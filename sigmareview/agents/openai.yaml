@@ -1,0 +1,12 @@
+interface:
+  display_name: SigmaReview
+  short_description: One-shot, full-repository engineering review
+  default_prompt: Use $sigmareview to review this repository end to end and open the
+    findings pull request.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
