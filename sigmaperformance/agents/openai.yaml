@@ -1,0 +1,12 @@
+interface:
+  display_name: SigmaPerformance
+  short_description: Measured full-repository performance audit
+  default_prompt: Use $sigmaperformance to audit this repository for performance and
+    open the report pull request.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
