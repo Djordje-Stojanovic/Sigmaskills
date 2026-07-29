@@ -1,0 +1,12 @@
+interface:
+  display_name: SigmaBrief
+  short_description: Paste-ready agent briefs from issues or work items
+  default_prompt: Use $sigmabrief to prepare copy-pastable execution briefs for the
+    given work items. Do not implement them.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
