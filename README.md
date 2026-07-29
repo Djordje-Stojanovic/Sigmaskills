@@ -12,13 +12,18 @@ A one-shot, single-agent, full-repository engineering audit. SigmaReview reviews
 
 A calibrated, audit-only, full-repository performance engineering system. It maps complete user journeys, uses controlled measurement and mechanically conclusive source evidence, separates confirmed bottlenecks from measurement-required opportunities, and publishes one structured report PR. Runtime code remains unchanged.
 
+### SigmaBrief
+
+A prompt factory for parallel or single-agent execution. SigmaBrief turns GitHub issues, features, upgrades, bugs, or plain work statements into short, copy-pastable briefs for other agents. It researches lightly (issues, open PRs, local standards), emits a dispatch list plus fenced briefs, and stops. It does not implement the work, audit the whole repository, or open fix PRs against the target product repository. Briefs default to plan → optional grill-me (including Windows worktree isolation) → approve → execute → validate → PR for review (do not merge), with agent-created worktrees when isolation is on and cleanup only after human merge or abandon.
+
 ## Install
 
-Install either skill with the cross-agent installer:
+Install any skill with the cross-agent installer:
 
 ```bash
 npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmareview
 npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmaperformance
+npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmabrief
 ```
 
 For Codex:
@@ -26,6 +31,7 @@ For Codex:
 ```text
 $skill-installer install sigmareview from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaperformance from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmabrief from https://github.com/Djordje-Stojanovic/Sigmaskills
 ```
 
 Manual universal installation:
@@ -35,6 +41,7 @@ git clone https://github.com/Djordje-Stojanovic/Sigmaskills.git
 mkdir -p ~/.agents/skills
 cp -R Sigmaskills/sigmareview ~/.agents/skills/sigmareview
 cp -R Sigmaskills/sigmaperformance ~/.agents/skills/sigmaperformance
+cp -R Sigmaskills/sigmabrief ~/.agents/skills/sigmabrief
 ```
 
 ## Run
@@ -44,6 +51,8 @@ Codex:
 ```text
 $sigmareview https://github.com/owner/repository
 $sigmaperformance https://github.com/owner/repository
+$sigmabrief https://github.com/owner/repository/issues/12
+$sigmabrief all open
 ```
 
 Pi:
@@ -51,11 +60,15 @@ Pi:
 ```text
 /skill:sigmareview https://github.com/owner/repository
 /skill:sigmaperformance https://github.com/owner/repository
+/skill:sigmabrief https://github.com/owner/repository/issues/12
+/skill:sigmabrief all open
 ```
 
-Other Agent Skills-compatible tools can invoke either skill through their normal skill picker or command syntax.
+Other Agent Skills-compatible tools can invoke these skills through their normal skill picker or command syntax.
 
 SigmaPerformance begins with two compact calibration batches covering agent topology, execution authority, stress permission, evidence access, performance priorities, and representative workloads. It then runs autonomously.
+
+**SigmaBrief is user-triggered only.** Invoke it when you want briefs, handoffs, or parallel agent prompts. Do not treat it as an ambient skill for ordinary implement/audit chat even if the host allows implicit skill invocation.
 
 ## Output contracts
 
@@ -78,9 +91,17 @@ SigmaPerformance begins with two compact calibration batches covering agent topo
 - Default single-agent execution; bounded subagents only through explicit run-specific calibration opt-in
 - No runtime-source changes or temporary measurement artifacts in the repository diff
 
+### SigmaBrief
+
+- Chat-only dispatch list plus paste-ready fenced `text` briefs (no `SIGMABRIEF-*.md` in the target product repository)
+- Prompt types: greenfield, finish-PR, skip, blocked
+- Executing-agent briefs: plan first, optional grill-me (including worktree), do not merge, self-review before PR
+- When isolation is on: agent-created Windows `git worktree add` with prerequisites; cleanup mentioned ≥3 times; cleanup only after human merge or abandon
+- Never implements the work or opens fix PRs against the target product repository
+
 ## Requirements
 
-The agent needs read access to the target repository and authenticated GitHub tooling with permission to push a branch or create a fork and pull request. SigmaPerformance execution additionally follows the authority and safety boundary selected during calibration.
+The agent needs read access to the target repository. SigmaReview and SigmaPerformance also need authenticated GitHub tooling with permission to push a branch or create a fork and pull request. SigmaPerformance execution additionally follows the authority and safety boundary selected during calibration. SigmaBrief needs GitHub read access (`gh`) when briefing from issues/PRs; it does not require push permission to the product repository.
 
 ## License
 
