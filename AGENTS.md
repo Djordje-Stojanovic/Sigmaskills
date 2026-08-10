@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**Sigmaskills** is a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaperformance`, `sigmabrief`, `sigmawrite`). There is no app runtime here — only skill markdown, contracts, docs, and structural tests.
+You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaperformance`, `sigmabrief`, `sigmawrite`). There is no app runtime here — only skill markdown, contracts, docs, and structural tests.
 
 **Where to look**
 
@@ -14,15 +14,15 @@
 
 When you add a skill (or rename/remove one): update `KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js) together with README + CHANGELOG, or CI fails on purpose. Folder name = frontmatter `name` = `--skill` id. Then run `npm test`.
 
+Follow every rule below. They are mandatory for this repo.
+
 ---
 
-## Karpathy guidelines
+## How you work
 
-Behavioral guidelines to reduce common LLM coding mistakes. Derived from [Andrej Karpathy’s observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls (via [karpathy-guidelines](https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md)).
+Bias toward caution over speed. For trivial tasks, use judgment.
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
-
-### 1. Think Before Coding
+### Think before coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
@@ -32,7 +32,7 @@ Before implementing:
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
 
-### 2. Simplicity First
+### Simplicity first
 
 **Minimum code that solves the problem. Nothing speculative.**
 
@@ -44,7 +44,7 @@ Before implementing:
 
 Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
-### 3. Surgical Changes
+### Surgical changes
 
 **Touch only what you must. Clean up only your own mess.**
 
@@ -60,7 +60,7 @@ When your changes create orphans:
 
 The test: Every changed line should trace directly to the user's request.
 
-### 4. Goal-Driven Execution
+### Goal-driven execution
 
 **Define success criteria. Loop until verified.**
 
@@ -78,43 +78,28 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+You are doing this right when: fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
 
 ---
 
-## SigmaWrite
+## How you write
 
 Write user-facing English in the spirit of ASD-STE100 Simplified Technical English: clear shared meaning, living voice, still precise. Not certified STE; no controlled dictionary.
 
-While active (until turned off), use this voice for explanations, summaries, plans, and answers. Leave code, paths, APIs, identifiers, and other skills’ required formats alone.
-
-### North star
+Use this voice for explanations, summaries, plans, and answers in this repo. Leave code, paths, APIs, identifiers, and other skills’ required formats alone.
 
 Write amazing high-quality technical English that never gets too long. A sharp person from a completely unrelated field — even without your jargon — should still grasp your meaning. Stay technical when the topic is. Be fun to read without baby-talk or buzzword cosplay.
 
 Prefer clear who-does-what over foggy abstractions. Prefer one clean idea per sentence when something is hard. Prefer stable names for the same concept; don’t synonym-hop for style. Prefer simple words; when a real technical term is needed, keep it and make its meaning obvious once. Prefer light noun stacks over packed noun piles. Prefer simple time (now / then / next). Prefer enough detail to act or understand; cut empty filler. Prefer steps a human can follow without sounding like a robot manual.
 
-### Never
-
+**Never:**
 - Invent nonsense words or fake-technical coinages.
 - Hide meaning in abstract gibberish.
 - Talk down to the reader.
 - Rename real code, paths, APIs, or identifiers to “sound simpler.”
 
-### Before / after
+**Bad:** We refactored the orchestration layer to idempotently hydrate the ephemeral projection surface across seven modules.
 
-**Before:** We refactored the orchestration layer to idempotently hydrate the ephemeral projection surface across seven modules.
+**Good:** I changed how temporary data loads across seven files. The load can run twice without creating duplicate records. Here is what each file does and why.
 
-**After:** I changed how temporary data loads across seven files. The load can run twice without creating duplicate records. Here is what each file does and why.
-
-### Paste as system prompt
-
-```text
-From now on, write in clear Simplified Technical English inspired by ASD-STE100.
-Use high-quality sentences that never get too long. A sharp outsider from another
-field should still understand you. Stay technical when needed; never dumb it down;
-never invent words or hide meaning in jargon soup. Prefer who-does-what, stable
-terms, simple time, and enough detail to act. Do not rename real code or paths.
-```
-
-Full skill package: [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md). Soft steers only — do not paste hard numbered writing laws into skills or docs.
+Soft steers only — do not paste hard numbered writing laws into skills or docs. Canonical package if you need the pasteable system-prompt block: [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md).
