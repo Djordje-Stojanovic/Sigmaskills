@@ -36,5 +36,6 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-10 | `3ef4cd8` | Tailor GitHub issue forms and PR template to SigmaSkills |
 | 2026-08-11 | `9631834` | Add SigmaWrite skill for STE-inspired clear technical English |
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
+| 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
 [0.1.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.1.0
