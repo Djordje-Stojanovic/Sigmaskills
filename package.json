@@ -1,0 +1,12 @@
+{
+  "name": "sigmaskills",
+  "private": true,
+  "description": "Structural regression tests for the Sigmaskills Agent Skills monorepo",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/**/*.test.js"
+  }
+}

@@ -77,8 +77,11 @@ Uses the cross-agent [skills](https://github.com/vercel-labs/skills) CLI — det
 # Everything, all detected agents, global
 npx skills add Djordje-Stojanovic/Sigmaskills --all -g -y
 
-# One skill, all detected agents
+# One skill at a time
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmareview -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaperformance -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmabrief -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
 
 # Pin to specific hosts
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g -a cursor -a claude-code -a codex -a opencode -a pi
@@ -251,8 +254,9 @@ Windows-native defaults where skills mention shells or worktrees (PowerShell-fri
 
 ```text
 Sigmaskills/
-├── README.md · CHANGELOG.md · LICENSE
-├── .github/                  Issue forms + PR template
+├── README.md · CHANGELOG.md · LICENSE · package.json
+├── test/                     Structural regression tests (npm test)
+├── .github/                  Issue forms · PR template · CI
 ├── sigmareview/              SKILL.md · agents/ · references/
 ├── sigmaperformance/         SKILL.md · agents/ · references/
 ├── sigmabrief/               SKILL.md · agents/ · references/
@@ -260,6 +264,20 @@ Sigmaskills/
 ```
 
 Each top-level folder is one installable skill. `name` in frontmatter = folder name = `--skill` id.
+
+---
+
+## Testing
+
+Zero-dependency Node tests guard the beauty: skill registry, `SKILL.md` frontmatter, `agents/openai.yaml`, README install/run wiring, CHANGELOG, issue templates, and SigmaWrite’s soft-steer contract.
+
+```bash
+npm test
+```
+
+CI runs the same suite on every push and pull request to `main`.
+
+When you **add or rename a skill**, update `KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js) in the same change as README and CHANGELOG — otherwise CI fails on purpose.
 
 ---
 
