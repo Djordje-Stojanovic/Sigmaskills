@@ -1,0 +1,89 @@
+name: Docs
+description: |
+  Fix or write guides, checklists, or reference docs. The product can be fine;
+  the writing is wrong or missing.
+title: "docs: "
+labels:
+  - documentation
+  - new
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when the fix lives in Markdown or docs — README, guides,
+        setup notes, and the like.
+
+  - type: textarea
+    id: what-docs
+    attributes:
+      label: What needs writing or fixing?
+      description: One or two sentences.
+      placeholder: README still lists the old setup command after the rename.
+    validations:
+      required: true
+
+  - type: textarea
+    id: who-why
+    attributes:
+      label: Who is it for, and why does it matter?
+      description: Future-you, another tool, or a person who will follow the doc cold.
+      placeholder: Future-me will run the wrong command and waste time.
+    validations:
+      required: true
+
+  - type: textarea
+    id: done-looks-like
+    attributes:
+      label: What does done look like?
+      description: Tick-box list of observable results that mean this is finished.
+      placeholder: |
+        - [ ] README shows the current setup command
+        - [ ] A cold reader can follow it without guessing
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this for you?
+      options:
+        - Now
+        - Soon
+        - Whenever
+        - Backlog
+    validations:
+      required: true
+
+  - type: textarea
+    id: gap-today
+    attributes:
+      label: What is wrong or missing today? (optional)
+      placeholder: It still says "npm run start"; the real command is "npm run dev".
+
+  - type: textarea
+    id: pages
+    attributes:
+      label: Which pages or sections? (optional)
+      placeholder: README.md Getting Started; maybe a one-line pointer in CONTRIBUTING if it exists.
+
+  - type: textarea
+    id: leave-out
+    attributes:
+      label: Leave out (optional)
+      placeholder: Rewriting the entire documentation site.
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else? (optional)
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched for an existing docs issue covering this.
+          required: true
+        - label: This is documentation work (not a code/config bug or a new product feature).
+          required: true

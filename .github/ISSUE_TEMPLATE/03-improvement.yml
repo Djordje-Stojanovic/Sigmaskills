@@ -1,0 +1,116 @@
+name: Improvement
+description: |
+  Make an existing thing better: faster, cleaner, clearer, or less fragile.
+  Not a brand-new feature and not a docs-only change.
+title: "improve: "
+labels:
+  - improvement
+  - new
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for refactors, speed-ups, cleanup, and hardening of something
+        that already exists. Skip optional fields for small chores.
+
+  - type: textarea
+    id: changing
+    attributes:
+      label: What are you changing?
+      description: One or two sentences about the change itself.
+      placeholder: Speed up the settings page load and make empty states clearer.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why-now
+    attributes:
+      label: Why now?
+      description: Why this matters today instead of “someday”.
+      placeholder: The page feels slow on every open and I keep thinking it is broken.
+    validations:
+      required: true
+
+  - type: textarea
+    id: done-looks-like
+    attributes:
+      label: What does done look like?
+      description: Tick-box list of observable results that mean this is finished.
+      placeholder: |
+        - [ ] Settings page feels responsive on a cold open
+        - [ ] Empty state explains what to do next
+        - [ ] Existing settings behaviour stays the same
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this for you?
+      options:
+        - Now
+        - Soon
+        - Whenever
+        - Backlog
+    validations:
+      required: true
+
+  - type: textarea
+    id: today
+    attributes:
+      label: How it works today (optional)
+      placeholder: Settings loads every section eagerly on first open.
+
+  - type: textarea
+    id: after
+    attributes:
+      label: How it should work after (optional)
+      placeholder: Same settings, faster first paint, clearer empty state when nothing is configured.
+
+  - type: textarea
+    id: in-scope
+    attributes:
+      label: In scope (optional)
+      placeholder: Loading behaviour and empty-state copy on the settings page.
+
+  - type: textarea
+    id: leave-out
+    attributes:
+      label: Leave out (optional)
+      placeholder: Redesigning the whole app shell or adding new settings.
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes (optional)
+      description: Known constraints, relevant files, or a suggested approach.
+      placeholder: Keep the current settings schema; measure before and after with a stopwatch.
+
+  - type: textarea
+    id: verify
+    attributes:
+      label: How you will verify (optional)
+      placeholder: Cold-open settings three times and confirm the empty state text is readable.
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks (optional)
+      description: Possible regressions, data risk, or operational surprises.
+      placeholder: Lazy-loading a section could hide a validation error until that tab is opened.
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else? (optional)
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched for an existing issue covering this improvement.
+          required: true
+        - label: This is about improving something that already exists (not a brand-new feature, not docs-only).
+          required: true

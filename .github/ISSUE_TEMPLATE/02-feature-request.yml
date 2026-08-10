@@ -1,0 +1,106 @@
+name: Feature
+description: |
+  Ask for something new that does not exist today. Say what people should be
+  able to do and why it matters.
+title: "feature: "
+labels:
+  - enhancement
+  - new
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem and the outcome. Keep implementation ideas optional —
+        they are guesses, not requirements.
+
+  - type: textarea
+    id: capability
+    attributes:
+      label: What should people be able to do?
+      description: One or two sentences. Observable capability, not a library name.
+      placeholder: From the dashboard, download the last 30 days of activity as CSV.
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does that solve?
+      description: The real pain or need — not only your preferred solution.
+      placeholder: I currently copy rows by hand into a spreadsheet once a week.
+    validations:
+      required: true
+
+  - type: textarea
+    id: done-looks-like
+    attributes:
+      label: What does done look like?
+      description: Tick-box list of observable results that mean this is finished.
+      placeholder: |
+        - [ ] Users can download a CSV of the last 30 days
+        - [ ] Empty results still produce a valid CSV header row
+        - [ ] Existing dashboard layout stays readable
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this for you?
+      options:
+        - Now
+        - Soon
+        - Whenever
+        - Backlog
+    validations:
+      required: true
+
+  - type: textarea
+    id: cope-today
+    attributes:
+      label: How do you cope today? (optional)
+      placeholder: I open the table and copy-paste into Excel.
+
+  - type: textarea
+    id: example
+    attributes:
+      label: One real example (optional)
+      description: A short story with a person, an action, and a result.
+      placeholder: Monday morning I open the dashboard, click Export, and email the CSV to myself.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Other ideas you considered (optional)
+      placeholder: Manual copy-paste; a separate admin script; third-party reporting tool.
+
+  - type: textarea
+    id: leave-out
+    attributes:
+      label: Leave out (optional)
+      description: What this issue should deliberately not include.
+      placeholder: Rebuilding the whole dashboard from scratch.
+
+  - type: textarea
+    id: possible-approach
+    attributes:
+      label: Possible approach (optional)
+      description: A guess at how to build it — not a requirement.
+      placeholder: Add an Export button that hits an existing list API and streams CSV.
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else? (optional)
+      description: Mock-ups, related issues, or constraints.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched for an existing request covering this problem.
+          required: true
+        - label: I explained the underlying problem, not only a preferred solution.
+          required: true

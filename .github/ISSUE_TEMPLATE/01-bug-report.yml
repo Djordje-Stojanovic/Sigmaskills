@@ -1,0 +1,121 @@
+name: Bug
+description: |
+  Something that should work is broken or wrong. Use this when behaviour is
+  incorrect, not when you want a new capability.
+title: "bug: "
+labels:
+  - bug
+  - new
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill the required fields so future-you can reproduce this without guessing.
+        Skip the optional ones if this is a quick note.
+
+  - type: textarea
+    id: what-broke
+    attributes:
+      label: What broke?
+      description: One or two sentences. Pretend you forgot this repo exists.
+      placeholder: The app fails when exporting a report that contains special characters.
+    validations:
+      required: true
+
+  - type: textarea
+    id: who-feels-it
+    attributes:
+      label: Who feels it, and how bad is it?
+      description: Who is affected, how often, and how serious is it?
+      placeholder: Anyone using export. Happens every time for names with "&"; other exports are fine.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to make it happen
+      description: Smallest reliable sequence that triggers the problem.
+      placeholder: |
+        1. Open the app
+        2. Open a record whose name contains "&"
+        3. Click Export
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened?
+      placeholder: Export spinner runs, then an error toast. Browser console shows a 500.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened?
+      placeholder: The file downloads successfully within a few seconds.
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Where it ran
+      description: Machine, browser or app, and how you reached the service.
+      placeholder: Windows 11 / Chrome / local Docker
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this for you?
+      options:
+        - Now
+        - Soon
+        - Whenever
+        - Backlog
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit (optional)
+      placeholder: v1.2.3, or a short git SHA
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often? (optional)
+      options:
+        - Always
+        - Often
+        - Sometimes
+        - Once
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs, screenshots, or a tiny reproduction (optional)
+      description: Strip passwords, tokens, and personal data first.
+      render: shell
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else? (optional)
+      description: Workaround, last known good version, related issues, or a guess at the cause.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched for an existing issue that already covers this.
+          required: true
+        - label: I removed secrets and sensitive data from this report.
+          required: true
