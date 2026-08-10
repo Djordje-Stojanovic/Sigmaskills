@@ -1,7 +1,7 @@
 name: Docs
 description: |
-  Fix or write guides, checklists, or reference docs. The product can be fine;
-  the writing is wrong or missing.
+  Fix or write README, skill install/run notes, or reference docs. The skill can
+  be fine; the writing is wrong or missing.
 title: "docs: "
 labels:
   - documentation
@@ -10,15 +10,15 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this when the fix lives in Markdown or docs — README, guides,
-        setup notes, and the like.
+        Use this when the fix lives in Markdown — README, SKILL.md prose,
+        references/*.md, or install/run examples for Codex / Pi / Cursor.
 
   - type: textarea
     id: what-docs
     attributes:
       label: What needs writing or fixing?
       description: One or two sentences.
-      placeholder: README still lists the old setup command after the rename.
+      placeholder: README still omits SigmaBrief’s “user-triggered only” note in the Run section.
     validations:
       required: true
 
@@ -26,8 +26,8 @@ body:
     id: who-why
     attributes:
       label: Who is it for, and why does it matter?
-      description: Future-you, another tool, or a person who will follow the doc cold.
-      placeholder: Future-me will run the wrong command and waste time.
+      description: Someone installing or invoking a skill cold.
+      placeholder: A Cursor user will treat SigmaBrief as ambient and get noisy briefs on ordinary chat.
     validations:
       required: true
 
@@ -37,8 +37,9 @@ body:
       label: What does done look like?
       description: Tick-box list of observable results that mean this is finished.
       placeholder: |
-        - [ ] README shows the current setup command
-        - [ ] A cold reader can follow it without guessing
+        - [ ] README Run section states SigmaBrief is user-triggered only
+        - [ ] Install snippets still match npx skills add / Codex / manual copy
+        - [ ] A cold reader can install and invoke without guessing
     validations:
       required: true
 
@@ -59,19 +60,19 @@ body:
     id: gap-today
     attributes:
       label: What is wrong or missing today? (optional)
-      placeholder: It still says "npm run start"; the real command is "npm run dev".
+      placeholder: Install block lists three skills but Run examples for one host are incomplete.
 
   - type: textarea
     id: pages
     attributes:
       label: Which pages or sections? (optional)
-      placeholder: README.md Getting Started; maybe a one-line pointer in CONTRIBUTING if it exists.
+      placeholder: README.md Install + Run; sigmabrief/SKILL.md; references/prompt-contract.md
 
   - type: textarea
     id: leave-out
     attributes:
       label: Leave out (optional)
-      placeholder: Rewriting the entire documentation site.
+      placeholder: Rewriting every reference doc or changing skill behaviour.
 
   - type: textarea
     id: anything-else
@@ -85,5 +86,5 @@ body:
       options:
         - label: I searched for an existing docs issue covering this.
           required: true
-        - label: This is documentation work (not a code/config bug or a new product feature).
+        - label: This is documentation work (not a skill-logic bug or a new skill request).
           required: true

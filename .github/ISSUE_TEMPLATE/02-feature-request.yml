@@ -1,7 +1,7 @@
 name: Feature
 description: |
-  Ask for something new that does not exist today. Say what people should be
-  able to do and why it matters.
+  Ask for a new skill, prompt factory, reference pack, or host integration that
+  does not exist today. Stay in the Agent Skills / AI-prompt lane.
 title: "feature: "
 labels:
   - enhancement
@@ -10,15 +10,16 @@ body:
   - type: markdown
     attributes:
       value: |
-        Describe the problem and the outcome. Keep implementation ideas optional —
-        they are guesses, not requirements.
+        SigmaSkills is for portable Agent Skills, prompts, contracts, and related
+        templates — not product apps (no photo editors, dashboards, runtimes).
+        Describe the capability and why it matters. Implementation ideas stay optional.
 
   - type: textarea
     id: capability
     attributes:
       label: What should people be able to do?
-      description: One or two sentences. Observable capability, not a library name.
-      placeholder: From the dashboard, download the last 30 days of activity as CSV.
+      description: One or two sentences. Observable skill or prompt outcome, not a library name.
+      placeholder: Invoke a skill that turns an open API changelog into a migration brief for coding agents.
     validations:
       required: true
 
@@ -27,7 +28,7 @@ body:
     attributes:
       label: What problem does that solve?
       description: The real pain or need — not only your preferred solution.
-      placeholder: I currently copy rows by hand into a spreadsheet once a week.
+      placeholder: I currently paste changelogs into chat and rewrite the same “do this / don’t do that” brief by hand.
     validations:
       required: true
 
@@ -37,9 +38,10 @@ body:
       label: What does done look like?
       description: Tick-box list of observable results that mean this is finished.
       placeholder: |
-        - [ ] Users can download a CSV of the last 30 days
-        - [ ] Empty results still produce a valid CSV header row
-        - [ ] Existing dashboard layout stays readable
+        - [ ] New top-level skill folder with SKILL.md (and references if needed)
+        - [ ] README lists install + run for the skill
+        - [ ] Output contract is explicit (chat-only vs report PR, etc.)
+        - [ ] “Do not use for …” negatives are clear
     validations:
       required: true
 
@@ -56,44 +58,56 @@ body:
     validations:
       required: true
 
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of addition? (optional)
+      options:
+        - New skill package
+        - New prompt / brief template
+        - New reference or contract doc
+        - Host metadata (e.g. agents/openai.yaml)
+        - Install / discoverability
+        - Other (still skill/prompt related)
+
   - type: textarea
     id: cope-today
     attributes:
       label: How do you cope today? (optional)
-      placeholder: I open the table and copy-paste into Excel.
+      placeholder: I hand-write briefs in chat or reuse an old SigmaBrief output and edit it.
 
   - type: textarea
     id: example
     attributes:
       label: One real example (optional)
       description: A short story with a person, an action, and a result.
-      placeholder: Monday morning I open the dashboard, click Export, and email the CSV to myself.
+      placeholder: After a library release I run the skill on the changelog URL and paste the brief into three parallel agents.
 
   - type: textarea
     id: alternatives
     attributes:
       label: Other ideas you considered (optional)
-      placeholder: Manual copy-paste; a separate admin script; third-party reporting tool.
+      placeholder: Stretch SigmaBrief; a one-off Cursor rule; a gist I copy each time.
 
   - type: textarea
     id: leave-out
     attributes:
       label: Leave out (optional)
       description: What this issue should deliberately not include.
-      placeholder: Rebuilding the whole dashboard from scratch.
+      placeholder: Building a web app, shipping runtime code for a product, or auditing whole unrelated repos.
 
   - type: textarea
     id: possible-approach
     attributes:
       label: Possible approach (optional)
-      description: A guess at how to build it — not a requirement.
-      placeholder: Add an Export button that hits an existing list API and streams CSV.
+      description: A guess at how to ship it — not a requirement.
+      placeholder: Mirror sigmabrief’s folder layout; keep output chat-only; document npx skills add --skill …
 
   - type: textarea
     id: anything-else
     attributes:
       label: Anything else? (optional)
-      description: Mock-ups, related issues, or constraints.
+      description: Sketch prompts, related issues, host constraints (Codex / Pi / Cursor).
 
   - type: checkboxes
     id: checks
@@ -101,6 +115,8 @@ body:
       label: Before you submit
       options:
         - label: I searched for an existing request covering this problem.
+          required: true
+        - label: This stays in Agent Skills / prompts / templates (not an unrelated product app).
           required: true
         - label: I explained the underlying problem, not only a preferred solution.
           required: true

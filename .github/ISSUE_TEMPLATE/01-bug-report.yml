@@ -1,7 +1,7 @@
 name: Bug
 description: |
-  Something that should work is broken or wrong. Use this when behaviour is
-  incorrect, not when you want a new capability.
+  Something that should work in a skill, prompt, contract, or install path is
+  wrong. Use this when behaviour is incorrect, not when you want a new skill.
 title: "bug: "
 labels:
   - bug
@@ -10,15 +10,16 @@ body:
   - type: markdown
     attributes:
       value: |
-        Fill the required fields so future-you can reproduce this without guessing.
-        Skip the optional ones if this is a quick note.
+        SigmaSkills ships Agent Skills (SKILL.md, references, install/run docs) —
+        not an app. Fill the required fields so someone can reproduce the skill
+        or docs failure without guessing. Skip optional fields for a quick note.
 
   - type: textarea
     id: what-broke
     attributes:
       label: What broke?
       description: One or two sentences. Pretend you forgot this repo exists.
-      placeholder: The app fails when exporting a report that contains special characters.
+      placeholder: SigmaBrief emits briefs that tell agents to open fix PRs against the target product repo, which violates its contract.
     validations:
       required: true
 
@@ -26,8 +27,8 @@ body:
     id: who-feels-it
     attributes:
       label: Who feels it, and how bad is it?
-      description: Who is affected, how often, and how serious is it?
-      placeholder: Anyone using export. Happens every time for names with "&"; other exports are fine.
+      description: Which skill or host, how often, and how serious is it?
+      placeholder: Anyone running $sigmabrief on an issue. Happens every time; briefs are usable but the stop-condition is wrong.
     validations:
       required: true
 
@@ -37,9 +38,9 @@ body:
       label: Steps to make it happen
       description: Smallest reliable sequence that triggers the problem.
       placeholder: |
-        1. Open the app
-        2. Open a record whose name contains "&"
-        3. Click Export
+        1. Install sigmabrief from this repo
+        2. Invoke $sigmabrief on a public GitHub issue
+        3. Read the “do not” / stop section of the emitted brief
     validations:
       required: true
 
@@ -47,7 +48,7 @@ body:
     id: actual
     attributes:
       label: What actually happened?
-      placeholder: Export spinner runs, then an error toast. Browser console shows a 500.
+      placeholder: Brief tells the agent to implement and open a product fix PR.
     validations:
       required: true
 
@@ -55,7 +56,7 @@ body:
     id: expected
     attributes:
       label: What should have happened?
-      placeholder: The file downloads successfully within a few seconds.
+      placeholder: Brief stays chat-only — research lightly, emit copy-pastable prompts, stop. No product fix PR.
     validations:
       required: true
 
@@ -63,8 +64,23 @@ body:
     id: environment
     attributes:
       label: Where it ran
-      description: Machine, browser or app, and how you reached the service.
-      placeholder: Windows 11 / Chrome / local Docker
+      description: Agent host, OS, and how the skill was installed or invoked.
+      placeholder: Cursor / Windows 11 / npx skills add … --skill sigmabrief
+    validations:
+      required: true
+
+  - type: dropdown
+    id: skill
+    attributes:
+      label: Which skill? (if known)
+      description: Leave blank-feeling? Pick the closest, or Other / not sure.
+      options:
+        - sigmareview
+        - sigmaperformance
+        - sigmabrief
+        - Shared (README / install / repo-wide)
+        - Other / not sure
+        - New skill (not shipped yet)
     validations:
       required: true
 
@@ -85,7 +101,7 @@ body:
     id: version
     attributes:
       label: Version or commit (optional)
-      placeholder: v1.2.3, or a short git SHA
+      placeholder: main @ 8dcf2b4, or the skill folder you copied
 
   - type: dropdown
     id: frequency
@@ -100,15 +116,15 @@ body:
   - type: textarea
     id: evidence
     attributes:
-      label: Logs, screenshots, or a tiny reproduction (optional)
-      description: Strip passwords, tokens, and personal data first.
-      render: shell
+      label: Snippet, transcript excerpt, or link (optional)
+      description: Paste a short wrong output, SKILL.md quote, or issue URL. Strip tokens and secrets first.
+      render: markdown
 
   - type: textarea
     id: anything-else
     attributes:
       label: Anything else? (optional)
-      description: Workaround, last known good version, related issues, or a guess at the cause.
+      description: Workaround, last known good commit, related issues, or a guess at the cause.
 
   - type: checkboxes
     id: checks
