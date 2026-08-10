@@ -254,7 +254,7 @@ Windows-native defaults where skills mention shells or worktrees (PowerShell-fri
 
 ```text
 Sigmaskills/
-├── AGENTS.md · CLAUDE.md     Agent working contract (source: AGENTS.md)
+├── AGENTS.md                 Agent working contract
 ├── README.md · CHANGELOG.md · LICENSE · package.json
 ├── test/                     Structural regression tests (npm test)
 ├── .github/                  Issue forms · PR template · CI
@@ -266,7 +266,7 @@ Sigmaskills/
 
 Each top-level folder is one installable skill. `name` in frontmatter = folder name = `--skill` id.
 
-Agents working in this repo should read [`AGENTS.md`](AGENTS.md) (Claude-style hosts: [`CLAUDE.md`](CLAUDE.md)).
+Agents working in this repo should read [`AGENTS.md`](AGENTS.md).
 
 ---
 

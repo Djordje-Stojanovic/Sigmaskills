@@ -78,7 +78,6 @@ test('repo ships required root docs and license', () => {
     'LICENSE',
     'package.json',
     'AGENTS.md',
-    'CLAUDE.md',
   ]) {
     assert.ok(exists(file), `missing ${file}`);
   }
@@ -95,10 +94,6 @@ test('AGENTS.md teaches registry discipline and SigmaWrite voice', () => {
   assert.match(agents, /SigmaWrite|sigmawrite/);
   assert.match(agents, /npm test/);
   assert.doesNotMatch(agents, /maximum\s+\d+\s+words/i);
-
-  const claude = read('CLAUDE.md');
-  assert.match(claude, /AGENTS\.md/);
-  assert.match(claude, /KNOWN_SKILLS/);
 });
 
 test('discovered skill folders match the known registry', () => {

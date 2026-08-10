@@ -7,7 +7,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Added
 
 - Structural regression tests (`npm test`) and GitHub Actions CI so skill registry, README wiring, templates, and SigmaWrite soft-steer invariants cannot silently drift.
-- Root [`AGENTS.md`](AGENTS.md) (plus [`CLAUDE.md`](CLAUDE.md) pointer): Karpathy-shaped working habits, SigmaWrite voice, and the `KNOWN_SKILLS` + README + CHANGELOG update rule.
+- Root [`AGENTS.md`](AGENTS.md): Karpathy-shaped working habits, SigmaWrite voice, and the `KNOWN_SKILLS` + README + CHANGELOG update rule.
 
 ## [0.1.0] — 2026-08-11
 

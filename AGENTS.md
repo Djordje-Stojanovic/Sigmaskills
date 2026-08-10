@@ -70,7 +70,7 @@ npm test
 | `test/repo-invariants.test.js` | Structural guards (`KNOWN_SKILLS`) |
 | `.github/` | Issue forms, PR template, CI |
 | `CHANGELOG.md` | Release history |
-| `CLAUDE.md` | Same contract for hosts that read Claude-style root files |
+| `AGENTS.md` | Working contract for coding agents in this repo |
 
 Do not inject host system prompts into other products from this repo. Skills stay portable packages. Users may copy SigmaWrite’s paste block into their own host instructions.
 
