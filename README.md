@@ -2,6 +2,8 @@
 
 High-rigor, portable [Agent Skills](https://agentskills.io/) for Codex, Pi, Claude Code, Cursor, and other compatible coding agents.
 
+**Current release:** [v0.1.0](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.1.0) — see [CHANGELOG.md](CHANGELOG.md).
+
 ## Available skills
 
 ### SigmaReview
