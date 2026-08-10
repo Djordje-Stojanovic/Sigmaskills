@@ -1,39 +1,99 @@
 # SigmaSkills
 
-High-rigor, portable [Agent Skills](https://agentskills.io/) for Codex, Pi, Claude Code, Cursor, and other compatible coding agents.
+**High-rigor Agent Skills for every serious coding agent.**
 
-**Current release:** [v0.1.0](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.1.0) — see [CHANGELOG.md](CHANGELOG.md).
+Portable [Agent Skills](https://agentskills.io/) that install once and run on **Codex**, **Claude Code**, **Cursor**, **Pi**, **OpenCode**, **LAPI**, Reasonix-class TUIs, Kimi/Muse-style hosts, and any tool that reads a `SKILL.md`.
 
-## Available skills
+| | |
+|---|---|
+| **Release** | [**v0.1.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.1.0) |
+| **Changelog** | [CHANGELOG.md](CHANGELOG.md) |
+| **License** | [MIT](LICENSE) |
+| **Spec** | [agentskills.io](https://agentskills.io/) |
+
+```text
+  Σ  review     →  one findings report, one PR, no runtime edits
+  Σ  performance→  calibrated bottlenecks, one report PR
+  Σ  brief      →  paste-ready agent briefs, chat only
+  Σ  write      →  clear STE-inspired technical English
+```
+
+---
+
+## Quick start
+
+Install every skill to every Agent Skills host the CLI can see:
+
+```bash
+npx skills add Djordje-Stojanovic/Sigmaskills --all -g -y
+```
+
+Or pick one:
+
+```bash
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
+```
+
+Then invoke with your host’s normal skill syntax (`$sigmawrite`, `/skill:sigmawrite`, skill picker, …).
+
+---
+
+## The skills
+
+| Skill | Id | Job | Output |
+|-------|-----|-----|--------|
+| **SigmaReview** | `sigmareview` | One-shot full-repo engineering audit | One findings MD + report-only PR |
+| **SigmaPerformance** | `sigmaperformance` | Calibrated performance investigation | One report MD + report-only PR |
+| **SigmaBrief** | `sigmabrief` | Prompt factory for parallel / single agents | Chat briefs only |
+| **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
 
 ### SigmaReview
 
-A one-shot, single-agent, full-repository engineering audit. SigmaReview reviews correctness, feature completeness, architecture, data and concurrency, reliability, security, performance, tests, dependencies, delivery, operations, and applicable domain-specific engineering. It rejects speculative findings, writes exactly one evidence-rich Markdown report, and opens it as a pull request without changing runtime code.
+A single agent walks an entire repository — correctness, completeness, architecture, data and concurrency, reliability, security, performance, tests, dependencies, delivery, operations, and domain-specific engineering. Speculative findings are rejected. Exactly **one** evidence-rich Markdown report is published as a **report-only** pull request. Runtime code is never changed.
 
 ### SigmaPerformance
 
-A calibrated, audit-only, full-repository performance engineering system. It maps complete user journeys, uses controlled measurement and mechanically conclusive source evidence, separates confirmed bottlenecks from measurement-required opportunities, and publishes one structured report PR. Runtime code remains unchanged.
+Maps real user journeys, then separates **measured** and **mechanically proven** bottlenecks from measurement-required opportunities. Publishes one structured report PR. Runtime sources stay untouched unless calibration explicitly says otherwise.
 
 ### SigmaBrief
 
-A prompt factory for parallel or single-agent execution. SigmaBrief turns GitHub issues, features, upgrades, bugs, or plain work statements into short, copy-pastable briefs for other agents. It researches lightly (issues, open PRs, local standards), emits a dispatch list plus fenced briefs, and stops. It does not implement the work, audit the whole repository, or open fix PRs against the target product repository. Briefs default to plan → optional grill-me (including Windows worktree isolation) → approve → execute → validate → PR for review (do not merge), with agent-created worktrees when isolation is on and cleanup only after human merge or abandon.
+Turns GitHub issues, features, upgrades, bugs, or plain work statements into short, copy-pastable briefs for other agents. Light research → dispatch list → fenced briefs → **stop**. Does not implement work or open product fix PRs. Default brief arc: plan → optional grill-me (including Windows worktree) → approve → execute → validate → PR for review (**do not merge**).
+
+**User-triggered only.** Do not treat Brief as ambient chat decoration.
 
 ### SigmaWrite
 
-A short writing-voice skill inspired by ASD-STE100 Simplified Technical English. Soft steers (not hard numbered rules) push clear, high-quality, still-technical explanations a sharp outsider can follow, with hard bans on gibberish and invented words. Includes a pasteable system-prompt block. Chat style only — not certified STE, no dictionary, no report PR.
+Writing voice inspired by **ASD-STE100 Simplified Technical English** — soft steers, not hard numbered rules. High-quality, still-technical explanations a sharp outsider can follow. Hard bans on gibberish and invented words. Includes a pasteable system-prompt block inside `SKILL.md`. Not certified STE; no dictionary ship.
+
+---
 
 ## Install
 
-Install any skill with the cross-agent installer:
+### One command (recommended)
+
+Uses the cross-agent [skills](https://github.com/vercel-labs/skills) CLI — detects Codex, Claude Code, Cursor, OpenCode, Pi, and dozens more:
 
 ```bash
-npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmareview
-npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmaperformance
-npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmabrief
-npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmawrite
+# Everything, all detected agents, global
+npx skills add Djordje-Stojanovic/Sigmaskills --all -g -y
+
+# One skill, all detected agents
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmareview -g
+
+# Pin to specific hosts
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g -a cursor -a claude-code -a codex -a opencode -a pi
+
+# List what this repo ships (no install)
+npx skills add Djordje-Stojanovic/Sigmaskills --list
 ```
 
-For Codex:
+Full GitHub URL also works:
+
+```bash
+npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmabrief -g
+```
+
+### Codex
 
 ```text
 $skill-installer install sigmareview from https://github.com/Djordje-Stojanovic/Sigmaskills
@@ -42,7 +102,11 @@ $skill-installer install sigmabrief from https://github.com/Djordje-Stojanovic/S
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
 ```
 
-Manual universal installation:
+### Manual / universal copy
+
+When a host only watches a skills folder (Pi, LAPI mirrors, custom TUIs, air-gapped boxes):
+
+**POSIX**
 
 ```bash
 git clone https://github.com/Djordje-Stojanovic/Sigmaskills.git
@@ -53,74 +117,159 @@ cp -R Sigmaskills/sigmabrief ~/.agents/skills/sigmabrief
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
 ```
 
+**Windows (PowerShell)**
+
+```powershell
+git clone https://github.com/Djordje-Stojanovic/Sigmaskills.git
+New-Item -ItemType Directory -Force -Path "$HOME\.agents\skills" | Out-Null
+Copy-Item -Recurse Sigmaskills\sigmareview   "$HOME\.agents\skills\sigmareview"
+Copy-Item -Recurse Sigmaskills\sigmaperformance "$HOME\.agents\skills\sigmaperformance"
+Copy-Item -Recurse Sigmaskills\sigmabrief    "$HOME\.agents\skills\sigmabrief"
+Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
+```
+
+Point other hosts at the same folders (or copy again) as needed:
+
+| Host family | Typical skills path |
+|-------------|---------------------|
+| Universal / Codex-style | `~/.agents/skills/<id>/` |
+| Cursor | `~/.cursor/skills/<id>/` or project `.agents/skills/` |
+| Claude Code | `~/.claude/skills/<id>/` |
+| Pi / LAPI-style | `~/.pi/agent/skills/<id>/` |
+| OpenCode | `~/.config/opencode/skills/<id>/` |
+| Codex | `~/.codex/skills/<id>/` |
+
+Release zip: download [**Sigmaskills-v0.1.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.1.0) and copy the four skill folders into the path your agent reads.
+
+### Optional: SigmaWrite as system prompt
+
+Open [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md), copy the **Paste as system prompt** block into host instructions when you want the voice always on — without editing this repo’s release contract.
+
+---
+
 ## Run
 
-Codex:
+Use your host’s skill syntax. Examples:
+
+<table>
+<tr>
+<td width="50%">
+
+**Codex**
 
 ```text
-$sigmareview https://github.com/owner/repository
-$sigmaperformance https://github.com/owner/repository
-$sigmabrief https://github.com/owner/repository/issues/12
+$sigmareview https://github.com/owner/repo
+$sigmaperformance https://github.com/owner/repo
+$sigmabrief https://github.com/owner/repo/issues/12
 $sigmabrief all open
 $sigmawrite
 ```
 
-Pi:
+</td>
+<td width="50%">
+
+**Pi / skill-slash hosts**
 
 ```text
-/skill:sigmareview https://github.com/owner/repository
-/skill:sigmaperformance https://github.com/owner/repository
-/skill:sigmabrief https://github.com/owner/repository/issues/12
+/skill:sigmareview https://github.com/owner/repo
+/skill:sigmaperformance https://github.com/owner/repo
+/skill:sigmabrief https://github.com/owner/repo/issues/12
 /skill:sigmabrief all open
 /skill:sigmawrite
 ```
 
-Other Agent Skills-compatible tools can invoke these skills through their normal skill picker or command syntax.
+</td>
+</tr>
+</table>
 
-SigmaPerformance begins with two compact calibration batches covering agent topology, execution authority, stress permission, evidence access, performance priorities, and representative workloads. It then runs autonomously.
+**Claude Code · Cursor · OpenCode · ChatGPT/Codex UI · Reasonix-class · Kimi/Muse · others**  
+Use the skill picker, `@` / `$` skill mention, or whatever that product documents for Agent Skills. Folder name = skill id = invocation token.
 
-**SigmaBrief is user-triggered only.** Invoke it when you want briefs, handoffs, or parallel agent prompts. Do not treat it as an ambient skill for ordinary implement/audit chat even if the host allows implicit skill invocation.
+| Skill | Typical invoke | Notes |
+|-------|----------------|-------|
+| `sigmareview` | repo URL | Needs push/fork rights for the report PR |
+| `sigmaperformance` | repo URL | Starts with two short calibration batches, then runs |
+| `sigmabrief` | issue URL · `#N` · `all open` · plain work | Explicit only — not ambient |
+| `sigmawrite` | (no args) | Session writing voice until you turn it off |
+
+---
 
 ## Output contracts
 
 ### SigmaReview
 
-- `SIGMAREVIEW-FINDINGS-YYYY-MM-DD.md`
-- One dedicated branch and report-only pull request
+- File: `SIGMAREVIEW-FINDINGS-YYYY-MM-DD.md`
+- One dedicated branch + **report-only** PR
 - Prioritized, confidence-gated findings with exact evidence
 - Implementation-ready remediation and verification steps
-- A full repository coverage ledger
-- No source fixes, dependency installation, application execution, subagents, or auxiliary repository artifacts
+- Full repository coverage ledger
+- **No** source fixes, dependency installs, app execution, subagents, or auxiliary repo artifacts
 
 ### SigmaPerformance
 
-- `SIGMAPERFORMANCE-REPORT-YYYY-MM-DD.md`
-- One dedicated report-only pull request
-- M1 measured bottlenecks and M2 mechanically proven bottlenecks
-- Separately accounted M3 measurement-required opportunities, unsuccessful experiments, and unverified boundaries
+- File: `SIGMAPERFORMANCE-REPORT-YYYY-MM-DD.md`
+- One dedicated **report-only** PR
+- **M1** measured · **M2** mechanically proven bottlenecks
+- **M3** measurement-required opportunities, failed experiments, unverified boundaries (accounted separately)
 - Structured future SigmaOptimize handoff
-- Default single-agent execution; bounded subagents only through explicit run-specific calibration opt-in
-- No runtime-source changes or temporary measurement artifacts in the repository diff
+- Default single-agent; bounded subagents only via explicit calibration opt-in
+- **No** runtime-source changes or temp measurement junk in the repo diff
 
 ### SigmaBrief
 
-- Chat-only dispatch list plus paste-ready fenced `text` briefs (no `SIGMABRIEF-*.md` in the target product repository)
-- Prompt types: greenfield, finish-PR, skip, blocked
-- Executing-agent briefs: plan first, optional grill-me (including worktree), do not merge, self-review before PR
-- When isolation is on: agent-created Windows `git worktree add` with prerequisites; cleanup mentioned ≥3 times; cleanup only after human merge or abandon
-- Never implements the work or opens fix PRs against the target product repository
+- Chat-only dispatch list + paste-ready fenced `text` briefs  
+  (**no** `SIGMABRIEF-*.md` in the product repo)
+- Types: greenfield · finish-PR · skip · blocked
+- Executing briefs: plan first · optional grill-me · **do not merge** · self-review before PR
+- Isolation on → agent-created Windows `git worktree`; cleanup only after human merge or abandon
+- Never implements the work or opens product fix PRs
 
 ### SigmaWrite
 
-- Chat writing style only (no report file, no pull request)
-- Soft STE-inspired steers plus hard bans on gibberish and invented words
+- Chat writing style only (no report file, no PR)
+- Soft STE-inspired steers + hard bans (gibberish / invented words / talking down / renaming code)
 - Optional pasteable system-prompt block in `SKILL.md`
-- Does not rewrite code identifiers or override other skills’ output contracts
+- Does not override another skill’s rigid output contract
+
+---
 
 ## Requirements
 
-The agent needs read access to the target repository. SigmaReview and SigmaPerformance also need authenticated GitHub tooling with permission to push a branch or create a fork and pull request. SigmaPerformance execution additionally follows the authority and safety boundary selected during calibration. SigmaBrief needs GitHub read access (`gh`) when briefing from issues/PRs; it does not require push permission to the product repository. SigmaWrite needs no GitHub access; it only changes how the agent writes in chat.
+| Skill | Needs |
+|-------|--------|
+| All | Agent that can load Agent Skills (`SKILL.md`) |
+| SigmaReview · SigmaPerformance | Read access to the target repo · authenticated GitHub tooling to push a branch or fork + open a PR |
+| SigmaPerformance | Authority / safety boundary chosen in calibration |
+| SigmaBrief | `gh` read when briefing from issues/PRs · **no** push to the product repo |
+| SigmaWrite | Nothing beyond chat — optional paste into system instructions |
+
+Windows-native defaults where skills mention shells or worktrees (PowerShell-friendly; do not assume WSL).
+
+---
+
+## Repo layout
+
+```text
+Sigmaskills/
+├── README.md · CHANGELOG.md · LICENSE
+├── .github/                  Issue forms + PR template
+├── sigmareview/              SKILL.md · agents/ · references/
+├── sigmaperformance/         SKILL.md · agents/ · references/
+├── sigmabrief/               SKILL.md · agents/ · references/
+└── sigmawrite/               SKILL.md · agents/
+```
+
+Each top-level folder is one installable skill. `name` in frontmatter = folder name = `--skill` id.
+
+---
+
+## Contributing & issues
+
+Use the issue chooser: [New issue](https://github.com/Djordje-Stojanovic/Sigmaskills/issues/new/choose)  
+Bug · Feature · Improvement · Docs — written for skills, prompts, and templates (not unrelated product apps).
+
+---
 
 ## License
 
-MIT
+[MIT](LICENSE) © Djordje Stojanovic
