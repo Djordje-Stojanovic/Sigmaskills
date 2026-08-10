@@ -1,79 +1,120 @@
 # AGENTS.md
 
-Instructions for coding agents working in **Sigmaskills**. Keep this file short. Prefer clarity over ceremony.
+**Sigmaskills** is a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaperformance`, `sigmabrief`, `sigmawrite`). There is no app runtime here — only skill markdown, contracts, docs, and structural tests.
 
-This repo ships portable [Agent Skills](https://agentskills.io/) — markdown skill packages, not an application runtime.
+**Where to look**
+
+| Path | What |
+|------|------|
+| [`README.md`](README.md) | Install, run, output contracts for every host |
+| [`CHANGELOG.md`](CHANGELOG.md) | Release history (`[Unreleased]` for WIP) |
+| `sigmareview/` · `sigmaperformance/` · `sigmabrief/` · `sigmawrite/` | The skills |
+| [`test/repo-invariants.test.js`](test/repo-invariants.test.js) | `KNOWN_SKILLS` registry + `npm test` guards |
+| `.github/` | Issue forms, PR template, CI |
+
+When you add a skill (or rename/remove one): update `KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js) together with README + CHANGELOG, or CI fails on purpose. Folder name = frontmatter `name` = `--skill` id. Then run `npm test`.
 
 ---
 
-## How to work here (Karpathy-shaped)
+## Karpathy guidelines
 
-Bias toward caution over speed. For trivial edits, use judgment.
+Behavioral guidelines to reduce common LLM coding mistakes. Derived from [Andrej Karpathy’s observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls (via [karpathy-guidelines](https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md)).
 
-**Think before coding.** State assumptions. If several readings exist, say so — do not pick silently. If something is unclear, stop and ask.
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
-**Simplicity first.** Minimum change that solves the ask. Nothing speculative. No abstractions for one-use code. No “flexibility” that nobody requested. If you wrote 200 lines and 50 would do, rewrite.
+### 1. Think Before Coding
 
-**Surgical changes.** Touch only what you must. Do not “improve” adjacent files, comments, or formatting. Match existing style. Every changed line should trace to the user request.
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-**Goal-driven.** Define success checks, then loop until they pass. For multi-step work:
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-```text
+### 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+### 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+### 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
 1. [Step] → verify: [check]
 2. [Step] → verify: [check]
+3. [Step] → verify: [check]
 ```
 
-Run `npm test` before you claim done when you touched skills, docs, tests, or templates.
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
 
 ---
 
-## Writing voice (SigmaWrite)
+## SigmaWrite
 
 Write user-facing English in the spirit of ASD-STE100 Simplified Technical English: clear shared meaning, living voice, still precise. Not certified STE; no controlled dictionary.
 
+While active (until turned off), use this voice for explanations, summaries, plans, and answers. Leave code, paths, APIs, identifiers, and other skills’ required formats alone.
+
+### North star
+
 Write amazing high-quality technical English that never gets too long. A sharp person from a completely unrelated field — even without your jargon — should still grasp your meaning. Stay technical when the topic is. Be fun to read without baby-talk or buzzword cosplay.
 
-Prefer clear who-does-what over foggy abstractions. Prefer one clean idea per sentence when something is hard. Prefer stable names for the same concept; don’t synonym-hop for style. Prefer simple words; when a real technical term is needed, keep it and make its meaning obvious once. Prefer light noun stacks over packed noun piles. Prefer simple time (now / then / next). Prefer enough detail to act or understand; cut empty filler.
+Prefer clear who-does-what over foggy abstractions. Prefer one clean idea per sentence when something is hard. Prefer stable names for the same concept; don’t synonym-hop for style. Prefer simple words; when a real technical term is needed, keep it and make its meaning obvious once. Prefer light noun stacks over packed noun piles. Prefer simple time (now / then / next). Prefer enough detail to act or understand; cut empty filler. Prefer steps a human can follow without sounding like a robot manual.
 
-**Never:** invent nonsense words or fake-technical coinages; hide meaning in abstract gibberish; talk down to the reader; rename real code, paths, APIs, or identifiers to “sound simpler.”
+### Never
 
-Do not paste hard numbered writing laws into skills or docs (no fixed word-count ceilings). Soft steers only. Full skill: [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md).
+- Invent nonsense words or fake-technical coinages.
+- Hide meaning in abstract gibberish.
+- Talk down to the reader.
+- Rename real code, paths, APIs, or identifiers to “sound simpler.”
 
----
+### Before / after
 
-## Adding, renaming, or removing a skill
+**Before:** We refactored the orchestration layer to idempotently hydrate the ephemeral projection surface across seven modules.
 
-Folder name = frontmatter `name` = `--skill` id = invocation token (`$id` / `/skill:id`).
+**After:** I changed how temporary data loads across seven files. The load can run twice without creating duplicate records. Here is what each file does and why.
 
-In the **same change**, update all of:
+### Paste as system prompt
 
-1. The skill folder (`SKILL.md`, and usually `agents/openai.yaml`; `references/` when the skill needs them)
-2. [`README.md`](README.md) — Available / Install / Run / Output contracts
-3. [`CHANGELOG.md`](CHANGELOG.md) — under `[Unreleased]`
-4. **`KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js)**
-
-If you skip the test registry, **CI fails on purpose**. That is intentional.
-
-Then run:
-
-```bash
-npm test
+```text
+From now on, write in clear Simplified Technical English inspired by ASD-STE100.
+Use high-quality sentences that never get too long. A sharp outsider from another
+field should still understand you. Stay technical when needed; never dumb it down;
+never invent words or hide meaning in jargon soup. Prefer who-does-what, stable
+terms, simple time, and enough detail to act. Do not rename real code or paths.
 ```
 
----
-
-## Repo map
-
-| Path | Role |
-|------|------|
-| `sigmareview/` · `sigmaperformance/` · `sigmabrief/` · `sigmawrite/` | Installable skills |
-| `test/repo-invariants.test.js` | Structural guards (`KNOWN_SKILLS`) |
-| `.github/` | Issue forms, PR template, CI |
-| `CHANGELOG.md` | Release history |
-| `AGENTS.md` | Working contract for coding agents in this repo |
-
-Do not inject host system prompts into other products from this repo. Skills stay portable packages. Users may copy SigmaWrite’s paste block into their own host instructions.
-
----
-
-**These guidelines are working if:** diffs stay small, `npm test` stays green, new skills appear in README + CHANGELOG + `KNOWN_SKILLS` together, and explanations stay clear without jargon soup.
+Full skill package: [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md). Soft steers only — do not paste hard numbered writing laws into skills or docs.
