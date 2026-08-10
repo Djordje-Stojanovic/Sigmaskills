@@ -72,12 +72,33 @@ function wordCount(text) {
 }
 
 test('repo ships required root docs and license', () => {
-  for (const file of ['README.md', 'CHANGELOG.md', 'LICENSE', 'package.json']) {
+  for (const file of [
+    'README.md',
+    'CHANGELOG.md',
+    'LICENSE',
+    'package.json',
+    'AGENTS.md',
+    'CLAUDE.md',
+  ]) {
     assert.ok(exists(file), `missing ${file}`);
   }
   const changelog = read('CHANGELOG.md');
   assert.match(changelog, /## \[0\.1\.0\]/);
   assert.match(read('LICENSE'), /MIT/);
+});
+
+test('AGENTS.md teaches registry discipline and SigmaWrite voice', () => {
+  const agents = read('AGENTS.md');
+  assert.match(agents, /KNOWN_SKILLS/);
+  assert.match(agents, /test\/repo-invariants\.test\.js/);
+  assert.match(agents, /CI fails on purpose/i);
+  assert.match(agents, /SigmaWrite|sigmawrite/);
+  assert.match(agents, /npm test/);
+  assert.doesNotMatch(agents, /maximum\s+\d+\s+words/i);
+
+  const claude = read('CLAUDE.md');
+  assert.match(claude, /AGENTS\.md/);
+  assert.match(claude, /KNOWN_SKILLS/);
 });
 
 test('discovered skill folders match the known registry', () => {
