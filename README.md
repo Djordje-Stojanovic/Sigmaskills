@@ -16,6 +16,10 @@ A calibrated, audit-only, full-repository performance engineering system. It map
 
 A prompt factory for parallel or single-agent execution. SigmaBrief turns GitHub issues, features, upgrades, bugs, or plain work statements into short, copy-pastable briefs for other agents. It researches lightly (issues, open PRs, local standards), emits a dispatch list plus fenced briefs, and stops. It does not implement the work, audit the whole repository, or open fix PRs against the target product repository. Briefs default to plan → optional grill-me (including Windows worktree isolation) → approve → execute → validate → PR for review (do not merge), with agent-created worktrees when isolation is on and cleanup only after human merge or abandon.
 
+### SigmaWrite
+
+A short writing-voice skill inspired by ASD-STE100 Simplified Technical English. Soft steers (not hard numbered rules) push clear, high-quality, still-technical explanations a sharp outsider can follow, with hard bans on gibberish and invented words. Includes a pasteable system-prompt block. Chat style only — not certified STE, no dictionary, no report PR.
+
 ## Install
 
 Install any skill with the cross-agent installer:
@@ -24,6 +28,7 @@ Install any skill with the cross-agent installer:
 npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmareview
 npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmaperformance
 npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmabrief
+npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmawrite
 ```
 
 For Codex:
@@ -32,6 +37,7 @@ For Codex:
 $skill-installer install sigmareview from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaperformance from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmabrief from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
 ```
 
 Manual universal installation:
@@ -42,6 +48,7 @@ mkdir -p ~/.agents/skills
 cp -R Sigmaskills/sigmareview ~/.agents/skills/sigmareview
 cp -R Sigmaskills/sigmaperformance ~/.agents/skills/sigmaperformance
 cp -R Sigmaskills/sigmabrief ~/.agents/skills/sigmabrief
+cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
 ```
 
 ## Run
@@ -53,6 +60,7 @@ $sigmareview https://github.com/owner/repository
 $sigmaperformance https://github.com/owner/repository
 $sigmabrief https://github.com/owner/repository/issues/12
 $sigmabrief all open
+$sigmawrite
 ```
 
 Pi:
@@ -62,6 +70,7 @@ Pi:
 /skill:sigmaperformance https://github.com/owner/repository
 /skill:sigmabrief https://github.com/owner/repository/issues/12
 /skill:sigmabrief all open
+/skill:sigmawrite
 ```
 
 Other Agent Skills-compatible tools can invoke these skills through their normal skill picker or command syntax.
@@ -99,9 +108,16 @@ SigmaPerformance begins with two compact calibration batches covering agent topo
 - When isolation is on: agent-created Windows `git worktree add` with prerequisites; cleanup mentioned ≥3 times; cleanup only after human merge or abandon
 - Never implements the work or opens fix PRs against the target product repository
 
+### SigmaWrite
+
+- Chat writing style only (no report file, no pull request)
+- Soft STE-inspired steers plus hard bans on gibberish and invented words
+- Optional pasteable system-prompt block in `SKILL.md`
+- Does not rewrite code identifiers or override other skills’ output contracts
+
 ## Requirements
 
-The agent needs read access to the target repository. SigmaReview and SigmaPerformance also need authenticated GitHub tooling with permission to push a branch or create a fork and pull request. SigmaPerformance execution additionally follows the authority and safety boundary selected during calibration. SigmaBrief needs GitHub read access (`gh`) when briefing from issues/PRs; it does not require push permission to the product repository.
+The agent needs read access to the target repository. SigmaReview and SigmaPerformance also need authenticated GitHub tooling with permission to push a branch or create a fork and pull request. SigmaPerformance execution additionally follows the authority and safety boundary selected during calibration. SigmaBrief needs GitHub read access (`gh`) when briefing from issues/PRs; it does not require push permission to the product repository. SigmaWrite needs no GitHub access; it only changes how the agent writes in chat.
 
 ## License
 

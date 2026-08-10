@@ -1,0 +1,12 @@
+interface:
+  display_name: SigmaWrite
+  short_description: Clear STE-inspired technical English for explanations
+  default_prompt: Use $sigmawrite so explanations and summaries stay clear,
+    technical, and free of jargon gibberish.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
