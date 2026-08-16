@@ -103,3 +103,17 @@ Prefer clear who-does-what over foggy abstractions. Prefer one clean idea per se
 **Good:** I changed how temporary data loads across seven files. The load can run twice without creating duplicate records. Here is what each file does and why.
 
 Soft steers only — do not paste hard numbered writing laws into skills or docs. Canonical package if you need the pasteable system-prompt block: [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md).
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are tracked in this repository's GitHub Issues through the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Triage uses the five default canonical label names. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Domain documentation uses the single-context layout. See `docs/agents/domain.md`.
