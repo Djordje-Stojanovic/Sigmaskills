@@ -1,5 +1,6 @@
 {
   "repository": "vercel-labs/skills",
-  "pinnedRevision": "pinned-fixture",
-  "upstreamFile": "src/agents.ts"
+  "pinnedRevision": "c6f69c631292444cc541ac6d91e2226b0ff247da",
+  "upstreamFile": "src/agents.ts",
+  "contentSha256": "81a1ebeeb152ca185c2000a507c993a0698f504afa86f20e2b73a5f50c45a470"
 }

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generatedFrom": {
     "repository": "vercel-labs/skills",
-    "pinnedRevision": "pinned-fixture",
+    "pinnedRevision": "c6f69c631292444cc541ac6d91e2226b0ff247da",
     "upstreamFile": "src/agents.ts"
   },
   "hosts": [
@@ -10,6 +10,8 @@
       "id": "adal",
       "name": "adal",
       "displayName": "AdaL",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -39,6 +41,8 @@
       "id": "aider-desk",
       "name": "aider-desk",
       "displayName": "AiderDesk",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -68,6 +72,8 @@
       "id": "amp",
       "name": "amp",
       "displayName": "Amp",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -97,6 +103,8 @@
       "id": "antigravity",
       "name": "antigravity",
       "displayName": "Antigravity",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -126,6 +134,8 @@
       "id": "antigravity-cli",
       "name": "antigravity-cli",
       "displayName": "Antigravity CLI",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -155,6 +165,8 @@
       "id": "astrbot",
       "name": "astrbot",
       "displayName": "AstrBot",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -184,6 +196,8 @@
       "id": "augment",
       "name": "augment",
       "displayName": "Augment",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -213,6 +227,8 @@
       "id": "autohand-code",
       "name": "autohand-code",
       "displayName": "Autohand Code CLI",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -242,6 +258,8 @@
       "id": "bob",
       "name": "bob",
       "displayName": "IBM Bob",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -271,6 +289,8 @@
       "id": "claude-code",
       "name": "claude-code",
       "displayName": "Claude Code",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -300,6 +320,8 @@
       "id": "cline",
       "name": "cline",
       "displayName": "Cline",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -330,6 +352,8 @@
       "id": "codearts-agent",
       "name": "codearts-agent",
       "displayName": "CodeArts Agent",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -359,6 +383,8 @@
       "id": "codebuddy",
       "name": "codebuddy",
       "displayName": "CodeBuddy",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -388,6 +414,8 @@
       "id": "codemaker",
       "name": "codemaker",
       "displayName": "Codemaker",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -417,6 +445,8 @@
       "id": "codestudio",
       "name": "codestudio",
       "displayName": "Code Studio",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -446,6 +476,8 @@
       "id": "codex",
       "name": "codex",
       "displayName": "Codex",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -475,6 +507,8 @@
       "id": "command-code",
       "name": "command-code",
       "displayName": "Command Code",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -504,6 +538,8 @@
       "id": "continue",
       "name": "continue",
       "displayName": "Continue",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -533,6 +569,8 @@
       "id": "cortex",
       "name": "cortex",
       "displayName": "Cortex Code",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -562,6 +600,8 @@
       "id": "crush",
       "name": "crush",
       "displayName": "Crush",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -591,6 +631,8 @@
       "id": "cursor",
       "name": "cursor",
       "displayName": "Cursor",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -620,6 +662,8 @@
       "id": "deepagents",
       "name": "deepagents",
       "displayName": "Deep Agents",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -649,6 +693,8 @@
       "id": "devin",
       "name": "devin",
       "displayName": "Devin for Terminal",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -678,6 +724,8 @@
       "id": "dexto",
       "name": "dexto",
       "displayName": "Dexto",
+      "universal": true,
+      "universalPrompt": false,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -707,6 +755,8 @@
       "id": "droid",
       "name": "droid",
       "displayName": "Droid",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -736,6 +786,8 @@
       "id": "eve",
       "name": "eve",
       "displayName": "Eve",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -761,6 +813,8 @@
       "id": "firebender",
       "name": "firebender",
       "displayName": "Firebender",
+      "universal": true,
+      "universalPrompt": false,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -790,6 +844,8 @@
       "id": "forgecode",
       "name": "forgecode",
       "displayName": "ForgeCode",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -819,6 +875,8 @@
       "id": "gemini-cli",
       "name": "gemini-cli",
       "displayName": "Gemini CLI",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -848,6 +906,8 @@
       "id": "github-copilot",
       "name": "github-copilot",
       "displayName": "GitHub Copilot",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -877,6 +937,8 @@
       "id": "goose",
       "name": "goose",
       "displayName": "Goose",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -906,6 +968,8 @@
       "id": "grok",
       "name": "grok",
       "displayName": "Grok Build",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -935,6 +999,8 @@
       "id": "hermes-agent",
       "name": "hermes-agent",
       "displayName": "Hermes Agent",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -964,6 +1030,8 @@
       "id": "iflow-cli",
       "name": "iflow-cli",
       "displayName": "iFlow CLI",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -993,6 +1061,8 @@
       "id": "inference-sh",
       "name": "inference-sh",
       "displayName": "inference.sh",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1022,6 +1092,8 @@
       "id": "jazz",
       "name": "jazz",
       "displayName": "Jazz",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1051,6 +1123,8 @@
       "id": "junie",
       "name": "junie",
       "displayName": "Junie",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1080,6 +1154,8 @@
       "id": "kilo",
       "name": "kilo",
       "displayName": "Kilo Code",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1109,6 +1185,8 @@
       "id": "kimchi",
       "name": "kimchi",
       "displayName": "Kimchi",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1141,6 +1219,8 @@
       "id": "kimi-code-cli",
       "name": "kimi-code-cli",
       "displayName": "Kimi Code CLI",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1170,6 +1250,8 @@
       "id": "kiro-cli",
       "name": "kiro-cli",
       "displayName": "Kiro CLI",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1199,6 +1281,8 @@
       "id": "kode",
       "name": "kode",
       "displayName": "Kode",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1228,6 +1312,8 @@
       "id": "lingma",
       "name": "lingma",
       "displayName": "Lingma",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1257,6 +1343,8 @@
       "id": "loaf",
       "name": "loaf",
       "displayName": "Loaf",
+      "universal": true,
+      "universalPrompt": false,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1286,6 +1374,8 @@
       "id": "mcpjam",
       "name": "mcpjam",
       "displayName": "MCPJam",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1315,6 +1405,8 @@
       "id": "minimax-code",
       "name": "minimax-code",
       "displayName": "MiniMax Code",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1344,6 +1436,8 @@
       "id": "mistral-vibe",
       "name": "mistral-vibe",
       "displayName": "Mistral Vibe",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1373,6 +1467,8 @@
       "id": "moxby",
       "name": "moxby",
       "displayName": "Moxby",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1402,6 +1498,8 @@
       "id": "mux",
       "name": "mux",
       "displayName": "Mux",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1431,6 +1529,8 @@
       "id": "neovate",
       "name": "neovate",
       "displayName": "Neovate",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1460,6 +1560,8 @@
       "id": "ona",
       "name": "ona",
       "displayName": "Ona",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1489,6 +1591,8 @@
       "id": "openclaw",
       "name": "openclaw",
       "displayName": "OpenClaw",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1560,6 +1664,8 @@
       "id": "opencode",
       "name": "opencode",
       "displayName": "OpenCode",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1589,6 +1695,8 @@
       "id": "openhands",
       "name": "openhands",
       "displayName": "OpenHands",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1618,6 +1726,8 @@
       "id": "pi",
       "name": "pi",
       "displayName": "Pi",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1647,6 +1757,8 @@
       "id": "pochi",
       "name": "pochi",
       "displayName": "Pochi",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1676,6 +1788,8 @@
       "id": "promptscript",
       "name": "promptscript",
       "displayName": "PromptScript",
+      "universal": true,
+      "universalPrompt": false,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1701,6 +1815,8 @@
       "id": "qoder",
       "name": "qoder",
       "displayName": "Qoder",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1730,6 +1846,8 @@
       "id": "qoder-cn",
       "name": "qoder-cn",
       "displayName": "Qoder CN",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1759,6 +1877,8 @@
       "id": "qwen-code",
       "name": "qwen-code",
       "displayName": "Qwen Code",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1788,6 +1908,8 @@
       "id": "reasonix",
       "name": "reasonix",
       "displayName": "Reasonix",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1817,6 +1939,8 @@
       "id": "replit",
       "name": "replit",
       "displayName": "Replit",
+      "universal": false,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1846,6 +1970,8 @@
       "id": "roo",
       "name": "roo",
       "displayName": "Roo Code",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1875,6 +2001,8 @@
       "id": "rovodev",
       "name": "rovodev",
       "displayName": "Rovo Dev",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1904,6 +2032,8 @@
       "id": "tabnine-cli",
       "name": "tabnine-cli",
       "displayName": "Tabnine CLI",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1933,6 +2063,8 @@
       "id": "terramind",
       "name": "terramind",
       "displayName": "Terramind",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1962,6 +2094,8 @@
       "id": "tinycloud",
       "name": "tinycloud",
       "displayName": "Tinycloud",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -1991,6 +2125,8 @@
       "id": "trae",
       "name": "trae",
       "displayName": "Trae",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -2020,6 +2156,8 @@
       "id": "trae-cn",
       "name": "trae-cn",
       "displayName": "Trae CN",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -2049,6 +2187,8 @@
       "id": "universal",
       "name": "universal",
       "displayName": "Universal",
+      "universal": false,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -2078,6 +2218,8 @@
       "id": "warp",
       "name": "warp",
       "displayName": "Warp",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -2107,6 +2249,8 @@
       "id": "windsurf",
       "name": "windsurf",
       "displayName": "Windsurf",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -2136,6 +2280,8 @@
       "id": "zcode",
       "name": "zcode",
       "displayName": "ZCode",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -2165,6 +2311,8 @@
       "id": "zed",
       "name": "zed",
       "displayName": "Zed",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -2194,6 +2342,8 @@
       "id": "zencoder",
       "name": "zencoder",
       "displayName": "Zencoder",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",
@@ -2223,6 +2373,8 @@
       "id": "zenflow",
       "name": "zenflow",
       "displayName": "Zenflow",
+      "universal": true,
+      "universalPrompt": true,
       "destinations": {
         "project": {
           "kind": "literal",

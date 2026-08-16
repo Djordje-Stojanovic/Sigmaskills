@@ -111,10 +111,8 @@ export function parseConditionalHelper(sourceText, name) {
   let rm;
   while ((rm = RETURN_RE.exec(body)) !== null) {
     let probe = null;
-    let candidate = null;
     for (const p of probes) {
       if (p.end > rm.index) break;
-      candidate = p;
       const between = body.slice(p.end, rm.index);
       if (!between.includes('}')) probe = p.probe;
     }
@@ -125,6 +123,14 @@ export function parseConditionalHelper(sourceText, name) {
   const first = cases.find((c) => c.formula && c.formula.base);
   const base = first ? first.formula.base : null;
   return { kind: 'conditional', base, cases };
+}
+
+/** Boolean value of an upstream literal boolean field. */
+function bool(value) {
+  if (value === null) return null;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return null;
 }
 
 /** Parse one host entry body into a declarative record. */
@@ -142,6 +148,8 @@ function parseHostBody(id, body, line, sourceText) {
   const aliases = aliasesRaw ? aliasesRaw.replace(/^\[|\]$/g, '').split(',').map((s) => s.trim()) : [];
   const platformsRaw = field(body, 'platforms');
   const platforms = platformsRaw ? platformsRaw.replace(/^\[|\]$/g, '').split(',').map((s) => s.trim()) : [];
+  const showInUniversalList = bool(field(body, 'showInUniversalList'));
+  const showInUniversalPrompt = bool(field(body, 'showInUniversalPrompt'));
   const envVars = extractEnvVars(body);
 
   return {
@@ -152,6 +160,8 @@ function parseHostBody(id, body, line, sourceText) {
     global,
     aliases,
     platforms,
+    universal: showInUniversalList !== false,
+    universalPrompt: showInUniversalPrompt !== false,
     envVars,
     line,
   };

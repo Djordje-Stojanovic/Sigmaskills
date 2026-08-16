@@ -13,6 +13,12 @@ const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
 const SHELL_SYNTAX = /[`$;|&<>()"'\\]/;
 const TRAVERSAL_SEGMENT = /^(\.\.|\.\.\.)$/;
 const ABSOLUTE_PREFIX = /^([/\\~%]|[A-Za-z]:)/;
+const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
+const BASE_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const ENV_VAR_PATTERN = /^[A-Z][A-Z0-9_]*$/;
+
+/** The platforms this registry supports; anything else is invalid data. */
+export const SUPPORTED_PLATFORMS = ['darwin', 'linux', 'win32'];
 
 /**
  * Assert a relative path fragment is safe. Fragments may contain '/' path
@@ -41,21 +47,31 @@ export function assertSafePath(path, where) {
   return null;
 }
 
-const BASE_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
-
 /** Validate one host record. Returns an error string or null. */
 export function validateHost(host) {
+  if (!host || typeof host !== 'object') {
+    return 'host entry is missing or not an object';
+  }
   if (typeof host.id !== 'string' || host.id.length === 0) {
     return 'host id is missing or empty';
   }
+  if (!ID_PATTERN.test(host.id)) {
+    return `host id is not a safe lowercase id (${JSON.stringify(host.id)})`;
+  }
   if (CONTROL_CHARS.test(host.id)) {
     return `host id contains control characters (${JSON.stringify(host.id)})`;
+  }
+  if (typeof host.name !== 'string' || host.name.length === 0) {
+    return `${host.id}: name is missing or empty`;
   }
   if (typeof host.displayName !== 'string' || host.displayName.length === 0) {
     return `${host.id}: displayName is missing or empty`;
   }
   if (CONTROL_CHARS.test(host.displayName)) {
     return `${host.id}: displayName contains control characters`;
+  }
+  if (typeof host.universal !== 'boolean' || typeof host.universalPrompt !== 'boolean') {
+    return `${host.id}: universal membership flags must be booleans`;
   }
   const d = host.destinations;
   if (!d || typeof d !== 'object') {
@@ -71,14 +87,34 @@ export function validateHost(host) {
     return `${host.id}: project and global destinations overlap (both resolve to ${projectKey})`;
   }
   if (!Array.isArray(host.aliases)) return `${host.id}: aliases must be an array`;
+  for (const alias of host.aliases) {
+    if (typeof alias !== 'string' || alias.length === 0 || CONTROL_CHARS.test(alias)) {
+      return `${host.id}: invalid alias declaration ${JSON.stringify(alias)}`;
+    }
+  }
   if (!Array.isArray(host.platforms)) return `${host.id}: platforms must be an array`;
   for (const platform of host.platforms) {
-    if (typeof platform !== 'string' || platform.length === 0 || CONTROL_CHARS.test(platform)) {
-      return `${host.id}: invalid platform declaration ${JSON.stringify(platform)}`;
+    if (typeof platform !== 'string' || !SUPPORTED_PLATFORMS.includes(platform)) {
+      return `${host.id}: unsupported platform ${JSON.stringify(platform)} (expected one of ${SUPPORTED_PLATFORMS.join(', ')})`;
     }
   }
   const envVars = host.detection && host.detection.envVars;
   if (!Array.isArray(envVars)) return `${host.id}: detection.envVars must be an array`;
+  for (const envVar of envVars) {
+    if (typeof envVar !== 'string' || !ENV_VAR_PATTERN.test(envVar)) {
+      return `${host.id}: invalid detection env var ${JSON.stringify(envVar)}`;
+    }
+  }
+  const attribution = host.attribution;
+  if (!attribution || typeof attribution !== 'object') {
+    return `${host.id}: attribution is missing`;
+  }
+  if (typeof attribution.upstreamFile !== 'string' || attribution.upstreamFile.length === 0) {
+    return `${host.id}: attribution.upstreamFile is missing`;
+  }
+  if (typeof attribution.upstreamLine !== 'number' || attribution.upstreamLine < 1) {
+    return `${host.id}: attribution.upstreamLine is invalid`;
+  }
   return null;
 }
 
@@ -109,6 +145,9 @@ export function validateDestination(dest, where, requirePresent) {
         return `${where}: conditional has no cases`;
       }
       for (const entry of dest.cases) {
+        if (!entry || typeof entry !== 'object') {
+          return `${where}: conditional case is not an object`;
+        }
         const err = validateDestination(entry.formula, `${where}.case(${JSON.stringify(entry.probe)})`, true);
         if (err) return err;
       }
@@ -164,7 +203,7 @@ export function validateSnapshot(snapshot) {
   for (const host of snapshot.hosts) {
     const err = validateHost(host);
     if (err) {
-      hostErrors[host.id] = err;
+      hostErrors[host && host.id ? host.id : '<malformed>'] = err;
       continue;
     }
     if (byId.has(host.id)) {

@@ -10,7 +10,7 @@
       "required": ["repository", "pinnedRevision", "upstreamFile"],
       "properties": {
         "repository": { "type": "string" },
-        "pinnedRevision": { "type": "string" },
+        "pinnedRevision": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
         "upstreamFile": { "type": "string" },
         "fetchedAt": { "type": "string" }
       },
@@ -21,47 +21,89 @@
       "items": { "$ref": "#/definitions/host" }
     }
   },
+  "additionalProperties": false,
   "definitions": {
     "host": {
       "type": "object",
-      "required": ["id", "name", "displayName", "destinations", "aliases", "platforms", "detection", "attribution"],
+      "required": ["id", "name", "displayName", "universal", "universalPrompt", "destinations", "aliases", "platforms", "detection", "attribution"],
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
-        "name": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
         "displayName": { "type": "string", "minLength": 1 },
+        "universal": { "type": "boolean" },
+        "universalPrompt": { "type": "boolean" },
         "destinations": {
           "type": "object",
           "required": ["project", "global"],
           "properties": {
             "project": { "$ref": "#/definitions/destination" },
             "global": { "$ref": "#/definitions/destination" }
-          }
+          },
+          "additionalProperties": false
         },
-        "aliases": { "type": "array", "items": { "type": "string" } },
-        "platforms": { "type": "array", "items": { "type": "string" } },
+        "aliases": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "platforms": { "type": "array", "items": { "enum": ["darwin", "linux", "win32"] } },
         "detection": {
           "type": "object",
           "required": ["envVars"],
           "properties": {
             "envVars": { "type": "array", "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" } }
-          }
+          },
+          "additionalProperties": false
         },
         "attribution": {
           "type": "object",
           "required": ["upstreamFile", "upstreamLine"],
           "properties": {
-            "upstreamFile": { "type": "string" },
+            "upstreamFile": { "type": "string", "minLength": 1 },
             "upstreamLine": { "type": "integer", "minimum": 1 }
-          }
+          },
+          "additionalProperties": false
         }
-      }
+      },
+      "additionalProperties": false
     },
     "destination": {
       "oneOf": [
-        { "type": "object", "required": ["kind", "path"], "properties": { "kind": { "enum": ["literal"] }, "path": { "type": "string" }, "raw": { "type": "string" } } },
-        { "type": "object", "required": ["kind", "base", "segments"], "properties": { "kind": { "enum": ["join"] }, "base": { "type": "string" }, "segments": { "type": "array", "items": { "type": "string" } }, "raw": { "type": "string" } } },
-        { "type": "object", "required": ["kind"], "properties": { "kind": { "enum": ["none"] }, "raw": { "type": "string" } } },
-        { "type": "object", "required": ["kind", "base", "cases"], "properties": { "kind": { "enum": ["conditional"] }, "base": { "type": ["string", "null"] }, "cases": { "type": "array" } } }
+        {
+          "type": "object",
+          "required": ["kind", "path"],
+          "properties": { "kind": { "enum": ["literal"] }, "path": { "type": "string" }, "raw": { "type": "string" } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "base", "segments"],
+          "properties": { "kind": { "enum": ["join"] }, "base": { "type": "string" }, "segments": { "type": "array", "items": { "type": "string" } }, "raw": { "type": "string" } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind"],
+          "properties": { "kind": { "enum": ["none"] }, "raw": { "type": "string" } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "base", "cases"],
+          "properties": {
+            "kind": { "enum": ["conditional"] },
+            "base": { "type": ["string", "null"] },
+            "cases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["probe", "formula"],
+                "properties": {
+                  "probe": { "type": ["string", "null"] },
+                  "formula": { "$ref": "#/definitions/destination" }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
       ]
     }
   }
