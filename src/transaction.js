@@ -1,0 +1,344 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { findPackageRoot, validateSkill } from './catalog.js';
+import { createInstallPlan } from './plan.js';
+import { loadProjectLock, saveProjectLock, updateProjectLockSkill, PROJECT_LOCK_FILENAME } from './project-lock.js';
+import {
+  getProjectStateDir,
+  getProjectStatePath,
+  loadProjectState,
+  saveProjectState,
+  recordSkillInState,
+} from './state.js';
+
+/**
+ * Acquire process concurrency lock for project.
+ *
+ * @param {string} projectRoot
+ * @param {string} [customStateDir]
+ * @returns {() => void} Release lock function
+ */
+export function acquireConcurrencyLock(projectRoot, customStateDir) {
+  const stateDir = getProjectStateDir(projectRoot, customStateDir);
+  if (!fs.existsSync(stateDir)) {
+    fs.mkdirSync(stateDir, { recursive: true });
+  }
+
+  const lockPath = path.join(stateDir, '.sigma.lock');
+
+  function tryCreateLock() {
+    try {
+      const fd = fs.openSync(lockPath, 'wx');
+      const payload = JSON.stringify({
+        pid: process.pid,
+        createdAt: new Date().toISOString(),
+      });
+      fs.writeFileSync(fd, payload, 'utf8');
+      fs.closeSync(fd);
+      return true;
+    } catch (err) {
+      if (err.code === 'EEXIST') {
+        return false;
+      }
+      throw err;
+    }
+  }
+
+  if (!tryCreateLock()) {
+    // Check if existing lock is stale
+    try {
+      const existing = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+      const isAlive = isProcessAlive(existing.pid);
+      if (isAlive) {
+        throw new Error(
+          `Concurrent SigmaSkills operation in progress (PID ${existing.pid}). Aborting to prevent corruption.`,
+        );
+      }
+      // Stale lock from dead process: remove and retry
+      fs.unlinkSync(lockPath);
+      if (!tryCreateLock()) {
+        throw new Error('Failed to acquire lock after clearing stale lock file.');
+      }
+    } catch (readErr) {
+      if (readErr.message.includes('Concurrent SigmaSkills operation')) {
+        throw readErr;
+      }
+      // If reading/parsing failed, attempt unlink and recreate
+      try {
+        fs.unlinkSync(lockPath);
+        if (!tryCreateLock()) {
+          throw new Error('Failed to acquire lock.');
+        }
+      } catch {
+        throw new Error(`Failed to acquire project lock at ${lockPath}: ${readErr.message}`);
+      }
+    }
+  }
+
+  let released = false;
+  return function releaseLock() {
+    if (released) return;
+    released = true;
+    try {
+      if (fs.existsSync(lockPath)) {
+        const existing = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+        if (existing.pid === process.pid) {
+          fs.unlinkSync(lockPath);
+        }
+      }
+    } catch {
+      // Best-effort cleanup
+    }
+  };
+}
+
+/**
+ * Check if a process ID is currently running.
+ *
+ * @param {number} pid
+ * @returns {boolean}
+ */
+function isProcessAlive(pid) {
+  if (!pid || typeof pid !== 'number') return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return err.code === 'EPERM'; // Process exists but no permission
+  }
+}
+
+/**
+ * Execute transactional single-skill project installation.
+ *
+ * @param {object} params
+ * @param {object} params.catalog
+ * @param {string} params.skillId
+ * @param {string} [params.projectRoot]
+ * @param {string} [params.customStateDir]
+ * @param {string} [params.packageRoot]
+ * @param {boolean} [params.dryRun]
+ * @returns {object} Execution summary with plan
+ */
+export function executeProjectInstall(params) {
+  const {
+    catalog,
+    skillId,
+    customStateDir,
+    dryRun = false,
+  } = params;
+
+  const projectRoot = path.resolve(params.projectRoot || process.cwd());
+  const packageRoot = params.packageRoot || findPackageRoot();
+
+  const plan = createInstallPlan(catalog, {
+    skillId,
+    projectRoot,
+    customStateDir,
+    dryRun,
+  });
+
+  if (plan.unownedConflict) {
+    throw new Error(
+      `Destination '${plan.destination}' already exists and is not owned by SigmaSkills. Safe adoption is not enabled. Installation aborted.`,
+    );
+  }
+
+  if (dryRun) {
+    return {
+      success: true,
+      dryRun: true,
+      plan,
+    };
+  }
+
+  const releaseLock = acquireConcurrencyLock(projectRoot, customStateDir);
+
+  const stagingParent = path.join(projectRoot, '.agents', '.sigma-staging');
+  const stagingDir = path.join(
+    stagingParent,
+    `${skillId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  );
+
+  let backupDir = null;
+  let destSwapped = false;
+
+  const lockPath = path.join(projectRoot, PROJECT_LOCK_FILENAME);
+  const lockExisted = fs.existsSync(lockPath);
+  const originalLock = loadProjectLock(projectRoot);
+
+  const statePath = getProjectStatePath(projectRoot, customStateDir);
+  const stateExisted = fs.existsSync(statePath);
+  const originalState = loadProjectState(projectRoot, customStateDir);
+
+  const cleanupStaging = () => {
+    try {
+      if (fs.existsSync(stagingDir)) {
+        fs.rmSync(stagingDir, { recursive: true, force: true });
+      }
+      if (fs.existsSync(stagingParent) && fs.readdirSync(stagingParent).length === 0) {
+        fs.rmSync(stagingParent, { recursive: true, force: true });
+      }
+    } catch {
+      // Staging cleanup is best-effort
+    }
+  };
+
+  const rollback = () => {
+    try {
+      if (destSwapped) {
+        if (backupDir && fs.existsSync(backupDir)) {
+          // Restore prior destination from backup
+          if (fs.existsSync(plan.destination)) {
+            fs.rmSync(plan.destination, { recursive: true, force: true });
+          }
+          fs.renameSync(backupDir, plan.destination);
+          backupDir = null;
+        } else if (fs.existsSync(plan.destination)) {
+          // Fresh install: remove partially created destination
+          fs.rmSync(plan.destination, { recursive: true, force: true });
+        }
+      }
+      if (backupDir && fs.existsSync(backupDir)) {
+        fs.rmSync(backupDir, { recursive: true, force: true });
+        backupDir = null;
+      }
+      // Restore state and lock or remove if they didn't exist before
+      if (stateExisted) {
+        saveProjectState(projectRoot, originalState, customStateDir);
+      } else if (fs.existsSync(statePath)) {
+        fs.unlinkSync(statePath);
+      }
+
+      if (lockExisted) {
+        saveProjectLock(projectRoot, originalLock);
+      } else if (fs.existsSync(lockPath)) {
+        fs.unlinkSync(lockPath);
+      }
+    } catch {
+      // Rollback is best-effort
+    } finally {
+      cleanupStaging();
+      releaseLock();
+    }
+  };
+
+  // Register signal listeners during transaction
+  const signalHandler = () => {
+    rollback();
+    process.exit(130);
+  };
+  process.once('SIGINT', signalHandler);
+  process.once('SIGTERM', signalHandler);
+
+  try {
+    // 1. Stage skill files on destination volume
+    fs.mkdirSync(stagingDir, { recursive: true });
+    const sourceSkillDir = path.join(packageRoot, skillId);
+    if (!fs.existsSync(sourceSkillDir)) {
+      throw new Error(`source skill directory missing at ${sourceSkillDir}`);
+    }
+
+    fs.cpSync(sourceSkillDir, stagingDir, { recursive: true });
+
+    // 2. Validate staged tree before touching live destination
+    const manifestMetadata = catalog.manifest.skills.find((s) => s.id === skillId);
+    const validatedStaged = validateSkill(stagingDir, manifestMetadata);
+    if (validatedStaged.revision !== plan.sourceRevision) {
+      throw new Error(
+        `staged skill revision '${validatedStaged.revision}' does not match catalog revision '${plan.sourceRevision}'`,
+      );
+    }
+
+    // 3. Swap staged tree into destination
+    const destDir = plan.destination;
+    const destParent = path.dirname(destDir);
+    if (!fs.existsSync(destParent)) {
+      fs.mkdirSync(destParent, { recursive: true });
+    }
+
+    if (fs.existsSync(destDir)) {
+      // Create temporary backup
+      backupDir = path.join(
+        destParent,
+        `.${skillId}-backup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      );
+      fs.renameSync(destDir, backupDir);
+
+      try {
+        fs.renameSync(stagingDir, destDir);
+        destSwapped = true;
+      } catch (swapErr) {
+        // Windows replacement fallback: try copy-swap
+        try {
+          fs.cpSync(stagingDir, destDir, { recursive: true });
+          cleanupStaging();
+          destSwapped = true;
+        } catch (copyFallbackErr) {
+          // Restore from backup
+          if (fs.existsSync(destDir)) {
+            fs.rmSync(destDir, { recursive: true, force: true });
+          }
+          fs.renameSync(backupDir, destDir);
+          throw new Error(`failed to swap staged destination: ${swapErr.message} (fallback: ${copyFallbackErr.message})`);
+        }
+      }
+    } else {
+      try {
+        fs.renameSync(stagingDir, destDir);
+        destSwapped = true;
+      } catch (renameErr) {
+        // Fallback for cross-device or permission limits
+        fs.cpSync(stagingDir, destDir, { recursive: true });
+        cleanupStaging();
+        destSwapped = true;
+      }
+    }
+
+    // 4. Update private state and project lock
+    const updatedState = recordSkillInState(originalState, {
+      skillId,
+      release: plan.release,
+      revision: plan.sourceRevision,
+      method: plan.method,
+      destination: plan.relativeDestination,
+      projectRoot,
+      ownedPaths: plan.writes,
+      baseHashes: validatedStaged.files,
+    });
+    saveProjectState(projectRoot, updatedState, customStateDir);
+
+    const updatedLock = updateProjectLockSkill(
+      originalLock,
+      skillId,
+      plan.sourceRevision,
+      plan.release,
+    );
+    saveProjectLock(projectRoot, updatedLock);
+
+    // 5. Cleanup backup after state & lock write succeed
+    if (backupDir && fs.existsSync(backupDir)) {
+      fs.rmSync(backupDir, { recursive: true, force: true });
+      backupDir = null;
+    }
+
+    cleanupStaging();
+    releaseLock();
+
+    return {
+      success: true,
+      dryRun: false,
+      plan,
+      lock: updatedLock,
+      state: updatedState,
+    };
+  } catch (err) {
+    rollback();
+    throw err;
+  } finally {
+    process.removeListener('SIGINT', signalHandler);
+    process.removeListener('SIGTERM', signalHandler);
+    cleanupStaging();
+    releaseLock();
+  }
+}

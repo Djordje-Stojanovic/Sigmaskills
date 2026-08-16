@@ -1,4 +1,6 @@
 import { getCatalog, findPackageRoot } from './catalog.js';
+import { formatPlanHuman, formatPlanJson } from './plan.js';
+import { executeProjectInstall } from './transaction.js';
 
 /**
  * Format and print help message.
@@ -19,17 +21,87 @@ Usage:
   sigmaskills [options] [command]
 
 Commands:
+  install <skill>   Install a skill into the project (.agents/skills/<skill>)
+  add <skill>       Alias for install
   list              List all shipped skills and their Skill Revisions
   verify            Validate manifest, skill resources, and compute revisions
 
 Options:
   -v, --version     Show version number
   -h, --help        Show help
-  --json            Output in JSON format (for list command)
+  --skill <name>    Skill identifier to install
+  --dry-run         Preview installation changes without writing files
+  --json            Output in versioned JSON format
+  --project <path>  Target project root directory (defaults to current directory)
+  --state-dir <dir> Custom state directory for private machine state
+  -y, --yes         Skip interactive confirmations
 
 Available Skills:
 ${skillsList}
 `;
+}
+
+/**
+ * Parse CLI arguments into structured options.
+ *
+ * @param {string[]} args
+ * @returns {object}
+ */
+export function parseCliArgs(args) {
+  const parsed = {
+    command: null,
+    skillId: null,
+    projectRoot: null,
+    stateDir: null,
+    dryRun: false,
+    json: false,
+    help: false,
+    version: false,
+    yes: false,
+    unknown: [],
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '-h' || arg === '--help') {
+      parsed.help = true;
+    } else if (arg === '-v' || arg === '--version') {
+      parsed.version = true;
+    } else if (arg === '--dry-run') {
+      parsed.dryRun = true;
+    } else if (arg === '--json') {
+      parsed.json = true;
+    } else if (arg === '-y' || arg === '--yes') {
+      parsed.yes = true;
+    } else if (arg === '--skill') {
+      parsed.skillId = args[++i];
+    } else if (arg.startsWith('--skill=')) {
+      parsed.skillId = arg.slice('--skill='.length);
+    } else if (arg === '--project' || arg === '--cwd') {
+      parsed.projectRoot = args[++i];
+    } else if (arg.startsWith('--project=')) {
+      parsed.projectRoot = arg.slice('--project='.length);
+    } else if (arg.startsWith('--cwd=')) {
+      parsed.projectRoot = arg.slice('--cwd='.length);
+    } else if (arg === '--state-dir') {
+      parsed.stateDir = args[++i];
+    } else if (arg.startsWith('--state-dir=')) {
+      parsed.stateDir = arg.slice('--state-dir='.length);
+    } else if (
+      !parsed.command &&
+      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add')
+    ) {
+      parsed.command = arg;
+    } else if (!parsed.skillId && (parsed.command === 'install' || parsed.command === 'add')) {
+      parsed.skillId = arg;
+    } else if (arg === '--list') {
+      parsed.command = 'list';
+    } else {
+      parsed.unknown.push(arg);
+    }
+  }
+
+  return parsed;
 }
 
 /**
@@ -44,21 +116,28 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
   const writeErr = (str) => io.stderr.write(str.endsWith('\n') ? str : `${str}\n`);
 
   try {
+    const opts = parseCliArgs(args);
     const rootDir = findPackageRoot();
     const catalog = getCatalog(rootDir);
 
-    if (args.length === 0 || args.includes('-h') || args.includes('--help')) {
+    if (opts.help || (args.length === 0 && !opts.skillId)) {
       writeOut(buildHelpText(catalog));
       return 0;
     }
 
-    if (args.includes('-v') || args.includes('--version')) {
+    if (opts.version) {
       writeOut(catalog.manifest.version);
       return 0;
     }
 
-    if (args[0] === 'list' || args[0] === '--list' || args.includes('--json')) {
-      if (args.includes('--json')) {
+    if (opts.unknown.length > 0) {
+      writeErr(`sigmaskills error: unknown option or command: ${opts.unknown[0]}`);
+      writeErr(`Run 'sigmaskills --help' for usage information.`);
+      return 1;
+    }
+
+    if (opts.command === 'list' || (!opts.command && opts.json && !opts.skillId)) {
+      if (opts.json) {
         const payload = {
           name: catalog.manifest.name,
           version: catalog.manifest.version,
@@ -83,7 +162,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       return 0;
     }
 
-    if (args[0] === 'verify' || args[0] === 'check') {
+    if (opts.command === 'verify' || opts.command === 'check') {
       writeOut(`✔ Manifest verified (${catalog.manifest.name} v${catalog.manifest.version})`);
       for (const skill of catalog.skills) {
         const fileCount = Object.keys(skill.files).length;
@@ -93,7 +172,36 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       return 0;
     }
 
-    writeErr(`sigmaskills error: unknown option or command: ${args[0]}`);
+    if (opts.command === 'install' || opts.command === 'add' || opts.skillId) {
+      if (!opts.skillId) {
+        writeErr("sigmaskills error: missing required skill name for install command (e.g. 'sigmaskills install sigmawrite')");
+        return 1;
+      }
+
+      const result = executeProjectInstall({
+        catalog,
+        skillId: opts.skillId,
+        projectRoot: opts.projectRoot,
+        customStateDir: opts.stateDir,
+        packageRoot: rootDir,
+        dryRun: opts.dryRun,
+      });
+
+      if (opts.json) {
+        writeOut(formatPlanJson(result.plan));
+      } else {
+        writeOut(formatPlanHuman(result.plan));
+        if (!opts.dryRun) {
+          writeOut('');
+          writeOut(`✔ Installed ${result.plan.title} (${result.plan.skill}) to ${result.plan.relativeDestination}`);
+          writeOut(`  Revision: ${result.plan.sourceRevision}`);
+          writeOut(`  Project lock: skills-lock.json updated`);
+        }
+      }
+      return 0;
+    }
+
+    writeErr(`sigmaskills error: unknown option or command`);
     writeErr(`Run 'sigmaskills --help' for usage information.`);
     return 1;
   } catch (err) {

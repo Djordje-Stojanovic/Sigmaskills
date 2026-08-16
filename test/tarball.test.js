@@ -41,8 +41,12 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       'package/src/catalog.js',
       'package/src/cli.js',
       'package/src/customization.js',
+      'package/src/plan.js',
       'package/src/prepack.js',
+      'package/src/project-lock.js',
       'package/src/revision.js',
+      'package/src/state.js',
+      'package/src/transaction.js',
       'package/sigmareview/SKILL.md',
       'package/sigmareview/agents/openai.yaml',
       'package/sigmareview/references/report-contract.md',
@@ -131,6 +135,82 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     for (const skill of parsed.skills) {
       assert.match(skill.revision, /^[a-f0-9]{64}$/);
     }
+
+    // Spawn install --dry-run --json on isolated project
+    const isolatedProject = path.join(tmpDir, 'isolated-proj');
+    fs.mkdirSync(isolatedProject, { recursive: true });
+
+    const dryRunJsonOut = execFileSync(
+      'node',
+      [installedBin, 'install', 'sigmawrite', '--dry-run', '--json', '--project', isolatedProject],
+      { cwd: appDir, encoding: 'utf8' },
+    );
+    const dryRunParsed = JSON.parse(dryRunJsonOut);
+    assert.equal(dryRunParsed.skill, 'sigmawrite');
+    assert.equal(dryRunParsed.dryRun, true);
+    assert.ok(!fs.existsSync(path.join(isolatedProject, '.agents')));
+
+    // Spawn real install on isolated project
+    const installOut = execFileSync(
+      'node',
+      [installedBin, 'install', 'sigmawrite', '--project', isolatedProject],
+      { cwd: appDir, encoding: 'utf8' },
+    );
+    assert.match(installOut, /Installed SigmaWrite \(sigmawrite\)/);
+    assert.ok(fs.existsSync(path.join(isolatedProject, '.agents', 'skills', 'sigmawrite', 'SKILL.md')));
+    assert.ok(fs.existsSync(path.join(isolatedProject, 'skills-lock.json')));
+    assert.ok(fs.existsSync(path.join(isolatedProject, '.agents', 'state.json')));
+
+    // Verify skills-lock.json is timestamp-free and sorted
+    const lockRaw = fs.readFileSync(path.join(isolatedProject, 'skills-lock.json'), 'utf8');
+    assert.ok(!lockRaw.includes('installedAt'));
+    assert.ok(!lockRaw.includes('destination'));
+    const lockParsed = JSON.parse(lockRaw);
+    assert.equal(lockParsed.release, '0.1.0');
+    assert.match(lockParsed.skills.sigmawrite.revision, /^[a-f0-9]{64}$/);
+
+    // Verify state.json records ownedPaths and baseHashes
+    const stateRaw = fs.readFileSync(path.join(isolatedProject, '.agents', 'state.json'), 'utf8');
+    const stateParsed = JSON.parse(stateRaw);
+    assert.equal(stateParsed.scope, 'project');
+    assert.equal(stateParsed.skills.sigmawrite.method, 'copy');
+    assert.ok(stateParsed.skills.sigmawrite.ownedPaths.length > 0);
+    assert.ok(stateParsed.skills.sigmawrite.baseHashes['SKILL.md']);
+
+    // Spawn real install on isolated project with isolated custom state directory
+    const customStateDir = path.join(tmpDir, 'custom-state-dir');
+    const customStateProject = path.join(tmpDir, 'custom-state-proj');
+    fs.mkdirSync(customStateProject, { recursive: true });
+
+    execFileSync(
+      'node',
+      [installedBin, 'install', 'sigmabrief', '--project', customStateProject, '--state-dir', customStateDir],
+      { cwd: appDir, encoding: 'utf8' },
+    );
+    assert.ok(fs.existsSync(path.join(customStateProject, '.agents', 'skills', 'sigmabrief', 'SKILL.md')));
+    assert.ok(fs.existsSync(path.join(customStateProject, 'skills-lock.json')));
+    assert.ok(fs.existsSync(path.join(customStateDir, 'state.json')));
+
+    // Spawn install on unowned existing folder to verify fail-closed behavior
+    const unownedProject = path.join(tmpDir, 'unowned-proj');
+    const unownedSkillDir = path.join(unownedProject, '.agents', 'skills', 'sigmawrite');
+    fs.mkdirSync(unownedSkillDir, { recursive: true });
+    fs.writeFileSync(path.join(unownedSkillDir, 'SKILL.md'), 'foreign content', 'utf8');
+
+    assert.throws(
+      () => {
+        execFileSync('node', [installedBin, 'install', 'sigmawrite', '--project', unownedProject], {
+          cwd: appDir,
+          encoding: 'utf8',
+          stdio: 'pipe',
+        });
+      },
+      (err) => {
+        const out = (err.stdout || '') + (err.stderr || '');
+        return out.includes('already exists and is not owned by SigmaSkills') || err.status !== 0;
+      },
+      'install should fail closed on unowned directory',
+    );
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
