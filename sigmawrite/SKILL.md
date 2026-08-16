@@ -37,3 +37,9 @@ field should still understand you. Stay technical when needed; never dumb it dow
 never invent words or hide meaning in jargon soup. Prefer who-does-what, stable
 terms, simple time, and enough detail to act. Do not rename real code or paths.
 ```
+
+## Personal instructions
+
+<sigmaskills-custom>
+</sigmaskills-custom>
+

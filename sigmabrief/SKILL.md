@@ -48,3 +48,9 @@ Return in chat only:
 3. Brief notes when needed (collisions, upstream waits, already fixed, human-only tests).
 
 Do not paste long research dumps. Do not create files in the target product repository.
+
+## Personal instructions
+
+<sigmaskills-custom>
+</sigmaskills-custom>
+

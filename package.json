@@ -1,12 +1,28 @@
 {
   "name": "sigmaskills",
-  "private": true,
-  "description": "Structural regression tests for the Sigmaskills Agent Skills monorepo",
+  "version": "0.1.0",
+  "description": "Portable Agent Skills monorepo and first-party Sigma Installer",
   "type": "module",
+  "bin": {
+    "sigmaskills": "./bin/sigmaskills.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "manifest.json",
+    "sigmareview",
+    "sigmaperformance",
+    "sigmabrief",
+    "sigmawrite",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
+    "prepack": "node ./src/prepack.js",
     "test": "node --test test/**/*.test.js"
   }
 }
