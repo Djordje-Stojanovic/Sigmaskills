@@ -109,6 +109,18 @@ function isProcessAlive(pid) {
 }
 
 /**
+ * Build the fail-closed error for an unowned destination.
+ *
+ * @param {object} plan
+ * @returns {Error}
+ */
+export function createUnownedConflictError(plan) {
+  return new Error(
+    `Destination '${plan.destination}' already exists and is not owned by SigmaSkills. Safe adoption is not enabled. Installation aborted.`,
+  );
+}
+
+/**
  * Execute transactional single-skill project installation.
  *
  * @param {object} params
@@ -138,11 +150,7 @@ export function executeProjectInstall(params) {
     dryRun,
   });
 
-  if (plan.unownedConflict) {
-    throw new Error(
-      `Destination '${plan.destination}' already exists and is not owned by SigmaSkills. Safe adoption is not enabled. Installation aborted.`,
-    );
-  }
+  if (plan.unownedConflict) throw createUnownedConflictError(plan);
 
   if (dryRun) {
     return {

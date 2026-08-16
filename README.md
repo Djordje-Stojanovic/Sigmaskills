@@ -22,16 +22,16 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 
 ## Quick start
 
-Install every skill to every Agent Skills host the CLI can see:
+Start the first-party Sigma Installer in a project:
 
 ```bash
-npx skills add Djordje-Stojanovic/Sigmaskills --all -g -y
+npx sigmaskills
 ```
 
-Or pick one:
+Select any set of skills. The installer shows the exact resolved `.agents/skills/<id>` destinations before it asks for confirmation. To install one skill without the interactive interface:
 
 ```bash
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
+npx sigmaskills install sigmawrite --project .
 ```
 
 Then invoke with your host’s normal skill syntax (`$sigmawrite`, `/skill:sigmawrite`, skill picker, …).
@@ -69,9 +69,15 @@ Writing voice inspired by **ASD-STE100 Simplified Technical English** — soft s
 
 ## Install
 
-### One command (recommended)
+### Sigma Installer: Project Installation (recommended)
 
-Uses the cross-agent [skills](https://github.com/vercel-labs/skills) CLI — detects Codex, Claude Code, Cursor, OpenCode, Pi, and dozens more:
+Run `npx sigmaskills` with no command. The Sigma Installer's Emberforge interface reads the Skill Pack catalog from `manifest.json`, installs the selected skills into the current project's universal `.agents/skills/` destination, and records reproducible project and private ownership state. Escape, EOF, Ctrl+C, or a rejected confirmation exits without writing.
+
+Use `--no-color`, `--static`, or `--narrow` when the terminal needs those modes. Use `--project <path>` to select another project root.
+
+### Cross-host alternative
+
+The cross-agent [skills](https://github.com/vercel-labs/skills) CLI detects Codex, Claude Code, Cursor, OpenCode, Pi, and dozens more:
 
 ```bash
 # Everything, all detected agents, global

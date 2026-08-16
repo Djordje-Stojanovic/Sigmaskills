@@ -22,7 +22,8 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.ok(fs.existsSync(tarballPath), `tarball does not exist at ${tarballPath}`);
 
     // 2. List tarball contents using tar -tf
-    const listOutput = execFileSync('tar', ['-tf', tarballPath], {
+    const listOutput = execFileSync('tar', ['-tf', tarballFileName], {
+      cwd: tmpDir,
       encoding: 'utf8',
     });
     const packedFiles = listOutput
@@ -41,6 +42,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       'package/src/catalog.js',
       'package/src/cli.js',
       'package/src/customization.js',
+      'package/src/interactive.js',
       'package/src/plan.js',
       'package/src/prepack.js',
       'package/src/project-lock.js',
@@ -135,6 +137,19 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     for (const skill of parsed.skills) {
       assert.match(skill.revision, /^[a-f0-9]{64}$/);
     }
+
+    // Spawn the interactive Project Installation in static, no-color, narrow mode
+    const interactiveProject = path.join(tmpDir, 'interactive-proj');
+    fs.mkdirSync(interactiveProject, { recursive: true });
+    const interactiveOut = execFileSync(
+      'node',
+      [installedBin, '--static', '--no-color', '--narrow', '--project', interactiveProject],
+      { cwd: appDir, encoding: 'utf8', input: ' \ry' },
+    );
+    assert.match(interactiveOut, /Project Installation \(default\) · narrow/);
+    assert.match(interactiveOut, /Resolved destinations:/);
+    assert.doesNotMatch(interactiveOut, /\x1b\[/);
+    assert.ok(fs.existsSync(path.join(interactiveProject, '.agents', 'skills', 'sigmareview', 'SKILL.md')));
 
     // Spawn install --dry-run --json on isolated project
     const isolatedProject = path.join(tmpDir, 'isolated-proj');

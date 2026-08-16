@@ -1,5 +1,6 @@
 import { getCatalog, findPackageRoot } from './catalog.js';
 import { formatPlanHuman, formatPlanJson } from './plan.js';
+import { runProjectInstaller } from './interactive.js';
 import { executeProjectInstall } from './transaction.js';
 
 /**
@@ -34,7 +35,12 @@ Options:
   --json            Output in versioned JSON format
   --project <path>  Target project root directory (defaults to current directory)
   --state-dir <dir> Custom state directory for private machine state
+  --no-color        Disable color and reveal animation
+  --static          Disable animation and screen repainting
+  --narrow          Use the narrow-terminal layout
   -y, --yes         Skip interactive confirmations
+
+Run without a command to start the interactive Project Installation.
 
 Available Skills:
 ${skillsList}
@@ -58,6 +64,9 @@ export function parseCliArgs(args) {
     help: false,
     version: false,
     yes: false,
+    noColor: false,
+    static: false,
+    narrow: false,
     unknown: [],
   };
 
@@ -73,6 +82,12 @@ export function parseCliArgs(args) {
       parsed.json = true;
     } else if (arg === '-y' || arg === '--yes') {
       parsed.yes = true;
+    } else if (arg === '--no-color') {
+      parsed.noColor = true;
+    } else if (arg === '--static') {
+      parsed.static = true;
+    } else if (arg === '--narrow') {
+      parsed.narrow = true;
     } else if (arg === '--skill') {
       parsed.skillId = args[++i];
     } else if (arg.startsWith('--skill=')) {
@@ -108,7 +123,7 @@ export function parseCliArgs(args) {
  * Main CLI entrypoint.
  *
  * @param {string[]} args Command-line arguments
- * @param {object} [io] Optional custom stdout/stderr stream handles
+ * @param {object} [io] Optional custom stdin/stdout/stderr stream handles
  * @returns {Promise<number>} Exit code (0 for success, 1 for failure)
  */
 export async function runCli(args = process.argv.slice(2), io = { stdout: process.stdout, stderr: process.stderr }) {
@@ -120,7 +135,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     const rootDir = findPackageRoot();
     const catalog = getCatalog(rootDir);
 
-    if (opts.help || (args.length === 0 && !opts.skillId)) {
+    if (opts.help) {
       writeOut(buildHelpText(catalog));
       return 0;
     }
@@ -199,6 +214,26 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         }
       }
       return 0;
+    }
+
+    if (!opts.command && !opts.skillId && !opts.dryRun && !opts.yes) {
+      return await runProjectInstaller({
+        catalog,
+        packageRoot: rootDir,
+        projectRoot: opts.projectRoot || process.cwd(),
+        customStateDir: opts.stateDir,
+        io: {
+          stdin: io.stdin || process.stdin,
+          stdout: io.stdout,
+          stderr: io.stderr,
+          env: io.env || process.env,
+        },
+        options: {
+          noColor: opts.noColor,
+          static: opts.static,
+          narrow: opts.narrow,
+        },
+      });
     }
 
     writeErr(`sigmaskills error: unknown option or command`);
