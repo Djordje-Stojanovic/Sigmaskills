@@ -38,10 +38,13 @@ function createTerminalIo(input, options = {}) {
 
   if (!options.manualInput) queueMicrotask(() => stdin.end(input));
 
+  const env = options.env ?? { ...process.env, CI: '' };
+
   return {
     stdin,
     stdout,
     stderr,
+    env,
     getStdout: () => out,
     getStderr: () => err,
     getRawModes: () => rawModes,
@@ -175,7 +178,7 @@ test('interactive Project Installation preflights every selected destination bef
 test('Emberforge reveal uses the accepted warm palette and any key skips it', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-reveal-skip-'));
   try {
-    const io = createTerminalIo('x\x1b', { tty: true });
+    const io = createTerminalIo('x\x1b', { tty: true, env: { ...process.env, CI: '' } });
     const startedAt = Date.now();
     const code = await runCli(['--project', projectRoot], io);
     const elapsed = Date.now() - startedAt;

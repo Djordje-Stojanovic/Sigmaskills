@@ -9,6 +9,9 @@
   "files": [
     "bin",
     "src",
+    "registry/agent-hosts.json",
+    "registry/source.json",
+    "registry/schema.json",
     "manifest.json",
     "sigmareview",
     "sigmaperformance",
@@ -23,6 +26,8 @@
   },
   "scripts": {
     "prepack": "node ./src/prepack.js",
-    "test": "node --test test/**/*.test.js"
+    "test": "node --test test/**/*.test.js",
+    "registry:sync": "node ./src/registry/sync.js",
+    "registry:validate": "node -e \"import('./src/registry/validate.js').then(m=>{const s=JSON.parse(require('fs').readFileSync('registry/agent-hosts.json','utf8'));const v=m.validateSnapshot(s);if(!v.valid){console.error(v);process.exit(1)}console.log('registry valid')})\""
   }
 }
