@@ -182,11 +182,14 @@ export function executeProjectInstall(params) {
 
   const lockPath = path.join(projectRoot, PROJECT_LOCK_FILENAME);
   const lockExisted = fs.existsSync(lockPath);
+  const originalLockBytes = lockExisted ? fs.readFileSync(lockPath) : null;
   const originalLock = loadProjectLock(projectRoot);
 
   const statePath = getProjectStatePath(projectRoot, customStateDir);
   const stateExisted = fs.existsSync(statePath);
+  const originalStateBytes = stateExisted ? fs.readFileSync(statePath) : null;
   const originalState = loadProjectState(projectRoot, customStateDir);
+  const persistState = params.saveState || saveProjectState;
 
   const cleanupStaging = () => {
     try {
@@ -204,6 +207,7 @@ export function executeProjectInstall(params) {
   const rollback = () => {
     try {
       for (const entry of committed.splice(0).reverse()) {
+        if (entry.adopted) continue;
         try {
           if (entry.backupDir && pathExists(entry.backupDir)) {
             if (pathExists(entry.destDir)) {
@@ -218,14 +222,14 @@ export function executeProjectInstall(params) {
         }
       }
       // Restore state and lock or remove if they didn't exist before
-      if (stateExisted) {
-        saveProjectState(projectRoot, originalState, customStateDir);
+      if (stateExisted && originalStateBytes) {
+        fs.writeFileSync(statePath, originalStateBytes);
       } else if (fs.existsSync(statePath)) {
         fs.unlinkSync(statePath);
       }
 
-      if (lockExisted) {
-        saveProjectLock(projectRoot, originalLock);
+      if (lockExisted && originalLockBytes) {
+        fs.writeFileSync(lockPath, originalLockBytes);
       } else if (fs.existsSync(lockPath)) {
         fs.unlinkSync(lockPath);
       }
@@ -246,25 +250,51 @@ export function executeProjectInstall(params) {
   process.once('SIGTERM', signalHandler);
 
   try {
-    // 1. Stage skill files on destination volume
-    fs.mkdirSync(stagingDir, { recursive: true });
-    const sourceSkillDir = path.join(packageRoot, skillId);
-    if (!fs.existsSync(sourceSkillDir)) {
-      throw new Error(`source skill directory missing at ${sourceSkillDir}`);
+    const allAdopted = plan.destinations.every((dest) => dest.adoption);
+    const existingEntry = originalState.skills?.[skillId];
+    const existingDests = new Set(
+      (existingEntry?.copies || []).map((copy) => String(copy.destination || '').replace(/\\/g, '/')),
+    );
+    const plannedDests = plan.destinations.map((dest) => dest.relativeDestination);
+    const sameManagedLayout = existingEntry
+      && existingEntry.revision === plan.sourceRevision
+      && plannedDests.every((dest) => existingDests.has(dest))
+      && existingDests.size === plannedDests.length
+      && originalLock.skills?.[skillId]?.revision === plan.sourceRevision;
+    if (allAdopted && sameManagedLayout) {
+      cleanupStaging();
+      releaseLock();
+      return {
+        success: true,
+        dryRun: false,
+        plan,
+        lock: originalLock,
+        state: originalState,
+      };
     }
 
-    fs.cpSync(sourceSkillDir, stagingDir, { recursive: true });
+    const catalogSkill = catalog.skills.find((item) => item.id === skillId);
+    let fileHashes = catalogSkill?.files || {};
 
-    // 2. Validate staged tree before touching live destination
-    const manifestMetadata = catalog.manifest.skills.find((s) => s.id === skillId);
-    const validatedStaged = validateSkill(stagingDir, manifestMetadata);
-    if (validatedStaged.revision !== plan.sourceRevision) {
-      throw new Error(
-        `staged skill revision '${validatedStaged.revision}' does not match catalog revision '${plan.sourceRevision}'`,
-      );
+    if (!allAdopted) {
+      fs.mkdirSync(stagingDir, { recursive: true });
+      const sourceSkillDir = path.join(packageRoot, skillId);
+      if (!fs.existsSync(sourceSkillDir)) {
+        throw new Error(`source skill directory missing at ${sourceSkillDir}`);
+      }
+
+      fs.cpSync(sourceSkillDir, stagingDir, { recursive: true });
+
+      const manifestMetadata = catalog.manifest.skills.find((s) => s.id === skillId);
+      const validatedStaged = validateSkill(stagingDir, manifestMetadata);
+      if (validatedStaged.revision !== plan.sourceRevision) {
+        throw new Error(
+          `staged skill revision '${validatedStaged.revision}' does not match catalog revision '${plan.sourceRevision}'`,
+        );
+      }
+      fileHashes = validatedStaged.files;
     }
 
-    // 3. Write the staged tree into every selected destination
     const createLink = params.createLink || ((linkPath, targetPath) => (
       createSkillLink(linkPath, targetPath, projectRoot)
     ));
@@ -347,6 +377,10 @@ export function executeProjectInstall(params) {
     });
 
     for (const dest of ordered) {
+      if (dest.adoption) {
+        committed.push({ destDir: dest.destination, backupDir: null, adopted: true });
+        continue;
+      }
       if (dest.method === 'copy') commitCopy(dest.destination);
       else commitLink(dest);
     }
@@ -362,12 +396,11 @@ export function executeProjectInstall(params) {
         ownedPaths: independent
           ? plan.files.map((file) => `${dest.relativeDestination}/${file}`)
           : [dest.relativeDestination],
-        ...(independent ? { baseHashes: validatedStaged.files } : {}),
+        ...(independent ? { baseHashes: dest.baseHashes || fileHashes } : {}),
       };
     });
     const primary = copies.find((copy) => copy.kind === 'canonical') || copies[0];
 
-    // 4. Update private state and project lock
     const updatedState = recordSkillInState(originalState, {
       skillId,
       release: plan.release,
@@ -376,10 +409,10 @@ export function executeProjectInstall(params) {
       destination: primary.destination,
       projectRoot,
       ownedPaths: primary.ownedPaths,
-      baseHashes: validatedStaged.files,
+      baseHashes: primary.baseHashes || fileHashes,
       copies,
     });
-    saveProjectState(projectRoot, updatedState, customStateDir);
+    persistState(projectRoot, updatedState, customStateDir);
 
     const updatedLock = updateProjectLockSkill(
       originalLock,

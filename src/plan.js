@@ -1,7 +1,7 @@
-import fs from 'node:fs';
 import path from 'node:path';
+import { chooseCanonical, classifySkillPath } from './adoption.js';
 import { loadProjectLock } from './project-lock.js';
-import { isDestinationOwned } from './state.js';
+import { isDestinationOwned, loadProjectState } from './state.js';
 import {
   UNIVERSAL_PROJECT_DESTINATION,
   defaultSelectedRoots,
@@ -12,9 +12,30 @@ import {
   resolveSkillPath,
 } from './destinations.js';
 import { findPackageRoot } from './catalog.js';
-import { recommendedLinkMethod } from './links.js';
+import { pathExists, recommendedLinkMethod } from './links.js';
 
 export const PLAN_SCHEMA_VERSION = 1;
+
+/**
+ * Project Installation classifier: valid Sigma state, then exact Skill Revision, then resolved link.
+ *
+ * @param {object} params
+ * @returns {(skillId: string, destination: string) => object}
+ */
+export function createProjectSkillClassifier({ catalog, projectRoot, customStateDir }) {
+  const projectState = loadProjectState(projectRoot, customStateDir);
+  return (skillId, destination) => {
+    const skill = catalog.skills.find((item) => item.id === skillId);
+    const expectedCanonical = resolveSkillPath(projectRoot, UNIVERSAL_PROJECT_DESTINATION, skillId);
+    return classifySkillPath({
+      destPath: destination,
+      bundledRevision: skill?.revision,
+      expectedCanonicalPath: expectedCanonical.destination,
+      sigmaOwned: isDestinationOwned(projectRoot, skillId, destination, customStateDir),
+      sigmaRevision: projectState.skills?.[skillId]?.revision || null,
+    });
+  };
+}
 
 function destinationGroupsFor(options, projectRoot) {
   if (options.destinationGroups) return options.destinationGroups;
@@ -89,11 +110,13 @@ export function createInstallPlan(catalog, options) {
   const requestedRoots = selectedRootsFor(options, groups);
   const requestedMethod = requestedMethodFor(options, requestedRoots);
   const selectedRoots = rootsForRequestedMethod(requestedRoots, requestedMethod);
+  const classify = createProjectSkillClassifier({ catalog, projectRoot, customStateDir });
   const conflictErrors = findDestinationConflicts({
     projectRoot,
     skillIds: [skillId],
     selectedRoots,
     isOwned: (id, destination) => isDestinationOwned(projectRoot, id, destination, customStateDir),
+    classify,
   });
   const fatal = conflictErrors.filter((message) => !/not owned/i.test(message));
   if (fatal.length > 0) {
@@ -110,7 +133,10 @@ export function createInstallPlan(catalog, options) {
     const group = groupByRoot.get(relativeRoot);
     const kind = relativeRoot === UNIVERSAL_PROJECT_DESTINATION ? 'canonical' : 'host';
     const owned = isDestinationOwned(projectRoot, skillId, resolved.destination, customStateDir);
-    const { method, dependsOn } = destinationMethod(kind, skillId, requestedMethod, copyRoots, relativeRoot);
+    const classification = classify(skillId, resolved.destination);
+    const planned = destinationMethod(kind, skillId, requestedMethod, copyRoots, relativeRoot);
+    const method = classification.adoptable ? (classification.method || 'copy') : planned.method;
+    const dependsOn = method === 'copy' ? null : `${UNIVERSAL_PROJECT_DESTINATION}/${skillId}`;
     return {
       kind,
       relativeRoot,
@@ -123,7 +149,9 @@ export function createInstallPlan(catalog, options) {
         displayName: host.displayName,
         detected: Boolean(host.detected),
       })),
-      unownedConflict: !owned && fs.existsSync(resolved.destination),
+      adoption: classification.adoptable ? classification.kind : undefined,
+      baseHashes: classification.files,
+      unownedConflict: !owned && pathExists(resolved.destination) && !classification.adoptable,
     };
   });
 
@@ -132,12 +160,14 @@ export function createInstallPlan(catalog, options) {
   const unownedConflict = destinations.some((dest) => dest.unownedConflict);
 
   const writes = destinations.flatMap((dest) => {
+    if (dest.adoption) return [];
     if (dest.method === 'copy') {
       return skillFiles.map((file) => `${dest.relativeDestination}/${file}`);
     }
     return [dest.relativeDestination];
   });
   const replacements = destinations.flatMap((dest) => {
+    if (dest.adoption) return [];
     const owned = isDestinationOwned(projectRoot, skillId, dest.destination, customStateDir);
     if (!owned) return [];
     if (dest.method === 'copy') {
@@ -156,6 +186,25 @@ export function createInstallPlan(catalog, options) {
     },
   };
 
+  const adoptionDecision = chooseCanonical(destinations.map((dest) => ({
+    relativeDestination: dest.relativeDestination,
+    relativeRoot: dest.relativeRoot,
+    destPath: dest.destination,
+    classification: {
+      kind: dest.adoption || 'missing',
+      adoptable: Boolean(dest.adoption),
+    },
+  })));
+  const adoption = {
+    canonical: adoptionDecision.canonical.relativeDestination,
+    copies: [adoptionDecision.canonical, ...adoptionDecision.others].map((copy) => ({
+      destination: copy.relativeDestination,
+      fate: copy.fate,
+      role: copy.role,
+      recognition: copy.classification?.kind || 'missing',
+    })),
+  };
+
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
     scope: 'project',
@@ -172,6 +221,7 @@ export function createInstallPlan(catalog, options) {
     writes,
     replacements,
     lockChanges,
+    adoption,
     requiresApproval: false,
     unownedConflict,
     dryRun: Boolean(dryRun),
@@ -205,6 +255,7 @@ export function formatPlanHuman(plan) {
     `  Method:              ${plan.method}`,
     `  Destination:         ${plan.destination}`,
     `  Relative Path:       ${plan.relativeDestination}`,
+    `  Canonical:           ${plan.adoption?.canonical || plan.relativeDestination}`,
     `  Resolved destinations:`,
     ...destinationLines,
     `  Required Approval:   ${plan.requiresApproval ? 'Yes' : 'None'}`,
@@ -215,6 +266,13 @@ export function formatPlanHuman(plan) {
   if (plan.replacements.length > 0) {
     lines.push(`  Files to replace (${plan.replacements.length}):`);
     lines.push(...plan.replacements.map((r) => `    ~ ${r}`));
+  }
+
+  if (plan.adoption?.copies?.length) {
+    lines.push('  Adoption:');
+    for (const copy of plan.adoption.copies) {
+      lines.push(`    ${copy.destination} (${copy.role}, ${copy.fate})`);
+    }
   }
 
   lines.push(`  Lock changes (${plan.lockChanges.file}):`);

@@ -28,7 +28,7 @@ Start the first-party Sigma Installer in a project:
 npx sigmaskills
 ```
 
-Select any set of skills. By default the installer writes only to `.agents/skills/<id>` and lists every Agent Host that reads that universal destination. Host-specific directories such as `.claude/skills` or `.pi/skills` stay unselected until you choose them. Selected host destinations use Windows directory junctions or macOS/Linux symbolic links to the canonical copy; `--copy` writes an independent managed copy instead. Link failure reports the exact cause and offers copy — the installer never changes method silently. The confirmation plan shows every full destination path and method. To install one skill without the interactive interface:
+Select any set of skills. By default the installer writes only to `.agents/skills/<id>` and lists every Agent Host that reads that universal destination. Host-specific directories such as `.claude/skills` or `.pi/skills` stay unselected until you choose them. Selected host destinations use Windows directory junctions or macOS/Linux symbolic links to the canonical copy; `--copy` writes an independent managed copy instead. Link failure reports the exact cause and offers copy — the installer never changes method silently. Exact current official copies and valid links are adopted in place without rewriting skill bytes. The confirmation plan shows every full destination path and method. To install one skill without the interactive interface:
 
 ```bash
 npx sigmaskills install sigmawrite --project .
@@ -73,7 +73,7 @@ Writing voice inspired by **ASD-STE100 Simplified Technical English** — soft s
 
 ### Sigma Installer: Project Installation (recommended)
 
-Run `npx sigmaskills` with no command. The Sigma Installer's Emberforge interface reads the Skill Pack catalog from `manifest.json` and the bundled Agent Host registry. Project Installation selects only the universal `.agents/skills/` destination by default, expands every Agent Host that reads it, and leaves host-specific destinations unselected until you choose them. Search remains available for every supported Agent Host, including hosts that are not detected. Escape, EOF, Ctrl+C, or a rejected confirmation exits without writing.
+Run `npx sigmaskills` with no command. The Sigma Installer's Emberforge interface reads the Skill Pack catalog from `manifest.json` and the bundled Agent Host registry. Project Installation selects only the universal `.agents/skills/` destination by default, expands every Agent Host that reads it, and leaves host-specific destinations unselected until you choose them. Search remains available for every supported Agent Host, including hosts that are not detected. Exact current official copies and valid links are recorded as managed without rewriting skill bytes. Escape, EOF, Ctrl+C, or a rejected confirmation exits without writing.
 
 Use `--no-color`, `--static`, or `--narrow` when the terminal needs those modes. Use `--project <path>` to select another project root.
 

@@ -1,5 +1,5 @@
 import readline from 'node:readline';
-import { createInstallPlan } from './plan.js';
+import { createInstallPlan, createProjectSkillClassifier } from './plan.js';
 import { createUnownedConflictError, executeProjectInstall } from './transaction.js';
 import { isDestinationOwned } from './state.js';
 import {
@@ -627,11 +627,13 @@ export async function runProjectInstaller(params) {
       method = methodChoice.method;
     }
 
+    const classify = createProjectSkillClassifier({ catalog, projectRoot, customStateDir });
     const conflictErrors = findDestinationConflicts({
       projectRoot,
       skillIds: selection.skillIds,
       selectedRoots: destinations.selectedRoots,
       isOwned: (skillId, destination) => isDestinationOwned(projectRoot, skillId, destination, customStateDir),
+      classify,
     });
     if (conflictErrors.length > 0) {
       throw new Error(conflictErrors[0]);

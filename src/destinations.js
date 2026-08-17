@@ -206,7 +206,7 @@ function classifyPathPair(a, b) {
  * @param {object} params
  * @returns {string[]}
  */
-export function findDestinationConflicts({ projectRoot, skillIds, selectedRoots, isOwned }) {
+export function findDestinationConflicts({ projectRoot, skillIds, selectedRoots, isOwned, classify }) {
   const errors = [];
   const normalizedRoots = selectedRoots.map((root) => normalizeRelativeRoot(root));
   const seenRoots = new Set();
@@ -266,6 +266,10 @@ export function findDestinationConflicts({ projectRoot, skillIds, selectedRoots,
       );
       continue;
     }
+    const classified = typeof classify === 'function'
+      ? classify(item.skillId, item.destination)
+      : null;
+    if (classified?.adoptable) continue;
     if (inspected.wrongTarget) {
       errors.push(
         `Destination '${item.destination}' is a wrong-target link. Installation aborted.`,

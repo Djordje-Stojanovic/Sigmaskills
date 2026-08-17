@@ -4,31 +4,53 @@ import path from 'node:path';
 export const PROJECT_LOCK_FILENAME = 'skills-lock.json';
 export const PROJECT_LOCK_SCHEMA_VERSION = 1;
 
+function emptyProjectLock() {
+  return {
+    schemaVersion: PROJECT_LOCK_SCHEMA_VERSION,
+    release: null,
+    skills: {},
+  };
+}
+
+function isGenericLock(parsed) {
+  return !parsed || typeof parsed !== 'object' || typeof parsed.schemaVersion !== 'number';
+}
+
 /**
- * Load and parse the project lockfile (skills-lock.json).
- * Returns a default empty lock structure if the file does not exist.
+ * Inspect a project lockfile without treating generic CLI locks as Sigma ownership.
+ *
+ * @param {string} projectRoot
+ * @returns {{ kind: 'missing' | 'sigma' | 'generic', lock: object }}
+ */
+export function inspectProjectLock(projectRoot) {
+  const lockPath = path.join(projectRoot, PROJECT_LOCK_FILENAME);
+  if (!fs.existsSync(lockPath)) {
+    return { kind: 'missing', lock: emptyProjectLock() };
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+  } catch (err) {
+    throw new Error(`failed to read project lockfile at ${lockPath}: ${err.message}`);
+  }
+
+  if (isGenericLock(parsed)) {
+    return { kind: 'generic', lock: emptyProjectLock() };
+  }
+
+  validateProjectLock(parsed);
+  return { kind: 'sigma', lock: parsed };
+}
+
+/**
+ * Load the Sigma project lock. Generic `skills-lock.json` files yield an empty Sigma lock.
  *
  * @param {string} projectRoot
  * @returns {object}
  */
 export function loadProjectLock(projectRoot) {
-  const lockPath = path.join(projectRoot, PROJECT_LOCK_FILENAME);
-  if (!fs.existsSync(lockPath)) {
-    return {
-      schemaVersion: PROJECT_LOCK_SCHEMA_VERSION,
-      release: null,
-      skills: {},
-    };
-  }
-
-  try {
-    const raw = fs.readFileSync(lockPath, 'utf8');
-    const parsed = JSON.parse(raw);
-    validateProjectLock(parsed);
-    return parsed;
-  } catch (err) {
-    throw new Error(`failed to read project lockfile at ${lockPath}: ${err.message}`);
-  }
+  return inspectProjectLock(projectRoot).lock;
 }
 
 /**

@@ -267,7 +267,7 @@ test('install: concurrency lock blocks parallel runs and cleans stale lock', () 
   }
 });
 
-test('install: reinstalling owned skill updates files and lock smoothly', () => {
+test('install: reinstalling an owned exact skill is a no-op', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-reinstall-test-'));
   try {
     const catalog = getCatalog(ROOT);
@@ -292,7 +292,8 @@ test('install: reinstalling owned skill updates files and lock smoothly', () => 
     });
 
     assert.equal(result2.success, true);
-    assert.equal(result2.plan.replacements.length, 2);
+    assert.equal(result2.plan.destinations[0].adoption, 'sigma-state');
+    assert.equal(result2.plan.replacements.length, 0);
 
     const lock = loadProjectLock(tmpDir);
     assert.ok(lock.skills.sigmawrite);

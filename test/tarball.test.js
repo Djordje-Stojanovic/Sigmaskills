@@ -51,6 +51,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       'package/CHANGELOG.md',
       'package/manifest.json',
       'package/bin/sigmaskills.js',
+      'package/src/adoption.js',
       'package/src/catalog.js',
       'package/src/cli.js',
       'package/src/customization.js',
