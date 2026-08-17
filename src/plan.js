@@ -1,9 +1,37 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadProjectLock } from './project-lock.js';
-import { loadProjectState } from './state.js';
+import { isDestinationOwned } from './state.js';
+import {
+  UNIVERSAL_PROJECT_DESTINATION,
+  defaultSelectedRoots,
+  findDestinationConflicts,
+  listProjectDestinationGroups,
+  loadHostRegistry,
+  normalizeRelativeRoot,
+  resolveSkillPath,
+} from './destinations.js';
+import { findPackageRoot } from './catalog.js';
 
 export const PLAN_SCHEMA_VERSION = 1;
+
+function destinationGroupsFor(options, projectRoot) {
+  if (options.destinationGroups) return options.destinationGroups;
+  const packageRoot = options.packageRoot || findPackageRoot();
+  return listProjectDestinationGroups({
+    registry: options.registry || loadHostRegistry(packageRoot),
+    projectRoot,
+    env: options.env || process.env,
+  });
+}
+
+function selectedRootsFor(options, groups) {
+  if (Array.isArray(options.selectedRoots) && options.selectedRoots.length > 0) {
+    return options.selectedRoots.map((root) => normalizeRelativeRoot(root));
+  }
+  const defaults = defaultSelectedRoots(groups);
+  return defaults.length > 0 ? defaults : [UNIVERSAL_PROJECT_DESTINATION];
+}
 
 /**
  * Generate an install plan for a skill without mutating the filesystem.
@@ -14,6 +42,7 @@ export const PLAN_SCHEMA_VERSION = 1;
  * @param {string} [options.projectRoot]
  * @param {string} [options.customStateDir]
  * @param {boolean} [options.dryRun]
+ * @param {string[]} [options.selectedRoots]
  * @returns {object} Versioned plan object
  */
 export function createInstallPlan(catalog, options) {
@@ -29,26 +58,51 @@ export function createInstallPlan(catalog, options) {
     throw new Error(`skill '${skillId}' was not found in Skill Pack ${catalog.manifest.name}`);
   }
 
-  const destPath = path.join(projectRoot, '.agents', 'skills', skillId);
-  const relDest = path.relative(projectRoot, destPath).replace(/\\/g, '/');
+  const groups = destinationGroupsFor(options, projectRoot);
+  const selectedRoots = selectedRootsFor(options, groups);
+  const conflictErrors = findDestinationConflicts({
+    projectRoot,
+    skillIds: [skillId],
+    selectedRoots,
+    isOwned: (id, destination) => isDestinationOwned(projectRoot, id, destination, customStateDir),
+  });
+  const fatal = conflictErrors.filter((message) => !/not owned/i.test(message));
+  if (fatal.length > 0) {
+    throw new Error(fatal[0]);
+  }
 
   const currentLock = loadProjectLock(projectRoot);
-  const currentState = loadProjectState(projectRoot, customStateDir);
-
-  const destExists = fs.existsSync(destPath);
-  const stateEntry = currentState.skills?.[skillId];
-  const isOwned = Boolean(
-    stateEntry &&
-      (stateEntry.destination === relDest ||
-        path.resolve(projectRoot, stateEntry.destination) === path.resolve(destPath)),
-  );
-  const unownedConflict = destExists && !isOwned;
-
   const skillFiles = Object.keys(skill.files).sort();
-  const writes = skillFiles.map((f) => `${relDest}/${f}`);
+  const groupByRoot = new Map(groups.filter((group) => group.selectable).map((group) => [group.relativeRoot, group]));
 
-  const isReinstall = Boolean(stateEntry);
-  const replacements = isReinstall ? [...writes] : [];
+  const destinations = selectedRoots.map((relativeRoot) => {
+    const resolved = resolveSkillPath(projectRoot, relativeRoot, skillId);
+    const group = groupByRoot.get(relativeRoot);
+    const kind = relativeRoot === UNIVERSAL_PROJECT_DESTINATION ? 'canonical' : 'host';
+    const owned = isDestinationOwned(projectRoot, skillId, resolved.destination, customStateDir);
+    return {
+      kind,
+      relativeRoot,
+      destination: resolved.destination,
+      relativeDestination: resolved.relativeDestination,
+      hosts: (group?.hosts || []).map((host) => ({
+        id: host.id,
+        displayName: host.displayName,
+        detected: Boolean(host.detected),
+      })),
+      unownedConflict: !owned && fs.existsSync(resolved.destination),
+    };
+  });
+
+  const destPath = destinations[0].destination;
+  const relDest = destinations[0].relativeDestination;
+  const unownedConflict = destinations.some((dest) => dest.unownedConflict);
+
+  const writes = destinations.flatMap((dest) => skillFiles.map((file) => `${dest.relativeDestination}/${file}`));
+  const replacements = destinations.flatMap((dest) => {
+    const owned = isDestinationOwned(projectRoot, skillId, dest.destination, customStateDir);
+    return owned ? skillFiles.map((file) => `${dest.relativeDestination}/${file}`) : [];
+  });
 
   const existingLockEntry = currentLock.skills?.[skillId] || null;
   const lockChanges = {
@@ -70,6 +124,7 @@ export function createInstallPlan(catalog, options) {
     sourceRevision: skill.revision,
     destination: destPath,
     relativeDestination: relDest,
+    destinations,
     method: 'copy',
     files: skillFiles,
     writes,
@@ -88,6 +143,15 @@ export function createInstallPlan(catalog, options) {
  * @returns {string}
  */
 export function formatPlanHuman(plan) {
+  const destinationLines = (plan.destinations || [{ destination: plan.destination, relativeDestination: plan.relativeDestination, hosts: [] }])
+    .flatMap((dest) => {
+      const hostNames = (dest.hosts || []).map((host) => host.displayName).join(', ');
+      const lines = [`    ${dest.destination}`];
+      if (dest.relativeDestination) lines.push(`      ${dest.relativeDestination}`);
+      if (hostNames) lines.push(`      Agent Hosts: ${hostNames}`);
+      return lines;
+    });
+
   const lines = [
     `SigmaSkills Project Installation Plan: ${plan.title} (${plan.skill})`,
     `  Scope:               ${plan.scope}`,
@@ -96,6 +160,8 @@ export function formatPlanHuman(plan) {
     `  Method:              ${plan.method}`,
     `  Destination:         ${plan.destination}`,
     `  Relative Path:       ${plan.relativeDestination}`,
+    `  Resolved destinations:`,
+    ...destinationLines,
     `  Required Approval:   ${plan.requiresApproval ? 'Yes' : 'None'}`,
     `  Files to write (${plan.writes.length}):`,
     ...plan.writes.map((w) => `    + ${w}`),
@@ -111,8 +177,9 @@ export function formatPlanHuman(plan) {
   lines.push(`    Next Revision: ${plan.lockChanges.next.revision}`);
 
   if (plan.unownedConflict) {
+    const conflictDest = (plan.destinations || []).find((dest) => dest.unownedConflict)?.destination || plan.destination;
     lines.push('');
-    lines.push(`  ⚠ UNOWNED CONFLICT: Destination '${plan.destination}' already exists and is not owned by Sigma.`);
+    lines.push(`  ⚠ UNOWNED CONFLICT: Destination '${conflictDest}' already exists and is not owned by Sigma.`);
     lines.push('    Installation will fail closed.');
   }
 

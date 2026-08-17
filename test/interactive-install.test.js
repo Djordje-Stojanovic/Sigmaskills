@@ -38,7 +38,11 @@ function createTerminalIo(input, options = {}) {
 
   if (!options.manualInput) queueMicrotask(() => stdin.end(input));
 
-  const env = options.env ?? { ...process.env, CI: '' };
+  const env = { ...(options.env ?? process.env), CI: options.env?.CI ?? '' };
+  delete env.NO_COLOR;
+  if (options.tty && (!env.TERM || env.TERM === 'dumb')) {
+    env.TERM = 'xterm-256color';
+  }
 
   return {
     stdin,
@@ -121,7 +125,7 @@ test('interactive Project Installation includes future skills supplied by the ma
 test('interactive Project Installation confirms exact destinations and installs only the selected subset through the command core', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-install-'));
   try {
-    const keys = ' \x1b[B\x1b[B \ry';
+    const keys = ' \x1b[B\x1b[B \r\ry';
     const io = createTerminalIo(keys);
     const code = await runCli(['--static', '--no-color', '--project', projectRoot], io);
 
@@ -132,6 +136,12 @@ test('interactive Project Installation confirms exact destinations and installs 
     const briefDestination = path.join(projectRoot, '.agents', 'skills', 'sigmabrief');
     const output = io.getStdout();
     assert.match(output, /Resolved destinations:/);
+    assert.match(output, /Only \.agents\/skills is selected by default/);
+    assert.match(output, /\.agents\/skills\s+\(universal default\)/);
+    assert.match(output, /Affected Agent Hosts:/);
+    assert.match(output, /Codex/);
+    assert.match(output, /\[ \] \.claude\/skills/);
+    assert.match(output, /\[ \] \.pi\/skills/);
     assert.ok(output.indexOf(reviewDestination) < output.indexOf('Installed SigmaReview'));
     assert.ok(output.indexOf(briefDestination) < output.indexOf('Installed SigmaBrief'));
 
@@ -139,6 +149,8 @@ test('interactive Project Installation confirms exact destinations and installs 
     assert.ok(fs.existsSync(path.join(briefDestination, 'SKILL.md')));
     assert.ok(!fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmaperformance')));
     assert.ok(!fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmawrite')));
+    assert.ok(!fs.existsSync(path.join(projectRoot, '.claude')));
+    assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));
 
     const lock = JSON.parse(fs.readFileSync(path.join(projectRoot, 'skills-lock.json'), 'utf8'));
     assert.deepEqual(Object.keys(lock.skills), ['sigmabrief', 'sigmareview']);
@@ -156,7 +168,7 @@ test('interactive Project Installation preflights every selected destination bef
     fs.mkdirSync(briefDestination, { recursive: true });
     fs.writeFileSync(path.join(briefDestination, 'unowned.txt'), 'keep me', 'utf8');
 
-    const io = createTerminalIo(' \x1b[B\x1b[B \ry');
+    const io = createTerminalIo(' \x1b[B\x1b[B \r\ry');
     const code = await runCli([
       '--static',
       '--no-color',
@@ -197,7 +209,7 @@ test('Emberforge reveal uses the accepted warm palette and any key skips it', as
 test('dynamic output separates the final prompt from the installation result', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-dynamic-output-'));
   try {
-    const io = createTerminalIo('x \ry', { tty: true });
+    const io = createTerminalIo('x \r\ry', { tty: true });
     const code = await runCli(['--project', projectRoot], io);
 
     assert.equal(code, 0);
@@ -276,8 +288,10 @@ test('escape, EOF, Ctrl+C, and confirmation cancellation write nothing and resto
     { name: 'escape at picker', keys: '\x1b', code: 0 },
     { name: 'EOF at picker', keys: '', code: 0 },
     { name: 'Ctrl+C at picker', keys: '\x03', code: 130 },
-    { name: 'cancel at confirmation', keys: ' \rn', code: 0 },
-    { name: 'EOF at confirmation', keys: ' \r', code: 0 },
+    { name: 'cancel at confirmation', keys: ' \r\rn', code: 0 },
+    { name: 'EOF at confirmation', keys: ' \r\r', code: 0 },
+    { name: 'escape at destinations', keys: ' \r\x1b', code: 0 },
+    { name: 'EOF at destinations', keys: ' \r', code: 0 },
   ];
 
   for (const scenario of cases) {
@@ -297,5 +311,93 @@ test('escape, EOF, Ctrl+C, and confirmation cancellation write nothing and resto
         fs.rmSync(projectRoot, { recursive: true, force: true });
       }
     });
+  }
+});
+
+test('interactive destinations keep every Agent Host searchable and never auto-select host-specific paths', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-search-'));
+  try {
+    const io = createTerminalIo(' \rp\x1b\x1b');
+    const code = await runCli(['--static', '--no-color', '--project', projectRoot], io);
+
+    assert.equal(code, 0);
+    const output = io.getStdout();
+    assert.match(output, /Search: p/);
+    assert.match(output, /Pi \(pi\)/);
+    assert.match(output, /Type to search every Agent Host/);
+    assert.ok(!fs.existsSync(path.join(projectRoot, '.agents')));
+    assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('interactive destinations label detected hosts without selecting them', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-detected-'));
+  try {
+    const catalog = {
+      manifest: { name: 'sigmaskills', version: '0.1.0' },
+      skills: [
+        { id: 'future-skill', title: 'Future Skill', description: 'A future skill discovered from manifest metadata.' },
+      ],
+    };
+    const registry = {
+      schemaVersion: 1,
+      hosts: [
+        {
+          id: 'amp',
+          name: 'amp',
+          displayName: 'Amp',
+          destinations: { project: { kind: 'literal', path: '.agents/skills' }, global: { kind: 'none' } },
+          aliases: [],
+          detection: { envVars: [] },
+        },
+        {
+          id: 'claude-code',
+          name: 'claude-code',
+          displayName: 'Claude Code',
+          destinations: { project: { kind: 'literal', path: '.claude/skills' }, global: { kind: 'none' } },
+          aliases: [],
+          detection: { envVars: ['CLAUDE_CODE'] },
+        },
+      ],
+    };
+    const io = createTerminalIo(' \r\x1b', { env: { ...process.env, CI: '', CLAUDE_CODE: '1' } });
+    const code = await runProjectInstaller({
+      catalog,
+      registry,
+      packageRoot: projectRoot,
+      projectRoot,
+      io,
+      options: { static: true, noColor: true },
+    });
+
+    assert.equal(code, 0);
+    const output = io.getStdout();
+    assert.match(output, /Claude Code \[detected\]/);
+    assert.match(output, /\[ \] \.claude\/skills/);
+    assert.match(output, /\[x\] \.agents\/skills/);
+    assert.ok(!fs.existsSync(path.join(projectRoot, '.claude')));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('interactive destinations install a Claude Code copy only after an explicit choice', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-claude-'));
+  try {
+    const io = createTerminalIo(' \rclaude-code \ry');
+    const code = await runCli(['--static', '--no-color', '--project', projectRoot], io);
+
+    assert.equal(code, 0);
+    assert.ok(fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmareview', 'SKILL.md')));
+    assert.ok(fs.existsSync(path.join(projectRoot, '.claude', 'skills', 'sigmareview', 'SKILL.md')));
+    assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));
+    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'));
+    const copies = state.skills.sigmareview.copies;
+    assert.equal(copies.length, 2);
+    assert.ok(copies.some((copy) => copy.destination === '.claude/skills/sigmareview' && copy.kind === 'host'));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });

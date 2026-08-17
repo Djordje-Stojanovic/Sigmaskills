@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { UNIVERSAL_PROJECT_DESTINATION } from './destinations.js';
 
 export const STATE_FILENAME = 'state.json';
 export const STATE_SCHEMA_VERSION = 1;
@@ -98,6 +99,28 @@ export function validateProjectState(state) {
     if (!skillState.baseHashes || typeof skillState.baseHashes !== 'object') {
       throw new Error(`invalid project state for '${skillId}': missing baseHashes map`);
     }
+    if (skillState.copies !== undefined) {
+      if (!Array.isArray(skillState.copies)) {
+        throw new Error(`invalid project state for '${skillId}': copies must be an array`);
+      }
+      for (const copy of skillState.copies) {
+        if (!copy || typeof copy !== 'object') {
+          throw new Error(`invalid project state for '${skillId}': copy entry is not an object`);
+        }
+        if (copy.kind !== 'canonical' && copy.kind !== 'host') {
+          throw new Error(`invalid project state for '${skillId}': copy kind must be canonical or host`);
+        }
+        if (!copy.destination || typeof copy.destination !== 'string') {
+          throw new Error(`invalid project state for '${skillId}': copy is missing destination`);
+        }
+        if (!Array.isArray(copy.hostIds)) {
+          throw new Error(`invalid project state for '${skillId}': copy is missing hostIds`);
+        }
+        if (!Array.isArray(copy.ownedPaths)) {
+          throw new Error(`invalid project state for '${skillId}': copy is missing ownedPaths`);
+        }
+      }
+    }
   }
 }
 
@@ -144,6 +167,17 @@ export function saveProjectState(projectRoot, state, customStateDir) {
   }
 }
 
+function recordedCopyDestinations(entry) {
+  const destinations = [];
+  if (entry?.destination) destinations.push(entry.destination);
+  if (Array.isArray(entry?.copies)) {
+    for (const copy of entry.copies) {
+      if (copy?.destination) destinations.push(copy.destination);
+    }
+  }
+  return destinations;
+}
+
 /**
  * Check whether a target skill destination is recorded as owned by Sigma in project state.
  *
@@ -161,9 +195,10 @@ export function isDestinationOwned(projectRoot, skillId, destinationPath, custom
   }
 
   const relDest = path.relative(projectRoot, destinationPath).replace(/\\/g, '/');
-  const recordedRel = entry.destination.replace(/\\/g, '/');
-
-  return relDest === recordedRel || path.resolve(destinationPath) === path.resolve(projectRoot, recordedRel);
+  return recordedCopyDestinations(entry).some((recorded) => {
+    const recordedRel = recorded.replace(/\\/g, '/');
+    return relDest === recordedRel || path.resolve(destinationPath) === path.resolve(projectRoot, recordedRel);
+  });
 }
 
 /**
@@ -184,18 +219,31 @@ export function recordSkillInState(state, details) {
     ownedPaths = [],
     baseHashes = {},
     installedAt,
+    copies,
   } = details;
 
-  const relDest = path.isAbsolute(destination)
-    ? path.relative(projectRoot, destination).replace(/\\/g, '/')
-    : destination.replace(/\\/g, '/');
-
-  const normalizedOwnedPaths = ownedPaths.map((p) => {
-    if (path.isAbsolute(p)) {
-      return path.relative(projectRoot, p).replace(/\\/g, '/');
+  const toRelative = (value) => {
+    if (path.isAbsolute(value)) {
+      return path.relative(projectRoot, value).replace(/\\/g, '/');
     }
-    return p.replace(/\\/g, '/');
-  });
+    return value.replace(/\\/g, '/');
+  };
+
+  const relDest = toRelative(destination);
+  const normalizedOwnedPaths = ownedPaths.map((p) => toRelative(p));
+  const normalizedCopies = Array.isArray(copies)
+    ? copies.map((copy) => ({
+      kind: copy.kind,
+      destination: toRelative(copy.destination),
+      hostIds: [...(copy.hostIds || [])],
+      ownedPaths: (copy.ownedPaths || []).map((p) => toRelative(p)),
+    }))
+    : [{
+      kind: relDest.replace(/\\/g, '/').startsWith(`${UNIVERSAL_PROJECT_DESTINATION}/`) ? 'canonical' : 'host',
+      destination: relDest,
+      hostIds: [],
+      ownedPaths: normalizedOwnedPaths,
+    }];
 
   const now = new Date().toISOString();
   const existing = state.skills?.[skillId];
@@ -206,6 +254,7 @@ export function recordSkillInState(state, details) {
     revision,
     method,
     destination: relDest,
+    copies: normalizedCopies,
     ownedPaths: normalizedOwnedPaths,
     baseHashes,
     installedAt: installedAt || existing?.installedAt || now,

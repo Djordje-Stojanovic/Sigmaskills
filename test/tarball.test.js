@@ -7,6 +7,18 @@ import test from 'node:test';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
+function assertOnlyUniversalProjectWrites(projectRoot) {
+  const allowed = new Set(['.agents', 'skills-lock.json']);
+  const extra = fs.readdirSync(projectRoot).filter((name) => !allowed.has(name));
+  assert.deepEqual(extra, []);
+  assert.ok(!fs.existsSync(path.join(projectRoot, '.claude')));
+  assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));
+  assert.ok(!fs.existsSync(path.join(projectRoot, '.adal')));
+  assert.ok(!fs.existsSync(path.join(projectRoot, '.qoder')));
+  assert.ok(!fs.existsSync(path.join(projectRoot, 'agent')));
+  assert.ok(!fs.existsSync(path.join(projectRoot, 'skills')));
+}
+
 test('tarball: pack, inspect contents, install into sandbox, and spawn installed executable', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-tarball-test-'));
   try {
@@ -42,6 +54,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       'package/src/catalog.js',
       'package/src/cli.js',
       'package/src/customization.js',
+      'package/src/destinations.js',
       'package/src/interactive.js',
       'package/src/plan.js',
       'package/src/prepack.js',
@@ -144,12 +157,13 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     const interactiveOut = execFileSync(
       'node',
       [installedBin, '--static', '--no-color', '--narrow', '--project', interactiveProject],
-      { cwd: appDir, encoding: 'utf8', input: ' \ry' },
+      { cwd: appDir, encoding: 'utf8', input: ' \r\ry' },
     );
     assert.match(interactiveOut, /Project Installation \(default\) · narrow/);
     assert.match(interactiveOut, /Resolved destinations:/);
     assert.doesNotMatch(interactiveOut, /\x1b\[/);
     assert.ok(fs.existsSync(path.join(interactiveProject, '.agents', 'skills', 'sigmareview', 'SKILL.md')));
+    assertOnlyUniversalProjectWrites(interactiveProject);
 
     // Spawn install --dry-run --json on isolated project
     const isolatedProject = path.join(tmpDir, 'isolated-proj');
@@ -175,6 +189,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.ok(fs.existsSync(path.join(isolatedProject, '.agents', 'skills', 'sigmawrite', 'SKILL.md')));
     assert.ok(fs.existsSync(path.join(isolatedProject, 'skills-lock.json')));
     assert.ok(fs.existsSync(path.join(isolatedProject, '.agents', 'state.json')));
+    assertOnlyUniversalProjectWrites(isolatedProject);
 
     // Verify skills-lock.json is timestamp-free and sorted
     const lockRaw = fs.readFileSync(path.join(isolatedProject, 'skills-lock.json'), 'utf8');

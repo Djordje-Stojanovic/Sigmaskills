@@ -1,6 +1,15 @@
 import readline from 'node:readline';
 import { createInstallPlan } from './plan.js';
 import { createUnownedConflictError, executeProjectInstall } from './transaction.js';
+import { isDestinationOwned } from './state.js';
+import {
+  UNIVERSAL_PROJECT_DESTINATION,
+  defaultSelectedRoots,
+  findDestinationConflicts,
+  listProjectDestinationGroups,
+  loadHostRegistry,
+  searchHosts,
+} from './destinations.js';
 
 export const EMBERFORGE_PALETTE = Object.freeze({
   base: '#1a1714',
@@ -130,8 +139,12 @@ class KeyInput {
     readline.emitKeypressEvents(stdin);
     this.onKeypress = (_value, key = {}) => {
       const normalized = key.ctrl && key.name === 'c'
-        ? { name: 'ctrl-c' }
-        : { name: key.name || key.sequence || 'unknown' };
+        ? { name: 'ctrl-c', ch: '', sequence: '' }
+        : {
+          name: key.name || key.sequence || 'unknown',
+          ch: typeof _value === 'string' ? _value : '',
+          sequence: key.sequence || '',
+        };
       this.push(normalized);
     };
     this.onEnd = () => {
@@ -310,6 +323,151 @@ async function selectSkills(renderer, input, catalog) {
   }
 }
 
+function affectedHostLabel(host) {
+  return host.detected ? `${host.displayName} [detected]` : host.displayName;
+}
+
+function destinationPickerLines(renderer, items, selectedRoots, cursor, query, error) {
+  const lines = [
+    renderer.style('Σ SIGMA SKILLS', EMBERFORGE_PALETTE.gold, true),
+    `Project Installation · destinations${renderer.narrow ? ' · narrow' : ''}`,
+    '',
+    'Only .agents/skills is selected by default. Host-specific destinations stay unselected.',
+    'Detection labels Agent Hosts; it never selects host-specific destinations.',
+  ];
+
+  if (query) {
+    lines.push('');
+    lines.push(`Search: ${query}`);
+  } else {
+    lines.push('');
+  }
+
+  items.forEach((item, index) => {
+    const current = index === cursor ? '>' : ' ';
+    const checked = selectedRoots.has(item.relativeRoot) ? 'x' : ' ';
+    const title = item.kind === 'host'
+      ? `${item.displayName} (${item.id})`
+      : `${item.relativeRoot}${item.universal ? '  (universal default)' : ''}`;
+    lines.push(`${current} [${checked}] ${title}`);
+    if (item.kind === 'group' && item.universal) {
+      const names = item.hosts.map((host) => affectedHostLabel(host)).join(', ');
+      for (const wrapped of wrapWords(`Affected Agent Hosts: ${names}`, Math.max(20, renderer.width - 6))) {
+        lines.push(`      ${wrapped}`);
+      }
+    } else if (item.kind === 'host') {
+      const detected = item.detected ? ' [detected]' : '';
+      lines.push(`      ${item.relativeRoot}${detected}`);
+    } else if (item.hosts?.length) {
+      lines.push(`      ${item.hosts.map((host) => affectedHostLabel(host)).join(', ')}`);
+    }
+    if (item.absoluteRoot) {
+      for (const wrapped of wrapWords(item.absoluteRoot, Math.max(20, renderer.width - 6))) {
+        lines.push(`      ${wrapped}`);
+      }
+    }
+  });
+
+  lines.push('');
+  lines.push(`Selected destinations: ${selectedRoots.size}`);
+  if (error) lines.push(renderer.style(`Error: ${error}`, EMBERFORGE_PALETTE.red, true));
+  lines.push('Type to search every Agent Host · space toggle · enter continue · esc cancel');
+  return lines;
+}
+
+function selectableGroups(groups) {
+  return groups.filter((group) => group.selectable);
+}
+
+function pickerItems(groups, query) {
+  if (query) {
+    return searchHosts(groups, query)
+      .filter((host) => host.relativeRoot)
+      .map((host) => ({
+        kind: 'host',
+        id: host.id,
+        displayName: host.displayName,
+        relativeRoot: host.relativeRoot,
+        absoluteRoot: host.group?.absoluteRoot || '',
+        detected: host.detected,
+        universal: host.relativeRoot === UNIVERSAL_PROJECT_DESTINATION,
+      }));
+  }
+  return selectableGroups(groups).map((group) => ({
+    kind: 'group',
+    relativeRoot: group.relativeRoot,
+    absoluteRoot: group.absoluteRoot,
+    universal: group.universal,
+    hosts: group.hosts,
+  }));
+}
+
+function isSearchChar(key) {
+  if (!key) return false;
+  if (key.name === 'space' || key.name === 'return' || key.name === 'escape') return false;
+  const ch = key.ch || '';
+  if (ch.length === 1 && /[A-Za-z0-9._/-]/.test(ch)) return true;
+  return Boolean(key.name && key.name.length === 1 && /[A-Za-z0-9._/-]/.test(key.name));
+}
+
+async function selectDestinations(renderer, input, groups) {
+  const selectedRoots = new Set(defaultSelectedRoots(groups));
+  let query = '';
+  let cursor = 0;
+  let error = '';
+
+  while (true) {
+    const items = pickerItems(groups, query);
+    if (items.length === 0) cursor = 0;
+    else cursor = ((cursor % items.length) + items.length) % items.length;
+    renderer.screen(destinationPickerLines(renderer, items, selectedRoots, cursor, query, error));
+    const key = await input.next();
+    if (key.name === 'ctrl-c') return { cancelled: true, exitCode: 130 };
+    if (key.name === 'escape') {
+      if (query) {
+        query = '';
+        cursor = 0;
+        error = '';
+        continue;
+      }
+      return { cancelled: true, exitCode: 0 };
+    }
+    if (key.name === 'eof') return { cancelled: true, exitCode: 0 };
+    if (key.name === 'up' && items.length) cursor = (cursor + items.length - 1) % items.length;
+    if (key.name === 'down' && items.length) cursor = (cursor + 1) % items.length;
+    if (key.name === 'backspace') {
+      query = query.slice(0, -1);
+      cursor = 0;
+      error = '';
+    }
+    if (isSearchChar(key)) {
+      query += key.ch || key.name;
+      cursor = 0;
+      error = '';
+    }
+    if (key.name === 'space') {
+      const item = items[cursor];
+      if (item?.relativeRoot) {
+        if (selectedRoots.has(item.relativeRoot)) selectedRoots.delete(item.relativeRoot);
+        else selectedRoots.add(item.relativeRoot);
+        error = '';
+      }
+    }
+    if (key.name === 'return') {
+      if (selectedRoots.size === 0) {
+        error = 'Select at least one destination.';
+      } else {
+        return {
+          cancelled: false,
+          selectedRoots: selectableGroups(groups)
+            .map((group) => group.relativeRoot)
+            .filter((root) => selectedRoots.has(root)),
+        };
+      }
+    }
+  }
+}
+
 function summaryLines(renderer, plans) {
   const lines = [
     renderer.style('Confirm Project Installation', EMBERFORGE_PALETTE.gold, true),
@@ -318,7 +476,9 @@ function summaryLines(renderer, plans) {
   ];
   for (const plan of plans) {
     lines.push(`${plan.title} (${plan.skill})`);
-    lines.push(`  ${plan.destination}`);
+    for (const dest of plan.destinations || [{ destination: plan.destination }]) {
+      lines.push(`  ${dest.destination}`);
+    }
   }
   lines.push('');
   lines.push(`Install ${plans.length} selected skill${plans.length === 1 ? '' : 's'}? [y/N]`);
@@ -376,10 +536,35 @@ export async function runProjectInstaller(params) {
       return selection.exitCode;
     }
 
+    const destinationGroups = listProjectDestinationGroups({
+      registry: params.registry || loadHostRegistry(packageRoot),
+      projectRoot,
+      env: io.env || process.env,
+    });
+    const destinations = await selectDestinations(renderer, input, destinationGroups);
+    if (destinations.cancelled) {
+      renderer.line('Installation cancelled. No files were written.');
+      return destinations.exitCode;
+    }
+
+    const conflictErrors = findDestinationConflicts({
+      projectRoot,
+      skillIds: selection.skillIds,
+      selectedRoots: destinations.selectedRoots,
+      isOwned: (skillId, destination) => isDestinationOwned(projectRoot, skillId, destination, customStateDir),
+    });
+    if (conflictErrors.length > 0) {
+      throw new Error(conflictErrors[0]);
+    }
+
     const plans = selection.skillIds.map((skillId) => createInstallPlan(catalog, {
       skillId,
       projectRoot,
       customStateDir,
+      packageRoot,
+      selectedRoots: destinations.selectedRoots,
+      destinationGroups,
+      env: io.env || process.env,
     }));
     const conflict = plans.find((plan) => plan.unownedConflict);
     if (conflict) throw createUnownedConflictError(conflict);
@@ -400,8 +585,13 @@ export async function runProjectInstaller(params) {
         projectRoot,
         customStateDir,
         packageRoot,
+        selectedRoots: destinations.selectedRoots,
+        destinationGroups,
+        env: io.env || process.env,
       });
-      renderer.line(`Installed ${result.plan.title} (${result.plan.skill}) to ${result.plan.destination}`);
+      for (const dest of result.plan.destinations) {
+        renderer.line(`Installed ${result.plan.title} (${result.plan.skill}) to ${dest.destination}`);
+      }
     }
     renderer.line(`Project Installation complete: ${selection.skillIds.length} skill${selection.skillIds.length === 1 ? '' : 's'} installed.`);
     return 0;

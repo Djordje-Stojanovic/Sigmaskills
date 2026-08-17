@@ -115,8 +115,10 @@ function isProcessAlive(pid) {
  * @returns {Error}
  */
 export function createUnownedConflictError(plan) {
+  const conflictDest = (plan.destinations || []).find((dest) => dest.unownedConflict)?.destination
+    || plan.destination;
   return new Error(
-    `Destination '${plan.destination}' already exists and is not owned by SigmaSkills. Safe adoption is not enabled. Installation aborted.`,
+    `Destination '${conflictDest}' already exists and is not owned by SigmaSkills. Safe adoption is not enabled. Installation aborted.`,
   );
 }
 
@@ -147,7 +149,12 @@ export function executeProjectInstall(params) {
     skillId,
     projectRoot,
     customStateDir,
+    packageRoot,
     dryRun,
+    selectedRoots: params.selectedRoots,
+    destinationGroups: params.destinationGroups,
+    registry: params.registry,
+    env: params.env,
   });
 
   if (plan.unownedConflict) throw createUnownedConflictError(plan);
@@ -168,8 +175,7 @@ export function executeProjectInstall(params) {
     `${skillId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
   );
 
-  let backupDir = null;
-  let destSwapped = false;
+  const committed = [];
 
   const lockPath = path.join(projectRoot, PROJECT_LOCK_FILENAME);
   const lockExisted = fs.existsSync(lockPath);
@@ -194,22 +200,19 @@ export function executeProjectInstall(params) {
 
   const rollback = () => {
     try {
-      if (destSwapped) {
-        if (backupDir && fs.existsSync(backupDir)) {
-          // Restore prior destination from backup
-          if (fs.existsSync(plan.destination)) {
-            fs.rmSync(plan.destination, { recursive: true, force: true });
+      for (const entry of committed.splice(0).reverse()) {
+        try {
+          if (entry.backupDir && fs.existsSync(entry.backupDir)) {
+            if (fs.existsSync(entry.destDir)) {
+              fs.rmSync(entry.destDir, { recursive: true, force: true });
+            }
+            fs.renameSync(entry.backupDir, entry.destDir);
+          } else if (fs.existsSync(entry.destDir)) {
+            fs.rmSync(entry.destDir, { recursive: true, force: true });
           }
-          fs.renameSync(backupDir, plan.destination);
-          backupDir = null;
-        } else if (fs.existsSync(plan.destination)) {
-          // Fresh install: remove partially created destination
-          fs.rmSync(plan.destination, { recursive: true, force: true });
+        } catch {
+          // Per-destination rollback is best-effort
         }
-      }
-      if (backupDir && fs.existsSync(backupDir)) {
-        fs.rmSync(backupDir, { recursive: true, force: true });
-        backupDir = null;
       }
       // Restore state and lock or remove if they didn't exist before
       if (stateExisted) {
@@ -258,50 +261,49 @@ export function executeProjectInstall(params) {
       );
     }
 
-    // 3. Swap staged tree into destination
-    const destDir = plan.destination;
-    const destParent = path.dirname(destDir);
-    if (!fs.existsSync(destParent)) {
-      fs.mkdirSync(destParent, { recursive: true });
-    }
+    // 3. Copy the staged tree into every selected destination
+    const commitDestination = (destDir) => {
+      const destParent = path.dirname(destDir);
+      if (!fs.existsSync(destParent)) {
+        fs.mkdirSync(destParent, { recursive: true });
+      }
 
-    if (fs.existsSync(destDir)) {
-      // Create temporary backup
-      backupDir = path.join(
-        destParent,
-        `.${skillId}-backup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      );
-      fs.renameSync(destDir, backupDir);
+      let backupDir = null;
+      if (fs.existsSync(destDir)) {
+        backupDir = path.join(
+          destParent,
+          `.${skillId}-backup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        );
+        fs.renameSync(destDir, backupDir);
+      }
 
       try {
-        fs.renameSync(stagingDir, destDir);
-        destSwapped = true;
-      } catch (swapErr) {
-        // Windows replacement fallback: try copy-swap
-        try {
-          fs.cpSync(stagingDir, destDir, { recursive: true });
-          cleanupStaging();
-          destSwapped = true;
-        } catch (copyFallbackErr) {
-          // Restore from backup
+        fs.cpSync(stagingDir, destDir, { recursive: true });
+        committed.push({ destDir, backupDir });
+      } catch (copyErr) {
+        if (backupDir && fs.existsSync(backupDir)) {
           if (fs.existsSync(destDir)) {
             fs.rmSync(destDir, { recursive: true, force: true });
           }
           fs.renameSync(backupDir, destDir);
-          throw new Error(`failed to swap staged destination: ${swapErr.message} (fallback: ${copyFallbackErr.message})`);
+        } else if (fs.existsSync(destDir)) {
+          fs.rmSync(destDir, { recursive: true, force: true });
         }
+        throw new Error(`failed to write destination '${destDir}': ${copyErr.message}`);
       }
-    } else {
-      try {
-        fs.renameSync(stagingDir, destDir);
-        destSwapped = true;
-      } catch (renameErr) {
-        // Fallback for cross-device or permission limits
-        fs.cpSync(stagingDir, destDir, { recursive: true });
-        cleanupStaging();
-        destSwapped = true;
-      }
+    };
+
+    for (const dest of plan.destinations) {
+      commitDestination(dest.destination);
     }
+
+    const copies = plan.destinations.map((dest) => ({
+      kind: dest.kind,
+      destination: dest.relativeDestination,
+      hostIds: (dest.hosts || []).map((host) => host.id),
+      ownedPaths: plan.files.map((file) => `${dest.relativeDestination}/${file}`),
+    }));
+    const primary = copies.find((copy) => copy.kind === 'canonical') || copies[0];
 
     // 4. Update private state and project lock
     const updatedState = recordSkillInState(originalState, {
@@ -309,10 +311,11 @@ export function executeProjectInstall(params) {
       release: plan.release,
       revision: plan.sourceRevision,
       method: plan.method,
-      destination: plan.relativeDestination,
+      destination: primary.destination,
       projectRoot,
-      ownedPaths: plan.writes,
+      ownedPaths: primary.ownedPaths,
       baseHashes: validatedStaged.files,
+      copies,
     });
     saveProjectState(projectRoot, updatedState, customStateDir);
 
@@ -324,10 +327,12 @@ export function executeProjectInstall(params) {
     );
     saveProjectLock(projectRoot, updatedLock);
 
-    // 5. Cleanup backup after state & lock write succeed
-    if (backupDir && fs.existsSync(backupDir)) {
-      fs.rmSync(backupDir, { recursive: true, force: true });
-      backupDir = null;
+    // 5. Cleanup backups after state & lock write succeed
+    for (const entry of committed) {
+      if (entry.backupDir && fs.existsSync(entry.backupDir)) {
+        fs.rmSync(entry.backupDir, { recursive: true, force: true });
+        entry.backupDir = null;
+      }
     }
 
     cleanupStaging();
