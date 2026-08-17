@@ -6,6 +6,7 @@ import { PassThrough } from 'node:stream';
 import test from 'node:test';
 import { runCli } from '../src/cli.js';
 import { runProjectInstaller } from '../src/interactive.js';
+import { getCatalog, findPackageRoot } from '../src/catalog.js';
 
 function createTerminalIo(input, options = {}) {
   const stdin = new PassThrough();
@@ -383,20 +384,76 @@ test('interactive destinations label detected hosts without selecting them', asy
   }
 });
 
-test('interactive destinations install a Claude Code copy only after an explicit choice', async () => {
+test('interactive destinations install a Claude Code link only after an explicit choice', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-claude-'));
   try {
-    const io = createTerminalIo(' \rclaude-code \ry');
+    const io = createTerminalIo(' \rclaude-code \r\ry');
     const code = await runCli(['--static', '--no-color', '--project', projectRoot], io);
 
     assert.equal(code, 0);
+    assert.match(io.getStdout(), /Link \(recommended\)/);
     assert.ok(fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmareview', 'SKILL.md')));
-    assert.ok(fs.existsSync(path.join(projectRoot, '.claude', 'skills', 'sigmareview', 'SKILL.md')));
+    assert.ok(fs.lstatSync(path.join(projectRoot, '.claude', 'skills', 'sigmareview')).isSymbolicLink());
     assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));
     const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'));
     const copies = state.skills.sigmareview.copies;
     assert.equal(copies.length, 2);
-    assert.ok(copies.some((copy) => copy.destination === '.claude/skills/sigmareview' && copy.kind === 'host'));
+    assert.ok(copies.some((copy) => copy.destination === '.claude/skills/sigmareview' && copy.kind === 'host' && copy.dependsOn === '.agents/skills/sigmareview'));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('interactive link failure reports the exact cause and declining copy writes nothing', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-link-fail-'));
+  try {
+    const io = createTerminalIo(' \rclaude-code \r\ryn');
+    const code = await runProjectInstaller({
+      catalog: getCatalog(findPackageRoot()),
+      packageRoot: findPackageRoot(),
+      projectRoot,
+      io,
+      options: { static: true, noColor: true },
+      createLink: () => {
+        throw Object.assign(new Error('EPERM: operation not permitted, symlink'), { code: 'EPERM' });
+      },
+    });
+
+    assert.equal(code, 0);
+    assert.match(io.getStdout(), /EPERM: operation not permitted/);
+    assert.match(io.getStdout(), /will not change method silently/);
+    assert.ok(!fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmareview')));
+    assert.ok(!fs.existsSync(path.join(projectRoot, '.claude', 'skills', 'sigmareview')));
+    assert.ok(!fs.existsSync(path.join(projectRoot, 'skills-lock.json')));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('interactive link failure copy fallback writes an independent managed copy', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-link-copy-'));
+  try {
+    const io = createTerminalIo(' \rclaude-code \r\ryy');
+    const code = await runProjectInstaller({
+      catalog: getCatalog(findPackageRoot()),
+      packageRoot: findPackageRoot(),
+      projectRoot,
+      io,
+      options: { static: true, noColor: true },
+      createLink: () => {
+        throw Object.assign(new Error('EPERM: operation not permitted, symlink'), { code: 'EPERM' });
+      },
+    });
+
+    assert.equal(code, 0);
+    const host = path.join(projectRoot, '.claude', 'skills', 'sigmareview');
+    assert.equal(fs.lstatSync(host).isSymbolicLink(), false);
+    assert.ok(fs.existsSync(path.join(host, 'SKILL.md')));
+    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'));
+    const hostCopy = state.skills.sigmareview.copies.find((copy) => copy.kind === 'host');
+    assert.equal(hostCopy.method, 'copy');
+    assert.equal(hostCopy.dependsOn, null);
+    assert.ok(hostCopy.baseHashes['SKILL.md']);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }

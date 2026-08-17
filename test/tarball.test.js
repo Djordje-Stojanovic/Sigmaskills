@@ -56,6 +56,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       'package/src/customization.js',
       'package/src/destinations.js',
       'package/src/interactive.js',
+      'package/src/links.js',
       'package/src/plan.js',
       'package/src/prepack.js',
       'package/src/project-lock.js',

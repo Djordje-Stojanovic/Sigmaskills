@@ -10,6 +10,7 @@ import {
   saveProjectState,
   recordSkillInState,
 } from './state.js';
+import { createSkillLink, pathExists, removeManagedPath } from './links.js';
 
 /**
  * Acquire process concurrency lock for project.
@@ -155,6 +156,8 @@ export function executeProjectInstall(params) {
     destinationGroups: params.destinationGroups,
     registry: params.registry,
     env: params.env,
+    method: params.method,
+    copyRoots: params.copyRoots,
   });
 
   if (plan.unownedConflict) throw createUnownedConflictError(plan);
@@ -202,13 +205,13 @@ export function executeProjectInstall(params) {
     try {
       for (const entry of committed.splice(0).reverse()) {
         try {
-          if (entry.backupDir && fs.existsSync(entry.backupDir)) {
-            if (fs.existsSync(entry.destDir)) {
-              fs.rmSync(entry.destDir, { recursive: true, force: true });
+          if (entry.backupDir && pathExists(entry.backupDir)) {
+            if (pathExists(entry.destDir)) {
+              removeManagedPath(entry.destDir);
             }
             fs.renameSync(entry.backupDir, entry.destDir);
-          } else if (fs.existsSync(entry.destDir)) {
-            fs.rmSync(entry.destDir, { recursive: true, force: true });
+          } else if (pathExists(entry.destDir)) {
+            removeManagedPath(entry.destDir);
           }
         } catch {
           // Per-destination rollback is best-effort
@@ -261,48 +264,107 @@ export function executeProjectInstall(params) {
       );
     }
 
-    // 3. Copy the staged tree into every selected destination
-    const commitDestination = (destDir) => {
+    // 3. Write the staged tree into every selected destination
+    const createLink = params.createLink || ((linkPath, targetPath) => (
+      createSkillLink(linkPath, targetPath, projectRoot)
+    ));
+    const canonicalDest = plan.destinations.find((dest) => dest.kind === 'canonical')
+      || plan.destinations[0];
+
+    const restoreBackup = (destDir, backupDir) => {
+      if (backupDir && pathExists(backupDir)) {
+        if (pathExists(destDir)) removeManagedPath(destDir);
+        fs.renameSync(backupDir, destDir);
+      } else if (pathExists(destDir)) {
+        removeManagedPath(destDir);
+      }
+    };
+
+    const prepareDestination = (destDir) => {
       const destParent = path.dirname(destDir);
       if (!fs.existsSync(destParent)) {
         fs.mkdirSync(destParent, { recursive: true });
       }
-
       let backupDir = null;
-      if (fs.existsSync(destDir)) {
+      if (pathExists(destDir)) {
         backupDir = path.join(
           destParent,
           `.${skillId}-backup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         );
         fs.renameSync(destDir, backupDir);
       }
+      return backupDir;
+    };
 
+    const commitCopy = (destDir) => {
+      const backupDir = prepareDestination(destDir);
       try {
         fs.cpSync(stagingDir, destDir, { recursive: true });
         committed.push({ destDir, backupDir });
       } catch (copyErr) {
-        if (backupDir && fs.existsSync(backupDir)) {
-          if (fs.existsSync(destDir)) {
-            fs.rmSync(destDir, { recursive: true, force: true });
-          }
-          fs.renameSync(backupDir, destDir);
-        } else if (fs.existsSync(destDir)) {
-          fs.rmSync(destDir, { recursive: true, force: true });
-        }
+        restoreBackup(destDir, backupDir);
         throw new Error(`failed to write destination '${destDir}': ${copyErr.message}`);
       }
     };
 
-    for (const dest of plan.destinations) {
-      commitDestination(dest.destination);
+    const commitLink = (dest) => {
+      const destDir = dest.destination;
+      const backupDir = prepareDestination(destDir);
+      try {
+        createLink(destDir, canonicalDest.destination, projectRoot);
+        committed.push({ destDir, backupDir });
+      } catch (linkErr) {
+        restoreBackup(destDir, backupDir);
+        const failure = {
+          destination: dest.destination,
+          relativeDestination: dest.relativeDestination,
+          relativeRoot: dest.relativeRoot,
+          method: dest.method,
+          cause: linkErr.message,
+          code: linkErr.code,
+        };
+        const decision = typeof params.onLinkFailure === 'function'
+          ? params.onLinkFailure(failure)
+          : 'abort';
+        if (decision !== 'copy') {
+          const wrapped = new Error(linkErr.message);
+          wrapped.cause = linkErr;
+          wrapped.code = linkErr.code;
+          wrapped.linkFailure = failure;
+          throw wrapped;
+        }
+        dest.fallbackFrom = dest.method;
+        dest.method = 'copy';
+        dest.dependsOn = null;
+        commitCopy(destDir);
+      }
+    };
+
+    const ordered = [...plan.destinations].sort((a, b) => {
+      if (a.kind === 'canonical' && b.kind !== 'canonical') return -1;
+      if (b.kind === 'canonical' && a.kind !== 'canonical') return 1;
+      return 0;
+    });
+
+    for (const dest of ordered) {
+      if (dest.method === 'copy') commitCopy(dest.destination);
+      else commitLink(dest);
     }
 
-    const copies = plan.destinations.map((dest) => ({
-      kind: dest.kind,
-      destination: dest.relativeDestination,
-      hostIds: (dest.hosts || []).map((host) => host.id),
-      ownedPaths: plan.files.map((file) => `${dest.relativeDestination}/${file}`),
-    }));
+    const copies = plan.destinations.map((dest) => {
+      const independent = dest.method === 'copy';
+      return {
+        kind: dest.kind,
+        destination: dest.relativeDestination,
+        method: dest.method,
+        dependsOn: dest.dependsOn || null,
+        hostIds: (dest.hosts || []).map((host) => host.id),
+        ownedPaths: independent
+          ? plan.files.map((file) => `${dest.relativeDestination}/${file}`)
+          : [dest.relativeDestination],
+        ...(independent ? { baseHashes: validatedStaged.files } : {}),
+      };
+    });
     const primary = copies.find((copy) => copy.kind === 'canonical') || copies[0];
 
     // 4. Update private state and project lock
@@ -329,8 +391,8 @@ export function executeProjectInstall(params) {
 
     // 5. Cleanup backups after state & lock write succeed
     for (const entry of committed) {
-      if (entry.backupDir && fs.existsSync(entry.backupDir)) {
-        fs.rmSync(entry.backupDir, { recursive: true, force: true });
+      if (entry.backupDir && pathExists(entry.backupDir)) {
+        removeManagedPath(entry.backupDir);
         entry.backupDir = null;
       }
     }

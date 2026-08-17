@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { findPackageRoot } from './catalog.js';
+import { inspectManagedPath, pathExists } from './links.js';
 
 export const UNIVERSAL_PROJECT_DESTINATION = '.agents/skills';
 
@@ -247,10 +248,30 @@ export function findDestinationConflicts({ projectRoot, skillIds, selectedRoots,
   }
 
   for (const item of resolved) {
-    if (!fs.existsSync(item.destination)) continue;
+    if (process.platform === 'win32' && item.destination.length >= 260) {
+      errors.push(
+        `Destination '${item.destination}' exceeds the Windows path length limit. Installation aborted.`,
+      );
+      continue;
+    }
+    if (!pathExists(item.destination)) continue;
+    const expectedCanonical = resolveSkillPath(projectRoot, UNIVERSAL_PROJECT_DESTINATION, item.skillId);
+    const inspected = inspectManagedPath(item.destination, expectedCanonical.destination);
     const owned = typeof isOwned === 'function'
       ? isOwned(item.skillId, item.destination)
       : false;
+    if (inspected.broken) {
+      errors.push(
+        `Destination '${item.destination}' is a broken link. Installation aborted.`,
+      );
+      continue;
+    }
+    if (inspected.wrongTarget) {
+      errors.push(
+        `Destination '${item.destination}' is a wrong-target link. Installation aborted.`,
+      );
+      continue;
+    }
     if (!owned) {
       errors.push(
         `Destination '${item.destination}' already exists and is not owned by SigmaSkills. Safe adoption is not enabled. Installation aborted.`,

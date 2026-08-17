@@ -35,6 +35,9 @@ Options:
   --json            Output in versioned JSON format
   --project <path>  Target project root directory (defaults to current directory)
   --state-dir <dir> Custom state directory for private machine state
+  --destination <dir> Project destination root (repeatable; default .agents/skills)
+  --link            Recommended links: Windows junctions, macOS/Linux symbolic links
+  --copy            Independent managed copy at every selected destination
   --no-color        Disable color and reveal animation
   --static          Disable animation and screen repainting
   --narrow          Use the narrow-terminal layout
@@ -67,6 +70,8 @@ export function parseCliArgs(args) {
     noColor: false,
     static: false,
     narrow: false,
+    method: null,
+    destinations: [],
     unknown: [],
   };
 
@@ -88,6 +93,14 @@ export function parseCliArgs(args) {
       parsed.static = true;
     } else if (arg === '--narrow') {
       parsed.narrow = true;
+    } else if (arg === '--copy') {
+      parsed.method = parsed.method && parsed.method !== 'copy' ? 'conflict' : 'copy';
+    } else if (arg === '--link') {
+      parsed.method = parsed.method && parsed.method !== 'link' ? 'conflict' : 'link';
+    } else if (arg === '--destination') {
+      parsed.destinations.push(args[++i]);
+    } else if (arg.startsWith('--destination=')) {
+      parsed.destinations.push(arg.slice('--destination='.length));
     } else if (arg === '--skill') {
       parsed.skillId = args[++i];
     } else if (arg.startsWith('--skill=')) {
@@ -151,6 +164,11 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       return 1;
     }
 
+    if (opts.method === 'conflict') {
+      writeErr('sigmaskills error: use either --link or --copy, not both');
+      return 1;
+    }
+
     if (opts.command === 'list' || (!opts.command && opts.json && !opts.skillId)) {
       if (opts.json) {
         const payload = {
@@ -200,6 +218,8 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         customStateDir: opts.stateDir,
         packageRoot: rootDir,
         dryRun: opts.dryRun,
+        selectedRoots: opts.destinations.length > 0 ? opts.destinations : undefined,
+        method: opts.method || undefined,
       });
 
       if (opts.json) {
@@ -208,7 +228,10 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeOut(formatPlanHuman(result.plan));
         if (!opts.dryRun) {
           writeOut('');
-          writeOut(`✔ Installed ${result.plan.title} (${result.plan.skill}) to ${result.plan.relativeDestination}`);
+          for (const dest of result.plan.destinations) {
+            const method = dest.method ? ` [${dest.method}]` : '';
+            writeOut(`✔ Installed ${result.plan.title} (${result.plan.skill}) to ${dest.relativeDestination}${method}`);
+          }
           writeOut(`  Revision: ${result.plan.sourceRevision}`);
           writeOut(`  Project lock: skills-lock.json updated`);
         }
@@ -241,6 +264,10 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     return 1;
   } catch (err) {
     writeErr(`sigmaskills error: ${err.message}`);
+    if (err.linkFailure) {
+      writeErr(`Link failed for '${err.linkFailure.relativeDestination || err.linkFailure.destination}'.`);
+      writeErr('The installer did not change method. Re-run with --copy to install a complete managed copy at this destination.');
+    }
     return 1;
   }
 }

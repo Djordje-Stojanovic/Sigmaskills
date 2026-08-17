@@ -10,6 +10,7 @@ import {
   loadHostRegistry,
   searchHosts,
 } from './destinations.js';
+import { recommendedLinkMethod } from './links.js';
 
 export const EMBERFORGE_PALETTE = Object.freeze({
   base: '#1a1714',
@@ -477,13 +478,81 @@ function summaryLines(renderer, plans) {
   for (const plan of plans) {
     lines.push(`${plan.title} (${plan.skill})`);
     for (const dest of plan.destinations || [{ destination: plan.destination }]) {
-      lines.push(`  ${dest.destination}`);
+      const method = dest.method ? ` [${dest.method}]` : '';
+      lines.push(`  ${dest.destination}${method}`);
+      if (dest.dependsOn) lines.push(`    depends on ${dest.dependsOn}`);
     }
   }
   lines.push('');
   lines.push(`Install ${plans.length} selected skill${plans.length === 1 ? '' : 's'}? [y/N]`);
   lines.push('y confirm · n/enter/esc cancel');
   return lines;
+}
+
+function methodPickerLines(renderer, cursor) {
+  const linkDetail = recommendedLinkMethod() === 'junction'
+    ? 'Windows directory junctions to the canonical copy'
+    : 'macOS/Linux symbolic links to the canonical copy';
+  const options = [
+    { title: 'Link (recommended)', detail: linkDetail },
+    { title: 'Copy', detail: 'Independent managed copy at every destination' },
+  ];
+  const lines = [
+    renderer.style('Σ SIGMA SKILLS', EMBERFORGE_PALETTE.gold, true),
+    `Project Installation · method${renderer.narrow ? ' · narrow' : ''}`,
+    '',
+    'Choose how host-specific destinations are written. The installer never changes method silently.',
+  ];
+  options.forEach((option, index) => {
+    const current = index === cursor ? '>' : ' ';
+    const checked = index === cursor ? 'x' : ' ';
+    lines.push(`${current} [${checked}] ${option.title}`);
+    for (const wrapped of wrapWords(option.detail, Math.max(20, renderer.width - 6))) {
+      lines.push(`      ${wrapped}`);
+    }
+  });
+  lines.push('');
+  lines.push('↑/↓ move · enter continue · esc cancel');
+  return lines;
+}
+
+async function selectMethod(renderer, input) {
+  let cursor = 0;
+  while (true) {
+    renderer.screen(methodPickerLines(renderer, cursor));
+    const key = await input.next();
+    if (key.name === 'ctrl-c') return { cancelled: true, exitCode: 130 };
+    if (key.name === 'escape' || key.name === 'eof') return { cancelled: true, exitCode: 0 };
+    if (key.name === 'up' || key.name === 'down') cursor = cursor === 0 ? 1 : 0;
+    if (key.name === 'return' || key.name === 'space') {
+      return { cancelled: false, method: cursor === 0 ? 'link' : 'copy' };
+    }
+  }
+}
+
+function fallbackLines(renderer, failure) {
+  return [
+    renderer.style('Link failed', EMBERFORGE_PALETTE.red, true),
+    '',
+    failure.relativeDestination || failure.destination,
+    `Cause: ${failure.cause}`,
+    '',
+    'The installer will not change method silently.',
+    'Install a complete managed copy at this destination instead? [y/N]',
+    'y copy · n/enter/esc leave unchanged',
+  ];
+}
+
+async function offerCopyFallback(renderer, input, failure) {
+  renderer.screen(fallbackLines(renderer, failure));
+  while (true) {
+    const key = await input.next();
+    if (key.name === 'y') return 'copy';
+    if (key.name === 'ctrl-c') return 'ctrl-c';
+    if (key.name === 'n' || key.name === 'escape' || key.name === 'return' || key.name === 'eof') {
+      return 'abort';
+    }
+  }
 }
 
 async function confirmPlans(renderer, input, plans) {
@@ -547,6 +616,17 @@ export async function runProjectInstaller(params) {
       return destinations.exitCode;
     }
 
+    const hostSelected = destinations.selectedRoots.some((root) => root !== UNIVERSAL_PROJECT_DESTINATION);
+    let method = hostSelected ? 'link' : 'copy';
+    if (hostSelected) {
+      const methodChoice = await selectMethod(renderer, input);
+      if (methodChoice.cancelled) {
+        renderer.line('Installation cancelled. No files were written.');
+        return methodChoice.exitCode;
+      }
+      method = methodChoice.method;
+    }
+
     const conflictErrors = findDestinationConflicts({
       projectRoot,
       skillIds: selection.skillIds,
@@ -565,6 +645,7 @@ export async function runProjectInstaller(params) {
       selectedRoots: destinations.selectedRoots,
       destinationGroups,
       env: io.env || process.env,
+      method,
     }));
     const conflict = plans.find((plan) => plan.unownedConflict);
     if (conflict) throw createUnownedConflictError(conflict);
@@ -575,22 +656,40 @@ export async function runProjectInstaller(params) {
       return confirmation.exitCode;
     }
 
-    input.close();
     renderer.cleanup();
 
+    const copyRoots = [];
     for (const skillId of selection.skillIds) {
-      const result = executeProjectInstall({
-        catalog,
-        skillId,
-        projectRoot,
-        customStateDir,
-        packageRoot,
-        selectedRoots: destinations.selectedRoots,
-        destinationGroups,
-        env: io.env || process.env,
-      });
+      let result;
+      while (true) {
+        try {
+          result = executeProjectInstall({
+            catalog,
+            skillId,
+            projectRoot,
+            customStateDir,
+            packageRoot,
+            selectedRoots: destinations.selectedRoots,
+            destinationGroups,
+            env: io.env || process.env,
+            method,
+            copyRoots,
+            createLink: params.createLink,
+          });
+          break;
+        } catch (err) {
+          if (!err.linkFailure) throw err;
+          const decision = await offerCopyFallback(renderer, input, err.linkFailure);
+          if (decision !== 'copy') {
+            renderer.line('Installation cancelled. No files were written.');
+            return decision === 'ctrl-c' ? 130 : 0;
+          }
+          copyRoots.push(err.linkFailure.relativeRoot);
+        }
+      }
       for (const dest of result.plan.destinations) {
-        renderer.line(`Installed ${result.plan.title} (${result.plan.skill}) to ${dest.destination}`);
+        const methodLabel = dest.method ? ` [${dest.method}]` : '';
+        renderer.line(`Installed ${result.plan.title} (${result.plan.skill}) to ${dest.destination}${methodLabel}`);
       }
     }
     renderer.line(`Project Installation complete: ${selection.skillIds.length} skill${selection.skillIds.length === 1 ? '' : 's'} installed.`);

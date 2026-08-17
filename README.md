@@ -28,10 +28,12 @@ Start the first-party Sigma Installer in a project:
 npx sigmaskills
 ```
 
-Select any set of skills. By default the installer writes only to `.agents/skills/<id>` and lists every Agent Host that reads that universal destination. Host-specific directories such as `.claude/skills` or `.pi/skills` stay unselected until you choose them. The confirmation plan shows every full destination path. To install one skill without the interactive interface:
+Select any set of skills. By default the installer writes only to `.agents/skills/<id>` and lists every Agent Host that reads that universal destination. Host-specific directories such as `.claude/skills` or `.pi/skills` stay unselected until you choose them. Selected host destinations use Windows directory junctions or macOS/Linux symbolic links to the canonical copy; `--copy` writes an independent managed copy instead. Link failure reports the exact cause and offers copy — the installer never changes method silently. The confirmation plan shows every full destination path and method. To install one skill without the interactive interface:
 
 ```bash
 npx sigmaskills install sigmawrite --project .
+npx sigmaskills install sigmawrite --project . --destination .claude/skills
+npx sigmaskills install sigmawrite --project . --destination .claude/skills --copy
 ```
 
 Then invoke with your host’s normal skill syntax (`$sigmawrite`, `/skill:sigmawrite`, skill picker, …).

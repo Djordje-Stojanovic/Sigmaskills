@@ -168,6 +168,31 @@ test('colliding, overlapping, duplicate, invalid, and occupied-unowned destinati
       isOwned: () => true,
     });
     assert.deepEqual(ownedOk, []);
+
+    const dangling = path.join(projectRoot, '.pi', 'skills', 'sigmawrite');
+    const missingTarget = path.join(projectRoot, '.missing', 'sigmawrite');
+    fs.mkdirSync(missingTarget, { recursive: true });
+    fs.mkdirSync(path.dirname(dangling), { recursive: true });
+    fs.symlinkSync(missingTarget, dangling, process.platform === 'win32' ? 'junction' : 'dir');
+    fs.rmSync(missingTarget, { recursive: true, force: true });
+    const broken = findDestinationConflicts({
+      projectRoot,
+      skillIds: ['sigmawrite'],
+      selectedRoots: ['.pi/skills'],
+      isOwned: () => false,
+    });
+    assert.match(broken[0], /broken link/);
+
+    if (process.platform === 'win32') {
+      const longRoot = `long/${'n'.repeat(240)}`;
+      const overlong = findDestinationConflicts({
+        projectRoot,
+        skillIds: ['sigmawrite'],
+        selectedRoots: [longRoot],
+        isOwned: () => false,
+      });
+      assert.match(overlong[0], /path length limit/);
+    }
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }

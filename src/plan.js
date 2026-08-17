@@ -12,6 +12,7 @@ import {
   resolveSkillPath,
 } from './destinations.js';
 import { findPackageRoot } from './catalog.js';
+import { recommendedLinkMethod } from './links.js';
 
 export const PLAN_SCHEMA_VERSION = 1;
 
@@ -31,6 +32,32 @@ function selectedRootsFor(options, groups) {
   }
   const defaults = defaultSelectedRoots(groups);
   return defaults.length > 0 ? defaults : [UNIVERSAL_PROJECT_DESTINATION];
+}
+
+function requestedMethodFor(options, selectedRoots) {
+  if (options.method === 'copy' || options.method === 'link') return options.method;
+  const hasHost = selectedRoots.some((root) => root !== UNIVERSAL_PROJECT_DESTINATION);
+  return hasHost ? 'link' : 'copy';
+}
+
+function rootsForRequestedMethod(selectedRoots, method) {
+  if (method !== 'link') return selectedRoots;
+  const hasHost = selectedRoots.some((root) => root !== UNIVERSAL_PROJECT_DESTINATION);
+  if (!hasHost || selectedRoots.includes(UNIVERSAL_PROJECT_DESTINATION)) return selectedRoots;
+  return [UNIVERSAL_PROJECT_DESTINATION, ...selectedRoots];
+}
+
+function destinationMethod(kind, skillId, requestedMethod, copyRoots, relativeRoot) {
+  if (kind === 'canonical') {
+    return { method: 'copy', dependsOn: null };
+  }
+  if (requestedMethod === 'copy' || (Array.isArray(copyRoots) && copyRoots.includes(relativeRoot))) {
+    return { method: 'copy', dependsOn: null };
+  }
+  return {
+    method: recommendedLinkMethod(),
+    dependsOn: `${UNIVERSAL_PROJECT_DESTINATION}/${skillId}`,
+  };
 }
 
 /**
@@ -59,7 +86,9 @@ export function createInstallPlan(catalog, options) {
   }
 
   const groups = destinationGroupsFor(options, projectRoot);
-  const selectedRoots = selectedRootsFor(options, groups);
+  const requestedRoots = selectedRootsFor(options, groups);
+  const requestedMethod = requestedMethodFor(options, requestedRoots);
+  const selectedRoots = rootsForRequestedMethod(requestedRoots, requestedMethod);
   const conflictErrors = findDestinationConflicts({
     projectRoot,
     skillIds: [skillId],
@@ -74,17 +103,21 @@ export function createInstallPlan(catalog, options) {
   const currentLock = loadProjectLock(projectRoot);
   const skillFiles = Object.keys(skill.files).sort();
   const groupByRoot = new Map(groups.filter((group) => group.selectable).map((group) => [group.relativeRoot, group]));
+  const copyRoots = (options.copyRoots || []).map((root) => normalizeRelativeRoot(root));
 
   const destinations = selectedRoots.map((relativeRoot) => {
     const resolved = resolveSkillPath(projectRoot, relativeRoot, skillId);
     const group = groupByRoot.get(relativeRoot);
     const kind = relativeRoot === UNIVERSAL_PROJECT_DESTINATION ? 'canonical' : 'host';
     const owned = isDestinationOwned(projectRoot, skillId, resolved.destination, customStateDir);
+    const { method, dependsOn } = destinationMethod(kind, skillId, requestedMethod, copyRoots, relativeRoot);
     return {
       kind,
       relativeRoot,
       destination: resolved.destination,
       relativeDestination: resolved.relativeDestination,
+      method,
+      dependsOn,
       hosts: (group?.hosts || []).map((host) => ({
         id: host.id,
         displayName: host.displayName,
@@ -98,10 +131,19 @@ export function createInstallPlan(catalog, options) {
   const relDest = destinations[0].relativeDestination;
   const unownedConflict = destinations.some((dest) => dest.unownedConflict);
 
-  const writes = destinations.flatMap((dest) => skillFiles.map((file) => `${dest.relativeDestination}/${file}`));
+  const writes = destinations.flatMap((dest) => {
+    if (dest.method === 'copy') {
+      return skillFiles.map((file) => `${dest.relativeDestination}/${file}`);
+    }
+    return [dest.relativeDestination];
+  });
   const replacements = destinations.flatMap((dest) => {
     const owned = isDestinationOwned(projectRoot, skillId, dest.destination, customStateDir);
-    return owned ? skillFiles.map((file) => `${dest.relativeDestination}/${file}`) : [];
+    if (!owned) return [];
+    if (dest.method === 'copy') {
+      return skillFiles.map((file) => `${dest.relativeDestination}/${file}`);
+    }
+    return [dest.relativeDestination];
   });
 
   const existingLockEntry = currentLock.skills?.[skillId] || null;
@@ -125,7 +167,7 @@ export function createInstallPlan(catalog, options) {
     destination: destPath,
     relativeDestination: relDest,
     destinations,
-    method: 'copy',
+    method: requestedMethod,
     files: skillFiles,
     writes,
     replacements,
@@ -148,6 +190,9 @@ export function formatPlanHuman(plan) {
       const hostNames = (dest.hosts || []).map((host) => host.displayName).join(', ');
       const lines = [`    ${dest.destination}`];
       if (dest.relativeDestination) lines.push(`      ${dest.relativeDestination}`);
+      if (dest.method) lines.push(`      Method: ${dest.method}`);
+      if (dest.dependsOn) lines.push(`      Depends on: ${dest.dependsOn}`);
+      if (dest.fallbackFrom) lines.push(`      Fallback from: ${dest.fallbackFrom}`);
       if (hostNames) lines.push(`      Agent Hosts: ${hostNames}`);
       return lines;
     });

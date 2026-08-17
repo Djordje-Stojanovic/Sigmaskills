@@ -119,6 +119,15 @@ export function validateProjectState(state) {
         if (!Array.isArray(copy.ownedPaths)) {
           throw new Error(`invalid project state for '${skillId}': copy is missing ownedPaths`);
         }
+        if (copy.method !== undefined && copy.method !== 'copy' && copy.method !== 'symlink' && copy.method !== 'junction') {
+          throw new Error(`invalid project state for '${skillId}': copy method must be copy, symlink, or junction`);
+        }
+        if (copy.dependsOn !== undefined && copy.dependsOn !== null && typeof copy.dependsOn !== 'string') {
+          throw new Error(`invalid project state for '${skillId}': copy dependsOn must be a string or null`);
+        }
+        if (copy.baseHashes !== undefined && (typeof copy.baseHashes !== 'object' || Array.isArray(copy.baseHashes) || copy.baseHashes === null)) {
+          throw new Error(`invalid project state for '${skillId}': copy baseHashes must be an object`);
+        }
       }
     }
   }
@@ -232,12 +241,20 @@ export function recordSkillInState(state, details) {
   const relDest = toRelative(destination);
   const normalizedOwnedPaths = ownedPaths.map((p) => toRelative(p));
   const normalizedCopies = Array.isArray(copies)
-    ? copies.map((copy) => ({
-      kind: copy.kind,
-      destination: toRelative(copy.destination),
-      hostIds: [...(copy.hostIds || [])],
-      ownedPaths: (copy.ownedPaths || []).map((p) => toRelative(p)),
-    }))
+    ? copies.map((copy) => {
+      const entry = {
+        kind: copy.kind,
+        destination: toRelative(copy.destination),
+        method: copy.method || method,
+        dependsOn: copy.dependsOn == null ? null : toRelative(copy.dependsOn),
+        hostIds: [...(copy.hostIds || [])],
+        ownedPaths: (copy.ownedPaths || []).map((p) => toRelative(p)),
+      };
+      if (copy.baseHashes && typeof copy.baseHashes === 'object') {
+        entry.baseHashes = copy.baseHashes;
+      }
+      return entry;
+    })
     : [{
       kind: relDest.replace(/\\/g, '/').startsWith(`${UNIVERSAL_PROJECT_DESTINATION}/`) ? 'canonical' : 'host',
       destination: relDest,
