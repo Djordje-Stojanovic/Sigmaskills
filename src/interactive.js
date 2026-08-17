@@ -1,6 +1,6 @@
 import readline from 'node:readline';
-import { createInstallPlan, createProjectSkillClassifier } from './plan.js';
-import { createUnownedConflictError, executeProjectInstall } from './transaction.js';
+import { createInstallPlan, createProjectSkillClassifier, formatPlanHuman } from './plan.js';
+import { createNeedsResolutionError, createUnownedConflictError, executeProjectInstall } from './transaction.js';
 import { isDestinationOwned } from './state.js';
 import {
   UNIVERSAL_PROJECT_DESTINATION,
@@ -651,6 +651,13 @@ export async function runProjectInstaller(params) {
     }));
     const conflict = plans.find((plan) => plan.unownedConflict);
     if (conflict) throw createUnownedConflictError(conflict);
+    const pending = plans.find((plan) => plan.requiresApproval);
+    if (pending) {
+      for (const plan of plans) {
+        renderer.line(formatPlanHuman(plan));
+      }
+      throw createNeedsResolutionError(pending);
+    }
 
     const confirmation = await confirmPlans(renderer, input, plans);
     if (!confirmation.confirmed) {

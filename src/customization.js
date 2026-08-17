@@ -70,6 +70,36 @@ export function validateCustomizationBlock(markdownContent, skillId = 'skill') {
 }
 
 /**
+ * Inspect customization markers without guessing. Absent markers stay absent;
+ * malformed markers are reported and never repaired.
+ *
+ * @param {string} markdownContent
+ * @param {string} [skillId]
+ * @returns {{ status: 'absent' | 'empty' | 'valid' | 'malformed', customContent?: string, error?: string }}
+ */
+export function inspectCustomizationBlock(markdownContent, skillId = 'skill') {
+  if (typeof markdownContent !== 'string') {
+    return { status: 'malformed', error: `${skillId}: markdown content must be a string` };
+  }
+
+  const hasStart = markdownContent.includes(CUSTOM_BLOCK_START);
+  const hasEnd = markdownContent.includes(CUSTOM_BLOCK_END);
+  if (!hasStart && !hasEnd) {
+    return { status: 'absent' };
+  }
+
+  try {
+    const result = validateCustomizationBlock(markdownContent, skillId);
+    return {
+      status: result.customContent ? 'valid' : 'empty',
+      customContent: result.customContent,
+    };
+  } catch (err) {
+    return { status: 'malformed', error: err.message };
+  }
+}
+
+/**
  * Extract the user-customized instructions from a skill markdown string.
  *
  * @param {string} markdownContent

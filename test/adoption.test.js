@@ -6,12 +6,13 @@ import test from 'node:test';
 import {
   chooseCanonical,
   classifySkillPath,
+  diffSkillFiles,
   RECOGNITION_PRECEDENCE,
 } from '../src/adoption.js';
 import { getCatalog, findPackageRoot } from '../src/catalog.js';
 import { recommendedLinkMethod } from '../src/links.js';
 import { inspectProjectLock, loadProjectLock } from '../src/project-lock.js';
-import { computeSkillRevision } from '../src/revision.js';
+import { computeSkillRevision, computeSkillRevisionAndHashes } from '../src/revision.js';
 
 const ROOT = findPackageRoot();
 const LINK_METHOD = recommendedLinkMethod();
@@ -189,4 +190,82 @@ test('duplicate exact destinations choose one canonical copy and report the fate
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
+});
+
+test('classify: exact historical baseline is legacy; the same tree is unverified without that baseline', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-adopt-legacy-'));
+  try {
+    const dest = path.join(projectRoot, '.agents', 'skills', 'sigmawrite');
+    plantSkill(dest);
+    const skillMd = path.join(dest, 'SKILL.md');
+    fs.writeFileSync(skillMd, `${fs.readFileSync(skillMd, 'utf8').replace('Not certified STE', 'Legacy certified STE')}`);
+    const hashed = computeSkillRevisionAndHashes(dest);
+    const bundledRevision = 'current-official-revision-not-matching';
+
+    const withoutBaseline = classifySkillPath({
+      destPath: dest,
+      skillId: 'sigmawrite',
+      bundledRevision,
+      bundledFiles: { 'SKILL.md': 'upstream' },
+      expectedCanonicalPath: dest,
+      sigmaOwned: false,
+    });
+    assert.equal(withoutBaseline.kind, 'unverified');
+    assert.equal(withoutBaseline.adoptable, false);
+    assert.equal(withoutBaseline.migratable, true);
+    assert.equal(withoutBaseline.confidence, 'low');
+    assert.ok(['valid', 'empty'].includes(withoutBaseline.customization.status));
+
+    const withBaseline = classifySkillPath({
+      destPath: dest,
+      skillId: 'sigmawrite',
+      bundledRevision,
+      bundledFiles: { 'SKILL.md': 'upstream' },
+      bundledBaselines: [{ revision: hashed.revision, files: hashed.files }],
+      expectedCanonicalPath: dest,
+      sigmaOwned: false,
+    });
+    assert.equal(withBaseline.kind, 'legacy');
+    assert.equal(withBaseline.adoptable, false);
+    assert.equal(withBaseline.migratable, true);
+    assert.equal(withBaseline.confidence, 'high');
+    assert.equal(withBaseline.baselineRevision, hashed.revision);
+    assert.deepEqual(withBaseline.diff.replaced, ['SKILL.md']);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('classify: malformed markers are never guessed into a customization block', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-adopt-malformed-'));
+  try {
+    const dest = path.join(projectRoot, '.agents', 'skills', 'sigmawrite');
+    plantSkill(dest);
+    const skillMd = path.join(dest, 'SKILL.md');
+    const md = fs.readFileSync(skillMd, 'utf8');
+    fs.writeFileSync(skillMd, md.replace('<sigmaskills-custom>', '<sigmaskills-custom>\n<sigmaskills-custom>'));
+    const classified = classifySkillPath({
+      destPath: dest,
+      skillId: 'sigmawrite',
+      bundledRevision: 'current',
+      bundledFiles: { 'SKILL.md': 'upstream' },
+      expectedCanonicalPath: dest,
+    });
+    assert.equal(classified.kind, 'malformed-custom');
+    assert.equal(classified.migratable, true);
+    assert.equal(classified.customization.status, 'malformed');
+    assert.equal(classified.adoptable, false);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('diffSkillFiles reports additions, replacements, and deletions from independent hashes', () => {
+  assert.deepEqual(
+    diffSkillFiles(
+      { 'SKILL.md': 'live', extra: 'new', keep: 'same' },
+      { 'SKILL.md': 'upstream', gone: 'old', keep: 'same' },
+    ),
+    { added: ['extra'], replaced: ['SKILL.md'], deleted: ['gone'] },
+  );
 });

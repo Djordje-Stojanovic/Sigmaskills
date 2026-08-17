@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { chooseCanonical, classifySkillPath } from './adoption.js';
+import { chooseCanonical, classifySkillPath, loadSkillBaselines } from './adoption.js';
 import { loadProjectLock } from './project-lock.js';
 import { isDestinationOwned, loadProjectState } from './state.js';
 import {
@@ -11,10 +11,21 @@ import {
   normalizeRelativeRoot,
   resolveSkillPath,
 } from './destinations.js';
+import { plannedExportDir } from './backup.js';
 import { findPackageRoot } from './catalog.js';
 import { pathExists, recommendedLinkMethod } from './links.js';
 
 export const PLAN_SCHEMA_VERSION = 1;
+
+function resolutionFor(classification, relativeDestination, options = {}) {
+  const explicit = options.resolutions?.[relativeDestination];
+  if (explicit) return explicit;
+  if (classification?.kind === 'changed') return options.adoptChanged;
+  if (classification?.kind === 'legacy') return options.adoptLegacy;
+  if (classification?.kind === 'unverified') return options.adoptUnverified;
+  if (classification?.kind === 'malformed-custom') return options.adoptMalformed;
+  return undefined;
+}
 
 /**
  * Project Installation classifier: valid Sigma state, then exact Skill Revision, then resolved link.
@@ -22,17 +33,23 @@ export const PLAN_SCHEMA_VERSION = 1;
  * @param {object} params
  * @returns {(skillId: string, destination: string) => object}
  */
-export function createProjectSkillClassifier({ catalog, projectRoot, customStateDir }) {
+export function createProjectSkillClassifier({ catalog, projectRoot, customStateDir, packageRoot }) {
   const projectState = loadProjectState(projectRoot, customStateDir);
+  const baselines = loadSkillBaselines(packageRoot || findPackageRoot());
   return (skillId, destination) => {
     const skill = catalog.skills.find((item) => item.id === skillId);
     const expectedCanonical = resolveSkillPath(projectRoot, UNIVERSAL_PROJECT_DESTINATION, skillId);
+    const entry = projectState.skills?.[skillId];
     return classifySkillPath({
       destPath: destination,
+      skillId,
       bundledRevision: skill?.revision,
+      bundledFiles: skill?.files || {},
+      bundledBaselines: Array.isArray(baselines?.[skillId]) ? baselines[skillId] : [],
       expectedCanonicalPath: expectedCanonical.destination,
       sigmaOwned: isDestinationOwned(projectRoot, skillId, destination, customStateDir),
-      sigmaRevision: projectState.skills?.[skillId]?.revision || null,
+      sigmaRevision: entry?.revision || null,
+      baseHashes: entry?.baseHashes || null,
     });
   };
 }
@@ -110,7 +127,12 @@ export function createInstallPlan(catalog, options) {
   const requestedRoots = selectedRootsFor(options, groups);
   const requestedMethod = requestedMethodFor(options, requestedRoots);
   const selectedRoots = rootsForRequestedMethod(requestedRoots, requestedMethod);
-  const classify = createProjectSkillClassifier({ catalog, projectRoot, customStateDir });
+  const classify = createProjectSkillClassifier({
+    catalog,
+    projectRoot,
+    customStateDir,
+    packageRoot: options.packageRoot,
+  });
   const conflictErrors = findDestinationConflicts({
     projectRoot,
     skillIds: [skillId],
@@ -137,6 +159,10 @@ export function createInstallPlan(catalog, options) {
     const planned = destinationMethod(kind, skillId, requestedMethod, copyRoots, relativeRoot);
     const method = classification.adoptable ? (classification.method || 'copy') : planned.method;
     const dependsOn = method === 'copy' ? null : `${UNIVERSAL_PROJECT_DESTINATION}/${skillId}`;
+    const resolution = classification.migratable
+      ? resolutionFor(classification, resolved.relativeDestination, options)
+      : undefined;
+    const migratable = Boolean(classification.migratable);
     return {
       kind,
       relativeRoot,
@@ -150,17 +176,41 @@ export function createInstallPlan(catalog, options) {
         detected: Boolean(host.detected),
       })),
       adoption: classification.adoptable ? classification.kind : undefined,
+      recognition: classification.kind,
+      confidence: classification.confidence || 'none',
+      baselineRevision: classification.baselineRevision,
+      diff: classification.diff,
+      customization: classification.customization,
+      migratable,
+      resolution,
       baseHashes: classification.files,
-      unownedConflict: !owned && pathExists(resolved.destination) && !classification.adoptable,
+      unownedConflict: !owned && pathExists(resolved.destination) && !classification.adoptable && !migratable,
     };
   });
 
   const destPath = destinations[0].destination;
   const relDest = destinations[0].relativeDestination;
   const unownedConflict = destinations.some((dest) => dest.unownedConflict);
+  const exportRoot = options.exportDir || path.join(projectRoot, '.sigma-export');
+  const claimedExports = new Set();
+  for (const dest of destinations) {
+    if (dest.resolution !== 'export') continue;
+    let exportPath = plannedExportDir(exportRoot, skillId);
+    while (claimedExports.has(exportPath)) {
+      const dir = path.dirname(exportPath);
+      const name = path.basename(exportPath);
+      const match = name.match(/^(.*)-(\d+)$/);
+      const rootName = match ? match[1] : name;
+      const next = match ? Number(match[2]) + 1 : 2;
+      exportPath = path.join(dir, `${rootName}-${next}`);
+    }
+    claimedExports.add(exportPath);
+    dest.exportPath = exportPath;
+  }
 
   const writes = destinations.flatMap((dest) => {
     if (dest.adoption) return [];
+    if (dest.resolution === 'skip' || dest.resolution === 'export') return [];
     if (dest.method === 'copy') {
       return skillFiles.map((file) => `${dest.relativeDestination}/${file}`);
     }
@@ -168,8 +218,8 @@ export function createInstallPlan(catalog, options) {
   });
   const replacements = destinations.flatMap((dest) => {
     if (dest.adoption) return [];
-    const owned = isDestinationOwned(projectRoot, skillId, dest.destination, customStateDir);
-    if (!owned) return [];
+    if (dest.resolution === 'skip' || dest.resolution === 'export') return [];
+    if (!pathExists(dest.destination)) return [];
     if (dest.method === 'copy') {
       return skillFiles.map((file) => `${dest.relativeDestination}/${file}`);
     }
@@ -190,9 +240,12 @@ export function createInstallPlan(catalog, options) {
     relativeDestination: dest.relativeDestination,
     relativeRoot: dest.relativeRoot,
     destPath: dest.destination,
+    resolution: dest.resolution,
     classification: {
-      kind: dest.adoption || 'missing',
+      kind: dest.recognition || dest.adoption || 'missing',
       adoptable: Boolean(dest.adoption),
+      migratable: Boolean(dest.migratable),
+      confidence: dest.confidence,
     },
   })));
   const adoption = {
@@ -202,8 +255,11 @@ export function createInstallPlan(catalog, options) {
       fate: copy.fate,
       role: copy.role,
       recognition: copy.classification?.kind || 'missing',
+      confidence: copy.classification?.confidence || 'none',
+      resolution: copy.resolution,
     })),
   };
+  const needsResolution = destinations.some((dest) => dest.migratable && !dest.resolution);
 
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
@@ -222,7 +278,8 @@ export function createInstallPlan(catalog, options) {
     replacements,
     lockChanges,
     adoption,
-    requiresApproval: false,
+    exportDir: options.exportDir || null,
+    requiresApproval: needsResolution,
     unownedConflict,
     dryRun: Boolean(dryRun),
   };
@@ -243,6 +300,18 @@ export function formatPlanHuman(plan) {
       if (dest.method) lines.push(`      Method: ${dest.method}`);
       if (dest.dependsOn) lines.push(`      Depends on: ${dest.dependsOn}`);
       if (dest.fallbackFrom) lines.push(`      Fallback from: ${dest.fallbackFrom}`);
+      if (dest.recognition) lines.push(`      Recognition: ${dest.recognition}`);
+      if (dest.confidence) lines.push(`      Provenance: ${dest.confidence}`);
+      if (dest.resolution) lines.push(`      Resolution: ${dest.resolution}`);
+      if (dest.exportPath) lines.push(`      Export: ${dest.exportPath}`);
+      if (dest.diff) {
+        const added = dest.diff.added || [];
+        const replaced = dest.diff.replaced || [];
+        const deleted = dest.diff.deleted || [];
+        if (added.length) lines.push(`      Additions: ${added.join(', ')}`);
+        if (replaced.length) lines.push(`      Replacements: ${replaced.join(', ')}`);
+        if (deleted.length) lines.push(`      Deletions: ${deleted.join(', ')}`);
+      }
       if (hostNames) lines.push(`      Agent Hosts: ${hostNames}`);
       return lines;
     });

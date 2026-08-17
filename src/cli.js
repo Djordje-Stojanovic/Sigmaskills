@@ -38,6 +38,16 @@ Options:
   --destination <dir> Project destination root (repeatable; default .agents/skills)
   --link            Recommended links: Windows junctions, macOS/Linux symbolic links
   --copy            Independent managed copy at every selected destination
+  --adopt-changed <replace|skip|export>
+                    Resolve changed owned or drifted trees
+  --adopt-legacy <replace|skip|export>
+                    Resolve trees that match a bundled historical baseline
+  --adopt-unverified <replace|skip|export>
+                    Resolve Sigma-looking trees without a baseline
+  --adopt-malformed <replace|skip|export>
+                    Resolve trees with malformed customization markers
+  --export-dir <dir>
+                    Collision-safe destination root for export resolutions
   --no-color        Disable color and reveal animation
   --static          Disable animation and screen repainting
   --narrow          Use the narrow-terminal layout
@@ -72,6 +82,11 @@ export function parseCliArgs(args) {
     narrow: false,
     method: null,
     destinations: [],
+    adoptChanged: null,
+    adoptLegacy: null,
+    adoptUnverified: null,
+    adoptMalformed: null,
+    exportDir: null,
     unknown: [],
   };
 
@@ -97,6 +112,26 @@ export function parseCliArgs(args) {
       parsed.method = parsed.method && parsed.method !== 'copy' ? 'conflict' : 'copy';
     } else if (arg === '--link') {
       parsed.method = parsed.method && parsed.method !== 'link' ? 'conflict' : 'link';
+    } else if (arg === '--adopt-changed') {
+      parsed.adoptChanged = args[++i];
+    } else if (arg.startsWith('--adopt-changed=')) {
+      parsed.adoptChanged = arg.slice('--adopt-changed='.length);
+    } else if (arg === '--adopt-legacy') {
+      parsed.adoptLegacy = args[++i];
+    } else if (arg.startsWith('--adopt-legacy=')) {
+      parsed.adoptLegacy = arg.slice('--adopt-legacy='.length);
+    } else if (arg === '--adopt-unverified') {
+      parsed.adoptUnverified = args[++i];
+    } else if (arg.startsWith('--adopt-unverified=')) {
+      parsed.adoptUnverified = arg.slice('--adopt-unverified='.length);
+    } else if (arg === '--adopt-malformed') {
+      parsed.adoptMalformed = args[++i];
+    } else if (arg.startsWith('--adopt-malformed=')) {
+      parsed.adoptMalformed = arg.slice('--adopt-malformed='.length);
+    } else if (arg === '--export-dir') {
+      parsed.exportDir = args[++i];
+    } else if (arg.startsWith('--export-dir=')) {
+      parsed.exportDir = arg.slice('--export-dir='.length);
     } else if (arg === '--destination') {
       parsed.destinations.push(args[++i]);
     } else if (arg.startsWith('--destination=')) {
@@ -169,6 +204,19 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       return 1;
     }
 
+    const adoptFlags = [
+      ['--adopt-changed', opts.adoptChanged],
+      ['--adopt-legacy', opts.adoptLegacy],
+      ['--adopt-unverified', opts.adoptUnverified],
+      ['--adopt-malformed', opts.adoptMalformed],
+    ];
+    for (const [flag, value] of adoptFlags) {
+      if (value && value !== 'replace' && value !== 'skip' && value !== 'export') {
+        writeErr(`sigmaskills error: ${flag} must be replace, skip, or export`);
+        return 1;
+      }
+    }
+
     if (opts.command === 'list' || (!opts.command && opts.json && !opts.skillId)) {
       if (opts.json) {
         const payload = {
@@ -220,6 +268,11 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         dryRun: opts.dryRun,
         selectedRoots: opts.destinations.length > 0 ? opts.destinations : undefined,
         method: opts.method || undefined,
+        adoptChanged: opts.adoptChanged || undefined,
+        adoptLegacy: opts.adoptLegacy || undefined,
+        adoptUnverified: opts.adoptUnverified || undefined,
+        adoptMalformed: opts.adoptMalformed || undefined,
+        exportDir: opts.exportDir || undefined,
       });
 
       if (opts.json) {

@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { findPackageRoot, validateSkill } from './catalog.js';
+import { injectCustomContent } from './customization.js';
+import { commitSkillBackup, exportSkillTree, pruneOlderBackups } from './backup.js';
 import { createInstallPlan } from './plan.js';
 import { loadProjectLock, saveProjectLock, updateProjectLockSkill, PROJECT_LOCK_FILENAME } from './project-lock.js';
 import {
@@ -123,6 +125,17 @@ export function createUnownedConflictError(plan) {
   );
 }
 
+export function createNeedsResolutionError(plan) {
+  const pending = (plan.destinations || []).filter((dest) => dest.migratable && !dest.resolution);
+  const details = pending.map((dest) => {
+    const diff = dest.diff || { added: [], replaced: [], deleted: [] };
+    return `${dest.relativeDestination} (${dest.recognition}, provenance ${dest.confidence}; +${(diff.added || []).length} ~${(diff.replaced || []).length} -${(diff.deleted || []).length})`;
+  }).join('; ');
+  return new Error(
+    `Changed or legacy Sigma-looking trees need an explicit replace, skip, or export choice before mutation: ${details}`,
+  );
+}
+
 /**
  * Execute transactional single-skill project installation.
  *
@@ -158,6 +171,12 @@ export function executeProjectInstall(params) {
     env: params.env,
     method: params.method,
     copyRoots: params.copyRoots,
+    resolutions: params.resolutions,
+    adoptChanged: params.adoptChanged,
+    adoptLegacy: params.adoptLegacy,
+    adoptUnverified: params.adoptUnverified,
+    adoptMalformed: params.adoptMalformed,
+    exportDir: params.exportDir,
   });
 
   if (plan.unownedConflict) throw createUnownedConflictError(plan);
@@ -170,6 +189,8 @@ export function executeProjectInstall(params) {
     };
   }
 
+  if (plan.requiresApproval) throw createNeedsResolutionError(plan);
+
   const releaseLock = acquireConcurrencyLock(projectRoot, customStateDir);
 
   const stagingParent = path.join(projectRoot, '.agents', '.sigma-staging');
@@ -179,6 +200,7 @@ export function executeProjectInstall(params) {
   );
 
   const committed = [];
+  const privateBackups = [];
 
   const lockPath = path.join(projectRoot, PROJECT_LOCK_FILENAME);
   const lockExisted = fs.existsSync(lockPath);
@@ -221,6 +243,13 @@ export function executeProjectInstall(params) {
           // Per-destination rollback is best-effort
         }
       }
+      for (const backupPath of privateBackups.splice(0)) {
+        try {
+          if (pathExists(backupPath)) removeManagedPath(backupPath);
+        } catch {
+          // Private backup cleanup is best-effort
+        }
+      }
       // Restore state and lock or remove if they didn't exist before
       if (stateExisted && originalStateBytes) {
         fs.writeFileSync(statePath, originalStateBytes);
@@ -250,7 +279,13 @@ export function executeProjectInstall(params) {
   process.once('SIGTERM', signalHandler);
 
   try {
+    const willWrite = (dest) => (
+      !dest.adoption
+      && dest.resolution !== 'skip'
+      && dest.resolution !== 'export'
+    );
     const allAdopted = plan.destinations.every((dest) => dest.adoption);
+    const needsSkillWrite = plan.destinations.some(willWrite);
     const existingEntry = originalState.skills?.[skillId];
     const existingDests = new Set(
       (existingEntry?.copies || []).map((copy) => String(copy.destination || '').replace(/\\/g, '/')),
@@ -276,7 +311,7 @@ export function executeProjectInstall(params) {
     const catalogSkill = catalog.skills.find((item) => item.id === skillId);
     let fileHashes = catalogSkill?.files || {};
 
-    if (!allAdopted) {
+    if (needsSkillWrite) {
       fs.mkdirSync(stagingDir, { recursive: true });
       const sourceSkillDir = path.join(packageRoot, skillId);
       if (!fs.existsSync(sourceSkillDir)) {
@@ -381,11 +416,53 @@ export function executeProjectInstall(params) {
         committed.push({ destDir: dest.destination, backupDir: null, adopted: true });
         continue;
       }
+      if (dest.resolution === 'skip') {
+        dest.exportPath = null;
+        continue;
+      }
+      if (dest.resolution === 'export') {
+        const exportRoot = plan.exportDir || path.join(projectRoot, '.sigma-export');
+        const exporter = params.exportSkill || exportSkillTree;
+        dest.exportPath = exporter({
+          sourceDir: dest.destination,
+          exportRoot,
+          skillId,
+          dest: dest.exportPath,
+        });
+        continue;
+      }
+      if (dest.resolution === 'replace' && pathExists(dest.destination)) {
+        const backupFn = params.backupSkill || commitSkillBackup;
+        const privateBackup = backupFn({
+          stateDir: getProjectStateDir(projectRoot, customStateDir),
+          skillId,
+          sourceDir: dest.destination,
+        });
+        privateBackups.push(privateBackup);
+        dest.privateBackup = privateBackup;
+        if (typeof params.afterBackup === 'function') {
+          params.afterBackup(privateBackup);
+        }
+      }
       if (dest.method === 'copy') commitCopy(dest.destination);
       else commitLink(dest);
+      const customStatus = dest.customization?.status;
+      if (dest.resolution === 'replace' && (customStatus === 'valid' || customStatus === 'empty')) {
+        const skillMd = path.join(dest.destination, 'SKILL.md');
+        if (pathExists(skillMd)) {
+          const current = fs.readFileSync(skillMd, 'utf8');
+          fs.writeFileSync(
+            skillMd,
+            injectCustomContent(current, dest.customization.customContent || '', skillId),
+            'utf8',
+          );
+        }
+      }
     }
 
-    const copies = plan.destinations.map((dest) => {
+    const copies = plan.destinations
+      .filter((dest) => dest.adoption || dest.resolution === 'replace' || (!dest.migratable && dest.resolution !== 'skip' && dest.resolution !== 'export'))
+      .map((dest) => {
       const independent = dest.method === 'copy';
       return {
         kind: dest.kind,
@@ -396,9 +473,20 @@ export function executeProjectInstall(params) {
         ownedPaths: independent
           ? plan.files.map((file) => `${dest.relativeDestination}/${file}`)
           : [dest.relativeDestination],
-        ...(independent ? { baseHashes: dest.baseHashes || fileHashes } : {}),
+        ...(independent ? { baseHashes: dest.baseHashes && dest.resolution !== 'replace' ? dest.baseHashes : fileHashes } : {}),
       };
     });
+    if (copies.length === 0) {
+      cleanupStaging();
+      releaseLock();
+      return {
+        success: true,
+        dryRun: false,
+        plan,
+        lock: originalLock,
+        state: originalState,
+      };
+    }
     const primary = copies.find((copy) => copy.kind === 'canonical') || copies[0];
 
     const updatedState = recordSkillInState(originalState, {
@@ -428,6 +516,13 @@ export function executeProjectInstall(params) {
         removeManagedPath(entry.backupDir);
         entry.backupDir = null;
       }
+    }
+    for (const backupPath of privateBackups) {
+      pruneOlderBackups({
+        stateDir: getProjectStateDir(projectRoot, customStateDir),
+        skillId,
+        keepPath: backupPath,
+      });
     }
 
     cleanupStaging();

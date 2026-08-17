@@ -12,6 +12,7 @@
     "registry/agent-hosts.json",
     "registry/source.json",
     "registry/schema.json",
+    "registry/skill-baselines.json",
     "manifest.json",
     "sigmareview",
     "sigmaperformance",

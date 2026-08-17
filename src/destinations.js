@@ -270,6 +270,7 @@ export function findDestinationConflicts({ projectRoot, skillIds, selectedRoots,
       ? classify(item.skillId, item.destination)
       : null;
     if (classified?.adoptable) continue;
+    if (classified?.migratable) continue;
     if (inspected.wrongTarget) {
       errors.push(
         `Destination '${item.destination}' is a wrong-target link. Installation aborted.`,
