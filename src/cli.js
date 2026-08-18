@@ -1,6 +1,7 @@
 import { getCatalog, findPackageRoot } from './catalog.js';
 import { formatPlanHuman, formatPlanJson } from './plan.js';
 import { runProjectInstaller } from './interactive.js';
+import { collectStatus, formatStatusHuman, formatStatusJson } from './status.js';
 import { executeProjectInstall } from './transaction.js';
 import { resolveHomeDir } from './destinations.js';
 
@@ -25,6 +26,7 @@ Usage:
 Commands:
   install <skill>   Install a skill into the project (.agents/skills/<skill>)
   add <skill>       Alias for install
+  status            Report managed Project or Global Installation state and drift
   list              List all shipped skills and their Skill Revisions
   verify            Validate manifest, skill resources, and compute revisions
 
@@ -157,7 +159,7 @@ export function parseCliArgs(args) {
       parsed.stateDir = arg.slice('--state-dir='.length);
     } else if (
       !parsed.command &&
-      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add')
+      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status')
     ) {
       parsed.command = arg;
     } else if (!parsed.skillId && (parsed.command === 'install' || parsed.command === 'add')) {
@@ -220,6 +222,21 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeErr(`sigmaskills error: ${flag} must be replace, skip, or export`);
         return 1;
       }
+    }
+
+    if (opts.command === 'status') {
+      const env = io.env || process.env;
+      const report = collectStatus({
+        catalog,
+        projectRoot: opts.projectRoot || process.cwd(),
+        homeDir: resolveHomeDir(env),
+        scope: opts.global ? 'global' : 'project',
+        customStateDir: opts.stateDir,
+        packageRoot: rootDir,
+        env,
+      });
+      writeOut(opts.json ? formatStatusJson(report) : formatStatusHuman(report));
+      return 0;
     }
 
     if (opts.command === 'list' || (!opts.command && opts.json && !opts.skillId)) {
