@@ -2,6 +2,7 @@ import { getCatalog, findPackageRoot } from './catalog.js';
 import { formatPlanHuman, formatPlanJson } from './plan.js';
 import { runProjectInstaller } from './interactive.js';
 import { collectStatus, formatStatusHuman, formatStatusJson } from './status.js';
+import { executeUpdate, formatUpdateHuman, formatUpdateJson } from './update.js';
 import { executeProjectInstall } from './transaction.js';
 import { resolveHomeDir } from './destinations.js';
 
@@ -26,6 +27,7 @@ Usage:
 Commands:
   install <skill>   Install a skill into the project (.agents/skills/<skill>)
   add <skill>       Alias for install
+  update            Update selected whole skills to the running CLI Release
   status            Report managed Project or Global Installation state and drift
   list              List all shipped skills and their Skill Revisions
   verify            Validate manifest, skill resources, and compute revisions
@@ -33,8 +35,8 @@ Commands:
 Options:
   -v, --version     Show version number
   -h, --help        Show help
-  --skill <name>    Skill identifier to install
-  --dry-run         Preview installation changes without writing files
+  --skill <name>    Skill identifier to install or update (repeatable for update)
+  --dry-run         Preview install or update changes without writing files
   --json            Output in versioned JSON format
   --project <path>  Target project root directory (defaults to current directory)
   --global          User-level Global Installation (requires --yes to write)
@@ -74,6 +76,7 @@ export function parseCliArgs(args) {
   const parsed = {
     command: null,
     skillId: null,
+    skillIds: [],
     projectRoot: null,
     stateDir: null,
     dryRun: false,
@@ -145,8 +148,10 @@ export function parseCliArgs(args) {
       parsed.destinations.push(arg.slice('--destination='.length));
     } else if (arg === '--skill') {
       parsed.skillId = args[++i];
+      if (parsed.skillId) parsed.skillIds.push(parsed.skillId);
     } else if (arg.startsWith('--skill=')) {
       parsed.skillId = arg.slice('--skill='.length);
+      if (parsed.skillId) parsed.skillIds.push(parsed.skillId);
     } else if (arg === '--project' || arg === '--cwd') {
       parsed.projectRoot = args[++i];
     } else if (arg.startsWith('--project=')) {
@@ -159,11 +164,13 @@ export function parseCliArgs(args) {
       parsed.stateDir = arg.slice('--state-dir='.length);
     } else if (
       !parsed.command &&
-      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status')
+      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status' || arg === 'update')
     ) {
       parsed.command = arg;
     } else if (!parsed.skillId && (parsed.command === 'install' || parsed.command === 'add')) {
       parsed.skillId = arg;
+    } else if (parsed.command === 'update' && !arg.startsWith('-')) {
+      parsed.skillIds.push(arg);
     } else if (arg === '--list') {
       parsed.command = 'list';
     } else {
@@ -222,6 +229,31 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeErr(`sigmaskills error: ${flag} must be replace, skip, or export`);
         return 1;
       }
+    }
+
+    if (opts.command === 'update') {
+      const env = io.env || process.env;
+      if (opts.global && !opts.dryRun && !opts.yes) {
+        writeErr('sigmaskills error: Global Installation requires both --global and --yes; CI, TTY, JSON, and Agent Host detection never imply that authority');
+        return 1;
+      }
+      if (!opts.dryRun && !opts.yes && opts.skillIds.length === 0) {
+        writeErr('sigmaskills error: update requires --yes to apply all changed skills, or --skill <id> to select complete skills; use --dry-run to preview');
+        return 1;
+      }
+      const result = executeUpdate({
+        catalog,
+        projectRoot: opts.projectRoot || process.cwd(),
+        homeDir: resolveHomeDir(env),
+        scope: opts.global ? 'global' : 'project',
+        customStateDir: opts.stateDir,
+        packageRoot: rootDir,
+        dryRun: opts.dryRun,
+        env,
+        skillIds: opts.skillIds,
+      });
+      writeOut(opts.json ? formatUpdateJson(result) : formatUpdateHuman(result));
+      return 0;
     }
 
     if (opts.command === 'status') {

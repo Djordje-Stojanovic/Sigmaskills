@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { findPackageRoot, validateSkill } from './catalog.js';
-import { injectCustomContent } from './customization.js';
+import { injectCustomContent, injectRawCustomContent } from './customization.js';
 import { commitSkillBackup, exportSkillTree, pruneOlderBackups } from './backup.js';
 import { createInstallPlan } from './plan.js';
 import { loadProjectLock, saveProjectLock, updateProjectLockSkill, PROJECT_LOCK_FILENAME } from './project-lock.js';
@@ -347,6 +347,17 @@ export function executeProjectInstall(params) {
         );
       }
       fileHashes = validatedStaged.files;
+      if (params.preservedCustomRaw !== undefined) {
+        const stagedSkillMd = path.join(stagingDir, 'SKILL.md');
+        if (pathExists(stagedSkillMd)) {
+          const stagedMarkdown = fs.readFileSync(stagedSkillMd, 'utf8');
+          fs.writeFileSync(
+            stagedSkillMd,
+            injectRawCustomContent(stagedMarkdown, params.preservedCustomRaw, skillId),
+            'utf8',
+          );
+        }
+      }
     }
 
     const createLink = params.createLink || ((linkPath, targetPath) => (
@@ -466,7 +477,11 @@ export function executeProjectInstall(params) {
       if (dest.method === 'copy') commitCopy(dest.destination);
       else commitLink(dest);
       const customStatus = dest.customization?.status;
-      if (dest.resolution === 'replace' && (customStatus === 'valid' || customStatus === 'empty')) {
+      if (
+        params.preservedCustomRaw === undefined
+        && dest.resolution === 'replace'
+        && (customStatus === 'valid' || customStatus === 'empty')
+      ) {
         const skillMd = path.join(dest.destination, 'SKILL.md');
         if (pathExists(skillMd)) {
           const current = fs.readFileSync(skillMd, 'utf8');

@@ -91,6 +91,10 @@ Non-interactive mutation requires both `--global` and `--yes`. `--dry-run` shows
 
 `npx sigmaskills status` is read-only. It reports Project Installation state by default, or Global Installation with `--global`. Human and `--json` output name the scope, installed and running Release, Skill Revisions, Agent Hosts, methods, exact paths, and ownership. Classification uses live per-file hashes and `lstat`/link checks. Valid Skill Customization is drift, not corruption. Drift discovery still exits `0`; command failures exit `1`. Status does not migrate, repair, write state or destinations, rewrite `skills-lock.json`, or contact the network.
 
+### Sigma Installer: update
+
+`npx sigmaskills update --dry-run` groups changed and unchanged skills, shows the bundled changelog and whole-skill file diffs, and writes nothing. `--yes` updates every changed skill when none are blocked; `--skill <id>` (repeatable) selects complete skills only. Valid Skill Customization bytes between the markers are copied onto the new official `SKILL.md` exactly. The canonical `.agents/skills/<id>` copy owns that customization; links and matching managed copies follow it. Unknown newer state schemas, missing bundled Skill Revisions, and unsafe drift (outside edits, broken links, copy disagreement, malformed markers) stop without mutation. Updates use the same transactional install path and refresh state only after commit. Project Installation is the default; Global Installation needs `--global` and `--yes`.
+
 ### Cross-host alternative
 
 The cross-agent [skills](https://github.com/vercel-labs/skills) CLI detects Codex, Claude Code, Cursor, OpenCode, Pi, and dozens more:

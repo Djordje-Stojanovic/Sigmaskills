@@ -112,6 +112,35 @@ export function extractCustomContent(markdownContent, skillId = 'skill') {
 }
 
 /**
+ * Exact bytes between the customization markers, including leading newlines.
+ *
+ * @param {string} markdownContent
+ * @param {string} [skillId]
+ * @returns {string}
+ */
+export function extractRawCustomContent(markdownContent, skillId = 'skill') {
+  validateCustomizationBlock(markdownContent, skillId);
+  const startIndex = markdownContent.indexOf(CUSTOM_BLOCK_START);
+  const endIndex = markdownContent.indexOf(CUSTOM_BLOCK_END);
+  return markdownContent.slice(startIndex + CUSTOM_BLOCK_START.length, endIndex);
+}
+
+/**
+ * Replace bytes between customization markers without normalizing newlines.
+ *
+ * @param {string} baseMarkdownContent
+ * @param {string} rawCustomContent
+ * @param {string} [skillId]
+ * @returns {string}
+ */
+export function injectRawCustomContent(baseMarkdownContent, rawCustomContent, skillId = 'skill') {
+  validateCustomizationBlock(baseMarkdownContent, skillId);
+  const startIndex = baseMarkdownContent.indexOf(CUSTOM_BLOCK_START);
+  const endIndex = baseMarkdownContent.indexOf(CUSTOM_BLOCK_END);
+  return `${baseMarkdownContent.slice(0, startIndex + CUSTOM_BLOCK_START.length)}${rawCustomContent}${baseMarkdownContent.slice(endIndex)}`;
+}
+
+/**
  * Inject user-customized instructions into a base skill markdown string.
  *
  * @param {string} baseMarkdownContent

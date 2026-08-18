@@ -6,7 +6,9 @@ import {
   SECTION_HEADING,
   validateCustomizationBlock,
   extractCustomContent,
+  extractRawCustomContent,
   injectCustomContent,
+  injectRawCustomContent,
 } from '../src/customization.js';
 
 test('customization: validates well-formed empty custom block', () => {
@@ -86,6 +88,20 @@ test('customization: rejects nested markers', () => {
   assert.throws(
     () => validateCustomizationBlock(md, 'sample'),
     /multiple '<sigmaskills-custom>' markers/i,
+  );
+});
+
+test('customization: raw bytes between tags survive inject including CRLF and no final newline', () => {
+  const base = `# Sample Skill\n\n${SECTION_HEADING}\n\n${CUSTOM_BLOCK_START}\n${CUSTOM_BLOCK_END}\n`;
+  const raw = '\r\n  keep   spaces\r\n# heading\n<note>xml</note>\nno-final-newline';
+  const injected = injectRawCustomContent(base, raw, 'sample');
+  assert.equal(extractRawCustomContent(injected, 'sample'), raw);
+  assert.equal(
+    injected.slice(
+      injected.indexOf(CUSTOM_BLOCK_START) + CUSTOM_BLOCK_START.length,
+      injected.indexOf(CUSTOM_BLOCK_END),
+    ),
+    raw,
   );
 });
 
