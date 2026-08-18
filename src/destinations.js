@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { findPackageRoot } from './catalog.js';
 import { inspectManagedPath, pathExists } from './links.js';
@@ -185,6 +186,207 @@ export function resolveSkillPath(projectRoot, relativeRoot, skillId) {
   };
 }
 
+const GLOBAL_BASES = Object.freeze({
+  home: (homeDir) => homeDir,
+  homeDir: (homeDir) => homeDir,
+  configHome: (homeDir, env) => env.XDG_CONFIG_HOME || path.join(homeDir, '.config'),
+  claudeHome: (homeDir, env) => env.CLAUDE_CONFIG_DIR || path.join(homeDir, '.claude'),
+  codexHome: (homeDir, env) => env.CODEX_HOME || path.join(homeDir, '.codex'),
+  grokHome: (homeDir, env) => env.GROK_HOME || path.join(homeDir, '.grok'),
+  hermesHome: (homeDir, env) => env.HERMES_HOME || path.join(homeDir, '.hermes'),
+  vibeHome: (homeDir, env) => env.VIBE_HOME || path.join(homeDir, '.vibe'),
+  autohandHome: (homeDir, env) => env.AUTOHAND_HOME || path.join(homeDir, '.autohand'),
+});
+
+/**
+ * Resolve the user home used for Global Installation. Env wins so tests can sandbox.
+ *
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {string}
+ */
+export function resolveHomeDir(env = process.env) {
+  const fromEnv = env.HOME || env.USERPROFILE;
+  return path.resolve(fromEnv || os.homedir());
+}
+
+function posixPath(value) {
+  return String(value || '').replace(/\\/g, '/');
+}
+
+function isUncPath(value) {
+  return /^[/\\]{2}[^/\\]+/.test(String(value || ''));
+}
+
+function isFilesystemRoot(absolutePath) {
+  const resolved = path.resolve(absolutePath);
+  const parsed = path.parse(resolved);
+  return resolved === parsed.root || posixPath(resolved) === '/' || /^[A-Za-z]:[\\/]?$/.test(resolved);
+}
+
+function isInsideHome(homeDir, absolutePath) {
+  const relative = path.relative(path.resolve(homeDir), path.resolve(absolutePath));
+  return relative === '' || (relative && !relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+function assertSafeUserPath(homeDir, absolutePath, label, { allowHome = false } = {}) {
+  const resolved = path.resolve(absolutePath);
+  if (isUncPath(resolved) || isUncPath(absolutePath)) {
+    throw new Error(`invalid destination '${label}': UNC path`);
+  }
+  if (isFilesystemRoot(resolved)) {
+    throw new Error(`invalid destination '${label}': filesystem root`);
+  }
+  if (!isInsideHome(homeDir, resolved)) {
+    throw new Error(`invalid destination '${label}': resolved path escapes the user home`);
+  }
+  if (!allowHome && path.resolve(resolved) === path.resolve(homeDir)) {
+    throw new Error(`invalid destination '${label}': user home root`);
+  }
+}
+
+function splitSafeSegments(segment, label) {
+  const posix = posixPath(segment);
+  if (isUncPath(posix) || path.isAbsolute(segment) || /^[A-Za-z]:/.test(segment)) {
+    throw new Error(`invalid destination '${label}'`);
+  }
+  const parts = posix.split('/').filter((part) => part && part !== '.');
+  if (parts.some((part) => part === '..')) {
+    throw new Error(`invalid destination '${label}': traversal`);
+  }
+  return parts;
+}
+
+function resolveKnownBase(baseName, homeDir, env, label) {
+  const resolver = GLOBAL_BASES[baseName];
+  if (!resolver) {
+    throw new Error(`unsupported global destination base '${baseName}'`);
+  }
+  const base = path.resolve(resolver(homeDir, env));
+  assertSafeUserPath(homeDir, base, label, { allowHome: true });
+  return base;
+}
+
+/**
+ * Expand a declarative global destination formula into an absolute path inside the user home.
+ *
+ * @param {object} formula
+ * @param {string} homeDir
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {string|null}
+ */
+export function expandGlobalDestination(formula, homeDir, env = process.env) {
+  if (!formula || formula.kind === 'none') return null;
+  const label = formula.raw || formula.path || formula.kind;
+  if (formula.kind === 'literal') {
+    const relativeRoot = normalizeRelativeRoot(formula.path);
+    const destination = path.resolve(homeDir, ...splitSafeSegments(relativeRoot, label));
+    assertSafeUserPath(homeDir, destination, label);
+    return destination;
+  }
+  if (formula.kind === 'join') {
+    const base = resolveKnownBase(formula.base, homeDir, env, label);
+    const parts = (formula.segments || []).flatMap((segment) => splitSafeSegments(segment, label));
+    const destination = path.resolve(base, ...parts);
+    assertSafeUserPath(homeDir, destination, label);
+    return destination;
+  }
+  if (formula.kind === 'conditional') {
+    const base = resolveKnownBase(formula.base || 'homeDir', homeDir, env, label);
+    for (const option of formula.cases || []) {
+      if (option.probe == null) {
+        return expandGlobalDestination(option.formula, homeDir, env);
+      }
+      const probeParts = splitSafeSegments(option.probe, label);
+      const probePath = path.resolve(base, ...probeParts);
+      if (isInsideHome(homeDir, probePath) && fs.existsSync(probePath)) {
+        return expandGlobalDestination(option.formula, homeDir, env);
+      }
+    }
+    return null;
+  }
+  throw new Error(`invalid destination '${label}'`);
+}
+
+function expandGlobalRelativeRoot(formula, homeDir, env) {
+  try {
+    const absoluteRoot = expandGlobalDestination(formula, homeDir, env);
+    if (!absoluteRoot) return null;
+    const relativeRoot = path.relative(path.resolve(homeDir), absoluteRoot).replace(/\\/g, '/');
+    if (!relativeRoot || relativeRoot.startsWith('..') || path.isAbsolute(relativeRoot)) return null;
+    return { relativeRoot, absoluteRoot };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Group every Agent Host by its Global Installation destination.
+ *
+ * @param {object} params
+ * @returns {object[]}
+ */
+export function listGlobalDestinationGroups({ registry, homeDir, env = process.env }) {
+  const resolvedHome = path.resolve(homeDir);
+  const grouped = new Map();
+
+  for (const host of registry.hosts || []) {
+    const expanded = expandGlobalRelativeRoot(host.destinations?.global, resolvedHome, env);
+    const relativeRoot = expanded?.relativeRoot || '';
+    const key = relativeRoot || `__none__:${host.id}`;
+    if (!grouped.has(key)) {
+      const universal = relativeRoot === UNIVERSAL_PROJECT_DESTINATION;
+      grouped.set(key, {
+        key,
+        relativeRoot,
+        absoluteRoot: expanded?.absoluteRoot || '',
+        universal,
+        selectedByDefault: universal,
+        selectable: Boolean(relativeRoot),
+        hosts: [],
+      });
+    }
+    grouped.get(key).hosts.push({
+      id: host.id,
+      name: host.name,
+      displayName: host.displayName,
+      aliases: [...(host.aliases || [])],
+      detected: detectHost(host, env),
+      relativeRoot,
+    });
+  }
+
+  const groups = [...grouped.values()].sort((a, b) => compareRoots(a.relativeRoot || a.key, b.relativeRoot || b.key));
+  for (const group of groups) {
+    group.hosts.sort((a, b) => compareIds(a.id, b.id));
+  }
+  return groups;
+}
+
+/**
+ * Resolve one skill folder under a Global Installation destination root.
+ *
+ * @param {string} homeDir
+ * @param {string} relativeRoot
+ * @param {string} skillId
+ * @returns {{ destination: string, relativeDestination: string, relativeRoot: string }}
+ */
+export function resolveGlobalSkillPath(homeDir, relativeRoot, skillId) {
+  const resolvedHome = path.resolve(homeDir);
+  const normalizedRoot = normalizeRelativeRoot(relativeRoot);
+  if (!normalizedRoot) {
+    throw new Error(`invalid destination '${relativeRoot}': filesystem root`);
+  }
+  if (isUncPath(relativeRoot) || isUncPath(normalizedRoot)) {
+    throw new Error(`invalid destination '${relativeRoot}': UNC path`);
+  }
+  if (path.isAbsolute(relativeRoot) || path.isAbsolute(normalizedRoot) || /^[A-Za-z]:/.test(normalizedRoot)) {
+    throw new Error(`invalid destination '${relativeRoot}': filesystem root`);
+  }
+  const resolved = resolveSkillPath(resolvedHome, normalizedRoot, skillId);
+  assertSafeUserPath(resolvedHome, resolved.destination, relativeRoot);
+  return resolved;
+}
+
 function normalizeAbs(absolutePath) {
   const resolved = path.resolve(absolutePath);
   return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
@@ -206,10 +408,11 @@ function classifyPathPair(a, b) {
  * @param {object} params
  * @returns {string[]}
  */
-export function findDestinationConflicts({ projectRoot, skillIds, selectedRoots, isOwned, classify }) {
+export function findDestinationConflicts({ projectRoot, skillIds, selectedRoots, isOwned, classify, resolvePath }) {
   const errors = [];
   const normalizedRoots = selectedRoots.map((root) => normalizeRelativeRoot(root));
   const seenRoots = new Set();
+  const resolve = resolvePath || resolveSkillPath;
 
   for (const root of normalizedRoots) {
     if (seenRoots.has(root)) {
@@ -223,7 +426,7 @@ export function findDestinationConflicts({ projectRoot, skillIds, selectedRoots,
     for (const skillId of skillIds) {
       let skillPath;
       try {
-        skillPath = resolveSkillPath(projectRoot, root, skillId);
+        skillPath = resolve(projectRoot, root, skillId);
       } catch (err) {
         errors.push(err.message);
         continue;

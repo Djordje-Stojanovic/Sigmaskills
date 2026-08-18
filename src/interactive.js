@@ -1,3 +1,4 @@
+import path from 'node:path';
 import readline from 'node:readline';
 import { createInstallPlan, createProjectSkillClassifier, formatPlanHuman } from './plan.js';
 import { createNeedsResolutionError, createUnownedConflictError, executeProjectInstall } from './transaction.js';
@@ -6,8 +7,11 @@ import {
   UNIVERSAL_PROJECT_DESTINATION,
   defaultSelectedRoots,
   findDestinationConflicts,
+  listGlobalDestinationGroups,
   listProjectDestinationGroups,
   loadHostRegistry,
+  resolveGlobalSkillPath,
+  resolveHomeDir,
   searchHosts,
 } from './destinations.js';
 import { recommendedLinkMethod } from './links.js';
@@ -263,10 +267,11 @@ async function runReveal(renderer, input) {
   }
 }
 
-function pickerLines(renderer, catalog, selected, cursor, error) {
+function pickerLines(renderer, catalog, selected, cursor, error, scope) {
+  const scopeLabel = scope === 'global' ? 'Global Installation' : 'Project Installation (default)';
   const lines = [
     renderer.style('Σ SIGMA SKILLS', EMBERFORGE_PALETTE.gold, true),
-    `Project Installation (default)${renderer.narrow ? ' · narrow' : ''}`,
+    `${scopeLabel}${renderer.narrow ? ' · narrow' : ''}`,
     '',
     'Select skills from this Skill Pack:',
   ];
@@ -284,17 +289,42 @@ function pickerLines(renderer, catalog, selected, cursor, error) {
   lines.push('');
   lines.push(`Selected: ${selected.size}/${catalog.skills.length}`);
   if (error) lines.push(renderer.style(`Error: ${error}`, EMBERFORGE_PALETTE.red, true));
-  lines.push('↑/↓ move · space toggle · a select all · enter continue · esc cancel');
+  lines.push(`↑/↓ move · space toggle · a select all${scope === 'global' ? '' : ' · g Global Installation'} · enter continue · esc cancel`);
   return lines;
 }
 
-async function selectSkills(renderer, input, catalog) {
+function globalWarningLines(renderer) {
+  return [
+    renderer.style('Global Installation warning', EMBERFORGE_PALETTE.red, true),
+    '',
+    'Global Installation writes skills for this operating-system user.',
+    'Other projects can pick them up. Project Installation remains the safer default.',
+    '',
+    'Continue with Global Installation? [y/N]',
+    'y continue · n/enter/esc cancel',
+  ];
+}
+
+async function confirmGlobalWarning(renderer, input) {
+  renderer.screen(globalWarningLines(renderer));
+  while (true) {
+    const key = await input.next();
+    if (key.name === 'y') return { confirmed: true, exitCode: 0 };
+    if (key.name === 'ctrl-c') return { confirmed: false, exitCode: 130 };
+    if (key.name === 'eof' || key.name === 'escape' || key.name === 'n' || key.name === 'return') {
+      return { confirmed: false, exitCode: 0 };
+    }
+  }
+}
+
+async function selectSkills(renderer, input, catalog, initialScope = 'project') {
   const selected = new Set();
   let cursor = 0;
   let error = '';
+  let scope = initialScope === 'global' ? 'global' : 'project';
 
   while (true) {
-    renderer.screen(pickerLines(renderer, catalog, selected, cursor, error));
+    renderer.screen(pickerLines(renderer, catalog, selected, cursor, error, scope));
     const key = await input.next();
     if (key.name === 'ctrl-c') return { cancelled: true, exitCode: 130 };
     if (key.name === 'escape' || key.name === 'eof') return { cancelled: true, exitCode: 0 };
@@ -311,12 +341,20 @@ async function selectSkills(renderer, input, catalog) {
       else catalog.skills.forEach((skill) => selected.add(skill.id));
       error = '';
     }
+    if (key.name === 'g' && scope !== 'global') {
+      const warning = await confirmGlobalWarning(renderer, input);
+      if (!warning.confirmed) return { cancelled: true, exitCode: warning.exitCode };
+      scope = 'global';
+      error = '';
+      continue;
+    }
     if (key.name === 'return') {
       if (selected.size === 0) {
         error = 'Select at least one skill.';
       } else {
         return {
           cancelled: false,
+          scope,
           skillIds: catalog.skills.filter((skill) => selected.has(skill.id)).map((skill) => skill.id),
         };
       }
@@ -328,10 +366,11 @@ function affectedHostLabel(host) {
   return host.detected ? `${host.displayName} [detected]` : host.displayName;
 }
 
-function destinationPickerLines(renderer, items, selectedRoots, cursor, query, error) {
+function destinationPickerLines(renderer, items, selectedRoots, cursor, query, error, scope) {
+  const scopeLabel = scope === 'global' ? 'Global Installation' : 'Project Installation';
   const lines = [
     renderer.style('Σ SIGMA SKILLS', EMBERFORGE_PALETTE.gold, true),
-    `Project Installation · destinations${renderer.narrow ? ' · narrow' : ''}`,
+    `${scopeLabel} · destinations${renderer.narrow ? ' · narrow' : ''}`,
     '',
     'Only .agents/skills is selected by default. Host-specific destinations stay unselected.',
     'Detection labels Agent Hosts; it never selects host-specific destinations.',
@@ -411,7 +450,7 @@ function isSearchChar(key) {
   return Boolean(key.name && key.name.length === 1 && /[A-Za-z0-9._/-]/.test(key.name));
 }
 
-async function selectDestinations(renderer, input, groups) {
+async function selectDestinations(renderer, input, groups, scope = 'project') {
   const selectedRoots = new Set(defaultSelectedRoots(groups));
   let query = '';
   let cursor = 0;
@@ -421,7 +460,7 @@ async function selectDestinations(renderer, input, groups) {
     const items = pickerItems(groups, query);
     if (items.length === 0) cursor = 0;
     else cursor = ((cursor % items.length) + items.length) % items.length;
-    renderer.screen(destinationPickerLines(renderer, items, selectedRoots, cursor, query, error));
+    renderer.screen(destinationPickerLines(renderer, items, selectedRoots, cursor, query, error, scope));
     const key = await input.next();
     if (key.name === 'ctrl-c') return { cancelled: true, exitCode: 130 };
     if (key.name === 'escape') {
@@ -469,9 +508,10 @@ async function selectDestinations(renderer, input, groups) {
   }
 }
 
-function summaryLines(renderer, plans) {
+function summaryLines(renderer, plans, scope = 'project') {
+  const title = scope === 'global' ? 'Confirm Global Installation' : 'Confirm Project Installation';
   const lines = [
-    renderer.style('Confirm Project Installation', EMBERFORGE_PALETTE.gold, true),
+    renderer.style(title, EMBERFORGE_PALETTE.gold, true),
     '',
     'Resolved destinations:',
   ];
@@ -481,6 +521,14 @@ function summaryLines(renderer, plans) {
       const method = dest.method ? ` [${dest.method}]` : '';
       lines.push(`  ${dest.destination}${method}`);
       if (dest.dependsOn) lines.push(`    depends on ${dest.dependsOn}`);
+      if (scope === 'global') {
+        const hostNames = (dest.hosts || []).map((host) => host.displayName).join(', ');
+        if (hostNames) lines.push(`    Agent Hosts: ${hostNames}`);
+        if (dest.method) lines.push(`    Method: ${dest.method}`);
+        if (dest.overwrite) lines.push(`    Overwrite: ${dest.overwrite}`);
+        if (dest.delete) lines.push(`    Delete: ${dest.delete}`);
+        if (dest.backup) lines.push(`    Backup: ${dest.backup}`);
+      }
     }
   }
   lines.push('');
@@ -555,8 +603,8 @@ async function offerCopyFallback(renderer, input, failure) {
   }
 }
 
-async function confirmPlans(renderer, input, plans) {
-  renderer.screen(summaryLines(renderer, plans));
+async function confirmPlans(renderer, input, plans, scope = 'project') {
+  renderer.screen(summaryLines(renderer, plans, scope));
   while (true) {
     const key = await input.next();
     if (key.name === 'ctrl-c') return { confirmed: false, exitCode: 130 };
@@ -588,6 +636,8 @@ export async function runProjectInstaller(params) {
     io,
     options = {},
   } = params;
+  const env = io.env || process.env;
+  const homeDir = path.resolve(params.homeDir || resolveHomeDir(env));
   const renderer = new TerminalRenderer(io, options);
   const input = new KeyInput(io.stdin);
 
@@ -599,24 +649,40 @@ export async function runProjectInstaller(params) {
       return revealKey === 'ctrl-c' ? 130 : 0;
     }
 
-    const selection = await selectSkills(renderer, input, catalog);
+    if (params.initialScope === 'global') {
+      const warning = await confirmGlobalWarning(renderer, input);
+      if (!warning.confirmed) {
+        renderer.line('Installation cancelled. No files were written.');
+        return warning.exitCode;
+      }
+    }
+
+    const selection = await selectSkills(renderer, input, catalog, params.initialScope === 'global' ? 'global' : 'project');
     if (selection.cancelled) {
       renderer.line('Installation cancelled. No files were written.');
       return selection.exitCode;
     }
 
-    const destinationGroups = listProjectDestinationGroups({
-      registry: params.registry || loadHostRegistry(packageRoot),
-      projectRoot,
-      env: io.env || process.env,
-    });
-    const destinations = await selectDestinations(renderer, input, destinationGroups);
+    const scope = selection.scope || 'project';
+    const root = scope === 'global' ? homeDir : projectRoot;
+    const destinationGroups = scope === 'global'
+      ? listGlobalDestinationGroups({
+        registry: params.registry || loadHostRegistry(packageRoot),
+        homeDir,
+        env,
+      })
+      : listProjectDestinationGroups({
+        registry: params.registry || loadHostRegistry(packageRoot),
+        projectRoot,
+        env,
+      });
+    const destinations = await selectDestinations(renderer, input, destinationGroups, scope);
     if (destinations.cancelled) {
       renderer.line('Installation cancelled. No files were written.');
       return destinations.exitCode;
     }
 
-    const hostSelected = destinations.selectedRoots.some((root) => root !== UNIVERSAL_PROJECT_DESTINATION);
+    const hostSelected = destinations.selectedRoots.some((selectedRoot) => selectedRoot !== UNIVERSAL_PROJECT_DESTINATION);
     let method = hostSelected ? 'link' : 'copy';
     if (hostSelected) {
       const methodChoice = await selectMethod(renderer, input);
@@ -627,13 +693,20 @@ export async function runProjectInstaller(params) {
       method = methodChoice.method;
     }
 
-    const classify = createProjectSkillClassifier({ catalog, projectRoot, customStateDir });
+    const classify = createProjectSkillClassifier({
+      catalog,
+      projectRoot: root,
+      customStateDir,
+      scope,
+      homeDir,
+    });
     const conflictErrors = findDestinationConflicts({
-      projectRoot,
+      projectRoot: root,
       skillIds: selection.skillIds,
       selectedRoots: destinations.selectedRoots,
-      isOwned: (skillId, destination) => isDestinationOwned(projectRoot, skillId, destination, customStateDir),
+      isOwned: (skillId, destination) => isDestinationOwned(root, skillId, destination, customStateDir, { scope }),
       classify,
+      resolvePath: scope === 'global' ? resolveGlobalSkillPath : undefined,
     });
     if (conflictErrors.length > 0) {
       throw new Error(conflictErrors[0]);
@@ -642,11 +715,13 @@ export async function runProjectInstaller(params) {
     const plans = selection.skillIds.map((skillId) => createInstallPlan(catalog, {
       skillId,
       projectRoot,
+      homeDir,
+      scope,
       customStateDir,
       packageRoot,
       selectedRoots: destinations.selectedRoots,
       destinationGroups,
-      env: io.env || process.env,
+      env,
       method,
     }));
     const conflict = plans.find((plan) => plan.unownedConflict);
@@ -659,7 +734,7 @@ export async function runProjectInstaller(params) {
       throw createNeedsResolutionError(pending);
     }
 
-    const confirmation = await confirmPlans(renderer, input, plans);
+    const confirmation = await confirmPlans(renderer, input, plans, scope);
     if (!confirmation.confirmed) {
       renderer.line('Installation cancelled. No files were written.');
       return confirmation.exitCode;
@@ -676,11 +751,13 @@ export async function runProjectInstaller(params) {
             catalog,
             skillId,
             projectRoot,
+            homeDir,
+            scope,
             customStateDir,
             packageRoot,
             selectedRoots: destinations.selectedRoots,
             destinationGroups,
-            env: io.env || process.env,
+            env,
             method,
             copyRoots,
             createLink: params.createLink,
@@ -701,7 +778,8 @@ export async function runProjectInstaller(params) {
         renderer.line(`Installed ${result.plan.title} (${result.plan.skill}) to ${dest.destination}${methodLabel}`);
       }
     }
-    renderer.line(`Project Installation complete: ${selection.skillIds.length} skill${selection.skillIds.length === 1 ? '' : 's'} installed.`);
+    const doneLabel = scope === 'global' ? 'Global Installation' : 'Project Installation';
+    renderer.line(`${doneLabel} complete: ${selection.skillIds.length} skill${selection.skillIds.length === 1 ? '' : 's'} installed.`);
     return 0;
   } finally {
     input.close();

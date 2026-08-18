@@ -66,71 +66,93 @@ export function loadProjectState(projectRoot, customStateDir) {
  *
  * @param {object} state
  */
-export function validateProjectState(state) {
+function validateManagedState(state, expectedScope) {
+  const label = expectedScope === 'global' ? 'global state' : 'project state';
   if (!state || typeof state !== 'object') {
-    throw new Error('invalid project state: expected JSON object');
+    throw new Error(`invalid ${label}: expected JSON object`);
   }
   if (typeof state.schemaVersion !== 'number' || state.schemaVersion < 1) {
-    throw new Error('invalid project state: missing or invalid schemaVersion');
+    throw new Error(`invalid ${label}: missing or invalid schemaVersion`);
   }
-  if (state.scope !== 'project') {
-    throw new Error(`invalid project state: expected scope 'project', got '${state.scope}'`);
+  if (state.scope !== expectedScope) {
+    throw new Error(`invalid ${label}: expected scope '${expectedScope}', got '${state.scope}'`);
   }
   if (!state.skills || typeof state.skills !== 'object' || Array.isArray(state.skills)) {
-    throw new Error('invalid project state: skills must be an object');
+    throw new Error(`invalid ${label}: skills must be an object`);
   }
 
   for (const [skillId, skillState] of Object.entries(state.skills)) {
     if (!skillState || typeof skillState !== 'object') {
-      throw new Error(`invalid project state entry for '${skillId}'`);
+      throw new Error(`invalid ${label} entry for '${skillId}'`);
     }
     if (!skillState.revision || typeof skillState.revision !== 'string') {
-      throw new Error(`invalid project state for '${skillId}': missing revision`);
+      throw new Error(`invalid ${label} for '${skillId}': missing revision`);
     }
     if (!skillState.method || typeof skillState.method !== 'string') {
-      throw new Error(`invalid project state for '${skillId}': missing method`);
+      throw new Error(`invalid ${label} for '${skillId}': missing method`);
     }
     if (!skillState.destination || typeof skillState.destination !== 'string') {
-      throw new Error(`invalid project state for '${skillId}': missing destination`);
+      throw new Error(`invalid ${label} for '${skillId}': missing destination`);
     }
     if (!Array.isArray(skillState.ownedPaths)) {
-      throw new Error(`invalid project state for '${skillId}': missing ownedPaths array`);
+      throw new Error(`invalid ${label} for '${skillId}': missing ownedPaths array`);
     }
     if (!skillState.baseHashes || typeof skillState.baseHashes !== 'object') {
-      throw new Error(`invalid project state for '${skillId}': missing baseHashes map`);
+      throw new Error(`invalid ${label} for '${skillId}': missing baseHashes map`);
+    }
+    if (skillState.lastBackup !== undefined && skillState.lastBackup !== null && typeof skillState.lastBackup !== 'string') {
+      throw new Error(`invalid ${label} for '${skillId}': lastBackup must be a string or null`);
     }
     if (skillState.copies !== undefined) {
       if (!Array.isArray(skillState.copies)) {
-        throw new Error(`invalid project state for '${skillId}': copies must be an array`);
+        throw new Error(`invalid ${label} for '${skillId}': copies must be an array`);
       }
       for (const copy of skillState.copies) {
         if (!copy || typeof copy !== 'object') {
-          throw new Error(`invalid project state for '${skillId}': copy entry is not an object`);
+          throw new Error(`invalid ${label} for '${skillId}': copy entry is not an object`);
         }
         if (copy.kind !== 'canonical' && copy.kind !== 'host') {
-          throw new Error(`invalid project state for '${skillId}': copy kind must be canonical or host`);
+          throw new Error(`invalid ${label} for '${skillId}': copy kind must be canonical or host`);
         }
         if (!copy.destination || typeof copy.destination !== 'string') {
-          throw new Error(`invalid project state for '${skillId}': copy is missing destination`);
+          throw new Error(`invalid ${label} for '${skillId}': copy is missing destination`);
         }
         if (!Array.isArray(copy.hostIds)) {
-          throw new Error(`invalid project state for '${skillId}': copy is missing hostIds`);
+          throw new Error(`invalid ${label} for '${skillId}': copy is missing hostIds`);
         }
         if (!Array.isArray(copy.ownedPaths)) {
-          throw new Error(`invalid project state for '${skillId}': copy is missing ownedPaths`);
+          throw new Error(`invalid ${label} for '${skillId}': copy is missing ownedPaths`);
         }
         if (copy.method !== undefined && copy.method !== 'copy' && copy.method !== 'symlink' && copy.method !== 'junction') {
-          throw new Error(`invalid project state for '${skillId}': copy method must be copy, symlink, or junction`);
+          throw new Error(`invalid ${label} for '${skillId}': copy method must be copy, symlink, or junction`);
         }
         if (copy.dependsOn !== undefined && copy.dependsOn !== null && typeof copy.dependsOn !== 'string') {
-          throw new Error(`invalid project state for '${skillId}': copy dependsOn must be a string or null`);
+          throw new Error(`invalid ${label} for '${skillId}': copy dependsOn must be a string or null`);
         }
         if (copy.baseHashes !== undefined && (typeof copy.baseHashes !== 'object' || Array.isArray(copy.baseHashes) || copy.baseHashes === null)) {
-          throw new Error(`invalid project state for '${skillId}': copy baseHashes must be an object`);
+          throw new Error(`invalid ${label} for '${skillId}': copy baseHashes must be an object`);
         }
       }
     }
   }
+}
+
+/**
+ * Validate that a project state structure is valid.
+ *
+ * @param {object} state
+ */
+export function validateProjectState(state) {
+  validateManagedState(state, 'project');
+}
+
+/**
+ * Validate that a global state structure is valid.
+ *
+ * @param {object} state
+ */
+export function validateGlobalState(state) {
+  validateManagedState(state, 'global');
 }
 
 /**
@@ -140,10 +162,7 @@ export function validateProjectState(state) {
  * @param {object} state
  * @param {string} [customStateDir]
  */
-export function saveProjectState(projectRoot, state, customStateDir) {
-  validateProjectState(state);
-
-  const stateDir = getProjectStateDir(projectRoot, customStateDir);
+function writeStateFile(stateDir, state, scope) {
   if (!fs.existsSync(stateDir)) {
     fs.mkdirSync(stateDir, { recursive: true });
   }
@@ -155,7 +174,7 @@ export function saveProjectState(projectRoot, state, customStateDir) {
 
   const cleanState = {
     schemaVersion: state.schemaVersion || STATE_SCHEMA_VERSION,
-    scope: 'project',
+    scope,
     skills: sortedSkills,
   };
 
@@ -174,6 +193,138 @@ export function saveProjectState(projectRoot, state, customStateDir) {
       throw err;
     }
   }
+}
+
+/**
+ * Serialize and atomically write project state.json file.
+ *
+ * @param {string} projectRoot
+ * @param {object} state
+ * @param {string} [customStateDir]
+ */
+export function saveProjectState(projectRoot, state, customStateDir) {
+  validateProjectState(state);
+  writeStateFile(getProjectStateDir(projectRoot, customStateDir), state, 'project');
+}
+
+/**
+ * Resolve directory path where private Global Installation state is stored.
+ *
+ * @param {string} homeDir
+ * @param {string} [customStateDir]
+ * @returns {string}
+ */
+export function getGlobalStateDir(homeDir, customStateDir) {
+  if (customStateDir) {
+    return path.resolve(customStateDir);
+  }
+  if (process.env.SIGMA_STATE_DIR) {
+    return path.resolve(process.env.SIGMA_STATE_DIR);
+  }
+  return path.join(path.resolve(homeDir), '.agents');
+}
+
+/**
+ * Resolve full path to global state.json file.
+ *
+ * @param {string} homeDir
+ * @param {string} [customStateDir]
+ * @returns {string}
+ */
+export function getGlobalStatePath(homeDir, customStateDir) {
+  return path.join(getGlobalStateDir(homeDir, customStateDir), STATE_FILENAME);
+}
+
+function emptyGlobalState() {
+  return {
+    schemaVersion: STATE_SCHEMA_VERSION,
+    scope: 'global',
+    skills: {},
+  };
+}
+
+function migrateGlobalState(parsed) {
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('invalid global state: expected JSON object');
+  }
+  if (typeof parsed.schemaVersion === 'number' && parsed.schemaVersion > STATE_SCHEMA_VERSION) {
+    throw new Error(
+      `unsupported global state schemaVersion ${parsed.schemaVersion}; this installer supports ${STATE_SCHEMA_VERSION}`,
+    );
+  }
+
+  const skills = {};
+  for (const [skillId, entry] of Object.entries(parsed.skills || {})) {
+    if (!entry || typeof entry !== 'object') {
+      throw new Error(`invalid global state entry for '${skillId}'`);
+    }
+    skills[skillId] = {
+      ...entry,
+      lastBackup: entry.lastBackup || entry.backup || null,
+    };
+  }
+
+  const migrated = {
+    schemaVersion: STATE_SCHEMA_VERSION,
+    scope: 'global',
+    skills,
+  };
+  validateGlobalState(migrated);
+  return migrated;
+}
+
+/**
+ * Load and parse the private global state file.
+ * Unknown newer schemas fail without writing. Older schemas migrate in memory.
+ *
+ * @param {string} homeDir
+ * @param {string} [customStateDir]
+ * @returns {object}
+ */
+export function loadGlobalState(homeDir, customStateDir) {
+  const statePath = getGlobalStatePath(homeDir, customStateDir);
+  if (!fs.existsSync(statePath)) {
+    return emptyGlobalState();
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    if (typeof parsed?.schemaVersion === 'number' && parsed.schemaVersion > STATE_SCHEMA_VERSION) {
+      throw new Error(
+        `unsupported global state schemaVersion ${parsed.schemaVersion}; this installer supports ${STATE_SCHEMA_VERSION}`,
+      );
+    }
+    if (parsed?.schemaVersion === STATE_SCHEMA_VERSION && parsed.scope === 'global') {
+      validateGlobalState(parsed);
+      return parsed;
+    }
+    if (parsed?.schemaVersion === STATE_SCHEMA_VERSION) {
+      throw new Error(`invalid global state: expected scope 'global', got '${parsed.scope}'`);
+    }
+    return migrateGlobalState(parsed);
+  } catch (err) {
+    if (/unsupported global state schemaVersion/.test(err.message) || /expected scope 'global'/.test(err.message)) {
+      throw err;
+    }
+    throw new Error(`failed to read global state at ${statePath}: ${err.message}`);
+  }
+}
+
+/**
+ * Serialize and atomically write global state.json file.
+ *
+ * @param {string} homeDir
+ * @param {object} state
+ * @param {string} [customStateDir]
+ */
+export function saveGlobalState(homeDir, state, customStateDir) {
+  if (typeof state?.schemaVersion === 'number' && state.schemaVersion > STATE_SCHEMA_VERSION) {
+    throw new Error(
+      `unsupported global state schemaVersion ${state.schemaVersion}; this installer supports ${STATE_SCHEMA_VERSION}`,
+    );
+  }
+  validateGlobalState(state);
+  writeStateFile(getGlobalStateDir(homeDir, customStateDir), state, 'global');
 }
 
 function recordedCopyDestinations(entry) {
@@ -196,8 +347,11 @@ function recordedCopyDestinations(entry) {
  * @param {string} [customStateDir]
  * @returns {boolean}
  */
-export function isDestinationOwned(projectRoot, skillId, destinationPath, customStateDir) {
-  const state = loadProjectState(projectRoot, customStateDir);
+export function isDestinationOwned(projectRoot, skillId, destinationPath, customStateDir, options = {}) {
+  const scope = options.scope || 'project';
+  const state = scope === 'global'
+    ? loadGlobalState(projectRoot, customStateDir)
+    : loadProjectState(projectRoot, customStateDir);
   const entry = state.skills?.[skillId];
   if (!entry) {
     return false;
@@ -229,6 +383,8 @@ export function recordSkillInState(state, details) {
     baseHashes = {},
     installedAt,
     copies,
+    lastBackup,
+    scope,
   } = details;
 
   const toRelative = (value) => {
@@ -276,11 +432,14 @@ export function recordSkillInState(state, details) {
     baseHashes,
     installedAt: installedAt || existing?.installedAt || now,
     updatedAt: now,
+    lastBackup: lastBackup === undefined
+      ? (existing?.lastBackup || null)
+      : (lastBackup == null ? null : toRelative(lastBackup)),
   };
 
   return {
     schemaVersion: state.schemaVersion || STATE_SCHEMA_VERSION,
-    scope: 'project',
+    scope: scope || state.scope || 'project',
     skills: updatedSkills,
   };
 }

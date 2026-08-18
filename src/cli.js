@@ -2,6 +2,7 @@ import { getCatalog, findPackageRoot } from './catalog.js';
 import { formatPlanHuman, formatPlanJson } from './plan.js';
 import { runProjectInstaller } from './interactive.js';
 import { executeProjectInstall } from './transaction.js';
+import { resolveHomeDir } from './destinations.js';
 
 /**
  * Format and print help message.
@@ -34,6 +35,7 @@ Options:
   --dry-run         Preview installation changes without writing files
   --json            Output in versioned JSON format
   --project <path>  Target project root directory (defaults to current directory)
+  --global          User-level Global Installation (requires --yes to write)
   --state-dir <dir> Custom state directory for private machine state
   --destination <dir> Project destination root (repeatable; default .agents/skills)
   --link            Recommended links: Windows junctions, macOS/Linux symbolic links
@@ -77,6 +79,7 @@ export function parseCliArgs(args) {
     help: false,
     version: false,
     yes: false,
+    global: false,
     noColor: false,
     static: false,
     narrow: false,
@@ -102,6 +105,8 @@ export function parseCliArgs(args) {
       parsed.json = true;
     } else if (arg === '-y' || arg === '--yes') {
       parsed.yes = true;
+    } else if (arg === '-g' || arg === '--global') {
+      parsed.global = true;
     } else if (arg === '--no-color') {
       parsed.noColor = true;
     } else if (arg === '--static') {
@@ -259,13 +264,22 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         return 1;
       }
 
+      if (opts.global && !opts.dryRun && !opts.yes) {
+        writeErr('sigmaskills error: Global Installation requires both --global and --yes; CI, TTY, JSON, and Agent Host detection never imply that authority');
+        return 1;
+      }
+
+      const env = io.env || process.env;
       const result = executeProjectInstall({
         catalog,
         skillId: opts.skillId,
         projectRoot: opts.projectRoot,
+        homeDir: resolveHomeDir(env),
+        scope: opts.global ? 'global' : 'project',
         customStateDir: opts.stateDir,
         packageRoot: rootDir,
         dryRun: opts.dryRun,
+        env,
         selectedRoots: opts.destinations.length > 0 ? opts.destinations : undefined,
         method: opts.method || undefined,
         adoptChanged: opts.adoptChanged || undefined,
@@ -286,7 +300,9 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
             writeOut(`✔ Installed ${result.plan.title} (${result.plan.skill}) to ${dest.relativeDestination}${method}`);
           }
           writeOut(`  Revision: ${result.plan.sourceRevision}`);
-          writeOut(`  Project lock: skills-lock.json updated`);
+          if (result.plan.scope !== 'global') {
+            writeOut(`  Project lock: skills-lock.json updated`);
+          }
         }
       }
       return 0;
@@ -297,7 +313,9 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         catalog,
         packageRoot: rootDir,
         projectRoot: opts.projectRoot || process.cwd(),
+        homeDir: resolveHomeDir(io.env || process.env),
         customStateDir: opts.stateDir,
+        initialScope: opts.global ? 'global' : 'project',
         io: {
           stdin: io.stdin || process.stdin,
           stdout: io.stdout,

@@ -28,12 +28,14 @@ Start the first-party Sigma Installer in a project:
 npx sigmaskills
 ```
 
-Select any set of skills. By default the installer writes only to `.agents/skills/<id>` and lists every Agent Host that reads that universal destination. Host-specific directories such as `.claude/skills` or `.pi/skills` stay unselected until you choose them. Selected host destinations use Windows directory junctions or macOS/Linux symbolic links to the canonical copy; `--copy` writes an independent managed copy instead. Link failure reports the exact cause and offers copy — the installer never changes method silently. Exact current official copies and valid links are adopted in place without rewriting skill bytes. Changed, older, pre-marker, and unverified Sigma-looking trees are classified with a file diff and provenance confidence; replace commits a private backup first, skip leaves the tree, and export writes a collision-safe copy. Pre-marker extra content is never guessed into the customization block; malformed markers stop unless you pass an explicit `--adopt-malformed` choice. The confirmation plan shows every full destination path and method. To install one skill without the interactive interface:
+Select any set of skills. By default the installer writes only to `.agents/skills/<id>` and lists every Agent Host that reads that universal destination. Host-specific directories such as `.claude/skills` or `.pi/skills` stay unselected until you choose them. Selected host destinations use Windows directory junctions or macOS/Linux symbolic links to the canonical copy; `--copy` writes an independent managed copy instead. Link failure reports the exact cause and offers copy — the installer never changes method silently. Exact current official copies and valid links are adopted in place without rewriting skill bytes. Changed, older, pre-marker, and unverified Sigma-looking trees are classified with a file diff and provenance confidence; replace commits a private backup first, skip leaves the tree, and export writes a collision-safe copy. Pre-marker extra content is never guessed into the customization block; malformed markers stop unless you pass an explicit `--adopt-malformed` choice. The confirmation plan shows every full destination path and method. Press `g` in the skill picker for Global Installation: an immediate scope warning appears, then a second confirmation repeats every Agent Host, resolved path, method, overwrite effect, and backup action. Non-interactive Global writes need both `--global` and `--yes`; CI, TTY, JSON, and Agent Host detection never imply that authority. To install one skill without the interactive interface:
 
 ```bash
 npx sigmaskills install sigmawrite --project .
 npx sigmaskills install sigmawrite --project . --destination .claude/skills
 npx sigmaskills install sigmawrite --project . --destination .claude/skills --copy
+npx sigmaskills install sigmawrite --global --dry-run
+npx sigmaskills install sigmawrite --global --yes
 ```
 
 Then invoke with your host’s normal skill syntax (`$sigmawrite`, `/skill:sigmawrite`, skill picker, …).
@@ -76,6 +78,12 @@ Writing voice inspired by **ASD-STE100 Simplified Technical English** — soft s
 Run `npx sigmaskills` with no command. The Sigma Installer's Emberforge interface reads the Skill Pack catalog from `manifest.json` and the bundled Agent Host registry. Project Installation selects only the universal `.agents/skills/` destination by default, expands every Agent Host that reads it, and leaves host-specific destinations unselected until you choose them. Search remains available for every supported Agent Host, including hosts that are not detected. Exact current official copies and valid links are recorded as managed without rewriting skill bytes. Escape, EOF, Ctrl+C, or a rejected confirmation exits without writing.
 
 Use `--no-color`, `--static`, or `--narrow` when the terminal needs those modes. Use `--project <path>` to select another project root.
+
+### Sigma Installer: Global Installation
+
+Project Installation stays the default. In the interactive installer, `g` selects Global Installation and shows a scope warning immediately. The final confirmation repeats every selected Agent Host, exact resolved path, method, overwrite or delete effect, and backup action. Cancel at either prompt leaves prior user-level state unchanged.
+
+Non-interactive mutation requires both `--global` and `--yes`. `--dry-run` shows those confirmation requirements and the full impact without writing. Unknown newer global state schemas fail closed; supported migrations keep ownership, hashes, methods, and backup references. Exact and changed existing copies use the same adoption path as Project Installation.
 
 ### Cross-host alternative
 

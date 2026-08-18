@@ -1,14 +1,17 @@
 import path from 'node:path';
 import { chooseCanonical, classifySkillPath, loadSkillBaselines } from './adoption.js';
 import { loadProjectLock } from './project-lock.js';
-import { isDestinationOwned, loadProjectState } from './state.js';
+import { isDestinationOwned, loadGlobalState, loadProjectState } from './state.js';
 import {
   UNIVERSAL_PROJECT_DESTINATION,
   defaultSelectedRoots,
   findDestinationConflicts,
+  listGlobalDestinationGroups,
   listProjectDestinationGroups,
   loadHostRegistry,
   normalizeRelativeRoot,
+  resolveGlobalSkillPath,
+  resolveHomeDir,
   resolveSkillPath,
 } from './destinations.js';
 import { plannedExportDir } from './backup.js';
@@ -33,13 +36,17 @@ function resolutionFor(classification, relativeDestination, options = {}) {
  * @param {object} params
  * @returns {(skillId: string, destination: string) => object}
  */
-export function createProjectSkillClassifier({ catalog, projectRoot, customStateDir, packageRoot }) {
-  const projectState = loadProjectState(projectRoot, customStateDir);
+export function createProjectSkillClassifier({ catalog, projectRoot, customStateDir, packageRoot, scope = 'project', homeDir }) {
+  const root = scope === 'global' ? path.resolve(homeDir) : projectRoot;
+  const managedState = scope === 'global'
+    ? loadGlobalState(root, customStateDir)
+    : loadProjectState(root, customStateDir);
   const baselines = loadSkillBaselines(packageRoot || findPackageRoot());
+  const resolvePath = scope === 'global' ? resolveGlobalSkillPath : resolveSkillPath;
   return (skillId, destination) => {
     const skill = catalog.skills.find((item) => item.id === skillId);
-    const expectedCanonical = resolveSkillPath(projectRoot, UNIVERSAL_PROJECT_DESTINATION, skillId);
-    const entry = projectState.skills?.[skillId];
+    const expectedCanonical = resolvePath(root, UNIVERSAL_PROJECT_DESTINATION, skillId);
+    const entry = managedState.skills?.[skillId];
     return classifySkillPath({
       destPath: destination,
       skillId,
@@ -47,21 +54,22 @@ export function createProjectSkillClassifier({ catalog, projectRoot, customState
       bundledFiles: skill?.files || {},
       bundledBaselines: Array.isArray(baselines?.[skillId]) ? baselines[skillId] : [],
       expectedCanonicalPath: expectedCanonical.destination,
-      sigmaOwned: isDestinationOwned(projectRoot, skillId, destination, customStateDir),
+      sigmaOwned: isDestinationOwned(root, skillId, destination, customStateDir, { scope }),
       sigmaRevision: entry?.revision || null,
       baseHashes: entry?.baseHashes || null,
     });
   };
 }
 
-function destinationGroupsFor(options, projectRoot) {
+function destinationGroupsFor(options, root, scope) {
   if (options.destinationGroups) return options.destinationGroups;
   const packageRoot = options.packageRoot || findPackageRoot();
-  return listProjectDestinationGroups({
-    registry: options.registry || loadHostRegistry(packageRoot),
-    projectRoot,
-    env: options.env || process.env,
-  });
+  const registry = options.registry || loadHostRegistry(packageRoot);
+  const env = options.env || process.env;
+  if (scope === 'global') {
+    return listGlobalDestinationGroups({ registry, homeDir: root, env });
+  }
+  return listProjectDestinationGroups({ registry, projectRoot: root, env });
 }
 
 function selectedRootsFor(options, groups) {
@@ -110,9 +118,36 @@ function destinationMethod(kind, skillId, requestedMethod, copyRoots, relativeRo
  * @param {string[]} [options.selectedRoots]
  * @returns {object} Versioned plan object
  */
+function destinationImpact(dest) {
+  if (dest.migratable && !dest.resolution) {
+    return { overwrite: 'needs replace, skip, or export', delete: 'none until a choice is made', backup: 'none until a choice is made' };
+  }
+  if (dest.adoption) {
+    return { overwrite: 'adopt in place', delete: 'none', backup: 'none' };
+  }
+  if (dest.resolution === 'skip') {
+    return { overwrite: 'none', delete: 'none', backup: 'none' };
+  }
+  if (dest.resolution === 'export') {
+    return { overwrite: 'none', delete: 'none', backup: 'export copy' };
+  }
+  const deleted = dest.diff?.deleted?.length ? dest.diff.deleted.join(', ') : 'none';
+  if (dest.resolution === 'replace') {
+    return { overwrite: 'replace existing tree', delete: deleted, backup: 'private backup before replace' };
+  }
+  if (pathExists(dest.destination)) {
+    return { overwrite: 'replace existing tree', delete: deleted, backup: 'sidecar restore copy' };
+  }
+  return { overwrite: 'create', delete: 'none', backup: 'none' };
+}
+
 export function createInstallPlan(catalog, options) {
   const { skillId, customStateDir, dryRun = false } = options;
+  const scope = options.scope || 'project';
   const projectRoot = path.resolve(options.projectRoot || process.cwd());
+  const homeDir = path.resolve(options.homeDir || resolveHomeDir(options.env || process.env));
+  const root = scope === 'global' ? homeDir : projectRoot;
+  const resolvePath = scope === 'global' ? resolveGlobalSkillPath : resolveSkillPath;
 
   if (!skillId || typeof skillId !== 'string') {
     throw new Error('missing or invalid skillId for install plan');
@@ -123,38 +158,41 @@ export function createInstallPlan(catalog, options) {
     throw new Error(`skill '${skillId}' was not found in Skill Pack ${catalog.manifest.name}`);
   }
 
-  const groups = destinationGroupsFor(options, projectRoot);
+  const groups = destinationGroupsFor(options, root, scope);
   const requestedRoots = selectedRootsFor(options, groups);
   const requestedMethod = requestedMethodFor(options, requestedRoots);
   const selectedRoots = rootsForRequestedMethod(requestedRoots, requestedMethod);
   const classify = createProjectSkillClassifier({
     catalog,
-    projectRoot,
+    projectRoot: root,
     customStateDir,
     packageRoot: options.packageRoot,
+    scope,
+    homeDir,
   });
   const conflictErrors = findDestinationConflicts({
-    projectRoot,
+    projectRoot: root,
     skillIds: [skillId],
     selectedRoots,
-    isOwned: (id, destination) => isDestinationOwned(projectRoot, id, destination, customStateDir),
+    isOwned: (id, destination) => isDestinationOwned(root, id, destination, customStateDir, { scope }),
     classify,
+    resolvePath: resolvePath,
   });
   const fatal = conflictErrors.filter((message) => !/not owned/i.test(message));
   if (fatal.length > 0) {
     throw new Error(fatal[0]);
   }
 
-  const currentLock = loadProjectLock(projectRoot);
+  const currentLock = scope === 'global' ? { skills: {} } : loadProjectLock(projectRoot);
   const skillFiles = Object.keys(skill.files).sort();
   const groupByRoot = new Map(groups.filter((group) => group.selectable).map((group) => [group.relativeRoot, group]));
-  const copyRoots = (options.copyRoots || []).map((root) => normalizeRelativeRoot(root));
+  const copyRoots = (options.copyRoots || []).map((copyRoot) => normalizeRelativeRoot(copyRoot));
 
   const destinations = selectedRoots.map((relativeRoot) => {
-    const resolved = resolveSkillPath(projectRoot, relativeRoot, skillId);
+    const resolved = resolvePath(root, relativeRoot, skillId);
     const group = groupByRoot.get(relativeRoot);
     const kind = relativeRoot === UNIVERSAL_PROJECT_DESTINATION ? 'canonical' : 'host';
-    const owned = isDestinationOwned(projectRoot, skillId, resolved.destination, customStateDir);
+    const owned = isDestinationOwned(root, skillId, resolved.destination, customStateDir, { scope });
     const classification = classify(skillId, resolved.destination);
     const planned = destinationMethod(kind, skillId, requestedMethod, copyRoots, relativeRoot);
     const method = classification.adoptable ? (classification.method || 'copy') : planned.method;
@@ -163,7 +201,7 @@ export function createInstallPlan(catalog, options) {
       ? resolutionFor(classification, resolved.relativeDestination, options)
       : undefined;
     const migratable = Boolean(classification.migratable);
-    return {
+    const dest = {
       kind,
       relativeRoot,
       destination: resolved.destination,
@@ -186,12 +224,19 @@ export function createInstallPlan(catalog, options) {
       baseHashes: classification.files,
       unownedConflict: !owned && pathExists(resolved.destination) && !classification.adoptable && !migratable,
     };
+    if (scope === 'global') {
+      const impact = destinationImpact(dest);
+      dest.overwrite = impact.overwrite;
+      dest.backup = impact.backup;
+      dest.delete = impact.delete;
+    }
+    return dest;
   });
 
   const destPath = destinations[0].destination;
   const relDest = destinations[0].relativeDestination;
   const unownedConflict = destinations.some((dest) => dest.unownedConflict);
-  const exportRoot = options.exportDir || path.join(projectRoot, '.sigma-export');
+  const exportRoot = options.exportDir || path.join(root, '.sigma-export');
   const claimedExports = new Set();
   for (const dest of destinations) {
     if (dest.resolution !== 'export') continue;
@@ -263,7 +308,7 @@ export function createInstallPlan(catalog, options) {
 
   return {
     schemaVersion: PLAN_SCHEMA_VERSION,
-    scope: 'project',
+    scope,
     action: 'install',
     skill: skillId,
     title: skill.title,
@@ -280,6 +325,7 @@ export function createInstallPlan(catalog, options) {
     adoption,
     exportDir: options.exportDir || null,
     requiresApproval: needsResolution,
+    confirmationRequirements: scope === 'global' ? ['--global', '--yes'] : [],
     unownedConflict,
     dryRun: Boolean(dryRun),
   };
@@ -300,6 +346,9 @@ export function formatPlanHuman(plan) {
       if (dest.method) lines.push(`      Method: ${dest.method}`);
       if (dest.dependsOn) lines.push(`      Depends on: ${dest.dependsOn}`);
       if (dest.fallbackFrom) lines.push(`      Fallback from: ${dest.fallbackFrom}`);
+      if (plan.scope === 'global' && dest.overwrite) lines.push(`      Overwrite: ${dest.overwrite}`);
+      if (plan.scope === 'global' && dest.delete) lines.push(`      Delete: ${dest.delete}`);
+      if (plan.scope === 'global' && dest.backup) lines.push(`      Backup: ${dest.backup}`);
       if (dest.recognition) lines.push(`      Recognition: ${dest.recognition}`);
       if (dest.confidence) lines.push(`      Provenance: ${dest.confidence}`);
       if (dest.resolution) lines.push(`      Resolution: ${dest.resolution}`);
@@ -316,8 +365,9 @@ export function formatPlanHuman(plan) {
       return lines;
     });
 
+  const scopeLabel = plan.scope === 'global' ? 'Global Installation' : 'Project Installation';
   const lines = [
-    `SigmaSkills Project Installation Plan: ${plan.title} (${plan.skill})`,
+    `SigmaSkills ${scopeLabel} Plan: ${plan.title} (${plan.skill})`,
     `  Scope:               ${plan.scope}`,
     `  Release:             v${plan.release}`,
     `  Source Revision:     ${plan.sourceRevision}`,
@@ -328,6 +378,9 @@ export function formatPlanHuman(plan) {
     `  Resolved destinations:`,
     ...destinationLines,
     `  Required Approval:   ${plan.requiresApproval ? 'Yes' : 'None'}`,
+    ...(plan.confirmationRequirements?.length
+      ? [`  Required confirmation: ${plan.confirmationRequirements.join(' and ')}`]
+      : []),
     `  Files to write (${plan.writes.length}):`,
     ...plan.writes.map((w) => `    + ${w}`),
   ];
@@ -344,9 +397,11 @@ export function formatPlanHuman(plan) {
     }
   }
 
-  lines.push(`  Lock changes (${plan.lockChanges.file}):`);
-  lines.push(`    Action: ${plan.lockChanges.action}`);
-  lines.push(`    Next Revision: ${plan.lockChanges.next.revision}`);
+  if (plan.scope !== 'global' && plan.lockChanges) {
+    lines.push(`  Lock changes (${plan.lockChanges.file}):`);
+    lines.push(`    Action: ${plan.lockChanges.action}`);
+    lines.push(`    Next Revision: ${plan.lockChanges.next.revision}`);
+  }
 
   if (plan.unownedConflict) {
     const conflictDest = (plan.destinations || []).find((dest) => dest.unownedConflict)?.destination || plan.destination;

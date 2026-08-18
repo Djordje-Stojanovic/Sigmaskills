@@ -5,10 +5,15 @@ import { injectCustomContent } from './customization.js';
 import { commitSkillBackup, exportSkillTree, pruneOlderBackups } from './backup.js';
 import { createInstallPlan } from './plan.js';
 import { loadProjectLock, saveProjectLock, updateProjectLockSkill, PROJECT_LOCK_FILENAME } from './project-lock.js';
+import { resolveHomeDir } from './destinations.js';
 import {
+  getGlobalStateDir,
+  getGlobalStatePath,
   getProjectStateDir,
   getProjectStatePath,
+  loadGlobalState,
   loadProjectState,
+  saveGlobalState,
   saveProjectState,
   recordSkillInState,
 } from './state.js';
@@ -156,19 +161,25 @@ export function executeProjectInstall(params) {
     dryRun = false,
   } = params;
 
+  const scope = params.scope || 'project';
+  const env = params.env || process.env;
+  const homeDir = path.resolve(params.homeDir || resolveHomeDir(env));
   const projectRoot = path.resolve(params.projectRoot || process.cwd());
+  const root = scope === 'global' ? homeDir : projectRoot;
   const packageRoot = params.packageRoot || findPackageRoot();
 
   const plan = createInstallPlan(catalog, {
     skillId,
     projectRoot,
+    homeDir,
+    scope,
     customStateDir,
     packageRoot,
     dryRun,
     selectedRoots: params.selectedRoots,
     destinationGroups: params.destinationGroups,
     registry: params.registry,
-    env: params.env,
+    env,
     method: params.method,
     copyRoots: params.copyRoots,
     resolutions: params.resolutions,
@@ -191,9 +202,9 @@ export function executeProjectInstall(params) {
 
   if (plan.requiresApproval) throw createNeedsResolutionError(plan);
 
-  const releaseLock = acquireConcurrencyLock(projectRoot, customStateDir);
+  const releaseLock = acquireConcurrencyLock(root, customStateDir);
 
-  const stagingParent = path.join(projectRoot, '.agents', '.sigma-staging');
+  const stagingParent = path.join(root, '.agents', '.sigma-staging');
   const stagingDir = path.join(
     stagingParent,
     `${skillId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -202,16 +213,24 @@ export function executeProjectInstall(params) {
   const committed = [];
   const privateBackups = [];
 
-  const lockPath = path.join(projectRoot, PROJECT_LOCK_FILENAME);
-  const lockExisted = fs.existsSync(lockPath);
+  const useProjectLock = scope !== 'global';
+  const lockPath = path.join(root, PROJECT_LOCK_FILENAME);
+  const lockExisted = useProjectLock && fs.existsSync(lockPath);
   const originalLockBytes = lockExisted ? fs.readFileSync(lockPath) : null;
-  const originalLock = loadProjectLock(projectRoot);
+  const originalLock = useProjectLock ? loadProjectLock(root) : { skills: {} };
 
-  const statePath = getProjectStatePath(projectRoot, customStateDir);
+  const statePath = scope === 'global'
+    ? getGlobalStatePath(root, customStateDir)
+    : getProjectStatePath(root, customStateDir);
   const stateExisted = fs.existsSync(statePath);
   const originalStateBytes = stateExisted ? fs.readFileSync(statePath) : null;
-  const originalState = loadProjectState(projectRoot, customStateDir);
-  const persistState = params.saveState || saveProjectState;
+  const originalState = scope === 'global'
+    ? loadGlobalState(root, customStateDir)
+    : loadProjectState(root, customStateDir);
+  const persistState = params.saveState || (scope === 'global' ? saveGlobalState : saveProjectState);
+  const stateDirForBackups = scope === 'global'
+    ? getGlobalStateDir(root, customStateDir)
+    : getProjectStateDir(root, customStateDir);
 
   const cleanupStaging = () => {
     try {
@@ -257,9 +276,9 @@ export function executeProjectInstall(params) {
         fs.unlinkSync(statePath);
       }
 
-      if (lockExisted && originalLockBytes) {
+      if (useProjectLock && lockExisted && originalLockBytes) {
         fs.writeFileSync(lockPath, originalLockBytes);
-      } else if (fs.existsSync(lockPath)) {
+      } else if (useProjectLock && fs.existsSync(lockPath)) {
         fs.unlinkSync(lockPath);
       }
     } catch {
@@ -295,7 +314,7 @@ export function executeProjectInstall(params) {
       && existingEntry.revision === plan.sourceRevision
       && plannedDests.every((dest) => existingDests.has(dest))
       && existingDests.size === plannedDests.length
-      && originalLock.skills?.[skillId]?.revision === plan.sourceRevision;
+      && (scope === 'global' || originalLock.skills?.[skillId]?.revision === plan.sourceRevision);
     if (allAdopted && sameManagedLayout) {
       cleanupStaging();
       releaseLock();
@@ -331,7 +350,7 @@ export function executeProjectInstall(params) {
     }
 
     const createLink = params.createLink || ((linkPath, targetPath) => (
-      createSkillLink(linkPath, targetPath, projectRoot)
+      createSkillLink(linkPath, targetPath, root)
     ));
     const canonicalDest = plan.destinations.find((dest) => dest.kind === 'canonical')
       || plan.destinations[0];
@@ -376,7 +395,7 @@ export function executeProjectInstall(params) {
       const destDir = dest.destination;
       const backupDir = prepareDestination(destDir);
       try {
-        createLink(destDir, canonicalDest.destination, projectRoot);
+        createLink(destDir, canonicalDest.destination, root);
         committed.push({ destDir, backupDir });
       } catch (linkErr) {
         restoreBackup(destDir, backupDir);
@@ -421,7 +440,7 @@ export function executeProjectInstall(params) {
         continue;
       }
       if (dest.resolution === 'export') {
-        const exportRoot = plan.exportDir || path.join(projectRoot, '.sigma-export');
+        const exportRoot = plan.exportDir || path.join(root, '.sigma-export');
         const exporter = params.exportSkill || exportSkillTree;
         dest.exportPath = exporter({
           sourceDir: dest.destination,
@@ -434,7 +453,7 @@ export function executeProjectInstall(params) {
       if (dest.resolution === 'replace' && pathExists(dest.destination)) {
         const backupFn = params.backupSkill || commitSkillBackup;
         const privateBackup = backupFn({
-          stateDir: getProjectStateDir(projectRoot, customStateDir),
+          stateDir: stateDirForBackups,
           skillId,
           sourceDir: dest.destination,
         });
@@ -489,26 +508,34 @@ export function executeProjectInstall(params) {
     }
     const primary = copies.find((copy) => copy.kind === 'canonical') || copies[0];
 
+    const lastBackup = privateBackups.length > 0
+      ? path.relative(stateDirForBackups, privateBackups[privateBackups.length - 1]).replace(/\\/g, '/')
+      : undefined;
     const updatedState = recordSkillInState(originalState, {
       skillId,
       release: plan.release,
       revision: plan.sourceRevision,
       method: plan.method,
       destination: primary.destination,
-      projectRoot,
+      projectRoot: root,
       ownedPaths: primary.ownedPaths,
       baseHashes: primary.baseHashes || fileHashes,
       copies,
+      scope,
+      lastBackup,
     });
-    persistState(projectRoot, updatedState, customStateDir);
+    persistState(root, updatedState, customStateDir);
 
-    const updatedLock = updateProjectLockSkill(
-      originalLock,
-      skillId,
-      plan.sourceRevision,
-      plan.release,
-    );
-    saveProjectLock(projectRoot, updatedLock);
+    let updatedLock = originalLock;
+    if (useProjectLock) {
+      updatedLock = updateProjectLockSkill(
+        originalLock,
+        skillId,
+        plan.sourceRevision,
+        plan.release,
+      );
+      saveProjectLock(root, updatedLock);
+    }
 
     // 5. Cleanup backups after state & lock write succeed
     for (const entry of committed) {
@@ -519,7 +546,7 @@ export function executeProjectInstall(params) {
     }
     for (const backupPath of privateBackups) {
       pruneOlderBackups({
-        stateDir: getProjectStateDir(projectRoot, customStateDir),
+        stateDir: stateDirForBackups,
         skillId,
         keepPath: backupPath,
       });
