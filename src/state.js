@@ -103,6 +103,11 @@ function validateManagedState(state, expectedScope) {
     if (skillState.lastBackup !== undefined && skillState.lastBackup !== null && typeof skillState.lastBackup !== 'string') {
       throw new Error(`invalid ${label} for '${skillId}': lastBackup must be a string or null`);
     }
+    if (skillState.cleanupDebt !== undefined) {
+      if (!Array.isArray(skillState.cleanupDebt) || skillState.cleanupDebt.some((item) => typeof item !== 'string')) {
+        throw new Error(`invalid ${label} for '${skillId}': cleanupDebt must be an array of strings`);
+      }
+    }
     if (skillState.copies !== undefined) {
       if (!Array.isArray(skillState.copies)) {
         throw new Error(`invalid ${label} for '${skillId}': copies must be an array`);
@@ -384,6 +389,7 @@ export function recordSkillInState(state, details) {
     installedAt,
     copies,
     lastBackup,
+    cleanupDebt,
     scope,
   } = details;
 
@@ -436,6 +442,13 @@ export function recordSkillInState(state, details) {
       ? (existing?.lastBackup || null)
       : (lastBackup == null ? null : toRelative(lastBackup)),
   };
+  if (cleanupDebt !== undefined) {
+    if (Array.isArray(cleanupDebt) && cleanupDebt.length > 0) {
+      updatedSkills[skillId].cleanupDebt = cleanupDebt.map((item) => toRelative(item));
+    }
+  } else if (Array.isArray(existing?.cleanupDebt) && existing.cleanupDebt.length > 0) {
+    updatedSkills[skillId].cleanupDebt = existing.cleanupDebt;
+  }
 
   return {
     schemaVersion: state.schemaVersion || STATE_SCHEMA_VERSION,

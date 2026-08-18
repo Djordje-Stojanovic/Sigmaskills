@@ -410,12 +410,14 @@ test('update: unknown schema, missing bundled revision, and unsafe drift do not 
     assert.deepEqual(afterGhost, beforeGhostFiles);
 
     fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
-    fs.writeFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'drift.md'), 'unsafe', 'utf8');
+    const skillMd = path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md');
+    fs.writeFileSync(skillMd, fs.readFileSync(skillMd, 'utf8').replace('<sigmaskills-custom>', '<sigmaskills-custom>'), 'utf8');
+    fs.writeFileSync(skillMd, `${fs.readFileSync(skillMd, 'utf8')}\n<sigmaskills-custom>\n`, 'utf8');
     const beforeDrift = snapshotTree(projectRoot);
     const driftIo = createMockIo();
     const driftCode = await runCli(['update', '--yes', '--project', projectRoot], driftIo);
     assert.equal(driftCode, 1);
-    assert.match(driftIo.getStderr(), /unsafe drift|stopped update without mutation/);
+    assert.match(driftIo.getStderr(), /unsafe drift|stopped update without mutation|malformed/);
     assert.deepEqual(snapshotTree(projectRoot), beforeDrift);
     const dry = createUpdatePlan({ catalog: getCatalog(ROOT), projectRoot, packageRoot: ROOT });
     assert.equal(dry.blocked[0].comparison, 'unsafe');

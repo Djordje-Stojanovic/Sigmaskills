@@ -52,6 +52,8 @@ Options:
                     Resolve Sigma-looking trees without a baseline
   --adopt-malformed <replace|skip|export>
                     Resolve trees with malformed customization markers
+  --outside-edit <replace|skip|export>
+                    Resolve outside-customization edits during update
   --export-dir <dir>
                     Collision-safe destination root for export resolutions
   --no-color        Disable color and reveal animation
@@ -94,6 +96,7 @@ export function parseCliArgs(args) {
     adoptLegacy: null,
     adoptUnverified: null,
     adoptMalformed: null,
+    outsideEdit: null,
     exportDir: null,
     unknown: [],
   };
@@ -138,6 +141,10 @@ export function parseCliArgs(args) {
       parsed.adoptMalformed = args[++i];
     } else if (arg.startsWith('--adopt-malformed=')) {
       parsed.adoptMalformed = arg.slice('--adopt-malformed='.length);
+    } else if (arg === '--outside-edit') {
+      parsed.outsideEdit = args[++i];
+    } else if (arg.startsWith('--outside-edit=')) {
+      parsed.outsideEdit = arg.slice('--outside-edit='.length);
     } else if (arg === '--export-dir') {
       parsed.exportDir = args[++i];
     } else if (arg.startsWith('--export-dir=')) {
@@ -231,6 +238,11 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       }
     }
 
+    if (opts.outsideEdit && opts.outsideEdit !== 'replace' && opts.outsideEdit !== 'skip' && opts.outsideEdit !== 'export') {
+      writeErr('sigmaskills error: --outside-edit must be replace, skip, or export');
+      return 1;
+    }
+
     if (opts.command === 'update') {
       const env = io.env || process.env;
       if (opts.global && !opts.dryRun && !opts.yes) {
@@ -251,6 +263,8 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         dryRun: opts.dryRun,
         env,
         skillIds: opts.skillIds,
+        outsideEdit: opts.outsideEdit || undefined,
+        exportDir: opts.exportDir || undefined,
       });
       writeOut(opts.json ? formatUpdateJson(result) : formatUpdateHuman(result));
       return 0;

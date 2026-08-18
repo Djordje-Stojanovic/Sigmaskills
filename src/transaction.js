@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { findPackageRoot, validateSkill } from './catalog.js';
 import { injectCustomContent, injectRawCustomContent } from './customization.js';
-import { commitSkillBackup, exportSkillTree, pruneOlderBackups } from './backup.js';
+import { commitSkillBackup, exportSkillTree, getBackupRoot, pruneOlderBackups } from './backup.js';
 import { createInstallPlan } from './plan.js';
 import { loadProjectLock, saveProjectLock, updateProjectLockSkill, PROJECT_LOCK_FILENAME } from './project-lock.js';
 import { resolveHomeDir } from './destinations.js';
@@ -538,6 +538,7 @@ export function executeProjectInstall(params) {
       copies,
       scope,
       lastBackup,
+      cleanupDebt: [],
     });
     persistState(root, updatedState, customStateDir);
 
@@ -560,11 +561,47 @@ export function executeProjectInstall(params) {
       }
     }
     for (const backupPath of privateBackups) {
-      pruneOlderBackups({
-        stateDir: stateDirForBackups,
-        skillId,
-        keepPath: backupPath,
-      });
+      let debt = [];
+      try {
+        const pruneFn = params.pruneBackups || pruneOlderBackups;
+        const result = pruneFn({
+          stateDir: stateDirForBackups,
+          skillId,
+          keepPath: backupPath,
+        });
+        if (result && Array.isArray(result.debt)) debt = result.debt;
+      } catch {
+        const dir = path.join(getBackupRoot(stateDirForBackups), skillId);
+        if (pathExists(dir)) {
+          const keep = path.resolve(backupPath);
+          for (const name of fs.readdirSync(dir)) {
+            const full = path.resolve(dir, name);
+            if (full !== keep) {
+              debt.push(path.relative(stateDirForBackups, full).replace(/\\/g, '/'));
+            }
+          }
+        }
+      }
+      if (debt.length > 0) {
+        try {
+          persistState(root, recordSkillInState(updatedState, {
+            skillId,
+            release: plan.release,
+            revision: plan.sourceRevision,
+            method: plan.method,
+            destination: primary.destination,
+            projectRoot: root,
+            ownedPaths: primary.ownedPaths,
+            baseHashes: primary.baseHashes || fileHashes,
+            copies,
+            scope,
+            lastBackup,
+            cleanupDebt: debt,
+          }), customStateDir);
+        } catch {
+          // Two backups remain; recording debt is best-effort.
+        }
+      }
     }
 
     cleanupStaging();

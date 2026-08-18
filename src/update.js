@@ -21,6 +21,7 @@ import {
 } from './state.js';
 import { collectStatus } from './status.js';
 import { executeProjectInstall } from './transaction.js';
+import { exportSkillTree, inventorySkillTree } from './backup.js';
 
 export const UPDATE_SCHEMA_VERSION = 1;
 export const CANONICAL_CUSTOMIZATION_OWNER = 'canonical';
@@ -69,35 +70,55 @@ function relativeRootOf(relativeDestination, skillId) {
 
 function walkLiveFiles(dir) {
   const files = {};
-  if (!pathExists(dir)) return files;
-  const top = fs.lstatSync(dir);
-  if (top.isSymbolicLink() || !top.isDirectory()) return files;
+  const inventory = inventorySkillTree(dir);
+  for (const [rel, entry] of Object.entries(inventory.entries || {})) {
+    if (entry.kind === 'file') files[rel] = entry.hash;
+  }
+  return { files, inventory };
+}
 
-  const visit = (current) => {
-    let entries;
-    try {
-      entries = fs.readdirSync(current, { withFileTypes: true });
-    } catch {
-      return;
+function detectRenames(deleted, added, fromFiles, toFiles) {
+  const unusedAdded = new Set(added);
+  const renames = [];
+  for (const from of deleted) {
+    const hash = fromFiles[from];
+    const match = [...unusedAdded].find((to) => toFiles[to] === hash);
+    if (!match) continue;
+    unusedAdded.delete(match);
+    renames.push({ from, to: match, hash });
+  }
+  return renames;
+}
+
+function detectTypeChanges(baseFiles, inventory) {
+  const changes = [];
+  for (const [rel, entry] of Object.entries(inventory.entries || {})) {
+    if (baseFiles[rel] && entry.kind !== 'file') {
+      changes.push({ path: rel, from: 'file', to: entry.kind });
     }
-    for (const entry of entries) {
-      const full = path.join(current, entry.name);
-      let stat;
-      try {
-        stat = fs.lstatSync(full);
-      } catch {
-        continue;
-      }
-      if (stat.isSymbolicLink()) continue;
-      if (stat.isDirectory()) visit(full);
-      else if (stat.isFile()) {
-        const rel = path.relative(dir, full).replace(/\\/g, '/');
-        files[rel] = hashBytes(fs.readFileSync(full));
+  }
+  for (const rel of Object.keys(baseFiles || {})) {
+    if (!inventory.entries[rel] && !Object.keys(inventory.entries).some((key) => key.startsWith(`${rel}/`))) {
+      continue;
+    }
+    const entry = inventory.entries[rel];
+    if (entry && entry.kind === 'directory' && baseFiles[rel]) {
+      if (!changes.some((change) => change.path === rel)) {
+        changes.push({ path: rel, from: 'file', to: 'directory' });
       }
     }
-  };
-  visit(dir);
-  return files;
+  }
+  return changes;
+}
+
+function symlinkEffects(inventory) {
+  return Object.entries(inventory.entries || {})
+    .filter(([, entry]) => entry.kind === 'symlink')
+    .map(([pathName, entry]) => ({
+      path: pathName,
+      target: entry.target,
+      escaped: Boolean(entry.escaped),
+    }));
 }
 
 function releaseRelation(installed, running) {
@@ -204,11 +225,13 @@ function compareSkill(options) {
   const ownerRel = String(owner.destination || '').replace(/\\/g, '/');
   const ownerAbs = path.resolve(root, ...ownerRel.split('/'));
   const liveMarkdown = readSkillMarkdown(ownerAbs);
-  const liveFiles = walkLiveFiles(ownerAbs);
+  const { files: liveFiles, inventory } = walkLiveFiles(ownerAbs);
   const baseHashes = entry?.baseHashes || {};
   const upstreamFiles = catalogSkill?.files || {};
   const officialLive = officialLiveFiles(liveFiles, liveMarkdown, bundledMarkdown, skillId);
-  const liveChanged = !mapsEqual(officialLive, baseHashes);
+  const liveChanged = !mapsEqual(officialLive, baseHashes)
+    || symlinkEffects(inventory).length > 0
+    || detectTypeChanges(baseHashes, inventory).length > 0;
   const upstreamChanged = !mapsEqual(baseHashes, upstreamFiles);
   const customKind = customizationKind(liveMarkdown, skillId);
   const statusKinds = (statusSkill?.destinations || []).flatMap((dest) => dest.classifications || []);
@@ -216,20 +239,57 @@ function compareSkill(options) {
   const missingBundled = !catalogSkill;
 
   let comparison = 'no-op';
+  let changeKind = 'none';
   if (missingBundled) {
     comparison = 'missing-bundled';
-  } else if (unsafeKinds.length || liveChanged || customKind === 'malformed') {
+  } else if (unsafeKinds.length || customKind === 'malformed') {
     comparison = 'unsafe';
+  } else if (liveChanged && upstreamChanged) {
+    comparison = 'concurrent';
+    changeKind = 'concurrent';
+  } else if (liveChanged) {
+    comparison = 'local-only';
+    changeKind = 'local-only';
   } else if (upstreamChanged && customKind === 'populated') {
     comparison = 'upstream-and-customization';
+    changeKind = 'upstream-only';
   } else if (upstreamChanged) {
     comparison = 'upstream-only';
+    changeKind = 'upstream-only';
   } else if (customKind === 'populated') {
     comparison = 'customization-only';
   }
 
   const blocked = comparison === 'unsafe' || comparison === 'missing-bundled';
+  const needsResolution = changeKind === 'local-only' || changeKind === 'concurrent';
   const diff = fileDiff(officialLive, upstreamFiles);
+  const liveOnlyFiles = {};
+  for (const [rel, entry] of Object.entries(inventory.entries || {})) {
+    if (entry.kind === 'file') liveOnlyFiles[rel] = entry.hash;
+  }
+  const vsLiveBase = fileDiff(baseHashes, liveOnlyFiles);
+  const renames = detectRenames(vsLiveBase.deleted, vsLiveBase.added, baseHashes, liveOnlyFiles);
+  const renamedFrom = new Set(renames.map((item) => item.from));
+  const renamedTo = new Set(renames.map((item) => item.to));
+  const typeChanges = detectTypeChanges(baseHashes, inventory);
+  const effects = {
+    added: vsLiveBase.added.filter((file) => !renamedTo.has(file)),
+    replaced: vsLiveBase.replaced,
+    deleted: vsLiveBase.deleted.filter((file) => !renamedFrom.has(file)),
+    overwrite: diff.replaced,
+    delete: [
+      ...diff.deleted,
+      ...Object.keys(inventory.entries || {}).filter((rel) => {
+        const entry = inventory.entries[rel];
+        return (entry.kind === 'symlink' || entry.kind === 'directory') && !(rel in upstreamFiles);
+      }),
+    ],
+    renames,
+    typeChanges,
+    symlinks: symlinkEffects(inventory),
+  };
+  const exportRoot = options.exportDir || path.join(root, '.sigma-export');
+  const exportPath = path.join(exportRoot, skillId);
   const skillChangelog = [
     ...diff.added.map((file) => `+ ${file}`),
     ...diff.replaced.map((file) => `~ ${file}`),
@@ -243,12 +303,15 @@ function compareSkill(options) {
     runningRevision: catalogSkill?.revision || null,
     installedRelease: entry?.release || null,
     comparison,
+    changeKind,
     customization: customKind,
     blocked,
+    needsResolution,
     blockedReasons: blocked
-      ? (missingBundled ? ['missing bundled Skill Revision'] : (unsafeKinds.length ? unsafeKinds : ['live tree drifted from recorded base']))
+      ? (missingBundled ? ['missing bundled Skill Revision'] : (unsafeKinds.length ? unsafeKinds : ['malformed customization markers']))
       : [],
     diff,
+    effects,
     changelog: skillChangelog,
     owner: CANONICAL_CUSTOMIZATION_OWNER,
     ownerDestination: ownerRel,
@@ -261,6 +324,9 @@ function compareSkill(options) {
     rawCustom: (customKind === 'populated' || customKind === 'empty') && typeof liveMarkdown === 'string'
       ? extractRawCustomContent(liveMarkdown, skillId)
       : undefined,
+    backup: { required: needsResolution },
+    exportPath,
+    exportCollision: pathExists(exportPath),
   };
 }
 
@@ -319,16 +385,25 @@ export function createUpdatePlan(options = {}) {
       root,
       packageRoot,
       bundledMarkdown,
+      exportDir: options.exportDir,
     });
   });
 
   const changed = skills.filter((skill) => (
-    skill.comparison === 'upstream-only' || skill.comparison === 'upstream-and-customization'
+    skill.comparison === 'upstream-only'
+    || skill.comparison === 'upstream-and-customization'
+    || skill.comparison === 'concurrent'
+    || skill.comparison === 'local-only'
   ));
   const unchanged = skills.filter((skill) => (
     skill.comparison === 'no-op' || skill.comparison === 'customization-only'
   ));
   const blocked = skills.filter((skill) => skill.blocked);
+  const needsResolution = skills.filter((skill) => skill.needsResolution);
+  const kinds = [...new Set(skills.map((skill) => skill.changeKind).filter((kind) => kind && kind !== 'none'))];
+  const prompt = kinds.length
+    ? `Resolve ${kinds.join(', ')} outside-edit cases with skip, export, or replace.`
+    : '';
 
   return {
     schemaVersion: UPDATE_SCHEMA_VERSION,
@@ -342,9 +417,11 @@ export function createUpdatePlan(options = {}) {
     },
     changelog: readChangelog(packageRoot),
     owner: CANONICAL_CUSTOMIZATION_OWNER,
+    prompt,
     changed,
     unchanged,
     blocked,
+    needsResolution,
     skills,
   };
 }
@@ -386,6 +463,9 @@ function installOptionsFor(skill, options, scope) {
     adoptChanged: 'replace',
     preservedCustomRaw: skill.rawCustom !== undefined ? skill.rawCustom : undefined,
     registry: options.registry || loadHostRegistry(findPackageRoot()),
+    afterBackup: options.afterBackup,
+    saveState: options.saveState,
+    pruneBackups: options.pruneBackups,
   };
 }
 
@@ -401,6 +481,7 @@ export function executeUpdate(options = {}) {
   const selectedIds = selectSkills(plan, options);
   const selected = plan.skills.filter((skill) => selectedIds.includes(skill.id));
   const skipped = plan.skills.filter((skill) => !selectedIds.includes(skill.id));
+  const outsideEdit = options.outsideEdit || null;
 
   const selectedBlocked = selected.filter((skill) => skill.blocked);
   if (selectedBlocked.length > 0) {
@@ -412,30 +493,59 @@ export function executeUpdate(options = {}) {
     throw new Error(`unsafe drift or missing revision stopped update without mutation: ${reasons}`);
   }
 
+  const unresolved = selected.filter((skill) => skill.needsResolution);
+  if (!options.dryRun && unresolved.length > 0 && !outsideEdit) {
+    const ids = unresolved.map((skill) => `${skill.id} (${skill.changeKind})`).join(', ');
+    throw new Error(`outside edits need --outside-edit replace, skip, or export before mutation: ${ids}`);
+  }
+
   const result = {
     ...plan,
     dryRun: Boolean(options.dryRun),
     selected: selected.map((skill) => skill.id),
     skipped: skipped.map((skill) => skill.id),
+    outsideEdit,
     results: [],
   };
 
   if (options.dryRun) return result;
 
-  const updatable = selected.filter((skill) => (
-    skill.comparison === 'upstream-only' || skill.comparison === 'upstream-and-customization'
-  ));
-
-  for (const skill of updatable) {
+  const updatableComparisons = new Set(['upstream-only', 'upstream-and-customization', 'local-only', 'concurrent']);
+  for (const skill of selected) {
+    if (skill.needsResolution && outsideEdit === 'skip') {
+      result.results.push({ id: skill.id, success: true, action: 'skip' });
+      continue;
+    }
+    if (skill.needsResolution && outsideEdit === 'export') {
+      if (skill.exportCollision) {
+        throw new Error(`export collision at '${skill.exportPath}'`);
+      }
+      const exported = exportSkillTree({
+        sourceDir: path.resolve(
+          options.scope === 'global' ? options.homeDir : options.projectRoot,
+          ...String(skill.ownerDestination).split('/'),
+        ),
+        exportRoot: path.dirname(skill.exportPath),
+        skillId: skill.id,
+        dest: skill.exportPath,
+        refuseCollision: true,
+      });
+      result.results.push({ id: skill.id, success: true, action: 'export', exportPath: exported });
+      continue;
+    }
+    if (!updatableComparisons.has(skill.comparison)) continue;
     const executed = executeProjectInstall(installOptionsFor(
       skill,
       options,
       options.scope === 'global' ? 'global' : 'project',
     ));
+    const backupDir = (executed.plan?.destinations || []).find((dest) => dest.privateBackup)?.privateBackup;
     result.results.push({
       id: skill.id,
       success: executed.success,
       revision: executed.plan?.sourceRevision,
+      action: 'replace',
+      backupIntegrity: backupDir ? { ok: true, path: backupDir } : { ok: true },
     });
   }
 
@@ -453,6 +563,7 @@ export function formatUpdateJson(plan) {
     changed: (plan.changed || []).map(({ rawCustom, copies, ...skill }) => skill),
     unchanged: (plan.unchanged || []).map(({ rawCustom, copies, ...skill }) => skill),
     blocked: (plan.blocked || []).map(({ rawCustom, copies, ...skill }) => skill),
+    needsResolution: (plan.needsResolution || []).map(({ rawCustom, copies, ...skill }) => skill),
   }));
   return JSON.stringify(payload, null, 2);
 }
@@ -498,6 +609,16 @@ export function formatUpdateHuman(plan) {
   renderGroup('Changed skills', plan.changed || []);
   renderGroup('Unchanged skills', plan.unchanged || []);
   renderGroup('Blocked skills', plan.blocked || []);
+  if (plan.prompt) {
+    lines.push('');
+    lines.push(`Prompt: ${plan.prompt}`);
+  }
+  const localOnly = (plan.skills || []).filter((skill) => skill.changeKind === 'local-only');
+  const upstreamOnly = (plan.skills || []).filter((skill) => skill.changeKind === 'upstream-only');
+  const concurrent = (plan.skills || []).filter((skill) => skill.changeKind === 'concurrent');
+  renderGroup('Local-only changes', localOnly);
+  renderGroup('Upstream-only changes', upstreamOnly);
+  renderGroup('Concurrent local/upstream changes', concurrent);
   if (Array.isArray(plan.selected)) {
     lines.push('');
     lines.push(`Selected: ${plan.selected.join(', ') || '(none)'}`);
