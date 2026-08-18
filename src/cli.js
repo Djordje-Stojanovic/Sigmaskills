@@ -326,6 +326,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
           noColor: opts.noColor,
           static: opts.static,
           narrow: opts.narrow,
+          json: opts.json,
         },
       });
     }
