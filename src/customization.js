@@ -69,6 +69,183 @@ export function validateCustomizationBlock(markdownContent, skillId = 'skill') {
   };
 }
 
+function countOccurrences(haystack, needle) {
+  let count = 0;
+  let index = 0;
+  while (needle && (index = haystack.indexOf(needle, index)) !== -1) {
+    count += 1;
+    index += needle.length;
+  }
+  return count;
+}
+
+function dominantEol(markdown) {
+  return markdown.includes('\r\n') ? '\r\n' : '\n';
+}
+
+function isWhitespaceOnly(text) {
+  return text.length === 0 || /^[\r\n \t]*$/.test(text);
+}
+
+function stripLeadingEols(text) {
+  let index = 0;
+  while (index < text.length) {
+    if (text.startsWith('\r\n', index)) index += 2;
+    else if (text[index] === '\n') index += 1;
+    else break;
+  }
+  return text.slice(index);
+}
+
+function insertEmptyBlockAfterHeading(markdown) {
+  const eol = dominantEol(markdown);
+  const headingIndex = markdown.indexOf(SECTION_HEADING);
+  const headingEnd = headingIndex + SECTION_HEADING.length;
+  const rest = stripLeadingEols(markdown.slice(headingEnd));
+  return `${markdown.slice(0, headingEnd)}${eol}${eol}${CUSTOM_BLOCK_START}${eol}${CUSTOM_BLOCK_END}${eol}${rest}`;
+}
+
+function insertHeadingBeforeStart(markdown) {
+  const eol = dominantEol(markdown);
+  const startIndex = markdown.indexOf(CUSTOM_BLOCK_START);
+  return `${markdown.slice(0, startIndex)}${SECTION_HEADING}${eol}${eol}${markdown.slice(startIndex)}`;
+}
+
+function swapReversedWhitespacePair(markdown) {
+  const endIndex = markdown.indexOf(CUSTOM_BLOCK_END);
+  const startIndex = markdown.indexOf(CUSTOM_BLOCK_START);
+  const mid = markdown.slice(endIndex + CUSTOM_BLOCK_END.length, startIndex);
+  return `${markdown.slice(0, endIndex)}${CUSTOM_BLOCK_START}${mid}${CUSTOM_BLOCK_END}${markdown.slice(startIndex + CUSTOM_BLOCK_START.length)}`;
+}
+
+/**
+ * Diagnose marker shapes without guessing user-text boundaries.
+ * Unique mechanical repairs never wrap existing user bytes as Skill Customization.
+ *
+ * @param {string} markdownContent
+ * @param {string} [skillId]
+ * @returns {{
+ *   status: 'valid' | 'empty' | 'absent' | 'malformed',
+ *   shape: string,
+ *   error?: string,
+ *   repairable: boolean,
+ *   proposedRepair?: string,
+ *   customContent?: string,
+ * }}
+ */
+export function diagnoseCustomizationMarkers(markdownContent, skillId = 'skill') {
+  if (typeof markdownContent !== 'string') {
+    return {
+      status: 'malformed',
+      shape: 'not-string',
+      error: `${skillId}: markdown content must be a string`,
+      repairable: false,
+    };
+  }
+
+  const startCount = countOccurrences(markdownContent, CUSTOM_BLOCK_START);
+  const endCount = countOccurrences(markdownContent, CUSTOM_BLOCK_END);
+  const headingIndex = markdownContent.indexOf(SECTION_HEADING);
+
+  try {
+    const result = validateCustomizationBlock(markdownContent, skillId);
+    return {
+      status: result.customContent ? 'valid' : 'empty',
+      shape: 'well-formed',
+      repairable: false,
+      customContent: result.customContent,
+    };
+  } catch (err) {
+    const error = err.message;
+    if (startCount === 0 && endCount === 0 && headingIndex !== -1) {
+      return {
+        status: 'malformed',
+        shape: 'missing-markers',
+        error,
+        repairable: true,
+        proposedRepair: insertEmptyBlockAfterHeading(markdownContent),
+      };
+    }
+    if (startCount === 0 && endCount === 0 && headingIndex === -1) {
+      return {
+        status: 'malformed',
+        shape: 'missing-markers',
+        error,
+        repairable: false,
+      };
+    }
+    if (headingIndex === -1 && startCount === 1 && endCount === 1) {
+      const startIndex = markdownContent.indexOf(CUSTOM_BLOCK_START);
+      const endIndex = markdownContent.indexOf(CUSTOM_BLOCK_END);
+      if (startIndex < endIndex) {
+        return {
+          status: 'malformed',
+          shape: 'missing-heading',
+          error,
+          repairable: true,
+          proposedRepair: insertHeadingBeforeStart(markdownContent),
+        };
+      }
+    }
+    if (startCount === 1 && endCount === 1) {
+      const startIndex = markdownContent.indexOf(CUSTOM_BLOCK_START);
+      const endIndex = markdownContent.indexOf(CUSTOM_BLOCK_END);
+      if (endIndex < startIndex) {
+        const mid = markdownContent.slice(endIndex + CUSTOM_BLOCK_END.length, startIndex);
+        const repairable = isWhitespaceOnly(mid) && headingIndex !== -1 && endIndex > headingIndex;
+        return {
+          status: 'malformed',
+          shape: 'reversed',
+          error,
+          repairable,
+          proposedRepair: repairable ? swapReversedWhitespacePair(markdownContent) : undefined,
+        };
+      }
+    }
+    let shape = 'malformed';
+    if (startCount > 1 && endCount > 1) shape = 'nested';
+    else if (startCount > 1) shape = 'duplicate-start';
+    else if (endCount > 1) shape = 'duplicate-end';
+    else if (startCount === 0) shape = 'missing-start';
+    else if (endCount === 0) shape = 'missing-end';
+    else if (headingIndex === -1) shape = 'missing-heading';
+    else if (markdownContent.indexOf(CUSTOM_BLOCK_START) < headingIndex) shape = 'outside-section';
+    return {
+      status: 'malformed',
+      shape,
+      error,
+      repairable: false,
+    };
+  }
+}
+
+/**
+ * Return exact approved repair bytes. Never infers marker boundaries.
+ *
+ * @param {string} markdownContent
+ * @param {string} [skillId]
+ * @param {{ editor?: (bytes: string) => string }} [options]
+ * @returns {string}
+ */
+export function applyProposedRepair(markdownContent, skillId = 'skill', options = {}) {
+  const diagnosis = diagnoseCustomizationMarkers(markdownContent, skillId);
+  if (!diagnosis.repairable || typeof diagnosis.proposedRepair !== 'string') {
+    throw new Error(`${skillId}: invalid repair; marker boundaries cannot be inferred`);
+  }
+  let bytes = diagnosis.proposedRepair;
+  if (typeof options.editor === 'function') {
+    bytes = options.editor(bytes);
+  }
+  if (typeof bytes !== 'string') {
+    throw new Error(`${skillId}: editor produced invalid repair bytes`);
+  }
+  const after = diagnoseCustomizationMarkers(bytes, skillId);
+  if (after.status !== 'valid' && after.status !== 'empty') {
+    throw new Error(`${skillId}: editor produced invalid repair`);
+  }
+  return bytes;
+}
+
 /**
  * Inspect customization markers without guessing. Absent markers stay absent;
  * malformed markers are reported and never repaired.

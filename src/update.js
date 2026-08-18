@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { findPackageRoot } from './catalog.js';
 import {
+  applyProposedRepair,
+  diagnoseCustomizationMarkers,
   extractRawCustomContent,
   injectRawCustomContent,
   inspectCustomizationBlock,
@@ -16,18 +18,19 @@ import { pathExists } from './links.js';
 import { inspectProjectLock } from './project-lock.js';
 import {
   STATE_SCHEMA_VERSION,
+  getGlobalStateDir,
+  getProjectStateDir,
   loadGlobalState,
   loadProjectState,
 } from './state.js';
 import { collectStatus } from './status.js';
 import { executeProjectInstall } from './transaction.js';
-import { exportSkillTree, inventorySkillTree } from './backup.js';
+import { commitSkillBackup, exportSkillTree, inventorySkillTree } from './backup.js';
 
 export const UPDATE_SCHEMA_VERSION = 1;
 export const CANONICAL_CUSTOMIZATION_OWNER = 'canonical';
 
 const UNSAFE_KINDS = new Set([
-  'malformed-markers',
   'missing-destination',
   'stale-state',
   'broken-link',
@@ -37,6 +40,12 @@ const UNSAFE_KINDS = new Set([
 
 function hashBytes(bytes) {
   return crypto.createHash('sha256').update(bytes).digest('hex');
+}
+
+function omitKey(map, key) {
+  const next = { ...(map || {}) };
+  delete next[key];
+  return next;
 }
 
 function mapsEqual(left, right) {
@@ -203,10 +212,10 @@ function officialLiveFiles(liveFiles, liveMarkdown, bundledMarkdown, skillId) {
 
 function customizationKind(markdown, skillId) {
   if (typeof markdown !== 'string') return 'absent';
-  const inspection = inspectCustomizationBlock(markdown, skillId);
-  if (inspection.status === 'valid') return 'populated';
-  if (inspection.status === 'empty') return 'empty';
-  if (inspection.status === 'malformed') return 'malformed';
+  const diagnosis = diagnoseCustomizationMarkers(markdown, skillId);
+  if (diagnosis.status === 'valid') return 'populated';
+  if (diagnosis.status === 'empty') return 'empty';
+  if (diagnosis.status === 'malformed') return 'malformed';
   return 'absent';
 }
 
@@ -228,8 +237,14 @@ function compareSkill(options) {
   const { files: liveFiles, inventory } = walkLiveFiles(ownerAbs);
   const baseHashes = entry?.baseHashes || {};
   const upstreamFiles = catalogSkill?.files || {};
+  const diagnosis = typeof liveMarkdown === 'string'
+    ? diagnoseCustomizationMarkers(liveMarkdown, skillId)
+    : { status: 'absent', shape: 'missing-file', repairable: false };
   const officialLive = officialLiveFiles(liveFiles, liveMarkdown, bundledMarkdown, skillId);
   const liveChanged = !mapsEqual(officialLive, baseHashes)
+    || symlinkEffects(inventory).length > 0
+    || detectTypeChanges(baseHashes, inventory).length > 0;
+  const hasOutsideDrift = !mapsEqual(omitKey(liveFiles, 'SKILL.md'), omitKey(baseHashes, 'SKILL.md'))
     || symlinkEffects(inventory).length > 0
     || detectTypeChanges(baseHashes, inventory).length > 0;
   const upstreamChanged = !mapsEqual(baseHashes, upstreamFiles);
@@ -237,13 +252,16 @@ function compareSkill(options) {
   const statusKinds = (statusSkill?.destinations || []).flatMap((dest) => dest.classifications || []);
   const unsafeKinds = [...new Set(statusKinds.filter((kind) => UNSAFE_KINDS.has(kind)))];
   const missingBundled = !catalogSkill;
+  const markerProblem = customKind === 'malformed';
 
   let comparison = 'no-op';
   let changeKind = 'none';
   if (missingBundled) {
     comparison = 'missing-bundled';
-  } else if (unsafeKinds.length || customKind === 'malformed') {
+  } else if (unsafeKinds.length) {
     comparison = 'unsafe';
+  } else if (markerProblem) {
+    comparison = 'malformed-markers';
   } else if (liveChanged && upstreamChanged) {
     comparison = 'concurrent';
     changeKind = 'concurrent';
@@ -261,7 +279,9 @@ function compareSkill(options) {
   }
 
   const blocked = comparison === 'unsafe' || comparison === 'missing-bundled';
-  const needsResolution = changeKind === 'local-only' || changeKind === 'concurrent';
+  const needsMarkerResolution = comparison === 'malformed-markers';
+  const needsResolution = changeKind === 'local-only' || changeKind === 'concurrent'
+    || (needsMarkerResolution && hasOutsideDrift);
   const diff = fileDiff(officialLive, upstreamFiles);
   const liveOnlyFiles = {};
   for (const [rel, entry] of Object.entries(inventory.entries || {})) {
@@ -307,9 +327,17 @@ function compareSkill(options) {
     customization: customKind,
     blocked,
     needsResolution,
+    needsMarkerResolution,
+    markerShape: diagnosis.shape || null,
+    repairable: Boolean(diagnosis.repairable),
+    proposedRepair: diagnosis.proposedRepair,
+    repairEffects: needsMarkerResolution
+      ? { added: [], replaced: ['SKILL.md'], deleted: [] }
+      : undefined,
+    hasOutsideDrift,
     blockedReasons: blocked
-      ? (missingBundled ? ['missing bundled Skill Revision'] : (unsafeKinds.length ? unsafeKinds : ['malformed customization markers']))
-      : [],
+      ? (missingBundled ? ['missing bundled Skill Revision'] : unsafeKinds)
+      : (needsMarkerResolution ? [diagnosis.error || 'malformed customization markers'] : []),
     diff,
     effects,
     changelog: skillChangelog,
@@ -400,10 +428,15 @@ export function createUpdatePlan(options = {}) {
   ));
   const blocked = skills.filter((skill) => skill.blocked);
   const needsResolution = skills.filter((skill) => skill.needsResolution);
+  const needsMarkerResolution = skills.filter((skill) => skill.needsMarkerResolution);
   const kinds = [...new Set(skills.map((skill) => skill.changeKind).filter((kind) => kind && kind !== 'none'))];
-  const prompt = kinds.length
-    ? `Resolve ${kinds.join(', ')} outside-edit cases with skip, export, or replace.`
-    : '';
+  const prompts = [];
+  if (kinds.length) {
+    prompts.push(`Resolve ${kinds.join(', ')} outside-edit cases with skip, export, or replace.`);
+  }
+  if (needsMarkerResolution.length) {
+    prompts.push('Resolve malformed customization markers with --malformed-markers skip, repair, or replace.');
+  }
 
   return {
     schemaVersion: UPDATE_SCHEMA_VERSION,
@@ -417,11 +450,12 @@ export function createUpdatePlan(options = {}) {
     },
     changelog: readChangelog(packageRoot),
     owner: CANONICAL_CUSTOMIZATION_OWNER,
-    prompt,
+    prompt: prompts.join(' '),
     changed,
     unchanged,
     blocked,
     needsResolution,
+    needsMarkerResolution,
     skills,
   };
 }
@@ -436,7 +470,14 @@ function selectSkills(plan, options) {
     }
     return requested;
   }
-  return plan.changed.filter((skill) => !skill.blocked).map((skill) => skill.id);
+  const selected = plan.changed.filter((skill) => !skill.blocked).map((skill) => skill.id);
+  const malformedChoice = options.malformedMarkers;
+  if (malformedChoice === 'repair' || malformedChoice === 'replace' || malformedChoice === 'skip') {
+    for (const skill of plan.needsMarkerResolution || []) {
+      if (!selected.includes(skill.id)) selected.push(skill.id);
+    }
+  }
+  return selected;
 }
 
 function installOptionsFor(skill, options, scope) {
@@ -461,12 +502,45 @@ function installOptionsFor(skill, options, scope) {
     method: hasLink ? 'link' : 'copy',
     copyRoots,
     adoptChanged: 'replace',
+    adoptMalformed: options.malformedMarkers === 'replace' ? 'replace' : undefined,
     preservedCustomRaw: skill.rawCustom !== undefined ? skill.rawCustom : undefined,
     registry: options.registry || loadHostRegistry(findPackageRoot()),
     afterBackup: options.afterBackup,
     saveState: options.saveState,
     pruneBackups: options.pruneBackups,
   };
+}
+
+function ownerAbsPath(skill, options) {
+  return path.resolve(
+    options.scope === 'global' ? options.homeDir : options.projectRoot,
+    ...String(skill.ownerDestination).split('/'),
+  );
+}
+
+function applyCanonicalRepair(skill, options) {
+  const ownerAbs = ownerAbsPath(skill, options);
+  const skillMd = path.join(ownerAbs, 'SKILL.md');
+  const current = fs.readFileSync(skillMd, 'utf8');
+  const repaired = applyProposedRepair(current, skill.id, { editor: options.repairEditor });
+  const stateDir = options.scope === 'global'
+    ? getGlobalStateDir(options.homeDir, options.customStateDir)
+    : getProjectStateDir(options.projectRoot, options.customStateDir);
+  const backupDir = commitSkillBackup({
+    stateDir,
+    skillId: skill.id,
+    sourceDir: ownerAbs,
+  });
+  if (typeof options.afterBackup === 'function') {
+    options.afterBackup(backupDir);
+  }
+  try {
+    fs.writeFileSync(skillMd, repaired, 'utf8');
+  } catch (err) {
+    fs.writeFileSync(skillMd, current, 'utf8');
+    throw err;
+  }
+  return backupDir;
 }
 
 /**
@@ -482,6 +556,7 @@ export function executeUpdate(options = {}) {
   const selected = plan.skills.filter((skill) => selectedIds.includes(skill.id));
   const skipped = plan.skills.filter((skill) => !selectedIds.includes(skill.id));
   const outsideEdit = options.outsideEdit || null;
+  const malformedMarkers = options.malformedMarkers || null;
 
   const selectedBlocked = selected.filter((skill) => skill.blocked);
   if (selectedBlocked.length > 0) {
@@ -493,7 +568,17 @@ export function executeUpdate(options = {}) {
     throw new Error(`unsafe drift or missing revision stopped update without mutation: ${reasons}`);
   }
 
-  const unresolved = selected.filter((skill) => skill.needsResolution);
+  const selectedMalformed = selected.filter((skill) => skill.needsMarkerResolution);
+  if (!options.dryRun && selectedMalformed.length > 0 && !malformedMarkers) {
+    const ids = selectedMalformed.map((skill) => `${skill.id} (${skill.markerShape || 'malformed'})`).join(', ');
+    throw new Error(`malformed customization markers need --malformed-markers skip, repair, or replace: ${ids}`);
+  }
+  if (!options.dryRun && requested.length === 0 && (plan.needsMarkerResolution || []).length > 0 && !malformedMarkers) {
+    const ids = plan.needsMarkerResolution.map((skill) => `${skill.id} (${skill.markerShape || 'malformed'})`).join(', ');
+    throw new Error(`malformed customization markers need --malformed-markers skip, repair, or replace: ${ids}`);
+  }
+
+  const unresolved = selected.filter((skill) => skill.needsResolution && !skill.needsMarkerResolution);
   if (!options.dryRun && unresolved.length > 0 && !outsideEdit) {
     const ids = unresolved.map((skill) => `${skill.id} (${skill.changeKind})`).join(', ');
     throw new Error(`outside edits need --outside-edit replace, skip, or export before mutation: ${ids}`);
@@ -505,6 +590,7 @@ export function executeUpdate(options = {}) {
     selected: selected.map((skill) => skill.id),
     skipped: skipped.map((skill) => skill.id),
     outsideEdit,
+    malformedMarkers,
     results: [],
   };
 
@@ -512,6 +598,82 @@ export function executeUpdate(options = {}) {
 
   const updatableComparisons = new Set(['upstream-only', 'upstream-and-customization', 'local-only', 'concurrent']);
   for (const skill of selected) {
+    if (skill.needsMarkerResolution) {
+      if (malformedMarkers === 'skip') {
+        result.results.push({ id: skill.id, success: true, action: 'skip' });
+        continue;
+      }
+      if (malformedMarkers === 'repair') {
+        if (!skill.repairable) {
+          throw new Error(`${skill.id}: invalid repair; marker boundaries cannot be inferred`);
+        }
+        if (skill.hasOutsideDrift && !outsideEdit) {
+          throw new Error(`malformed markers combined with outside edits need --outside-edit skip, export, or replace: ${skill.id}`);
+        }
+        if (skill.hasOutsideDrift && outsideEdit === 'replace') {
+          const executed = executeProjectInstall(installOptionsFor(
+            skill,
+            { ...options, malformedMarkers: 'replace' },
+            options.scope === 'global' ? 'global' : 'project',
+          ));
+          const backupDir = (executed.plan?.destinations || []).find((dest) => dest.privateBackup)?.privateBackup;
+          result.results.push({
+            id: skill.id,
+            success: executed.success,
+            revision: executed.plan?.sourceRevision,
+            action: 'replace',
+            backupIntegrity: backupDir ? { ok: true, path: backupDir } : { ok: true },
+          });
+          continue;
+        }
+        const backupDir = applyCanonicalRepair(skill, options);
+        if (skill.hasOutsideDrift && outsideEdit === 'export') {
+          if (skill.exportCollision) throw new Error(`export collision at '${skill.exportPath}'`);
+          exportSkillTree({
+            sourceDir: ownerAbsPath(skill, options),
+            exportRoot: path.dirname(skill.exportPath),
+            skillId: skill.id,
+            dest: skill.exportPath,
+            refuseCollision: true,
+          });
+        }
+        result.results.push({ id: skill.id, success: true, action: 'repair', backupIntegrity: { ok: true, path: backupDir } });
+        continue;
+      }
+      if (malformedMarkers === 'replace') {
+        if (skill.hasOutsideDrift && !outsideEdit) {
+          throw new Error(`malformed markers combined with outside edits need --outside-edit skip, export, or replace: ${skill.id}`);
+        }
+        if (skill.hasOutsideDrift && (outsideEdit === 'skip' || outsideEdit === 'export')) {
+          if (outsideEdit === 'export') {
+            if (skill.exportCollision) throw new Error(`export collision at '${skill.exportPath}'`);
+            exportSkillTree({
+              sourceDir: ownerAbsPath(skill, options),
+              exportRoot: path.dirname(skill.exportPath),
+              skillId: skill.id,
+              dest: skill.exportPath,
+              refuseCollision: true,
+            });
+          }
+          result.results.push({ id: skill.id, success: true, action: outsideEdit });
+          continue;
+        }
+        const executed = executeProjectInstall(installOptionsFor(
+          skill,
+          options,
+          options.scope === 'global' ? 'global' : 'project',
+        ));
+        const backupDir = (executed.plan?.destinations || []).find((dest) => dest.privateBackup)?.privateBackup;
+        result.results.push({
+          id: skill.id,
+          success: executed.success,
+          revision: executed.plan?.sourceRevision,
+          action: 'replace',
+          backupIntegrity: backupDir ? { ok: true, path: backupDir } : { ok: true },
+        });
+        continue;
+      }
+    }
     if (skill.needsResolution && outsideEdit === 'skip') {
       result.results.push({ id: skill.id, success: true, action: 'skip' });
       continue;
@@ -521,10 +683,7 @@ export function executeUpdate(options = {}) {
         throw new Error(`export collision at '${skill.exportPath}'`);
       }
       const exported = exportSkillTree({
-        sourceDir: path.resolve(
-          options.scope === 'global' ? options.homeDir : options.projectRoot,
-          ...String(skill.ownerDestination).split('/'),
-        ),
+        sourceDir: ownerAbsPath(skill, options),
         exportRoot: path.dirname(skill.exportPath),
         skillId: skill.id,
         dest: skill.exportPath,
@@ -564,6 +723,7 @@ export function formatUpdateJson(plan) {
     unchanged: (plan.unchanged || []).map(({ rawCustom, copies, ...skill }) => skill),
     blocked: (plan.blocked || []).map(({ rawCustom, copies, ...skill }) => skill),
     needsResolution: (plan.needsResolution || []).map(({ rawCustom, copies, ...skill }) => skill),
+    needsMarkerResolution: (plan.needsMarkerResolution || []).map(({ rawCustom, copies, ...skill }) => skill),
   }));
   return JSON.stringify(payload, null, 2);
 }
@@ -603,12 +763,29 @@ export function formatUpdateHuman(plan) {
       if (skill.blockedReasons?.length) {
         lines.push(`    blocked: ${skill.blockedReasons.join(', ')}`);
       }
+      if (skill.needsMarkerResolution) {
+        lines.push(`    marker shape: ${skill.markerShape || 'malformed'}`);
+        lines.push(`    repairable: ${skill.repairable ? 'yes' : 'no'}`);
+        if (skill.repairEffects) {
+          lines.push(`    repair replacements: ${(skill.repairEffects.replaced || []).join(', ') || '(none)'}`);
+          lines.push(`    repair deletions: ${(skill.repairEffects.deleted || []).join(', ') || '(none)'}`);
+        }
+        if (skill.effects?.delete?.length || skill.effects?.added?.length) {
+          lines.push(`    whole-skill overwrite: ${(skill.effects.overwrite || []).join(', ') || '(none)'}`);
+          lines.push(`    whole-skill deletions: ${(skill.effects.delete || []).join(', ') || '(none)'}`);
+        }
+        if (skill.proposedRepair) {
+          lines.push('    proposed repair bytes:');
+          for (const line of skill.proposedRepair.split('\n')) lines.push(`      ${line}`);
+        }
+      }
     }
   };
 
   renderGroup('Changed skills', plan.changed || []);
   renderGroup('Unchanged skills', plan.unchanged || []);
   renderGroup('Blocked skills', plan.blocked || []);
+  renderGroup('Malformed markers', plan.needsMarkerResolution || []);
   if (plan.prompt) {
     lines.push('');
     lines.push(`Prompt: ${plan.prompt}`);

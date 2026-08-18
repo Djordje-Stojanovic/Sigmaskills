@@ -420,7 +420,7 @@ test('update: unknown schema, missing bundled revision, and unsafe drift do not 
     assert.match(driftIo.getStderr(), /unsafe drift|stopped update without mutation|malformed/);
     assert.deepEqual(snapshotTree(projectRoot), beforeDrift);
     const dry = createUpdatePlan({ catalog: getCatalog(ROOT), projectRoot, packageRoot: ROOT });
-    assert.equal(dry.blocked[0].comparison, 'unsafe');
+    assert.equal(dry.needsMarkerResolution[0].comparison, 'malformed-markers');
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }

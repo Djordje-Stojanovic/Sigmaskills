@@ -54,6 +54,8 @@ Options:
                     Resolve trees with malformed customization markers
   --outside-edit <replace|skip|export>
                     Resolve outside-customization edits during update
+  --malformed-markers <skip|repair|replace>
+                    Resolve malformed customization markers during update
   --export-dir <dir>
                     Collision-safe destination root for export resolutions
   --no-color        Disable color and reveal animation
@@ -97,6 +99,7 @@ export function parseCliArgs(args) {
     adoptUnverified: null,
     adoptMalformed: null,
     outsideEdit: null,
+    malformedMarkers: null,
     exportDir: null,
     unknown: [],
   };
@@ -145,6 +148,10 @@ export function parseCliArgs(args) {
       parsed.outsideEdit = args[++i];
     } else if (arg.startsWith('--outside-edit=')) {
       parsed.outsideEdit = arg.slice('--outside-edit='.length);
+    } else if (arg === '--malformed-markers') {
+      parsed.malformedMarkers = args[++i];
+    } else if (arg.startsWith('--malformed-markers=')) {
+      parsed.malformedMarkers = arg.slice('--malformed-markers='.length);
     } else if (arg === '--export-dir') {
       parsed.exportDir = args[++i];
     } else if (arg.startsWith('--export-dir=')) {
@@ -243,6 +250,11 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       return 1;
     }
 
+    if (opts.malformedMarkers && opts.malformedMarkers !== 'replace' && opts.malformedMarkers !== 'skip' && opts.malformedMarkers !== 'repair') {
+      writeErr('sigmaskills error: --malformed-markers must be skip, repair, or replace');
+      return 1;
+    }
+
     if (opts.command === 'update') {
       const env = io.env || process.env;
       if (opts.global && !opts.dryRun && !opts.yes) {
@@ -264,6 +276,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         env,
         skillIds: opts.skillIds,
         outsideEdit: opts.outsideEdit || undefined,
+        malformedMarkers: opts.malformedMarkers || undefined,
         exportDir: opts.exportDir || undefined,
       });
       writeOut(opts.json ? formatUpdateJson(result) : formatUpdateHuman(result));
