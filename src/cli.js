@@ -11,6 +11,11 @@ import {
   formatPurgeHuman,
   formatPurgeJson,
 } from './purge.js';
+import {
+  executeRelease,
+  formatReleaseHuman,
+  formatReleaseJson,
+} from './release.js';
 import { executeProjectInstall } from './transaction.js';
 import { resolveHomeDir } from './destinations.js';
 
@@ -39,6 +44,7 @@ Commands:
   restore           Restore the latest retained backup for a skill
   uninstall         Uninstall selected skills or every recorded skill in one scope after Uninstall Review
   purge             Remove all Sigma-owned content in one scope after the typed confirmation phrase
+  release           Prepare or dispatch an owner-triggered GitHub and npm Release
   status            Report managed Project or Global Installation state and drift
   list              List all shipped skills and their Skill Revisions
   verify            Validate manifest, skill resources, and compute revisions
@@ -48,9 +54,17 @@ Options:
   -h, --help        Show help
   --skill <name>    Skill identifier to install, update, restore, or uninstall (repeatable)
   --all             Uninstall every recorded Sigma skill in the chosen Project or Global scope
-  --dry-run         Preview install, update, restore, uninstall, or purge changes without writing files
+  --dry-run         Preview install, update, restore, uninstall, purge, or release without writing files
   --confirm-purge <phrase>
                     Exact typed confirmation for purge; --yes, CI, non-TTY, and JSON are not enough
+  --write-identities
+                    Write package, manifest, and changelog version identities for the calculated Release
+  --expected-commit <sha>
+                    Approved source commit for release dispatch
+  --expected-version <version>
+                    Approved Release version for release dispatch
+  --expected-digest <sha256>
+                    Approved tarball SHA-256 digest for release dispatch
   --json            Output in versioned JSON format
   --project <path>  Target project root directory (defaults to current directory)
   --global          User-level Global Installation (requires --yes to write)
@@ -123,6 +137,10 @@ export function parseCliArgs(args) {
     exportDir: null,
     all: false,
     confirmPurge: undefined,
+    writeIdentities: false,
+    expectedCommit: null,
+    expectedVersion: null,
+    expectedDigest: null,
     unknown: [],
   };
 
@@ -188,6 +206,20 @@ export function parseCliArgs(args) {
       parsed.exportDir = args[++i];
     } else if (arg.startsWith('--export-dir=')) {
       parsed.exportDir = arg.slice('--export-dir='.length);
+    } else if (arg === '--write-identities') {
+      parsed.writeIdentities = true;
+    } else if (arg === '--expected-commit') {
+      parsed.expectedCommit = args[++i];
+    } else if (arg.startsWith('--expected-commit=')) {
+      parsed.expectedCommit = arg.slice('--expected-commit='.length);
+    } else if (arg === '--expected-version') {
+      parsed.expectedVersion = args[++i];
+    } else if (arg.startsWith('--expected-version=')) {
+      parsed.expectedVersion = arg.slice('--expected-version='.length);
+    } else if (arg === '--expected-digest') {
+      parsed.expectedDigest = args[++i];
+    } else if (arg.startsWith('--expected-digest=')) {
+      parsed.expectedDigest = arg.slice('--expected-digest='.length);
     } else if (arg === '--confirm-purge') {
       parsed.confirmPurge = args[++i] ?? '';
     } else if (arg.startsWith('--confirm-purge=')) {
@@ -214,7 +246,7 @@ export function parseCliArgs(args) {
       parsed.stateDir = arg.slice('--state-dir='.length);
     } else if (
       !parsed.command &&
-      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status' || arg === 'update' || arg === 'restore' || arg === 'uninstall' || arg === 'purge')
+      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status' || arg === 'update' || arg === 'restore' || arg === 'uninstall' || arg === 'purge' || arg === 'release')
     ) {
       parsed.command = arg;
     } else if (!parsed.skillId && (parsed.command === 'install' || parsed.command === 'add')) {
@@ -325,6 +357,28 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     if (opts.changed && opts.changed !== 'backup' && opts.changed !== 'keep' && opts.changed !== 'export' && opts.changed !== 'delete') {
       writeErr('sigmaskills error: --changed must be backup, keep, export, or delete');
       return 1;
+    }
+
+    if (opts.command === 'release') {
+      const adapters = io.release || {};
+      const result = executeRelease({
+        rootDir: adapters.rootDir || rootDir,
+        catalog: adapters.catalog || catalog,
+        dryRun: opts.dryRun,
+        yes: opts.yes,
+        writeIdentities: opts.writeIdentities,
+        expectedCommit: opts.expectedCommit,
+        expectedVersion: opts.expectedVersion,
+        expectedDigest: opts.expectedDigest,
+        git: adapters.git,
+        pack: adapters.pack,
+        probes: adapters.probes,
+        dispatch: adapters.dispatch,
+        workflow: adapters.workflow,
+        now: adapters.now,
+      });
+      writeOut(opts.json ? formatReleaseJson(result) : formatReleaseHuman(result));
+      return 0;
     }
 
     if (opts.command === 'purge') {
