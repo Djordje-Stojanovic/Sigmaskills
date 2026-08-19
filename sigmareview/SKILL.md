@@ -125,3 +125,9 @@ If authentication, permissions, repository state, or platform limitations make p
 ## Final response
 
 Do not paste or summarize the report in chat. Return the pull-request URL and one compact sentence stating the finding count and any material coverage limitation. If publication failed, link the report and state the blocker plainly.
+
+## Personal instructions
+
+<sigmaskills-custom>
+</sigmaskills-custom>
+

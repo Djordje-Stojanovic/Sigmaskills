@@ -1,0 +1,2404 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": {
+    "repository": "vercel-labs/skills",
+    "pinnedRevision": "c6f69c631292444cc541ac6d91e2226b0ff247da",
+    "upstreamFile": "src/agents.ts"
+  },
+  "hosts": [
+    {
+      "id": "adal",
+      "name": "adal",
+      "displayName": "AdaL",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".adal/skills",
+          "raw": "'.adal/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".adal/skills"
+          ],
+          "raw": "join(home, '.adal/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 758
+      }
+    },
+    {
+      "id": "aider-desk",
+      "name": "aider-desk",
+      "displayName": "AiderDesk",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".aider-desk/skills",
+          "raw": "'.aider-desk/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".aider-desk/skills"
+          ],
+          "raw": "join(home, '.aider-desk/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 72
+      }
+    },
+    {
+      "id": "amp",
+      "name": "amp",
+      "displayName": "Amp",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "configHome",
+          "segments": [
+            "agents/skills"
+          ],
+          "raw": "join(configHome, 'agents/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 81
+      }
+    },
+    {
+      "id": "antigravity",
+      "name": "antigravity",
+      "displayName": "Antigravity",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".gemini/antigravity/skills"
+          ],
+          "raw": "join(home, '.gemini/antigravity/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 90
+      }
+    },
+    {
+      "id": "antigravity-cli",
+      "name": "antigravity-cli",
+      "displayName": "Antigravity CLI",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".gemini/antigravity-cli/skills"
+          ],
+          "raw": "join(home, '.gemini/antigravity-cli/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 99
+      }
+    },
+    {
+      "id": "astrbot",
+      "name": "astrbot",
+      "displayName": "AstrBot",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": "data/skills",
+          "raw": "'data/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".astrbot/data/skills"
+          ],
+          "raw": "join(home, '.astrbot/data/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 108
+      }
+    },
+    {
+      "id": "augment",
+      "name": "augment",
+      "displayName": "Augment",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".augment/skills",
+          "raw": "'.augment/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".augment/skills"
+          ],
+          "raw": "join(home, '.augment/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 126
+      }
+    },
+    {
+      "id": "autohand-code",
+      "name": "autohand-code",
+      "displayName": "Autohand Code CLI",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".autohand/skills",
+          "raw": "'.autohand/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "autohandHome",
+          "segments": [
+            "skills"
+          ],
+          "raw": "join(autohandHome, 'skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 117
+      }
+    },
+    {
+      "id": "bob",
+      "name": "bob",
+      "displayName": "IBM Bob",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".bob/skills",
+          "raw": "'.bob/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".bob/skills"
+          ],
+          "raw": "join(home, '.bob/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 135
+      }
+    },
+    {
+      "id": "claude-code",
+      "name": "claude-code",
+      "displayName": "Claude Code",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".claude/skills",
+          "raw": "'.claude/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "claudeHome",
+          "segments": [
+            "skills"
+          ],
+          "raw": "join(claudeHome, 'skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 144
+      }
+    },
+    {
+      "id": "cline",
+      "name": "cline",
+      "displayName": "Cline",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".agents",
+            "skills"
+          ],
+          "raw": "join(home, '.agents', 'skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 166
+      }
+    },
+    {
+      "id": "codearts-agent",
+      "name": "codearts-agent",
+      "displayName": "CodeArts Agent",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".codeartsdoer/skills",
+          "raw": "'.codeartsdoer/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".codeartsdoer/skills"
+          ],
+          "raw": "join(home, '.codeartsdoer/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 175
+      }
+    },
+    {
+      "id": "codebuddy",
+      "name": "codebuddy",
+      "displayName": "CodeBuddy",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".codebuddy/skills",
+          "raw": "'.codebuddy/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".codebuddy/skills"
+          ],
+          "raw": "join(home, '.codebuddy/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 184
+      }
+    },
+    {
+      "id": "codemaker",
+      "name": "codemaker",
+      "displayName": "Codemaker",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".codemaker/skills",
+          "raw": "'.codemaker/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".codemaker/skills"
+          ],
+          "raw": "join(home, '.codemaker/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 193
+      }
+    },
+    {
+      "id": "codestudio",
+      "name": "codestudio",
+      "displayName": "Code Studio",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".codestudio/skills",
+          "raw": "'.codestudio/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".codestudio/skills"
+          ],
+          "raw": "join(home, '.codestudio/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 202
+      }
+    },
+    {
+      "id": "codex",
+      "name": "codex",
+      "displayName": "Codex",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "codexHome",
+          "segments": [
+            "skills"
+          ],
+          "raw": "join(codexHome, 'skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 211
+      }
+    },
+    {
+      "id": "command-code",
+      "name": "command-code",
+      "displayName": "Command Code",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".commandcode/skills",
+          "raw": "'.commandcode/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".commandcode/skills"
+          ],
+          "raw": "join(home, '.commandcode/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 220
+      }
+    },
+    {
+      "id": "continue",
+      "name": "continue",
+      "displayName": "Continue",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".continue/skills",
+          "raw": "'.continue/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".continue/skills"
+          ],
+          "raw": "join(home, '.continue/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 229
+      }
+    },
+    {
+      "id": "cortex",
+      "name": "cortex",
+      "displayName": "Cortex Code",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".cortex/skills",
+          "raw": "'.cortex/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".snowflake/cortex/skills"
+          ],
+          "raw": "join(home, '.snowflake/cortex/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 238
+      }
+    },
+    {
+      "id": "crush",
+      "name": "crush",
+      "displayName": "Crush",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".crush/skills",
+          "raw": "'.crush/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".config/crush/skills"
+          ],
+          "raw": "join(home, '.config/crush/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 247
+      }
+    },
+    {
+      "id": "cursor",
+      "name": "cursor",
+      "displayName": "Cursor",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".cursor/skills"
+          ],
+          "raw": "join(home, '.cursor/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 256
+      }
+    },
+    {
+      "id": "deepagents",
+      "name": "deepagents",
+      "displayName": "Deep Agents",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".deepagents/agent/skills"
+          ],
+          "raw": "join(home, '.deepagents/agent/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 265
+      }
+    },
+    {
+      "id": "devin",
+      "name": "devin",
+      "displayName": "Devin for Terminal",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".devin/skills",
+          "raw": "'.devin/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "configHome",
+          "segments": [
+            "devin/skills"
+          ],
+          "raw": "join(configHome, 'devin/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 274
+      }
+    },
+    {
+      "id": "dexto",
+      "name": "dexto",
+      "displayName": "Dexto",
+      "universal": true,
+      "universalPrompt": false,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".agents/skills"
+          ],
+          "raw": "join(home, '.agents/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 283
+      }
+    },
+    {
+      "id": "droid",
+      "name": "droid",
+      "displayName": "Droid",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".factory/skills",
+          "raw": "'.factory/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".factory/skills"
+          ],
+          "raw": "join(home, '.factory/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 293
+      }
+    },
+    {
+      "id": "eve",
+      "name": "eve",
+      "displayName": "Eve",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": "agent/skills",
+          "raw": "'agent/skills'"
+        },
+        "global": {
+          "kind": "none",
+          "raw": "undefined"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 302
+      }
+    },
+    {
+      "id": "firebender",
+      "name": "firebender",
+      "displayName": "Firebender",
+      "universal": true,
+      "universalPrompt": false,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".firebender/skills"
+          ],
+          "raw": "join(home, '.firebender/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 314
+      }
+    },
+    {
+      "id": "forgecode",
+      "name": "forgecode",
+      "displayName": "ForgeCode",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".forge/skills",
+          "raw": "'.forge/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".forge/skills"
+          ],
+          "raw": "join(home, '.forge/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 324
+      }
+    },
+    {
+      "id": "gemini-cli",
+      "name": "gemini-cli",
+      "displayName": "Gemini CLI",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".gemini/skills"
+          ],
+          "raw": "join(home, '.gemini/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 333
+      }
+    },
+    {
+      "id": "github-copilot",
+      "name": "github-copilot",
+      "displayName": "GitHub Copilot",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".copilot/skills"
+          ],
+          "raw": "join(home, '.copilot/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 342
+      }
+    },
+    {
+      "id": "goose",
+      "name": "goose",
+      "displayName": "Goose",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".goose/skills",
+          "raw": "'.goose/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "configHome",
+          "segments": [
+            "goose/skills"
+          ],
+          "raw": "join(configHome, 'goose/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 351
+      }
+    },
+    {
+      "id": "grok",
+      "name": "grok",
+      "displayName": "Grok Build",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".grok/skills",
+          "raw": "'.grok/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "grokHome",
+          "segments": [
+            "skills"
+          ],
+          "raw": "join(grokHome, 'skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 360
+      }
+    },
+    {
+      "id": "hermes-agent",
+      "name": "hermes-agent",
+      "displayName": "Hermes Agent",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".hermes/skills",
+          "raw": "'.hermes/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "hermesHome",
+          "segments": [
+            "skills"
+          ],
+          "raw": "join(hermesHome, 'skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 369
+      }
+    },
+    {
+      "id": "iflow-cli",
+      "name": "iflow-cli",
+      "displayName": "iFlow CLI",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".iflow/skills",
+          "raw": "'.iflow/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".iflow/skills"
+          ],
+          "raw": "join(home, '.iflow/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 405
+      }
+    },
+    {
+      "id": "inference-sh",
+      "name": "inference-sh",
+      "displayName": "inference.sh",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".inferencesh/skills",
+          "raw": "'.inferencesh/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".inferencesh/skills"
+          ],
+          "raw": "join(home, '.inferencesh/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 378
+      }
+    },
+    {
+      "id": "jazz",
+      "name": "jazz",
+      "displayName": "Jazz",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".jazz/skills",
+          "raw": "'.jazz/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".jazz/skills"
+          ],
+          "raw": "join(home, '.jazz/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 387
+      }
+    },
+    {
+      "id": "junie",
+      "name": "junie",
+      "displayName": "Junie",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".junie/skills",
+          "raw": "'.junie/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".junie/skills"
+          ],
+          "raw": "join(home, '.junie/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 396
+      }
+    },
+    {
+      "id": "kilo",
+      "name": "kilo",
+      "displayName": "Kilo Code",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".kilocode/skills",
+          "raw": "'.kilocode/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".kilocode/skills"
+          ],
+          "raw": "join(home, '.kilocode/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 414
+      }
+    },
+    {
+      "id": "kimchi",
+      "name": "kimchi",
+      "displayName": "Kimchi",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".kimchi/skills",
+          "raw": "'.kimchi/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".config",
+            "kimchi",
+            "harness",
+            "skills"
+          ],
+          "raw": "join(home, '.config', 'kimchi', 'harness', 'skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 423
+      }
+    },
+    {
+      "id": "kimi-code-cli",
+      "name": "kimi-code-cli",
+      "displayName": "Kimi Code CLI",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".agents/skills"
+          ],
+          "raw": "join(home, '.agents/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 432
+      }
+    },
+    {
+      "id": "kiro-cli",
+      "name": "kiro-cli",
+      "displayName": "Kiro CLI",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".kiro/skills",
+          "raw": "'.kiro/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".kiro/skills"
+          ],
+          "raw": "join(home, '.kiro/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 441
+      }
+    },
+    {
+      "id": "kode",
+      "name": "kode",
+      "displayName": "Kode",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".kode/skills",
+          "raw": "'.kode/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".kode/skills"
+          ],
+          "raw": "join(home, '.kode/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 450
+      }
+    },
+    {
+      "id": "lingma",
+      "name": "lingma",
+      "displayName": "Lingma",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".lingma/skills",
+          "raw": "'.lingma/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".lingma/skills"
+          ],
+          "raw": "join(home, '.lingma/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 459
+      }
+    },
+    {
+      "id": "loaf",
+      "name": "loaf",
+      "displayName": "Loaf",
+      "universal": true,
+      "universalPrompt": false,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".agents/skills"
+          ],
+          "raw": "join(home, '.agents/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 468
+      }
+    },
+    {
+      "id": "mcpjam",
+      "name": "mcpjam",
+      "displayName": "MCPJam",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".mcpjam/skills",
+          "raw": "'.mcpjam/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".mcpjam/skills"
+          ],
+          "raw": "join(home, '.mcpjam/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 478
+      }
+    },
+    {
+      "id": "minimax-code",
+      "name": "minimax-code",
+      "displayName": "MiniMax Code",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".minimax/skills",
+          "raw": "'.minimax/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".minimax/skills"
+          ],
+          "raw": "join(home, '.minimax/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 487
+      }
+    },
+    {
+      "id": "mistral-vibe",
+      "name": "mistral-vibe",
+      "displayName": "Mistral Vibe",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".vibe/skills",
+          "raw": "'.vibe/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "vibeHome",
+          "segments": [
+            "skills"
+          ],
+          "raw": "join(vibeHome, 'skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 496
+      }
+    },
+    {
+      "id": "moxby",
+      "name": "moxby",
+      "displayName": "Moxby",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".moxby/skills",
+          "raw": "'.moxby/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".moxby/skills"
+          ],
+          "raw": "join(home, '.moxby/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 505
+      }
+    },
+    {
+      "id": "mux",
+      "name": "mux",
+      "displayName": "Mux",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".mux/skills",
+          "raw": "'.mux/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".mux/skills"
+          ],
+          "raw": "join(home, '.mux/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 514
+      }
+    },
+    {
+      "id": "neovate",
+      "name": "neovate",
+      "displayName": "Neovate",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".neovate/skills",
+          "raw": "'.neovate/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".neovate/skills"
+          ],
+          "raw": "join(home, '.neovate/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 727
+      }
+    },
+    {
+      "id": "ona",
+      "name": "ona",
+      "displayName": "Ona",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".ona/skills",
+          "raw": "'.ona/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".ona/skills"
+          ],
+          "raw": "join(home, '.ona/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 541
+      }
+    },
+    {
+      "id": "openclaw",
+      "name": "openclaw",
+      "displayName": "OpenClaw",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": "skills",
+          "raw": "'skills'"
+        },
+        "global": {
+          "kind": "conditional",
+          "base": "homeDir",
+          "cases": [
+            {
+              "probe": ".openclaw",
+              "formula": {
+                "kind": "join",
+                "base": "homeDir",
+                "segments": [
+                  ".openclaw/skills"
+                ],
+                "raw": "join(homeDir, '.openclaw/skills')"
+              }
+            },
+            {
+              "probe": ".clawdbot",
+              "formula": {
+                "kind": "join",
+                "base": "homeDir",
+                "segments": [
+                  ".clawdbot/skills"
+                ],
+                "raw": "join(homeDir, '.clawdbot/skills')"
+              }
+            },
+            {
+              "probe": ".moltbot",
+              "formula": {
+                "kind": "join",
+                "base": "homeDir",
+                "segments": [
+                  ".moltbot/skills"
+                ],
+                "raw": "join(homeDir, '.moltbot/skills')"
+              }
+            },
+            {
+              "probe": null,
+              "formula": {
+                "kind": "join",
+                "base": "homeDir",
+                "segments": [
+                  ".openclaw/skills"
+                ],
+                "raw": "join(homeDir, '.openclaw/skills')"
+              }
+            }
+          ]
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 153
+      }
+    },
+    {
+      "id": "opencode",
+      "name": "opencode",
+      "displayName": "OpenCode",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "configHome",
+          "segments": [
+            "opencode/skills"
+          ],
+          "raw": "join(configHome, 'opencode/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 523
+      }
+    },
+    {
+      "id": "openhands",
+      "name": "openhands",
+      "displayName": "OpenHands",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".openhands/skills",
+          "raw": "'.openhands/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".openhands/skills"
+          ],
+          "raw": "join(home, '.openhands/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 532
+      }
+    },
+    {
+      "id": "pi",
+      "name": "pi",
+      "displayName": "Pi",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".pi/skills",
+          "raw": "'.pi/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".pi/agent/skills"
+          ],
+          "raw": "join(home, '.pi/agent/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 550
+      }
+    },
+    {
+      "id": "pochi",
+      "name": "pochi",
+      "displayName": "Pochi",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".pochi/skills",
+          "raw": "'.pochi/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".pochi/skills"
+          ],
+          "raw": "join(home, '.pochi/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 736
+      }
+    },
+    {
+      "id": "promptscript",
+      "name": "promptscript",
+      "displayName": "PromptScript",
+      "universal": true,
+      "universalPrompt": false,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "none",
+          "raw": "undefined"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 745
+      }
+    },
+    {
+      "id": "qoder",
+      "name": "qoder",
+      "displayName": "Qoder",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".qoder/skills",
+          "raw": "'.qoder/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".qoder/skills"
+          ],
+          "raw": "join(home, '.qoder/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 559
+      }
+    },
+    {
+      "id": "qoder-cn",
+      "name": "qoder-cn",
+      "displayName": "Qoder CN",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".qoder/skills",
+          "raw": "'.qoder/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".qoder-cn/skills"
+          ],
+          "raw": "join(home, '.qoder-cn/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 568
+      }
+    },
+    {
+      "id": "qwen-code",
+      "name": "qwen-code",
+      "displayName": "Qwen Code",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".qwen/skills",
+          "raw": "'.qwen/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".qwen/skills"
+          ],
+          "raw": "join(home, '.qwen/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 577
+      }
+    },
+    {
+      "id": "reasonix",
+      "name": "reasonix",
+      "displayName": "Reasonix",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".reasonix/skills",
+          "raw": "'.reasonix/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".reasonix/skills"
+          ],
+          "raw": "join(home, '.reasonix/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 596
+      }
+    },
+    {
+      "id": "replit",
+      "name": "replit",
+      "displayName": "Replit",
+      "universal": false,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "configHome",
+          "segments": [
+            "agents/skills"
+          ],
+          "raw": "join(configHome, 'agents/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 586
+      }
+    },
+    {
+      "id": "roo",
+      "name": "roo",
+      "displayName": "Roo Code",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".roo/skills",
+          "raw": "'.roo/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".roo/skills"
+          ],
+          "raw": "join(home, '.roo/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 614
+      }
+    },
+    {
+      "id": "rovodev",
+      "name": "rovodev",
+      "displayName": "Rovo Dev",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".rovodev/skills",
+          "raw": "'.rovodev/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".rovodev/skills"
+          ],
+          "raw": "join(home, '.rovodev/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 605
+      }
+    },
+    {
+      "id": "tabnine-cli",
+      "name": "tabnine-cli",
+      "displayName": "Tabnine CLI",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".tabnine/agent/skills",
+          "raw": "'.tabnine/agent/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".tabnine/agent/skills"
+          ],
+          "raw": "join(home, '.tabnine/agent/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 623
+      }
+    },
+    {
+      "id": "terramind",
+      "name": "terramind",
+      "displayName": "Terramind",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".terramind/skills",
+          "raw": "'.terramind/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".terramind/skills"
+          ],
+          "raw": "join(home, '.terramind/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 632
+      }
+    },
+    {
+      "id": "tinycloud",
+      "name": "tinycloud",
+      "displayName": "Tinycloud",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".tinycloud/skills",
+          "raw": "'.tinycloud/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".tinycloud/skills"
+          ],
+          "raw": "join(home, '.tinycloud/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 641
+      }
+    },
+    {
+      "id": "trae",
+      "name": "trae",
+      "displayName": "Trae",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".trae/skills",
+          "raw": "'.trae/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".trae/skills"
+          ],
+          "raw": "join(home, '.trae/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 650
+      }
+    },
+    {
+      "id": "trae-cn",
+      "name": "trae-cn",
+      "displayName": "Trae CN",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".trae/skills",
+          "raw": "'.trae/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".trae-cn/skills"
+          ],
+          "raw": "join(home, '.trae-cn/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 659
+      }
+    },
+    {
+      "id": "universal",
+      "name": "universal",
+      "displayName": "Universal",
+      "universal": false,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "configHome",
+          "segments": [
+            "agents/skills"
+          ],
+          "raw": "join(configHome, 'agents/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 767
+      }
+    },
+    {
+      "id": "warp",
+      "name": "warp",
+      "displayName": "Warp",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".agents/skills"
+          ],
+          "raw": "join(home, '.agents/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 668
+      }
+    },
+    {
+      "id": "windsurf",
+      "name": "windsurf",
+      "displayName": "Windsurf",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".windsurf/skills",
+          "raw": "'.windsurf/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".codeium/windsurf/skills"
+          ],
+          "raw": "join(home, '.codeium/windsurf/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 677
+      }
+    },
+    {
+      "id": "zcode",
+      "name": "zcode",
+      "displayName": "ZCode",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".zcode/skills",
+          "raw": "'.zcode/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".zcode/skills"
+          ],
+          "raw": "join(home, '.zcode/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 700
+      }
+    },
+    {
+      "id": "zed",
+      "name": "zed",
+      "displayName": "Zed",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".agents/skills",
+          "raw": "'.agents/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".agents/skills"
+          ],
+          "raw": "join(home, '.agents/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 686
+      }
+    },
+    {
+      "id": "zencoder",
+      "name": "zencoder",
+      "displayName": "Zencoder",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".zencoder/skills",
+          "raw": "'.zencoder/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".zencoder/skills"
+          ],
+          "raw": "join(home, '.zencoder/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 709
+      }
+    },
+    {
+      "id": "zenflow",
+      "name": "zenflow",
+      "displayName": "Zenflow",
+      "universal": true,
+      "universalPrompt": true,
+      "destinations": {
+        "project": {
+          "kind": "literal",
+          "path": ".zencoder/skills",
+          "raw": "'.zencoder/skills'"
+        },
+        "global": {
+          "kind": "join",
+          "base": "home",
+          "segments": [
+            ".zencoder/skills"
+          ],
+          "raw": "join(home, '.zencoder/skills')"
+        }
+      },
+      "aliases": [],
+      "platforms": [],
+      "detection": {
+        "envVars": []
+      },
+      "attribution": {
+        "upstreamFile": "src/agents.ts",
+        "upstreamLine": 718
+      }
+    }
+  ]
+}

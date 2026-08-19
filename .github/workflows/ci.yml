@@ -7,12 +7,24 @@ on:
 
 jobs:
   test:
-    name: Repo invariants
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} · Node ${{ matrix.node-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [20, 22]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - name: Run structural tests
+          node-version: ${{ matrix.node-version }}
+      - name: Isolate the test filesystem
+        shell: bash
+        run: mkdir -p "${RUNNER_TEMP}/sigma-test-fs"
+      - name: Run structural and installer tests
+        env:
+          TMPDIR: ${{ runner.temp }}/sigma-test-fs
+          TMP: ${{ runner.temp }}/sigma-test-fs
+          TEMP: ${{ runner.temp }}/sigma-test-fs
         run: npm test

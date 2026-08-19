@@ -110,3 +110,9 @@ Use an authenticated fork if direct push fails. Do not change labels, milestones
 ## Final response
 
 Return the PR URL and one compact sentence with M1/M2 count, M3 count, runtime-baseline status, and material coverage boundary. Do not paste the report into chat.
+
+## Personal instructions
+
+<sigmaskills-custom>
+</sigmaskills-custom>
+

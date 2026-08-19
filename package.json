@@ -1,12 +1,42 @@
 {
   "name": "sigmaskills",
-  "private": true,
-  "description": "Structural regression tests for the Sigmaskills Agent Skills monorepo",
+  "version": "0.1.0",
+  "description": "Portable Agent Skills monorepo and first-party Sigma Installer",
   "type": "module",
+  "bin": {
+    "sigmaskills": "./bin/sigmaskills.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "registry/agent-hosts.json",
+    "registry/source.json",
+    "registry/schema.json",
+    "registry/skill-baselines.json",
+    "manifest.json",
+    "sigmareview",
+    "sigmaperformance",
+    "sigmabrief",
+    "sigmawrite",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Djordje-Stojanovic/Sigmaskills.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test test/**/*.test.js"
+    "prepack": "node ./src/prepack.js",
+    "test": "node scripts/run-tests.js",
+    "registry:sync": "node ./src/registry/sync.js",
+    "registry:validate": "node ./test/registry-validate-cli.mjs"
   }
 }
