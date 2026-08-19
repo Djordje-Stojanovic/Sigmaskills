@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathExists } from './links.js';
 
+export const BACKUP_METADATA_NAME = '.sigma-backup.json';
+export const BACKUP_SCHEMA_VERSION = 1;
+
 /**
  * @param {string} stateDir
  * @returns {string}
@@ -61,6 +64,7 @@ export function inventorySkillTree(dir) {
       } catch {
         continue;
       }
+      if (dirent.name === BACKUP_METADATA_NAME) continue;
       if (stat.isSymbolicLink()) {
         let target = '';
         try {
@@ -95,7 +99,7 @@ export function inventorySkillTree(dir) {
   return { entries };
 }
 
-function inventoriesMatch(left, right) {
+export function inventoriesMatch(left, right) {
   const leftKeys = Object.keys(left.entries || {}).sort();
   const rightKeys = Object.keys(right.entries || {}).sort();
   if (leftKeys.join('\0') !== rightKeys.join('\0')) return false;
@@ -106,6 +110,140 @@ function inventoriesMatch(left, right) {
     if (a.kind === 'file' && a.hash !== b.hash) return false;
   }
   return true;
+}
+
+export function copySkillTree(sourceDir, destDir) {
+  copyTreeNoFollow(sourceDir, destDir);
+}
+
+function treeSizeBytes(dir, inventory) {
+  let total = 0;
+  for (const [rel, entry] of Object.entries(inventory.entries || {})) {
+    if (entry.kind !== 'file') continue;
+    try {
+      total += fs.statSync(path.join(dir, ...rel.split('/'))).size;
+    } catch {
+      // Size is best-effort for preview; integrity still uses hashes.
+    }
+  }
+  return total;
+}
+
+/**
+ * @param {string} backupDir
+ * @returns {object}
+ */
+export function readBackupMetadata(backupDir) {
+  const file = path.join(backupDir, BACKUP_METADATA_NAME);
+  if (!pathExists(file)) {
+    const err = new Error('schema-incompatible backup: missing metadata');
+    err.code = 'schema';
+    throw err;
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (cause) {
+    const err = new Error(`schema-incompatible backup: ${cause.message}`);
+    err.code = 'schema';
+    throw err;
+  }
+  if (!parsed || typeof parsed !== 'object' || typeof parsed.schemaVersion !== 'number') {
+    const err = new Error('schema-incompatible backup: metadata is not a versioned object');
+    err.code = 'schema';
+    throw err;
+  }
+  if (parsed.schemaVersion !== BACKUP_SCHEMA_VERSION) {
+    const err = new Error(
+      `schema-incompatible backup: schemaVersion ${parsed.schemaVersion} is not supported`,
+    );
+    err.code = 'schema';
+    throw err;
+  }
+  return parsed;
+}
+
+function writeBackupMetadata(backupDir, metadata) {
+  fs.writeFileSync(
+    path.join(backupDir, BACKUP_METADATA_NAME),
+    `${JSON.stringify(metadata, null, 2)}\n`,
+    'utf8',
+  );
+}
+
+/**
+ * Locate the retained backup directory for a skill.
+ *
+ * @param {object} params
+ * @returns {string | null}
+ */
+export function findLatestBackupDir(params) {
+  const { stateDir, skillId, lastBackup } = params;
+  if (lastBackup) {
+    const fromState = path.isAbsolute(lastBackup)
+      ? lastBackup
+      : path.join(stateDir, lastBackup);
+    if (pathExists(fromState) && fs.lstatSync(fromState).isDirectory()) {
+      return fromState;
+    }
+  }
+  const dir = path.join(getBackupRoot(stateDir), skillId);
+  if (!pathExists(dir)) return null;
+  const stamps = fs.readdirSync(dir)
+    .map((name) => path.join(dir, name))
+    .filter((full) => {
+      try {
+        return fs.lstatSync(full).isDirectory();
+      } catch {
+        return false;
+      }
+    })
+    .sort();
+  return stamps.length > 0 ? stamps[stamps.length - 1] : null;
+}
+
+/**
+ * Integrity-check a retained backup before any restore write.
+ *
+ * @param {object} params
+ * @returns {{ metadata: object, inventory: object, sizeBytes: number }}
+ */
+export function verifyBackupIntegrity(params) {
+  const { backupDir, skillId } = params;
+  if (!backupDir || !pathExists(backupDir)) {
+    const err = new Error(`missing backup for '${skillId}'`);
+    err.code = 'missing';
+    throw err;
+  }
+  const metadata = readBackupMetadata(backupDir);
+  if (metadata.skillId && metadata.skillId !== skillId) {
+    const err = new Error(
+      `stale-ownership: backup for '${metadata.skillId}' cannot restore '${skillId}'`,
+    );
+    err.code = 'stale-ownership';
+    throw err;
+  }
+  const inventory = inventorySkillTree(backupDir);
+  const expected = { entries: metadata.inventory || {} };
+  const expectedKeys = Object.keys(expected.entries).sort();
+  const actualKeys = Object.keys(inventory.entries || {}).sort();
+  for (const key of expectedKeys) {
+    if (!inventory.entries[key]) {
+      const err = new Error(`truncated backup for '${skillId}': missing '${key}'`);
+      err.code = 'truncated';
+      throw err;
+    }
+  }
+  if (actualKeys.join('\0') !== expectedKeys.join('\0') || !inventoriesMatch(expected, inventory)) {
+    const err = new Error(`tampered backup for '${skillId}'`);
+    err.code = 'tampered';
+    throw err;
+  }
+  return {
+    metadata,
+    inventory,
+    sizeBytes: typeof metadata.sizeBytes === 'number' ? metadata.sizeBytes : treeSizeBytes(backupDir, inventory),
+  };
 }
 
 function copyTreeNoFollow(sourceDir, destDir) {
@@ -151,6 +289,22 @@ export function commitSkillBackup(params) {
     if (!inventoriesMatch(sourceInventory, backupInventory)) {
       throw new Error('backup integrity check failed');
     }
+    const ownership = params.ownership || {};
+    const createdAt = (now instanceof Date ? now : new Date(now)).toISOString();
+    writeBackupMetadata(dest, {
+      schemaVersion: BACKUP_SCHEMA_VERSION,
+      skillId,
+      scope: ownership.scope || null,
+      release: ownership.release || null,
+      revision: ownership.revision || null,
+      createdAt,
+      sizeBytes: treeSizeBytes(dest, backupInventory),
+      canonicalTarget: ownership.canonicalTarget || null,
+      method: ownership.method || null,
+      copies: Array.isArray(ownership.copies) ? ownership.copies : [],
+      ownedPaths: Array.isArray(ownership.ownedPaths) ? ownership.ownedPaths : [],
+      inventory: backupInventory.entries,
+    });
   } catch (err) {
     if (pathExists(dest)) fs.rmSync(dest, { recursive: true, force: true });
     throw err;

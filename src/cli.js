@@ -3,6 +3,7 @@ import { formatPlanHuman, formatPlanJson } from './plan.js';
 import { runProjectInstaller } from './interactive.js';
 import { collectStatus, formatStatusHuman, formatStatusJson } from './status.js';
 import { executeUpdate, formatUpdateHuman, formatUpdateJson } from './update.js';
+import { executeRestore, formatRestoreHuman, formatRestoreJson } from './restore.js';
 import { executeProjectInstall } from './transaction.js';
 import { resolveHomeDir } from './destinations.js';
 
@@ -28,6 +29,7 @@ Commands:
   install <skill>   Install a skill into the project (.agents/skills/<skill>)
   add <skill>       Alias for install
   update            Update selected whole skills to the running CLI Release
+  restore           Restore the latest retained backup for a skill
   status            Report managed Project or Global Installation state and drift
   list              List all shipped skills and their Skill Revisions
   verify            Validate manifest, skill resources, and compute revisions
@@ -35,8 +37,8 @@ Commands:
 Options:
   -v, --version     Show version number
   -h, --help        Show help
-  --skill <name>    Skill identifier to install or update (repeatable for update)
-  --dry-run         Preview install or update changes without writing files
+  --skill <name>    Skill identifier to install, update, or restore (repeatable)
+  --dry-run         Preview install, update, or restore changes without writing files
   --json            Output in versioned JSON format
   --project <path>  Target project root directory (defaults to current directory)
   --global          User-level Global Installation (requires --yes to write)
@@ -178,12 +180,12 @@ export function parseCliArgs(args) {
       parsed.stateDir = arg.slice('--state-dir='.length);
     } else if (
       !parsed.command &&
-      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status' || arg === 'update')
+      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status' || arg === 'update' || arg === 'restore')
     ) {
       parsed.command = arg;
     } else if (!parsed.skillId && (parsed.command === 'install' || parsed.command === 'add')) {
       parsed.skillId = arg;
-    } else if (parsed.command === 'update' && !arg.startsWith('-')) {
+    } else if ((parsed.command === 'update' || parsed.command === 'restore') && !arg.startsWith('-')) {
       parsed.skillIds.push(arg);
     } else if (arg === '--list') {
       parsed.command = 'list';
@@ -280,6 +282,36 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         exportDir: opts.exportDir || undefined,
       });
       writeOut(opts.json ? formatUpdateJson(result) : formatUpdateHuman(result));
+      return 0;
+    }
+
+    if (opts.command === 'restore') {
+      const env = io.env || process.env;
+      if (opts.global && !opts.dryRun && !opts.yes) {
+        writeErr('sigmaskills error: Global Installation requires both --global and --yes; CI, TTY, JSON, and Agent Host detection never imply that authority');
+        return 1;
+      }
+      if (opts.skillIds.length === 0) {
+        writeErr('sigmaskills error: restore requires --skill <id>');
+        return 1;
+      }
+      if (!opts.dryRun && !opts.yes) {
+        writeErr('sigmaskills error: restore requires --yes to apply, or --dry-run to preview');
+        return 1;
+      }
+      const result = executeRestore({
+        catalog,
+        projectRoot: opts.projectRoot || process.cwd(),
+        homeDir: resolveHomeDir(env),
+        scope: opts.global ? 'global' : 'project',
+        customStateDir: opts.stateDir,
+        packageRoot: rootDir,
+        dryRun: opts.dryRun,
+        env,
+        skillIds: opts.skillIds,
+        yes: opts.yes,
+      });
+      writeOut(opts.json ? formatRestoreJson(result) : formatRestoreHuman(result));
       return 0;
     }
 

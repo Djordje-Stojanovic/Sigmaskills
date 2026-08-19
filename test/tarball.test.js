@@ -64,6 +64,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       'package/src/prepack.js',
       'package/src/project-lock.js',
       'package/src/revision.js',
+      'package/src/restore.js',
       'package/src/state.js',
       'package/src/status.js',
       'package/src/transaction.js',

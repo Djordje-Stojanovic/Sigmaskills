@@ -36,6 +36,7 @@ function skillBytes(destDir) {
   const files = {};
   const walk = (dir, prefix = '') => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === '.sigma-backup.json') continue;
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full, rel);

@@ -530,6 +530,15 @@ function applyCanonicalRepair(skill, options) {
     stateDir,
     skillId: skill.id,
     sourceDir: ownerAbs,
+    ownership: {
+      scope: options.scope || 'project',
+      release: skill.installedRelease || null,
+      revision: skill.installedRevision || null,
+      method: 'copy',
+      canonicalTarget: skill.ownerDestination,
+      copies: [],
+      ownedPaths: skill.ownerDestination ? [skill.ownerDestination] : [],
+    },
   });
   if (typeof options.afterBackup === 'function') {
     options.afterBackup(backupDir);

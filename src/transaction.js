@@ -463,10 +463,20 @@ export function executeProjectInstall(params) {
       }
       if (dest.resolution === 'replace' && pathExists(dest.destination)) {
         const backupFn = params.backupSkill || commitSkillBackup;
+        const existing = originalState.skills?.[skillId];
         const privateBackup = backupFn({
           stateDir: stateDirForBackups,
           skillId,
           sourceDir: dest.destination,
+          ownership: {
+            scope,
+            release: existing?.release || plan.release || null,
+            revision: existing?.revision || null,
+            method: existing?.method || dest.method,
+            canonicalTarget: existing?.destination || dest.relativeDestination,
+            copies: existing?.copies || [],
+            ownedPaths: existing?.ownedPaths || [dest.relativeDestination],
+          },
         });
         privateBackups.push(privateBackup);
         dest.privateBackup = privateBackup;
