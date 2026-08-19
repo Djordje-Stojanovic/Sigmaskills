@@ -5,6 +5,12 @@ import { collectStatus, formatStatusHuman, formatStatusJson } from './status.js'
 import { executeUpdate, formatUpdateHuman, formatUpdateJson } from './update.js';
 import { executeRestore, formatRestoreHuman, formatRestoreJson } from './restore.js';
 import { executeUninstall, formatUninstallHuman, formatUninstallJson } from './uninstall.js';
+import {
+  PURGE_CONFIRMATION_PHRASE,
+  executePurge,
+  formatPurgeHuman,
+  formatPurgeJson,
+} from './purge.js';
 import { executeProjectInstall } from './transaction.js';
 import { resolveHomeDir } from './destinations.js';
 
@@ -32,6 +38,7 @@ Commands:
   update            Update selected whole skills to the running CLI Release
   restore           Restore the latest retained backup for a skill
   uninstall         Uninstall selected skills or every recorded skill in one scope after Uninstall Review
+  purge             Remove all Sigma-owned content in one scope after the typed confirmation phrase
   status            Report managed Project or Global Installation state and drift
   list              List all shipped skills and their Skill Revisions
   verify            Validate manifest, skill resources, and compute revisions
@@ -41,7 +48,9 @@ Options:
   -h, --help        Show help
   --skill <name>    Skill identifier to install, update, restore, or uninstall (repeatable)
   --all             Uninstall every recorded Sigma skill in the chosen Project or Global scope
-  --dry-run         Preview install, update, restore, or uninstall changes without writing files
+  --dry-run         Preview install, update, restore, uninstall, or purge changes without writing files
+  --confirm-purge <phrase>
+                    Exact typed confirmation for purge; --yes, CI, non-TTY, and JSON are not enough
   --json            Output in versioned JSON format
   --project <path>  Target project root directory (defaults to current directory)
   --global          User-level Global Installation (requires --yes to write)
@@ -113,6 +122,7 @@ export function parseCliArgs(args) {
     changed: null,
     exportDir: null,
     all: false,
+    confirmPurge: undefined,
     unknown: [],
   };
 
@@ -178,6 +188,10 @@ export function parseCliArgs(args) {
       parsed.exportDir = args[++i];
     } else if (arg.startsWith('--export-dir=')) {
       parsed.exportDir = arg.slice('--export-dir='.length);
+    } else if (arg === '--confirm-purge') {
+      parsed.confirmPurge = args[++i] ?? '';
+    } else if (arg.startsWith('--confirm-purge=')) {
+      parsed.confirmPurge = arg.slice('--confirm-purge='.length);
     } else if (arg === '--destination') {
       parsed.destinations.push(args[++i]);
     } else if (arg.startsWith('--destination=')) {
@@ -200,7 +214,7 @@ export function parseCliArgs(args) {
       parsed.stateDir = arg.slice('--state-dir='.length);
     } else if (
       !parsed.command &&
-      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status' || arg === 'update' || arg === 'restore' || arg === 'uninstall')
+      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status' || arg === 'update' || arg === 'restore' || arg === 'uninstall' || arg === 'purge')
     ) {
       parsed.command = arg;
     } else if (!parsed.skillId && (parsed.command === 'install' || parsed.command === 'add')) {
@@ -215,6 +229,32 @@ export function parseCliArgs(args) {
   }
 
   return parsed;
+}
+
+function readStdinLine(stdin) {
+  return new Promise((resolve) => {
+    if (!stdin) {
+      resolve('');
+      return;
+    }
+    let settled = false;
+    let buffer = '';
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      stdin.off('data', onData);
+      stdin.off('end', finish);
+      if (typeof stdin.pause === 'function') stdin.pause();
+      resolve(buffer.split(/\r?\n/)[0] ?? '');
+    };
+    const onData = (chunk) => {
+      buffer += String(chunk);
+      if (buffer.includes('\n') || buffer.includes('\r')) finish();
+    };
+    stdin.on('data', onData);
+    stdin.once('end', finish);
+    if (typeof stdin.resume === 'function') stdin.resume();
+  });
 }
 
 /**
@@ -285,6 +325,47 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     if (opts.changed && opts.changed !== 'backup' && opts.changed !== 'keep' && opts.changed !== 'export' && opts.changed !== 'delete') {
       writeErr('sigmaskills error: --changed must be backup, keep, export, or delete');
       return 1;
+    }
+
+    if (opts.command === 'purge') {
+      const env = io.env || process.env;
+      const stdin = io.stdin || process.stdin;
+      let confirmPurge = opts.confirmPurge;
+      if (!opts.dryRun && confirmPurge === undefined) {
+        const ci = env.CI;
+        const nonInteractive = Boolean(opts.json)
+          || (ci !== undefined && ci !== '' && ci !== '0' && String(ci).toLowerCase() !== 'false')
+          || !stdin.isTTY;
+        if (nonInteractive) {
+          writeErr('sigmaskills error: purge requires --confirm-purge with the typed confirmation phrase; --yes, CI, non-TTY, and JSON are not authority');
+          return 1;
+        }
+        writeOut(formatPurgeHuman(executePurge({
+          catalog,
+          projectRoot: opts.projectRoot || process.cwd(),
+          homeDir: resolveHomeDir(env),
+          scope: opts.global ? 'global' : 'project',
+          customStateDir: opts.stateDir,
+          packageRoot: rootDir,
+          dryRun: true,
+          env,
+        })));
+        writeOut(`Type ${PURGE_CONFIRMATION_PHRASE} to purge, or nothing to cancel.`);
+        confirmPurge = await readStdinLine(stdin);
+      }
+      const result = executePurge({
+        catalog,
+        projectRoot: opts.projectRoot || process.cwd(),
+        homeDir: resolveHomeDir(env),
+        scope: opts.global ? 'global' : 'project',
+        customStateDir: opts.stateDir,
+        packageRoot: rootDir,
+        dryRun: opts.dryRun,
+        env,
+        confirmPurge,
+      });
+      writeOut(opts.json ? formatPurgeJson(result) : formatPurgeHuman(result));
+      return 0;
     }
 
     if (opts.command === 'update') {
