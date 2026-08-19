@@ -74,6 +74,11 @@ function validateManagedState(state, expectedScope) {
   if (typeof state.schemaVersion !== 'number' || state.schemaVersion < 1) {
     throw new Error(`invalid ${label}: missing or invalid schemaVersion`);
   }
+  if (state.schemaVersion > STATE_SCHEMA_VERSION) {
+    throw new Error(
+      `unsupported ${label} schemaVersion ${state.schemaVersion}; this installer supports ${STATE_SCHEMA_VERSION}`,
+    );
+  }
   if (state.scope !== expectedScope) {
     throw new Error(`invalid ${label}: expected scope '${expectedScope}', got '${state.scope}'`);
   }

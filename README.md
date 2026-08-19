@@ -324,7 +324,7 @@ Zero-dependency Node tests guard the beauty: skill registry, `SKILL.md` frontmat
 npm test
 ```
 
-CI runs the same suite on every push and pull request to `main`.
+CI runs the same suite on Windows, macOS, and Linux for Node.js 20 and 22, on every pull request and every push to `main`. Those jobs cover real junctions or symbolic links, copy fallback, shell differences, and an isolated temp filesystem.
 
 When you **add or rename a skill**, update `KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js) in the same change as README and CHANGELOG — otherwise CI fails on purpose. That rule also lives in [`AGENTS.md`](AGENTS.md).
 

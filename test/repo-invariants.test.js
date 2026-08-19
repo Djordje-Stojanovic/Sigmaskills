@@ -163,6 +163,16 @@ test('CHANGELOG mentions every shipped skill id', () => {
   }
 });
 
+test('CI covers Windows, macOS, and Linux on Node.js 20+', () => {
+  const ci = read('.github/workflows/ci.yml');
+  assert.match(ci, /ubuntu-latest/);
+  assert.match(ci, /windows-latest/);
+  assert.match(ci, /macos-latest/);
+  assert.match(ci, /node-version:\s*\[20,\s*22\]/);
+  assert.match(ci, /npm test/);
+  assert.match(ci, /sigma-test-fs/);
+});
+
 test('GitHub issue kit templates remain present', () => {
   for (const rel of ISSUE_TEMPLATES) {
     assert.ok(exists(path.join('.github', rel)), `missing .github/${rel}`);
