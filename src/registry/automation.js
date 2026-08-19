@@ -6,9 +6,10 @@
  * Converter code always comes from an exact trusted default-branch SHA.
  * Upstream TypeScript is fetched as pinned data and never executed.
  * Generated trees are limited to the registry/attribution allowlist.
- * Classification records whether a change could later be auto-merged;
- * this ticket never merges, publishes npm, closes unrelated work, or
- * deletes unrelated branches.
+ * Classification records whether a change may auto-merge. Safe additions
+ * and description-only changes can merge and publish a patch Release
+ * through the trusted patch primitive; authority-sensitive changes stay
+ * blocked for owner review.
  */
 
 import crypto from 'node:crypto';
@@ -16,7 +17,7 @@ import { parseAgents } from './parse.js';
 import { buildSnapshot, normalizeHost } from './normalize.js';
 import { validateSnapshot } from './validate.js';
 import { diffSnapshots } from './diff.js';
-import { CHECKOUT_ACTION_PIN, SETUP_NODE_ACTION_PIN } from '../release.js';
+import { bumpSemver, CHECKOUT_ACTION_PIN, SETUP_NODE_ACTION_PIN } from '../release.js';
 
 export const REGISTRY_SYNC_WORKFLOW_FILE = 'registry-sync.yml';
 export const GENERATED_BRANCH_PREFIX = 'registry/sync-';
@@ -27,9 +28,7 @@ export const REGISTRY_ALLOWLIST = Object.freeze([
 ]);
 
 const REVISION_PATTERN = /^[0-9a-f]{40}$/;
-const BLOCKED_ACTIONS = Object.freeze({
-  merge: false,
-  publishNpm: false,
+const BLOCKED_MUTATIONS = Object.freeze({
   closeUnrelatedIssues: false,
   closeUnrelatedPullRequests: false,
   deleteUnrelatedBranches: false,
@@ -53,6 +52,31 @@ export function assertAllowlistedPaths(files) {
     ok: denied.length === 0,
     denied,
   };
+}
+
+export function calculateRegistryPatchVersion({
+  packageVersion,
+  npmVersions = [],
+  githubVersions = [],
+  requestedBump,
+} = {}) {
+  if (requestedBump && requestedBump !== 'patch') {
+    throw new Error('registry automation can publish patch Releases only; major and minor Releases stay owner-triggered');
+  }
+  const parsed = [];
+  for (const value of [packageVersion, ...npmVersions, ...githubVersions]) {
+    const match = String(value || '').match(/^(\d+)\.(\d+)\.(\d+)$/);
+    if (!match) continue;
+    parsed.push({
+      major: Number(match[1]),
+      minor: Number(match[2]),
+      patch: Number(match[3]),
+      raw: match[0],
+    });
+  }
+  if (parsed.length === 0) throw new Error('registry patch version requires a published or package semantic version');
+  parsed.sort((a, b) => a.major - b.major || a.minor - b.minor || a.patch - b.patch);
+  return bumpSemver(parsed[parsed.length - 1].raw, 'patch');
 }
 
 export function classifySemanticAuthority(diff) {
@@ -99,17 +123,31 @@ export function evaluateAutoAuthorization(input) {
     deniedReasons.push('failed or incomplete checks cannot be auto-authorized');
   }
   if (input.concurrentRun) deniedReasons.push('concurrent registry-sync runs cannot be auto-authorized');
+  if (input.fromTrustedWorkflow !== true) {
+    deniedReasons.push('only a generated pull request from the trusted registry-sync workflow can proceed');
+  }
+  if (input.defaultBranchProtected !== true) {
+    deniedReasons.push('current protected default branch is required');
+  }
   const allowlist = assertAllowlistedPaths(input.files);
   if (!allowlist.ok) {
     deniedReasons.push(`generated changes escape the registry allowlist: ${allowlist.denied.join(', ')}`);
   }
+  if (!input.files || input.files.length === 0) {
+    deniedReasons.push('generated changes are missing; empty diffs cannot be auto-authorized');
+  }
   if (input.classification && input.classification.autoEligible === false) {
     deniedReasons.push(...(input.classification.blockedReasons || ['semantic classification is blocked']));
   }
+  const autoAuthorized = deniedReasons.length === 0;
   return {
-    autoAuthorized: deniedReasons.length === 0,
+    autoAuthorized,
     deniedReasons,
-    actions: { ...BLOCKED_ACTIONS },
+    actions: {
+      merge: autoAuthorized,
+      publishNpm: autoAuthorized,
+      ...BLOCKED_MUTATIONS,
+    },
   };
 }
 
@@ -222,6 +260,7 @@ export function formatRegistryPrBody(plan) {
     '',
     `Upstream commit: \`${plan.upstreamRevision}\``,
     `Expected default-branch head: \`${plan.expectedHeadSha || ''}\``,
+    plan.generatedHeadSha ? `Generated head SHA: \`${plan.generatedHeadSha}\`` : null,
     '',
     '### Semantic diff',
     '',
@@ -237,9 +276,11 @@ export function formatRegistryPrBody(plan) {
     '',
     ...(blocked.length ? blocked.map((reason) => `- ${reason}`) : ['- none; classified as later-auto-mergeable']),
     '',
-    'This pull request does not auto-merge, publish npm, close unrelated issues or pull requests, or delete unrelated branches.',
+    plan.classification && plan.classification.autoEligible
+      ? 'This pull request may auto-merge and publish a patch Release after required checks pass. It will not close unrelated issues or pull requests, delete human branches, or publish a major or minor Release.'
+      : 'This pull request requires owner review and will not auto-merge, publish npm, close unrelated issues or pull requests, or delete unrelated branches.',
     '',
-  ].join('\n');
+  ].filter((line) => line !== null).join('\n');
 }
 
 export function inspectRegistrySyncWorkflow(yaml) {
@@ -252,7 +293,6 @@ export function inspectRegistrySyncWorkflow(yaml) {
     errors.push('registry-sync must not check out pull_request.head.sha');
   }
   if (/npm publish/.test(text)) errors.push('registry-sync must not publish npm');
-  if (/gh pr merge/.test(text)) errors.push('registry-sync must not merge pull requests');
   if (/gh issue close/.test(text)) errors.push('registry-sync must not close issues');
   if (/uses:\s+actions\/(?:checkout|setup-node)@v\d+/.test(text)) {
     errors.push('registry-sync must pin actions by commit SHA');
@@ -263,6 +303,9 @@ export function inspectRegistrySyncWorkflow(yaml) {
   if (setupNodePin !== SETUP_NODE_ACTION_PIN) errors.push('actions/setup-node pin is missing or drifted');
   if (!/node \.\/src\/registry\/automation-ci\.js generate/.test(text)) {
     errors.push('generate job must run automation-ci.js generate');
+  }
+  if (!/node \.\/src\/registry\/automation-ci\.js auto-merge/.test(text)) {
+    errors.push('auto-merge job must run automation-ci.js auto-merge');
   }
   if (!/EXPECTED_HEAD/.test(text)) errors.push('workflow must pass EXPECTED_HEAD');
   if (!/concurrency:/.test(text)) errors.push('workflow must serialize concurrent runs');
@@ -285,6 +328,13 @@ export function inspectRegistrySyncWorkflow(yaml) {
   if (generate.permissions.issues) errors.push('generate job must not receive issues write');
   if (generate.permissions['id-token']) errors.push('generate job must not receive id-token');
 
+  const autoMergeMatch = text.match(/auto-merge:[\s\S]*?permissions:\s*\n((?:\s{6,}[^\n]+\n)+)/);
+  const autoMerge = { permissions: parsePerms(autoMergeMatch ? autoMergeMatch[1] : '') };
+  if (autoMerge.permissions.contents !== 'write') errors.push('auto-merge job must use contents: write');
+  if (autoMerge.permissions['pull-requests'] !== 'write') errors.push('auto-merge job must use pull-requests: write');
+  if (autoMerge.permissions['id-token'] !== 'write') errors.push('auto-merge job must use id-token: write');
+  if (autoMerge.permissions.issues) errors.push('auto-merge job must not receive issues write');
+
   const topPerms = {};
   const top = text.match(/^permissions:\s*\n((?:\s{2}[^\n]+\n)+)/m);
   if (top) Object.assign(topPerms, parsePerms(top[1]));
@@ -297,10 +347,141 @@ export function inspectRegistrySyncWorkflow(yaml) {
     usesFloatingTags: /uses:\s+actions\/(?:checkout|setup-node)@v\d+/.test(text),
     permissions: topPerms,
     generate,
+    autoMerge,
   };
 }
 
+export async function executeRegistryAutoMerge(args, io = {}) {
+  const pr = io.inspectPullRequest ? await io.inspectPullRequest() : null;
+  if (!pr) {
+    return {
+      ok: true,
+      dryRun: args.dryRun !== false,
+      merged: false,
+      published: false,
+      branchDeleted: false,
+      skipped: true,
+    };
+  }
+
+  const expectedHead = args.expectedHead;
+  const currentDefaultSha = io.currentDefaultSha ? await io.currentDefaultSha() : expectedHead;
+  const concurrentRun = io.hasConcurrentRun ? await io.hasConcurrentRun() : false;
+  const fromTrustedWorkflow = io.fromTrustedWorkflow ? await io.fromTrustedWorkflow() : false;
+  const defaultBranchProtected = io.defaultBranchProtected ? await io.defaultBranchProtected() : false;
+  const classification = io.classification
+    ? await io.classification()
+    : { autoEligible: false, blockedReasons: ['missing classification'] };
+
+  const authorization = evaluateAutoAuthorization({
+    origin: pr.origin,
+    headRef: pr.headRef,
+    headSha: pr.headSha,
+    expectedGeneratedSha: pr.expectedGeneratedSha,
+    expectedHeadSha: expectedHead,
+    currentDefaultSha,
+    files: pr.files,
+    checkConclusion: pr.checkConclusion,
+    concurrentRun,
+    fromTrustedWorkflow,
+    defaultBranchProtected,
+    classification,
+  });
+
+  const result = {
+    ok: true,
+    dryRun: args.dryRun !== false,
+    autoAuthorized: authorization.autoAuthorized,
+    deniedReasons: authorization.deniedReasons,
+    actions: authorization.actions,
+    merged: false,
+    published: false,
+    branchDeleted: false,
+  };
+
+  if (!authorization.autoAuthorized) return result;
+  if (args.dryRun !== false) return { ...result, bump: 'patch' };
+
+  const mergedPr = await io.mergePullRequest(pr);
+  const verified = io.verifyMerge
+    ? await io.verifyMerge(mergedPr)
+    : { ok: Boolean(mergedPr && mergedPr.merged) };
+  if (!verified || verified.ok === false) {
+    return {
+      ...result,
+      ok: false,
+      errors: ['merge was not verified on the protected default branch'],
+    };
+  }
+  result.merged = true;
+
+  let lock = { release: async () => {} };
+  try {
+    if (io.acquireVersionLock) lock = await io.acquireVersionLock();
+  } catch (err) {
+    return {
+      ...result,
+      ok: false,
+      published: false,
+      branchDeleted: false,
+      errors: [err.message || String(err)],
+    };
+  }
+  try {
+    const publishedState = io.reconcilePublishedState
+      ? await io.reconcilePublishedState()
+      : { packageVersion: '0.0.0', npmVersions: [], githubVersions: [] };
+    const version = calculateRegistryPatchVersion(publishedState);
+    const identities = io.commitPatchIdentities
+      ? await io.commitPatchIdentities({ version })
+      : { commit: verified.sha, version };
+    const published = await io.trustedPatchRelease({
+      version,
+      commit: identities.commit,
+      bump: 'patch',
+      usesTrustedPatchPrimitive: true,
+    });
+    if (!published || published.ok === false) {
+      return {
+        ...result,
+        ok: false,
+        published: false,
+        branchDeleted: false,
+        version,
+        bump: 'patch',
+        errors: published?.errors || ['trusted patch Release failed'],
+        recovery: published?.recovery,
+      };
+    }
+    const publication = io.verifyPublication
+      ? await io.verifyPublication(published)
+      : { ok: true };
+    if (!publication.ok) {
+      return {
+        ...result,
+        ok: false,
+        published: false,
+        branchDeleted: false,
+        version,
+        bump: 'patch',
+        errors: ['publication did not match npm and GitHub identities'],
+        recovery: published.recovery,
+      };
+    }
+    result.published = true;
+    result.version = version;
+    result.bump = 'patch';
+    result.recovery = published.recovery;
+    if (io.deleteBranch) await io.deleteBranch(pr.headRef);
+    result.branchDeleted = true;
+    return result;
+  } finally {
+    if (lock.release) await lock.release();
+  }
+}
+
 export async function executeRegistryAutomation(args, io = {}) {
+  if (args.mode === 'auto-merge') return executeRegistryAutoMerge(args, io);
   if (args.mode === 'cleanup') {
     const branches = io.listBranches ? await io.listBranches() : [];
     const protectedRefs = io.protectedRefs ? await io.protectedRefs() : ['main'];
@@ -356,7 +537,11 @@ export async function executeRegistryAutomation(args, io = {}) {
     dryRun: args.dryRun !== false,
     body,
     autoAuthorization: authorization,
-    actions: { ...BLOCKED_ACTIONS },
+    actions: {
+      merge: false,
+      publishNpm: false,
+      ...BLOCKED_MUTATIONS,
+    },
     merged: false,
     published: false,
   };

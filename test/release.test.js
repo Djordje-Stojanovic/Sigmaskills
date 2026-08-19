@@ -11,9 +11,11 @@ import {
   RELEASE_SCHEMA_VERSION,
   RELEASE_WORKFLOW_FILE,
   applyReleaseIdentities,
+  applyRegistryPatchIdentities,
   calculateReleasePlan,
   evaluatePublicationGate,
   executeRelease,
+  executeTrustedPatchRelease,
   formatReleaseHuman,
   formatReleaseJson,
   inspectReleaseWorkflow,
@@ -417,6 +419,62 @@ test('idempotent recovery: matching npm digest or GitHub Release is skipped; mis
     npmPackage: { exists: true, versions: { '0.2.0': { integrity: 'sha512-other' } } },
     githubRelease: null,
     gitTag: null,
+  });
+  assert.equal(clash.ok, false);
+  assert.match(clash.errors.join('\n'), /different digest/);
+});
+
+test('registry patch identities keep Unreleased owner work and only add a patch heading', () => {
+  const changelog = changelogWith('### Added\n\n- Owner minor work.\n');
+  const applied = applyRegistryPatchIdentities({
+    packageJson: { name: 'sigmaskills', version: '0.1.0' },
+    manifest: { version: '0.1.0' },
+    changelog,
+    version: '0.1.1',
+    date: '2026-08-20',
+    note: 'Agent Host registry sync from deadbeefdeadbeefdeadbeefdeadbeefdeadbeef.',
+  });
+  assert.equal(applied.packageJson.version, '0.1.1');
+  assert.equal(applied.manifest.version, '0.1.1');
+  assert.match(applied.changelog, /## \[Unreleased\]/);
+  assert.match(applied.changelog, /Owner minor work/);
+  assert.match(applied.changelog, /## \[0\.1\.1\] — 2026-08-20/);
+  assert.match(applied.changelog, /Agent Host registry sync/);
+});
+
+test('trusted patch Release calls idempotent publication and refuses digest clashes', async () => {
+  const publishers = { createTag: [], createGithubRelease: [], publishNpm: [] };
+  const preview = await executeTrustedPatchRelease({
+    version: '0.1.1',
+    commit: 'deadbeef',
+    tarball: { digest: 'aa'.repeat(32), integrity: 'sha512-local', contents: [], path: 'x.tgz' },
+    npmPackage: { exists: true, versions: {} },
+    githubRelease: null,
+    gitTag: null,
+    environment: { name: RELEASE_ENVIRONMENT, protected: true },
+    trustedPublisher: true,
+    publishers: {
+      createTag: (p) => publishers.createTag.push(p.version),
+      createGithubRelease: (p) => publishers.createGithubRelease.push(p.version),
+      publishNpm: (p) => publishers.publishNpm.push(p.version),
+    },
+  });
+  assert.equal(preview.ok, true);
+  assert.equal(preview.recovery.publishNpm, true);
+  assert.deepEqual(publishers.publishNpm, ['0.1.1']);
+
+  const clash = await executeTrustedPatchRelease({
+    version: '0.1.1',
+    commit: 'deadbeef',
+    tarball: { digest: 'aa'.repeat(32), integrity: 'sha512-local', contents: [] },
+    npmPackage: { exists: true, versions: { '0.1.1': { integrity: 'sha512-other' } } },
+    githubRelease: null,
+    gitTag: null,
+    environment: { name: RELEASE_ENVIRONMENT, protected: true },
+    trustedPublisher: true,
+    publishers: {
+      publishNpm: () => { throw new Error('must not overwrite npm'); },
+    },
   });
   assert.equal(clash.ok, false);
   assert.match(clash.errors.join('\n'), /different digest/);

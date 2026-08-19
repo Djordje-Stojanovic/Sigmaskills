@@ -158,6 +158,71 @@ export function applyReleaseIdentities({ packageJson, manifest, changelog, versi
   };
 }
 
+export function applyRegistryPatchIdentities({ packageJson, manifest, changelog, version, date, note }) {
+  if (new RegExp(`^## \\[${String(version).replace(/\./g, '\\.')}\\]`, 'm').test(String(changelog || ''))) {
+    return {
+      packageJson: { ...packageJson, version },
+      manifest: { ...manifest, version },
+      changelog,
+    };
+  }
+  const insertion = `## [Unreleased]\n\n## [${version}] — ${date}\n\n### Changed\n\n- ${note}\n`;
+  const nextChangelog = String(changelog).replace(/## \[Unreleased\]\s*\n/, `${insertion}\n`);
+  return {
+    packageJson: { ...packageJson, version },
+    manifest: { ...manifest, version },
+    changelog: nextChangelog,
+  };
+}
+
+/**
+ * Patch-only trusted publication. Reuses evaluatePublicationGate and
+ * planIdempotentPublish; never overwrites an existing npm version.
+ */
+export async function executeTrustedPatchRelease(options = {}) {
+  const tarball = options.tarball || (options.rootDir ? defaultPack(options.rootDir) : null);
+  const expected = {
+    version: options.version,
+    commit: options.commit,
+    digest: tarball?.digest,
+    integrity: tarball?.integrity,
+    tag: `v${options.version}`,
+  };
+  const gate = evaluatePublicationGate({
+    expected,
+    workflow: options.workflow || { ok: true },
+    npmPackage: options.npmPackage,
+    githubRelease: options.githubRelease,
+    gitTag: options.gitTag,
+    environment: options.environment,
+    trustedPublisher: options.trustedPublisher,
+  });
+  const recovery = planIdempotentPublish({
+    expected,
+    npmPackage: options.npmPackage,
+    githubRelease: options.githubRelease,
+    gitTag: options.gitTag,
+  });
+  const preview = {
+    ok: gate.ok && recovery.ok,
+    errors: [...(gate.ok ? [] : gate.errors || []), ...(recovery.ok ? [] : recovery.errors || [])],
+    version: options.version,
+    commit: options.commit,
+    tag: expected.tag,
+    bump: 'patch',
+    tarball,
+    gate,
+    recovery,
+  };
+  if (!preview.ok || options.dryRun) return preview;
+
+  const publishers = options.publishers || {};
+  if (recovery.createTag && publishers.createTag) publishers.createTag(preview);
+  if (recovery.createGithubRelease && publishers.createGithubRelease) publishers.createGithubRelease(preview);
+  if (recovery.publishNpm && publishers.publishNpm) publishers.publishNpm(preview);
+  return preview;
+}
+
 export function inspectReleaseWorkflow(yaml) {
   const text = String(yaml || '');
   const errors = [];

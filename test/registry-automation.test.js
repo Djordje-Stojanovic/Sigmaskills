@@ -9,6 +9,7 @@ import {
   GENERATED_BRANCH_PREFIX,
   REGISTRY_ALLOWLIST,
   REGISTRY_SYNC_WORKFLOW_FILE,
+  calculateRegistryPatchVersion,
   classifySemanticAuthority,
   evaluateAutoAuthorization,
   executeRegistryAutomation,
@@ -57,6 +58,24 @@ function snap(hosts, revision = SHA_A) {
 
 function classifyDiff(previous, current) {
   return classifySemanticAuthority(diffSnapshots(previous, current));
+}
+
+function eligibleAuthorization(patch = {}) {
+  return {
+    origin: 'same-repo',
+    headRef: `${GENERATED_BRANCH_PREFIX}deadbeef`,
+    headSha: SHA_B,
+    expectedGeneratedSha: SHA_B,
+    expectedHeadSha: SHA_A,
+    currentDefaultSha: SHA_A,
+    files: [...REGISTRY_ALLOWLIST],
+    checkConclusion: 'success',
+    concurrentRun: false,
+    fromTrustedWorkflow: true,
+    defaultBranchProtected: true,
+    classification: { autoEligible: true, blockedReasons: [] },
+    ...patch,
+  };
 }
 
 test('registry automation: only validated new hosts and description-only changes stay auto-eligible', () => {
@@ -116,50 +135,18 @@ test('registry automation: generated files must stay on the registry allowlist',
     'registry/source.json',
     'test/fixtures/vercel-skills/src/agents.ts',
   ]);
-  const ok = evaluateAutoAuthorization({
-    origin: 'same-repo',
-    headRef: `${GENERATED_BRANCH_PREFIX}deadbeef`,
-    headSha: SHA_B,
-    expectedGeneratedSha: SHA_B,
-    expectedHeadSha: SHA_A,
-    currentDefaultSha: SHA_A,
-    files: REGISTRY_ALLOWLIST,
-    checkConclusion: 'success',
-    concurrentRun: false,
-    classification: { autoEligible: true, blockedReasons: [] },
-  });
+  const ok = evaluateAutoAuthorization(eligibleAuthorization({ files: REGISTRY_ALLOWLIST }));
   assert.equal(ok.autoAuthorized, true);
 
-  const extra = evaluateAutoAuthorization({
-    ...ok,
-    origin: 'same-repo',
-    headRef: `${GENERATED_BRANCH_PREFIX}deadbeef`,
-    headSha: SHA_B,
-    expectedGeneratedSha: SHA_B,
-    expectedHeadSha: SHA_A,
-    currentDefaultSha: SHA_A,
+  const extra = evaluateAutoAuthorization(eligibleAuthorization({
     files: [...REGISTRY_ALLOWLIST, 'src/cli.js'],
-    checkConclusion: 'success',
-    concurrentRun: false,
-    classification: { autoEligible: true, blockedReasons: [] },
-  });
+  }));
   assert.equal(extra.autoAuthorized, false);
   assert.ok(extra.deniedReasons.some((reason) => /allowlist/i.test(reason)));
 });
 
 test('registry automation: forks, human branches, stale heads, moved main, failed checks, and concurrent runs cannot be auto-authorized', () => {
-  const eligible = {
-    origin: 'same-repo',
-    headRef: `${GENERATED_BRANCH_PREFIX}deadbeef`,
-    headSha: SHA_B,
-    expectedGeneratedSha: SHA_B,
-    expectedHeadSha: SHA_A,
-    currentDefaultSha: SHA_A,
-    files: [...REGISTRY_ALLOWLIST],
-    checkConclusion: 'success',
-    concurrentRun: false,
-    classification: { autoEligible: true, blockedReasons: [] },
-  };
+  const eligible = eligibleAuthorization();
   assert.equal(evaluateAutoAuthorization(eligible).autoAuthorized, true);
 
   const denials = [
@@ -169,6 +156,8 @@ test('registry automation: forks, human branches, stale heads, moved main, faile
     [{ currentDefaultSha: SHA_C }, /moved|default branch/i],
     [{ checkConclusion: 'failure' }, /check/i],
     [{ concurrentRun: true }, /concurrent/i],
+    [{ fromTrustedWorkflow: false }, /trusted.*workflow/i],
+    [{ defaultBranchProtected: false }, /protected/i],
   ];
   for (const [patch, pattern] of denials) {
     const result = evaluateAutoAuthorization({ ...eligible, ...patch });
@@ -177,22 +166,11 @@ test('registry automation: forks, human branches, stale heads, moved main, faile
   }
 });
 
-test('registry automation: even auto-authorized plans cannot merge, publish, close unrelated work, or delete unrelated branches', () => {
-  const result = evaluateAutoAuthorization({
-    origin: 'same-repo',
-    headRef: `${GENERATED_BRANCH_PREFIX}deadbeef`,
-    headSha: SHA_B,
-    expectedGeneratedSha: SHA_B,
-    expectedHeadSha: SHA_A,
-    currentDefaultSha: SHA_A,
-    files: [...REGISTRY_ALLOWLIST],
-    checkConclusion: 'success',
-    concurrentRun: false,
-    classification: { autoEligible: true, blockedReasons: [] },
-  });
+test('registry automation: auto-authorized plans may merge and patch-publish, but cannot close unrelated work or delete unrelated branches', () => {
+  const result = evaluateAutoAuthorization(eligibleAuthorization());
   assert.equal(result.autoAuthorized, true);
-  assert.equal(result.actions.merge, false);
-  assert.equal(result.actions.publishNpm, false);
+  assert.equal(result.actions.merge, true);
+  assert.equal(result.actions.publishNpm, true);
   assert.equal(result.actions.closeUnrelatedIssues, false);
   assert.equal(result.actions.closeUnrelatedPullRequests, false);
   assert.equal(result.actions.deleteUnrelatedBranches, false);
@@ -271,8 +249,19 @@ test('registry automation: pull request body carries upstream commit, semantic d
   assert.match(body, /amp/);
   assert.match(body, /validation/i);
   assert.match(body, /blocked/i);
-  assert.match(body, /does not auto-merge/i);
+  assert.match(body, /owner review/i);
+  assert.match(body, /will not auto-merge/i);
   assert.match(body, /npm/i);
+
+  const safeBody = formatRegistryPrBody({
+    upstreamRevision: UPSTREAM,
+    expectedHeadSha: SHA_A,
+    diff: { changes: [{ id: 'newhost', kind: 'addition', authority: 'safe' }] },
+    validation: { valid: true, errors: [], hostErrors: {} },
+    classification: { autoEligible: true, blockedReasons: [] },
+  });
+  assert.match(safeBody, /may auto-merge/i);
+  assert.match(safeBody, /patch/i);
 });
 
 test('registry automation dry-run: execute classifies authority and cleanup without merging or publishing', async () => {
@@ -303,8 +292,8 @@ test('registry automation dry-run: execute classifies authority and cleanup with
   assert.equal(wrote, false);
   assert.equal(merged, false);
   assert.equal(published, false);
-  assert.equal(result.actions.merge, false);
-  assert.equal(result.actions.publishNpm, false);
+  assert.equal(result.merged, false);
+  assert.equal(result.published, false);
   assert.match(result.body, new RegExp(UPSTREAM));
 
   const cleanup = await executeRegistryAutomation({
@@ -337,9 +326,196 @@ test('trusted registry-sync workflow: pinned actions, expected-head checkout, no
   assert.doesNotMatch(yaml, /pull_request:/);
   assert.doesNotMatch(yaml, /github\.event\.pull_request\.head\.sha/);
   assert.doesNotMatch(yaml, /npm publish/);
-  assert.doesNotMatch(yaml, /gh pr merge/);
   assert.doesNotMatch(yaml, /gh issue close/);
   assert.match(yaml, /node \.\/src\/registry\/automation-ci\.js generate/);
+  assert.match(yaml, /node \.\/src\/registry\/automation-ci\.js auto-merge/);
   assert.match(yaml, /EXPECTED_HEAD/);
   assert.match(yaml, /concurrency:/);
+  assert.equal(inspected.autoMerge.permissions['id-token'], 'write');
+  assert.equal(inspected.autoMerge.permissions.contents, 'write');
+  assert.equal(inspected.autoMerge.permissions['pull-requests'], 'write');
+  assert.equal(inspected.autoMerge.permissions.issues, undefined);
+  assert.equal(inspected.generate.permissions['id-token'], undefined);
 });
+
+test('registry patch version: serialize against actual npm and GitHub state, always patch, never major or minor', () => {
+  assert.equal(calculateRegistryPatchVersion({
+    packageVersion: '0.1.0',
+    npmVersions: ['0.1.0'],
+    githubVersions: ['0.1.0'],
+  }), '0.1.1');
+  assert.equal(calculateRegistryPatchVersion({
+    packageVersion: '0.1.0',
+    npmVersions: ['0.2.0'],
+    githubVersions: ['0.1.5'],
+  }), '0.2.1');
+  assert.throws(
+    () => calculateRegistryPatchVersion({ packageVersion: '0.1.0', requestedBump: 'minor' }),
+    /major|minor|patch/i,
+  );
+  assert.throws(
+    () => calculateRegistryPatchVersion({ packageVersion: '0.1.0', requestedBump: 'major' }),
+    /major|minor|patch/i,
+  );
+});
+
+function autoMergeIo(overrides = {}) {
+  const calls = {
+    merged: [],
+    published: [],
+    deleted: [],
+    closedIssues: [],
+    closedPrs: [],
+    skillWrites: [],
+    versionLocks: 0,
+  };
+  return {
+    calls,
+    io: {
+      inspectPullRequest: async () => ({
+        origin: 'same-repo',
+        headRef: `${GENERATED_BRANCH_PREFIX}deadbeef`,
+        headSha: SHA_B,
+        expectedGeneratedSha: SHA_B,
+        files: [...REGISTRY_ALLOWLIST],
+        checkConclusion: 'success',
+        number: 99,
+        ...overrides.pr,
+      }),
+      currentDefaultSha: async () => SHA_A,
+      expectedHeadSha: async () => SHA_A,
+      hasConcurrentRun: async () => false,
+      fromTrustedWorkflow: async () => true,
+      defaultBranchProtected: async () => true,
+      classification: async () => classifyDiff(
+        snap([host('amp', { displayName: 'Amp' })]),
+        snap([
+          host('amp', { displayName: 'Amp' }),
+          host('newhost', { displayName: 'New' }),
+        ], SHA_B),
+      ),
+      acquireVersionLock: async () => { calls.versionLocks += 1; return { release: async () => {} }; },
+      reconcilePublishedState: async () => ({
+        packageVersion: '0.1.0',
+        npmVersions: ['0.1.0'],
+        githubVersions: ['0.1.0'],
+      }),
+      mergePullRequest: async (pr) => { calls.merged.push(pr.number); return { sha: SHA_C, merged: true }; },
+      verifyMerge: async () => ({ ok: true, sha: SHA_C }),
+      commitPatchIdentities: async () => ({ commit: 'e'.repeat(40), version: '0.1.1' }),
+      trustedPatchRelease: async (payload) => {
+        calls.published.push(payload);
+        return {
+          ok: true,
+          version: payload.version,
+          recovery: { ok: true, publishNpm: true, createGithubRelease: true, createTag: true },
+          npm: { version: payload.version, integrity: 'sha512-match' },
+          github: { tag: `v${payload.version}`, targetCommit: payload.commit },
+        };
+      },
+      verifyPublication: async () => ({ ok: true, npmMatches: true, githubMatches: true }),
+      deleteBranch: async (name) => { calls.deleted.push(name); },
+      closeIssue: async (n) => { calls.closedIssues.push(n); },
+      closePullRequest: async (n) => { calls.closedPrs.push(n); },
+      writeSkill: async (id) => { calls.skillWrites.push(id); },
+      ...overrides.io,
+    },
+  };
+}
+
+test('registry automation: empty diffs and missing generated files cannot be auto-authorized', () => {
+  const empty = evaluateAutoAuthorization(eligibleAuthorization({ files: [] }));
+  assert.equal(empty.autoAuthorized, false);
+  assert.ok(empty.deniedReasons.some((reason) => /empty/i.test(reason)));
+});
+
+test('end-to-end safe-addition rehearsal: merge, trusted patch Release, then delete only the generated branch', async () => {
+  const { io, calls } = autoMergeIo();
+  const result = await executeRegistryAutomation({
+    mode: 'auto-merge',
+    dryRun: false,
+    expectedHead: SHA_A,
+  }, io);
+  assert.equal(result.ok, true);
+  assert.equal(result.merged, true);
+  assert.equal(result.published, true);
+  assert.equal(result.version, '0.1.1');
+  assert.equal(result.bump, 'patch');
+  assert.deepEqual(calls.merged, [99]);
+  assert.equal(calls.published.length, 1);
+  assert.equal(calls.published[0].version, '0.1.1');
+  assert.equal(calls.published[0].bump, 'patch');
+  assert.ok(calls.published[0].usesTrustedPatchPrimitive);
+  assert.deepEqual(calls.deleted, [`${GENERATED_BRANCH_PREFIX}deadbeef`]);
+  assert.deepEqual(calls.closedIssues, []);
+  assert.deepEqual(calls.closedPrs, []);
+  assert.deepEqual(calls.skillWrites, []);
+  assert.equal(calls.versionLocks, 1);
+  assert.equal(result.actions.closeUnrelatedIssues, false);
+  assert.equal(result.actions.deleteUnrelatedBranches, false);
+});
+
+test('end-to-end blocked path-change rehearsal: owner review, no merge, no publish, no branch delete', async () => {
+  const { io, calls } = autoMergeIo({
+    io: {
+      classification: async () => classifyDiff(
+        snap([host('amp', { displayName: 'Amp' })]),
+        snap([host('amp', {
+          displayName: 'Amp',
+          destinations: { project: { kind: 'literal', path: '.moved/skills' }, global: { kind: 'none' } },
+        })]),
+      ),
+    },
+  });
+  const result = await executeRegistryAutomation({
+    mode: 'auto-merge',
+    dryRun: false,
+    expectedHead: SHA_A,
+  }, io);
+  assert.equal(result.ok, true);
+  assert.equal(result.autoAuthorized, false);
+  assert.equal(result.merged, false);
+  assert.equal(result.published, false);
+  assert.deepEqual(calls.merged, []);
+  assert.deepEqual(calls.published, []);
+  assert.deepEqual(calls.deleted, []);
+  assert.ok(result.deniedReasons.some((reason) => /project/i.test(reason)));
+});
+
+test('auto-merge: partial trusted patch success is recoverable and never overwrites an npm version', async () => {
+  const { io, calls } = autoMergeIo({
+    io: {
+      trustedPatchRelease: async (payload) => ({
+        ok: true,
+        version: payload.version,
+        recovery: { ok: true, publishNpm: false, createGithubRelease: true, createTag: true },
+        npm: { version: payload.version, integrity: 'sha512-existing' },
+        github: { tag: `v${payload.version}`, targetCommit: payload.commit },
+      }),
+    },
+  });
+  const recovered = await executeRegistryAutomation({ mode: 'auto-merge', dryRun: false, expectedHead: SHA_A }, io);
+  assert.equal(recovered.published, true);
+  assert.equal(recovered.recovery.publishNpm, false);
+  assert.deepEqual(calls.deleted, [`${GENERATED_BRANCH_PREFIX}deadbeef`]);
+
+  const clashIo = autoMergeIo({
+    io: {
+      trustedPatchRelease: async () => ({
+        ok: false,
+        errors: ['npm already has sigmaskills@0.1.1 with a different digest; versions are immutable.'],
+        recovery: { ok: false, publishNpm: false },
+      }),
+    },
+  });
+  const clash = await executeRegistryAutomation({
+    mode: 'auto-merge',
+    dryRun: false,
+    expectedHead: SHA_A,
+  }, clashIo.io);
+  assert.equal(clash.ok, false);
+  assert.equal(clash.branchDeleted, false);
+  assert.deepEqual(clashIo.calls.deleted, []);
+  assert.match(clash.errors.join('\n'), /different digest|immutable/i);
+});
+
