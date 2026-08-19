@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `npm test` lists `test/*.test.js` files in a runner script so Node.js 20 CI runs the suite without glob expansion. Registry pin hashing ignores CRLF from Windows checkout so the fixture still matches `contentSha256`.
+
 ### Added
 
 - Safe Agent Host registry additions and description-only changes may auto-merge after required checks and publish a patch Release through the trusted idempotent publication primitive. Destination, ID, alias, detection, platform, membership, removal, and unknown changes still need owner review. Version calculation serializes concurrent runs against live npm and GitHub state. The generated branch is deleted only after verified merge and matching publication. Automation cannot change skills, CLI behavior, unrelated work, human branches, or major/minor Releases, and it never overwrites an existing npm version.

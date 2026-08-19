@@ -9,7 +9,7 @@ import { parseAgents, extractEnvVars } from '../src/registry/parse.js';
 import { validateSnapshot, assertSafePath, SUPPORTED_PLATFORMS } from '../src/registry/validate.js';
 import { diffSnapshots } from '../src/registry/diff.js';
 import { normalizeHost, buildSnapshot, compareIds } from '../src/registry/normalize.js';
-import { loadPin, syncRegistry, runSync, fetchPinnedSource } from '../src/registry/sync.js';
+import { loadPin, syncRegistry, runSync, fetchPinnedSource, canonicalSourceText } from '../src/registry/sync.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -42,10 +42,27 @@ test('registry: snapshot carries primary-source attribution from a real pin', ()
   assert.equal(snapshot.generatedFrom.repository, 'vercel-labs/skills');
   assert.equal(snapshot.generatedFrom.upstreamFile, 'src/agents.ts');
   assert.match(snapshot.generatedFrom.pinnedRevision, /^[0-9a-f]{40}$/);
-  assert.equal(pin.contentSha256, sha256(fs.readFileSync(FIXTURE, 'utf8')));
+  assert.equal(pin.contentSha256, sha256(canonicalSourceText(fs.readFileSync(FIXTURE, 'utf8'))));
   for (const host of snapshot.hosts) {
     assert.equal(host.attribution.upstreamFile, 'src/agents.ts');
     assert.ok(host.attribution.upstreamLine >= 1);
+  }
+});
+
+test('registry: pinned content hash ignores CRLF from Windows checkout', () => {
+  const pin = loadPin();
+  const lf = canonicalSourceText(fs.readFileSync(FIXTURE, 'utf8'));
+  const crlf = lf.replace(/\n/g, '\r\n');
+  assert.equal(sha256(canonicalSourceText(crlf)), pin.contentSha256);
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-registry-crlf-'));
+  try {
+    const source = path.join(tmpDir, 'agents.ts');
+    fs.writeFileSync(source, crlf, 'utf8');
+    const result = syncRegistry({ source, allowReview: true, dryRun: true }, { pin, previous: loadSnapshot() });
+    assert.equal(result.ok, true, (result.errors || []).join('\n'));
+    assert.equal(result.diff.summary.review, 0);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
 

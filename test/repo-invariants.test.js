@@ -211,7 +211,8 @@ test('package.json is publishable, requires Node 20+, exposes bin, and defines f
   for (const skill of KNOWN_SKILLS) {
     assert.ok(pkg.files.includes(skill.id), `package.json files allowlist missing ${skill.id}`);
   }
-  assert.match(pkg.scripts.test, /node --test/);
+  assert.match(pkg.scripts.test, /node scripts\/run-tests\.js/);
+  assert.doesNotMatch(pkg.scripts.test, /\*\*/, 'Node 20 does not expand ** globs in npm test');
 });
 
 test('manifest.json agrees with KNOWN_SKILLS and discovered skills', () => {

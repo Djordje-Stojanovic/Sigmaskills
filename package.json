@@ -35,7 +35,7 @@
   },
   "scripts": {
     "prepack": "node ./src/prepack.js",
-    "test": "node --test test/**/*.test.js",
+    "test": "node scripts/run-tests.js",
     "registry:sync": "node ./src/registry/sync.js",
     "registry:validate": "node ./test/registry-validate-cli.mjs"
   }

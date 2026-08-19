@@ -42,6 +42,10 @@ function sha256(text) {
   return crypto.createHash('sha256').update(text, 'utf8').digest('hex');
 }
 
+export function canonicalSourceText(text) {
+  return String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+}
+
 function parseArgs(argv) {
   const args = { fetch: false, dryRun: false, allowReview: false, source: null };
   for (let i = 0; i < argv.length; i++) {
@@ -101,7 +105,7 @@ export async function fetchPinnedSource(pin, fixturePath = FIXTURE_PATH) {
   if (!res.ok) {
     throw new Error(`failed to fetch ${url}: HTTP ${res.status}`);
   }
-  const text = await res.text();
+  const text = canonicalSourceText(await res.text());
   const digest = sha256(text);
   if (digest !== pin.contentSha256) {
     throw new Error(
@@ -129,7 +133,7 @@ export function syncRegistry(args, options = {}) {
   if (args.fetch) {
     sourceText = fetchPinnedSourceSync(pin, fixturePath);
   } else {
-    sourceText = fs.readFileSync(sourcePath, 'utf8');
+    sourceText = canonicalSourceText(fs.readFileSync(sourcePath, 'utf8'));
     const digest = sha256(sourceText);
     if (digest !== pin.contentSha256) {
       return {
