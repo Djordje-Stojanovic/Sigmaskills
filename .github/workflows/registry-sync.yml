@@ -1,0 +1,44 @@
+name: Registry sync
+
+on:
+  schedule:
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+    inputs:
+      expected_head:
+        description: Exact default-branch SHA whose converter must run
+        required: true
+        type: string
+      upstream_revision:
+        description: Pinned 40-hex upstream revision
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: registry-sync
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    name: Generate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.expected_head || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22.14.0'
+          package-manager-cache: false
+      - name: Generate allowlisted registry pull request
+        env:
+          EXPECTED_HEAD: ${{ inputs.expected_head || github.sha }}
+          UPSTREAM_REVISION: ${{ inputs.upstream_revision }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node ./src/registry/automation-ci.js generate
