@@ -68,6 +68,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       'package/src/state.js',
       'package/src/status.js',
       'package/src/transaction.js',
+      'package/src/uninstall.js',
       'package/src/update.js',
       'package/sigmareview/SKILL.md',
       'package/sigmareview/agents/openai.yaml',

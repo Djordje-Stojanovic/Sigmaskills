@@ -456,3 +456,20 @@ export function recordSkillInState(state, details) {
     skills: updatedSkills,
   };
 }
+
+/**
+ * Drop a skill from managed state after a successful uninstall.
+ *
+ * @param {object} state
+ * @param {string} skillId
+ * @returns {object}
+ */
+export function removeSkillFromState(state, skillId) {
+  const skills = { ...(state.skills || {}) };
+  delete skills[skillId];
+  return {
+    schemaVersion: state.schemaVersion || STATE_SCHEMA_VERSION,
+    scope: state.scope || 'project',
+    skills,
+  };
+}

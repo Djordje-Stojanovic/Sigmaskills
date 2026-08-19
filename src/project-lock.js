@@ -149,3 +149,21 @@ export function updateProjectLockSkill(currentLock, skillId, revision, release) 
     skills: nextSkills,
   };
 }
+
+/**
+ * Drop a skill from the project lock after a successful uninstall.
+ *
+ * @param {object} currentLock
+ * @param {string} skillId
+ * @returns {object}
+ */
+export function removeProjectLockSkill(currentLock, skillId) {
+  const nextSkills = { ...(currentLock.skills || {}) };
+  delete nextSkills[skillId];
+  const remaining = Object.keys(nextSkills);
+  return {
+    schemaVersion: currentLock.schemaVersion || PROJECT_LOCK_SCHEMA_VERSION,
+    release: remaining.length > 0 ? (currentLock.release || null) : null,
+    skills: nextSkills,
+  };
+}

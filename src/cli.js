@@ -4,6 +4,7 @@ import { runProjectInstaller } from './interactive.js';
 import { collectStatus, formatStatusHuman, formatStatusJson } from './status.js';
 import { executeUpdate, formatUpdateHuman, formatUpdateJson } from './update.js';
 import { executeRestore, formatRestoreHuman, formatRestoreJson } from './restore.js';
+import { executeUninstall, formatUninstallHuman, formatUninstallJson } from './uninstall.js';
 import { executeProjectInstall } from './transaction.js';
 import { resolveHomeDir } from './destinations.js';
 
@@ -30,6 +31,7 @@ Commands:
   add <skill>       Alias for install
   update            Update selected whole skills to the running CLI Release
   restore           Restore the latest retained backup for a skill
+  uninstall         Uninstall selected skills after Uninstall Review
   status            Report managed Project or Global Installation state and drift
   list              List all shipped skills and their Skill Revisions
   verify            Validate manifest, skill resources, and compute revisions
@@ -37,8 +39,8 @@ Commands:
 Options:
   -v, --version     Show version number
   -h, --help        Show help
-  --skill <name>    Skill identifier to install, update, or restore (repeatable)
-  --dry-run         Preview install, update, or restore changes without writing files
+  --skill <name>    Skill identifier to install, update, restore, or uninstall (repeatable)
+  --dry-run         Preview install, update, restore, or uninstall changes without writing files
   --json            Output in versioned JSON format
   --project <path>  Target project root directory (defaults to current directory)
   --global          User-level Global Installation (requires --yes to write)
@@ -58,6 +60,10 @@ Options:
                     Resolve outside-customization edits during update
   --malformed-markers <skip|repair|replace>
                     Resolve malformed customization markers during update
+  --clean <remove|keep>
+                    Uninstall Review choice for a clean skill
+  --changed <backup|keep|export|delete>
+                    Uninstall Review choice for a changed, customized, or malformed skill
   --export-dir <dir>
                     Collision-safe destination root for export resolutions
   --no-color        Disable color and reveal animation
@@ -102,6 +108,8 @@ export function parseCliArgs(args) {
     adoptMalformed: null,
     outsideEdit: null,
     malformedMarkers: null,
+    clean: null,
+    changed: null,
     exportDir: null,
     unknown: [],
   };
@@ -154,6 +162,14 @@ export function parseCliArgs(args) {
       parsed.malformedMarkers = args[++i];
     } else if (arg.startsWith('--malformed-markers=')) {
       parsed.malformedMarkers = arg.slice('--malformed-markers='.length);
+    } else if (arg === '--clean') {
+      parsed.clean = args[++i];
+    } else if (arg.startsWith('--clean=')) {
+      parsed.clean = arg.slice('--clean='.length);
+    } else if (arg === '--changed') {
+      parsed.changed = args[++i];
+    } else if (arg.startsWith('--changed=')) {
+      parsed.changed = arg.slice('--changed='.length);
     } else if (arg === '--export-dir') {
       parsed.exportDir = args[++i];
     } else if (arg.startsWith('--export-dir=')) {
@@ -180,12 +196,12 @@ export function parseCliArgs(args) {
       parsed.stateDir = arg.slice('--state-dir='.length);
     } else if (
       !parsed.command &&
-      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status' || arg === 'update' || arg === 'restore')
+      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status' || arg === 'update' || arg === 'restore' || arg === 'uninstall')
     ) {
       parsed.command = arg;
     } else if (!parsed.skillId && (parsed.command === 'install' || parsed.command === 'add')) {
       parsed.skillId = arg;
-    } else if ((parsed.command === 'update' || parsed.command === 'restore') && !arg.startsWith('-')) {
+    } else if ((parsed.command === 'update' || parsed.command === 'restore' || parsed.command === 'uninstall') && !arg.startsWith('-')) {
       parsed.skillIds.push(arg);
     } else if (arg === '--list') {
       parsed.command = 'list';
@@ -257,6 +273,16 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       return 1;
     }
 
+    if (opts.clean && opts.clean !== 'remove' && opts.clean !== 'keep') {
+      writeErr('sigmaskills error: --clean must be remove or keep');
+      return 1;
+    }
+
+    if (opts.changed && opts.changed !== 'backup' && opts.changed !== 'keep' && opts.changed !== 'export' && opts.changed !== 'delete') {
+      writeErr('sigmaskills error: --changed must be backup, keep, export, or delete');
+      return 1;
+    }
+
     if (opts.command === 'update') {
       const env = io.env || process.env;
       if (opts.global && !opts.dryRun && !opts.yes) {
@@ -282,6 +308,39 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         exportDir: opts.exportDir || undefined,
       });
       writeOut(opts.json ? formatUpdateJson(result) : formatUpdateHuman(result));
+      return 0;
+    }
+
+    if (opts.command === 'uninstall') {
+      const env = io.env || process.env;
+      if (opts.global && !opts.dryRun && !opts.yes) {
+        writeErr('sigmaskills error: Global Installation requires both --global and --yes; CI, TTY, JSON, and Agent Host detection never imply that authority');
+        return 1;
+      }
+      if (opts.skillIds.length === 0) {
+        writeErr('sigmaskills error: uninstall requires --skill <id>');
+        return 1;
+      }
+      if (!opts.dryRun && !opts.yes) {
+        writeErr('sigmaskills error: uninstall requires --yes to apply, or --dry-run to preview');
+        return 1;
+      }
+      const result = executeUninstall({
+        catalog,
+        projectRoot: opts.projectRoot || process.cwd(),
+        homeDir: resolveHomeDir(env),
+        scope: opts.global ? 'global' : 'project',
+        customStateDir: opts.stateDir,
+        packageRoot: rootDir,
+        dryRun: opts.dryRun,
+        env,
+        skillIds: opts.skillIds,
+        yes: opts.yes,
+        clean: opts.clean || (opts.yes ? 'remove' : undefined),
+        changed: opts.changed || undefined,
+        exportDir: opts.exportDir || undefined,
+      });
+      writeOut(opts.json ? formatUninstallJson(result) : formatUninstallHuman(result));
       return 0;
     }
 

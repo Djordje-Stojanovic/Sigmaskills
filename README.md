@@ -99,6 +99,10 @@ Non-interactive mutation requires both `--global` and `--yes`. `--dry-run` shows
 
 `npx sigmaskills restore --skill <id> --dry-run` shows the latest retained backup: Release and Skill Revision when known, creation date, verified size, scope, canonical target, and affected links or copies. `--yes` stages and integrity-checks the backup before any live write. On success the displaced current tree becomes the new one-step backup. Restoring identical content is a no-op and does not rotate backups. A removed skill can return from portable ownership metadata without claiming unrelated paths. Missing, truncated, tampered, schema-incompatible, insufficient-space, stale-ownership, occupied-unowned, and failed Windows fallback cases stop with the prior live tree and retained backup intact. Project Installation is the default; Global Installation needs `--global` and `--yes`.
 
+### Sigma Installer: uninstall
+
+`npx sigmaskills uninstall --skill <id> --dry-run` runs Uninstall Review for each selected skill. The preview lists every affected path, method, scope, and remaining canonical dependency. Clean skills offer `--clean remove|keep`. Changed, customized, or malformed skills offer `--changed backup|keep|export|delete`. `--yes` applies those choices: remove deletes only revalidated Sigma-owned paths; backup snapshots the current tree then removes it; export copies the current tree to `--export-dir` then removes managed paths; delete removes current content and leaves any older retained backup; keep writes nothing. Execution rechecks each leaf with `lstat` and deletes a link itself, never its resolved target. Canonical content stays until recorded dependents are gone. Missing paths, stale state, unowned replacements, divergent managed copies, and wrong-target links stop without a partial ownership change. State and lock update only after filesystem operations commit. Project Installation is the default; Global Installation needs `--global` and `--yes`.
+
 ### Cross-host alternative
 
 The cross-agent [skills](https://github.com/vercel-labs/skills) CLI detects Codex, Claude Code, Cursor, OpenCode, Pi, and dozens more:
