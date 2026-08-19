@@ -31,7 +31,7 @@ Commands:
   add <skill>       Alias for install
   update            Update selected whole skills to the running CLI Release
   restore           Restore the latest retained backup for a skill
-  uninstall         Uninstall selected skills after Uninstall Review
+  uninstall         Uninstall selected skills or every recorded skill in one scope after Uninstall Review
   status            Report managed Project or Global Installation state and drift
   list              List all shipped skills and their Skill Revisions
   verify            Validate manifest, skill resources, and compute revisions
@@ -40,6 +40,7 @@ Options:
   -v, --version     Show version number
   -h, --help        Show help
   --skill <name>    Skill identifier to install, update, restore, or uninstall (repeatable)
+  --all             Uninstall every recorded Sigma skill in the chosen Project or Global scope
   --dry-run         Preview install, update, restore, or uninstall changes without writing files
   --json            Output in versioned JSON format
   --project <path>  Target project root directory (defaults to current directory)
@@ -111,6 +112,7 @@ export function parseCliArgs(args) {
     clean: null,
     changed: null,
     exportDir: null,
+    all: false,
     unknown: [],
   };
 
@@ -120,6 +122,8 @@ export function parseCliArgs(args) {
       parsed.help = true;
     } else if (arg === '-v' || arg === '--version') {
       parsed.version = true;
+    } else if (arg === '--all') {
+      parsed.all = true;
     } else if (arg === '--dry-run') {
       parsed.dryRun = true;
     } else if (arg === '--json') {
@@ -317,8 +321,12 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeErr('sigmaskills error: Global Installation requires both --global and --yes; CI, TTY, JSON, and Agent Host detection never imply that authority');
         return 1;
       }
-      if (opts.skillIds.length === 0) {
-        writeErr('sigmaskills error: uninstall requires --skill <id>');
+      if (opts.all && opts.skillIds.length > 0) {
+        writeErr('sigmaskills error: uninstall --all cannot be combined with --skill');
+        return 1;
+      }
+      if (opts.skillIds.length === 0 && !opts.all) {
+        writeErr('sigmaskills error: uninstall requires --skill <id> or --all');
         return 1;
       }
       if (!opts.dryRun && !opts.yes) {
@@ -335,12 +343,14 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         dryRun: opts.dryRun,
         env,
         skillIds: opts.skillIds,
+        all: opts.all,
         yes: opts.yes,
-        clean: opts.clean || (opts.yes ? 'remove' : undefined),
-        changed: opts.changed || undefined,
+        clean: opts.clean || (opts.yes || opts.all ? 'remove' : undefined),
+        changed: opts.changed || (opts.all ? 'backup' : undefined),
         exportDir: opts.exportDir || undefined,
       });
       writeOut(opts.json ? formatUninstallJson(result) : formatUninstallHuman(result));
+      if ((result.summary?.failed || []).length > 0) return 1;
       return 0;
     }
 

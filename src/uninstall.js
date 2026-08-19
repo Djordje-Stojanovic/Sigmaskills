@@ -17,6 +17,7 @@ import { collectStatus } from './status.js';
 import { acquireConcurrencyLock } from './transaction.js';
 
 export const UNINSTALL_SCHEMA_VERSION = 1;
+export const UNINSTALL_JOURNAL_FILENAME = 'uninstall-journal.json';
 
 const CHANGED_KINDS = new Set([
   'outside-change',
@@ -188,30 +189,114 @@ function actionName(choice) {
   return choice || 'remove';
 }
 
+function plannedOutcome(skill) {
+  if (skill.blocked && skill.choice !== 'keep') return 'skipped';
+  if (skill.choice === 'keep') return 'retained';
+  if (!skill.choice) return 'skipped';
+  return 'removed';
+}
+
+function stateChangeFor(skill) {
+  if (skill.choice === 'keep' || skill.outcome === 'retained' || skill.outcome === 'skipped' || skill.outcome === 'failed') {
+    return 'unchanged';
+  }
+  return 'drop ownership';
+}
+
+function summarize(skills) {
+  const summary = {
+    removed: [],
+    retained: [],
+    skipped: [],
+    failed: [],
+  };
+  for (const skill of skills) {
+    const bucket = skill.outcome;
+    if (summary[bucket]) summary[bucket].push(skill.id);
+  }
+  return summary;
+}
+
+function getJournalPath(stateDir) {
+  return path.join(stateDir, UNINSTALL_JOURNAL_FILENAME);
+}
+
+function persistJournal(stateDir, journal) {
+  fs.mkdirSync(stateDir, { recursive: true });
+  const target = getJournalPath(stateDir);
+  const tmp = `${target}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, `${JSON.stringify(journal, null, 2)}\n`, 'utf8');
+  fs.renameSync(tmp, target);
+}
+
+function clearJournal(stateDir) {
+  const target = getJournalPath(stateDir);
+  if (pathExists(target)) fs.rmSync(target, { force: true });
+}
+
+function journalFrom(plan, status) {
+  return {
+    schemaVersion: UNINSTALL_SCHEMA_VERSION,
+    command: 'uninstall',
+    all: true,
+    scope: plan.scope,
+    status,
+    startedAt: plan.startedAt,
+    skills: (plan.skills || []).map((skill) => ({
+      id: skill.id,
+      outcome: skill.outcome || 'pending',
+      choice: skill.choice || null,
+      lastBackup: skill.lastBackup || null,
+      error: skill.error || null,
+    })),
+  };
+}
+
+function recordedSkillIds(options) {
+  const requested = Array.isArray(options.skillIds) ? options.skillIds.filter(Boolean) : [];
+  if (options.all && requested.length > 0) {
+    throw codedError('uninstall --all cannot be combined with --skill', 'usage');
+  }
+  if (!options.all) return requested;
+  const scope = options.scope || 'project';
+  const root = resolveRoot(options);
+  return Object.keys(loadState(scope, root, options.customStateDir).skills || {}).sort();
+}
+
 /**
- * Preview Uninstall Review for selected skills.
+ * Preview Uninstall Review for selected skills or every recorded skill in one scope.
  *
  * @param {object} options
  * @returns {object}
  */
 export function createUninstallPlan(options = {}) {
   const scope = options.scope || 'project';
-  const skillIds = Array.isArray(options.skillIds) ? options.skillIds.filter(Boolean) : [];
+  const skillIds = recordedSkillIds(options);
   const resolved = {
     ...options,
-    clean: options.clean || (options.yes ? 'remove' : undefined),
+    clean: options.clean || (options.yes || options.all ? 'remove' : undefined),
+    changed: options.changed || (options.all ? 'backup' : undefined),
   };
   const skills = skillIds.map((skillId) => {
     const skill = classifyUninstallSkill(resolved, skillId);
     return { ...skill, choice: resolveChoice(skill, resolved) };
   });
-  return {
+  const plan = {
     schemaVersion: UNINSTALL_SCHEMA_VERSION,
     command: 'uninstall',
+    all: Boolean(options.all),
     scope,
     dryRun: Boolean(options.dryRun),
     skills,
   };
+  if (plan.all) {
+    for (const skill of skills) {
+      skill.outcome = plannedOutcome(skill);
+      skill.stateChange = stateChangeFor(skill);
+    }
+    plan.summary = summarize(skills);
+  }
+  return plan;
 }
 
 function inspectLiveLeaf(dest, root, canonicalAbs) {
@@ -383,7 +468,7 @@ function applyOneUninstall(options, skill) {
 }
 
 /**
- * Uninstall selected skills after Uninstall Review.
+ * Uninstall selected skills, or every recorded skill in one scope, after Uninstall Review.
  *
  * @param {object} options
  * @returns {object}
@@ -415,38 +500,88 @@ export function executeUninstall(options = {}) {
   const scope = options.scope || 'project';
   const root = resolveRoot(options);
   const customStateDir = options.customStateDir;
+  const stateDir = resolveStateDir(scope, root, customStateDir);
   const releaseLock = acquireConcurrencyLock(root, customStateDir);
   let state = loadState(scope, root, customStateDir);
+  plan.startedAt = new Date().toISOString();
+
+  const writeAllJournal = (status) => {
+    if (!plan.all) return;
+    persistJournal(stateDir, journalFrom(plan, status));
+  };
 
   try {
-    for (const skill of plan.skills) {
-      const applied = applyOneUninstall(options, skill);
-      skill.action = applied.action;
-      if (skill.choice === 'keep') continue;
+    if (plan.all) writeAllJournal('in-progress');
 
-      const priorState = state;
-      const persist = options.saveState || (scope === 'global' ? saveGlobalState : saveProjectState);
+    for (let index = 0; index < plan.skills.length; index += 1) {
+      const skill = plan.skills[index];
+      if (plan.all && skill.choice !== 'keep' && skill.blocked) {
+        skill.outcome = 'skipped';
+        skill.error = (skill.blockedReasons || []).join(', ') || 'blocked';
+        skill.stateChange = stateChangeFor(skill);
+        writeAllJournal('in-progress');
+        continue;
+      }
+
       try {
-        state = removeSkillFromState(state, skill.id);
-        persist(root, state, customStateDir);
-        if (scope !== 'global') {
-          const lock = loadProjectLock(root);
-          saveProjectLock(root, removeProjectLockSkill(lock, skill.id));
+        const applied = applyOneUninstall(options, skill);
+        skill.action = applied.action;
+        if (skill.choice === 'keep') {
+          skill.outcome = 'retained';
+          skill.stateChange = stateChangeFor(skill);
+          writeAllJournal('in-progress');
+          continue;
         }
-      } catch (err) {
-        restoreStaged(root, applied.staged || []);
-        persist(root, priorState, customStateDir);
+
+        const priorState = state;
+        const persist = options.saveState || (scope === 'global' ? saveGlobalState : saveProjectState);
+        try {
+          state = removeSkillFromState(state, skill.id);
+          persist(root, state, customStateDir);
+          if (scope !== 'global') {
+            const lock = loadProjectLock(root);
+            saveProjectLock(root, removeProjectLockSkill(lock, skill.id));
+          }
+        } catch (err) {
+          restoreStaged(root, applied.staged || []);
+          persist(root, priorState, customStateDir);
+          if (typeof applied.cleanupStaging === 'function') applied.cleanupStaging();
+          throw err;
+        }
+        if (skill.choice === 'backup' && applied.backupDir) {
+          pruneOlderBackups({
+            stateDir,
+            skillId: skill.id,
+            keepPath: applied.backupDir,
+          });
+          skill.lastBackup = path.relative(stateDir, applied.backupDir).replace(/\\/g, '/');
+        }
         if (typeof applied.cleanupStaging === 'function') applied.cleanupStaging();
+        skill.outcome = 'removed';
+        skill.stateChange = stateChangeFor(skill);
+        writeAllJournal('in-progress');
+      } catch (err) {
+        skill.outcome = 'failed';
+        skill.error = err.message;
+        skill.stateChange = stateChangeFor(skill);
+        if (plan.all) {
+          for (const remaining of plan.skills.slice(index + 1)) {
+            remaining.outcome = 'skipped';
+            remaining.error = 'stopped-after-failure';
+            remaining.stateChange = stateChangeFor(remaining);
+          }
+          writeAllJournal('failed');
+          break;
+        }
         throw err;
       }
-      if (skill.choice === 'backup' && applied.backupDir) {
-        pruneOlderBackups({
-          stateDir: resolveStateDir(scope, root, customStateDir),
-          skillId: skill.id,
-          keepPath: applied.backupDir,
-        });
+    }
+
+    if (plan.all) {
+      plan.summary = summarize(plan.skills);
+      if ((plan.summary.failed || []).length === 0) {
+        clearJournal(stateDir);
       }
-      if (typeof applied.cleanupStaging === 'function') applied.cleanupStaging();
     }
     return { ...plan, dryRun: false, state };
   } finally {
@@ -472,16 +607,25 @@ export function formatUninstallHuman(result) {
     `Scope: ${result.scope}`,
     '',
   ];
+  if (result.all) {
+    lines.push('Mode: every recorded skill in this scope');
+    lines.push('');
+  }
   for (const skill of result.skills || []) {
     lines.push(`Skill: ${skill.id}`);
     lines.push(`  Review: ${skill.reviewKind}`);
     lines.push(`  Choices: ${(skill.choices || []).join(', ')}`);
     if (skill.choice) lines.push(`  Choice: ${skill.choice}`);
     if (skill.action) lines.push(`  Action: ${skill.action}`);
+    if (skill.outcome) lines.push(`  Outcome: ${skill.outcome}`);
     lines.push(`  Scope: ${skill.scope}`);
     if (skill.canonicalRel) lines.push(`  Canonical: ${skill.canonicalRel}`);
     const deps = (skill.remainingCanonicalDependencies || []).join(', ');
     lines.push(`  Remaining canonical dependencies: ${deps || 'none'}`);
+    if (result.all) {
+      lines.push(`  Retained backup: ${skill.lastBackup || 'none'}`);
+      lines.push(`  State: ${skill.stateChange || stateChangeFor(skill)}`);
+    }
     for (const dest of skill.destinations || []) {
       lines.push(`  Path: ${dest.relativeDestination}`);
       lines.push(`    Method: ${dest.method || 'none'}`);
@@ -489,6 +633,14 @@ export function formatUninstallHuman(result) {
       if (dest.hostIds?.length) lines.push(`    Agent Hosts: ${dest.hostIds.join(', ')}`);
     }
     if (skill.blockedReasons?.length) lines.push(`  Blocked: ${skill.blockedReasons.join(', ')}`);
+    if (skill.error) lines.push(`  Error: ${skill.error}`);
+    lines.push('');
+  }
+  if (result.summary) {
+    lines.push(`Removed: ${(result.summary.removed || []).join(', ') || 'none'}`);
+    lines.push(`Retained: ${(result.summary.retained || []).join(', ') || 'none'}`);
+    lines.push(`Skipped: ${(result.summary.skipped || []).join(', ') || 'none'}`);
+    lines.push(`Failed: ${(result.summary.failed || []).join(', ') || 'none'}`);
     lines.push('');
   }
   return lines.join('\n');

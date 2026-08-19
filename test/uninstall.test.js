@@ -8,12 +8,18 @@ import { getBackupRoot } from '../src/backup.js';
 import { getCatalog, findPackageRoot } from '../src/catalog.js';
 import { runCli } from '../src/cli.js';
 import { injectRawCustomContent } from '../src/customization.js';
-import { UNIVERSAL_PROJECT_DESTINATION, listProjectDestinationGroups, loadHostRegistry } from '../src/destinations.js';
+import {
+  UNIVERSAL_PROJECT_DESTINATION,
+  listGlobalDestinationGroups,
+  listProjectDestinationGroups,
+  loadHostRegistry,
+} from '../src/destinations.js';
 import { pathExists, recommendedLinkMethod } from '../src/links.js';
+import { executeRestore } from '../src/restore.js';
 import { getProjectStateDir } from '../src/state.js';
 import { executeProjectInstall } from '../src/transaction.js';
 import { executeUpdate } from '../src/update.js';
-import { createUninstallPlan, executeUninstall } from '../src/uninstall.js';
+import { createUninstallPlan, executeUninstall, UNINSTALL_JOURNAL_FILENAME } from '../src/uninstall.js';
 
 const ROOT = findPackageRoot();
 const LINK_METHOD = recommendedLinkMethod();
@@ -520,3 +526,260 @@ test('packed CLI uninstalls a selected skill and leaves an unowned stranger path
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
+
+test('uninstall-all: dry-run reviews every recorded skill and writes nothing', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-uninstall-all-preview-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite', {
+      selectedRoots: [UNIVERSAL_PROJECT_DESTINATION, '.claude/skills'],
+      method: 'link',
+    });
+    installWrite(projectRoot, 'sigmabrief');
+    const writeDest = skillDir(projectRoot, 'sigmawrite');
+    fs.writeFileSync(path.join(writeDest, 'local-keep.txt'), 'outside', 'utf8');
+    const before = snapshotOwned(projectRoot);
+
+    const plan = createUninstallPlan({
+      catalog: getCatalog(ROOT),
+      projectRoot,
+      packageRoot: ROOT,
+      all: true,
+      dryRun: true,
+    });
+    assert.equal(plan.command, 'uninstall');
+    assert.equal(plan.all, true);
+    assert.deepEqual(plan.skills.map((skill) => skill.id), ['sigmabrief', 'sigmawrite']);
+    assert.equal(plan.skills[0].reviewKind, 'clean');
+    assert.equal(plan.skills[1].reviewKind, 'changed');
+    assert.equal(plan.skills[0].choice, 'remove');
+    assert.equal(plan.skills[1].choice, 'backup');
+    for (const skill of plan.skills) {
+      assert.ok(skill.destinations.length > 0);
+      assert.ok(skill.canonicalRel);
+      assert.ok('lastBackup' in skill);
+      assert.ok('remainingCanonicalDependencies' in skill);
+      assert.ok(skill.stateChange === 'drop ownership' || skill.stateChange === 'unchanged');
+    }
+    const writeSkill = plan.skills.find((skill) => skill.id === 'sigmawrite');
+    assert.ok(writeSkill.remainingCanonicalDependencies.includes('.claude/skills/sigmawrite'));
+
+    const io = createMockIo();
+    const code = await runCli(['uninstall', '--all', '--dry-run', '--project', projectRoot], io);
+    assert.equal(code, 0);
+    const human = io.getStdout();
+    assert.match(human, /sigmabrief/);
+    assert.match(human, /sigmawrite/);
+    assert.match(human, /Retained backup/i);
+    assert.match(human, /Removed:|retained|skipped|failed/i);
+    assert.deepEqual(snapshotOwned(projectRoot), before);
+    assert.equal(pathExists(path.join(getProjectStateDir(projectRoot), UNINSTALL_JOURNAL_FILENAME)), false);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('uninstall-all: project scope never touches Global Installation; global never scans projects', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-uninstall-all-project-'));
+  const homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-uninstall-all-home-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    installWrite(projectRoot, 'sigmabrief');
+    executeProjectInstall({
+      catalog: getCatalog(ROOT),
+      skillId: 'sigmawrite',
+      projectRoot,
+      homeDir,
+      scope: 'global',
+      packageRoot: ROOT,
+      env: { HOME: homeDir, USERPROFILE: homeDir, CI: '' },
+      destinationGroups: listGlobalDestinationGroups({
+        registry: loadHostRegistry(ROOT),
+        homeDir,
+        env: {},
+      }),
+      selectedRoots: [UNIVERSAL_PROJECT_DESTINATION],
+    });
+    const globalDest = path.join(homeDir, '.agents', 'skills', 'sigmawrite', 'SKILL.md');
+    const projectWrite = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8');
+    const projectBrief = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md'), 'utf8');
+
+    executeUninstall({
+      catalog: getCatalog(ROOT),
+      projectRoot,
+      homeDir,
+      scope: 'global',
+      packageRoot: ROOT,
+      all: true,
+      yes: true,
+    });
+    assert.equal(pathExists(path.join(homeDir, '.agents', 'skills', 'sigmawrite')), false);
+    assert.equal(fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8'), projectWrite);
+    assert.equal(fs.readFileSync(path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md'), 'utf8'), projectBrief);
+    assert.ok(readState(projectRoot).skills.sigmawrite);
+    assert.ok(readState(projectRoot).skills.sigmabrief);
+
+    executeUninstall({
+      catalog: getCatalog(ROOT),
+      projectRoot,
+      homeDir,
+      packageRoot: ROOT,
+      all: true,
+      yes: true,
+    });
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite')), false);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), false);
+    assert.equal(pathExists(globalDest), false);
+    assert.ok(!readState(projectRoot).skills.sigmawrite);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+    fs.rmSync(homeDir, { recursive: true, force: true });
+  }
+});
+
+test('uninstall-all: keep leaves shared state intact; default backup remains restorable', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-uninstall-all-keep-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite', {
+      selectedRoots: [UNIVERSAL_PROJECT_DESTINATION, '.claude/skills'],
+      method: 'link',
+    });
+    installWrite(projectRoot, 'sigmabrief');
+    const writeDest = skillDir(projectRoot, 'sigmawrite');
+    fs.writeFileSync(path.join(writeDest, 'local-keep.txt'), 'keep-me', 'utf8');
+    const stranger = path.join(projectRoot, '.claude', 'skills', 'not-ours');
+    fs.mkdirSync(stranger, { recursive: true });
+    fs.writeFileSync(path.join(stranger, 'leave-me.txt'), 'unrelated', 'utf8');
+
+    const result = executeUninstall({
+      catalog: getCatalog(ROOT),
+      projectRoot,
+      packageRoot: ROOT,
+      all: true,
+      yes: true,
+      clean: 'keep',
+    });
+    assert.deepEqual(result.summary.retained, ['sigmabrief']);
+    assert.deepEqual(result.summary.removed, ['sigmawrite']);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), true);
+    assert.ok(readState(projectRoot).skills.sigmabrief);
+    assert.ok(readLock(projectRoot).skills.sigmabrief);
+    assert.equal(pathExists(writeDest), false);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite', '.claude/skills')), false);
+    assert.equal(fs.readFileSync(path.join(stranger, 'leave-me.txt'), 'utf8'), 'unrelated');
+    assert.equal(pathExists(path.join(getProjectStateDir(projectRoot), UNINSTALL_JOURNAL_FILENAME)), false);
+
+    const restored = executeRestore({
+      catalog: getCatalog(ROOT),
+      projectRoot,
+      packageRoot: ROOT,
+      skillIds: ['sigmawrite'],
+    });
+    assert.equal(restored.skills[0].action, 'restored');
+    assert.equal(fs.readFileSync(path.join(writeDest, 'local-keep.txt'), 'utf8'), 'keep-me');
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('uninstall-all: failure writes a recovery journal and restores the failed skill', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-uninstall-all-fail-'));
+  try {
+    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmawrite');
+    const writeDest = skillDir(projectRoot, 'sigmawrite');
+    const before = fs.readFileSync(path.join(writeDest, 'SKILL.md'), 'utf8');
+
+    const result = executeUninstall({
+      catalog: getCatalog(ROOT),
+      projectRoot,
+      packageRoot: ROOT,
+      all: true,
+      yes: true,
+      afterStage: (stagingDir) => {
+        if (String(stagingDir).includes('sigmawrite')) {
+          throw new Error('injected uninstall-all failure');
+        }
+      },
+    });
+    assert.deepEqual(result.summary.removed, ['sigmabrief']);
+    assert.deepEqual(result.summary.failed, ['sigmawrite']);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), false);
+    assert.equal(fs.readFileSync(path.join(writeDest, 'SKILL.md'), 'utf8'), before);
+    assert.ok(readState(projectRoot).skills.sigmawrite);
+    assert.ok(!readState(projectRoot).skills.sigmabrief);
+    const journal = JSON.parse(
+      fs.readFileSync(path.join(getProjectStateDir(projectRoot), UNINSTALL_JOURNAL_FILENAME), 'utf8'),
+    );
+    assert.equal(journal.command, 'uninstall');
+    assert.equal(journal.all, true);
+    assert.equal(journal.status, 'failed');
+    assert.equal(journal.scope, 'project');
+    assert.equal(journal.skills.find((skill) => skill.id === 'sigmabrief').outcome, 'removed');
+    assert.equal(journal.skills.find((skill) => skill.id === 'sigmawrite').outcome, 'failed');
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite', '.claude/skills')), false);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('cli: uninstall --all reports removed, retained, skipped, and failed; refuses --skill', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-uninstall-all-cli-'));
+  try {
+    const mix = createMockIo();
+    assert.equal(await runCli(['uninstall', '--all', '--skill', 'sigmawrite', '--project', projectRoot], mix), 1);
+    assert.match(mix.getStderr(), /--all/);
+
+    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmawrite', {
+      selectedRoots: [UNIVERSAL_PROJECT_DESTINATION, '.claude/skills'],
+      method: 'link',
+    });
+    fs.rmSync(skillDir(projectRoot, 'sigmawrite'), { recursive: true, force: true });
+
+    const jsonIo = createMockIo();
+    const code = await runCli([
+      'uninstall',
+      '--all',
+      '--yes',
+      '--json',
+      '--project',
+      projectRoot,
+    ], jsonIo);
+    assert.equal(code, 0);
+    const result = JSON.parse(jsonIo.getStdout());
+    assert.equal(result.all, true);
+    assert.deepEqual(result.summary.removed, ['sigmabrief']);
+    assert.deepEqual(result.summary.skipped, ['sigmawrite']);
+    assert.deepEqual(result.summary.failed, []);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), false);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite', '.claude/skills')), true);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+function snapshotOwned(projectRoot) {
+  const files = {};
+  const walk = (dir, prefix = '') => {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      const full = path.join(dir, entry.name);
+      let stat;
+      try {
+        stat = fs.lstatSync(full);
+      } catch {
+        continue;
+      }
+      if (stat.isSymbolicLink()) continue;
+      if (stat.isDirectory()) walk(full, rel);
+      else if (stat.isFile()) files[rel] = fs.readFileSync(full);
+    }
+  };
+  walk(path.join(projectRoot, '.agents'));
+  walk(path.join(projectRoot, '.claude'));
+  if (fs.existsSync(path.join(projectRoot, 'skills-lock.json'))) {
+    files['skills-lock.json'] = fs.readFileSync(path.join(projectRoot, 'skills-lock.json'));
+  }
+  return files;
+}
