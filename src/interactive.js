@@ -31,6 +31,8 @@ export const EMBERFORGE_REVEAL_MS = 650;
 
 const RESET = '\x1b[0m';
 const CLEAR = '\x1b[2J\x1b[H';
+const ENTER_ALT_SCREEN = '\x1b[?1049h';
+const LEAVE_ALT_SCREEN = '\x1b[?1049l';
 const HIDE_CURSOR = '\x1b[?25l';
 const SHOW_CURSOR = '\x1b[?25h';
 
@@ -147,6 +149,8 @@ class TerminalRenderer {
     this.dynamic = Boolean(this.stdout.isTTY && !this.static && !this.noColor);
     this.cursorHidden = false;
     this.paint = null;
+    this.altScreen = false;
+    this.cleaned = false;
     this.onResize = () => {
       if (this.paint) this.paint();
     };
@@ -196,21 +200,28 @@ class TerminalRenderer {
 
   start() {
     if (this.dynamic) {
-      this.stdout.write(HIDE_CURSOR);
+      this.stdout.write(`${ENTER_ALT_SCREEN}${HIDE_CURSOR}`);
       this.cursorHidden = true;
+      this.altScreen = true;
     }
   }
 
   cleanup() {
     this.paint = null;
+    if (this.cleaned) return;
+    this.cleaned = true;
     if (typeof this.stdout.removeListener === 'function') {
       this.stdout.removeListener('resize', this.onResize);
+    }
+    if (this.altScreen) {
+      this.stdout.write(`${LEAVE_ALT_SCREEN}${RESET}${SHOW_CURSOR}`);
+      this.altScreen = false;
+      this.cursorHidden = false;
+      return;
     }
     if (this.cursorHidden) {
       this.stdout.write(`${RESET}${SHOW_CURSOR}`);
       this.cursorHidden = false;
-    } else if (this.dynamic) {
-      this.stdout.write(`${RESET}${SHOW_CURSOR}`);
     }
   }
 
@@ -511,61 +522,93 @@ async function selectSkills(renderer, input, catalog, initialScope = 'project') 
   }
 }
 
-function affectedHostLabel(host) {
-  return host.detected ? `${host.displayName} [detected]` : host.displayName;
+function persistOutput(renderer, text) {
+  renderer.cleanup();
+  renderer.line(text);
+}
+
+function destinationWindowSize(renderer, itemCount) {
+  if (!renderer.dynamic) return itemCount;
+  const rows = Number(renderer.stdout.rows) || 24;
+  const chrome = 10;
+  return Math.min(itemCount, Math.max(3, rows - chrome));
+}
+
+function visibleDestinationItems(items, cursor, limit) {
+  if (!items.length || items.length <= limit) {
+    return { items, start: 0, total: items.length };
+  }
+  const half = Math.floor(limit / 2);
+  let start = Math.max(0, cursor - half);
+  if (start + limit > items.length) start = items.length - limit;
+  return {
+    items: items.slice(start, start + limit),
+    start,
+    total: items.length,
+  };
+}
+
+function destinationRowTitle(item) {
+  const detectedMark = item.detected || (item.hosts || []).some((host) => host.detected)
+    ? ' [detected]'
+    : '';
+  if (item.kind === 'host') {
+    return `${item.relativeRoot}  ${item.displayName} (${item.id})${detectedMark}`;
+  }
+  const hosts = item.hosts || [];
+  const detectedCount = hosts.filter((host) => host.detected).length;
+  if (item.universal) {
+    const extra = detectedCount ? ` · ${detectedCount} detected` : '';
+    return `${item.relativeRoot}  (universal default · ${hosts.length} hosts${extra})`;
+  }
+  if (hosts.length <= 2) {
+    const names = hosts.map((host) => host.displayName).join(', ');
+    const ids = hosts.map((host) => host.id).join(', ');
+    return `${item.relativeRoot}  ${names} (${ids})${detectedMark}`;
+  }
+  return `${item.relativeRoot}  ${hosts[0].displayName} +${hosts.length - 1}${detectedMark}`;
 }
 
 function destinationPickerLines(renderer, items, selectedRoots, cursor, query, error, scope) {
   const scopeLabel = scope === 'global' ? 'Global Installation' : 'Project Installation';
+  const view = visibleDestinationItems(items, cursor, destinationWindowSize(renderer, items.length));
+  const focused = items[cursor];
   const lines = [
     renderer.style(renderer.brand, EMBERFORGE_PALETTE.gold, true),
     `${scopeLabel} · destinations${renderer.narrow ? ' · narrow' : ''}`,
     '',
     'Only .agents/skills is selected by default. Host-specific destinations stay unselected.',
-    'Detection labels Agent Hosts; it never selects host-specific destinations.',
   ];
 
   if (query) {
-    lines.push('');
     lines.push(`Search: ${query}`);
   } else {
-    lines.push('');
+    lines.push('Type a host name to search. Arrow keys move. Space toggles.');
   }
 
-  items.forEach((item, index) => {
+  view.items.forEach((item, viewIndex) => {
+    const index = view.start + viewIndex;
     const current = index === cursor ? '>' : ' ';
     const checked = selectedRoots.has(item.relativeRoot) ? 'x' : ' ';
-    const title = item.kind === 'host'
-      ? `${item.displayName} (${item.id})`
-      : `${item.relativeRoot}${item.universal ? '  (universal default)' : ''}`;
     const marker = `${current} [${checked}] `;
-    const titleLines = wrapWords(title, Math.max(20, renderer.width - marker.length));
+    const titleLines = wrapWords(destinationRowTitle(item), Math.max(20, renderer.width - marker.length));
     titleLines.forEach((titleLine, titleIndex) => {
       lines.push(titleIndex === 0 ? `${marker}${titleLine}` : `      ${titleLine}`);
     });
-    if (item.kind === 'group' && item.universal) {
-      const names = item.hosts.map((host) => affectedHostLabel(host)).join(', ');
-      for (const wrapped of wrapWords(`Affected Agent Hosts: ${names}`, Math.max(20, renderer.width - 6))) {
-        lines.push(`      ${wrapped}`);
-      }
-    } else if (item.kind === 'host') {
-      const detected = item.detected ? ' [detected]' : '';
-      for (const wrapped of wrapWords(`${item.relativeRoot}${detected}`, Math.max(20, renderer.width - 6))) {
-        lines.push(`      ${wrapped}`);
-      }
-    } else if (item.hosts?.length) {
-      for (const wrapped of wrapWords(item.hosts.map((host) => affectedHostLabel(host)).join(', '), Math.max(20, renderer.width - 6))) {
-        lines.push(`      ${wrapped}`);
-      }
-    }
-    if (item.absoluteRoot) {
-      for (const wrapped of wrapWords(item.absoluteRoot, Math.max(20, renderer.width - 6))) {
-        lines.push(`      ${wrapped}`);
-      }
-    }
   });
 
+  if (view.total > view.items.length) {
+    const from = view.start + 1;
+    const to = view.start + view.items.length;
+    lines.push(`Showing ${from}–${to} of ${view.total}`);
+  }
+
   lines.push('');
+  if (focused?.absoluteRoot) {
+    for (const wrapped of wrapWords(`Path: ${focused.absoluteRoot}`, Math.max(20, renderer.width - 2))) {
+      lines.push(wrapped);
+    }
+  }
   lines.push(`Selected destinations: ${selectedRoots.size}`);
   if (error) lines.push(renderer.style(`Error: ${error}`, EMBERFORGE_PALETTE.red, true));
   lines.push(withHelp('Type to search every Agent Host · space toggle · enter continue · esc cancel'));
@@ -578,17 +621,29 @@ function selectableGroups(groups) {
 
 function pickerItems(groups, query) {
   if (query) {
-    return searchHosts(groups, query)
-      .filter((host) => host.relativeRoot)
-      .map((host) => ({
-        kind: 'host',
-        id: host.id,
-        displayName: host.displayName,
-        relativeRoot: host.relativeRoot,
-        absoluteRoot: host.group?.absoluteRoot || '',
-        detected: host.detected,
-        universal: host.relativeRoot === UNIVERSAL_PROJECT_DESTINATION,
-      }));
+    const matches = searchHosts(groups, query).filter((host) => host.relativeRoot);
+    const byRoot = new Map();
+    for (const host of matches) {
+      const existing = byRoot.get(host.relativeRoot);
+      if (!existing) {
+        byRoot.set(host.relativeRoot, {
+          kind: 'host',
+          id: host.id,
+          displayName: host.displayName,
+          relativeRoot: host.relativeRoot,
+          absoluteRoot: host.group?.absoluteRoot || '',
+          detected: host.detected,
+          universal: host.relativeRoot === UNIVERSAL_PROJECT_DESTINATION,
+          hosts: [host],
+        });
+        continue;
+      }
+      existing.hosts.push(host);
+      existing.detected = existing.detected || host.detected;
+      existing.kind = 'group';
+      existing.universal = existing.universal || host.relativeRoot === UNIVERSAL_PROJECT_DESTINATION;
+    }
+    return [...byRoot.values()];
   }
   return selectableGroups(groups).map((group) => ({
     kind: 'group',
@@ -620,7 +675,7 @@ async function selectDestinations(renderer, input, groups, scope = 'project') {
     const { help, key } = await readKeyedScreen(
       renderer,
       input,
-      () => renderer.screen(destinationPickerLines(renderer, pickerItems(groups, query), selectedRoots, cursor, query, error, scope)),
+      () => renderer.screen(destinationPickerLines(renderer, items, selectedRoots, cursor, query, error, scope)),
     );
     if (help) continue;
     if (key.name === 'ctrl-c') return { cancelled: true, exitCode: 130 };
@@ -816,21 +871,21 @@ export async function runProjectInstaller(params) {
   try {
     const revealKey = await runReveal(renderer, input);
     if (revealKey === 'ctrl-c' || revealKey === 'eof') {
-      renderer.line('Installation cancelled. No files were written.');
+      persistOutput(renderer, 'Installation cancelled. No files were written.');
       return revealKey === 'ctrl-c' ? 130 : 0;
     }
 
     if (params.initialScope === 'global') {
       const warning = await confirmGlobalWarning(renderer, input);
       if (!warning.confirmed) {
-        renderer.line('Installation cancelled. No files were written.');
+        persistOutput(renderer, 'Installation cancelled. No files were written.');
         return warning.exitCode;
       }
     }
 
     const selection = await selectSkills(renderer, input, catalog, params.initialScope === 'global' ? 'global' : 'project');
     if (selection.cancelled) {
-      renderer.line('Installation cancelled. No files were written.');
+      persistOutput(renderer, 'Installation cancelled. No files were written.');
       return selection.exitCode;
     }
 
@@ -849,7 +904,7 @@ export async function runProjectInstaller(params) {
       });
     const destinations = await selectDestinations(renderer, input, destinationGroups, scope);
     if (destinations.cancelled) {
-      renderer.line('Installation cancelled. No files were written.');
+      persistOutput(renderer, 'Installation cancelled. No files were written.');
       return destinations.exitCode;
     }
 
@@ -858,7 +913,7 @@ export async function runProjectInstaller(params) {
     if (hostSelected) {
       const methodChoice = await selectMethod(renderer, input);
       if (methodChoice.cancelled) {
-        renderer.line('Installation cancelled. No files were written.');
+        persistOutput(renderer, 'Installation cancelled. No files were written.');
         return methodChoice.exitCode;
       }
       method = methodChoice.method;
@@ -899,6 +954,7 @@ export async function runProjectInstaller(params) {
     if (conflict) throw createUnownedConflictError(conflict);
     const pending = plans.find((plan) => plan.requiresApproval);
     if (pending) {
+      renderer.cleanup();
       for (const plan of plans) {
         renderer.line(formatPlanHuman(plan));
       }
@@ -907,7 +963,7 @@ export async function runProjectInstaller(params) {
 
     const confirmation = await confirmPlans(renderer, input, plans, scope);
     if (!confirmation.confirmed) {
-      renderer.line('Installation cancelled. No files were written.');
+      persistOutput(renderer, 'Installation cancelled. No files were written.');
       return confirmation.exitCode;
     }
 
@@ -938,7 +994,7 @@ export async function runProjectInstaller(params) {
           if (!err.linkFailure) throw err;
           const decision = await offerCopyFallback(renderer, input, err.linkFailure);
           if (decision !== 'copy') {
-            renderer.line('Installation cancelled. No files were written.');
+            persistOutput(renderer, 'Installation cancelled. No files were written.');
             return decision === 'ctrl-c' ? 130 : 0;
           }
           copyRoots.push(err.linkFailure.relativeRoot);

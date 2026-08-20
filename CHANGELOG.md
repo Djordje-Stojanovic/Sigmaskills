@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- The destination picker paints one compact row per path, windows a live TTY list, groups search hits that share a path, and leaves the alternate screen before cancel or error copy so Windows does not stack or swallow that text.
+
 ## [0.2.0] — 2026-08-20
 
 ### Fixed

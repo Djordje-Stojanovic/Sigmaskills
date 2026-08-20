@@ -138,9 +138,8 @@ test('interactive Project Installation confirms exact destinations and installs 
     const output = io.getStdout();
     assert.match(output, /Resolved destinations:/);
     assert.match(output, /Only \.agents\/skills is selected by default/);
-    assert.match(output, /\.agents\/skills\s+\(universal default\)/);
-    assert.match(output, /Affected Agent Hosts:/);
-    assert.match(output, /Codex/);
+    assert.match(output, /\.agents\/skills\s+\(universal default/);
+    assert.match(output, /\d+ hosts/);
     assert.match(output, /\[ \] \.claude\/skills/);
     assert.match(output, /\[ \] \.pi\/skills/);
     assert.ok(output.indexOf(reviewDestination) < output.indexOf('Installed SigmaReview'));
@@ -325,9 +324,32 @@ test('interactive destinations keep every Agent Host searchable and never auto-s
     const output = io.getStdout();
     assert.match(output, /Search: p/);
     assert.match(output, /Pi \(pi\)/);
+    assert.match(output, /\.pi\/skills/);
     assert.match(output, /Type to search every Agent Host/);
     assert.ok(!fs.existsSync(path.join(projectRoot, '.agents')));
     assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('interactive destination search groups matching hosts that share one path', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-search-group-'));
+  try {
+    const io = createTerminalIo(' \rc\x1b\x1b');
+    const code = await runCli(['--static', '--no-color', '--project', projectRoot], io);
+
+    assert.equal(code, 0);
+    const output = io.getStdout();
+    assert.match(output, /Search: c/);
+    const start = output.lastIndexOf('Search: c');
+    assert.ok(start >= 0);
+    const rest = output.slice(start);
+    const end = rest.search(/\nType a host name/);
+    const searchView = end >= 0 ? rest.slice(0, end) : rest;
+    const universalRows = searchView.match(/\[x\] \.agents\/skills/g) || [];
+    assert.equal(universalRows.length, 1, 'shared .agents/skills matches must be one row');
+    assert.ok(!fs.existsSync(path.join(projectRoot, '.agents')));
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -351,7 +373,7 @@ test('interactive destinations label detected hosts without selecting them', asy
           displayName: 'Amp',
           destinations: { project: { kind: 'literal', path: '.agents/skills' }, global: { kind: 'none' } },
           aliases: [],
-          detection: { envVars: [] },
+          detection: { envVars: ['AMP_PRESENT'] },
         },
         {
           id: 'claude-code',
@@ -363,7 +385,7 @@ test('interactive destinations label detected hosts without selecting them', asy
         },
       ],
     };
-    const io = createTerminalIo(' \r\x1b', { env: { ...process.env, CI: '', CLAUDE_CODE: '1' } });
+    const io = createTerminalIo(' \r\x1b', { env: { ...process.env, CI: '', CLAUDE_CODE: '1', AMP_PRESENT: '1' } });
     const code = await runProjectInstaller({
       catalog,
       registry,
@@ -375,9 +397,10 @@ test('interactive destinations label detected hosts without selecting them', asy
 
     assert.equal(code, 0);
     const output = io.getStdout();
-    assert.match(output, /Claude Code \[detected\]/);
+    assert.match(output, /Claude Code \(claude-code\) \[detected\]/);
     assert.match(output, /\[ \] \.claude\/skills/);
     assert.match(output, /\[x\] \.agents\/skills/);
+    assert.match(output, /1 detected/);
     assert.ok(!fs.existsSync(path.join(projectRoot, '.claude')));
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });

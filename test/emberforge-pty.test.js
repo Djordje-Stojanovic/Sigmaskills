@@ -379,6 +379,8 @@ test('cursor and raw mode restore after success, failure, interrupt, EOF, and ex
         assert.equal(io.stdin.isRaw, false);
         if (scenario.write) {
           assert.ok(fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmareview', 'SKILL.md')));
+          const leaves = io.getStdout().match(/\x1b\[\?1049l/g) || [];
+          assert.equal(leaves.length, 1);
         } else {
           assert.ok(!fs.existsSync(path.join(projectRoot, '.agents')));
         }
@@ -404,4 +406,55 @@ test('cursor and raw mode restore after success, failure, interrupt, EOF, and ex
       fs.rmSync(projectRoot, { recursive: true, force: true });
     }
   });
+});
+
+test('dynamic cancel leaves the alternate screen before printing persist copy', async () => {
+  const projectRoot = sandboxProject();
+  try {
+    const io = createPty('x\x1b');
+    const code = await runCli(['--project', projectRoot], io);
+    assert.equal(code, 0);
+    const output = io.getStdout();
+    const enter = output.match(/\x1b\[\?1049h/g) || [];
+    const leave = output.match(/\x1b\[\?1049l/g) || [];
+    assert.equal(enter.length, 1);
+    assert.equal(leave.length, 1);
+    const leaveAt = output.lastIndexOf('\x1b[?1049l');
+    const messageAt = output.lastIndexOf('Installation cancelled. No files were written.');
+    assert.ok(leaveAt >= 0);
+    assert.ok(messageAt > leaveAt);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('dynamic destination picker windows a short terminal and shows a path status line', async () => {
+  const projectRoot = sandboxProject();
+  try {
+    let phase = 0;
+    const io = createPty('', {
+      rows: 16,
+      columns: 80,
+      manualInput: true,
+      onStdout: (_chunk, output, stdin) => {
+        if (phase === 0 && output.includes('Select skills from this Skill Pack:')) {
+          phase = 1;
+          stdin.write(' \r');
+        }
+        if (phase === 1 && output.includes('Project Installation · destinations')) {
+          phase = 2;
+          stdin.end('\x1b');
+        }
+      },
+    });
+    const code = await runCli(['--project', projectRoot], io);
+    assert.equal(code, 0);
+    const output = io.getStdout();
+    assert.match(output, /Showing \d+–\d+ of \d+/);
+    assert.match(output, /Path: /);
+    const leave = output.match(/\x1b\[\?1049l/g) || [];
+    assert.equal(leave.length, 1);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
 });
