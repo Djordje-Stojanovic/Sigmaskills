@@ -6,6 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
+const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
 
 function assertOnlyUniversalProjectWrites(projectRoot) {
   const allowed = new Set(['.agents', 'skills-lock.json']);
@@ -136,7 +137,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       cwd: appDir,
       encoding: 'utf8',
     }).trim();
-    assert.equal(versionOut, '0.1.0');
+    assert.equal(versionOut, PACKAGE_VERSION);
 
     // Spawn --help
     const helpOut = execFileSync('node', [installedBin, '--help'], {
@@ -156,7 +157,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     });
     const parsed = JSON.parse(jsonOut);
     assert.equal(parsed.name, 'sigmaskills');
-    assert.equal(parsed.version, '0.1.0');
+    assert.equal(parsed.version, PACKAGE_VERSION);
     assert.equal(parsed.skills.length, 4);
     for (const skill of parsed.skills) {
       assert.match(skill.revision, /^[a-f0-9]{64}$/);
@@ -207,7 +208,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.ok(!lockRaw.includes('installedAt'));
     assert.ok(!lockRaw.includes('destination'));
     const lockParsed = JSON.parse(lockRaw);
-    assert.equal(lockParsed.release, '0.1.0');
+    assert.equal(lockParsed.release, PACKAGE_VERSION);
     assert.match(lockParsed.skills.sigmawrite.revision, /^[a-f0-9]{64}$/);
 
     // Verify state.json records ownedPaths and baseHashes

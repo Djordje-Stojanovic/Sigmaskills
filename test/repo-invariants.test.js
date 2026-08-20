@@ -128,10 +128,11 @@ test('each skill has valid SKILL.md and openai.yaml', () => {
 });
 
 test('README wires every skill for install and run', () => {
+  const pkg = JSON.parse(read('package.json'));
   const readme = read('README.md');
 
   assert.match(readme, /npx skills add Djordje-Stojanovic\/Sigmaskills --all/);
-  assert.match(readme, /v0\.1\.0/);
+  assert.match(readme, new RegExp(`v${pkg.version.replaceAll('.', '\\.')}`));
   assert.match(readme, /CHANGELOG\.md/);
 
   for (const skill of KNOWN_SKILLS) {
@@ -220,7 +221,7 @@ test('manifest.json agrees with KNOWN_SKILLS and discovered skills', () => {
   const manifest = JSON.parse(read('manifest.json'));
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.name, 'sigmaskills');
-  assert.equal(manifest.version, '0.1.0');
+  assert.equal(manifest.version, JSON.parse(read('package.json')).version);
   assert.ok(Array.isArray(manifest.skills));
 
   const manifestIds = manifest.skills.map((s) => s.id).sort();

@@ -6,7 +6,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 
 | | |
 |---|---|
-| **Release** | [**v0.1.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.1.0) |
+| **Release** | [**v0.2.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.2.0) |
 | **Changelog** | [CHANGELOG.md](CHANGELOG.md) |
 | **License** | [MIT](LICENSE) |
 | **Spec** | [agentskills.io](https://agentskills.io/) |
@@ -188,7 +188,7 @@ Point other hosts at the same folders (or copy again) as needed:
 | OpenCode | `~/.config/opencode/skills/<id>/` |
 | Codex | `~/.codex/skills/<id>/` |
 
-Release zip: download [**Sigmaskills-v0.1.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.1.0) and copy the four skill folders into the path your agent reads.
+Release zip: download [**Sigmaskills-v0.2.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.2.0) and copy the four skill folders into the path your agent reads.
 
 ### Optional: SigmaWrite as system prompt
 

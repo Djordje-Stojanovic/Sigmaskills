@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { runCli } from '../src/cli.js';
+
+const PACKAGE_VERSION = JSON.parse(
+  fs.readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'),
+).version;
 
 function createMockIo() {
   const stdout = [];
@@ -21,7 +27,7 @@ test('cli: --version prints package version', async () => {
   const io = createMockIo();
   const exitCode = await runCli(['--version'], io);
   assert.equal(exitCode, 0);
-  assert.equal(io.getStdout().trim(), '0.1.0');
+  assert.equal(io.getStdout().trim(), PACKAGE_VERSION);
   assert.equal(io.getStderr(), '');
 });
 
@@ -29,7 +35,7 @@ test('cli: -v prints package version', async () => {
   const io = createMockIo();
   const exitCode = await runCli(['-v'], io);
   assert.equal(exitCode, 0);
-  assert.equal(io.getStdout().trim(), '0.1.0');
+  assert.equal(io.getStdout().trim(), PACKAGE_VERSION);
 });
 
 test('cli: --help prints usage and dynamically lists skills', async () => {
@@ -53,7 +59,7 @@ test('cli: list --json outputs valid JSON array of skills with revisions', async
   const parsed = JSON.parse(io.getStdout());
   assert.ok(Array.isArray(parsed.skills));
   assert.equal(parsed.name, 'sigmaskills');
-  assert.equal(parsed.version, '0.1.0');
+  assert.equal(parsed.version, PACKAGE_VERSION);
 
   for (const skill of parsed.skills) {
     assert.ok(skill.id);

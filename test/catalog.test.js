@@ -15,7 +15,7 @@ test('catalog: validates real repository manifest and skills', () => {
   const rootDir = path.resolve(import.meta.dirname, '..');
   const catalog = getCatalog(rootDir);
   assert.equal(catalog.manifest.name, 'sigmaskills');
-  assert.equal(catalog.manifest.version, '0.1.0');
+  assert.equal(catalog.manifest.version, JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')).version);
   assert.equal(catalog.manifest.schemaVersion, 1);
   assert.ok(Array.isArray(catalog.skills));
   assert.ok(catalog.skills.length >= 1);
