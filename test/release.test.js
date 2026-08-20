@@ -102,7 +102,7 @@ test('release plan: Added notes on the last published version calculate the next
   assert.deepEqual(plan.changeSet, [{ heading: 'Added', items: ['Installer purge command.'] }]);
   assert.equal(plan.tag, 'v0.2.0');
   assert.equal(plan.githubRelease, 'v0.2.0');
-  assert.equal(plan.npmPackage, 'sigmaskills@0.2.0');
+  assert.equal(plan.npmPackage, '@djordje-stojanovic/sigmaskills@0.2.0');
   assert.equal(plan.distTag, RELEASE_DIST_TAG);
   assert.equal(plan.tests.command, 'npm test');
 });
@@ -197,7 +197,7 @@ test('release dry-run preview names commit, version, tests, tarball, revisions, 
     assert.equal(result.skills[0].revision, 'aa'.repeat(32));
     assert.equal(result.tag, 'v0.2.0');
     assert.equal(result.githubRelease, 'v0.2.0');
-    assert.equal(result.npmPackage, 'sigmaskills@0.2.0');
+    assert.equal(result.npmPackage, '@djordje-stojanovic/sigmaskills@0.2.0');
     assert.equal(result.distTag, 'latest');
     const human = formatReleaseHuman(result);
     assert.match(human, /deadbeef/);
@@ -207,7 +207,7 @@ test('release dry-run preview names commit, version, tests, tarball, revisions, 
     assert.match(human, /sigmawrite/);
     assert.match(human, /v0\.2\.0/);
     assert.match(human, /GitHub Release/);
-    assert.match(human, /sigmaskills@0\.2\.0/);
+    assert.match(human, /@djordje-stojanovic\/sigmaskills@0\.2\.0/);
     assert.match(human, /latest/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -560,7 +560,7 @@ test('formatReleaseJson is a stable versioned envelope', () => {
     skills: [{ id: 'sigmawrite', revision: 'bb'.repeat(32) }],
     tag: 'v0.2.0',
     githubRelease: 'v0.2.0',
-    npmPackage: 'sigmaskills@0.2.0',
+    npmPackage: '@djordje-stojanovic/sigmaskills@0.2.0',
     distTag: 'latest',
   }));
   assert.equal(json.schemaVersion, 1);

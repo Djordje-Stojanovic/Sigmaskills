@@ -306,7 +306,7 @@ test('packed CLI skips a malformed skill and updates a sibling Project Installat
     fs.mkdirSync(appDir, { recursive: true });
     execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
     execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    const installedBin = path.join(appDir, 'node_modules', 'sigmaskills', 'bin', 'sigmaskills.js');
+    const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
     const project = path.join(tmpDir, 'proj');
     execFileSync('node', [installedBin, 'install', 'sigmawrite', '--project', project], {
       cwd: appDir,

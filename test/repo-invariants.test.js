@@ -200,11 +200,11 @@ test('SigmaWrite stays soft-steer and Karpathy-sized', () => {
 
 test('package.json is publishable, requires Node 20+, exposes bin, and defines files allowlist', () => {
   const pkg = JSON.parse(read('package.json'));
-  assert.equal(pkg.name, 'sigmaskills');
+  assert.equal(pkg.name, '@djordje-stojanovic/sigmaskills');
   assert.equal(pkg.type, 'module');
   assert.equal(pkg.private, undefined, 'root package must be publishable (not private)');
   assert.match(pkg.engines?.node, />=\s*20/, 'requires Node.js 20+');
-  assert.equal(pkg.bin?.sigmaskills, './bin/sigmaskills.js', 'exposes sigmaskills binary');
+  assert.equal(pkg.bin?.sigmaskills, 'bin/sigmaskills.js', 'exposes sigmaskills binary');
   assert.ok(Array.isArray(pkg.files), 'package.json must specify explicit files allowlist');
   assert.ok(pkg.files.includes('bin'));
   assert.ok(pkg.files.includes('src'));

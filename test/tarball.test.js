@@ -129,7 +129,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     execSync('npm init -y', { cwd: appDir, encoding: 'utf8' });
     execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8' });
 
-    const installedBin = path.join(appDir, 'node_modules', 'sigmaskills', 'bin', 'sigmaskills.js');
+    const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
     assert.ok(fs.existsSync(installedBin), `installed bin script missing at ${installedBin}`);
 
     // Spawn --version

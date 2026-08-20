@@ -1,10 +1,10 @@
 {
-  "name": "sigmaskills",
+  "name": "@djordje-stojanovic/sigmaskills",
   "version": "0.2.0",
   "description": "Portable Agent Skills monorepo and first-party Sigma Installer",
   "type": "module",
   "bin": {
-    "sigmaskills": "./bin/sigmaskills.js"
+    "sigmaskills": "bin/sigmaskills.js"
   },
   "files": [
     "bin",

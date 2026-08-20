@@ -135,7 +135,7 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
     fs.mkdirSync(appDir, { recursive: true });
     execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
     execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    const packedRoot = path.join(appDir, 'node_modules', 'sigmaskills');
+    const packedRoot = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills');
     const bin = path.join(packedRoot, 'bin', 'sigmaskills.js');
     const offline = offlineEnv({ HOME: path.join(tmpDir, 'offline-home'), USERPROFILE: path.join(tmpDir, 'offline-home') });
 

@@ -402,8 +402,8 @@ test('packed CLI restores adoption and update backups', () => {
     fs.mkdirSync(appDir, { recursive: true });
     execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
     execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    const installedBin = path.join(appDir, 'node_modules', 'sigmaskills', 'bin', 'sigmaskills.js');
-    const packedRoot = path.join(appDir, 'node_modules', 'sigmaskills');
+    const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
+    const packedRoot = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills');
 
     const adoptProject = path.join(tmpDir, 'adopt');
     const adoptDest = path.join(adoptProject, '.agents', 'skills', 'sigmawrite');

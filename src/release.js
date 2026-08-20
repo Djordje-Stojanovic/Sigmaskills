@@ -9,7 +9,7 @@ export const RELEASE_SCHEMA_VERSION = 1;
 export const RELEASE_WORKFLOW_FILE = 'release.yml';
 export const RELEASE_ENVIRONMENT = 'release';
 export const RELEASE_DIST_TAG = 'latest';
-export const RELEASE_PACKAGE_NAME = 'sigmaskills';
+export const RELEASE_PACKAGE_NAME = '@djordje-stojanovic/sigmaskills';
 export const CHECKOUT_ACTION_PIN = '11bd71901bbe5b1630ceea73d27597364c9af683';
 export const SETUP_NODE_ACTION_PIN = '49933ea5288caeca8642d1e84afbd3f7d6820020';
 

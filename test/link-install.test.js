@@ -328,7 +328,7 @@ test('packed CLI creates a real platform link for an explicit host destination',
     fs.mkdirSync(appDir, { recursive: true });
     execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
     execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    const installedBin = path.join(appDir, 'node_modules', 'sigmaskills', 'bin', 'sigmaskills.js');
+    const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
     const projectRoot = path.join(tmpDir, 'proj');
     fs.mkdirSync(projectRoot, { recursive: true });
 

@@ -499,8 +499,8 @@ test('packed CLI uninstalls a selected skill and leaves an unowned stranger path
     fs.mkdirSync(appDir, { recursive: true });
     execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
     execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    const installedBin = path.join(appDir, 'node_modules', 'sigmaskills', 'bin', 'sigmaskills.js');
-    const packedRoot = path.join(appDir, 'node_modules', 'sigmaskills');
+    const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
+    const packedRoot = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills');
     const listed = execFileSync('tar', ['-tf', tarballFileName], { cwd: tmpDir, encoding: 'utf8' });
     assert.match(listed, /package\/src\/uninstall\.js/);
 

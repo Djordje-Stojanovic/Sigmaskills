@@ -333,8 +333,8 @@ test('packed CLI classifies, backups, and exports changed Sigma-looking trees', 
     fs.mkdirSync(appDir, { recursive: true });
     execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
     execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    const installedBin = path.join(appDir, 'node_modules', 'sigmaskills', 'bin', 'sigmaskills.js');
-    const packedRoot = path.join(appDir, 'node_modules', 'sigmaskills');
+    const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
+    const packedRoot = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills');
 
     const project = path.join(tmpDir, 'proj');
     const dest = path.join(project, '.agents', 'skills', 'sigmawrite');
