@@ -151,6 +151,48 @@ export function evaluateAutoAuthorization(input) {
   };
 }
 
+export function planGeneratedBranchPush({
+  branch,
+  remoteExists = false,
+  openPullRequest = false,
+} = {}) {
+  const name = String(branch || '');
+  if (!name.startsWith(GENERATED_BRANCH_PREFIX)) {
+    return {
+      ok: false,
+      action: 'refuse',
+      reason: 'not-generated',
+      forcePush: false,
+      createPr: false,
+    };
+  }
+  if (openPullRequest) {
+    return {
+      ok: true,
+      action: 'reuse',
+      reason: 'open-pr',
+      forcePush: false,
+      createPr: false,
+    };
+  }
+  if (remoteExists) {
+    return {
+      ok: true,
+      action: 'replace',
+      reason: 'stale-generated-branch',
+      forcePush: true,
+      createPr: true,
+    };
+  }
+  return {
+    ok: true,
+    action: 'create',
+    reason: 'new-generated-branch',
+    forcePush: false,
+    createPr: true,
+  };
+}
+
 export function planGeneratedBranchCleanup({ dryRun = true, branches = [], protectedRefs = [] }) {
   const protectedSet = new Set(protectedRefs);
   const wouldDelete = [];
@@ -548,7 +590,25 @@ export async function executeRegistryAutomation(args, io = {}) {
 
   if (args.dryRun !== false) return result;
   if (!plan.ok || !plan.hasChanges || concurrentRun) return result;
+
+  const branch = `${GENERATED_BRANCH_PREFIX}${String(upstreamRevision || '').slice(0, 12)}`;
+  const existing = io.inspectGeneratedBranch
+    ? await io.inspectGeneratedBranch(branch)
+    : { remoteExists: false, openPullRequest: false };
+  const pushPlan = planGeneratedBranchPush({
+    branch,
+    remoteExists: existing.remoteExists === true,
+    openPullRequest: existing.openPullRequest === true,
+  });
+  result.branch = branch;
+  result.pushPlan = pushPlan;
+  if (!pushPlan.ok) {
+    return { ...result, ok: false, errors: [`refusing to publish ${pushPlan.reason} branch ${branch}`] };
+  }
+  if (pushPlan.action === 'reuse') {
+    return { ...result, skipped: true, skipReason: pushPlan.reason };
+  }
   if (io.writeAllowlisted) await io.writeAllowlisted(plan);
-  if (io.createPullRequest) await io.createPullRequest({ ...result, body });
+  if (io.createPullRequest) await io.createPullRequest({ ...result, body, branch, pushPlan });
   return result;
 }

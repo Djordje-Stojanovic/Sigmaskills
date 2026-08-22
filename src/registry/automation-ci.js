@@ -64,6 +64,23 @@ function stagedFiles() {
   return output ? output.split('\0').filter(Boolean) : [];
 }
 
+function remoteGeneratedBranchSha(branch) {
+  if (!String(branch || '').startsWith(GENERATED_BRANCH_PREFIX)) return null;
+  const output = git(['ls-remote', '--heads', 'origin', branch]);
+  const sha = (output.split(/\s+/)[0] || '').trim();
+  return /^[0-9a-f]{40}$/.test(sha) ? sha : null;
+}
+
+function remoteGeneratedBranchExists(branch) {
+  return remoteGeneratedBranchSha(branch) !== null;
+}
+
+function openGeneratedPullRequestExists(branch, env) {
+  if (!String(branch || '').startsWith(GENERATED_BRANCH_PREFIX)) return false;
+  const prs = ghJson(['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number'], env);
+  return Array.isArray(prs) && prs.length > 0;
+}
+
 function npmVersions() {
   try {
     const raw = execFileSync('npm', ['view', RELEASE_PACKAGE_NAME, 'versions', '--json'], {
@@ -180,8 +197,18 @@ function createRealIo(env, mode) {
       }
     },
     writeAllowlisted: async (plan) => writeAllowlisted(plan),
+    inspectGeneratedBranch: async (branch) => ({
+      remoteExists: remoteGeneratedBranchExists(branch),
+      openPullRequest: openGeneratedPullRequestExists(branch, env),
+    }),
     createPullRequest: async (result) => {
-      const branch = `registry/sync-${result.upstreamRevision.slice(0, 12)}`;
+      const branch = result.branch
+        || `${GENERATED_BRANCH_PREFIX}${result.upstreamRevision.slice(0, 12)}`;
+      const pushPlan = result.pushPlan;
+      if (!pushPlan || !pushPlan.ok) {
+        throw new Error(`refusing to publish ${pushPlan && pushPlan.reason ? pushPlan.reason : 'unknown'} branch ${branch}`);
+      }
+      if (pushPlan.action === 'reuse') return;
       if (env.GITHUB_ACTIONS) {
         git(['config', 'user.name', 'github-actions[bot]']);
         git(['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
@@ -192,13 +219,29 @@ function createRealIo(env, mode) {
       if (extra.length > 0) throw new Error(`refusing to commit files outside the registry allowlist: ${extra.join(', ')}`);
       git(['commit', '-m', `chore(registry): sync Agent Host snapshot from ${result.upstreamRevision}`]);
       const generatedHeadSha = git(['rev-parse', 'HEAD']);
-      git(['push', '-u', 'origin', branch]);
-      execFileSync('gh', [
-        'pr', 'create',
-        '--title', `chore(registry): sync Agent Hosts from ${result.upstreamRevision.slice(0, 12)}`,
-        '--body', `${result.body}\nGenerated head SHA: \`${generatedHeadSha}\`\n`,
-        '--base', 'main',
-      ], { cwd: ROOT, encoding: 'utf8', env });
+      if (pushPlan.forcePush) {
+        const expected = remoteGeneratedBranchSha(branch);
+        if (expected) {
+          git(['push', `--force-with-lease=refs/heads/${branch}:${expected}`, '-u', 'origin', branch]);
+        } else {
+          git(['push', '-u', 'origin', branch]);
+        }
+      } else {
+        git(['push', '-u', 'origin', branch]);
+      }
+      if (pushPlan.createPr === false) return;
+      try {
+        execFileSync('gh', [
+          'pr', 'create',
+          '--title', `chore(registry): sync Agent Hosts from ${result.upstreamRevision.slice(0, 12)}`,
+          '--body', `${result.body}\nGenerated head SHA: \`${generatedHeadSha}\`\n`,
+          '--base', 'main',
+        ], { cwd: ROOT, encoding: 'utf8', env });
+      } catch (err) {
+        const message = `${err.message || ''}\n${err.stderr || ''}`;
+        if (/already exists/i.test(message)) return;
+        throw err;
+      }
     },
     listBranches: async () => git(['branch', '-a']).split(/\n/).map((line) => ({
       name: line.replace(/^\*?\s*/, '').replace(/^remotes\/origin\//, ''),

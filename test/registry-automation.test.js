@@ -16,6 +16,7 @@ import {
   formatRegistryPrBody,
   inspectRegistrySyncWorkflow,
   planGeneratedBranchCleanup,
+  planGeneratedBranchPush,
   planRegistrySync,
 } from '../src/registry/automation.js';
 
@@ -176,6 +177,50 @@ test('registry automation: auto-authorized plans may merge and patch-publish, bu
   assert.equal(result.actions.deleteUnrelatedBranches, false);
 });
 
+test('registry automation: leftover generated branch is replaced; matching open PR is reused; human branches stay refused', () => {
+  const generated = `${GENERATED_BRANCH_PREFIX}${UPSTREAM.slice(0, 12)}`;
+
+  const replace = planGeneratedBranchPush({
+    branch: generated,
+    remoteExists: true,
+    openPullRequest: false,
+  });
+  assert.equal(replace.ok, true);
+  assert.equal(replace.action, 'replace');
+  assert.equal(replace.forcePush, true);
+  assert.equal(replace.createPr, true);
+
+  const reuse = planGeneratedBranchPush({
+    branch: generated,
+    remoteExists: true,
+    openPullRequest: true,
+  });
+  assert.equal(reuse.ok, true);
+  assert.equal(reuse.action, 'reuse');
+  assert.equal(reuse.forcePush, false);
+  assert.equal(reuse.createPr, false);
+
+  const create = planGeneratedBranchPush({
+    branch: generated,
+    remoteExists: false,
+    openPullRequest: false,
+  });
+  assert.equal(create.ok, true);
+  assert.equal(create.action, 'create');
+  assert.equal(create.forcePush, false);
+  assert.equal(create.createPr, true);
+
+  const refused = planGeneratedBranchPush({
+    branch: 'feature/sigma-installer',
+    remoteExists: true,
+    openPullRequest: false,
+  });
+  assert.equal(refused.ok, false);
+  assert.equal(refused.action, 'refuse');
+  assert.equal(refused.forcePush, false);
+  assert.equal(refused.createPr, false);
+});
+
 test('registry automation: generated-branch cleanup dry-run refuses human, protected, and unrelated refs', () => {
   const plan = planGeneratedBranchCleanup({
     dryRun: true,
@@ -310,6 +355,52 @@ test('registry automation dry-run: execute classifies authority and cleanup with
   assert.equal(cleanup.dryRun, true);
   assert.deepEqual(cleanup.wouldDelete, [`${GENERATED_BRANCH_PREFIX}abcd`]);
   assert.equal(cleanup.deleteUnrelatedBranches, false);
+});
+
+test('registry automation generate: leftover generated branch is force-replaced; matching open PR is reused', async () => {
+  const fixture = fs.readFileSync(FIXTURE, 'utf8');
+  const previousPin = JSON.parse(fs.readFileSync(path.join(ROOT, 'registry/source.json'), 'utf8'));
+  const previousSnapshot = JSON.parse(fs.readFileSync(path.join(ROOT, 'registry/agent-hosts.json'), 'utf8'));
+  const calls = { wrote: 0, created: [] };
+  const generateIo = (inspect) => ({
+    converterSha: async () => SHA_A,
+    currentDefaultSha: async () => SHA_A,
+    fetchUpstreamText: async () => fixture,
+    readPin: async () => previousPin,
+    readSnapshot: async () => previousSnapshot,
+    hasConcurrentRun: async () => false,
+    inspectGeneratedBranch: async () => inspect,
+    writeAllowlisted: async () => { calls.wrote += 1; },
+    createPullRequest: async (payload) => { calls.created.push(payload); },
+  });
+
+  const replaced = await executeRegistryAutomation({
+    mode: 'generate',
+    dryRun: false,
+    expectedHead: SHA_A,
+    upstreamRevision: UPSTREAM,
+  }, generateIo({ remoteExists: true, openPullRequest: false }));
+  assert.equal(replaced.ok, true);
+  assert.equal(replaced.pushPlan.action, 'replace');
+  assert.equal(replaced.pushPlan.forcePush, true);
+  assert.equal(calls.wrote, 1);
+  assert.equal(calls.created.length, 1);
+  assert.equal(calls.created[0].pushPlan.forcePush, true);
+  assert.equal(calls.created[0].pushPlan.createPr, true);
+
+  calls.wrote = 0;
+  calls.created = [];
+  const reused = await executeRegistryAutomation({
+    mode: 'generate',
+    dryRun: false,
+    expectedHead: SHA_A,
+    upstreamRevision: UPSTREAM,
+  }, generateIo({ remoteExists: true, openPullRequest: true }));
+  assert.equal(reused.ok, true);
+  assert.equal(reused.pushPlan.action, 'reuse');
+  assert.equal(reused.pushPlan.forcePush, false);
+  assert.equal(calls.wrote, 0);
+  assert.deepEqual(calls.created, []);
 });
 
 test('trusted registry-sync workflow: pinned actions, expected-head checkout, no untrusted execution, no publish or unrelated mutation', () => {
