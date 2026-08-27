@@ -451,7 +451,7 @@ test('dynamic destination picker windows a short terminal and shows a path statu
     assert.equal(code, 0);
     const output = io.getStdout();
     assert.match(output, /Showing \d+–\d+ of \d+/);
-    assert.match(output, /Path: /);
+    assert.match(output, /Path:/);
     const leave = output.match(/\x1b\[\?1049l/g) || [];
     assert.equal(leave.length, 1);
   } finally {

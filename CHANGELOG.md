@@ -4,10 +4,17 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-08-27
+
+### Changed
+
+- The Agent Host registry now includes Posit Assistant from the pinned `vercel-labs/skills` revision `dd3ca3c85581`.
+
 ### Fixed
 
 - The destination picker paints one compact row per path, windows a live TTY list, groups search hits that share a path, and leaves the alternate screen before cancel or error copy so Windows does not stack or swallow that text.
 - Registry Sync no longer fails when a leftover `registry/sync-*` branch still exists: it replaces that generated branch, or reuses a matching open pull request, and still refuses human branches.
+
 
 ## [0.2.0] — 2026-08-20
 
@@ -77,6 +84,7 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.1.0
