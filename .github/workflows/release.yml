@@ -36,6 +36,7 @@ jobs:
           package-manager-cache: false
       - name: Rebuild and verify the approved commit
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EXPECTED_COMMIT: ${{ inputs.expected_commit }}
           EXPECTED_VERSION: ${{ inputs.expected_version }}
           EXPECTED_DIGEST: ${{ inputs.expected_digest }}
@@ -63,6 +64,7 @@ jobs:
         run: npm install -g npm@11.5.1
       - name: Publish matching GitHub and npm identities
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EXPECTED_COMMIT: ${{ inputs.expected_commit }}
           EXPECTED_VERSION: ${{ inputs.expected_version }}
           EXPECTED_DIGEST: ${{ inputs.expected_digest }}
