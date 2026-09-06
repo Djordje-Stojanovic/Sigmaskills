@@ -27,7 +27,7 @@ export const EMBERFORGE_PALETTE = Object.freeze({
   red: '#d4645c',
 });
 
-export const EMBERFORGE_REVEAL_MS = 650;
+export const EMBERFORGE_REVEAL_MS = 450;
 
 const RESET = '\x1b[0m';
 const CLEAR = '\x1b[2J\x1b[H';
