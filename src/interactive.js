@@ -430,7 +430,7 @@ function pickerLines(renderer, catalog, selected, cursor, error, scope) {
   const scopeLabel = scope === 'global' ? 'Global Installation' : 'Project Installation (default)';
   const lines = [
     renderer.style(renderer.brand, EMBERFORGE_PALETTE.gold, true),
-    `${scopeLabel}${renderer.narrow ? ' · narrow' : ''}`,
+    `${scopeLabel}${renderer.narrow ? ' · narrow' : ''} · Stage 2/4`,
     '',
     'Select skills from this Skill Pack:',
   ];
@@ -600,7 +600,7 @@ function destinationPickerLines(renderer, items, selectedRoots, cursor, query, e
   const focused = items[cursor];
   const lines = [
     renderer.style(renderer.brand, EMBERFORGE_PALETTE.gold, true),
-    `${scopeLabel} · destinations${renderer.narrow ? ' · narrow' : ''}`,
+    `${scopeLabel} · destinations · Stage 3/4${renderer.narrow ? ' · narrow' : ''}`,
     '',
     'Only .agents/skills is selected by default. Host-specific destinations stay unselected.',
   ];
@@ -756,7 +756,7 @@ async function selectDestinations(renderer, input, groups, scope = 'project') {
 function summaryLines(renderer, plans, scope = 'project') {
   const title = scope === 'global' ? 'Confirm Global Installation' : 'Confirm Project Installation';
   const lines = [
-    renderer.style(title, EMBERFORGE_PALETTE.gold, true),
+    renderer.style(`${title} · Stage 4/4`, EMBERFORGE_PALETTE.gold, true),
     '',
     'Resolved destinations:',
   ];
