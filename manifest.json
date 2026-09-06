@@ -23,6 +23,11 @@
       "id": "sigmawrite",
       "title": "SigmaWrite",
       "needsReferences": false
+    },
+    {
+      "id": "sigmarefactor",
+      "title": "SigmaRefactor",
+      "needsReferences": true
     }
   ]
 }

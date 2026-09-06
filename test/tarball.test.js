@@ -4,9 +4,20 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { extractRawCustomContent, injectRawCustomContent } from '../src/customization.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
+const MANIFEST = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
+
+function listFiles(root, relative = '') {
+  const current = path.join(root, relative);
+  return fs.readdirSync(current, { withFileTypes: true }).flatMap((entry) => {
+    const next = path.join(relative, entry.name);
+    if (entry.isDirectory()) return listFiles(root, next);
+    return [next.replace(/\\/g, '/')];
+  }).sort();
+}
 
 function assertOnlyUniversalProjectWrites(projectRoot) {
   const allowed = new Set(['.agents', 'skills-lock.json']);
@@ -44,7 +55,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       .map((f) => f.trim().replace(/\\/g, '/'))
       .filter(Boolean);
 
-    // 3. Verify required files are included
+    // 3. Verify required package files and every declared skill file are included
     const requiredFiles = [
       'package/package.json',
       'package/README.md',
@@ -74,16 +85,8 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       'package/src/transaction.js',
       'package/src/uninstall.js',
       'package/src/update.js',
-      'package/sigmareview/SKILL.md',
-      'package/sigmareview/agents/openai.yaml',
-      'package/sigmareview/references/report-contract.md',
-      'package/sigmareview/references/review-method.md',
-      'package/sigmaperformance/SKILL.md',
-      'package/sigmaperformance/agents/openai.yaml',
-      'package/sigmabrief/SKILL.md',
-      'package/sigmabrief/agents/openai.yaml',
-      'package/sigmawrite/SKILL.md',
-      'package/sigmawrite/agents/openai.yaml',
+      ...MANIFEST.skills.flatMap((skill) => listFiles(path.join(ROOT, skill.id))
+        .map((file) => `package/${skill.id}/${file}`)),
     ];
 
     for (const req of requiredFiles) {
@@ -149,6 +152,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.match(helpOut, /sigmaperformance/);
     assert.match(helpOut, /sigmabrief/);
     assert.match(helpOut, /sigmawrite/);
+    assert.match(helpOut, /sigmarefactor/);
 
     // Spawn list --json
     const jsonOut = execFileSync('node', [installedBin, 'list', '--json'], {
@@ -158,7 +162,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     const parsed = JSON.parse(jsonOut);
     assert.equal(parsed.name, 'sigmaskills');
     assert.equal(parsed.version, PACKAGE_VERSION);
-    assert.equal(parsed.skills.length, 4);
+    assert.equal(parsed.skills.length, MANIFEST.skills.length);
     for (const skill of parsed.skills) {
       assert.match(skill.revision, /^[a-f0-9]{64}$/);
     }
@@ -169,9 +173,9 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     const interactiveOut = execFileSync(
       'node',
       [installedBin, '--static', '--no-color', '--narrow', '--project', interactiveProject],
-      { cwd: appDir, encoding: 'utf8', input: ' \r\ry' },
+      { cwd: appDir, encoding: 'utf8', input: '1\n\n\ny\n' },
     );
-    assert.match(interactiveOut, /Project Installation \(default\) · narrow/);
+    assert.match(interactiveOut, /Project Installation \(default\)/);
     assert.match(interactiveOut, /Resolved destinations:/);
     assert.doesNotMatch(interactiveOut, /\x1b\[/);
     assert.ok(fs.existsSync(path.join(interactiveProject, '.agents', 'skills', 'sigmareview', 'SKILL.md')));
@@ -232,6 +236,47 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.ok(fs.existsSync(path.join(customStateProject, '.agents', 'skills', 'sigmabrief', 'SKILL.md')));
     assert.ok(fs.existsSync(path.join(customStateProject, 'skills-lock.json')));
     assert.ok(fs.existsSync(path.join(customStateDir, 'state.json')));
+
+    // Compare every file and byte, then exercise the complete five-skill installation.
+    const skillProject = path.join(tmpDir, 'all-skills');
+    fs.mkdirSync(skillProject, { recursive: true });
+    for (const { id: skillId } of MANIFEST.skills) {
+      const source = path.join(ROOT, skillId);
+      const packed = path.join(path.dirname(path.dirname(installedBin)), skillId);
+      const sourceFiles = listFiles(source);
+      assert.deepEqual(listFiles(packed), sourceFiles, `${skillId}: packed tree differs`);
+      for (const file of sourceFiles) {
+        assert.deepEqual(fs.readFileSync(path.join(packed, file)), fs.readFileSync(path.join(source, file)), `${skillId}/${file}: packed bytes differ`);
+      }
+      execFileSync('node', [installedBin, 'install', skillId, '--project', skillProject], {
+        cwd: appDir,
+        encoding: 'utf8',
+      });
+      const destination = path.join(skillProject, '.agents', 'skills', skillId);
+      assert.deepEqual(listFiles(destination), sourceFiles, `${skillId}: installed tree differs`);
+      for (const file of sourceFiles) {
+        assert.deepEqual(fs.readFileSync(path.join(destination, file)), fs.readFileSync(path.join(packed, file)), `${skillId}/${file}: installed bytes differ`);
+      }
+      const skillMd = path.join(destination, 'SKILL.md');
+      execFileSync('node', [installedBin, 'install', skillId, '--project', skillProject], { cwd: appDir });
+      const raw = `\r\n\tUser content for ${skillId}: café ✓  \r\n\n`;
+      fs.writeFileSync(skillMd, injectRawCustomContent(fs.readFileSync(skillMd, 'utf8'), raw, skillId));
+      assert.throws(() => execFileSync('node', [installedBin, 'install', skillId, '--project', skillProject], { cwd: appDir, stdio: 'pipe' }), /Command failed/);
+      assert.equal(extractRawCustomContent(fs.readFileSync(skillMd, 'utf8'), skillId), raw);
+      assertOnlyUniversalProjectWrites(skillProject);
+    }
+    const status = JSON.parse(execFileSync('node', [installedBin, 'status', '--json', '--project', skillProject], { cwd: appDir, encoding: 'utf8' }));
+    assert.equal(status.skills.length, MANIFEST.skills.length);
+    // Simulate a successor package in the isolated installed artifact.
+    for (const { id } of MANIFEST.skills) {
+      fs.appendFileSync(path.join(path.dirname(path.dirname(installedBin)), id, 'SKILL.md'), '\nUpdated packaged guidance.\n');
+    }
+    execFileSync('node', [installedBin, 'update', '--yes', '--project', skillProject], { cwd: appDir });
+    for (const { id } of MANIFEST.skills) {
+      const markdown = fs.readFileSync(path.join(skillProject, '.agents', 'skills', id, 'SKILL.md'), 'utf8');
+      assert.equal(extractRawCustomContent(markdown, id), `\r\n\tUser content for ${id}: café ✓  \r\n\n`);
+      assert.match(markdown, /Updated packaged guidance\./);
+    }
 
     // Spawn install on unowned existing folder to verify fail-closed behavior
     const unownedProject = path.join(tmpDir, 'unowned-proj');

@@ -16,6 +16,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
   Σ  performance→  calibrated bottlenecks, one report PR
   Σ  brief      →  paste-ready agent briefs, chat only
   Σ  write      →  clear STE-inspired technical English
+  Σ  refactor   →  user-guided, behavior-preserving code reduction
 ```
 
 ---
@@ -50,6 +51,7 @@ Then invoke with your host’s normal skill syntax (`$sigmawrite`, `/skill:sigma
 | **SigmaPerformance** | `sigmaperformance` | Calibrated performance investigation | One report MD + report-only PR |
 | **SigmaBrief** | `sigmabrief` | Prompt factory for parallel / single agents | Chat briefs only |
 | **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
+| **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
 
 ### SigmaReview
 
@@ -69,6 +71,10 @@ Turns GitHub issues, features, upgrades, bugs, or plain work statements into sho
 
 Writing voice inspired by **ASD-STE100 Simplified Technical English** — soft steers, not hard numbered rules. High-quality, still-technical explanations a sharp outsider can follow. Hard bans on gibberish and invented words. Includes a pasteable system-prompt block inside `SKILL.md`. Not certified STE; no dictionary ship.
 
+### SigmaRefactor
+
+Runs a reproducible `laloc` scan, reads the five largest maintained files, explains safe refactoring choices, and waits for user agreement before editing. It checks directories that `laloc` skips, preserves behavior and user changes, and reports lines removed separately from lines moved into new modules.
+
 ---
 
 ## Install
@@ -77,7 +83,9 @@ Writing voice inspired by **ASD-STE100 Simplified Technical English** — soft s
 
 Run `npx @djordje-stojanovic/sigmaskills` with no command. The Sigma Installer's Emberforge interface reads the Skill Pack catalog from `manifest.json` and the bundled Agent Host registry. Project Installation selects only the universal `.agents/skills/` destination by default, shows a compact host-path list, and leaves host-specific destinations unselected until you choose them. Search remains available for every supported Agent Host, including hosts that are not detected. Exact current official copies and valid links are recorded as managed without rewriting skill bytes. Escape, EOF, Ctrl+C, or a rejected confirmation exits without writing.
 
-The Emberforge screens keep the accepted warm LAPI palette and do not mix in Prismgrid or Monolith. Layouts reflow below 76 columns and wrap long paths. Keyboard-only controls cover focus, search, selection, confirmation, cancellation, and `?` help. `--no-color`, `--static`, `--narrow`, `--json`, `NO_COLOR`, `CI`, `REDUCED_MOTION=1`, `PREFERS_REDUCED_MOTION=reduce`, redirected output, and non-TTY sessions disable animation and decorative color. Truecolor, 256-color, 16-color, and ASCII fallbacks stay readable and still show safety copy. The cursor and raw mode restore after success, failure, interrupt, EOF, and exceptions.
+The installer opens directly to a small Sigma heading in the warm LAPI palette. Skill descriptions stay in a bounded focus area. Destination pages show at most eight rows and adapt to terminal height. Long confirmation paths wrap onto pages; use `next`/`prev` in plain mode or left/right arrows in interactive mode. Reduced motion keeps the same picker: there is no opening animation. The cursor, raw mode, input flow, and listeners are restored when the installer finishes or stops.
+
+With `--static`, `--no-color`, `NO_COLOR`, `CI`, redirected output, or a non-TTY session, enter one command per line. Type a row number to toggle it, `/claude` to search destinations, `/` to clear search, `next` or `prev` to change page, and press Enter to continue. Use `a` to select all skills, `g` for the global warning, `?` for help, or `esc` to cancel. Confirm installation with `y` followed by Enter. Only `.agents/skills` is selected by default; detected hosts stay unselected.
 
 Use `--no-color`, `--static`, or `--narrow` when the terminal needs those modes. Use `--project <path>` to select another project root.
 
@@ -128,6 +136,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmareview -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaperformance -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmabrief -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmarefactor -g
 
 # Pin to specific hosts
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g -a cursor -a claude-code -a codex -a opencode -a pi
@@ -149,6 +158,7 @@ $skill-installer install sigmareview from https://github.com/Djordje-Stojanovic/
 $skill-installer install sigmaperformance from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmabrief from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmarefactor from https://github.com/Djordje-Stojanovic/Sigmaskills
 ```
 
 ### Manual / universal copy
@@ -164,6 +174,7 @@ cp -R Sigmaskills/sigmareview ~/.agents/skills/sigmareview
 cp -R Sigmaskills/sigmaperformance ~/.agents/skills/sigmaperformance
 cp -R Sigmaskills/sigmabrief ~/.agents/skills/sigmabrief
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
+cp -R Sigmaskills/sigmarefactor ~/.agents/skills/sigmarefactor
 ```
 
 **Windows (PowerShell)**
@@ -175,6 +186,7 @@ Copy-Item -Recurse Sigmaskills\sigmareview   "$HOME\.agents\skills\sigmareview"
 Copy-Item -Recurse Sigmaskills\sigmaperformance "$HOME\.agents\skills\sigmaperformance"
 Copy-Item -Recurse Sigmaskills\sigmabrief    "$HOME\.agents\skills\sigmabrief"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
+Copy-Item -Recurse Sigmaskills\sigmarefactor "$HOME\.agents\skills\sigmarefactor"
 ```
 
 Point other hosts at the same folders (or copy again) as needed:
@@ -188,7 +200,7 @@ Point other hosts at the same folders (or copy again) as needed:
 | OpenCode | `~/.config/opencode/skills/<id>/` |
 | Codex | `~/.codex/skills/<id>/` |
 
-Release zip: download [**Sigmaskills-v0.2.1**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.2.1) and copy the four skill folders into the path your agent reads.
+Release zip: [**Sigmaskills-v0.2.1**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.2.1) contains the four skills released at that version. SigmaRefactor and the revised installer are available from the current repository source until a new package release is published.
 
 ### Optional: SigmaWrite as system prompt
 
@@ -212,6 +224,7 @@ $sigmaperformance https://github.com/owner/repo
 $sigmabrief https://github.com/owner/repo/issues/12
 $sigmabrief all open
 $sigmawrite
+$sigmarefactor
 ```
 
 </td>
@@ -225,6 +238,7 @@ $sigmawrite
 /skill:sigmabrief https://github.com/owner/repo/issues/12
 /skill:sigmabrief all open
 /skill:sigmawrite
+/skill:sigmarefactor
 ```
 
 </td>
@@ -240,6 +254,7 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 | `sigmaperformance` | repo URL | Starts with two short calibration batches, then runs |
 | `sigmabrief` | issue URL · `#N` · `all open` · plain work | Explicit only — not ambient |
 | `sigmawrite` | (no args) | Session writing voice until you turn it off |
+| `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
 
 ---
 
@@ -280,6 +295,13 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 - Optional pasteable system-prompt block in `SKILL.md`
 - Does not override another skill’s rigid output contract
 
+### SigmaRefactor
+
+- Five-stage scan → read → discussion → implementation → verification flow
+- `laloc` reconciliation with a maintained-file inventory and explicit exclusions
+- User approval before edits; behavior, tests, interfaces, and custom content stay protected
+- Final line-count comparison with removed and moved lines reported separately
+
 ---
 
 ## Requirements
@@ -291,6 +313,7 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 | SigmaPerformance | Authority / safety boundary chosen in calibration |
 | SigmaBrief | `gh` read when briefing from issues/PRs · **no** push to the product repo |
 | SigmaWrite | Nothing beyond chat — optional paste into system instructions |
+| SigmaRefactor | Read access to the target repository and `laloc` when available; no required external skill |
 
 Windows-native defaults where skills mention shells or worktrees (PowerShell-friendly; do not assume WSL).
 
@@ -307,7 +330,8 @@ Sigmaskills/
 ├── sigmareview/              SKILL.md · agents/ · references/
 ├── sigmaperformance/         SKILL.md · agents/ · references/
 ├── sigmabrief/               SKILL.md · agents/ · references/
-└── sigmawrite/               SKILL.md · agents/
+├── sigmawrite/               SKILL.md · agents/
+└── sigmarefactor/            SKILL.md · agents/ · references/
 ```
 
 Each top-level folder is one installable skill. `name` in frontmatter = folder name = `--skill` id.

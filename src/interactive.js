@@ -1,5 +1,6 @@
 import path from 'node:path';
 import readline from 'node:readline';
+import { PassThrough } from 'node:stream';
 import { createInstallPlan, createProjectSkillClassifier, formatPlanHuman } from './plan.js';
 import { createNeedsResolutionError, createUnownedConflictError, executeProjectInstall } from './transaction.js';
 import { isDestinationOwned } from './state.js';
@@ -26,8 +27,6 @@ export const EMBERFORGE_PALETTE = Object.freeze({
   teal: '#7cb8a8',
   red: '#d4645c',
 });
-
-export const EMBERFORGE_REVEAL_MS = 650;
 
 const RESET = '\x1b[0m';
 const CLEAR = '\x1b[2J\x1b[H';
@@ -86,12 +85,6 @@ function detectColorMode(stdout, env, options) {
   return 'plain';
 }
 
-function prefersReducedMotion(env = {}) {
-  const reduced = String(env.REDUCED_MOTION || '').toLowerCase();
-  const prefers = String(env.PREFERS_REDUCED_MOTION || '').toLowerCase();
-  return reduced === '1' || reduced === 'true' || prefers === 'reduce' || prefers === '1' || prefers === 'true';
-}
-
 function wrapWords(value, width) {
   const max = Math.max(1, width);
   if (!value) return [''];
@@ -142,7 +135,6 @@ class TerminalRenderer {
       options.json ||
       this.noColor ||
       this.env.CI ||
-      prefersReducedMotion(this.env) ||
       !this.stdin.isTTY ||
       !this.stdout.isTTY,
     );
@@ -151,6 +143,9 @@ class TerminalRenderer {
     this.paint = null;
     this.altScreen = false;
     this.cleaned = false;
+    this.lastStaticScreen = null;
+    this.page = 0;
+    this.pages = 1;
     this.onResize = () => {
       if (this.paint) this.paint();
     };
@@ -161,6 +156,10 @@ class TerminalRenderer {
 
   get width() {
     return this.forcedNarrow ? Math.min(this.stdout.columns || 80, 60) : (this.stdout.columns || 80);
+  }
+
+  get height() {
+    return Math.max(5, Number(this.stdout.rows) || 24);
   }
 
   get narrow() {
@@ -208,6 +207,7 @@ class TerminalRenderer {
 
   cleanup() {
     this.paint = null;
+    this.dynamic = false;
     if (this.cleaned) return;
     this.cleaned = true;
     if (typeof this.stdout.removeListener === 'function') {
@@ -226,7 +226,20 @@ class TerminalRenderer {
   }
 
   screen(lines) {
-    const content = lines.join('\n');
+    const width = Math.max(1, this.width - 1);
+    const rows = lines.flatMap((line) => {
+      // Color only short headings. Wrap plain text so paths remain exact.
+      const plain = line.replace(/\x1b\[[0-9;]*m/g, '');
+      return plain.length <= width ? [line] : wrapWords(plain, width);
+    });
+    const limit = Math.max(1, this.height - (rows.length > this.height - 1 ? 3 : 1));
+    this.pages = Math.max(1, Math.ceil(rows.length / limit));
+    this.page = Math.min(this.page, this.pages - 1);
+    const visible = rows.slice(this.page * limit, (this.page + 1) * limit);
+    if (this.pages > 1) visible.push(`Page ${this.page + 1}/${this.pages}`, 'next/prev: page · esc: cancel');
+    const content = visible.join('\n');
+    if (!this.dynamic && this.lastStaticScreen === content) return;
+    if (!this.dynamic) this.lastStaticScreen = content;
     if (this.dynamic) {
       this.stdout.write(`${CLEAR}${this.fill()}${content}${RESET}\n`);
     } else {
@@ -240,16 +253,17 @@ class TerminalRenderer {
 }
 
 class KeyInput {
-  constructor(stdin) {
+  constructor(stdin, lineMode = false) {
     this.stdin = stdin;
     this.queue = [];
     this.waiters = [];
     this.ended = false;
     this.closed = false;
     this.previousRawMode = Boolean(stdin.isRaw);
+    this.previousFlowing = stdin.readableFlowing;
     this.changedRawMode = false;
 
-    readline.emitKeypressEvents(stdin);
+    this.lineMode = lineMode;
     this.onKeypress = (_value, key = {}) => {
       const normalized = key.ctrl && key.name === 'c'
         ? { name: 'ctrl-c', ch: '', sequence: '', shift: false }
@@ -266,12 +280,33 @@ class KeyInput {
       this.push({ name: 'eof' });
     };
     this.onSigint = () => this.push({ name: 'ctrl-c' });
+    this.onError = (error) => this.push({ name: 'input-error', error });
 
-    stdin.on('keypress', this.onKeypress);
+    if (lineMode) {
+      this.lines = readline.createInterface({ input: stdin, terminal: false, crlfDelay: Infinity });
+      this.lines.on('line', (line) => {
+        const command = line.trim();
+        const aliases = { enter: 'return', esc: 'escape', cancel: 'escape' };
+        this.push({ name: aliases[command] || command || 'return', ch: command, line: true });
+      });
+      this.lines.once('close', this.onEnd);
+      // Ctrl+C must work in a pipe as well as in a cooked terminal.
+      this.onControl = (chunk) => {
+        if (chunk.includes('\x03')) this.onSigint();
+      };
+      stdin.on('data', this.onControl);
+    } else {
+      // Give readline a private stream so its parser listeners cannot leak onto stdin.
+      this.parser = new PassThrough();
+      readline.emitKeypressEvents(this.parser);
+      this.parser.on('keypress', this.onKeypress);
+      stdin.pipe(this.parser);
+    }
     stdin.once('end', this.onEnd);
+    stdin.on('error', this.onError);
     process.on('SIGINT', this.onSigint);
 
-    if (stdin.isTTY && typeof stdin.setRawMode === 'function') {
+    if (!lineMode && stdin.isTTY && typeof stdin.setRawMode === 'function') {
       stdin.setRawMode(true);
       this.changedRawMode = true;
     }
@@ -309,7 +344,18 @@ class KeyInput {
     if (this.closed) return;
     this.closed = true;
     this.stdin.removeListener('keypress', this.onKeypress);
+    if (this.lines) {
+      this.lines.removeListener('close', this.onEnd);
+      this.lines.close();
+      this.stdin.removeListener('data', this.onControl);
+    }
+    if (this.parser) {
+      this.stdin.unpipe(this.parser);
+      this.parser.removeAllListeners();
+      this.parser.destroy();
+    }
     this.stdin.removeListener('end', this.onEnd);
+    this.stdin.removeListener('error', this.onError);
     process.removeListener('SIGINT', this.onSigint);
     for (const waiter of this.waiters.splice(0)) {
       clearTimeout(waiter.timer);
@@ -321,6 +367,9 @@ class KeyInput {
       } catch {
         // The stream may already be closed. Cursor restoration still runs.
       }
+    }
+    if (this.previousFlowing !== true && typeof this.stdin.pause === 'function') {
+      this.stdin.pause();
     }
   }
 }
@@ -336,113 +385,89 @@ function helpLines(renderer) {
     '',
     '↑/↓ move focus',
     'space toggle selection',
+    'a select all skills · g global warning',
     'type to search Agent Hosts',
     'enter continue',
     'esc cancel',
     'Ctrl+C abort',
-    'any key skips the opening reveal',
+    'Plain mode: type a command, then Enter.',
+    'number toggle · next/prev page · /text search · / clear',
     '? close help',
   ];
 }
 
 async function readKeyedScreen(renderer, input, paint) {
+  renderer.page = 0;
   renderer.paint = paint;
-  paint();
-  const key = await input.next();
-  if (isHelpKey(key)) {
-    await showHelp(renderer, input);
-    return { help: true, key };
+  while (true) {
+    paint();
+    const key = await input.next();
+    if (key.name === 'input-error') throw key.error;
+    if (renderer.pages > 1 && ['next', 'prev', 'right', 'left'].includes(key.name)) {
+      renderer.page = Math.max(0, Math.min(renderer.pages - 1, renderer.page + (['next', 'right'].includes(key.name) ? 1 : -1)));
+      continue;
+    }
+    if (isHelpKey(key)) {
+      const closeKey = await showHelp(renderer, input);
+      if (['ctrl-c', 'eof'].includes(closeKey.name)) return { help: false, key: closeKey };
+      return { help: true, key };
+    }
+    return { help: false, key };
   }
-  return { help: false, key };
 }
 
 async function showHelp(renderer, input) {
   const paint = () => renderer.screen(helpLines(renderer));
   renderer.paint = paint;
+  renderer.page = 0;
   paint();
-  await input.next();
+  while (true) {
+    const key = await input.next();
+    if (key.name === 'input-error') throw key.error;
+    if (['next', 'prev', 'right', 'left'].includes(key.name)) {
+      renderer.page = Math.max(0, Math.min(renderer.pages - 1, renderer.page + (['next', 'right'].includes(key.name) ? 1 : -1)));
+      paint();
+    } else return key;
+  }
 }
 
 function withHelp(hints) {
   return `${hints} · ? help`;
 }
 
-function revealLines(renderer, progress = 1) {
-  const templates = renderer.narrow
-    ? ['██████████', '      ███', '    ███', '  ███', '██████████']
-    : ['██████████████████', '              ████', '           ████', '        ████', '     ████', '██████████████████'];
-  const sigma = templates.map((row) => row.replaceAll('█', renderer.block));
-  const visibleRows = Math.max(1, Math.ceil(sigma.length * progress));
-  const firstVisible = sigma.length - visibleRows;
-  const fire = [
-    EMBERFORGE_PALETTE.red,
-    EMBERFORGE_PALETTE.orange,
-    EMBERFORGE_PALETTE.gold,
-    EMBERFORGE_PALETTE.text,
-  ];
-  const lines = [''];
 
-  for (let index = 0; index < sigma.length; index++) {
-    if (index < firstVisible) {
-      lines.push('');
-      continue;
-    }
-    const colorIndex = Math.min(fire.length - 1, sigma.length - 1 - index);
-    lines.push(`  ${renderer.style(sigma[index], fire[colorIndex], true)}`);
-  }
-  lines.push('');
-  lines.push(`  ${renderer.style('SIGMA SKILLS', EMBERFORGE_PALETTE.gold, true)}`);
-  lines.push(`  ${renderer.style('Project Installation', EMBERFORGE_PALETTE.orange)}`);
-  return lines;
+function compact(value, width) {
+  return value.length <= width ? value : value.slice(0, Math.max(0, width - 1)) + '…';
 }
 
-async function runReveal(renderer, input) {
-  if (renderer.static) {
-    renderer.screen(revealLines(renderer));
-    return null;
-  }
-
-  const startedAt = Date.now();
-  while (true) {
-    const elapsed = Date.now() - startedAt;
-    const progress = Math.min(1, elapsed / EMBERFORGE_REVEAL_MS);
-    renderer.paint = () => renderer.screen(revealLines(renderer, progress));
-    renderer.screen(revealLines(renderer, progress));
-    if (progress >= 1) return null;
-
-    const remaining = EMBERFORGE_REVEAL_MS - elapsed;
-    const key = await input.next(Math.min(90, remaining));
-    if (key) {
-      renderer.screen(revealLines(renderer));
-      return key.name;
-    }
-  }
+function menuLines(renderer, { heading, rows, cursor, details = [], footer, error }) {
+  const width = Math.max(1, renderer.width - 1);
+  const head = [compact(heading, width)];
+  if (renderer.height >= 12) head.unshift(renderer.style(renderer.brand, EMBERFORGE_PALETTE.gold, true));
+  const hints = width < 70
+    ? (renderer.static ? '# toggle /search next/prev enter esc ?' : '↑↓ move · space · enter · esc · ?')
+    : footer;
+  const tail = [compact(hints, width)];
+  if (error) tail.unshift(compact('Error: ' + error, width));
+  if (renderer.height >= 16) tail.unshift(...details.slice(0, 2).map((line) => compact(line, width)));
+  const limit = Math.max(1, Math.min(8, renderer.height - 2 - head.length - tail.length));
+  const view = visibleDestinationItems(rows, cursor, limit);
+  renderer.menuSize = limit;
+  if (view.total > view.items.length) tail.unshift(compact(`Showing ${view.start + 1}–${view.start + view.items.length} of ${view.total}`, width));
+  return [...head, ...view.items.map((row) => compact(row, width)), ...tail];
 }
 
 function pickerLines(renderer, catalog, selected, cursor, error, scope) {
+  const focused = catalog.skills[cursor];
   const scopeLabel = scope === 'global' ? 'Global Installation' : 'Project Installation (default)';
-  const lines = [
-    renderer.style(renderer.brand, EMBERFORGE_PALETTE.gold, true),
-    `${scopeLabel}${renderer.narrow ? ' · narrow' : ''}`,
-    '',
-    'Select skills from this Skill Pack:',
-  ];
-
-  catalog.skills.forEach((skill, index) => {
-    const current = index === cursor ? '>' : ' ';
-    const checked = selected.has(skill.id) ? 'x' : ' ';
-    lines.push(`${current} [${checked}] ${skill.title} (${skill.id})`);
-    const descriptionWidth = Math.max(20, renderer.width - 6);
-    for (const descriptionLine of wrapWords(skill.description, descriptionWidth)) {
-      lines.push(`      ${descriptionLine}`);
-    }
+  return menuLines(renderer, {
+    heading: `${scopeLabel} · Stage 1/4`,
+    rows: catalog.skills.map((skill, index) => `${index === cursor ? '>' : ' '} ${renderer.static ? (index + 1) + '. ' : ''}[${selected.has(skill.id) ? 'x' : ' '}] ${skill.title} (${skill.id})`),
+    cursor,
+    details: [`Focused: ${focused?.title || ''}`, focused?.description || ''],
+    footer: renderer.static ? 'number toggle · a all · g global · enter next · esc cancel · ? help' : '↑↓ move · space toggle · a all · g global · enter next · esc cancel · ? help',
+    error,
   });
-
-  lines.push('');
-  lines.push(`Selected: ${selected.size}/${catalog.skills.length}`);
-  if (error) lines.push(renderer.style(`Error: ${error}`, EMBERFORGE_PALETTE.red, true));
-  lines.push(withHelp(`↑/↓ move · space toggle · a select all${scope === 'global' ? '' : ' · g Global Installation'} · enter continue · esc cancel`));
-  return lines;
 }
 
 function globalWarningLines(renderer) {
@@ -490,6 +515,12 @@ async function selectSkills(renderer, input, catalog, initialScope = 'project') 
     if (key.name === 'down' || (key.name === 'tab' && !key.shift)) {
       cursor = (cursor + 1) % catalog.skills.length;
     }
+    if (key.name === 'next') cursor = Math.min(catalog.skills.length - 1, cursor + renderer.menuSize);
+    if (key.name === 'prev') cursor = Math.max(0, cursor - renderer.menuSize);
+    if (key.line && /^\d+$/.test(key.name) && catalog.skills[Number(key.name) - 1]) {
+      cursor = Number(key.name) - 1;
+      key.name = 'space';
+    }
     if (key.name === 'space') {
       const skillId = catalog.skills[cursor].id;
       if (selected.has(skillId)) selected.delete(skillId);
@@ -527,12 +558,7 @@ function persistOutput(renderer, text) {
   renderer.line(text);
 }
 
-function destinationWindowSize(renderer, itemCount) {
-  if (!renderer.dynamic) return itemCount;
-  const rows = Number(renderer.stdout.rows) || 24;
-  const chrome = 10;
-  return Math.min(itemCount, Math.max(3, rows - chrome));
-}
+
 
 function visibleDestinationItems(items, cursor, limit) {
   if (!items.length || items.length <= limit) {
@@ -571,48 +597,14 @@ function destinationRowTitle(item) {
 
 function destinationPickerLines(renderer, items, selectedRoots, cursor, query, error, scope) {
   const scopeLabel = scope === 'global' ? 'Global Installation' : 'Project Installation';
-  const view = visibleDestinationItems(items, cursor, destinationWindowSize(renderer, items.length));
-  const focused = items[cursor];
-  const lines = [
-    renderer.style(renderer.brand, EMBERFORGE_PALETTE.gold, true),
-    `${scopeLabel} · destinations${renderer.narrow ? ' · narrow' : ''}`,
-    '',
-    'Only .agents/skills is selected by default. Host-specific destinations stay unselected.',
-  ];
-
-  if (query) {
-    lines.push(`Search: ${query}`);
-  } else {
-    lines.push('Type a host name to search. Arrow keys move. Space toggles.');
-  }
-
-  view.items.forEach((item, viewIndex) => {
-    const index = view.start + viewIndex;
-    const current = index === cursor ? '>' : ' ';
-    const checked = selectedRoots.has(item.relativeRoot) ? 'x' : ' ';
-    const marker = `${current} [${checked}] `;
-    const titleLines = wrapWords(destinationRowTitle(item), Math.max(20, renderer.width - marker.length));
-    titleLines.forEach((titleLine, titleIndex) => {
-      lines.push(titleIndex === 0 ? `${marker}${titleLine}` : `      ${titleLine}`);
-    });
+  return menuLines(renderer, {
+    heading: `${scopeLabel} · Stage 2/4 · destinations`,
+    rows: items.map((item, index) => `${index === cursor ? '>' : ' '} ${renderer.static ? (index + 1) + '. ' : ''}[${selectedRoots.has(item.relativeRoot) ? 'x' : ' '}] ${destinationRowTitle(item)}`),
+    cursor,
+    details: [query ? `Search: ${query}` : 'Only .agents/skills is selected by default.', `Selected: ${selectedRoots.size} · Path: ${items[cursor]?.absoluteRoot || '(no matches)'}`],
+    footer: renderer.static ? 'number toggle · /search · next/prev · enter next · esc cancel · ? help' : '↑↓ move · type search · space toggle · enter next · esc cancel · ? help',
+    error,
   });
-
-  if (view.total > view.items.length) {
-    const from = view.start + 1;
-    const to = view.start + view.items.length;
-    lines.push(`Showing ${from}–${to} of ${view.total}`);
-  }
-
-  lines.push('');
-  if (focused?.absoluteRoot) {
-    for (const wrapped of wrapWords(`Path: ${focused.absoluteRoot}`, Math.max(20, renderer.width - 2))) {
-      lines.push(wrapped);
-    }
-  }
-  lines.push(`Selected destinations: ${selectedRoots.size}`);
-  if (error) lines.push(renderer.style(`Error: ${error}`, EMBERFORGE_PALETTE.red, true));
-  lines.push(withHelp('Type to search every Agent Host · space toggle · enter continue · esc cancel'));
-  return lines;
 }
 
 function selectableGroups(groups) {
@@ -695,6 +687,18 @@ async function selectDestinations(renderer, input, groups, scope = 'project') {
     if (key.name === 'down' || (key.name === 'tab' && !key.shift)) {
       if (items.length) cursor = (cursor + 1) % items.length;
     }
+    if (key.name === 'next') cursor = Math.min(items.length - 1, cursor + renderer.menuSize);
+    if (key.name === 'prev') cursor = Math.max(0, cursor - renderer.menuSize);
+    if (key.line && /^\d+$/.test(key.name) && items[Number(key.name) - 1]) {
+      cursor = Number(key.name) - 1;
+      key.name = 'space';
+    }
+    if (key.line && key.ch.startsWith('/')) {
+      query = key.ch.slice(1);
+      cursor = 0;
+      error = '';
+      continue;
+    }
     if (key.name === 'backspace') {
       query = query.slice(0, -1);
       cursor = 0;
@@ -731,7 +735,7 @@ async function selectDestinations(renderer, input, groups, scope = 'project') {
 function summaryLines(renderer, plans, scope = 'project') {
   const title = scope === 'global' ? 'Confirm Global Installation' : 'Confirm Project Installation';
   const lines = [
-    renderer.style(title, EMBERFORGE_PALETTE.gold, true),
+    renderer.style(`${title} · Stage 4/4`, EMBERFORGE_PALETTE.gold, true),
     '',
     'Resolved destinations:',
   ];
@@ -747,13 +751,13 @@ function summaryLines(renderer, plans, scope = 'project') {
           lines.push(`    ${wrapped}`);
         }
       }
+      if (dest.overwrite) lines.push(`    Overwrite: ${dest.overwrite}`);
+      if (dest.delete) lines.push(`    Delete: ${dest.delete}`);
+      if (dest.backup) lines.push(`    Backup: ${dest.backup}`);
       if (scope === 'global') {
         const hostNames = (dest.hosts || []).map((host) => host.displayName).join(', ');
         if (hostNames) lines.push(`    Agent Hosts: ${hostNames}`);
         if (dest.method) lines.push(`    Method: ${dest.method}`);
-        if (dest.overwrite) lines.push(`    Overwrite: ${dest.overwrite}`);
-        if (dest.delete) lines.push(`    Delete: ${dest.delete}`);
-        if (dest.backup) lines.push(`    Backup: ${dest.backup}`);
       }
     }
   }
@@ -773,7 +777,7 @@ function methodPickerLines(renderer, cursor) {
   ];
   const lines = [
     renderer.style(renderer.brand, EMBERFORGE_PALETTE.gold, true),
-    `Project Installation · method${renderer.narrow ? ' · narrow' : ''}`,
+    `Project Installation · method · Stage 3/4${renderer.narrow ? ' · narrow' : ''}`,
     '',
     'Choose how host-specific destinations are written. The installer never changes method silently.',
   ];
@@ -786,7 +790,7 @@ function methodPickerLines(renderer, cursor) {
     }
   });
   lines.push('');
-  lines.push(withHelp('↑/↓ move · enter continue · esc cancel'));
+  lines.push(withHelp(renderer.static ? 'link/copy choose · enter link · esc cancel' : '↑/↓ move · enter continue · esc cancel'));
   return lines;
 }
 
@@ -798,6 +802,9 @@ async function selectMethod(renderer, input) {
     if (key.name === 'ctrl-c') return { cancelled: true, exitCode: 130 };
     if (key.name === 'escape' || key.name === 'eof') return { cancelled: true, exitCode: 0 };
     if (key.name === 'up' || key.name === 'down' || key.name === 'tab') cursor = cursor === 0 ? 1 : 0;
+    if (key.line && ['1', '2', 'link', 'copy'].includes(key.name)) {
+      return { cancelled: false, method: ['1', 'link'].includes(key.name) ? 'link' : 'copy' };
+    }
     if (key.name === 'return' || key.name === 'space') {
       return { cancelled: false, method: cursor === 0 ? 'link' : 'copy' };
     }
@@ -865,16 +872,10 @@ export async function runProjectInstaller(params) {
   const env = io.env || process.env;
   const homeDir = path.resolve(params.homeDir || resolveHomeDir(env));
   const renderer = new TerminalRenderer(io, options);
-  const input = new KeyInput(io.stdin);
+  const input = new KeyInput(io.stdin, renderer.static);
 
-  renderer.start();
   try {
-    const revealKey = await runReveal(renderer, input);
-    if (revealKey === 'ctrl-c' || revealKey === 'eof') {
-      persistOutput(renderer, 'Installation cancelled. No files were written.');
-      return revealKey === 'ctrl-c' ? 130 : 0;
-    }
-
+    renderer.start();
     if (params.initialScope === 'global') {
       const warning = await confirmGlobalWarning(renderer, input);
       if (!warning.confirmed) {
@@ -970,6 +971,7 @@ export async function runProjectInstaller(params) {
     renderer.cleanup();
 
     const copyRoots = [];
+    let installedCount = 0;
     for (const skillId of selection.skillIds) {
       let result;
       while (true) {
@@ -994,7 +996,9 @@ export async function runProjectInstaller(params) {
           if (!err.linkFailure) throw err;
           const decision = await offerCopyFallback(renderer, input, err.linkFailure);
           if (decision !== 'copy') {
-            persistOutput(renderer, 'Installation cancelled. No files were written.');
+            persistOutput(renderer, installedCount
+              ? `Installation stopped. ${installedCount} previously installed skill(s) remain installed; the failed skill was rolled back.`
+              : 'Installation cancelled. No files were written.');
             return decision === 'ctrl-c' ? 130 : 0;
           }
           copyRoots.push(err.linkFailure.relativeRoot);
@@ -1004,6 +1008,7 @@ export async function runProjectInstaller(params) {
         const methodLabel = dest.method ? ` [${dest.method}]` : '';
         renderer.line(`Installed ${result.plan.title} (${result.plan.skill}) to ${dest.destination}${methodLabel}`);
       }
+      installedCount += 1;
     }
     const doneLabel = scope === 'global' ? 'Global Installation' : 'Project Installation';
     renderer.line(`${doneLabel} complete: ${selection.skillIds.length} skill${selection.skillIds.length === 1 ? '' : 's'} installed.`);

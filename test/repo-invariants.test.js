@@ -28,6 +28,11 @@ const KNOWN_SKILLS = [
     title: 'SigmaWrite',
     needsReferences: false,
   },
+  {
+    id: 'sigmarefactor',
+    title: 'SigmaRefactor',
+    needsReferences: true,
+  },
 ];
 
 const ISSUE_TEMPLATES = [
@@ -248,4 +253,3 @@ test('every shipped skill contains approved Personal instructions customization 
     assert.equal(endCount, 1, `${skill.id}: must have exactly 1 end tag`);
   }
 });
-
