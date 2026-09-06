@@ -7,6 +7,16 @@ import test from 'node:test';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
+const MANIFEST = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
+
+function listFiles(root, relative = '') {
+  const current = path.join(root, relative);
+  return fs.readdirSync(current, { withFileTypes: true }).flatMap((entry) => {
+    const next = path.join(relative, entry.name);
+    if (entry.isDirectory()) return listFiles(root, next);
+    return [next.replace(/\\/g, '/')];
+  }).sort();
+}
 
 function assertOnlyUniversalProjectWrites(projectRoot) {
   const allowed = new Set(['.agents', 'skills-lock.json']);
@@ -44,7 +54,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       .map((f) => f.trim().replace(/\\/g, '/'))
       .filter(Boolean);
 
-    // 3. Verify required files are included
+    // 3. Verify required package files and every declared skill file are included
     const requiredFiles = [
       'package/package.json',
       'package/README.md',
@@ -74,16 +84,8 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       'package/src/transaction.js',
       'package/src/uninstall.js',
       'package/src/update.js',
-      'package/sigmareview/SKILL.md',
-      'package/sigmareview/agents/openai.yaml',
-      'package/sigmareview/references/report-contract.md',
-      'package/sigmareview/references/review-method.md',
-      'package/sigmaperformance/SKILL.md',
-      'package/sigmaperformance/agents/openai.yaml',
-      'package/sigmabrief/SKILL.md',
-      'package/sigmabrief/agents/openai.yaml',
-      'package/sigmawrite/SKILL.md',
-      'package/sigmawrite/agents/openai.yaml',
+      ...MANIFEST.skills.flatMap((skill) => listFiles(path.join(ROOT, skill.id))
+        .map((file) => `package/${skill.id}/${file}`)),
     ];
 
     for (const req of requiredFiles) {
@@ -149,6 +151,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.match(helpOut, /sigmaperformance/);
     assert.match(helpOut, /sigmabrief/);
     assert.match(helpOut, /sigmawrite/);
+    assert.match(helpOut, /sigmarefactor/);
 
     // Spawn list --json
     const jsonOut = execFileSync('node', [installedBin, 'list', '--json'], {
@@ -158,7 +161,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     const parsed = JSON.parse(jsonOut);
     assert.equal(parsed.name, 'sigmaskills');
     assert.equal(parsed.version, PACKAGE_VERSION);
-    assert.equal(parsed.skills.length, 4);
+    assert.equal(parsed.skills.length, MANIFEST.skills.length);
     for (const skill of parsed.skills) {
       assert.match(skill.revision, /^[a-f0-9]{64}$/);
     }
@@ -232,6 +235,18 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.ok(fs.existsSync(path.join(customStateProject, '.agents', 'skills', 'sigmabrief', 'SKILL.md')));
     assert.ok(fs.existsSync(path.join(customStateProject, 'skills-lock.json')));
     assert.ok(fs.existsSync(path.join(customStateDir, 'state.json')));
+
+    // Spawn the remaining declared skills from the packed artifact.
+    for (const skillId of ['sigmaperformance', 'sigmarefactor']) {
+      const skillProject = path.join(tmpDir, `${skillId}-proj`);
+      fs.mkdirSync(skillProject, { recursive: true });
+      execFileSync('node', [installedBin, 'install', skillId, '--project', skillProject], {
+        cwd: appDir,
+        encoding: 'utf8',
+      });
+      assert.ok(fs.existsSync(path.join(skillProject, '.agents', 'skills', skillId, 'SKILL.md')));
+      assertOnlyUniversalProjectWrites(skillProject);
+    }
 
     // Spawn install on unowned existing folder to verify fail-closed behavior
     const unownedProject = path.join(tmpDir, 'unowned-proj');

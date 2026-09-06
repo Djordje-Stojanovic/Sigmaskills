@@ -151,6 +151,7 @@ class TerminalRenderer {
     this.paint = null;
     this.altScreen = false;
     this.cleaned = false;
+    this.lastStaticScreen = null;
     this.onResize = () => {
       if (this.paint) this.paint();
     };
@@ -227,6 +228,8 @@ class TerminalRenderer {
 
   screen(lines) {
     const content = lines.join('\n');
+    if (!this.dynamic && this.lastStaticScreen === content) return;
+    if (!this.dynamic) this.lastStaticScreen = content;
     if (this.dynamic) {
       this.stdout.write(`${CLEAR}${this.fill()}${content}${RESET}\n`);
     } else {
@@ -247,6 +250,7 @@ class KeyInput {
     this.ended = false;
     this.closed = false;
     this.previousRawMode = Boolean(stdin.isRaw);
+    this.previousFlowing = stdin.readableFlowing;
     this.changedRawMode = false;
 
     readline.emitKeypressEvents(stdin);
@@ -322,6 +326,9 @@ class KeyInput {
         // The stream may already be closed. Cursor restoration still runs.
       }
     }
+    if (this.previousFlowing !== true && typeof this.stdin.pause === 'function') {
+      this.stdin.pause();
+    }
   }
 }
 
@@ -369,8 +376,8 @@ function withHelp(hints) {
 
 function revealLines(renderer, progress = 1) {
   const templates = renderer.narrow
-    ? ['██████████', '      ███', '    ███', '  ███', '██████████']
-    : ['██████████████████', '              ████', '           ████', '        ████', '     ████', '██████████████████'];
+    ? ['██████████', '      ███', '██████████']
+    : ['██████████', '      ███', '██████████'];
   const sigma = templates.map((row) => row.replaceAll('█', renderer.block));
   const visibleRows = Math.max(1, Math.ceil(sigma.length * progress));
   const firstVisible = sigma.length - visibleRows;
@@ -392,7 +399,7 @@ function revealLines(renderer, progress = 1) {
   }
   lines.push('');
   lines.push(`  ${renderer.style('SIGMA SKILLS', EMBERFORGE_PALETTE.gold, true)}`);
-  lines.push(`  ${renderer.style('Project Installation', EMBERFORGE_PALETTE.orange)}`);
+  lines.push(`  ${renderer.style('Stage 1/4 · Project Installation', EMBERFORGE_PALETTE.orange)}`);
   return lines;
 }
 
@@ -432,12 +439,21 @@ function pickerLines(renderer, catalog, selected, cursor, error, scope) {
     const current = index === cursor ? '>' : ' ';
     const checked = selected.has(skill.id) ? 'x' : ' ';
     lines.push(`${current} [${checked}] ${skill.title} (${skill.id})`);
-    const descriptionWidth = Math.max(20, renderer.width - 6);
-    for (const descriptionLine of wrapWords(skill.description, descriptionWidth)) {
-      lines.push(`      ${descriptionLine}`);
-    }
   });
 
+  lines.push('');
+  const focused = catalog.skills[cursor];
+  if (focused) {
+    lines.push(`Focused: ${focused.title}`);
+    const detailWidth = Math.max(20, renderer.width - 8);
+    const detailLines = wrapWords(focused.description, detailWidth);
+    const visibleDetail = detailLines.slice(0, 2);
+    if (detailLines.length > visibleDetail.length && visibleDetail.length > 0) {
+      const last = visibleDetail.length - 1;
+      visibleDetail[last] = `${visibleDetail[last].slice(0, Math.max(1, detailWidth - 1))}…`;
+    }
+    visibleDetail.forEach((descriptionLine) => lines.push(`      ${descriptionLine}`));
+  }
   lines.push('');
   lines.push(`Selected: ${selected.size}/${catalog.skills.length}`);
   if (error) lines.push(renderer.style(`Error: ${error}`, EMBERFORGE_PALETTE.red, true));
@@ -528,10 +544,19 @@ function persistOutput(renderer, text) {
 }
 
 function destinationWindowSize(renderer, itemCount) {
-  if (!renderer.dynamic) return itemCount;
+  if (!renderer.dynamic) return itemCount.length;
   const rows = Number(renderer.stdout.rows) || 24;
-  const chrome = 10;
-  return Math.min(itemCount, Math.max(3, rows - chrome));
+  const chrome = 12;
+  const available = Math.max(1, rows - chrome);
+  let used = 0;
+  let count = 0;
+  for (const item of itemCount) {
+    const itemRows = wrapWords(destinationRowTitle(item), Math.max(20, renderer.width - 4)).length;
+    if (count > 0 && used + itemRows > available) break;
+    used += itemRows;
+    count += 1;
+  }
+  return Math.max(1, count);
 }
 
 function visibleDestinationItems(items, cursor, limit) {
@@ -571,7 +596,7 @@ function destinationRowTitle(item) {
 
 function destinationPickerLines(renderer, items, selectedRoots, cursor, query, error, scope) {
   const scopeLabel = scope === 'global' ? 'Global Installation' : 'Project Installation';
-  const view = visibleDestinationItems(items, cursor, destinationWindowSize(renderer, items.length));
+  const view = visibleDestinationItems(items, cursor, destinationWindowSize(renderer, items));
   const focused = items[cursor];
   const lines = [
     renderer.style(renderer.brand, EMBERFORGE_PALETTE.gold, true),

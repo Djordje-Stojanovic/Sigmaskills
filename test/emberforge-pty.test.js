@@ -428,6 +428,20 @@ test('dynamic cancel leaves the alternate screen before printing persist copy', 
   }
 });
 
+test('static prompts print an unchanged page once after an ignored key', async () => {
+  const projectRoot = sandboxProject();
+  try {
+    const io = createPty('xq\x1b', { tty: false, forceNoColor: true });
+    const code = await runCli(['--project', projectRoot], io);
+    assert.equal(code, 0);
+    const output = io.getStdout();
+    assert.equal((output.match(/Select skills from this Skill Pack:/g) || []).length, 1);
+    assert.match(output, /Installation cancelled\. No files were written\./);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
 test('dynamic destination picker windows a short terminal and shows a path status line', async () => {
   const projectRoot = sandboxProject();
   try {

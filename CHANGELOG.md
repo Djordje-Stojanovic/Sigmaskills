@@ -4,6 +4,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- SigmaRefactor (`sigmarefactor`) scans and reconciles the five largest maintained files, reads them fully, discusses behavior-preserving refactoring choices with the user, and verifies approved changes.
+
+### Fixed
+
+- The interactive installer stops repeating unchanged static pages and pauses standard input during cleanup, so confirmed installs return to the shell reliably.
+
 ## [0.2.1] — 2026-08-27
 
 ### Changed
