@@ -5,7 +5,7 @@ SigmaSkills distributes a small, portable set of Agent Skills across compatible 
 ## Language
 
 **Skill Pack**:
-The four installable SigmaSkills published together from this repository.
+The five installable SigmaSkills maintained together in this repository.
 _Avoid_: Bundle, plugin
 
 **Sigma Installer**:

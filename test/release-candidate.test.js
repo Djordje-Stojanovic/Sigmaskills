@@ -311,7 +311,7 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
     const cancelOut = runCli(bin, [
       '--static', '--no-color', '--narrow', '--project', interactiveProject,
     ], { cwd: appDir, env: { ...offline, CI: '', NO_COLOR: '', REDUCED_MOTION: '1' }, input: '\x1b' });
-    assert.match(cancelOut, /narrow/i);
+    assert.ok(cancelOut.split('\n').every((line) => line.length <= 60));
     assert.match(cancelOut, /cancelled/i);
     assert.doesNotMatch(cancelOut, /\x1b\[/);
     assert.ok(!fs.existsSync(path.join(interactiveProject, '.agents', 'skills')));

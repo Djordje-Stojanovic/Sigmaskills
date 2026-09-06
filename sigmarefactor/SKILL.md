@@ -45,7 +45,7 @@ Completion criterion: the agreed plan has explicit files, behavior to preserve, 
 - Keep public names, command output, persisted data, error handling, and user customizations stable unless the user approved a change.
 - Add behavior tests only where current tests cannot prove the agreed behavior. Do not weaken or delete tests to reduce lines.
 
-Completion criterion: the agreed refactoring is present and every preserved behavior has a test or an existing verified contract.
+Completion criterion: the agreed refactoring is present and has the planned verification, with coverage limits reported.
 
 ### 5. Verify and deliver
 
@@ -58,7 +58,7 @@ Completion criterion: verification is green or every remaining failure is named,
 
 ## Boundaries
 
-This skill may read `C:\Coding\Thinkcenter_Setup` to understand `laloc` and may use it as a read-only trial repository. It does not change that repository or load its full profile automatically.
+Resolve tool availability in the current shell. If `laloc` is missing, use the scan fallback. Do not install a toolkit or load a full machine profile automatically.
 
 Use SigmaBrief only when the user asks for an agent brief or delegation. Use SigmaWrite as a writing voice, not as a required dependency. The skill must work when both skills are absent.
 

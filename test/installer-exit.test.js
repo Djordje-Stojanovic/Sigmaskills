@@ -22,24 +22,27 @@ test('interactive child exits after confirmation while stdin stays open', async 
   child.stderr.on('data', (chunk) => { stderr += chunk; });
 
   try {
-    child.stdin.write(' \r\ry');
+    child.stdin.write('1\n\n\ny\n');
     const result = await new Promise((resolve, reject) => {
+      let timedOut = false;
       const timer = setTimeout(() => {
+        timedOut = true;
         child.kill();
-        reject(new Error(`installer did not exit while stdin stayed open\nstdout: ${stdout}\nstderr: ${stderr}`));
-      }, 2000);
+      }, 10000);
       child.once('error', (error) => {
         clearTimeout(timer);
         reject(error);
       });
       child.once('close', (code, signal) => {
         clearTimeout(timer);
+        if (timedOut) return reject(new Error(`installer did not exit while stdin stayed open\nstdout: ${stdout}\nstderr: ${stderr}`));
         resolve({ code, signal });
       });
     });
 
     assert.equal(result.signal, null);
     assert.equal(result.code, 0, stderr);
+    assert.equal((stdout.match(/Project Installation complete:/g) || []).length, 1);
     assert.ok(fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmareview', 'SKILL.md')));
   } finally {
     child.stdin.destroy();

@@ -83,7 +83,9 @@ Runs a reproducible `laloc` scan, reads the five largest maintained files, expla
 
 Run `npx @djordje-stojanovic/sigmaskills` with no command. The Sigma Installer's Emberforge interface reads the Skill Pack catalog from `manifest.json` and the bundled Agent Host registry. Project Installation selects only the universal `.agents/skills/` destination by default, shows a compact host-path list, and leaves host-specific destinations unselected until you choose them. Search remains available for every supported Agent Host, including hosts that are not detected. Exact current official copies and valid links are recorded as managed without rewriting skill bytes. Escape, EOF, Ctrl+C, or a rejected confirmation exits without writing.
 
-The Emberforge screens keep the accepted warm LAPI palette and do not mix in Prismgrid or Monolith. Layouts reflow below 76 columns and wrap long paths. Keyboard-only controls cover focus, search, selection, confirmation, cancellation, and `?` help. `--no-color`, `--static`, `--narrow`, `--json`, `NO_COLOR`, `CI`, `REDUCED_MOTION=1`, `PREFERS_REDUCED_MOTION=reduce`, redirected output, and non-TTY sessions disable animation and decorative color. Truecolor, 256-color, 16-color, and ASCII fallbacks stay readable and still show safety copy. The cursor and raw mode restore after success, failure, interrupt, EOF, and exceptions.
+The installer opens directly to a small Sigma heading in the warm LAPI palette. Skill descriptions stay in a bounded focus area. Destination pages show at most eight rows and adapt to terminal height. Long confirmation paths wrap onto pages; use `next`/`prev` in plain mode or left/right arrows in interactive mode. Reduced motion keeps the same picker: there is no opening animation. The cursor, raw mode, input flow, and listeners are restored when the installer finishes or stops.
+
+With `--static`, `--no-color`, `NO_COLOR`, `CI`, redirected output, or a non-TTY session, enter one command per line. Type a row number to toggle it, `/claude` to search destinations, `/` to clear search, `next` or `prev` to change page, and press Enter to continue. Use `a` to select all skills, `g` for the global warning, `?` for help, or `esc` to cancel. Confirm installation with `y` followed by Enter. Only `.agents/skills` is selected by default; detected hosts stay unselected.
 
 Use `--no-color`, `--static`, or `--narrow` when the terminal needs those modes. Use `--project <path>` to select another project root.
 
@@ -198,7 +200,7 @@ Point other hosts at the same folders (or copy again) as needed:
 | OpenCode | `~/.config/opencode/skills/<id>/` |
 | Codex | `~/.codex/skills/<id>/` |
 
-Release zip: download [**Sigmaskills-v0.2.1**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.2.1) and copy the five skill folders into the path your agent reads.
+Release zip: [**Sigmaskills-v0.2.1**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.2.1) contains the four skills released at that version. SigmaRefactor and the revised installer are available from the current repository source until a new package release is published.
 
 ### Optional: SigmaWrite as system prompt
 

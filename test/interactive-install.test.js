@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import test from 'node:test';
+import { commandLines } from './terminal-input.js';
 import { runCli } from '../src/cli.js';
 import { runProjectInstaller } from '../src/interactive.js';
 import { getCatalog, findPackageRoot } from '../src/catalog.js';
@@ -37,7 +38,7 @@ function createTerminalIo(input, options = {}) {
     err += chunk;
   });
 
-  if (!options.manualInput) queueMicrotask(() => stdin.end(input));
+  if (!options.manualInput) queueMicrotask(() => stdin.end((options.static || !stdin.isTTY || options.forceNoColor || options.colorDepth === 1 || options.env?.CI) ? commandLines(input) : input));
 
   const env = { ...(options.env ?? process.env), CI: options.env?.CI ?? '' };
   delete env.NO_COLOR;
@@ -141,7 +142,7 @@ test('interactive Project Installation confirms exact destinations and installs 
     assert.match(output, /\.agents\/skills\s+\(universal default/);
     assert.match(output, /\d+ hosts/);
     assert.match(output, /\[ \] \.claude\/skills/);
-    assert.match(output, /\[ \] \.pi\/skills/);
+    assert.match(output, /Showing 1–8 of/);
     assert.ok(output.indexOf(reviewDestination) < output.indexOf('Installed SigmaReview'));
     assert.ok(output.indexOf(briefDestination) < output.indexOf('Installed SigmaBrief'));
 
@@ -187,20 +188,18 @@ test('interactive Project Installation preflights every selected destination bef
   }
 });
 
-test('Emberforge reveal uses the accepted warm palette and any key skips it', async () => {
+test('installer heading uses the warm palette without an opening animation', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-reveal-skip-'));
   try {
     const io = createTerminalIo('x\x1b', { tty: true, env: { ...process.env, CI: '' } });
-    const startedAt = Date.now();
     const code = await runCli(['--project', projectRoot], io);
-    const elapsed = Date.now() - startedAt;
 
     assert.equal(code, 0);
-    assert.ok(elapsed < 300, `key skip took ${elapsed} ms`);
+    assert.doesNotMatch(io.getStdout(), /█/, 'opening animation must be absent');
     assert.match(io.getStdout(), /\x1b\[48;2;26;23;20m/); // base #1a1714
     assert.match(io.getStdout(), /\x1b\[1;38;2;212;165;100m/); // gold #d4a564
-    assert.match(io.getStdout(), /\x1b\[38;2;204;136;68m/); // orange #cc8844
-    assert.match(io.getStdout(), /\x1b\[1;38;2;212;100;92m/); // red #d4645c
+
+
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -223,7 +222,7 @@ test('dynamic output separates the final prompt from the installation result', a
   }
 });
 
-test('Ctrl+C during the Emberforge reveal cancels before any prompt or write', async () => {
+test('Ctrl+C at startup cancels before any write', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-reveal-cancel-'));
   try {
     const io = createTerminalIo('\x03', { tty: true });
@@ -238,10 +237,9 @@ test('Ctrl+C during the Emberforge reveal cancels before any prompt or write', a
   }
 });
 
-test('Emberforge reveal reaches the skill prompt within 700 ms', async () => {
+test('installer shows skill selection before receiving any input', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-reveal-duration-'));
   try {
-    const startedAt = Date.now();
     let resolvePrompt;
     const promptShown = new Promise((resolve) => {
       resolvePrompt = resolve;
@@ -250,19 +248,19 @@ test('Emberforge reveal reaches the skill prompt within 700 ms', async () => {
       tty: true,
       manualInput: true,
       onStdout: (_chunk, output, stdin) => {
-        if (output.includes('Select skills from this Skill Pack:')) {
-          resolvePrompt(Date.now() - startedAt);
+        if (output.includes('Stage 1/4')) {
+          resolvePrompt();
           stdin.end('\x1b');
         }
       },
     });
 
     const run = runCli(['--project', projectRoot], io);
-    const revealElapsed = await promptShown;
+    await promptShown;
     const code = await run;
 
     assert.equal(code, 0);
-    assert.ok(revealElapsed <= 750, `reveal took ${revealElapsed} ms`);
+    assert.match(io.getStdout(), /Stage 1\/4/);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -275,8 +273,8 @@ test('narrow terminals use the compact Project Installation layout', async () =>
     const code = await runCli(['--static', '--narrow', '--project', projectRoot], io);
 
     assert.equal(code, 0);
-    assert.match(io.getStdout(), /Project Installation \(default\) · narrow/);
-    assert.match(io.getStdout(), /██████████/);
+    assert.match(io.getStdout(), /Project Installation/);
+    assert.doesNotMatch(io.getStdout(), /█/);
     assert.doesNotMatch(io.getStdout(), /██████████████████/);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
@@ -298,12 +296,12 @@ test('escape, EOF, Ctrl+C, and confirmation cancellation write nothing and resto
     await t.test(scenario.name, async () => {
       const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-cancel-'));
       try {
-        const io = createTerminalIo(scenario.keys, { tty: true });
+        const io = createTerminalIo(scenario.keys, { tty: true, static: true });
         const code = await runCli(['--static', '--project', projectRoot], io);
 
         assert.equal(code, scenario.code);
         assert.match(io.getStdout(), /Installation cancelled\. No files were written\./);
-        assert.deepEqual(io.getRawModes(), [true, false]);
+        assert.deepEqual(io.getRawModes(), []);
         assert.equal(io.stdin.isRaw, false);
         assert.ok(!fs.existsSync(path.join(projectRoot, '.agents')));
         assert.ok(!fs.existsSync(path.join(projectRoot, 'skills-lock.json')));
@@ -325,7 +323,7 @@ test('interactive destinations keep every Agent Host searchable and never auto-s
     assert.match(output, /Search: p/);
     assert.match(output, /Pi \(pi\)/);
     assert.match(output, /\.pi\/skills/);
-    assert.match(output, /Type to search every Agent Host/);
+    assert.match(output, /\/search/);
     assert.ok(!fs.existsSync(path.join(projectRoot, '.agents')));
     assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));
   } finally {

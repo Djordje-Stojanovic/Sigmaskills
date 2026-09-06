@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import test from 'node:test';
+import { commandLines } from './terminal-input.js';
 import { getCatalog, findPackageRoot } from '../src/catalog.js';
 import { runCli } from '../src/cli.js';
 import {
@@ -79,7 +80,7 @@ function createTerminalIo(input, options = {}) {
     err += chunk;
   });
 
-  if (!options.manualInput) queueMicrotask(() => stdin.end(input));
+  if (!options.manualInput) queueMicrotask(() => stdin.end((!stdin.isTTY || options.forceNoColor || options.colorDepth === 1 || options.env?.CI) ? commandLines(input) : input));
 
   const env = { ...(options.env ?? process.env), CI: options.env?.CI ?? '' };
   delete env.NO_COLOR;

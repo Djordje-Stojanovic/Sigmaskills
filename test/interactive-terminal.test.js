@@ -4,10 +4,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import test from 'node:test';
+import { commandLines } from './terminal-input.js';
 import { runCli } from '../src/cli.js';
 import { runProjectInstaller } from '../src/interactive.js';
 
-function createPty(input, options = {}) {
+function createSimulatedTerminal(input, options = {}) {
   const stdin = new PassThrough();
   stdin.isTTY = options.tty ?? true;
   stdin.isRaw = false;
@@ -36,7 +37,7 @@ function createPty(input, options = {}) {
     err += chunk;
   });
 
-  if (!options.manualInput) queueMicrotask(() => stdin.end(input));
+  if (!options.manualInput) queueMicrotask(() => stdin.end((options.static || !stdin.isTTY || options.forceNoColor || options.colorDepth === 1 || options.env?.CI) ? commandLines(input) : input));
 
   const env = { ...(options.env ?? process.env), CI: options.env?.CI ?? '' };
   delete env.NO_COLOR;
@@ -67,15 +68,15 @@ function sandboxProject() {
 test('Emberforge keeps the warm LAPI palette and does not blend Prismgrid or Monolith', async () => {
   const projectRoot = sandboxProject();
   try {
-    const io = createPty('\x1b');
+    const io = createSimulatedTerminal('\x1b');
     const code = await runCli(['--project', projectRoot], io);
 
     assert.equal(code, 0);
     const output = io.getStdout();
     assert.match(output, /\x1b\[48;2;26;23;20m/);
     assert.match(output, /\x1b\[1;38;2;212;165;100m/);
-    assert.match(output, /\x1b\[38;2;204;136;68m/);
-    assert.match(output, /\x1b\[1;38;2;212;100;92m/);
+    
+    
     assert.match(output, /SIGMA SKILLS/);
     assert.doesNotMatch(output, /SIG\/\/SYS/);
     assert.doesNotMatch(output, /PRISMGRID/i);
@@ -126,18 +127,22 @@ test('reduced motion, CI, NO_COLOR, and JSON disable Emberforge animation and de
     await t.test(scenario.name, async () => {
       const projectRoot = sandboxProject();
       try {
-        const io = createPty('\x1b', scenario.options);
+        const io = createSimulatedTerminal('\x1b', scenario.options);
         const code = await runCli(scenario.args(projectRoot), io);
         assert.equal(code, 0);
         const output = io.getStdout();
-        assert.doesNotMatch(output, /\x1b\[\?25l/);
-        assert.doesNotMatch(output, /\x1b\[2J/);
+        if (scenario.name === 'REDUCED_MOTION' || scenario.name === 'prefers-reduced-motion') {
+          assert.match(output, /\x1b\[\?25l/);
+        } else {
+          assert.doesNotMatch(output, /\x1b\[\?25l/);
+          assert.doesNotMatch(output, /\x1b\[2J/);
+        }
         if (scenario.expectJson) {
           const parsed = JSON.parse(output);
           assert.equal(parsed.name, 'sigmaskills');
           assert.doesNotMatch(output, /\x1b\[/);
         } else {
-          assert.match(output, /Select skills from this Skill Pack:/);
+          assert.match(output, /Stage 1\/4/);
           assert.match(output, /Installation cancelled\. No files were written\./);
         }
         if (scenario.name === 'NO_COLOR' || scenario.name === 'JSON') {
@@ -155,14 +160,14 @@ test('truecolor, 256-color, basic color, and ASCII fallbacks stay readable and k
     {
       name: 'truecolor',
       colorDepth: 24,
-      match: /\x1b\[38;2;/,
+      match: /\x1b\[1;38;2;/,
       reject: null,
       ascii: false,
     },
     {
       name: '256-color',
       colorDepth: 8,
-      match: /\x1b\[38;5;/,
+      match: /\x1b\[1;38;5;/,
       reject: /\x1b\[38;2;/,
       ascii: false,
     },
@@ -186,13 +191,13 @@ test('truecolor, 256-color, basic color, and ASCII fallbacks stay readable and k
     await t.test(scenario.name, async () => {
       const projectRoot = sandboxProject();
       try {
-        const io = createPty('x\r\x1b', { colorDepth: scenario.colorDepth });
+        const io = createSimulatedTerminal('x\r\x1b', { colorDepth: scenario.colorDepth });
         const code = await runCli(['--project', projectRoot], io);
         assert.equal(code, 0);
         const output = io.getStdout();
         assert.match(output, scenario.match);
         assert.match(output, /Select at least one skill\./);
-        assert.match(output, /g Global Installation/);
+        assert.match(output, /g global/);
         if (scenario.reject) assert.doesNotMatch(output, scenario.reject);
         if (scenario.ascii) {
           assert.doesNotMatch(output, /█/);
@@ -206,44 +211,41 @@ test('truecolor, 256-color, basic color, and ASCII fallbacks stay readable and k
   }
 });
 
-test('bounded PTY skip-any-key reveal stays under the 700 ms motion ceiling', async () => {
+test('simulated terminal opens directly to skill selection without animation', async () => {
   const projectRoot = sandboxProject();
   try {
-    const startedAt = Date.now();
-    const io = createPty('x\x1b');
+    const io = createSimulatedTerminal('x\x1b');
     const code = await runCli(['--project', projectRoot], io);
-    const elapsed = Date.now() - startedAt;
     assert.equal(code, 0);
-    assert.ok(elapsed < 300, `key skip took ${elapsed} ms`);
-    assert.match(io.getStdout(), /Select skills from this Skill Pack:/);
+    assert.doesNotMatch(io.getStdout(), /█/, 'opening animation must be absent');
+    assert.match(io.getStdout(), /Stage 1\/4/);
     assert.match(io.getStdout(), /Installation cancelled\. No files were written\./);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });
 
-test('bounded PTY Emberforge reveal reaches the skill prompt within 700 ms without a skip key', async () => {
+test('simulated terminal shows skill selection before receiving any input', async () => {
   const projectRoot = sandboxProject();
   try {
-    const startedAt = Date.now();
     let resolvePrompt;
     const promptShown = new Promise((resolve) => {
       resolvePrompt = resolve;
     });
-    const io = createPty('', {
+    const io = createSimulatedTerminal('', {
       manualInput: true,
       onStdout: (_chunk, output, stdin) => {
-        if (output.includes('Select skills from this Skill Pack:')) {
-          resolvePrompt(Date.now() - startedAt);
+        if (output.includes('Stage 1/4')) {
+          resolvePrompt();
           stdin.end('\x1b');
         }
       },
     });
     const run = runCli(['--project', projectRoot], io);
-    const revealElapsed = await promptShown;
+    await promptShown;
     const code = await run;
     assert.equal(code, 0);
-    assert.ok(revealElapsed <= 750, `reveal took ${revealElapsed} ms`);
+    assert.match(io.getStdout(), /Stage 1\/4/);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -253,11 +255,11 @@ test('layouts reflow on resize and wrap long paths at the documented 76-column n
   const projectRoot = sandboxProject();
   try {
     let resized = false;
-    const io = createPty('', {
+    const io = createSimulatedTerminal('', {
       columns: 100,
       manualInput: true,
       onStdout: (_chunk, output, stdin, stdout) => {
-        if (!resized && output.includes('Select skills from this Skill Pack:')) {
+        if (!resized && output.includes('Stage 1/4')) {
           resized = true;
           stdout.columns = 44;
           stdout.emit('resize');
@@ -298,8 +300,8 @@ test('layouts reflow on resize and wrap long paths at the documented 76-column n
     });
     assert.equal(code, 0);
     const output = io.getStdout();
-    assert.match(output, /· narrow/);
-    assert.match(output, /██████████|#{10}/);
+    assert.match(output, /Stage 1\/4/);
+    assert.doesNotMatch(output, /█/);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -315,7 +317,7 @@ test('long destination paths wrap instead of overflowing the documented narrow w
         { id: 'future-skill', title: 'Future Skill', description: longToken },
       ],
     };
-    const io = createPty('\x1b', { columns: 44, colorDepth: 1 });
+    const io = createSimulatedTerminal('\x1b', { columns: 44, colorDepth: 1 });
     const code = await runProjectInstaller({
       catalog,
       packageRoot: projectRoot,
@@ -325,9 +327,9 @@ test('long destination paths wrap instead of overflowing the documented narrow w
     });
     assert.equal(code, 0);
     const output = io.getStdout();
-    assert.match(output, / · narrow/);
-    const descriptionLines = output.split('\n').filter((line) => line.startsWith('      x'));
-    assert.ok(descriptionLines.length >= 2, 'long description should wrap onto more than one line');
+    assert.match(output, /Stage 1\/4/);
+    const descriptionLines = output.split('\n').filter((line) => line.startsWith('xxx'));
+    assert.equal(descriptionLines.length, 1, 'focused description stays bounded');
     for (const line of descriptionLines) {
       assert.ok(line.length <= 50, `wrapped line too long: ${line.length}`);
     }
@@ -339,7 +341,7 @@ test('long destination paths wrap instead of overflowing the documented narrow w
 test('keyboard help, focus, search, selection, confirmation, and cancellation stay available without a mouse', async () => {
   const projectRoot = sandboxProject();
   try {
-    const io = createPty('x?x \rp\x1b\x1b');
+    const io = createSimulatedTerminal('x?x \rp\x1b\x1b');
     const code = await runCli(['--project', projectRoot], io);
     assert.equal(code, 0);
     const output = io.getStdout();
@@ -351,7 +353,7 @@ test('keyboard help, focus, search, selection, confirmation, and cancellation st
     assert.match(output, /enter continue/);
     assert.match(output, /esc cancel/);
     assert.match(output, /Ctrl\+C abort/);
-    assert.match(output, /any key skips the opening reveal/);
+    assert.match(output, /Plain mode: type a command, then Enter./);
     assert.match(output, /> \[x\] SigmaReview/);
     assert.match(output, /Search: p/);
     assert.match(output, /Installation cancelled\. No files were written\./);
@@ -371,7 +373,7 @@ test('cursor and raw mode restore after success, failure, interrupt, EOF, and ex
     await t.test(scenario.name, async () => {
       const projectRoot = sandboxProject();
       try {
-        const io = createPty(scenario.keys);
+        const io = createSimulatedTerminal(scenario.keys);
         const code = await runCli(['--project', projectRoot], io);
         assert.equal(code, scenario.code);
         assert.match(io.getStdout(), /\x1b\[\?25h/);
@@ -396,7 +398,7 @@ test('cursor and raw mode restore after success, failure, interrupt, EOF, and ex
       const dest = path.join(projectRoot, '.agents', 'skills', 'sigmareview');
       fs.mkdirSync(dest, { recursive: true });
       fs.writeFileSync(path.join(dest, 'unowned.txt'), 'keep', 'utf8');
-      const io = createPty('x \r\r');
+      const io = createSimulatedTerminal('x \r\r');
       const code = await runCli(['--project', projectRoot], io);
       assert.equal(code, 1);
       assert.match(io.getStderr(), /already exists and is not owned/);
@@ -411,7 +413,7 @@ test('cursor and raw mode restore after success, failure, interrupt, EOF, and ex
 test('dynamic cancel leaves the alternate screen before printing persist copy', async () => {
   const projectRoot = sandboxProject();
   try {
-    const io = createPty('x\x1b');
+    const io = createSimulatedTerminal('x\x1b');
     const code = await runCli(['--project', projectRoot], io);
     assert.equal(code, 0);
     const output = io.getStdout();
@@ -431,12 +433,68 @@ test('dynamic cancel leaves the alternate screen before printing persist copy', 
 test('static prompts print an unchanged page once after an ignored key', async () => {
   const projectRoot = sandboxProject();
   try {
-    const io = createPty('xq\x1b', { tty: false, forceNoColor: true });
+    const io = createSimulatedTerminal('xq\x1b', { tty: false, forceNoColor: true });
     const code = await runCli(['--project', projectRoot], io);
     assert.equal(code, 0);
     const output = io.getStdout();
-    assert.equal((output.match(/Select skills from this Skill Pack:/g) || []).length, 1);
+    assert.equal((output.match(/Stage 1\/4/g) || []).length, 1);
     assert.match(output, /Installation cancelled\. No files were written\./);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('plain input waits for a complete command and short pages retain all skills', async () => {
+  const projectRoot = sandboxProject();
+  try {
+    const io = createSimulatedTerminal('', { tty: false, rows: 6, columns: 44, manualInput: true });
+    const run = runCli(['--static', '--project', projectRoot], io);
+    const initial = io.getStdout();
+    io.stdin.write('next');
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(io.getStdout(), initial, 'partial commands must not redraw');
+    io.stdin.write('\nnext\nnext\nnext\nesc\n');
+    assert.equal(await run, 0);
+    for (const name of ['SigmaReview', 'SigmaPerformance', 'SigmaBrief', 'SigmaWrite', 'SigmaRefactor']) {
+      assert.ok(io.getStdout().includes(name), `${name} must remain reachable`);
+    }
+    assert.deepEqual(io.getRawModes(), []);
+    assert.equal(io.stdin.readableFlowing, false);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('short dynamic screens retain focus and navigation within the terminal bounds', async () => {
+  const projectRoot = sandboxProject();
+  try {
+    const io = createSimulatedTerminal(' \r' + '\x1b[B'.repeat(20) + '\x1b', { rows: 8, columns: 44 });
+    assert.equal(await runCli(['--project', projectRoot], io), 0);
+    const frames = io.getStdout().split('\x1b[2J\x1b[H').slice(1, -1);
+    assert.ok(frames.length > 20);
+    for (const frame of frames) {
+      const lines = frame.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '').trimEnd().split('\n');
+      assert.ok(lines.length <= 7, `${lines.length} rows exceed usable height`);
+      assert.ok(lines.every((line) => line.length <= 43));
+      assert.equal(lines.filter((line) => line.startsWith('>')).length, 1);
+      assert.ok(lines.some((line) => line.includes('enter') && line.includes('esc')));
+    }
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('Ctrl+C in help exits and releases parser and resize listeners', async () => {
+  const projectRoot = sandboxProject();
+  try {
+    const io = createSimulatedTerminal('?\x03');
+    const inputListeners = io.stdin.listenerCount('data');
+    const resizeListeners = io.stdout.listenerCount('resize');
+    assert.equal(await runCli(['--project', projectRoot], io), 130);
+    assert.equal(io.stdin.listenerCount('data'), inputListeners);
+    assert.equal(io.stdout.listenerCount('resize'), resizeListeners);
+    assert.deepEqual(io.getRawModes(), [true, false]);
+    assert.equal(io.stdin.readableFlowing, false);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -446,16 +504,16 @@ test('dynamic destination picker windows a short terminal and shows a path statu
   const projectRoot = sandboxProject();
   try {
     let phase = 0;
-    const io = createPty('', {
+    const io = createSimulatedTerminal('', {
       rows: 16,
       columns: 80,
       manualInput: true,
       onStdout: (_chunk, output, stdin) => {
-        if (phase === 0 && output.includes('Select skills from this Skill Pack:')) {
+        if (phase === 0 && output.includes('Stage 1/4')) {
           phase = 1;
           stdin.write(' \r');
         }
-        if (phase === 1 && output.includes('Project Installation · destinations')) {
+        if (phase === 1 && output.includes('Stage 2/4 · destinations')) {
           phase = 2;
           stdin.end('\x1b');
         }

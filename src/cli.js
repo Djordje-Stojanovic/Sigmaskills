@@ -90,8 +90,8 @@ Options:
                     Uninstall Review choice for a changed, customized, or malformed skill
   --export-dir <dir>
                     Collision-safe destination root for export resolutions
-  --no-color        Disable color and reveal animation
-  --static          Disable animation and screen repainting
+  --no-color        Use plain, line-based prompts without color
+  --static          Use paged line prompts without screen repainting
   --narrow          Use the narrow-terminal layout
   -y, --yes         Skip interactive confirmations
 

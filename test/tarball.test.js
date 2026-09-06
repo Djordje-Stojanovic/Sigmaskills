@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { extractRawCustomContent, injectRawCustomContent } from '../src/customization.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
@@ -172,9 +173,9 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     const interactiveOut = execFileSync(
       'node',
       [installedBin, '--static', '--no-color', '--narrow', '--project', interactiveProject],
-      { cwd: appDir, encoding: 'utf8', input: ' \r\ry' },
+      { cwd: appDir, encoding: 'utf8', input: '1\n\n\ny\n' },
     );
-    assert.match(interactiveOut, /Project Installation \(default\) · narrow/);
+    assert.match(interactiveOut, /Project Installation \(default\)/);
     assert.match(interactiveOut, /Resolved destinations:/);
     assert.doesNotMatch(interactiveOut, /\x1b\[/);
     assert.ok(fs.existsSync(path.join(interactiveProject, '.agents', 'skills', 'sigmareview', 'SKILL.md')));
@@ -236,16 +237,45 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.ok(fs.existsSync(path.join(customStateProject, 'skills-lock.json')));
     assert.ok(fs.existsSync(path.join(customStateDir, 'state.json')));
 
-    // Spawn the remaining declared skills from the packed artifact.
-    for (const skillId of ['sigmaperformance', 'sigmarefactor']) {
-      const skillProject = path.join(tmpDir, `${skillId}-proj`);
-      fs.mkdirSync(skillProject, { recursive: true });
+    // Compare every file and byte, then exercise the complete five-skill installation.
+    const skillProject = path.join(tmpDir, 'all-skills');
+    fs.mkdirSync(skillProject, { recursive: true });
+    for (const { id: skillId } of MANIFEST.skills) {
+      const source = path.join(ROOT, skillId);
+      const packed = path.join(path.dirname(path.dirname(installedBin)), skillId);
+      const sourceFiles = listFiles(source);
+      assert.deepEqual(listFiles(packed), sourceFiles, `${skillId}: packed tree differs`);
+      for (const file of sourceFiles) {
+        assert.deepEqual(fs.readFileSync(path.join(packed, file)), fs.readFileSync(path.join(source, file)), `${skillId}/${file}: packed bytes differ`);
+      }
       execFileSync('node', [installedBin, 'install', skillId, '--project', skillProject], {
         cwd: appDir,
         encoding: 'utf8',
       });
-      assert.ok(fs.existsSync(path.join(skillProject, '.agents', 'skills', skillId, 'SKILL.md')));
+      const destination = path.join(skillProject, '.agents', 'skills', skillId);
+      assert.deepEqual(listFiles(destination), sourceFiles, `${skillId}: installed tree differs`);
+      for (const file of sourceFiles) {
+        assert.deepEqual(fs.readFileSync(path.join(destination, file)), fs.readFileSync(path.join(packed, file)), `${skillId}/${file}: installed bytes differ`);
+      }
+      const skillMd = path.join(destination, 'SKILL.md');
+      execFileSync('node', [installedBin, 'install', skillId, '--project', skillProject], { cwd: appDir });
+      const raw = `\r\n\tUser content for ${skillId}: café ✓  \r\n\n`;
+      fs.writeFileSync(skillMd, injectRawCustomContent(fs.readFileSync(skillMd, 'utf8'), raw, skillId));
+      assert.throws(() => execFileSync('node', [installedBin, 'install', skillId, '--project', skillProject], { cwd: appDir, stdio: 'pipe' }), /Command failed/);
+      assert.equal(extractRawCustomContent(fs.readFileSync(skillMd, 'utf8'), skillId), raw);
       assertOnlyUniversalProjectWrites(skillProject);
+    }
+    const status = JSON.parse(execFileSync('node', [installedBin, 'status', '--json', '--project', skillProject], { cwd: appDir, encoding: 'utf8' }));
+    assert.equal(status.skills.length, MANIFEST.skills.length);
+    // Simulate a successor package in the isolated installed artifact.
+    for (const { id } of MANIFEST.skills) {
+      fs.appendFileSync(path.join(path.dirname(path.dirname(installedBin)), id, 'SKILL.md'), '\nUpdated packaged guidance.\n');
+    }
+    execFileSync('node', [installedBin, 'update', '--yes', '--project', skillProject], { cwd: appDir });
+    for (const { id } of MANIFEST.skills) {
+      const markdown = fs.readFileSync(path.join(skillProject, '.agents', 'skills', id, 'SKILL.md'), 'utf8');
+      assert.equal(extractRawCustomContent(markdown, id), `\r\n\tUser content for ${id}: café ✓  \r\n\n`);
+      assert.match(markdown, /Updated packaged guidance\./);
     }
 
     // Spawn install on unowned existing folder to verify fail-closed behavior

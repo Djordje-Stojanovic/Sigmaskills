@@ -1,6 +1,6 @@
 # AGENTS.md
 
-You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaperformance`, `sigmabrief`, `sigmawrite`, `sigmarefactor`). There is no app runtime here — only skill markdown, contracts, docs, and structural tests.
+You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaperformance`, `sigmabrief`, `sigmawrite`, `sigmarefactor`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
 
 **Where to look**
 
