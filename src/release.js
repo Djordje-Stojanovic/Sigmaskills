@@ -375,8 +375,12 @@ function defaultGit(rootDir) {
   };
 }
 
-function npmCommand() {
-  return process.platform === 'win32' ? 'npm.cmd' : 'npm';
+function execNpm(args, options = {}) {
+  const isWin = process.platform === 'win32';
+  return execFileSync(isWin ? 'npm.cmd' : 'npm', args, {
+    ...options,
+    shell: isWin ? true : options.shell,
+  });
 }
 
 function parseNpmPackJson(output) {
@@ -390,7 +394,7 @@ function parseNpmPackJson(output) {
 
 function defaultPack(rootDir) {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-release-pack-'));
-  const output = execFileSync(npmCommand(), ['pack', '--json', `--pack-destination=${dest}`], {
+  const output = execNpm(['pack', '--json', `--pack-destination=${dest}`], {
     cwd: rootDir,
     encoding: 'utf8',
   });
@@ -459,14 +463,13 @@ export function writeReleaseIdentities(rootDir, { now } = {}) {
 function defaultProbes({ git, expected, rootDir }) {
   let npmPackage = { exists: false, versions: {} };
   try {
-    const name = execFileSync(npmCommand(), ['view', RELEASE_PACKAGE_NAME, 'name'], {
+    const name = execNpm(['view', RELEASE_PACKAGE_NAME, 'name'], {
       encoding: 'utf8',
     }).trim();
     npmPackage.exists = name === RELEASE_PACKAGE_NAME;
     if (npmPackage.exists) {
       try {
-        const integrity = execFileSync(
-          npmCommand(),
+        const integrity = execNpm(
           ['view', `${RELEASE_PACKAGE_NAME}@${expected.version}`, 'dist.integrity'],
           { encoding: 'utf8' },
         ).trim();
@@ -772,7 +775,7 @@ export async function runTrustedValidate(env, options = {}) {
   const git = options.git || defaultGit(rootDir);
   verifyApprovedCommit({ git, expectedCommit, expectedVersion, rootDir });
   if (options.runTests) await options.runTests();
-  else execFileSync(npmCommand(), ['test'], { cwd: rootDir, stdio: 'inherit' });
+  else execNpm(['test'], { cwd: rootDir, stdio: 'inherit' });
   const tarball = options.pack ? options.pack() : defaultPack(rootDir);
   if (tarball.digest !== expectedDigest) {
     throw codedError(`rebuilt tarball sha256:${tarball.digest} does not match approved digest sha256:${expectedDigest}`, 'digest-mismatch');
@@ -825,7 +828,7 @@ export async function runTrustedPublish(env, options = {}) {
         ? ['publish', artifact, '--access', 'public', '--tag', RELEASE_DIST_TAG, '--provenance']
         : ['publish', '--access', 'public', '--tag', RELEASE_DIST_TAG, '--provenance'];
       try {
-        execFileSync(npmCommand(), publishArgs, {
+        execNpm(publishArgs, {
           cwd: rootDir,
           encoding: 'utf8',
           stdio: 'pipe',
