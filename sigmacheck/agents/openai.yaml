@@ -1,0 +1,12 @@
+interface:
+  display_name: SigmaCheck
+  short_description: Scored 50-point audit of any codebase or system
+  default_prompt: Use $sigmacheck to audit this repository with all 50 checks and
+    deliver the scored report.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

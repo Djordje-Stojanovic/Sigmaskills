@@ -4,6 +4,18 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-26
+
+### Added
+
+- SigmaCheck (`sigmacheck`) is the sixth skill. It scores any codebase or system on 50 checks in 10 topics and delivers one Markdown report, a report-only pull request, one GitHub issue per topic, or a chat summary. It never changes the audited system.
+- The first SigmaCheck audit of this repository is in `docs/audits/SIGMACHECK-2026-09-26.md`.
+
+### Fixed
+
+- The README no longer points to the v0.2.1 zip as the latest Release.
+
+
 ## [0.3.0] — 2026-09-08
 
 ### Added
