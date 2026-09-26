@@ -53,6 +53,7 @@ body:
         - sigmaimprove
         - sigmarefactor
         - sigmabrief
+        - sigmaship
         - sigmawrite
         - Shared (README / install / repo-wide)
         - Other / not sure

@@ -8,11 +8,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 - SigmaImprove (`sigmaimprove`) finds what would make a product, game, codebase, or system clearly better. It scans a full list of improvement categories (value, speed, control, look and feel, reach, intelligence, trust, engineering, and games) and compares the product with the world's top one to three products and with published bars such as Core Web Vitals and WCAG 2.2. It keeps at least ten entries: ideas with 3–5 weighed options and text sketches, and signals that flag a gap for a person to think about. It files one living issue per category (1–20 per run) and updates those issues on later runs instead of duplicating them. It never edits the system. It grew out of the SigmaCheck draft, which was never released.
 - The first SigmaCheck audit of this repository is kept in `docs/audits/SIGMACHECK-2026-09-26.md` as a baseline.
+- SigmaShip (`sigmaship`) ships one planned GitHub issue end to end: a feature worktree and branch, a draft PR linked to the ticket, spec, and map, test-first commits pushed as it goes, review rounds by fresh agents until one finds nothing at P0–P2, then merge, ticket closed, branches and worktree deleted, and local `main` verified equal to `origin/main`. It refuses tickets without checkable acceptance criteria and names the skill to run first. It builds on Matt Pocock's `implement` skill.
 
 ### Changed
 
 - SigmaReview (`sigmareview`) now covers correctness, security (source review plus safe tests on a local instance), and measured performance in one run. It reports every finding with no cap, each written as a self-contained fix brief that an LLM can act on, grouped into waves that can be fixed in parallel. It still never changes code: it publishes one feature-branch pull request with the review file. The report file is now `SIGMAREVIEW-YYYY-MM-DD.md`.
-
 - SigmaBrief (`sigmabrief`) accepts SigmaReview reports and SigmaImprove issues as input and groups briefs into waves, so only independent items run in parallel. Every brief now asks for green baseline checks before changes and ends with a fixed report (`DONE`, `DONE_WITH_CONCERNS`, or `BLOCKED`, plus PR, checks, and open questions). `approval: auto` lets agents record their decisions as rulings instead of waiting. A host's native worktree tool is preferred over manual `git worktree`. A new `session` brief hands the current conversation to a fresh agent.
 
 ### Removed

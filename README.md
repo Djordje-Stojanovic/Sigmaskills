@@ -16,6 +16,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
   Σ  improve    →  ideas versus the world's best, one living issue per category
   Σ  refactor   →  user-guided, behavior-preserving code reduction
   Σ  brief      →  paste-ready agent briefs, chat only
+  Σ  ship       →  one planned ticket to a merged, cleaned-up PR
   Σ  write      →  clear STE-inspired technical English
 ```
 
@@ -50,6 +51,7 @@ Then invoke with your host’s normal skill syntax (`$sigmawrite`, `/skill:sigma
 | **SigmaReview** | `sigmareview` | Find and prove what is wrong: bugs, security, performance, tests | One feature-branch PR with one review file |
 | **SigmaImprove** | `sigmaimprove` | Find what would make it clearly better, measured against the world's best | One living issue per category (1–20), updated on every run |
 | **SigmaBrief** | `sigmabrief` | Prompt factory for parallel / single agents | Chat briefs only |
+| **SigmaShip** | `sigmaship` | Ship one planned ticket: build, review rounds, merge, clean up | One merged PR, closed ticket, main in sync |
 | **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
 | **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
 
@@ -61,7 +63,7 @@ SigmaReview and SigmaImprove split on one question: **is it wrong, or could it b
 - If good people could disagree about the answer, it is a SigmaImprove idea. Examples: weak character animation, a missing boss level, an onboarding flow with too many steps.
 - If the code is only too large and behavior must not change, it is SigmaRefactor.
 
-The skills chain into two loops: **fix** (SigmaReview → review PR → you or your agents fix each finding → merge) and **grow** (SigmaImprove → category issues → SigmaBrief → agents).
+The skills chain into two loops: **fix** (SigmaReview → review PR → SigmaBrief or SigmaShip fix each finding → merge) and **grow** (SigmaImprove → category issues → specs and tickets → SigmaShip).
 
 ### SigmaReview
 
@@ -76,6 +78,10 @@ Names the world's top one to three products in the field, then uses the product 
 Turns GitHub issues, features, upgrades, bugs, or plain work statements into short, copy-pastable briefs for other agents. Light research → dispatch list → fenced briefs → **stop**. Does not implement work or open product fix PRs. Default brief arc: plan → optional grill-me (including Windows worktree) → approve → execute → validate → PR for review (**do not merge**).
 
 **User-triggered only.** Do not treat Brief as ambient chat decoration.
+
+### SigmaShip
+
+Takes one GitHub issue that has acceptance criteria and ships it. It creates a feature worktree and branch, opens a draft PR linked to the ticket, spec, and map, and builds test-first, committing and pushing each slice. When every criterion has evidence and CI is green, fresh agents review the branch in rounds until one round finds nothing at P0–P2. Then it merges, closes the ticket, deletes the branches and worktree, and proves that local `main` equals `origin/main`. A ticket without checkable criteria is refused, with the skill to run first (`/to-spec`, `/to-tickets`, `/grilling`, SigmaReview, SigmaImprove, or SigmaBrief).
 
 ### SigmaWrite
 
@@ -145,6 +151,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --all -g -y
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmareview -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaimprove -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmabrief -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaship -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmarefactor -g
 
@@ -167,6 +174,7 @@ npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmabr
 $skill-installer install sigmareview from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaimprove from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmabrief from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmaship from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmarefactor from https://github.com/Djordje-Stojanovic/Sigmaskills
 ```
@@ -183,6 +191,7 @@ mkdir -p ~/.agents/skills
 cp -R Sigmaskills/sigmareview ~/.agents/skills/sigmareview
 cp -R Sigmaskills/sigmaimprove ~/.agents/skills/sigmaimprove
 cp -R Sigmaskills/sigmabrief ~/.agents/skills/sigmabrief
+cp -R Sigmaskills/sigmaship ~/.agents/skills/sigmaship
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
 cp -R Sigmaskills/sigmarefactor ~/.agents/skills/sigmarefactor
 ```
@@ -195,6 +204,7 @@ New-Item -ItemType Directory -Force -Path "$HOME\.agents\skills" | Out-Null
 Copy-Item -Recurse Sigmaskills\sigmareview   "$HOME\.agents\skills\sigmareview"
 Copy-Item -Recurse Sigmaskills\sigmaimprove  "$HOME\.agents\skills\sigmaimprove"
 Copy-Item -Recurse Sigmaskills\sigmabrief    "$HOME\.agents\skills\sigmabrief"
+Copy-Item -Recurse Sigmaskills\sigmaship     "$HOME\.agents\skills\sigmaship"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
 Copy-Item -Recurse Sigmaskills\sigmarefactor "$HOME\.agents\skills\sigmarefactor"
 ```
@@ -233,6 +243,7 @@ $sigmareview https://github.com/owner/repo
 $sigmaimprove
 $sigmabrief https://github.com/owner/repo/issues/12
 $sigmabrief all open
+$sigmaship https://github.com/owner/repo/issues/42
 $sigmawrite
 $sigmarefactor
 ```
@@ -247,6 +258,7 @@ $sigmarefactor
 /skill:sigmaimprove
 /skill:sigmabrief https://github.com/owner/repo/issues/12
 /skill:sigmabrief all open
+/skill:sigmaship https://github.com/owner/repo/issues/42
 /skill:sigmawrite
 /skill:sigmarefactor
 ```
@@ -263,6 +275,7 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 | `sigmareview` | repo URL · path | One setup message (authority, goals), then runs alone |
 | `sigmaimprove` | repo · path · running product | One setup message (vision, focus, constraints, ticket place), then discusses ideas |
 | `sigmabrief` | issue URL · `#N` · `all open` · plain work | Explicit only — not ambient |
+| `sigmaship` | issue URL · `#N` | Refuses tickets without checkable acceptance criteria |
 | `sigmawrite` | (no args) | Session writing voice until you turn it off |
 | `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
 
@@ -296,6 +309,14 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 - Isolation on → agent-created Windows `git worktree`; cleanup only after human merge or abandon
 - Never implements the work or opens product fix PRs
 
+### SigmaShip
+
+- Branch `ship/<issue>-<slug>` in its own worktree; draft PR opened before any code, with `Closes #N`, spec and map links, and one checkbox per criterion
+- The PR body is the ledger: criteria with evidence, rulings, follow-ups, and review rounds; an interrupted run resumes from it
+- Test-first slices, one conventional commit per slice, pushed as it goes; never force-pushes or merges red
+- Review rounds by fresh agents until one finds zero P0–P2 problems (at most 3, then it asks you)
+- Lands with the repository's merge style, closes the ticket, deletes branches and worktree, and verifies `main` equals `origin/main`
+
 ### SigmaWrite
 
 - Chat writing style only (no report file, no PR)
@@ -320,6 +341,7 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 | All | Agent that can load Agent Skills (`SKILL.md`) |
 | SigmaReview | Read access to the target repo · GitHub tooling to push a branch or fork and open a PR · execution authority only if you want measured findings |
 | SigmaImprove | Read access to the target · GitHub issue access only if tickets go to GitHub |
+| SigmaShip | Push rights and GitHub tooling (`gh` or connector) to open, merge, and close; the repository's test commands |
 | SigmaBrief | `gh` read when briefing from issues/PRs · **no** push to the product repo |
 | SigmaWrite | Nothing beyond chat — optional paste into system instructions |
 | SigmaRefactor | Read access to the target repository and `laloc` when available; no required external skill |
@@ -339,6 +361,7 @@ Sigmaskills/
 ├── sigmareview/              SKILL.md · agents/ · references/
 ├── sigmaimprove/             SKILL.md · agents/ · references/
 ├── sigmabrief/               SKILL.md · agents/ · references/
+├── sigmaship/                SKILL.md · agents/ · references/
 ├── sigmawrite/               SKILL.md · agents/
 └── sigmarefactor/            SKILL.md · agents/ · references/
 ```

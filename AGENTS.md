@@ -1,6 +1,6 @@
 # AGENTS.md
 
-You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaimprove`, `sigmabrief`, `sigmawrite`, `sigmarefactor`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
+You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaimprove`, `sigmabrief`, `sigmaship`, `sigmawrite`, `sigmarefactor`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
 
 **Where to look**
 
@@ -8,7 +8,7 @@ You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) 
 |------|------|
 | [`README.md`](README.md) | Install, run, output contracts for every host |
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history (`[Unreleased]` for WIP) |
-| `sigmareview/` · `sigmaimprove/` · `sigmabrief/` · `sigmawrite/` · `sigmarefactor/` | The skills |
+| `sigmareview/` · `sigmaimprove/` · `sigmabrief/` · `sigmaship/` · `sigmawrite/` · `sigmarefactor/` | The skills |
 | [`test/repo-invariants.test.js`](test/repo-invariants.test.js) | `KNOWN_SKILLS` registry + `npm test` guards |
 | `.github/` | Issue forms, PR template, CI |
 

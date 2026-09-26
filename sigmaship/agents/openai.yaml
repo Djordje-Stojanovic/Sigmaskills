@@ -1,0 +1,12 @@
+interface:
+  display_name: SigmaShip
+  short_description: Ship one planned ticket to a merged, cleaned-up PR
+  default_prompt: Use $sigmaship to ship this issue end to end, with review rounds,
+    merge, and full cleanup.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

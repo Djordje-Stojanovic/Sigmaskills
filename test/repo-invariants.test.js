@@ -24,6 +24,11 @@ const KNOWN_SKILLS = [
     needsReferences: true,
   },
   {
+    id: 'sigmaship',
+    title: 'SigmaShip',
+    needsReferences: true,
+  },
+  {
     id: 'sigmawrite',
     title: 'SigmaWrite',
     needsReferences: false,
