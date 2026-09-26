@@ -1,0 +1,12 @@
+interface:
+  display_name: SigmaImprove
+  short_description: Find and weigh the ideas that make a product clearly better
+  default_prompt: Use $sigmaimprove to find the few changes that would make this
+    project clearly better, weigh the options with me, and file the ones we choose.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

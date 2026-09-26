@@ -14,8 +14,8 @@ const KNOWN_SKILLS = [
     needsReferences: true,
   },
   {
-    id: 'sigmaperformance',
-    title: 'SigmaPerformance',
+    id: 'sigmaimprove',
+    title: 'SigmaImprove',
     needsReferences: true,
   },
   {
@@ -32,11 +32,6 @@ const KNOWN_SKILLS = [
     id: 'sigmarefactor',
     title: 'SigmaRefactor',
     needsReferences: true,
-  },
-  {
-    id: 'sigmacheck',
-    title: 'SigmaCheck',
-    needsReferences: false,
   },
 ];
 

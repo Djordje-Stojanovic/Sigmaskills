@@ -1,8 +1,8 @@
 interface:
   display_name: SigmaReview
-  short_description: One-shot, full-repository engineering review
-  default_prompt: Use $sigmareview to review this repository end to end and open the
-    findings pull request.
+  short_description: Find, prove, and fix bugs, security holes, and slow paths
+  default_prompt: Use $sigmareview to find everything wrong in this repository,
+    open the findings pull request, and fix the findings we agree on.
 policy:
   products:
   - chatgpt

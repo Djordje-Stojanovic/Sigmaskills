@@ -76,8 +76,10 @@ body:
       description: Leave blank-feeling? Pick the closest, or Other / not sure.
       options:
         - sigmareview
-        - sigmaperformance
+        - sigmaimprove
+        - sigmarefactor
         - sigmabrief
+        - sigmawrite
         - Shared (README / install / repo-wide)
         - Other / not sure
         - New skill (not shipped yet)

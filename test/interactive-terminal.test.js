@@ -455,7 +455,7 @@ test('plain input waits for a complete command and short pages retain all skills
     assert.equal(io.getStdout(), initial, 'partial commands must not redraw');
     io.stdin.write('\nnext\nnext\nnext\nesc\n');
     assert.equal(await run, 0);
-    for (const name of ['SigmaReview', 'SigmaPerformance', 'SigmaBrief', 'SigmaWrite', 'SigmaRefactor']) {
+    for (const name of ['SigmaReview', 'SigmaImprove', 'SigmaBrief', 'SigmaWrite', 'SigmaRefactor']) {
       assert.ok(io.getStdout().includes(name), `${name} must remain reachable`);
     }
     assert.deepEqual(io.getRawModes(), []);

@@ -6,18 +6,17 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 
 | | |
 |---|---|
-| **Release** | [**v0.4.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.4.0) |
+| **Release** | [**v0.3.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.3.0) |
 | **Changelog** | [CHANGELOG.md](CHANGELOG.md) |
 | **License** | [MIT](LICENSE) |
 | **Spec** | [agentskills.io](https://agentskills.io/) |
 
 ```text
-  Σ  review     →  one findings report, one PR, no runtime edits
-  Σ  performance→  calibrated bottlenecks, one report PR
+  Σ  review     →  find what is wrong, prove it, fix what you agree on
+  Σ  improve    →  find what would make it better, weigh options, file tickets
+  Σ  refactor   →  user-guided, behavior-preserving code reduction
   Σ  brief      →  paste-ready agent briefs, chat only
   Σ  write      →  clear STE-inspired technical English
-  Σ  refactor   →  user-guided, behavior-preserving code reduction
-  Σ  check      →  scored 50-point audit, one report or one issue per topic
 ```
 
 ---
@@ -48,20 +47,29 @@ Then invoke with your host’s normal skill syntax (`$sigmawrite`, `/skill:sigma
 
 | Skill | Id | Job | Output |
 |-------|-----|-----|--------|
-| **SigmaReview** | `sigmareview` | One-shot full-repo engineering audit | One findings MD + report-only PR |
-| **SigmaPerformance** | `sigmaperformance` | Calibrated performance investigation | One report MD + report-only PR |
+| **SigmaReview** | `sigmareview` | Find, prove, and fix what is wrong: bugs, security, performance, tests | One findings PR, then agreed fixes on that branch |
+| **SigmaImprove** | `sigmaimprove` | Find what would make it clearly better, and decide with you | Weighed options in chat, then one ticket per chosen idea |
 | **SigmaBrief** | `sigmabrief` | Prompt factory for parallel / single agents | Chat briefs only |
 | **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
 | **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
-| **SigmaCheck** | `sigmacheck` | Scored 50-point audit of any codebase or system | Report MD, report PR, or one issue per topic |
+
+### Which one do I need?
+
+SigmaReview and SigmaImprove split on one question: **is it wrong, or could it be better?**
+
+- If a test, a doc, a stated goal, or a budget can prove it wrong, it is a SigmaReview finding. Examples: a crash, a security hole, a page that breaks its latency budget, a level that renders the wrong texture.
+- If good people could disagree about the answer, it is a SigmaImprove idea. Examples: weak character animation, a missing boss level, an onboarding flow with too many steps.
+- If the code is only too large and behavior must not change, it is SigmaRefactor.
+
+The skills chain into two loops: **fix** (SigmaReview → findings PR → fixes → merge) and **grow** (SigmaImprove → tickets → SigmaBrief → agents).
 
 ### SigmaReview
 
-A single agent walks an entire repository — correctness, completeness, architecture, data and concurrency, reliability, security, performance, tests, dependencies, delivery, operations, and domain-specific engineering. Speculative findings are rejected. Exactly **one** evidence-rich Markdown report is published as a **report-only** pull request. Runtime code is never changed.
+Finds everything that breaks the system's own promises: bugs, security holes (source review plus safe tests on a local instance), slow and wasteful paths (measured when you allow execution), broken rendering, and weak tests. Every finding carries a location, a mechanism, an impact, an evidence class (measured or proven), and a proof test. It publishes one findings pull request. After you decide which findings to fix, it fixes them on the same branch, each with its test. It merges only when you say so.
 
-### SigmaPerformance
+### SigmaImprove
 
-Maps real user journeys, then separates **measured** and **mechanically proven** bottlenecks from measurement-required opportunities. Publishes one structured report PR. Runtime sources stay untouched unless calibration explicitly says otherwise.
+Uses the product like a new user, then looks through product, simplicity, ambition, and craft lenses to find the five to ten changes that would matter most. Each idea gets three to five options with impact, effort, risk, and a text sketch. You decide each idea in chat. Only the ideas you choose become tickets: GitHub issues, or local Markdown files if that is how the project tracks work. It never edits the system.
 
 ### SigmaBrief
 
@@ -76,12 +84,6 @@ Writing voice inspired by **ASD-STE100 Simplified Technical English** — soft s
 ### SigmaRefactor
 
 Runs a reproducible `laloc` scan, reads the five largest maintained files, explains safe refactoring choices, and waits for user agreement before editing. It checks directories that `laloc` skips, preserves behavior and user changes, and reports lines removed separately from lines moved into new modules.
-
-### SigmaCheck
-
-Scores any system — web app, CLI, library, game, firmware, hardware design, or AI pipeline — on 50 checks in 10 topics: requirements, bugs, security, performance, simplicity, architecture, reliability, UX, intelligence, and verification and cost. Every check gets a 0–10 score. A score below 8 needs a finding that passes the evidence gate. You choose the output: one Markdown report, a report-only pull request, one GitHub issue per topic, or chat only.
-
-Use SigmaReview when you want a deep, evidence-only engineering findings report. Use SigmaCheck when you want a scored health check that also covers product, UX, and cost, and can become a set of GitHub issues.
 
 ---
 
@@ -141,11 +143,10 @@ npx skills add Djordje-Stojanovic/Sigmaskills --all -g -y
 
 # One skill at a time
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmareview -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaperformance -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaimprove -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmabrief -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmarefactor -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmacheck -g
 
 # Pin to specific hosts
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g -a cursor -a claude-code -a codex -a opencode -a pi
@@ -164,11 +165,10 @@ npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmabr
 
 ```text
 $skill-installer install sigmareview from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmaperformance from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmaimprove from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmabrief from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmarefactor from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmacheck from https://github.com/Djordje-Stojanovic/Sigmaskills
 ```
 
 ### Manual / universal copy
@@ -181,11 +181,10 @@ When a host only watches a skills folder (Pi, LAPI mirrors, custom TUIs, air-gap
 git clone https://github.com/Djordje-Stojanovic/Sigmaskills.git
 mkdir -p ~/.agents/skills
 cp -R Sigmaskills/sigmareview ~/.agents/skills/sigmareview
-cp -R Sigmaskills/sigmaperformance ~/.agents/skills/sigmaperformance
+cp -R Sigmaskills/sigmaimprove ~/.agents/skills/sigmaimprove
 cp -R Sigmaskills/sigmabrief ~/.agents/skills/sigmabrief
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
 cp -R Sigmaskills/sigmarefactor ~/.agents/skills/sigmarefactor
-cp -R Sigmaskills/sigmacheck ~/.agents/skills/sigmacheck
 ```
 
 **Windows (PowerShell)**
@@ -194,11 +193,10 @@ cp -R Sigmaskills/sigmacheck ~/.agents/skills/sigmacheck
 git clone https://github.com/Djordje-Stojanovic/Sigmaskills.git
 New-Item -ItemType Directory -Force -Path "$HOME\.agents\skills" | Out-Null
 Copy-Item -Recurse Sigmaskills\sigmareview   "$HOME\.agents\skills\sigmareview"
-Copy-Item -Recurse Sigmaskills\sigmaperformance "$HOME\.agents\skills\sigmaperformance"
+Copy-Item -Recurse Sigmaskills\sigmaimprove  "$HOME\.agents\skills\sigmaimprove"
 Copy-Item -Recurse Sigmaskills\sigmabrief    "$HOME\.agents\skills\sigmabrief"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
 Copy-Item -Recurse Sigmaskills\sigmarefactor "$HOME\.agents\skills\sigmarefactor"
-Copy-Item -Recurse Sigmaskills\sigmacheck    "$HOME\.agents\skills\sigmacheck"
 ```
 
 Point other hosts at the same folders (or copy again) as needed:
@@ -232,12 +230,11 @@ Use your host’s skill syntax. Examples:
 
 ```text
 $sigmareview https://github.com/owner/repo
-$sigmaperformance https://github.com/owner/repo
+$sigmaimprove
 $sigmabrief https://github.com/owner/repo/issues/12
 $sigmabrief all open
 $sigmawrite
 $sigmarefactor
-$sigmacheck https://github.com/owner/repo
 ```
 
 </td>
@@ -247,12 +244,11 @@ $sigmacheck https://github.com/owner/repo
 
 ```text
 /skill:sigmareview https://github.com/owner/repo
-/skill:sigmaperformance https://github.com/owner/repo
+/skill:sigmaimprove
 /skill:sigmabrief https://github.com/owner/repo/issues/12
 /skill:sigmabrief all open
 /skill:sigmawrite
 /skill:sigmarefactor
-/skill:sigmacheck https://github.com/owner/repo
 ```
 
 </td>
@@ -264,12 +260,11 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 
 | Skill | Typical invoke | Notes |
 |-------|----------------|-------|
-| `sigmareview` | repo URL | Needs push/fork rights for the report PR |
-| `sigmaperformance` | repo URL | Starts with two short calibration batches, then runs |
+| `sigmareview` | repo URL · path | One setup message (authority, goals, fix or report only), then runs alone |
+| `sigmaimprove` | repo · path · running product | One setup message (vision, focus, constraints, ticket place), then discusses ideas |
 | `sigmabrief` | issue URL · `#N` · `all open` · plain work | Explicit only — not ambient |
 | `sigmawrite` | (no args) | Session writing voice until you turn it off |
 | `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
-| `sigmacheck` | repo URL · path · upload | Asks one setup message (output, scope, authority, context), then runs alone |
 
 ---
 
@@ -277,22 +272,19 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 
 ### SigmaReview
 
-- File: `SIGMAREVIEW-FINDINGS-YYYY-MM-DD.md`
-- One dedicated branch + **report-only** PR
-- Prioritized, confidence-gated findings with exact evidence
-- Implementation-ready remediation and verification steps
-- Full repository coverage ledger
-- **No** source fixes, dependency installs, app execution, subagents, or auxiliary repo artifacts
+- File: `SIGMAREVIEW-YYYY-MM-DD.md` on branch `sigmareview/YYYY-MM-DD`, one pull request
+- `SIG-###` findings: P0–P3, **M1** measured or **M2** proven, location, broken promise, fix, and proof test
+- **M3** needs-measurement items listed apart and never counted as confirmed
+- No code changes before you agree; then one `fix(SIG-###)` commit per accepted finding, each with its test
+- Execution, installs, and security probes only with your authority, and only on a local instance
+- Merges and deletes the branch only when you say so
 
-### SigmaPerformance
+### SigmaImprove
 
-- File: `SIGMAPERFORMANCE-REPORT-YYYY-MM-DD.md`
-- One dedicated **report-only** PR
-- **M1** measured · **M2** mechanically proven bottlenecks
-- **M3** measurement-required opportunities, failed experiments, unverified boundaries (accounted separately)
-- Structured future SigmaOptimize handoff
-- Default single-agent; bounded subagents only via explicit calibration opt-in
-- **No** runtime-source changes or temp measurement junk in the repo diff
+- Chat first: a ranked list, then one idea at a time with 3–5 weighed options, text sketches, and a recommendation
+- One ticket per chosen idea: GitHub issue or `.scratch/sigmaimprove/NN-<slug>.md`
+- Tickets stand alone and are ready for SigmaBrief
+- Never edits code, assets, or docs
 
 ### SigmaBrief
 
@@ -317,12 +309,6 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 - User approval before edits; behavior, tests, interfaces, and custom content stay protected
 - Final line-count comparison with removed and moved lines reported separately
 
-### SigmaCheck
-
-- File: `SIGMACHECK-YYYY-MM-DD.md`, or a report-only PR titled `docs: SigmaCheck audit (YYYY-MM-DD)`, or one GitHub issue per topic with findings, or chat only
-- Scorecard of 10 topics and 50 checks, each 0–10 or `N/A` with a reason
-- `SC-###` findings with priority (P0–P3), evidence strength (Measured · Proven · Needs measurement), location, fix, and verification
-- Never modifies the audited system; never touches production, paid APIs, or shared infrastructure
 
 ---
 
@@ -331,12 +317,11 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 | Skill | Needs |
 |-------|--------|
 | All | Agent that can load Agent Skills (`SKILL.md`) |
-| SigmaReview · SigmaPerformance | Read access to the target repo · authenticated GitHub tooling to push a branch or fork + open a PR |
-| SigmaPerformance | Authority / safety boundary chosen in calibration |
+| SigmaReview | Read access to the target repo · GitHub tooling to push a branch or fork and open a PR · execution authority only if you want measured findings |
+| SigmaImprove | Read access to the target · GitHub issue access only if tickets go to GitHub |
 | SigmaBrief | `gh` read when briefing from issues/PRs · **no** push to the product repo |
 | SigmaWrite | Nothing beyond chat — optional paste into system instructions |
 | SigmaRefactor | Read access to the target repository and `laloc` when available; no required external skill |
-| SigmaCheck | Read access to the target · GitHub write access only for the PR or issue outputs |
 
 Windows-native defaults where skills mention shells or worktrees (PowerShell-friendly; do not assume WSL).
 
@@ -351,11 +336,10 @@ Sigmaskills/
 ├── test/                     Structural regression tests (npm test)
 ├── .github/                  Issue forms · PR template · CI
 ├── sigmareview/              SKILL.md · agents/ · references/
-├── sigmaperformance/         SKILL.md · agents/ · references/
+├── sigmaimprove/             SKILL.md · agents/ · references/
 ├── sigmabrief/               SKILL.md · agents/ · references/
 ├── sigmawrite/               SKILL.md · agents/
-├── sigmarefactor/            SKILL.md · agents/ · references/
-└── sigmacheck/               SKILL.md · agents/
+└── sigmarefactor/            SKILL.md · agents/ · references/
 ```
 
 Each top-level folder is one installable skill. `name` in frontmatter = folder name = `--skill` id.

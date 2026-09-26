@@ -4,17 +4,22 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
-## [0.4.0] — 2026-09-26
-
 ### Added
 
-- SigmaCheck (`sigmacheck`) is the sixth skill. It scores any codebase or system on 50 checks in 10 topics and delivers one Markdown report, a report-only pull request, one GitHub issue per topic, or a chat summary. It never changes the audited system.
-- The first SigmaCheck audit of this repository is in `docs/audits/SIGMACHECK-2026-09-26.md`.
+- SigmaImprove (`sigmaimprove`) finds what would make a product, game, codebase, or system clearly better. It turns each idea into 3–5 weighed options with text sketches, decides them with the user in chat, and files one GitHub issue or local ticket per chosen idea. It never edits the system. It grew out of the SigmaCheck draft, which was never released.
+- The first SigmaCheck audit of this repository is kept in `docs/audits/SIGMACHECK-2026-09-26.md` as a baseline.
+
+### Changed
+
+- SigmaReview (`sigmareview`) now covers correctness, security (source review plus safe tests on a local instance), and measured performance in one run. After the findings pull request, it fixes the findings the user accepts on the same branch, one commit and one proof test per finding. The report file is now `SIGMAREVIEW-YYYY-MM-DD.md`.
+
+### Removed
+
+- SigmaPerformance (`sigmaperformance`). Its measurement method and evidence classes are now part of SigmaReview.
 
 ### Fixed
 
 - The README no longer points to the v0.2.1 zip as the latest Release.
-
 
 ## [0.3.0] — 2026-09-08
 

@@ -149,7 +149,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     });
     assert.match(helpOut, /Usage:\s+sigmaskills/i);
     assert.match(helpOut, /sigmareview/);
-    assert.match(helpOut, /sigmaperformance/);
+    assert.match(helpOut, /sigmaimprove/);
     assert.match(helpOut, /sigmabrief/);
     assert.match(helpOut, /sigmawrite/);
     assert.match(helpOut, /sigmarefactor/);
