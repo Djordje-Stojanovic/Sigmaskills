@@ -13,7 +13,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 
 ```text
   Σ  review     →  find and prove what is wrong, one PR an LLM can fix from
-  Σ  improve    →  find what would make it better, weigh options, file tickets
+  Σ  improve    →  ideas versus the world's best, one living issue per category
   Σ  refactor   →  user-guided, behavior-preserving code reduction
   Σ  brief      →  paste-ready agent briefs, chat only
   Σ  write      →  clear STE-inspired technical English
@@ -48,7 +48,7 @@ Then invoke with your host’s normal skill syntax (`$sigmawrite`, `/skill:sigma
 | Skill | Id | Job | Output |
 |-------|-----|-----|--------|
 | **SigmaReview** | `sigmareview` | Find and prove what is wrong: bugs, security, performance, tests | One feature-branch PR with one review file |
-| **SigmaImprove** | `sigmaimprove` | Find what would make it clearly better, and decide with you | Weighed options in chat, then one ticket per chosen idea |
+| **SigmaImprove** | `sigmaimprove` | Find what would make it clearly better, measured against the world's best | One living issue per category (1–20), updated on every run |
 | **SigmaBrief** | `sigmabrief` | Prompt factory for parallel / single agents | Chat briefs only |
 | **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
 | **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
@@ -61,7 +61,7 @@ SigmaReview and SigmaImprove split on one question: **is it wrong, or could it b
 - If good people could disagree about the answer, it is a SigmaImprove idea. Examples: weak character animation, a missing boss level, an onboarding flow with too many steps.
 - If the code is only too large and behavior must not change, it is SigmaRefactor.
 
-The skills chain into two loops: **fix** (SigmaReview → review PR → you or your agents fix each finding → merge) and **grow** (SigmaImprove → tickets → SigmaBrief → agents).
+The skills chain into two loops: **fix** (SigmaReview → review PR → you or your agents fix each finding → merge) and **grow** (SigmaImprove → category issues → SigmaBrief → agents).
 
 ### SigmaReview
 
@@ -69,7 +69,7 @@ Finds everything that breaks the system's own promises: bugs, security holes (so
 
 ### SigmaImprove
 
-Uses the product like a new user, then looks through product, simplicity, ambition, and craft lenses across a full list of improvement categories — new features, speed and latency, control, layout, color, motion, native feel, accessibility, backend, engineering quality, and game design — and presents at least ten ideas spread across those categories. Each idea gets three to five options with impact, effort, risk, and a text sketch. You decide each idea in chat. Only the ideas you choose become tickets: GitHub issues, or local Markdown files if that is how the project tracks work. It never edits the system.
+Names the world's top one to three products in the field, then uses the product like a new user, then looks through product, simplicity, ambition, and craft lenses across a full list of improvement categories — new features, speed and latency, control, layout, color, motion, native feel, accessibility, backend, engineering quality, and game design — and keeps at least ten entries spread across those categories. An *idea* gets three to five options with impact, effort, risk, and a text sketch. A *signal* flags a gap that needs a person to think first: the UI looks dated next to the leaders, startup is four times slower, or every leader has a feature this product lacks. Each category gets one issue that holds all its entries, so a run produces 1–20 issues, not hundreds. Later runs update those same issues instead of adding duplicates. It never edits the system.
 
 ### SigmaBrief
 
@@ -281,9 +281,10 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 
 ### SigmaImprove
 
-- Chat first: a ranked list, then one idea at a time with 3–5 weighed options, text sketches, and a recommendation
-- One ticket per chosen idea: GitHub issue or `.scratch/sigmaimprove/NN-<slug>.md`
-- Tickets stand alone and are ready for SigmaBrief
+- Compares with the world's top 1–3 products and with published bars (Core Web Vitals, RAIL, WCAG 2.2, platform guidelines, DORA)
+- At least 10 entries across at least 5 category groups; ideas with 3–5 weighed options and sketches, signals with evidence and questions
+- One issue per category, titled `SigmaImprove · <ID> <name>`, 1–20 issues per run; or `.scratch/sigmaimprove/<ID>-<slug>.md`
+- Later runs update the same issues: new entries, done entries marked, rejected entries not re-proposed
 - Never edits code, assets, or docs
 
 ### SigmaBrief

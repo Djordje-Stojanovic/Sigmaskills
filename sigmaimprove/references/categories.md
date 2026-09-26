@@ -1,6 +1,22 @@
 # Improvement categories
 
-Scan every category that applies to the target. Each line is a question to ask, not a box to tick. The list draws on the ISO/IEC 25010 quality model, Nielsen's usability heuristics, WCAG 2.2, Core Web Vitals, Google's HEART metrics (happiness, engagement, adoption, retention, task success), Apple's Human Interface Guidelines and Material Design, game-feel practice, and DORA delivery metrics. Tag every idea with its category ID, for example `B1 Perceived latency`.
+Scan every category that applies to the target. Each line is a question to ask, not a box to tick. The list draws on the ISO/IEC 25010 quality model, Nielsen's usability heuristics, WCAG 2.2, Core Web Vitals, Google's HEART metrics (happiness, engagement, adoption, retention, task success), Apple's Human Interface Guidelines and Material Design, game-feel practice, and DORA delivery metrics. Tag every entry with its category ID, for example `B1 Perceived latency`.
+
+## Measure against the leaders and the bars
+
+For each category, the comparison has two parts. The first is the world's top one to three products in this field: what they achieve, from primary sources. The second is the published bars below, where they apply. Beating the fifth-best product is not the goal. Closing the gap to the best is. Quote the source of each bar and each leader number.
+
+| Area | Bar | Source |
+|---|---|---|
+| Response to input | Under 0.1 s feels instant; under 1 s keeps the flow of thought; over 10 s loses attention | Nielsen's response-time limits |
+| Web interaction | Respond within 100 ms; work in chunks under 50 ms; produce a frame within about 16 ms | Google RAIL model |
+| Web loading and stability | LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1 at the 75th percentile | Core Web Vitals |
+| Frame rate | 16.7 ms per frame for 60 fps, 8.3 ms for 120 fps; judge by frame-time percentiles and 1% lows, not averages | Display refresh arithmetic, game-performance practice |
+| Contrast | 4.5:1 for normal text, 3:1 for large text and UI components (AA) | WCAG 2.2 |
+| Touch and click targets | At least 24×24 CSS px (WCAG 2.2 AA); 44×44 pt on Apple platforms; 48×48 dp on Android | WCAG 2.2, Apple HIG, Material Design |
+| Delivery | Deploy frequency, lead time, change failure rate, and time to restore compared with the elite group of the latest DORA report | DORA |
+
+A bar is a floor, not the goal. When the leaders are far above it, their level is the target.
 
 **Speed ideas versus SigmaReview:** here, speed is a design choice that goes beyond what the product promises today. Examples: prerender for instant start, stream results, or move work off the critical path. A path that breaks a stated budget, or does measurable waste with one correct fix, is a SigmaReview finding.
 
