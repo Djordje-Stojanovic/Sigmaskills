@@ -125,6 +125,14 @@ test('release plan: Fixed-only notes calculate a patch, Removed notes calculate 
   });
   assert.equal(major.version, '2.0.0');
   assert.equal(major.bump, 'major');
+
+  const preOne = calculateReleasePlan({
+    packageVersion: '0.3.0',
+    manifestVersion: '0.3.0',
+    changelog: changelogWith('### Removed\n\n- Legacy skill.\n', '0.3.0'),
+    sourceCommit: 'def',
+  });
+  assert.equal(preOne.version, '0.4.0', 'a breaking change before 1.0.0 bumps the minor version');
 });
 
 test('release plan: committed identities reuse that version and its change set', () => {

@@ -4,7 +4,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
-## [1.0.0] — 2026-09-26
+## [0.4.0] — 2026-09-27
 
 ### Added
 
@@ -23,7 +23,9 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Fixed
 
+- The release tool now treats a breaking change before 1.0.0 as a minor version step, as SemVer allows for 0.y.z versions, instead of jumping to 1.0.0.
 - The README no longer points to the v0.2.1 zip as the latest Release.
+- The finished 0.3.0 `plan.md` is removed from the repository root; its content lives in issue #3 and PR #29.
 - `update` no longer stops when a skill that left the Skill Pack is still installed. The manifest lists retired skills (`sigmaperformance`); `update` leaves them unchanged, lists them under *Retired skills*, and names the `uninstall` command that removes them.
 
 
