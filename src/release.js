@@ -35,7 +35,11 @@ export function bumpSemver(version, kind) {
   let major = Number(match[1]);
   let minor = Number(match[2]);
   let patch = Number(match[3]);
-  if (kind === 'major') {
+  if (kind === 'major' && major === 0) {
+    // Before 1.0.0, a breaking change moves the minor version (SemVer 0.y.z).
+    minor += 1;
+    patch = 0;
+  } else if (kind === 'major') {
     major += 1;
     minor = 0;
     patch = 0;
