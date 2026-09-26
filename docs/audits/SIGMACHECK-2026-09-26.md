@@ -31,19 +31,19 @@ The three decisions that matter most:
 
 | # | Check | Score | Reason |
 |---|---|---|---|
-| 1 | Requirement validity | 8 | #32 | Each skill has a clear job; installer need is real |
-| 2 | Scope discipline | 6 | #33 | SC-014 overlapping audit skills; SC-017 installer surface |
-| 3 | Spec vs. reality | 6 | #34 | SC-003 README promises a changelog the tool never shows |
-| 4 | Journey completeness | 7 | #35 | SC-006 upgrade of an untouched copy needs a flag |
-| 5 | Success metrics | 6 | #36 | SC-017 no usage data behind purge/restore/uninstall-all |
-| 6 | Logic and boundaries | 7 | #37 | SC-004 inverted release relation label |
-| 7 | Error handling | 8 | #38 | Errors surface; SC-011 one misleading message |
-| 8 | Concurrency and state | 6 | #39 | SC-002 two processes can both hold the lock |
-| 9 | Data integrity | 6 | #40 | SC-001 private state and backups inside committed tree |
-| 10 | Contracts | 7 | #41 | SC-006 baseline contract exists but is empty |
-| 11 | AuthN / AuthZ | 9 | #42 | Global writes need `--global --yes`; purge needs typed phrase |
-| 12 | Untrusted input | 8 | #43 | Registry sync validates paths, traversal, control chars |
-| 13 | Secrets and supply chain | 7 | #44 | SC-012 CI has no `permissions:` and tag-pinned actions |
+| 1 | Requirement validity | 8 | Each skill has a clear job; installer need is real |
+| 2 | Scope discipline | 6 | SC-014 overlapping audit skills; SC-017 installer surface |
+| 3 | Spec vs. reality | 6 | SC-003 README promises a changelog the tool never shows |
+| 4 | Journey completeness | 7 | SC-006 upgrade of an untouched copy needs a flag |
+| 5 | Success metrics | 6 | SC-017 no usage data behind purge/restore/uninstall-all |
+| 6 | Logic and boundaries | 7 | SC-004 inverted release relation label |
+| 7 | Error handling | 8 | Errors surface; SC-011 one misleading message |
+| 8 | Concurrency and state | 6 | SC-002 two processes can both hold the lock |
+| 9 | Data integrity | 6 | SC-001 private state and backups inside committed tree |
+| 10 | Contracts | 7 | SC-006 baseline contract exists but is empty |
+| 11 | AuthN / AuthZ | 9 | Global writes need `--global --yes`; purge needs typed phrase |
+| 12 | Untrusted input | 8 | Registry sync validates paths, traversal, control chars |
+| 13 | Secrets and supply chain | 7 | SC-012 CI has no `permissions:` and tag-pinned actions |
 | 14 | Privacy | 7 | SC-001 backups of personal customizations can be pushed |
 | 15 | Abuse resistance | N/A | Local CLI, no service surface |
 | 16 | End-to-end latency | 8 | Measured 75–90 ms per command vs 34 ms bare Node |
