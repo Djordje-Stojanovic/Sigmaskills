@@ -579,3 +579,30 @@ test('packed CLI updates Project and Global Installation while preserving custom
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
+
+test('update: a retired skill is reported and left untouched instead of blocking the update', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-retired-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    const statePath = path.join(projectRoot, '.agents', 'state.json');
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    const retiredDir = path.join(projectRoot, '.agents', 'skills', 'sigmaperformance');
+    fs.cpSync(path.join(projectRoot, '.agents', 'skills', 'sigmawrite'), retiredDir, { recursive: true });
+    state.skills.sigmaperformance = { ...state.skills.sigmawrite, destination: '.agents/skills/sigmaperformance' };
+    fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
+    const before = snapshotTree(retiredDir);
+
+    const io = createMockIo();
+    const code = await runCli(['update', '--yes', '--project', projectRoot], io);
+    assert.equal(code, 0, io.getStderr());
+    assert.match(io.getStdout(), /Retired skills[\s\S]*sigmaperformance/);
+    assert.match(io.getStdout(), /uninstall --skill sigmaperformance/);
+    assert.deepEqual(snapshotTree(retiredDir), before);
+
+    const jsonIo = createMockIo();
+    assert.equal(await runCli(['update', '--dry-run', '--json', '--project', projectRoot], jsonIo), 0);
+    assert.deepEqual(JSON.parse(jsonIo.getStdout()).retired, ['sigmaperformance']);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});

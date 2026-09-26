@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "sigmaskills",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Portable Agent Skills monorepo and first-party Sigma Installer",
   "skills": [
     {
@@ -10,13 +10,18 @@
       "needsReferences": true
     },
     {
-      "id": "sigmaperformance",
-      "title": "SigmaPerformance",
+      "id": "sigmaimprove",
+      "title": "SigmaImprove",
       "needsReferences": true
     },
     {
       "id": "sigmabrief",
       "title": "SigmaBrief",
+      "needsReferences": true
+    },
+    {
+      "id": "sigmaship",
+      "title": "SigmaShip",
       "needsReferences": true
     },
     {
@@ -29,5 +34,8 @@
       "title": "SigmaRefactor",
       "needsReferences": true
     }
+  ],
+  "retired": [
+    "sigmaperformance"
   ]
 }

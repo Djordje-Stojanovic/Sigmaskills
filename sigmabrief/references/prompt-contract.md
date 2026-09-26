@@ -18,7 +18,7 @@ Return only:
 One line per item:
 
 ```text
-#N or title | isolation: on|off|ask | type: greenfield|finish-PR|skip|blocked
+wave N | #N or title | isolation: on|off|ask | type: greenfield|finish-PR|skip|blocked|session
 ```
 
 ### Briefs
@@ -32,21 +32,22 @@ Only when useful: overlaps, upstream waits, already fixed, human-only tests.
 ## 2. Invariants every brief must carry
 
 1. Exact work target (issue URL and/or plain task).
-2. Plan first; wait for approval. If trade-offs exist, executing agent uses `/grill-me` or focused questions — including worktree yes/no (parallel → on; sequential single → off OK).
+2. Plan first. With `approval: plan` (default), wait for approval; if trade-offs exist, use `/grill-me` or focused questions — including worktree yes/no (parallel → on; sequential single → off OK). With `approval: auto`, decide, record each decision as `Ruling: <what> — <why> — <cost if wrong>` in the PR body, and stop only for irreversible, security-sensitive, or outside-the-branch actions.
 3. Branch from latest `main` **or** continue existing PR branch (never duplicate in-flight work).
 4. One-sentence definition of done.
 5. Required reads when discoverable (concrete paths, not “read the docs”).
-6. Validate (tests/checkpoints if known; else smoke the failure mode + adjust tests if present).
+6. Baseline first: run the project's checks before changing anything, and report a red baseline instead of building on it. Then validate (tests/checkpoints if known; else smoke the failure mode + adjust tests if present). For a SigmaReview finding, its proof test must fail before the fix and pass after.
 7. Commit, push, open PR for review (`Closes #N` when applicable).
 8. **Do not merge.**
 9. Self-review: high quality, docs, validation, low regression risk before opening the PR.
 10. Explicit out-of-scope / do-not-touch list.
 11. Windows-native commands/paths. No WSL assumptions.
 12. **Do not merge. Keep any worktree while the PR is open. Cleanup only after human merge or user cancel/abandon.**
+13. Report back in this format: `Status: DONE | DONE_WITH_CONCERNS | BLOCKED` · PR URL · checks run and results · rulings or open questions · concerns.
 
 ## 3. Worktree create (Windows)
 
-When isolation is on, the **executing agent** creates the worktree (Approach A).
+When isolation is on, the **executing agent** creates the worktree (Approach A). If the host has a native worktree tool (for example Cursor `/worktree`, a `--worktree` flag, or an `EnterWorktree` tool), use it: the host can then see and clean up the worktree. Otherwise use the git commands below. If the agent already runs inside a linked worktree, it creates no second one.
 
 ### Prerequisites (verify before add)
 
@@ -66,7 +67,6 @@ git worktree add -b <branch> <sibling-path> origin/main
 
 Rules: one branch ↔ one worktree; sibling path next to the main repo (not under `.git`); never write to the shared main checkout while parallel agents are writing.
 
-Host extras (Cursor `/worktree`, Pi/Lazy `worktree: true`, Codex after `cd` into the worktree) are optional — they do not replace agent-created `git worktree add` when isolation is on.
 
 ### Finish-PR isolation
 
@@ -107,7 +107,7 @@ Plan first. If trade-offs exist, use /grill-me or ask focused questions — incl
 If isolation is on: YOU create the worktree (git fetch; verify clean-enough main checkout, unique branch, free sibling path; then git worktree add -b <branch> <Windows-sibling-path> origin/main). Do all work there. You own cleanup — do not leave worktrees/branches behind (see cleanup at end; this is critical). Do not merge. Keep the worktree while the PR is open. Cleanup only after human merge or abandon.
 
 Solve the work. Follow repo standards and these required reads: <paths>.
-Validate with: <tests/smoke>. Update docs/LEARNINGS only when something non-obvious was learned.
+Run the baseline checks before any change; if they are red, stop and report. Validate with: <tests/smoke>. Update docs/LEARNINGS only when something non-obvious was learned.
 Commit, push, open a PR for review (Closes #<N> if an issue). Do NOT merge.
 Self-review: high quality, docs, validation, low probability of bug introduction before opening the PR.
 
@@ -119,6 +119,8 @@ CLEANUP (if you created a worktree) — after human merge OR abandon only:
 - git worktree remove <path>; git worktree prune; delete local branch
 - verify with git worktree list
 Remind: worktree cleanup is mandatory to avoid disk/git bloat.
+
+REPORT BACK: Status: DONE | DONE_WITH_CONCERNS | BLOCKED · PR URL · checks run · rulings/open questions · concerns.
 ```
 
 ### Finish-PR
@@ -135,6 +137,21 @@ Out of scope: unrelated issues.
 
 CLEANUP: N/A unless you created a worktree — then cleanup only after human merge or abandon (same checklist as greenfield; mention lifecycle ownership at start and in DoD).
 ```
+
+### Session
+
+```text
+Continue this work: <one-sentence goal>.
+
+Where it stands: <current state in three to six lines>.
+Decided, with reasons: <decisions the next agent must not reopen>.
+Artifacts (read these; they are the source of truth): <spec, issue, PR, branch, commit, file paths or URLs>.
+Next step: <the first concrete action and how to know it is done>.
+Open questions: <only the ones still open>.
+Suggested skills: <e.g. $sigmareview, /tdd, $sigmawrite>.
+```
+
+Write it for an agent that has never seen this conversation. Point to artifacts instead of copying them. Redact secrets and personal data. Return it in chat like every other brief.
 
 ### Sequential (isolation off)
 

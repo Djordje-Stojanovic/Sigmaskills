@@ -14,13 +14,18 @@ const KNOWN_SKILLS = [
     needsReferences: true,
   },
   {
-    id: 'sigmaperformance',
-    title: 'SigmaPerformance',
+    id: 'sigmaimprove',
+    title: 'SigmaImprove',
     needsReferences: true,
   },
   {
     id: 'sigmabrief',
     title: 'SigmaBrief',
+    needsReferences: true,
+  },
+  {
+    id: 'sigmaship',
+    title: 'SigmaShip',
     needsReferences: true,
   },
   {

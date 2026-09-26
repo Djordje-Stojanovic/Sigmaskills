@@ -68,7 +68,7 @@ test('interactive Project Installation reads the skill picker from the manifest 
     assert.doesNotMatch(io.getStdout(), /\x1b\[/);
     assert.match(io.getStdout(), /Project Installation \(default\)/);
     assert.match(io.getStdout(), /sigmareview/);
-    assert.match(io.getStdout(), /sigmaperformance/);
+    assert.match(io.getStdout(), /sigmaimprove/);
     assert.match(io.getStdout(), /sigmabrief/);
     assert.match(io.getStdout(), /sigmawrite/);
     assert.match(io.getStdout(), /Installation cancelled\. No files were written\./);
@@ -148,7 +148,7 @@ test('interactive Project Installation confirms exact destinations and installs 
 
     assert.ok(fs.existsSync(path.join(reviewDestination, 'SKILL.md')));
     assert.ok(fs.existsSync(path.join(briefDestination, 'SKILL.md')));
-    assert.ok(!fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmaperformance')));
+    assert.ok(!fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmaimprove')));
     assert.ok(!fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmawrite')));
     assert.ok(!fs.existsSync(path.join(projectRoot, '.claude')));
     assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));

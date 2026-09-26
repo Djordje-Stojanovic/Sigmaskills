@@ -1,6 +1,6 @@
 {
   "name": "@djordje-stojanovic/sigmaskills",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Portable Agent Skills monorepo and first-party Sigma Installer",
   "type": "module",
   "bin": {
@@ -15,8 +15,9 @@
     "registry/skill-baselines.json",
     "manifest.json",
     "sigmareview",
-    "sigmaperformance",
+    "sigmaimprove",
     "sigmabrief",
+    "sigmaship",
     "sigmawrite",
     "sigmarefactor",
     "README.md",

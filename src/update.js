@@ -387,10 +387,13 @@ export function createUpdatePlan(options = {}) {
     registry: options.registry || loadHostRegistry(findPackageRoot()),
   });
 
-  const skillIds = [...new Set([
+  const retiredIds = new Set(catalog.manifest.retired || []);
+  const recordedIds = [...new Set([
     ...Object.keys(state.skills || {}),
     ...Object.keys(lockInspect.lock.skills || {}),
   ])].sort();
+  const retired = recordedIds.filter((skillId) => retiredIds.has(skillId));
+  const skillIds = recordedIds.filter((skillId) => !retiredIds.has(skillId));
 
   const missing = skillIds.filter((skillId) => !catalog.skills.some((skill) => skill.id === skillId));
   if (missing.length > 0) {
@@ -456,6 +459,7 @@ export function createUpdatePlan(options = {}) {
     blocked,
     needsResolution,
     needsMarkerResolution,
+    retired,
     skills,
   };
 }
@@ -795,6 +799,13 @@ export function formatUpdateHuman(plan) {
   renderGroup('Unchanged skills', plan.unchanged || []);
   renderGroup('Blocked skills', plan.blocked || []);
   renderGroup('Malformed markers', plan.needsMarkerResolution || []);
+  if (plan.retired?.length) {
+    lines.push('');
+    lines.push('Retired skills (no longer in the Skill Pack; left unchanged):');
+    for (const skillId of plan.retired) {
+      lines.push(`  ${skillId} — remove with: sigmaskills uninstall --skill ${skillId}`);
+    }
+  }
   if (plan.prompt) {
     lines.push('');
     lines.push(`Prompt: ${plan.prompt}`);

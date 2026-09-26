@@ -1,0 +1,12 @@
+interface:
+  display_name: SigmaImprove
+  short_description: Living per-category backlog of ideas versus the world's best
+  default_prompt: Use $sigmaimprove to compare this project with the best in its
+    field and file or update one issue per category with weighed ideas.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
