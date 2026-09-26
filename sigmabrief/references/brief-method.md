@@ -26,7 +26,10 @@ Accept:
 - one or more issue URLs;
 - issue numbers when the repo is clear (`#12`, `12`);
 - `all open` / simple label filters;
+- a SigmaReview report (`SIGMAREVIEW-*.md`): one brief per finding or per tight group of findings, reusing each finding's fix, proof test, and `Done when` verbatim instead of re-describing them;
+- SigmaImprove category issues: brief only entries marked `chosen`, and carry the chosen option and its sketch;
 - non-GitHub work: features, upgrades, bugs, plain English tasks;
+- `this session`: a session brief so a fresh agent can continue the current conversation;
 - constraints: skip N, do not merge, finish PR M only, max agents.
 
 ## 3. Light research
@@ -60,6 +63,9 @@ Assign one prompt type:
 | `finish-PR` | Open PR/branch already addresses it — rebase/finish only; never a second implementation |
 | `skip` | Already on default branch / fixed / user said skip |
 | `blocked` | Upstream-only or human-gate; smallest workaround or tracking note, no giant fork |
+| `session` | Hand the current conversation to a fresh agent: goal, current state, decisions and their reasons, next step, suggested skills. Link specs, issues, PRs, commits, and files instead of copying them. Redact secrets and personal data. |
+
+Then group items into **waves**. Two items are independent only when they touch different files and no shared state (schema, config, lockfile, generated output, the same test fixtures). Independent items share a wave and run in parallel. Dependent or overlapping items go in later waves or run one after another in one lane. When in doubt, sequence: a merge conflict costs more than a wait.
 
 Recommend isolation defaults for the *executing* agent’s plan question:
 
