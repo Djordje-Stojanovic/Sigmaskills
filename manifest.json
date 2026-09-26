@@ -34,5 +34,8 @@
       "title": "SigmaRefactor",
       "needsReferences": true
     }
+  ],
+  "retired": [
+    "sigmaperformance"
   ]
 }

@@ -22,6 +22,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Fixed
 
 - The README no longer points to the v0.2.1 zip as the latest Release.
+- `update` no longer stops when a skill that left the Skill Pack is still installed. The manifest lists retired skills (`sigmaperformance`); `update` leaves them unchanged, lists them under *Retired skills*, and names the `uninstall` command that removes them.
 
 ## [0.3.0] — 2026-09-08
 
