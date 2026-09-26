@@ -6,12 +6,12 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
-- SigmaImprove (`sigmaimprove`) finds what would make a product, game, codebase, or system clearly better. It turns each idea into 3–5 weighed options with text sketches, decides them with the user in chat, and files one GitHub issue or local ticket per chosen idea. It never edits the system. It grew out of the SigmaCheck draft, which was never released.
+- SigmaImprove (`sigmaimprove`) finds what would make a product, game, codebase, or system clearly better. It scans a full list of improvement categories (value, speed, control, look and feel, reach, intelligence, trust, engineering, and games) and presents at least ten ideas across them. It turns each idea into 3–5 weighed options with text sketches, decides them with the user in chat, and files one GitHub issue or local ticket per chosen idea. It never edits the system. It grew out of the SigmaCheck draft, which was never released.
 - The first SigmaCheck audit of this repository is kept in `docs/audits/SIGMACHECK-2026-09-26.md` as a baseline.
 
 ### Changed
 
-- SigmaReview (`sigmareview`) now covers correctness, security (source review plus safe tests on a local instance), and measured performance in one run. After the findings pull request, it fixes the findings the user accepts on the same branch, one commit and one proof test per finding. The report file is now `SIGMAREVIEW-YYYY-MM-DD.md`.
+- SigmaReview (`sigmareview`) now covers correctness, security (source review plus safe tests on a local instance), and measured performance in one run. It reports every finding with no cap, each written as a self-contained fix brief that an LLM can act on, grouped into waves that can be fixed in parallel. It still never changes code: it publishes one feature-branch pull request with the review file. The report file is now `SIGMAREVIEW-YYYY-MM-DD.md`.
 
 ### Removed
 

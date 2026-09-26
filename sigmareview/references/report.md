@@ -1,6 +1,6 @@
 # SigmaReview report and pull request
 
-Create one file at the repository root: `SIGMAREVIEW-YYYY-MM-DD.md`. If that file already exists on the base branch, update it; do not add a second report. The report must still make sense after the conversation is gone. It is the verdict, the evidence, and the fix backlog in one.
+Create one file at the repository root: `SIGMAREVIEW-YYYY-MM-DD.md`. If that file already exists on the base branch, update it; do not add a second report. The report must still make sense after the conversation is gone. It is the verdict, the evidence, and the fix backlog in one. Its main reader is the LLM or engineer who will fix each finding, so every finding must stand alone.
 
 ## Report structure
 
@@ -30,11 +30,19 @@ Use this order. Leave out a section only when this contract allows it, and never
 
 ## Fix plan
 
-| Order | Findings | Action | Depends on | Done when | Status |
-|---:|---|---|---|---|---|
-| 1 | SIG-001 | <action> | — | <objective signal> | open |
+| Wave | Findings | Action | Depends on | Done when |
+|---:|---|---|---|---|
+| 1 | SIG-001, SIG-004 | <action> | — | <objective signal> |
 
-<Status values: open, fix, defer, reject, fixed. Update them during the discussion and fix phase.>
+<Group findings into waves. Findings in the same wave do not depend on each other and can be fixed in parallel. A later wave depends only on earlier waves.>
+
+## Findings index
+
+| ID | Priority | Evidence | Category | Title | Location | Effort |
+|---|---|---|---|---|---|---|
+| SIG-001 | P1 | M1 | Security | <specific failure> | `path:line` | S |
+
+<One row per finding. For large reports this table is the entry point; keep it complete.>
 
 ## Findings
 
@@ -42,7 +50,7 @@ Use this order. Leave out a section only when this contract allows it, and never
 
 ## Needs measurement
 
-<M3 items, capped at the five most valuable. Each item gives the mechanism, the location, and the exact measurement that would promote or kill it. Leave this section out if there are none.>
+<Every M3 item that passed every gate except magnitude. Each item gives the mechanism, the location, and the exact measurement that would promote or kill it. Leave this section out if there are none.>
 
 ## Coverage
 
@@ -86,6 +94,8 @@ Use this order. Leave out a section only when this contract allows it, and never
 **Proof test:** <setup, action, and assertion that fail before the fix and pass after>.
 
 **Depends on:** <IDs or none>.
+
+**Done when:** <the proof test passes, the full suite passes, plus any extra objective signal>.
 ```
 
 Rules:
@@ -95,6 +105,8 @@ Rules:
 - Cite current line numbers at the reviewed commit. Link external facts to primary sources next to the claim.
 - No rejected candidates, generic best-practice lists, praise padding, decorative scores, or large code excerpts.
 - Never print a full secret. Write `<redacted credential>`.
+- Write every finding so it can be copied alone into an agent prompt: no "see above", no reference to this conversation, full paths, and the exact test command.
+- Many instances of one root cause become one finding with an occurrences table (`path:line` and a short note per row), not many findings.
 
 ## Pull request
 
@@ -127,4 +139,4 @@ Authority: <in words>. Coverage limit: <limit or none>.
 Full evidence and the fix plan: [`SIGMAREVIEW-YYYY-MM-DD.md`](./SIGMAREVIEW-YYYY-MM-DD.md).
 ```
 
-During the fix phase, each fix is its own commit, `fix(SIG-###): <what changed>`, with its proof test. Update the report's status column and the PR body counts as fixes land. If publication is impossible, keep the local branch and commit, and state the exact blocker and the smallest command that would publish it.
+The pull request contains only the review file. Do not fix, merge, or delete anything. If publication is impossible, keep the local branch and commit, and state the exact blocker and the smallest command that would publish it.

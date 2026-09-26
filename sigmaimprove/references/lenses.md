@@ -1,6 +1,6 @@
 # Improvement lenses
 
-Each lens is a question to ask of the target, not a quote to repeat. Use them to generate candidates. Most lenses produce nothing on a given target, and a few produce the best idea of the run.
+Each lens is a question to ask of the target, not a quote to repeat. Use them to generate candidates. Most lenses produce nothing on a given target, and a few produce the best idea of the run. Where to look is in [categories.md](categories.md).
 
 ## Contents
 
@@ -9,7 +9,6 @@ Each lens is a question to ask of the target, not a quote to repeat. Use them to
 3. Ambition and first principles
 4. Experience and craft
 5. Weighing
-6. Domain prompts
 
 ## Product and focus
 
@@ -51,12 +50,3 @@ For every option, give:
 - **Signal:** how the user would know it worked.
 
 Recommend one option and say why it beats the others. Never hide the tradeoff.
-
-## Domain prompts
-
-- **Games:** the core loop and its first five minutes; level variety and pacing; boss and enemy design; character animation and readability; art direction consistency; music and sound; difficulty curve; progression and rewards; accessibility options (remapping, subtitles, colorblind modes); replay value.
-- **Web and mobile apps:** time to first value; onboarding; the core task in fewer steps; empty, loading, and error states; visual hierarchy, spacing, and typography; mobile ergonomics; accessibility; trust signals.
-- **CLI and developer tools:** the zero-config path; defaults that do the obvious thing; help and error messages that tell you the next command; output that people and scripts can both read; speed of the common command.
-- **Libraries and APIs:** the smallest useful example; names that explain themselves; a pit of success where the easy way is the right way; migration cost for users.
-- **AI products:** where the model should not be used at all; where a smaller or faster model is good enough; how the user sees and corrects output; evaluation of quality.
-- **Hardware and firmware:** the first-hour experience; a bill of materials that could be simpler; manufacturability; field updates; diagnostics a user can read.

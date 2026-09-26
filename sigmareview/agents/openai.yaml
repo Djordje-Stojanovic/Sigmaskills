@@ -1,8 +1,8 @@
 interface:
   display_name: SigmaReview
-  short_description: Find, prove, and fix bugs, security holes, and slow paths
-  default_prompt: Use $sigmareview to find everything wrong in this repository,
-    open the findings pull request, and fix the findings we agree on.
+  short_description: Find and prove every bug, security hole, and slow path
+  default_prompt: Use $sigmareview to find everything wrong in this repository
+    and open one pull request with a review file an LLM can fix from.
 policy:
   products:
   - chatgpt

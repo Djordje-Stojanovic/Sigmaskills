@@ -1,6 +1,6 @@
 ---
 name: sigmaimprove
-description: Find what would make a product, game, codebase, or system clearly better - weak features, clumsy or ugly UX, missing content, needless parts to delete, bold new directions - and turn each into a decision with 3-5 weighed options and a text sketch, discussed with the user, then filed as one issue or local ticket per chosen idea. Use when the user asks for SigmaImprove by name, or asks what to improve, add, cut, or redesign next. Do not use to find bugs, security holes, or slow paths against existing goals (SigmaReview), to shrink code without changing behavior (SigmaRefactor), or to write agent briefs (SigmaBrief). Never edits the system.
+description: Find what would make a product, game, codebase, or system clearly better - at least 10 ideas across a full category list (new features, speed, latency, control, UI, colors, feel, native feel, accessibility, backend, quality, content, and more) - and turn each into a decision with 3-5 weighed options and a text sketch, discussed with the user, then filed as one issue or local ticket per chosen idea. Use when the user asks for SigmaImprove by name, or asks what to improve, add, cut, or redesign next. Do not use to find bugs, security holes, or slow paths against existing goals (SigmaReview), to shrink code without changing behavior (SigmaRefactor), or to write agent briefs (SigmaBrief). Never edits the system.
 ---
 
 # SigmaImprove
@@ -9,7 +9,7 @@ Find the few changes that would make this thing clearly better, and help the use
 
 If you find something that breaks a stated goal, a doc, or a test, it is a SigmaReview finding: name it in one line at the end, and do not turn it into an idea. Code that is merely large belongs to SigmaRefactor.
 
-Read [lenses.md](references/lenses.md) before exploring. Read [idea.md](references/idea.md) before presenting ideas or writing tickets.
+Read [categories.md](references/categories.md) and [lenses.md](references/lenses.md) before exploring. The categories say *where* to look; the lenses say *how* to think. Read [idea.md](references/idea.md) before presenting ideas or writing tickets.
 
 ## 1. Setup: one message
 
@@ -28,11 +28,20 @@ Use the thing as a new user would before you read the code. Run, open, or play i
 
 ## 3. Diverge, then converge
 
-Generate many candidates through the lenses in [lenses.md](references/lenses.md): at least twenty, in your reasoning only. Then keep the **five to ten** with the most impact on the vision. For each one, you must be able to say who benefits and how you would know it worked. Cut ideas that are generic ("add dark mode"), that you cannot tie to evidence, or that a SigmaReview finding would cover. Prefer one bold idea over three safe ones when the evidence supports it. Always consider deletion: the best part is often no part.
+Walk through every category in [categories.md](references/categories.md) that applies to the target. Mark the others `N/A` in one word. Apply the lenses to each category and generate candidates in your reasoning, far more than you will keep.
+
+Then keep **at least ten ideas**, and more when the evidence supports more:
+
+- Spread them across at least five category groups (A–I). No single category gets more than three ideas, unless the user set that focus.
+- Include at least one idea that deletes or simplifies something (A3), and at least one ambitious idea that changes what the product can be.
+- For each one, you must be able to say who benefits and how you would know it worked.
+- Cut ideas that are generic ("add dark mode" with no reason tied to this product), that you cannot tie to evidence, or that belong to SigmaReview (see the speed rule in the categories).
+
+Record which categories you scanned and found nothing strong in. That list shows the user where you looked.
 
 ## 4. Present and decide
 
-Show a short ranked list first: one line per idea, with its impact and effort. Then take the ideas one at a time, as [idea.md](references/idea.md) specifies: the problem with evidence, three to five options (including "leave it" and, where it fits, "delete it"), a weighing table, a text sketch per option, and your recommendation. Let the user choose, merge, change, or drop each idea. Push back when you disagree, and give your reason. The goal is a better decision, not agreement.
+Show a short ranked list first: one line per idea, with its category, impact, and effort, followed by the one-line list of categories scanned with no strong idea. Then take the ideas one at a time, as [idea.md](references/idea.md) specifies: the problem with evidence, three to five options (including "leave it" and, where it fits, "delete it"), a weighing table, a text sketch per option, and your recommendation. Let the user choose, merge, change, or drop each idea. Push back when you disagree, and give your reason. The goal is a better decision, not agreement.
 
 ## 5. File the chosen ideas
 

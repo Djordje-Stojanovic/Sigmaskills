@@ -1,11 +1,11 @@
 ---
 name: sigmareview
-description: Find everything that is wrong in a codebase or system - bugs, security holes, slow or wasteful paths, broken rendering, weak tests, unmet goals - prove each finding, publish one findings pull request, then fix the agreed findings on that branch. Covers correctness, security testing, and measured performance in one run. Use when the user asks for SigmaReview by name, or wants a full review, bug hunt, security review, or performance audit of a repository. Do not use for new feature ideas, design taste, or product direction (SigmaImprove), for size-only refactoring (SigmaRefactor), or for reviewing one small diff.
+description: Find everything that is wrong in a codebase or system - bugs, security holes, slow or wasteful paths, broken rendering, weak tests, unmet goals - prove each finding, and publish one feature-branch pull request with one review file that any LLM can use to fix every problem, whether there is 1 or 1000. Covers correctness, security testing, and measured performance in one run. Never fixes anything itself. Use when the user asks for SigmaReview by name, or wants a full review, bug hunt, security review, or performance audit of a repository. Do not use for new feature ideas, design taste, or product direction (SigmaImprove), for size-only refactoring (SigmaRefactor), or for reviewing one small diff.
 ---
 
 # SigmaReview
 
-Find what is wrong, prove it, and fix what the user agrees to fix. "Wrong" means the system breaks a promise it already makes: its goals, docs, specs, tests, interfaces, budgets, or the plain intent of its code. Bugs, security holes, slow paths, wasted resources, broken rendering, and tests that would not catch a real failure are all wrong in this sense. They go in one report, and fixing them is the same kind of work.
+Find what is wrong, prove it, and write it down so well that any engineer or LLM can fix every problem without rediscovering it. You never fix anything yourself. "Wrong" means the system breaks a promise it already makes: its goals, docs, specs, tests, interfaces, budgets, or the plain intent of its code. Bugs, security holes, slow paths, wasted resources, broken rendering, and tests that would not catch a real failure are all wrong in this sense. They all go in one review file.
 
 An idea about what the system *should become* is not a finding. Examples are a missing feature, a weak design, or a better game level. Leave those to SigmaImprove, and name them in one line at the end of the report if they are strong. Code that is only large or repetitive, with no defect, belongs to SigmaRefactor.
 
@@ -19,9 +19,8 @@ Then ask one message, with the defaults marked ★. Accept "defaults".
 
 1. **Authority:** A — read the source only · B — may install the declared dependencies and run the existing tests, builds, the local app, benchmarks, and safe security probes in an isolated workspace ★ · C — custom. Production systems, paid APIs, shared infrastructure, and other people's services are never in scope.
 2. **Goals and budgets:** the primary users and journeys, any latency, frame-time, memory, size, or cost budgets, and known complaints or telemetry. Default: infer them from the repository and label every inference.
-3. **After the report:** A — discuss, then fix the agreed findings on the report branch ★ · B — report only.
 
-If nobody answers (unattended run), use the defaults, state them at the top of the report, and continue. Work as one agent. Use subagents only when the user asks for them in this message. You remain the only writer of the report and of every fix.
+If nobody answers (unattended run), use the defaults, state them at the top of the report, and continue. Work as one agent. Use subagents only when the user asks for them in this message. You remain the only writer of the report. You never modify the reviewed code, tests, or docs.
 
 ## 2. Map
 
@@ -52,24 +51,13 @@ Merge symptoms under one root cause. Discard what fails. There is no "possible i
 - **P2:** material but bounded.
 - **P3:** small, with a demonstrated cost.
 
-## 5. Report
+## 5. Report and pull request
 
-Write one file, `SIGMAREVIEW-YYYY-MM-DD.md`, at the repository root, as [report.md](references/report.md) specifies. Publish it on the branch `sigmareview/YYYY-MM-DD` as one pull request. The report is the backlog: every finding is independent, ordered, and ready to fix.
+Write one file, `SIGMAREVIEW-YYYY-MM-DD.md`, at the repository root, as [report.md](references/report.md) specifies. Report every finding that passes the gate. There is no cap: one finding or a thousand, the file holds them all, ordered and indexed. Group many instances of one root cause into one finding with an occurrences table.
 
-## 6. Discuss, then fix
+Write each finding as a self-contained fix brief. An LLM that reads only that finding and the repository must be able to make the fix, write the proof test, and know when it is done, without this conversation and without re-investigating. Name dependencies between findings, so that fixers can work in parallel where it is safe.
 
-With option 3B, stop after the pull request.
-
-With the default, walk the user through the findings in priority order. For each one, the user decides: fix, defer, or reject. Record each decision in the report's status column. Do not edit code before this agreement.
-
-Then fix the accepted findings on the same branch, one at a time:
-
-1. Write the proof test and see it fail.
-2. Make the smallest fix that makes it pass.
-3. Run the full suite.
-4. Commit it as `fix(SIG-###): <what changed>`.
-
-Keep behavior, public interfaces, data, and user changes intact beyond the fix. If a fix turns out larger or riskier than the report said, stop and ask. When every accepted fix is green, update the report, push, and tell the user the branch is ready. Merge and delete the branch only when the user says so.
+Publish the file on a feature branch `sigmareview/YYYY-MM-DD` as one pull request. The pull request adds only the review file. Fixing, merging, and deleting the branch are for the user and their agents after the review.
 
 ## Final response
 

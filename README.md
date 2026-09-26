@@ -12,7 +12,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 | **Spec** | [agentskills.io](https://agentskills.io/) |
 
 ```text
-  Σ  review     →  find what is wrong, prove it, fix what you agree on
+  Σ  review     →  find and prove what is wrong, one PR an LLM can fix from
   Σ  improve    →  find what would make it better, weigh options, file tickets
   Σ  refactor   →  user-guided, behavior-preserving code reduction
   Σ  brief      →  paste-ready agent briefs, chat only
@@ -47,7 +47,7 @@ Then invoke with your host’s normal skill syntax (`$sigmawrite`, `/skill:sigma
 
 | Skill | Id | Job | Output |
 |-------|-----|-----|--------|
-| **SigmaReview** | `sigmareview` | Find, prove, and fix what is wrong: bugs, security, performance, tests | One findings PR, then agreed fixes on that branch |
+| **SigmaReview** | `sigmareview` | Find and prove what is wrong: bugs, security, performance, tests | One feature-branch PR with one review file |
 | **SigmaImprove** | `sigmaimprove` | Find what would make it clearly better, and decide with you | Weighed options in chat, then one ticket per chosen idea |
 | **SigmaBrief** | `sigmabrief` | Prompt factory for parallel / single agents | Chat briefs only |
 | **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
@@ -61,15 +61,15 @@ SigmaReview and SigmaImprove split on one question: **is it wrong, or could it b
 - If good people could disagree about the answer, it is a SigmaImprove idea. Examples: weak character animation, a missing boss level, an onboarding flow with too many steps.
 - If the code is only too large and behavior must not change, it is SigmaRefactor.
 
-The skills chain into two loops: **fix** (SigmaReview → findings PR → fixes → merge) and **grow** (SigmaImprove → tickets → SigmaBrief → agents).
+The skills chain into two loops: **fix** (SigmaReview → review PR → you or your agents fix each finding → merge) and **grow** (SigmaImprove → tickets → SigmaBrief → agents).
 
 ### SigmaReview
 
-Finds everything that breaks the system's own promises: bugs, security holes (source review plus safe tests on a local instance), slow and wasteful paths (measured when you allow execution), broken rendering, and weak tests. Every finding carries a location, a mechanism, an impact, an evidence class (measured or proven), and a proof test. It publishes one findings pull request. After you decide which findings to fix, it fixes them on the same branch, each with its test. It merges only when you say so.
+Finds everything that breaks the system's own promises: bugs, security holes (source review plus safe tests on a local instance), slow and wasteful paths (measured when you allow execution), broken rendering, and weak tests. Every finding carries a location, a mechanism, an impact, an evidence class (measured or proven), a fix, and a proof test, written so an LLM can fix it from that finding alone. There is no cap: 1 finding or 1,000 go in one review file on one feature-branch pull request. It never changes your code.
 
 ### SigmaImprove
 
-Uses the product like a new user, then looks through product, simplicity, ambition, and craft lenses to find the five to ten changes that would matter most. Each idea gets three to five options with impact, effort, risk, and a text sketch. You decide each idea in chat. Only the ideas you choose become tickets: GitHub issues, or local Markdown files if that is how the project tracks work. It never edits the system.
+Uses the product like a new user, then looks through product, simplicity, ambition, and craft lenses across a full list of improvement categories — new features, speed and latency, control, layout, color, motion, native feel, accessibility, backend, engineering quality, and game design — and presents at least ten ideas spread across those categories. Each idea gets three to five options with impact, effort, risk, and a text sketch. You decide each idea in chat. Only the ideas you choose become tickets: GitHub issues, or local Markdown files if that is how the project tracks work. It never edits the system.
 
 ### SigmaBrief
 
@@ -260,7 +260,7 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 
 | Skill | Typical invoke | Notes |
 |-------|----------------|-------|
-| `sigmareview` | repo URL · path | One setup message (authority, goals, fix or report only), then runs alone |
+| `sigmareview` | repo URL · path | One setup message (authority, goals), then runs alone |
 | `sigmaimprove` | repo · path · running product | One setup message (vision, focus, constraints, ticket place), then discusses ideas |
 | `sigmabrief` | issue URL · `#N` · `all open` · plain work | Explicit only — not ambient |
 | `sigmawrite` | (no args) | Session writing voice until you turn it off |
@@ -275,9 +275,9 @@ Use the skill picker, `@` / `$` skill mention, or whatever that product document
 - File: `SIGMAREVIEW-YYYY-MM-DD.md` on branch `sigmareview/YYYY-MM-DD`, one pull request
 - `SIG-###` findings: P0–P3, **M1** measured or **M2** proven, location, broken promise, fix, and proof test
 - **M3** needs-measurement items listed apart and never counted as confirmed
-- No code changes before you agree; then one `fix(SIG-###)` commit per accepted finding, each with its test
+- Every finding is a self-contained fix brief; findings are grouped into waves that can be fixed in parallel
+- The PR adds only the review file; it never changes code
 - Execution, installs, and security probes only with your authority, and only on a local instance
-- Merges and deletes the branch only when you say so
 
 ### SigmaImprove
 

@@ -5,9 +5,11 @@
 Show this first, so the user sees the whole set before the detail:
 
 ```markdown
-| # | Idea | Impact | Effort | Door |
-|---|---|---|---|---|
-| 1 | <short name> | High | M | two-way |
+| # | Idea | Category | Impact | Effort | Door |
+|---|---|---|---|---|---|
+| 1 | <short name> | B1 Perceived latency | High | M | two-way |
+
+Scanned, nothing strong: <category IDs>. Not applicable: <category IDs>.
 ```
 
 ## One idea
@@ -16,6 +18,8 @@ Present each idea in this shape, and keep each one to about a screen.
 
 ```markdown
 ### IMP-### — <short name>
+
+**Category:** <ID and name>.
 
 **Problem:** <what is weak or missing, for whom, with the evidence: what you saw when you used it, plus `path:line` or asset where relevant>.
 
