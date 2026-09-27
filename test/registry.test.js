@@ -5,11 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { parseAgents, extractEnvVars } from '../src/registry/parse.js';
-import { validateSnapshot, assertSafePath, SUPPORTED_PLATFORMS } from '../src/registry/validate.js';
-import { diffSnapshots } from '../src/registry/diff.js';
-import { normalizeHost, buildSnapshot, compareIds } from '../src/registry/normalize.js';
-import { loadPin, syncRegistry, runSync, fetchPinnedSource, canonicalSourceText } from '../src/registry/sync.js';
+import { parseAgents, extractEnvVars } from '../scripts/registry/parse.js';
+import { validateSnapshot, assertSafePath, SUPPORTED_PLATFORMS } from '../scripts/registry/validate.js';
+import { diffSnapshots } from '../scripts/registry/diff.js';
+import { normalizeHost, buildSnapshot, compareIds } from '../scripts/registry/normalize.js';
+import { loadPin, syncRegistry, runSync, fetchPinnedSource, canonicalSourceText } from '../scripts/registry/sync.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -231,10 +231,17 @@ test('registry: sync writes snapshot only when diff is safe', () => {
   try {
     const prev = loadSnapshot();
     // same source, no drift -> should write
-    const ok = syncRegistry({ source: FIXTURE, allowReview: true }, { pin, previous: prev });
+    const snapshotPath = path.join(tmpDir, 'agent-hosts.json');
+    const pinPath = path.join(tmpDir, 'source.json');
+    const repoSnapshot = fs.readFileSync(SNAPSHOT);
+    const ok = syncRegistry({ source: FIXTURE, allowReview: true }, { pin, previous: prev, snapshotPath, pinPath });
     assert.equal(ok.ok, true);
     assert.equal(ok.diff.summary.review, 0);
     assert.equal(ok.shouldWrite, true);
+    assert.deepEqual(JSON.parse(fs.readFileSync(snapshotPath, 'utf8')), ok.snapshot);
+    assert.ok(fs.existsSync(pinPath));
+    // The test must not rewrite the repository file that other test files read in parallel.
+    assert.deepEqual(fs.readFileSync(SNAPSHOT), repoSnapshot);
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }

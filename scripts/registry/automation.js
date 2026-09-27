@@ -343,10 +343,10 @@ export function inspectRegistrySyncWorkflow(yaml) {
   const setupNodePin = (text.match(/uses:\s+actions\/setup-node@([a-f0-9]{40})/) || [])[1] || null;
   if (checkoutPin !== CHECKOUT_ACTION_PIN) errors.push('actions/checkout pin is missing or drifted');
   if (setupNodePin !== SETUP_NODE_ACTION_PIN) errors.push('actions/setup-node pin is missing or drifted');
-  if (!/node \.\/src\/registry\/automation-ci\.js generate/.test(text)) {
+  if (!/node \.\/scripts\/registry\/automation-ci\.js generate/.test(text)) {
     errors.push('generate job must run automation-ci.js generate');
   }
-  if (!/node \.\/src\/registry\/automation-ci\.js auto-merge/.test(text)) {
+  if (!/node \.\/scripts\/registry\/automation-ci\.js auto-merge/.test(text)) {
     errors.push('auto-merge job must run automation-ci.js auto-merge');
   }
   if (!/EXPECTED_HEAD/.test(text)) errors.push('workflow must pass EXPECTED_HEAD');

@@ -11,11 +11,6 @@ import {
   formatPurgeHuman,
   formatPurgeJson,
 } from './purge.js';
-import {
-  executeRelease,
-  formatReleaseHuman,
-  formatReleaseJson,
-} from './release.js';
 import { executeProjectInstall, executeProjectInstallBatch } from './transaction.js';
 import { resolveHomeDir } from './destinations.js';
 
@@ -44,7 +39,6 @@ Commands:
   restore           Restore the latest retained backup for a skill
   uninstall         Uninstall selected skills or every recorded skill in one scope after Uninstall Review
   purge             Remove all Sigma-owned content in one scope after the typed confirmation phrase
-  release           Prepare or dispatch an owner-triggered GitHub and npm Release
   status            Report managed Project or Global Installation state and drift
   list              List all shipped skills and their Skill Revisions
   verify            Validate manifest, skill resources, and compute revisions
@@ -54,17 +48,9 @@ Options:
   -h, --help        Show help
   --skill <name>    Skill identifier to install, update, restore, or uninstall (repeatable)
   --all             Install every shipped skill, or uninstall every recorded Sigma skill in the chosen scope
-  --dry-run         Preview install, update, restore, uninstall, purge, or release without writing files
+  --dry-run         Preview install, update, restore, uninstall, or purge without writing files
   --confirm-purge <phrase>
                     Exact typed confirmation for purge; --yes, CI, non-TTY, and JSON are not enough
-  --write-identities
-                    Write package, manifest, and changelog version identities for the calculated Release
-  --expected-commit <sha>
-                    Approved source commit for release dispatch
-  --expected-version <version>
-                    Approved Release version for release dispatch
-  --expected-digest <sha256>
-                    Approved tarball SHA-256 digest for release dispatch
   --json            Output in versioned JSON format
   --project <path>  Target project root directory (defaults to current directory)
   --global          User-level Global Installation (requires --yes to write)
@@ -102,7 +88,7 @@ ${skillsList}
 `;
 }
 
-const COMMANDS = ['list', 'verify', 'check', 'install', 'add', 'status', 'update', 'restore', 'uninstall', 'purge', 'release'];
+const COMMANDS = ['list', 'verify', 'check', 'install', 'add', 'status', 'update', 'restore', 'uninstall', 'purge'];
 const SKILL_COMMANDS = ['install', 'add', 'update', 'restore', 'uninstall'];
 const RESOLUTIONS = ['replace', 'skip', 'export'];
 
@@ -124,7 +110,6 @@ const FLAGS = [
   { name: '--copy', key: 'copy' },
   { name: '--link', key: 'link' },
   { name: '--list', key: 'list' },
-  { name: '--write-identities', key: 'writeIdentities' },
   { name: '--skill', key: 'skillIds', value: true, repeatable: true },
   { name: '--destination', key: 'destinations', value: true, repeatable: true },
   { name: '--project', alias: '--cwd', key: 'projectRoot', value: true },
@@ -139,9 +124,6 @@ const FLAGS = [
   { name: '--clean', key: 'clean', value: true, values: ['remove', 'keep'] },
   { name: '--changed', key: 'changed', value: true, values: ['backup', 'keep', 'export', 'delete'] },
   { name: '--confirm-purge', key: 'confirmPurge', value: true, allowEmpty: true },
-  { name: '--expected-commit', key: 'expectedCommit', value: true },
-  { name: '--expected-version', key: 'expectedVersion', value: true },
-  { name: '--expected-digest', key: 'expectedDigest', value: true },
 ];
 
 function formatChoices(values) {
@@ -282,28 +264,6 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       writeErr(`sigmaskills error: unknown skill '${unknownId}'`);
       writeErr(`The skill '${unknownId}' was not found in Skill Pack ${catalog.manifest.name}. Run 'sigmaskills list' to see skill ids.`);
       return 1;
-    }
-
-    if (opts.command === 'release') {
-      const adapters = io.release || {};
-      const result = executeRelease({
-        rootDir: adapters.rootDir || rootDir,
-        catalog: adapters.catalog || catalog,
-        dryRun: opts.dryRun,
-        yes: opts.yes,
-        writeIdentities: opts.writeIdentities,
-        expectedCommit: opts.expectedCommit,
-        expectedVersion: opts.expectedVersion,
-        expectedDigest: opts.expectedDigest,
-        git: adapters.git,
-        pack: adapters.pack,
-        probes: adapters.probes,
-        dispatch: adapters.dispatch,
-        workflow: adapters.workflow,
-        now: adapters.now,
-      });
-      writeOut(opts.json ? formatReleaseJson(result) : formatReleaseHuman(result));
-      return 0;
     }
 
     if (opts.command === 'purge') {
