@@ -203,7 +203,9 @@ export function executeProjectInstall(params) {
 
   if (plan.requiresApproval) throw createNeedsResolutionError(plan);
 
-  const releaseLock = acquireConcurrencyLock(root, customStateDir);
+  // Inside a batch, the batch holds the concurrency lock and owns rollback, signals, the lock file, and cleanup.
+  const { batch } = params;
+  const releaseLock = batch ? () => {} : acquireConcurrencyLock(root, customStateDir);
 
   const stagingParent = path.join(
     scope === 'global' ? getGlobalStateDir(root, customStateDir) : getProjectStateDir(root, customStateDir),
@@ -298,8 +300,12 @@ export function executeProjectInstall(params) {
     rollback();
     process.exit(130);
   };
-  process.once('SIGINT', signalHandler);
-  process.once('SIGTERM', signalHandler);
+  if (batch) {
+    batch.rollbacks.push(rollback);
+  } else {
+    process.once('SIGINT', signalHandler);
+    process.once('SIGTERM', signalHandler);
+  }
 
   try {
     const willWrite = (dest) => (
@@ -557,7 +563,9 @@ export function executeProjectInstall(params) {
     persistState(root, updatedState, customStateDir);
 
     let updatedLock = originalLock;
-    if (useProjectLock) {
+    if (useProjectLock && batch) {
+      batch.lockSkills.push([skillId, plan.sourceRevision, plan.release]);
+    } else if (useProjectLock) {
       updatedLock = updateProjectLockSkill(
         originalLock,
         skillId,
@@ -567,56 +575,63 @@ export function executeProjectInstall(params) {
       saveProjectLock(root, updatedLock);
     }
 
-    // 5. Cleanup backups after state & lock write succeed
-    for (const entry of committed) {
-      if (entry.backupDir && pathExists(entry.backupDir)) {
-        removeManagedPath(entry.backupDir);
-        entry.backupDir = null;
+    // 5. Cleanup backups after state & lock write succeed (a batch runs this after its lock write)
+    const finalize = () => {
+      for (const entry of committed) {
+        if (entry.backupDir && pathExists(entry.backupDir)) {
+          removeManagedPath(entry.backupDir);
+          entry.backupDir = null;
+        }
       }
-    }
-    for (const backupPath of privateBackups) {
-      let debt = [];
-      try {
-        const pruneFn = params.pruneBackups || pruneOlderBackups;
-        const result = pruneFn({
-          stateDir: stateDirForBackups,
-          skillId,
-          keepPath: backupPath,
-        });
-        if (result && Array.isArray(result.debt)) debt = result.debt;
-      } catch {
-        const dir = path.join(getBackupRoot(stateDirForBackups), skillId);
-        if (pathExists(dir)) {
-          const keep = path.resolve(backupPath);
-          for (const name of fs.readdirSync(dir)) {
-            const full = path.resolve(dir, name);
-            if (full !== keep) {
-              debt.push(path.relative(stateDirForBackups, full).replace(/\\/g, '/'));
+      for (const backupPath of privateBackups) {
+        let debt = [];
+        try {
+          const pruneFn = params.pruneBackups || pruneOlderBackups;
+          const result = pruneFn({
+            stateDir: stateDirForBackups,
+            skillId,
+            keepPath: backupPath,
+          });
+          if (result && Array.isArray(result.debt)) debt = result.debt;
+        } catch {
+          const dir = path.join(getBackupRoot(stateDirForBackups), skillId);
+          if (pathExists(dir)) {
+            const keep = path.resolve(backupPath);
+            for (const name of fs.readdirSync(dir)) {
+              const full = path.resolve(dir, name);
+              if (full !== keep) {
+                debt.push(path.relative(stateDirForBackups, full).replace(/\\/g, '/'));
+              }
             }
           }
         }
-      }
-      if (debt.length > 0) {
-        try {
-          persistState(root, recordSkillInState(updatedState, {
-            skillId,
-            release: plan.release,
-            revision: plan.sourceRevision,
-            method: plan.method,
-            destination: primary.destination,
-            projectRoot: root,
-            ownedPaths: primary.ownedPaths,
-            baseHashes: primary.baseHashes || fileHashes,
-            copies,
-            scope,
-            lastBackup,
-            cleanupDebt: debt,
-          }), customStateDir);
-        } catch {
-          // Two backups remain; recording debt is best-effort.
+        if (debt.length > 0) {
+          try {
+            const debtBase = batch
+              ? (scope === 'global' ? loadGlobalState(root, customStateDir) : loadProjectState(root, customStateDir))
+              : updatedState;
+            persistState(root, recordSkillInState(debtBase, {
+              skillId,
+              release: plan.release,
+              revision: plan.sourceRevision,
+              method: plan.method,
+              destination: primary.destination,
+              projectRoot: root,
+              ownedPaths: primary.ownedPaths,
+              baseHashes: primary.baseHashes || fileHashes,
+              copies,
+              scope,
+              lastBackup,
+              cleanupDebt: debt,
+            }), customStateDir);
+          } catch {
+            // Two backups remain; recording debt is best-effort.
+          }
         }
       }
-    }
+    };
+    if (batch) batch.finalizers.push(finalize);
+    else finalize();
 
     cleanupStaging();
     releaseLock();
@@ -635,6 +650,66 @@ export function executeProjectInstall(params) {
     process.removeListener('SIGINT', signalHandler);
     process.removeListener('SIGTERM', signalHandler);
     cleanupStaging();
+    releaseLock();
+  }
+}
+
+/**
+ * Install several skills as one transaction.
+ *
+ * Every skill is planned first, so a conflict or a pending choice stops before any write.
+ * Then each skill commits under one concurrency lock. If any skill fails, every skill in
+ * the batch rolls back and the state and project lock return to their earlier bytes.
+ * The project lock is written once, after every skill has committed.
+ *
+ * @param {object} params Same as executeProjectInstall, with `skillIds` instead of `skillId`
+ * @returns {object[]} One execution summary per skill, in order
+ */
+export function executeProjectInstallBatch(params) {
+  const { skillIds, dryRun = false, ...rest } = params;
+  const plans = skillIds.map((skillId) => executeProjectInstall({ ...rest, skillId, dryRun: true }).plan);
+  if (dryRun) return plans.map((plan) => ({ success: true, dryRun: true, plan }));
+  const pending = plans.find((plan) => plan.requiresApproval);
+  if (pending) throw createNeedsResolutionError(pending);
+
+  migrateStateForCommand(params);
+  const scope = rest.scope || 'project';
+  const root = path.resolve(scope === 'global'
+    ? rest.homeDir || resolveHomeDir(rest.env || process.env)
+    : rest.projectRoot || process.cwd());
+  const batch = { rollbacks: [], finalizers: [], lockSkills: [] };
+  const releaseLock = acquireConcurrencyLock(root, rest.customStateDir);
+  const rollbackAll = () => {
+    for (const rollback of batch.rollbacks.splice(0).reverse()) rollback();
+  };
+  const signalHandler = () => {
+    rollbackAll();
+    releaseLock();
+    process.exit(130);
+  };
+  process.once('SIGINT', signalHandler);
+  process.once('SIGTERM', signalHandler);
+
+  try {
+    let results;
+    try {
+      results = skillIds.map((skillId) => executeProjectInstall({ ...rest, skillId, batch }));
+      if (batch.lockSkills.length > 0) {
+        let lock = loadProjectLock(root);
+        for (const [skillId, revision, release] of batch.lockSkills) {
+          lock = updateProjectLockSkill(lock, skillId, revision, release);
+        }
+        saveProjectLock(root, lock);
+      }
+    } catch (err) {
+      rollbackAll();
+      throw err;
+    }
+    for (const finalize of batch.finalizers) finalize();
+    return results;
+  } finally {
+    process.removeListener('SIGINT', signalHandler);
+    process.removeListener('SIGTERM', signalHandler);
     releaseLock();
   }
 }

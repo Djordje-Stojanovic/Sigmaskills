@@ -16,7 +16,7 @@ import {
   formatReleaseHuman,
   formatReleaseJson,
 } from './release.js';
-import { executeProjectInstall } from './transaction.js';
+import { executeProjectInstall, executeProjectInstallBatch } from './transaction.js';
 import { resolveHomeDir } from './destinations.js';
 
 /**
@@ -38,8 +38,8 @@ Usage:
   sigmaskills [options] [command]
 
 Commands:
-  install <skill>   Install a skill into the project (.agents/skills/<skill>)
-  add <skill>       Alias for install
+  install <skill...> Install one or more skills in one transaction (.agents/skills/<skill>)
+  add <skill...>    Alias for install
   update            Update selected whole skills to the running CLI Release
   restore           Restore the latest retained backup for a skill
   uninstall         Uninstall selected skills or every recorded skill in one scope after Uninstall Review
@@ -53,7 +53,7 @@ Options:
   -v, --version     Show version number
   -h, --help        Show help
   --skill <name>    Skill identifier to install, update, restore, or uninstall (repeatable)
-  --all             Uninstall every recorded Sigma skill in the chosen Project or Global scope
+  --all             Install every shipped skill, or uninstall every recorded Sigma skill in the chosen scope
   --dry-run         Preview install, update, restore, uninstall, purge, or release without writing files
   --confirm-purge <phrase>
                     Exact typed confirmation for purge; --yes, CI, non-TTY, and JSON are not enough
@@ -496,8 +496,12 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     }
 
     if (opts.command === 'install' || opts.command === 'add' || opts.skillIds.length > 0) {
-      if (opts.skillIds.length === 0) {
-        writeErr("sigmaskills error: missing required skill name for install command (e.g. 'sigmaskills install sigmawrite')");
+      if (opts.all && opts.skillIds.length > 0) {
+        writeErr('sigmaskills error: install --all cannot be combined with skill ids');
+        return 1;
+      }
+      if (!opts.all && opts.skillIds.length === 0) {
+        writeErr("sigmaskills error: missing required skill name for install command (e.g. 'sigmaskills install sigmawrite', or --all)");
         return 1;
       }
 
@@ -507,9 +511,9 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       }
 
       const env = io.env || process.env;
-      const result = executeProjectInstall({
+      const skillIds = opts.all ? catalog.skills.map((skill) => skill.id) : [...new Set(opts.skillIds)];
+      const installParams = {
         catalog,
-        skillId: opts.skillIds[0],
         projectRoot: opts.projectRoot,
         homeDir: resolveHomeDir(env),
         scope: opts.global ? 'global' : 'project',
@@ -524,20 +528,27 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         adoptUnverified: opts.adoptUnverified || undefined,
         adoptMalformed: opts.adoptMalformed || undefined,
         exportDir: opts.exportDir || undefined,
-      });
+      };
+      const results = skillIds.length === 1
+        ? [executeProjectInstall({ ...installParams, skillId: skillIds[0] })]
+        : executeProjectInstallBatch({ ...installParams, skillIds });
 
       if (opts.json) {
-        writeOut(formatPlanJson(result.plan));
+        writeOut(results.length === 1
+          ? formatPlanJson(results[0].plan)
+          : JSON.stringify({ schemaVersion: 1, plans: results.map((result) => result.plan) }, null, 2));
       } else {
-        writeOut(formatPlanHuman(result.plan));
+        for (const result of results) writeOut(formatPlanHuman(result.plan));
         if (!opts.dryRun) {
           writeOut('');
-          for (const dest of result.plan.destinations) {
-            const method = dest.method ? ` [${dest.method}]` : '';
-            writeOut(`✔ Installed ${result.plan.title} (${result.plan.skill}) to ${dest.relativeDestination}${method}`);
+          for (const { plan } of results) {
+            for (const dest of plan.destinations) {
+              const method = dest.method ? ` [${dest.method}]` : '';
+              writeOut(`✔ Installed ${plan.title} (${plan.skill}) to ${dest.relativeDestination}${method}`);
+            }
+            writeOut(`  Revision: ${plan.sourceRevision}`);
           }
-          writeOut(`  Revision: ${result.plan.sourceRevision}`);
-          if (result.plan.scope !== 'global') {
+          if (results[0].plan.scope !== 'global') {
             writeOut(`  Project lock: skills-lock.json updated`);
           }
         }
