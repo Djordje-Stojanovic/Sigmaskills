@@ -19,6 +19,7 @@ import {
   formatReleaseHuman,
   formatReleaseJson,
   inspectReleaseWorkflow,
+  parseNpmPackJson,
   parseReleaseArgs,
   planIdempotentPublish,
   runReleaseCli,
@@ -588,4 +589,11 @@ test('formatReleaseJson is a stable versioned envelope', () => {
   }));
   assert.equal(json.schemaVersion, 1);
   assert.equal(json.command, 'release');
+});
+
+test('release packing reads npm pack --json after prepack logs on stdout (dd35041)', () => {
+  const json = JSON.stringify([{ filename: 'sigmaskills-0.2.1.tgz', integrity: 'sha512-x' }], null, 2);
+  const output = `\n> sigmaskills@0.2.1 prepack\n> node ./src/prepack.js\n\nPrepack validation successful: 6 skills validated\n${json}\n`;
+  assert.equal(parseNpmPackJson(output)[0].filename, 'sigmaskills-0.2.1.tgz');
+  assert.throws(() => parseNpmPackJson('no json here'), /produced no JSON/);
 });
