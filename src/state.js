@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { acquireFileLock } from './concurrency-lock.js';
 import path from 'node:path';
 import { resolveHomeDir, UNIVERSAL_PROJECT_DESTINATION } from './destinations.js';
 
@@ -59,17 +60,6 @@ export function removeEmptyStateDir(stateDir) {
   }
 }
 
-function isLiveLock(lockPath) {
-  try {
-    const { pid } = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
-    if (!pid || pid === process.pid) return false;
-    process.kill(pid, 0);
-    return true;
-  } catch (err) {
-    return err.code === 'EPERM';
-  }
-}
-
 // fs.cpSync turns a Windows junction into a plain folder with the target's files,
 // so copy links as links, the same way backups create them.
 function copyNoFollow(from, to) {
@@ -89,7 +79,7 @@ function finishLegacyCleanup(legacyDir, newDir) {
   if (!fs.existsSync(markerPath)) return;
   const { entries = [] } = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
   for (const name of entries) {
-    if (LEGACY_ENTRIES.includes(name)) {
+    if (LEGACY_ENTRIES.includes(name) && name !== '.sigma.lock') {
       fs.rmSync(path.join(legacyDir, name), { recursive: true, force: true });
     }
   }
@@ -108,8 +98,13 @@ function finishLegacyCleanup(legacyDir, newDir) {
 export function migrateLegacyState(legacyDir, newDir, hooks = {}) {
   const tempDir = path.join(legacyDir, `${PRIVATE_STATE_DIRNAME}.migrating`);
   if (fs.existsSync(newDir)) {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-    finishLegacyCleanup(legacyDir, newDir);
+    if (!fs.existsSync(path.join(newDir, LEGACY_MIGRATION_MARKER))
+      && !fs.existsSync(path.join(legacyDir, '.sigma.lock'))) return;
+    const release = acquireFileLock(path.join(legacyDir, '.sigma.lock'));
+    try {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+      finishLegacyCleanup(legacyDir, newDir);
+    } finally { release(); }
     return;
   }
   const present = LEGACY_ENTRIES.filter((name) => fs.existsSync(path.join(legacyDir, name)));
@@ -127,8 +122,10 @@ export function migrateLegacyState(legacyDir, newDir, hooks = {}) {
   }
   // Hold the old-layout lock so no other run (this version or 0.4.0) touches the files mid-copy.
   const lockPath = path.join(legacyDir, '.sigma.lock');
-  if (!takeLegacyLock(lockPath)) {
-    throw new Error(`another SigmaSkills run holds ${lockPath}. Wait for it, then try again.`);
+  let release;
+  try { release = acquireFileLock(lockPath); }
+  catch (err) {
+    throw new Error(`another SigmaSkills run holds ${lockPath}. ${err.message}`);
   }
   try {
     if (fs.existsSync(newDir)) {
@@ -149,31 +146,7 @@ export function migrateLegacyState(legacyDir, newDir, hooks = {}) {
     hooks.afterCommit?.();
     finishLegacyCleanup(legacyDir, newDir);
   } finally {
-    releaseLegacyLock(lockPath);
-  }
-}
-
-function takeLegacyLock(lockPath) {
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const fd = fs.openSync(lockPath, 'wx');
-      fs.writeFileSync(fd, JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() }), 'utf8');
-      fs.closeSync(fd);
-      return true;
-    } catch (err) {
-      if (err.code !== 'EEXIST') throw err;
-      if (isLiveLock(lockPath)) return false;
-      fs.rmSync(lockPath, { force: true });
-    }
-  }
-  return false;
-}
-
-function releaseLegacyLock(lockPath) {
-  try {
-    if (JSON.parse(fs.readFileSync(lockPath, 'utf8')).pid === process.pid) fs.rmSync(lockPath, { force: true });
-  } catch {
-    // Already removed by the cleanup, or never ours.
+    release();
   }
 }
 

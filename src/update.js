@@ -149,12 +149,16 @@ function releaseRelation(installed, running) {
   return 'same';
 }
 
-function readChangelog(packageRoot) {
+function readChangelog(packageRoot, installed, running) {
   const changelogPath = path.join(packageRoot, 'CHANGELOG.md');
   if (!pathExists(changelogPath) || !fs.lstatSync(changelogPath).isFile()) return '';
   const text = fs.readFileSync(changelogPath, 'utf8');
-  const match = text.match(/## \[Unreleased\][\s\S]*?(?=\n## \[|$)/);
-  return (match ? match[0] : text.slice(0, 4000)).trim();
+  if (!installed || releaseRelation(installed, running) !== 'older') return '';
+  return text.split(/(?=^## \[)/m).filter((section) => {
+    const version = section.match(/^## \[(\d+\.\d+\.\d+)\]/)?.[1];
+    return version && releaseRelation(installed, version) === 'older'
+      && ['older', 'same'].includes(releaseRelation(version, running));
+  }).map((section) => section.trim()).join('\n\n');
 }
 
 function assertSupportedSchema(state, label) {
@@ -433,7 +437,7 @@ export function createUpdatePlan(options = {}) {
   const blocked = skills.filter((skill) => skill.blocked);
   const needsResolution = skills.filter((skill) => skill.needsResolution);
   const needsMarkerResolution = skills.filter((skill) => skill.needsMarkerResolution);
-  const kinds = [...new Set(skills.map((skill) => skill.changeKind).filter((kind) => kind && kind !== 'none'))];
+  const kinds = [...new Set(needsResolution.map((skill) => skill.changeKind).filter((kind) => kind && kind !== 'none'))];
   const prompts = [];
   if (kinds.length) {
     prompts.push(`Resolve ${kinds.join(', ')} outside-edit cases with skip, export, or replace.`);
@@ -452,7 +456,7 @@ export function createUpdatePlan(options = {}) {
       running: status.release?.running || catalog.manifest.version,
       relation: releaseRelation(status.release?.installed, status.release?.running || catalog.manifest.version),
     },
-    changelog: readChangelog(packageRoot),
+    changelog: readChangelog(packageRoot, status.release?.installed, status.release?.running || catalog.manifest.version),
     owner: CANONICAL_CUSTOMIZATION_OWNER,
     prompt: prompts.join(' '),
     changed,
@@ -749,10 +753,11 @@ export function formatUpdateJson(plan) {
  */
 export function formatUpdateHuman(plan) {
   const scopeLabel = plan.scope === 'global' ? 'Global Installation' : 'Project Installation';
+  const runningRelation = { older: 'newer', newer: 'older' }[plan.release?.relation] || plan.release?.relation || 'unknown';
   const lines = [
     `SigmaSkills ${scopeLabel} Update`,
     `  Installed Release:   ${plan.release?.installed || 'none'}`,
-    `  Running Release:     ${plan.release?.running || 'unknown'} (${plan.release?.relation || 'unknown'})`,
+    `  Running Release:     ${plan.release?.running || 'unknown'} (${runningRelation})`,
     `  Customization owner: ${plan.owner} copy`,
   ];
   if (plan.changelog) {
@@ -763,12 +768,9 @@ export function formatUpdateHuman(plan) {
   }
 
   const renderGroup = (title, skills) => {
+    if (!skills.length) return;
     lines.push('');
     lines.push(`${title}:`);
-    if (!skills.length) {
-      lines.push('  (none)');
-      return;
-    }
     for (const skill of skills) {
       lines.push(`  ${skill.title} (${skill.id}) [${skill.comparison}]`);
       if (skill.changelog) {
@@ -820,8 +822,8 @@ export function formatUpdateHuman(plan) {
   renderGroup('Concurrent local/upstream changes', concurrent);
   if (Array.isArray(plan.selected)) {
     lines.push('');
-    lines.push(`Selected: ${plan.selected.join(', ') || '(none)'}`);
-    lines.push(`Skipped:  ${plan.skipped.join(', ') || '(none)'}`);
+    if (plan.selected.length) lines.push(`Selected: ${plan.selected.join(', ')}`);
+    if (plan.skipped?.length) lines.push(`Skipped:  ${plan.skipped.join(', ')}`);
   }
   if (plan.dryRun) lines.push('', 'Dry run complete. No files were written.');
   return lines.join('\n');

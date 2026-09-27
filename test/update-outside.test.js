@@ -165,6 +165,10 @@ test('update: prompts distinguish local-only, upstream-only, and concurrent chan
     assert.match(io.getStdout(), /local-only/);
     assert.match(io.getStdout(), /upstream-only/);
     assert.match(io.getStdout(), /concurrent/);
+    const prompt = io.getStdout().match(/^Prompt: .*$/m)?.[0] || '';
+    assert.match(prompt, /local-only/);
+    assert.match(prompt, /concurrent/);
+    assert.doesNotMatch(prompt, /upstream-only/);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }

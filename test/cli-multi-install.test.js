@@ -188,3 +188,23 @@ test('cli: install a b --global --yes installs both skills and writes no project
   }
   assert.deepEqual(fs.readdirSync(projectRoot), []);
 });
+
+test('cli: install a b migrates an old-layout project once, then installs both', async (t) => {
+  const projectRoot = tempProject(t);
+  assert.equal(await runCli(['install', 'sigmabrief', '--project', projectRoot], createMockIo()), 0);
+  const agents = path.join(projectRoot, '.agents');
+  const stateDir = path.join(agents, '.sigmaskills');
+  for (const name of fs.readdirSync(stateDir)) {
+    if (name !== '.gitignore') fs.renameSync(path.join(stateDir, name), path.join(agents, name));
+  }
+  fs.rmSync(stateDir, { recursive: true, force: true });
+
+  const io = createMockIo();
+  const code = await runCli(['install', 'sigmawrite', 'sigmareview', '--project', projectRoot], io);
+
+  assert.equal(code, 0, io.getStderr());
+  assert.ok(!fs.existsSync(path.join(agents, 'state.json')));
+  const state = JSON.parse(fs.readFileSync(path.join(stateDir, 'state.json'), 'utf8'));
+  assert.deepEqual(Object.keys(state.skills).sort(), ['sigmabrief', 'sigmareview', 'sigmawrite']);
+  assert.deepEqual(Object.keys(readLock(projectRoot).skills), ['sigmabrief', 'sigmareview', 'sigmawrite']);
+});

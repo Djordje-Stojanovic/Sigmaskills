@@ -12,11 +12,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 - An unknown skill id now fails with `unknown skill '<id>'` before any planning, for `install`, `update`, `restore`, and `uninstall`. `uninstall --skill nope` said `stale-state` before. (#38)
 - A value flag with a missing, empty, or dash-prefixed value now fails with the flag name. Before, `--skill --yes` read `--yes` as a skill id, and a value flag at the end of the command was ignored. One flag table now parses and checks every flag; all current flags and aliases still work. (#38)
+- Update previews show the relevant release notes and correct running-version relation, omit empty sections, and ask for outside-edit choices only when needed. JSON field names and the installed-side relation remain compatible. (#36)
+- Lock recovery serializes competing takeovers, preserves fresh incomplete records, and checks unique ownership when releasing. Locks expire after 24 hours; a crash-leftover takeover guard stops safely with recovery instructions. Legacy migration uses the same lock. (#37)
 - Untouched copies of earlier Releases are recognized again. `registry/skill-baselines.json` now holds the file hashes of 0.1.0, 0.2.0, 0.2.1, and 0.3.0, rebuilt from their git tags (`node scripts/backfill-baselines.js <tag>...`), and `release --write-identities` adds the outgoing Release each time. Such a copy shows as `legacy` with high provenance and upgrades with no `--adopt-*` flag; a changed copy still needs a choice. (#35)
 - Install plans now label files from the installer's point of view: *Additions* are files the new Release brings, *Deletions* are files the install removes. They were swapped before. (#35)
 
 ### Changed
 
+- The skill picker and `list` now show each skill's short description for people (`short_description` in `agents/openai.yaml`) instead of the agent-facing description cut off mid-word. The picker wraps it onto at most two lines, so narrow terminals show it whole. A skill without that line shows the first sentence of its description. `list --json` still gives the full description. (#39)
 - The installer's private files (state, lock, backups, journals, staging) now live in `.agents/.sigmaskills/` (global: `~/.agents/.sigmaskills/`). The folder ignores itself in Git, so `git add -A` no longer stages `.agents/state.json` or backups. Older projects move there on the next write command; `status` and `--dry-run` still read the old layout and write nothing. `--state-dir` and `SIGMA_STATE_DIR` are unchanged. (#34)
 
 ## [0.4.0] — 2026-09-27
