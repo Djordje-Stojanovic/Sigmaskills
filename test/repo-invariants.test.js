@@ -4,6 +4,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { parseSkillFrontmatter } from '../src/catalog.js';
+import { CHECKOUT_ACTION_PIN, SETUP_NODE_ACTION_PIN } from '../scripts/release.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -174,14 +175,29 @@ test('CHANGELOG mentions every shipped skill id', () => {
   }
 });
 
-test('CI covers Windows, macOS, and Linux on Node.js 20+', () => {
+test('CI covers Node.js 22 and 24 on Windows, macOS, and Linux, plus Node.js 20 on Linux', () => {
   const ci = read('.github/workflows/ci.yml');
-  assert.match(ci, /ubuntu-latest/);
-  assert.match(ci, /windows-latest/);
-  assert.match(ci, /macos-latest/);
-  assert.match(ci, /node-version:\s*\[20,\s*22\]/);
+  assert.match(ci, /os:\s*\[ubuntu-latest,\s*windows-latest,\s*macos-latest\]/);
+  assert.match(ci, /node-version:\s*\[22,\s*24\]/);
+  assert.match(ci, /include:\s*\n(?:\s*#[^\n]*\n)*\s*- os: ubuntu-latest\s*\n\s*node-version: 20\s*\n/);
   assert.match(ci, /npm test/);
   assert.match(ci, /sigma-test-fs/);
+  assert.match(ci, /fetch-depth: 0/);
+});
+
+test('CI reads the repository only, pins actions by SHA, and rehearses the Release path', () => {
+  const ci = read('.github/workflows/ci.yml');
+  assert.match(ci, /\npermissions:\s*\n\s+contents: read\s*\n/);
+  assert.doesNotMatch(ci, /: write|id-token|secrets\.|environment:|npm publish/);
+  const uses = [...ci.matchAll(/uses:\s*(\S+)(.*)/g)];
+  assert.ok(uses.length > 0);
+  for (const [, action, comment] of uses) {
+    assert.match(action, /@[a-f0-9]{40}$/, `${action} must be pinned by full commit SHA`);
+    assert.match(comment, /#\s*v\d+\.\d+\.\d+/, `${action} needs a # vX.Y.Z comment`);
+  }
+  assert.match(ci, new RegExp(`actions/checkout@${CHECKOUT_ACTION_PIN}`));
+  assert.match(ci, new RegExp(`actions/setup-node@${SETUP_NODE_ACTION_PIN}`));
+  assert.match(ci, /release-rehearsal:[\s\S]*github\.event\.pull_request\.head\.sha[\s\S]*node \.\/scripts\/release-rehearsal\.js/);
 });
 
 test('GitHub issue kit templates remain present', () => {
