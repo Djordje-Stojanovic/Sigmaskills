@@ -121,6 +121,8 @@ function sigmaship({ files }) {
     ...requireInOrder(body, ['Acceptance', 'Rulings', 'Follow-ups (not in this PR)', 'Review rounds'], 'PR-BODY.md'),
     ...requireText(body, [/^- \[x\] .+/m, /\|\s*Round\s*\|\s*Status\s*\|/], 'PR-BODY.md'),
   ];
+  if (/^- \[ \]/m.test(body)) problems.push('PR-BODY.md: an acceptance criterion is still unticked');
+  if (!/^\|\s*\d+\s*\|/m.test(body)) problems.push('PR-BODY.md: no review round recorded in the Review rounds table');
   if (!cleanup) problems.push('missing CLEANUP.md (the cleanup verification output)');
   else problems.push(...requireText(cleanup, [/main in sync/, /tree clean/], 'CLEANUP.md'));
   return problems;

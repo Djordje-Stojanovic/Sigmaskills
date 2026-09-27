@@ -67,3 +67,12 @@ test('evals: near-miss prompts route to the right skill and not its neighbour', 
     assert.ok(route(prompt).find((r) => r.skill === near).score < first.score, `"${prompt}" also fits ${near}`);
   }
 });
+
+test('evals: sigmaship contract rejects unticked criteria and an empty review rounds table', () => {
+  const sample = loadSample(path.join(SAMPLES, 'sigmaship', 'good'));
+  const body = sample.files['PR-BODY.md'];
+  const unticked = body.replace(/^- \[x\] (A test covers)/m, '- [ ] $1');
+  assert.notDeepEqual(checkContract('sigmaship', { ...sample, files: { ...sample.files, 'PR-BODY.md': unticked } }), []);
+  const noRounds = body.replace(/^\| 1 \|.*\n?/m, '');
+  assert.notDeepEqual(checkContract('sigmaship', { ...sample, files: { ...sample.files, 'PR-BODY.md': noRounds } }), []);
+});

@@ -15,7 +15,7 @@ What each check requires:
 | SigmaReview | `SIGMAREVIEW-YYYY-MM-DD.md` at the root | Title; sections Verdict, System and promises, Fix plan, Findings index, Findings, Coverage in order; verdict and wave tables; `SIG-001`… numbered in order, each in the index with priority, evidence class, broken promise, fix, proof test, and done-when |
 | SigmaImprove | `.scratch/sigmaimprove/*.md` (local tracker) | 1–20 category files titled `SigmaImprove · <ID> <name>`; Where we stand, Entries, History; entries table; each Idea has problem, recommendation, done-when; each Signal has what we see, gap, questions; at least 10 entries across 5 category groups |
 | SigmaBrief | Final chat reply | Dispatch lines `wave N \| … \| isolation: … \| type: …`; fenced `text` briefs that each say do not merge and end with the fixed report-back line; no `SIGMABRIEF-*.md` file |
-| SigmaShip | `PR-BODY.md` and `CLEANUP.md` (the runner asks for them) | `Closes #N`, spec and map line, Acceptance with ticked boxes, Rulings, Follow-ups, Review rounds table; cleanup output shows `main in sync` and `tree clean` |
+| SigmaShip | `PR-BODY.md` and `CLEANUP.md` (the runner asks for them) | `Closes #N`, spec and map line, Acceptance with every box ticked, Rulings, Follow-ups, Review rounds table with at least one round; cleanup output shows `main in sync` and `tree clean` |
 | SigmaWrite | `docs/NOTES.md` in the fixture, rewritten | Code names `step`, `saveBest`, `src/scores.js` survive; the planted jargon is gone; no sentence over 30 words |
 | SigmaRefactor | `REFACTOR-SCAN.md` (the runner asks for it) | Counting method named (`laloc` or fallback); ranked files with line counts; choices with risk and verification |
 
