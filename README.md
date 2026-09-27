@@ -147,6 +147,8 @@ Releases run from a repository checkout, never from the published package; the n
 2. `npm run release -- --write-identities` writes the version identities; commit them and merge.
 3. `npm run release -- --expected-commit <sha> --expected-version <version> --expected-digest <sha256>` dispatches `release.yml`.
 
+CI rehearses these steps and the trusted `validate` and publish steps on every pull request (`node scripts/release-rehearsal.js`), with a real `npm pack` and stubbed network, dispatch, and publish.
+
 `--dry-run` calculates the next semantic version and complete change set from the accepted source commit, then prints one publication preview: commit, version, required tests, tarball contents and SHA-256 digest, Skill Revisions, git tag, GitHub Release, npm package, and `latest` dist-tag. Ordinary merges never publish. `--yes`, CI, and informal text cannot dispatch. `--write-identities` writes matching `package.json`, `manifest.json`, and `CHANGELOG.md` identities, and adds the outgoing Release's skill hashes (read from its local `v<version>` tag) to `registry/skill-baselines.json`, so the owner can commit them. Dispatch requires `--expected-commit`, `--expected-version`, and `--expected-digest` that match that rebuilt preview. The trusted `release.yml` workflow independently checks out the approved commit, re-runs tests, rebuilds the tarball, and verifies those values before the publish job. Validation stays `contents: read`. Only the final job receives `id-token: write`, `contents: write`, and the protected `release` environment, with actions pinned by commit SHA. Missing npm reservation, trusted publisher, environment protection, or a conflicting version, tag, or GitHub Release fails closed with setup guidance. Matching npm provenance or an existing GitHub Release at the same commit is skipped rather than overwritten or duplicated.
 
 ### Cross-host alternative
@@ -390,7 +392,7 @@ Zero-dependency Node tests guard the beauty: skill registry, `SKILL.md` frontmat
 npm test
 ```
 
-CI runs the same suite on Windows, macOS, and Linux for Node.js 20 and 22, on every pull request and every push to `main`. Those jobs cover real junctions or symbolic links, copy fallback, shell differences, and an isolated temp filesystem.
+CI runs the same suite on Windows, macOS, and Linux for Node.js 22 and 24, plus Node.js 20 on Linux, on every pull request and every push to `main`. Those jobs cover real junctions or symbolic links, copy fallback, shell differences, and an isolated temp filesystem.
 
 `npm test` also checks each skill's output contract against good and bad sample outputs, and checks that near-miss prompts reach the right skill. To run the skills themselves on a small fixture game, use `node scripts/eval-skills.js [skill...]`: it calls Claude Code, costs money, and stays out of CI. Results and method: [`docs/evals.md`](docs/evals.md).
 
