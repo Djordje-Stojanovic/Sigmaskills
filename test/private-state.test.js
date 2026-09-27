@@ -407,3 +407,20 @@ test('private state: a private folder left without its ignore file by a crash is
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });
+
+test('private state: purge removes state.json temp files left by a crashed save', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-private-tmp-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    fs.writeFileSync(path.join(getProjectStateDir(projectRoot), 'state.json.tmp.123.456'), '{}', 'utf8');
+    executePurge({
+      catalog: getCatalog(ROOT),
+      projectRoot,
+      packageRoot: ROOT,
+      confirmPurge: PURGE_CONFIRMATION_PHRASE,
+    });
+    assert.equal(pathExists(path.join(projectRoot, '.agents', PRIVATE_STATE_DIRNAME)), false);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
