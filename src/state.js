@@ -1,9 +1,205 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { UNIVERSAL_PROJECT_DESTINATION } from './destinations.js';
+import { resolveHomeDir, UNIVERSAL_PROJECT_DESTINATION } from './destinations.js';
 
 export const STATE_FILENAME = 'state.json';
 export const STATE_SCHEMA_VERSION = 1;
+export const PRIVATE_STATE_DIRNAME = '.sigmaskills';
+export const LEGACY_MIGRATION_MARKER = 'legacy-migration.json';
+const IGNORE_ALL = '*\n';
+
+// Private entries that 0.4.0 and older kept straight in .agents/, next to the committed skills.
+const LEGACY_ENTRIES = [
+  STATE_FILENAME,
+  '.sigma.lock',
+  'backups',
+  '.sigma-staging',
+  '.sigma-uninstall-staging',
+  '.sigma-restore-staging',
+];
+// Journals store absolute paths, so an interrupted run must finish where it started.
+const LEGACY_JOURNALS = ['uninstall-journal.json', 'purge-journal.json', '.sigma-purge-quarantine'];
+
+/**
+ * Create a private state folder that ignores itself in Git.
+ * The ignore file is written only into a folder this call creates, or into the
+ * default .agents/.sigmaskills folder when a crash left it without one,
+ * so a user's own --state-dir folder is never hidden.
+ *
+ * @param {string} stateDir
+ */
+export function ensureStateDir(stateDir) {
+  const ignorePath = path.join(stateDir, '.gitignore');
+  if (fs.existsSync(stateDir)) {
+    const isDefault = path.basename(stateDir) === PRIVATE_STATE_DIRNAME
+      && path.basename(path.dirname(stateDir)) === '.agents';
+    if (isDefault && !fs.existsSync(ignorePath)) fs.writeFileSync(ignorePath, IGNORE_ALL, 'utf8');
+    return;
+  }
+  fs.mkdirSync(stateDir, { recursive: true });
+  fs.writeFileSync(ignorePath, IGNORE_ALL, 'utf8');
+}
+
+/**
+ * Remove the self-ignore file and the folder when nothing else is left in it.
+ *
+ * @param {string} stateDir
+ */
+export function removeEmptyStateDir(stateDir) {
+  const ignorePath = path.join(stateDir, '.gitignore');
+  try {
+    const names = fs.readdirSync(stateDir);
+    // Only a folder this installer created (it holds our own ignore file) is removed.
+    if (names.length !== 1 || names[0] !== '.gitignore') return;
+    if (fs.readFileSync(ignorePath, 'utf8') !== IGNORE_ALL) return;
+    fs.rmSync(ignorePath, { force: true });
+    fs.rmdirSync(stateDir);
+  } catch {
+    // Best-effort: an empty private folder is harmless.
+  }
+}
+
+function isLiveLock(lockPath) {
+  try {
+    const { pid } = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+    if (!pid || pid === process.pid) return false;
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return err.code === 'EPERM';
+  }
+}
+
+// fs.cpSync turns a Windows junction into a plain folder with the target's files,
+// so copy links as links, the same way backups create them.
+function copyNoFollow(from, to) {
+  const stat = fs.lstatSync(from);
+  if (stat.isSymbolicLink()) {
+    fs.symlinkSync(fs.readlinkSync(from), to, process.platform === 'win32' ? 'junction' : 'dir');
+  } else if (stat.isDirectory()) {
+    fs.mkdirSync(to, { recursive: true });
+    for (const name of fs.readdirSync(from)) copyNoFollow(path.join(from, name), path.join(to, name));
+  } else {
+    fs.copyFileSync(from, to);
+  }
+}
+
+function finishLegacyCleanup(legacyDir, newDir) {
+  const markerPath = path.join(newDir, LEGACY_MIGRATION_MARKER);
+  if (!fs.existsSync(markerPath)) return;
+  const { entries = [] } = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
+  for (const name of entries) {
+    if (LEGACY_ENTRIES.includes(name)) {
+      fs.rmSync(path.join(legacyDir, name), { recursive: true, force: true });
+    }
+  }
+  fs.rmSync(markerPath, { force: true });
+}
+
+/**
+ * Move 0.4.0-layout private state from legacyDir into newDir.
+ * One directory rename is the commit point: a crash before it leaves the old layout,
+ * a crash after it leaves the new layout plus a marker that finishes the cleanup next run.
+ *
+ * @param {string} legacyDir
+ * @param {string} newDir
+ * @param {{ beforeCommit?: () => void, afterCommit?: () => void }} [hooks] test-only crash points
+ */
+export function migrateLegacyState(legacyDir, newDir, hooks = {}) {
+  const tempDir = path.join(legacyDir, `${PRIVATE_STATE_DIRNAME}.migrating`);
+  if (fs.existsSync(newDir)) {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    finishLegacyCleanup(legacyDir, newDir);
+    return;
+  }
+  const present = LEGACY_ENTRIES.filter((name) => fs.existsSync(path.join(legacyDir, name)));
+  if (present.length === 0) {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    return;
+  }
+  const journal = LEGACY_JOURNALS.find((name) => fs.existsSync(path.join(legacyDir, name)));
+  if (journal) {
+    throw new Error(
+      `an interrupted SigmaSkills run left ${path.join(legacyDir, journal)}. `
+      + 'Finish it with the version that started it, then run this command again: '
+      + 'npx @djordje-stojanovic/sigmaskills@0.4.0 uninstall --all --yes, or purge --confirm-purge "purge SigmaSkills".',
+    );
+  }
+  // Hold the old-layout lock so no other run (this version or 0.4.0) touches the files mid-copy.
+  const lockPath = path.join(legacyDir, '.sigma.lock');
+  if (!takeLegacyLock(lockPath)) {
+    throw new Error(`another SigmaSkills run holds ${lockPath}. Wait for it, then try again.`);
+  }
+  try {
+    if (fs.existsSync(newDir)) {
+      finishLegacyCleanup(legacyDir, newDir);
+      return;
+    }
+    const entries = LEGACY_ENTRIES.filter((name) => fs.existsSync(path.join(legacyDir, name)));
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    fs.mkdirSync(tempDir, { recursive: true });
+    fs.writeFileSync(path.join(tempDir, '.gitignore'), IGNORE_ALL, 'utf8');
+    for (const name of entries) {
+      if (name === '.sigma.lock') continue;
+      copyNoFollow(path.join(legacyDir, name), path.join(tempDir, name));
+    }
+    fs.writeFileSync(path.join(tempDir, LEGACY_MIGRATION_MARKER), `${JSON.stringify({ entries })}\n`, 'utf8');
+    hooks.beforeCommit?.();
+    fs.renameSync(tempDir, newDir);
+    hooks.afterCommit?.();
+    finishLegacyCleanup(legacyDir, newDir);
+  } finally {
+    releaseLegacyLock(lockPath);
+  }
+}
+
+function takeLegacyLock(lockPath) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const fd = fs.openSync(lockPath, 'wx');
+      fs.writeFileSync(fd, JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() }), 'utf8');
+      fs.closeSync(fd);
+      return true;
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
+      if (isLiveLock(lockPath)) return false;
+      fs.rmSync(lockPath, { force: true });
+    }
+  }
+  return false;
+}
+
+function releaseLegacyLock(lockPath) {
+  try {
+    if (JSON.parse(fs.readFileSync(lockPath, 'utf8')).pid === process.pid) fs.rmSync(lockPath, { force: true });
+  } catch {
+    // Already removed by the cleanup, or never ours.
+  }
+}
+
+// Read-only: an unmigrated project keeps working from the old layout until a write command migrates it.
+function defaultStateDir(base) {
+  const legacyDir = path.join(path.resolve(base), '.agents');
+  const stateDir = path.join(legacyDir, PRIVATE_STATE_DIRNAME);
+  if (fs.existsSync(stateDir)) return stateDir;
+  const legacy = [...LEGACY_ENTRIES, ...LEGACY_JOURNALS].some((name) => fs.existsSync(path.join(legacyDir, name)));
+  return legacy ? legacyDir : stateDir;
+}
+
+/**
+ * Migrate the default private state folder before a write command plans anything.
+ * Dry runs, --state-dir, and SIGMA_STATE_DIR never migrate.
+ *
+ * @param {{ scope?: string, projectRoot?: string, homeDir?: string, env?: object, customStateDir?: string, dryRun?: boolean }} options
+ */
+export function migrateStateForCommand(options = {}) {
+  if (options.dryRun || options.customStateDir || process.env.SIGMA_STATE_DIR) return;
+  const base = options.scope === 'global'
+    ? (options.homeDir || resolveHomeDir(options.env || process.env))
+    : (options.projectRoot || process.cwd());
+  const legacyDir = path.join(path.resolve(base), '.agents');
+  migrateLegacyState(legacyDir, path.join(legacyDir, PRIVATE_STATE_DIRNAME));
+}
 
 /**
  * Resolve directory path where private project machine state is stored.
@@ -19,7 +215,7 @@ export function getProjectStateDir(projectRoot, customStateDir) {
   if (process.env.SIGMA_STATE_DIR) {
     return path.resolve(process.env.SIGMA_STATE_DIR);
   }
-  return path.join(projectRoot, '.agents');
+  return defaultStateDir(projectRoot);
 }
 
 /**
@@ -173,9 +369,7 @@ export function validateGlobalState(state) {
  * @param {string} [customStateDir]
  */
 function writeStateFile(stateDir, state, scope) {
-  if (!fs.existsSync(stateDir)) {
-    fs.mkdirSync(stateDir, { recursive: true });
-  }
+  ensureStateDir(stateDir);
 
   const sortedSkills = {};
   for (const key of Object.keys(state.skills || {}).sort()) {
@@ -231,7 +425,7 @@ export function getGlobalStateDir(homeDir, customStateDir) {
   if (process.env.SIGMA_STATE_DIR) {
     return path.resolve(process.env.SIGMA_STATE_DIR);
   }
-  return path.join(path.resolve(homeDir), '.agents');
+  return defaultStateDir(homeDir);
 }
 
 /**

@@ -416,7 +416,7 @@ test('interactive destinations install a Claude Code link only after an explicit
     assert.ok(fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmareview', 'SKILL.md')));
     assert.ok(fs.lstatSync(path.join(projectRoot, '.claude', 'skills', 'sigmareview')).isSymbolicLink());
     assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));
-    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'));
+    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
     const copies = state.skills.sigmareview.copies;
     assert.equal(copies.length, 2);
     assert.ok(copies.some((copy) => copy.destination === '.claude/skills/sigmareview' && copy.kind === 'host' && copy.dependsOn === '.agents/skills/sigmareview'));
@@ -470,7 +470,7 @@ test('interactive link failure copy fallback writes an independent managed copy'
     const host = path.join(projectRoot, '.claude', 'skills', 'sigmareview');
     assert.equal(fs.lstatSync(host).isSymbolicLink(), false);
     assert.ok(fs.existsSync(path.join(host, 'SKILL.md')));
-    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'));
+    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
     const hostCopy = state.skills.sigmareview.copies.find((copy) => copy.kind === 'host');
     assert.equal(hostCopy.method, 'copy');
     assert.equal(hostCopy.dependsOn, null);

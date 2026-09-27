@@ -7,6 +7,7 @@ import { createInstallPlan } from './plan.js';
 import { loadProjectLock, saveProjectLock, updateProjectLockSkill, PROJECT_LOCK_FILENAME } from './project-lock.js';
 import { resolveHomeDir } from './destinations.js';
 import {
+  ensureStateDir,
   getGlobalStateDir,
   getGlobalStatePath,
   getProjectStateDir,
@@ -16,6 +17,7 @@ import {
   saveGlobalState,
   saveProjectState,
   recordSkillInState,
+  migrateStateForCommand,
 } from './state.js';
 import { createSkillLink, pathExists, removeManagedPath } from './links.js';
 
@@ -28,9 +30,7 @@ import { createSkillLink, pathExists, removeManagedPath } from './links.js';
  */
 export function acquireConcurrencyLock(projectRoot, customStateDir) {
   const stateDir = getProjectStateDir(projectRoot, customStateDir);
-  if (!fs.existsSync(stateDir)) {
-    fs.mkdirSync(stateDir, { recursive: true });
-  }
+  ensureStateDir(stateDir);
 
   const lockPath = path.join(stateDir, '.sigma.lock');
 
@@ -154,6 +154,7 @@ export function createNeedsResolutionError(plan) {
  * @returns {object} Execution summary with plan
  */
 export function executeProjectInstall(params) {
+  migrateStateForCommand(params);
   const {
     catalog,
     skillId,
@@ -204,7 +205,10 @@ export function executeProjectInstall(params) {
 
   const releaseLock = acquireConcurrencyLock(root, customStateDir);
 
-  const stagingParent = path.join(root, '.agents', '.sigma-staging');
+  const stagingParent = path.join(
+    scope === 'global' ? getGlobalStateDir(root, customStateDir) : getProjectStateDir(root, customStateDir),
+    '.sigma-staging',
+  );
   const stagingDir = path.join(
     stagingParent,
     `${skillId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

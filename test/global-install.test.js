@@ -205,7 +205,7 @@ test('non-interactive Global mutation requires both --global and --yes', async (
         assert.equal(code, 1);
         assert.match(io.getStderr(), /--global and --yes/);
         assert.ok(!fs.existsSync(path.join(homeDir, '.agents', 'skills', 'sigmawrite')));
-        assert.ok(!fs.existsSync(path.join(homeDir, '.agents', STATE_FILENAME)));
+        assert.ok(!fs.existsSync(path.join(homeDir, '.agents', '.sigmaskills', STATE_FILENAME)));
       } finally {
         fs.rmSync(homeDir, { recursive: true, force: true });
       }
@@ -282,7 +282,7 @@ test('global paths reject traversal, roots, UNC, escapes, collisions, and overla
 test('unknown newer global state schema fails without mutation', () => {
   const homeDir = sandboxHome();
   try {
-    const stateDir = path.join(homeDir, '.agents');
+    const stateDir = path.join(homeDir, '.agents', '.sigmaskills');
     fs.mkdirSync(stateDir, { recursive: true });
     const statePath = path.join(stateDir, STATE_FILENAME);
     const newer = {
@@ -327,7 +327,7 @@ test('unknown newer global state schema fails without mutation', () => {
 test('current project-scoped state at the global path is not relabeled as global', () => {
   const homeDir = sandboxHome();
   try {
-    const stateDir = path.join(homeDir, '.agents');
+    const stateDir = path.join(homeDir, '.agents', '.sigmaskills');
     fs.mkdirSync(stateDir, { recursive: true });
     const statePath = path.join(stateDir, STATE_FILENAME);
     const projectState = {
@@ -355,7 +355,7 @@ test('current project-scoped state at the global path is not relabeled as global
 test('supported global state migration keeps ownership, hashes, methods, and backup references', () => {
   const homeDir = sandboxHome();
   try {
-    const stateDir = path.join(homeDir, '.agents');
+    const stateDir = path.join(homeDir, '.agents', '.sigmaskills');
     fs.mkdirSync(stateDir, { recursive: true });
     fs.writeFileSync(path.join(stateDir, STATE_FILENAME), `${JSON.stringify({
       schemaVersion: 0,
@@ -489,7 +489,7 @@ test('injected Global transaction failure restores the prior global state', () =
         },
       },
     });
-    const priorState = fs.readFileSync(path.join(homeDir, '.agents', STATE_FILENAME));
+    const priorState = fs.readFileSync(path.join(homeDir, '.agents', '.sigmaskills', STATE_FILENAME));
 
     assert.throws(
       () => {
@@ -510,7 +510,7 @@ test('injected Global transaction failure restores the prior global state', () =
       /global state write failed/,
     );
     assert.deepEqual(skillBytes(dest), before);
-    assert.deepEqual(fs.readFileSync(path.join(homeDir, '.agents', STATE_FILENAME)), priorState);
+    assert.deepEqual(fs.readFileSync(path.join(homeDir, '.agents', '.sigmaskills', STATE_FILENAME)), priorState);
     assert.ok(!fs.existsSync(path.join(homeDir, 'skills-lock.json')));
 
     assert.throws(
@@ -532,7 +532,7 @@ test('injected Global transaction failure restores the prior global state', () =
       /fail after global backup/,
     );
     assert.deepEqual(skillBytes(dest), before);
-    assert.deepEqual(fs.readFileSync(path.join(homeDir, '.agents', STATE_FILENAME)), priorState);
+    assert.deepEqual(fs.readFileSync(path.join(homeDir, '.agents', '.sigmaskills', STATE_FILENAME)), priorState);
   } finally {
     fs.rmSync(homeDir, { recursive: true, force: true });
   }
@@ -580,7 +580,7 @@ test('approved non-interactive Global Installation writes only under the sandbox
     assert.equal(code, 0);
     assert.ok(fs.existsSync(path.join(homeDir, '.agents', 'skills', 'sigmawrite', 'SKILL.md')));
     assert.ok(!fs.existsSync(path.join(homeDir, 'skills-lock.json')));
-    const state = JSON.parse(fs.readFileSync(path.join(homeDir, '.agents', STATE_FILENAME), 'utf8'));
+    const state = JSON.parse(fs.readFileSync(path.join(homeDir, '.agents', '.sigmaskills', STATE_FILENAME), 'utf8'));
     assert.equal(state.scope, 'global');
     assert.equal(state.schemaVersion, 1);
     assert.match(io.getStdout(), /Global Installation/);

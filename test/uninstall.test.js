@@ -57,7 +57,7 @@ function skillDir(root, skillId, relativeRoot = UNIVERSAL_PROJECT_DESTINATION) {
 }
 
 function readState(root) {
-  return JSON.parse(fs.readFileSync(path.join(root, '.agents', 'state.json'), 'utf8'));
+  return JSON.parse(fs.readFileSync(path.join(root, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
 }
 
 function readLock(root) {
@@ -388,7 +388,7 @@ test('uninstall: missing, unowned, divergent copies, and wrong-target links stop
       const unownedDest = skillDir(unownedRoot, 'sigmawrite');
       const state = readState(unownedRoot);
       delete state.skills.sigmawrite;
-      fs.writeFileSync(path.join(unownedRoot, '.agents', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
+      fs.writeFileSync(path.join(unownedRoot, '.agents', '.sigmaskills', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
       assert.throws(
         () => executeUninstall({
           catalog: getCatalog(ROOT),
@@ -520,7 +520,7 @@ test('packed CLI uninstalls a selected skill and leaves an unowned stranger path
     );
     assert.equal(pathExists(dest), false);
     assert.equal(fs.readFileSync(path.join(stranger, 'leave-me.txt'), 'utf8'), 'unrelated');
-    assert.equal(JSON.parse(fs.readFileSync(path.join(project, '.agents', 'state.json'), 'utf8')).skills.sigmawrite, undefined);
+    assert.equal(JSON.parse(fs.readFileSync(path.join(project, '.agents', '.sigmaskills', 'state.json'), 'utf8')).skills.sigmawrite, undefined);
     assert.ok(fs.existsSync(path.join(packedRoot, 'src', 'uninstall.js')));
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -629,7 +629,7 @@ test('uninstall-all: project scope never touches Global Installation; global nev
     assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite')), false);
     assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), false);
     assert.equal(pathExists(globalDest), false);
-    assert.ok(!readState(projectRoot).skills.sigmawrite);
+    assert.equal(pathExists(path.join(projectRoot, '.agents', '.sigmaskills')), false);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
     fs.rmSync(homeDir, { recursive: true, force: true });

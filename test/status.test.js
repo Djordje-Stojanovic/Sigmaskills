@@ -355,8 +355,8 @@ test('cli: status human output names scope, release, paths, and ownership; comma
 
     const badRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-status-bad-'));
     try {
-      fs.mkdirSync(path.join(badRoot, '.agents'), { recursive: true });
-      fs.writeFileSync(path.join(badRoot, '.agents', 'state.json'), '{not-json', 'utf8');
+      fs.mkdirSync(path.join(badRoot, '.agents', '.sigmaskills'), { recursive: true });
+      fs.writeFileSync(path.join(badRoot, '.agents', '.sigmaskills', 'state.json'), '{not-json', 'utf8');
       const failIo = createMockIo();
       const failCode = await runCli(['status', '--project', badRoot], failIo);
       assert.equal(failCode, 1);

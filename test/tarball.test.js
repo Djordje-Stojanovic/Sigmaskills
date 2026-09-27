@@ -204,7 +204,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.match(installOut, /Installed SigmaWrite \(sigmawrite\)/);
     assert.ok(fs.existsSync(path.join(isolatedProject, '.agents', 'skills', 'sigmawrite', 'SKILL.md')));
     assert.ok(fs.existsSync(path.join(isolatedProject, 'skills-lock.json')));
-    assert.ok(fs.existsSync(path.join(isolatedProject, '.agents', 'state.json')));
+    assert.ok(fs.existsSync(path.join(isolatedProject, '.agents', '.sigmaskills', 'state.json')));
     assertOnlyUniversalProjectWrites(isolatedProject);
 
     // Verify skills-lock.json is timestamp-free and sorted
@@ -216,7 +216,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.match(lockParsed.skills.sigmawrite.revision, /^[a-f0-9]{64}$/);
 
     // Verify state.json records ownedPaths and baseHashes
-    const stateRaw = fs.readFileSync(path.join(isolatedProject, '.agents', 'state.json'), 'utf8');
+    const stateRaw = fs.readFileSync(path.join(isolatedProject, '.agents', '.sigmaskills', 'state.json'), 'utf8');
     const stateParsed = JSON.parse(stateRaw);
     assert.equal(stateParsed.scope, 'project');
     assert.equal(stateParsed.skills.sigmawrite.method, 'copy');

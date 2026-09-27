@@ -141,7 +141,7 @@ test('install: existing Sigma state is a no-op rerun that leaves files and lock 
     const before = skillBytes(dest);
     const lockPath = path.join(projectRoot, PROJECT_LOCK_FILENAME);
     const lockBytes = fs.readFileSync(lockPath);
-    const statePath = path.join(projectRoot, '.agents', STATE_FILENAME);
+    const statePath = path.join(projectRoot, '.agents', '.sigmaskills', STATE_FILENAME);
     const stateBytes = fs.readFileSync(statePath);
     const skillMtime = fs.statSync(path.join(dest, 'SKILL.md')).mtimeMs;
 
@@ -221,7 +221,7 @@ test('install: failed state creation leaves the original exact copy and prior st
       baseHashes: { 'SKILL.md': 'abc' },
     });
     saveProjectState(projectRoot, originalState);
-    const priorState = fs.readFileSync(path.join(projectRoot, '.agents', STATE_FILENAME));
+    const priorState = fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', STATE_FILENAME));
 
     assert.throws(
       () => {
@@ -239,7 +239,7 @@ test('install: failed state creation leaves the original exact copy and prior st
     );
 
     assert.deepEqual(skillBytes(dest), before);
-    assert.deepEqual(fs.readFileSync(path.join(projectRoot, '.agents', STATE_FILENAME)), priorState);
+    assert.deepEqual(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', STATE_FILENAME)), priorState);
     assert.ok(!fs.existsSync(path.join(projectRoot, PROJECT_LOCK_FILENAME)));
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });

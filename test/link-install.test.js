@@ -228,7 +228,7 @@ test('install: declining copy fallback leaves destination and ownership unchange
     assert.ok(!pathExists(path.join(projectRoot, '.agents', 'skills', 'sigmawrite')));
     assert.ok(!pathExists(path.join(projectRoot, '.claude', 'skills', 'sigmawrite')));
     assert.ok(!fs.existsSync(path.join(projectRoot, 'skills-lock.json')));
-    const statePath = path.join(projectRoot, '.agents', 'state.json');
+    const statePath = path.join(projectRoot, '.agents', '.sigmaskills', 'state.json');
     assert.ok(!fs.existsSync(statePath));
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
@@ -347,7 +347,7 @@ test('packed CLI creates a real platform link for an explicit host destination',
     const host = path.join(projectRoot, '.claude', 'skills', 'sigmawrite');
     assert.ok(fs.lstatSync(host).isSymbolicLink());
     assert.equal(fs.realpathSync(host), fs.realpathSync(canonical));
-    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'));
+    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
     const hostCopy = state.skills.sigmawrite.copies.find((copy) => copy.kind === 'host');
     assert.equal(hostCopy.method, LINK_METHOD);
     assert.equal(hostCopy.dependsOn, '.agents/skills/sigmawrite');

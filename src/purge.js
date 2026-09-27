@@ -8,6 +8,8 @@ import {
   STATE_FILENAME,
   getGlobalStateDir,
   getProjectStateDir,
+  removeEmptyStateDir,
+  migrateStateForCommand,
 } from './state.js';
 import { acquireConcurrencyLock } from './transaction.js';
 import { createUninstallPlan, UNINSTALL_JOURNAL_FILENAME } from './uninstall.js';
@@ -343,6 +345,11 @@ function finishCleanup(stateDir, plan) {
     const target = path.join(stateDir, name);
     if (pathExists(target)) fs.rmSync(target, { recursive: true, force: true });
   }
+  // Temp files that a crashed state save left behind.
+  for (const name of pathExists(stateDir) ? fs.readdirSync(stateDir) : []) {
+    if (name.startsWith(`${STATE_FILENAME}.tmp.`)) fs.rmSync(path.join(stateDir, name), { force: true });
+  }
+  removeEmptyStateDir(stateDir);
 }
 
 /**
@@ -352,11 +359,13 @@ function finishCleanup(stateDir, plan) {
  * @returns {object}
  */
 export function executePurge(options = {}) {
+  // A cancelled or unconfirmed purge writes nothing, not even the state migration.
+  if (!options.dryRun) assertConfirmed(options);
+  migrateStateForCommand(options);
   const plan = createPurgePlan(options);
   if (options.dryRun) {
     return { ...plan, dryRun: true };
   }
-  assertConfirmed(options);
   if ((plan.blocked || []).length > 0) {
     const first = plan.blocked[0];
     throw codedError(

@@ -22,6 +22,7 @@ import {
   recordSkillInState,
   saveGlobalState,
   saveProjectState,
+  migrateStateForCommand,
 } from './state.js';
 import { acquireConcurrencyLock } from './transaction.js';
 
@@ -424,6 +425,7 @@ function recordRestoredSkill(state, skill, root, undoBackup, stateDir) {
  * @returns {object}
  */
 export function executeRestore(options = {}) {
+  migrateStateForCommand(options);
   const plan = createRestorePlan(options);
   if (options.dryRun) {
     return { ...plan, dryRun: true };

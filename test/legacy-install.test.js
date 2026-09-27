@@ -118,7 +118,7 @@ test('install: skip leaves unverified bytes and does not claim ownership', () =>
 
     assert.deepEqual(skillBytes(dest), before);
     assert.ok(!fs.existsSync(path.join(projectRoot, PROJECT_LOCK_FILENAME)));
-    const statePath = path.join(projectRoot, '.agents', STATE_FILENAME);
+    const statePath = path.join(projectRoot, '.agents', '.sigmaskills', STATE_FILENAME);
     assert.ok(!fs.existsSync(statePath) || !loadProjectState(projectRoot).skills.sigmawrite);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
@@ -362,7 +362,7 @@ test('packed CLI classifies, backups, and exports changed Sigma-looking trees', 
       { cwd: appDir, encoding: 'utf8' },
     );
     assert.ok(!fs.existsSync(path.join(dest, 'extra.md')));
-    const backups = fs.readdirSync(path.join(project, '.agents', 'backups', 'sigmawrite'));
+    const backups = fs.readdirSync(path.join(project, '.agents', '.sigmaskills', 'backups', 'sigmawrite'));
     assert.equal(backups.length, 1);
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
