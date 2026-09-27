@@ -1,0 +1,2 @@
+# SigmaImprove writes local issues to .scratch/, which the root .gitignore hides.
+!.scratch/

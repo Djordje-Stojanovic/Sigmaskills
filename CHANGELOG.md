@@ -7,6 +7,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Added
 
 - `install` takes several skill ids (`install sigmawrite sigmareview`) or `--all`. Every skill is planned first, then all of them install in one transaction: if one fails, none stay installed, and `skills-lock.json` is written once. `--json` prints `{ schemaVersion, plans }` when there is more than one skill; one skill prints the same plan as before. (#38)
+- Skill evals. `npm test` now checks the output contract of every skill against good and bad sample outputs, and checks that near-miss prompts route to the right skill. `node scripts/eval-skills.js [skill...]` runs the real skills on a small fixture game with Claude Code, on demand only. See `docs/evals.md`. (#43)
 
 ### Fixed
 
