@@ -150,8 +150,8 @@ test('baselines: release --write-identities appends the outgoing Release for eve
 test('baselines: release guidance names the baselines file among the files to commit', () => {
   const human = formatReleaseHuman({ identitiesCommitted: false, skills: [] });
   assert.match(human, /registry\/skill-baselines\.json/);
-  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-  assert.match(readme, /`--write-identities` writes[^\n]*?skill hashes[^\n]*?`registry\/skill-baselines\.json`/);
+  const maintainers = fs.readFileSync(path.join(ROOT, 'docs', 'maintainers.md'), 'utf8');
+  assert.match(maintainers, /`--write-identities` writes[^\n]*?skill hashes[^\n]*?`registry\/skill-baselines\.json`/);
 });
 
 test('baselines: personal links prevent automatic legacy replacement and appear in the preview', () => {

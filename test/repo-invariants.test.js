@@ -137,33 +137,76 @@ test('each skill has valid SKILL.md and openai.yaml', () => {
   }
 });
 
-test('README wires every skill for install and run', () => {
+test('README and the installer guide wire every skill for install and run', () => {
   const pkg = JSON.parse(read('package.json'));
   const readme = read('README.md');
+  const guide = read('docs/installer.md');
 
   assert.match(readme, /npx skills add Djordje-Stojanovic\/Sigmaskills --all/);
   assert.match(readme, new RegExp(`v${pkg.version.replaceAll('.', '\\.')}`));
   assert.match(readme, /CHANGELOG\.md/);
+  assert.match(readme, /\(docs\/installer\.md\)/, 'README must link the installer guide');
 
   for (const skill of KNOWN_SKILLS) {
     assert.match(readme, new RegExp(`### ${skill.title}\\b`));
     assert.match(
-      readme,
+      guide,
       new RegExp(`npx skills add[^\\n]*--skill ${skill.id}`),
-      `README missing npx --skill ${skill.id}`,
+      `docs/installer.md missing npx --skill ${skill.id}`,
     );
     assert.match(
-      readme,
+      guide,
       new RegExp(`\\$skill-installer install ${skill.id} from`),
-      `README missing Codex installer for ${skill.id}`,
+      `docs/installer.md missing Codex installer for ${skill.id}`,
     );
     assert.match(
-      readme,
+      guide,
       new RegExp(`(?:cp -R|Copy-Item)[^\\n]*${skill.id}`),
-      `README missing manual copy for ${skill.id}`,
+      `docs/installer.md missing manual copy for ${skill.id}`,
     );
     assert.match(readme, new RegExp(`\\$${skill.id}\\b`), `README missing $${skill.id} invoke example`);
     assert.match(readme, new RegExp(`/skill:${skill.id}\\b`), `README missing /skill:${skill.id} example`);
+  }
+});
+
+// Counting rule: fenced code blocks, table rows, and HTML tags do not count.
+// A paragraph is a block between blank lines; each list item is its own paragraph.
+// A word is a whitespace-separated token with at least one letter or digit.
+function proseWords(text) {
+  return text.split(/\s+/).filter((token) => /[\p{L}\p{N}]/u.test(token)).length;
+}
+
+function proseOf(md) {
+  return md
+    .replace(/^```[\s\S]*?^```[^\n]*$/gm, '')
+    .split(/\r?\n/)
+    .filter((line) => !/^\s*\|/.test(line))
+    .map((line) => line.replace(/<[^>]+>/g, ''))
+    .join('\n');
+}
+
+function paragraphsOf(prose) {
+  return prose
+    .split(/\n\s*\n/)
+    .flatMap((block) => block.split(/\n(?=\s*(?:[-*]|\d+\.)\s)/))
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
+test('README word counter skips code, tables, and HTML, and splits list items', () => {
+  const md = 'One two.\n\n```bash\nnot counted\n```\n\n| a | b |\n|---|---|\n\n<td>three</td>\n\n- four\n- five six\n';
+  const prose = proseOf(md);
+  assert.equal(proseWords(prose), 6);
+  assert.deepEqual(paragraphsOf(prose), ['One two.', 'three', '- four', '- five six']);
+});
+
+test('README stays short: under 1,500 words and no paragraph over 80 words', () => {
+  const prose = proseOf(read('README.md'));
+  const words = proseWords(prose);
+  assert.ok(words < 1500, `README has ${words} prose words; keep it under 1,500 and move details to docs/`);
+  for (const paragraph of paragraphsOf(prose)) {
+    const n = proseWords(paragraph);
+    assert.ok(n <= 80, `README paragraph has ${n} words (max 80): ${paragraph.slice(0, 60)}…`);
   }
 });
 
