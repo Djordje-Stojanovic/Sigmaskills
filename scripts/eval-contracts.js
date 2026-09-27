@@ -159,7 +159,8 @@ function sigmawrite({ files }) {
   const jargon = text.match(JARGON);
   if (jargon) problems.push(`docs/NOTES.md: jargon left: ${[...new Set(jargon.map((w) => w.toLowerCase()))].join(', ')}`);
   const prose = text.replace(/^#.*$/gm, '').replace(/`[^`]*`/g, 'x');
-  const sentences = prose.split(/[.!?](\s|$)/).map((s) => s.trim().split(/\s+/).filter(Boolean).length).filter((n) => n > 0);
+  // A sentence ends at . ! or ?, at a blank line, or where a list item starts.
+  const sentences = prose.split(/[.!?](?:\s|$)|\n\s*\n|\n\s*(?:[-*+]|\d+\.)\s/).map((s) => s.trim().split(/\s+/).filter(Boolean).length).filter((n) => n > 0);
   const longest = Math.max(0, ...sentences);
   if (longest > 30) problems.push(`docs/NOTES.md: a sentence has ${longest} words (limit 30)`);
   return problems;

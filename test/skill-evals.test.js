@@ -86,3 +86,16 @@ test('evals: sigmabrief contract rejects edits to the target repository', () => 
   assert.notDeepEqual(checkContract('sigmabrief', { ...sample, files: edited }), []);
   assert.notDeepEqual(checkContract('sigmabrief', { ...sample, files: { ...fixture, 'PLAN.md': 'plan' } }), []);
 });
+
+test('evals: sigmawrite contract counts list items and paragraphs as separate sentences', () => {
+  const text = [
+    '# Design notes',
+    '',
+    'Each tick, the game calls `step` to compute the next board from the current one',
+    '',
+    '- `step` gives the same result when you run it twice on the same input board',
+    '- At game over, `saveBest` in `src/scores.js` writes the best score to a file on disk',
+    '',
+  ].join('\n');
+  assert.deepEqual(checkContract('sigmawrite', { files: { 'docs/NOTES.md': text } }), []);
+});
