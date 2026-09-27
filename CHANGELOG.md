@@ -4,8 +4,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `install` takes several skill ids (`install sigmawrite sigmareview`) or `--all`. Every skill is planned first, then all of them install in one transaction: if one fails, none stay installed, and `skills-lock.json` is written once. `--json` prints `{ schemaVersion, plans }` when there is more than one skill; one skill prints the same plan as before. (#38)
+
 ### Fixed
 
+- An unknown skill id now fails with `unknown skill '<id>'` before any planning, for `install`, `update`, `restore`, and `uninstall`. `uninstall --skill nope` said `stale-state` before. (#38)
+- A value flag with a missing, empty, or dash-prefixed value now fails with the flag name. Before, `--skill --yes` read `--yes` as a skill id, and a value flag at the end of the command was ignored. One flag table now parses and checks every flag; all current flags and aliases still work. (#38)
 - Untouched copies of earlier Releases are recognized again. `registry/skill-baselines.json` now holds the file hashes of 0.1.0, 0.2.0, 0.2.1, and 0.3.0, rebuilt from their git tags (`node scripts/backfill-baselines.js <tag>...`), and `release --write-identities` adds the outgoing Release each time. Such a copy shows as `legacy` with high provenance and upgrades with no `--adopt-*` flag; a changed copy still needs a choice. (#35)
 - Install plans now label files from the installer's point of view: *Additions* are files the new Release brings, *Deletions* are files the install removes. They were swapped before. (#35)
 
