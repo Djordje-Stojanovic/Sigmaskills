@@ -24,7 +24,8 @@ function resolutionFor(classification, relativeDestination, options = {}) {
   const explicit = options.resolutions?.[relativeDestination];
   if (explicit) return explicit;
   if (classification?.kind === 'changed') return options.adoptChanged;
-  if (classification?.kind === 'legacy') return options.adoptLegacy;
+  // An untouched official copy of an earlier Release upgrades without a flag.
+  if (classification?.kind === 'legacy') return options.adoptLegacy || 'replace';
   if (classification?.kind === 'unverified') return options.adoptUnverified;
   if (classification?.kind === 'malformed-custom') return options.adoptMalformed;
   return undefined;
@@ -266,7 +267,10 @@ export function createInstallPlan(catalog, options) {
     if (dest.resolution === 'skip' || dest.resolution === 'export') return [];
     if (!pathExists(dest.destination)) return [];
     if (dest.method === 'copy') {
-      return skillFiles.map((file) => `${dest.relativeDestination}/${file}`);
+      // A file the new Release adds is a write, not a replacement.
+      return skillFiles
+        .filter((file) => pathExists(path.join(dest.destination, file)))
+        .map((file) => `${dest.relativeDestination}/${file}`);
     }
     return [dest.relativeDestination];
   });

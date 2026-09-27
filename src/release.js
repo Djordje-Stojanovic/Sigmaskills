@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { appendReleaseBaselines, hashSkillsAtRef } from './baselines.js';
 import { getCatalog } from './catalog.js';
 
 export const RELEASE_SCHEMA_VERSION = 1;
@@ -453,6 +454,25 @@ export function writeReleaseIdentities(rootDir, { now } = {}) {
     sourceCommit: null,
   });
   if (plan.identitiesCommitted) return plan;
+  // A prepared candidate is not a published Release. Find the preceding tagged
+  // changelog entry, and fold later fixes into the candidate instead of inventing a baseline.
+  const tags = new Set(execFileSync('git', ['tag', '--list'], { cwd: rootDir, encoding: 'utf8' }).trim().split(/\r?\n/));
+  const versions = [...identities.changelog.matchAll(/^## \[(\d+\.\d+\.\d+)\]/gm)].map((match) => match[1]);
+  const outgoing = versions.find((version) => tags.has(`v${version}`));
+  if (!outgoing) throw codedError('cannot find a tagged outgoing Release; fetch release tags first', 'missing-tag');
+  const outgoingSkills = hashSkillsAtRef(rootDir, `refs/tags/v${outgoing}`);
+  if (outgoing !== identities.packageJson.version) {
+    const candidate = identities.packageJson.version;
+    const escaped = candidate.replace(/\./g, '\\.');
+    identities.changelog = identities.changelog.replace(new RegExp(`^## \\[${escaped}\\][^\\n]*\\n`, 'm'), '');
+    plan.version = candidate;
+    plan.tag = `v${candidate}`;
+    plan.githubRelease = plan.tag;
+    plan.npmPackage = `${RELEASE_PACKAGE_NAME}@${candidate}`;
+    plan.changeSet = parseChangeSet(extractUnreleased(identities.changelog));
+    plan.bump = classifyChangelogBump(extractUnreleased(identities.changelog));
+  }
+  appendReleaseBaselines(rootDir, outgoing, outgoingSkills);
   const applied = applyReleaseIdentities({
     ...identities,
     version: plan.version,
@@ -727,7 +747,7 @@ export function formatReleaseHuman(result) {
     for (const error of result.gate.errors) lines.push(`    - ${error}`);
   }
   if (!result.identitiesCommitted) {
-    lines.push('  Next: run `sigmaskills release --write-identities`, commit the identity files, then re-run --dry-run.');
+    lines.push('  Next: run `sigmaskills release --write-identities`, commit the identity files and `registry/skill-baselines.json`, then re-run --dry-run.');
   } else if (result.dryRun) {
     lines.push('  Next: dispatch with --expected-commit, --expected-version, and --expected-digest matching this preview.');
   }
