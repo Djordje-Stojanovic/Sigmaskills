@@ -42,8 +42,9 @@ export function removeEmptyStateDir(stateDir) {
   const ignorePath = path.join(stateDir, '.gitignore');
   try {
     const names = fs.readdirSync(stateDir);
-    if (names.some((name) => name !== '.gitignore')) return;
-    if (names.length && fs.readFileSync(ignorePath, 'utf8') !== IGNORE_ALL) return;
+    // Only a folder this installer created (it holds our own ignore file) is removed.
+    if (names.length !== 1 || names[0] !== '.gitignore') return;
+    if (fs.readFileSync(ignorePath, 'utf8') !== IGNORE_ALL) return;
     fs.rmSync(ignorePath, { force: true });
     fs.rmdirSync(stateDir);
   } catch {

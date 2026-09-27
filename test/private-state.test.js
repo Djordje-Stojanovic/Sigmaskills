@@ -351,3 +351,21 @@ test('private state: uninstall-all with no kept backups removes the private fold
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });
+
+test('private state: purge keeps a --state-dir folder the user made', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-private-custom-'));
+  const customStateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-private-custom-state-'));
+  try {
+    executePurge({
+      catalog: getCatalog(ROOT),
+      projectRoot,
+      packageRoot: ROOT,
+      customStateDir,
+      confirmPurge: PURGE_CONFIRMATION_PHRASE,
+    });
+    assert.ok(pathExists(customStateDir));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+    fs.rmSync(customStateDir, { recursive: true, force: true });
+  }
+});
