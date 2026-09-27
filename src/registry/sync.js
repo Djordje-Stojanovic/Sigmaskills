@@ -165,8 +165,8 @@ export function syncRegistry(args, options = {}) {
   const shouldWrite = !args.dryRun && (args.allowReview || reviewCount === 0);
 
   if (shouldWrite) {
-    writeJson(SNAPSHOT_PATH, snapshot);
-    writeJson(PIN_PATH, pin);
+    writeJson(options.snapshotPath ?? SNAPSHOT_PATH, snapshot);
+    writeJson(options.pinPath ?? PIN_PATH, pin);
   }
 
   return {
