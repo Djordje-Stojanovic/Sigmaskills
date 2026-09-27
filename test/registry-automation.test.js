@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { diffSnapshots } from '../src/registry/diff.js';
-import { CHECKOUT_ACTION_PIN, SETUP_NODE_ACTION_PIN } from '../src/release.js';
+import { diffSnapshots } from '../scripts/registry/diff.js';
+import { CHECKOUT_ACTION_PIN, SETUP_NODE_ACTION_PIN } from '../scripts/release.js';
 import {
   GENERATED_BRANCH_PREFIX,
   REGISTRY_ALLOWLIST,
@@ -18,7 +18,7 @@ import {
   planGeneratedBranchCleanup,
   planGeneratedBranchPush,
   planRegistrySync,
-} from '../src/registry/automation.js';
+} from '../scripts/registry/automation.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FIXTURE = path.join(ROOT, 'test/fixtures/vercel-skills/src/agents.ts');
@@ -418,8 +418,8 @@ test('trusted registry-sync workflow: pinned actions, expected-head checkout, no
   assert.doesNotMatch(yaml, /github\.event\.pull_request\.head\.sha/);
   assert.doesNotMatch(yaml, /npm publish/);
   assert.doesNotMatch(yaml, /gh issue close/);
-  assert.match(yaml, /node \.\/src\/registry\/automation-ci\.js generate/);
-  assert.match(yaml, /node \.\/src\/registry\/automation-ci\.js auto-merge/);
+  assert.match(yaml, /node \.\/scripts\/registry\/automation-ci\.js generate/);
+  assert.match(yaml, /node \.\/scripts\/registry\/automation-ci\.js auto-merge/);
   assert.match(yaml, /EXPECTED_HEAD/);
   assert.match(yaml, /concurrency:/);
   assert.equal(inspected.autoMerge.permissions['id-token'], 'write');

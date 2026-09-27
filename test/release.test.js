@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { findPackageRoot } from '../src/catalog.js';
-import { runCli, parseCliArgs } from '../src/cli.js';
+import { runCli } from '../src/cli.js';
 import {
   RELEASE_DIST_TAG,
   RELEASE_ENVIRONMENT,
@@ -19,8 +19,10 @@ import {
   formatReleaseHuman,
   formatReleaseJson,
   inspectReleaseWorkflow,
+  parseReleaseArgs,
   planIdempotentPublish,
-} from '../src/release.js';
+  runReleaseCli,
+} from '../scripts/release.js';
 
 const ROOT = findPackageRoot();
 
@@ -507,7 +509,7 @@ test('trusted workflow: validation is read-only, publish is the only privileged 
   assert.doesNotMatch(releaseYaml, /\non:\s*\n(?:[^\n]*\n)*?\s+push:/);
 });
 
-test('cli: release --dry-run --json prints the versioned preview; --yes is not enough to dispatch', async () => {
+test('maintainer release: --dry-run --json prints the versioned preview; --yes is not enough to dispatch', async () => {
   const dir = tmpTree(readyIdentities);
   try {
     const release = {
@@ -526,7 +528,7 @@ test('cli: release --dry-run --json prints the versioned preview; --yes is not e
       },
     };
     const io = mockIo(release);
-    const code = await runCli(['release', '--dry-run', '--json'], io);
+    const code = await runReleaseCli(['--dry-run', '--json'], io);
     assert.equal(code, 0);
     const parsed = JSON.parse(io.getStdout());
     assert.equal(parsed.schemaVersion, RELEASE_SCHEMA_VERSION);
@@ -535,7 +537,7 @@ test('cli: release --dry-run --json prints the versioned preview; --yes is not e
     assert.equal(parsed.tarball.digest, 'aa'.repeat(32));
 
     const yesIo = mockIo(release);
-    const yesCode = await runCli(['release', '--yes'], yesIo);
+    const yesCode = await runReleaseCli(['--yes'], yesIo);
     assert.equal(yesCode, 1);
     assert.match(yesIo.getStderr(), /immutable expected commit, version, and digest/);
   } finally {
@@ -543,17 +545,30 @@ test('cli: release --dry-run --json prints the versioned preview; --yes is not e
   }
 });
 
-test('cli: parseCliArgs captures immutable release confirmation flags', () => {
-  const parsed = parseCliArgs([
-    'release',
+test('maintainer release: parseReleaseArgs captures immutable release confirmation flags', () => {
+  const parsed = parseReleaseArgs([
     '--expected-commit', 'deadbeef',
     '--expected-version', '0.2.0',
     '--expected-digest', 'aa'.repeat(32),
   ]);
-  assert.equal(parsed.command, 'release');
   assert.equal(parsed.expectedCommit, 'deadbeef');
   assert.equal(parsed.expectedVersion, '0.2.0');
   assert.equal(parsed.expectedDigest, 'aa'.repeat(32));
+});
+
+test('maintainer release: unknown flags fail closed', async () => {
+  const io = mockIo({});
+  assert.equal(await runReleaseCli(['--dry-rn'], io), 1);
+  assert.match(io.getStderr(), /unknown option: --dry-rn/);
+});
+
+test('maintainer release: runs from the repository, not the published CLI', async () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  assert.equal(pkg.scripts.release, 'node scripts/release.js');
+  assert.ok(!pkg.files.includes('scripts'));
+  const io = mockIo({});
+  assert.equal(await runCli(['release', '--dry-run'], io), 1);
+  assert.match(io.getStderr(), /unknown option or command: release/);
 });
 
 test('formatReleaseJson is a stable versioned envelope', () => {

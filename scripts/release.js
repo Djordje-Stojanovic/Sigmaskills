@@ -3,8 +3,9 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { appendReleaseBaselines, hashSkillsAtRef } from './baselines.js';
-import { getCatalog } from './catalog.js';
+import { getCatalog } from '../src/catalog.js';
 
 export const RELEASE_SCHEMA_VERSION = 1;
 export const RELEASE_WORKFLOW_FILE = 'release.yml';
@@ -276,8 +277,8 @@ export function inspectReleaseWorkflow(yaml) {
   if (publish.permissions['id-token'] !== 'write') errors.push('publish job must use id-token: write');
   if (publish.permissions.contents !== 'write') errors.push('publish job must use contents: write');
   if (publish.environment !== RELEASE_ENVIRONMENT) errors.push(`publish job must use environment ${RELEASE_ENVIRONMENT}`);
-  if (!/node \.\/src\/release-ci\.js validate/.test(text)) errors.push('validate job must rebuild through release-ci.js');
-  if (!/node \.\/src\/release-ci\.js publish/.test(text)) errors.push('publish job must publish through release-ci.js');
+  if (!/node \.\/scripts\/release-ci\.js validate/.test(text)) errors.push('validate job must rebuild through release-ci.js');
+  if (!/node \.\/scripts\/release-ci\.js publish/.test(text)) errors.push('publish job must publish through release-ci.js');
 
   return {
     ok: errors.length === 0,
@@ -747,7 +748,7 @@ export function formatReleaseHuman(result) {
     for (const error of result.gate.errors) lines.push(`    - ${error}`);
   }
   if (!result.identitiesCommitted) {
-    lines.push('  Next: run `sigmaskills release --write-identities`, commit the identity files and `registry/skill-baselines.json`, then re-run --dry-run.');
+    lines.push('  Next: run `npm run release -- --write-identities`, commit the identity files and `registry/skill-baselines.json`, then re-run --dry-run.');
   } else if (result.dryRun) {
     lines.push('  Next: dispatch with --expected-commit, --expected-version, and --expected-digest matching this preview.');
   }
@@ -870,4 +871,72 @@ export async function runTrustedPublish(env, options = {}) {
     }
   }
   return { ...preview, dryRun: false, published: recovery };
+}
+
+const RELEASE_VALUE_FLAGS = {
+  '--expected-commit': 'expectedCommit',
+  '--expected-version': 'expectedVersion',
+  '--expected-digest': 'expectedDigest',
+};
+
+/**
+ * Parse the maintainer release command: `npm run release -- [flags]`.
+ *
+ * @param {string[]} args
+ * @returns {object}
+ */
+export function parseReleaseArgs(args) {
+  const parsed = { dryRun: false, json: false, yes: false, writeIdentities: false, unknown: [] };
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    const [flag, inline] = arg.split(/=(.*)/s);
+    if (arg === '--dry-run') parsed.dryRun = true;
+    else if (arg === '--json') parsed.json = true;
+    else if (arg === '-y' || arg === '--yes') parsed.yes = true;
+    else if (arg === '--write-identities') parsed.writeIdentities = true;
+    else if (RELEASE_VALUE_FLAGS[flag]) parsed[RELEASE_VALUE_FLAGS[flag]] = inline ?? args[++i];
+    else parsed.unknown.push(arg);
+  }
+  return parsed;
+}
+
+/**
+ * Run the maintainer release command from a repository checkout.
+ *
+ * @param {string[]} args
+ * @param {object} [io] stdout/stderr handles; `io.release` injects test adapters
+ * @returns {Promise<number>} exit code
+ */
+export async function runReleaseCli(args = process.argv.slice(2), io = { stdout: process.stdout, stderr: process.stderr }) {
+  try {
+    const opts = parseReleaseArgs(args);
+    if (opts.unknown.length > 0) throw new Error(`unknown option: ${opts.unknown[0]}`);
+    const adapters = io.release || {};
+    const result = executeRelease({
+      rootDir: adapters.rootDir || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
+      catalog: adapters.catalog,
+      dryRun: opts.dryRun,
+      yes: opts.yes,
+      writeIdentities: opts.writeIdentities,
+      expectedCommit: opts.expectedCommit,
+      expectedVersion: opts.expectedVersion,
+      expectedDigest: opts.expectedDigest,
+      git: adapters.git,
+      pack: adapters.pack,
+      probes: adapters.probes,
+      dispatch: adapters.dispatch,
+      workflow: adapters.workflow,
+      now: adapters.now,
+    });
+    const out = opts.json ? formatReleaseJson(result) : formatReleaseHuman(result);
+    io.stdout.write(out.endsWith('\n') ? out : `${out}\n`);
+    return 0;
+  } catch (err) {
+    io.stderr.write(`release error: ${err.message}\n`);
+    return 1;
+  }
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  process.exitCode = await runReleaseCli();
 }

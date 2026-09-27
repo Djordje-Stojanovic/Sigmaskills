@@ -2,7 +2,7 @@
 // Usage: node scripts/backfill-baselines.js v0.1.0 v0.2.0 ...   (safe to run again)
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { appendReleaseBaselines, hashSkillsAtRef } from '../src/baselines.js';
+import { appendReleaseBaselines, hashSkillsAtRef } from './baselines.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const tags = process.argv.slice(2);

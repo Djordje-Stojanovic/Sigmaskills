@@ -3,7 +3,7 @@
 /**
  * sync.js — deterministic registry synchronization command.
  *
- *   node src/registry/sync.js [--fetch] [--dry-run] [--allow-review]
+ *   node scripts/registry/sync.js [--fetch] [--dry-run] [--allow-review]
  *
  * Reads upstream `agents.ts` (the pinned revision recorded in
  * `registry/source.json`), verifies its content hash against the recorded

@@ -40,7 +40,7 @@ jobs:
           EXPECTED_COMMIT: ${{ inputs.expected_commit }}
           EXPECTED_VERSION: ${{ inputs.expected_version }}
           EXPECTED_DIGEST: ${{ inputs.expected_digest }}
-        run: node ./src/release-ci.js validate
+        run: node ./scripts/release-ci.js validate
 
   publish:
     name: Publish
@@ -68,4 +68,4 @@ jobs:
           EXPECTED_COMMIT: ${{ inputs.expected_commit }}
           EXPECTED_VERSION: ${{ inputs.expected_version }}
           EXPECTED_DIGEST: ${{ inputs.expected_digest }}
-        run: node ./src/release-ci.js publish
+        run: node ./scripts/release-ci.js publish
