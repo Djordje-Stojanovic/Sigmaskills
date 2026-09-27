@@ -231,10 +231,17 @@ test('registry: sync writes snapshot only when diff is safe', () => {
   try {
     const prev = loadSnapshot();
     // same source, no drift -> should write
-    const ok = syncRegistry({ source: FIXTURE, allowReview: true }, { pin, previous: prev });
+    const snapshotPath = path.join(tmpDir, 'agent-hosts.json');
+    const pinPath = path.join(tmpDir, 'source.json');
+    const repoSnapshot = fs.readFileSync(SNAPSHOT);
+    const ok = syncRegistry({ source: FIXTURE, allowReview: true }, { pin, previous: prev, snapshotPath, pinPath });
     assert.equal(ok.ok, true);
     assert.equal(ok.diff.summary.review, 0);
     assert.equal(ok.shouldWrite, true);
+    assert.deepEqual(JSON.parse(fs.readFileSync(snapshotPath, 'utf8')), ok.snapshot);
+    assert.ok(fs.existsSync(pinPath));
+    // The test must not rewrite the repository file that other test files read in parallel.
+    assert.deepEqual(fs.readFileSync(SNAPSHOT), repoSnapshot);
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
