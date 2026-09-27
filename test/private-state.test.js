@@ -369,3 +369,24 @@ test('private state: purge keeps a --state-dir folder the user made', () => {
     fs.rmSync(customStateDir, { recursive: true, force: true });
   }
 });
+
+test('private state: a cancelled or unconfirmed purge does not migrate an old-layout project', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-private-purge-cancel-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    toLegacyLayout(projectRoot);
+    const legacyDir = path.join(projectRoot, '.agents');
+    for (const confirmPurge of [undefined, '', 'wrong phrase']) {
+      assert.throws(() => executePurge({
+        catalog: getCatalog(ROOT),
+        projectRoot,
+        packageRoot: ROOT,
+        confirmPurge,
+      }));
+      assert.ok(pathExists(path.join(legacyDir, 'state.json')));
+      assert.equal(pathExists(path.join(legacyDir, PRIVATE_STATE_DIRNAME)), false);
+    }
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});

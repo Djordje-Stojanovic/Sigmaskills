@@ -355,12 +355,13 @@ function finishCleanup(stateDir, plan) {
  * @returns {object}
  */
 export function executePurge(options = {}) {
+  // A cancelled or unconfirmed purge writes nothing, not even the state migration.
+  if (!options.dryRun) assertConfirmed(options);
   migrateStateForCommand(options);
   const plan = createPurgePlan(options);
   if (options.dryRun) {
     return { ...plan, dryRun: true };
   }
-  assertConfirmed(options);
   if ((plan.blocked || []).length > 0) {
     const first = plan.blocked[0];
     throw codedError(
