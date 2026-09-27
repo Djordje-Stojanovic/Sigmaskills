@@ -10,6 +10,7 @@ import {
   listProjectDestinationGroups,
   loadHostRegistry,
 } from '../src/destinations.js';
+import { verifyBackupIntegrity } from '../src/backup.js';
 import { pathExists } from '../src/links.js';
 import { executePurge, PURGE_CONFIRMATION_PHRASE } from '../src/purge.js';
 import { executeRestore } from '../src/restore.js';
@@ -272,5 +273,27 @@ test('private state: purge removes the private folder; uninstall-all leaves only
     assert.deepEqual(fs.readdirSync(path.join(allRoot, '.agents')).filter((name) => name !== 'skills'), [PRIVATE_STATE_DIRNAME]);
   } finally {
     fs.rmSync(allRoot, { recursive: true, force: true });
+  }
+});
+
+test('private state: migration keeps links inside old backups as links', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-private-link-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    const outside = path.join(projectRoot, 'outside');
+    fs.mkdirSync(outside);
+    fs.writeFileSync(path.join(outside, 'big.txt'), 'not part of the backup', 'utf8');
+    fs.symlinkSync(outside, path.join(skillDir(projectRoot, 'sigmawrite'), 'linked'), process.platform === 'win32' ? 'junction' : 'dir');
+    forceBackup(projectRoot, 'sigmawrite', 'old-backup');
+    toLegacyLayout(projectRoot);
+
+    migrateStateForCommand({ projectRoot });
+
+    const backupRoot = path.join(getProjectStateDir(projectRoot), 'backups', 'sigmawrite');
+    const [stamp] = fs.readdirSync(backupRoot);
+    assert.ok(fs.lstatSync(path.join(backupRoot, stamp, 'linked')).isSymbolicLink(), 'link became a plain folder');
+    verifyBackupIntegrity({ backupDir: path.join(backupRoot, stamp), skillId: 'sigmawrite' });
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });

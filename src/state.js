@@ -62,6 +62,20 @@ function isLiveLock(lockPath) {
   }
 }
 
+// fs.cpSync turns a Windows junction into a plain folder with the target's files,
+// so copy links as links, the same way backups create them.
+function copyNoFollow(from, to) {
+  const stat = fs.lstatSync(from);
+  if (stat.isSymbolicLink()) {
+    fs.symlinkSync(fs.readlinkSync(from), to, process.platform === 'win32' ? 'junction' : 'dir');
+  } else if (stat.isDirectory()) {
+    fs.mkdirSync(to, { recursive: true });
+    for (const name of fs.readdirSync(from)) copyNoFollow(path.join(from, name), path.join(to, name));
+  } else {
+    fs.copyFileSync(from, to);
+  }
+}
+
 function finishLegacyCleanup(legacyDir, newDir) {
   const markerPath = path.join(newDir, LEGACY_MIGRATION_MARKER);
   if (!fs.existsSync(markerPath)) return;
@@ -112,7 +126,7 @@ export function migrateLegacyState(legacyDir, newDir, hooks = {}) {
   fs.writeFileSync(path.join(tempDir, '.gitignore'), IGNORE_ALL, 'utf8');
   for (const name of present) {
     if (name === '.sigma.lock') continue;
-    fs.cpSync(path.join(legacyDir, name), path.join(tempDir, name), { recursive: true, verbatimSymlinks: true });
+    copyNoFollow(path.join(legacyDir, name), path.join(tempDir, name));
   }
   fs.writeFileSync(path.join(tempDir, LEGACY_MIGRATION_MARKER), `${JSON.stringify({ entries: present })}\n`, 'utf8');
   hooks.beforeCommit?.();
