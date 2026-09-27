@@ -384,6 +384,8 @@ npm test
 
 CI runs the same suite on Windows, macOS, and Linux for Node.js 20 and 22, on every pull request and every push to `main`. Those jobs cover real junctions or symbolic links, copy fallback, shell differences, and an isolated temp filesystem.
 
+`npm test` also checks each skill's output contract against good and bad sample outputs, and checks that near-miss prompts reach the right skill. To run the skills themselves on a small fixture game, use `node scripts/eval-skills.js [skill...]`: it calls Claude Code, costs money, and stays out of CI. Results and method: [`docs/evals.md`](docs/evals.md).
+
 When you **add or rename a skill**, update `KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js) in the same change as README and CHANGELOG — otherwise CI fails on purpose. That rule also lives in [`AGENTS.md`](AGENTS.md).
 
 ---

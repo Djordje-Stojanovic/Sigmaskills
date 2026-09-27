@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- Skill evals. `npm test` now checks the output contract of every skill against good and bad sample outputs, and checks that near-miss prompts route to the right skill. `node scripts/eval-skills.js [skill...]` runs the real skills on a small fixture game with Claude Code, on demand only. See `docs/evals.md`. (#43)
+
 ### Fixed
 
 - Lock recovery serializes competing takeovers, preserves fresh incomplete records, and checks unique ownership when releasing. Locks expire after 24 hours; a crash-leftover takeover guard stops safely with recovery instructions. Legacy migration uses the same lock. (#37)
