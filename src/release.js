@@ -737,7 +737,7 @@ export function formatReleaseHuman(result) {
     for (const error of result.gate.errors) lines.push(`    - ${error}`);
   }
   if (!result.identitiesCommitted) {
-    lines.push('  Next: run `sigmaskills release --write-identities`, commit the identity files, then re-run --dry-run.');
+    lines.push('  Next: run `sigmaskills release --write-identities`, commit the identity files and `registry/skill-baselines.json`, then re-run --dry-run.');
   } else if (result.dryRun) {
     lines.push('  Next: dispatch with --expected-commit, --expected-version, and --expected-digest matching this preview.');
   }

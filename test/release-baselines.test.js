@@ -8,7 +8,7 @@ import { loadSkillBaselines } from '../src/adoption.js';
 import { hashSkillsAtRef, readSkillTreeAtRef } from '../src/baselines.js';
 import { getCatalog, findPackageRoot } from '../src/catalog.js';
 import { createInstallPlan } from '../src/plan.js';
-import { writeReleaseIdentities } from '../src/release.js';
+import { formatReleaseHuman, writeReleaseIdentities } from '../src/release.js';
 import { computeSkillRevision } from '../src/revision.js';
 import { executeProjectInstall } from '../src/transaction.js';
 
@@ -137,4 +137,11 @@ test('baselines: release --write-identities appends the outgoing Release for eve
   } finally {
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
+});
+
+test('baselines: release guidance names the baselines file among the files to commit', () => {
+  const human = formatReleaseHuman({ identitiesCommitted: false, skills: [] });
+  assert.match(human, /registry\/skill-baselines\.json/);
+  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+  assert.match(readme, /`--write-identities` writes[^\n]*?skill hashes[^\n]*?`registry\/skill-baselines\.json`/);
 });
