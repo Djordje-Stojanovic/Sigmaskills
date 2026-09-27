@@ -6,13 +6,15 @@ You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) 
 
 | Path | What |
 |------|------|
-| [`README.md`](README.md) | Install, run, output contracts for every host |
+| [`README.md`](README.md) | Short front page: quick start, the skills, one install table, run examples |
+| [`docs/installer.md`](docs/installer.md) | Installer guide: every command, flag, and install method |
+| [`docs/maintainers.md`](docs/maintainers.md) | Maintainer guide: layout, tests, CI, releases, registry automation |
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history (`[Unreleased]` for WIP) |
 | `sigmareview/` · `sigmaimprove/` · `sigmabrief/` · `sigmaship/` · `sigmawrite/` · `sigmarefactor/` | The skills |
 | [`test/repo-invariants.test.js`](test/repo-invariants.test.js) | `KNOWN_SKILLS` registry + `npm test` guards |
 | `.github/` | Issue forms, PR template, CI |
 
-When you add a skill (or rename/remove one): update `KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js) together with README + CHANGELOG, or CI fails on purpose. Folder name = frontmatter `name` = `--skill` id. Then run `npm test`.
+When you add a skill (or rename/remove one): update `KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js) together with README, the per-skill install lines in `docs/installer.md`, and CHANGELOG, or CI fails on purpose. Folder name = frontmatter `name` = `--skill` id. Then run `npm test`.
 
 Follow every rule below. They are mandatory for this repo.
 

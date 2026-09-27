@@ -27,6 +27,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - Every pull request now rehearses the Release path. A CI job commits the Release identities in a throwaway worktree, then runs the preview, the dispatch checks, and the trusted `validate` and publish steps with a real `npm pack` (`node scripts/release-rehearsal.js`). npm and GitHub lookups, dispatch, and publish are stubbed, so the job needs no secrets. A pull request that breaks packing, such as the `npm pack` JSON bug fixed in 0.2.1, now fails before merge. (#41)
 - CI now runs with a read-only token (`permissions: contents: read`) and pins every action to a full commit SHA, like the Release workflows. (#41)
 - CI now tests Node.js 22 and 24 on Windows, macOS, and Linux. Node.js 20 reached end of life on 2026-04-30, but `engines` stays at `>=20` for this Release so current users on Node.js 20 can still install; one Linux job on Node.js 20 keeps that promise tested. A later Release may raise it. (#41)
+- The README is short again. It keeps the quick start, the skills, one install table, and run examples. Command details moved to [`docs/installer.md`](docs/installer.md); releases, registry automation, tests, and CI moved to [`docs/maintainers.md`](docs/maintainers.md). A test keeps it under 1,500 words, with no paragraph over 80 words. (#42)
 
 ## [0.4.0] — 2026-09-27
 
