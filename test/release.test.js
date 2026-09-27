@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -596,4 +597,11 @@ test('release packing reads npm pack --json after prepack logs on stdout (dd3504
   const output = `\n> sigmaskills@0.2.1 prepack\n> node ./src/prepack.js\n\nPrepack validation successful: 6 skills validated\n${json}\n`;
   assert.equal(parseNpmPackJson(output)[0].filename, 'sigmaskills-0.2.1.tgz');
   assert.throws(() => parseNpmPackJson('no json here'), /produced no JSON/);
+});
+
+test('prepack logs to stderr so npm pack --json stdout stays JSON (dd35041)', () => {
+  const result = spawnSync(process.execPath, [path.join(ROOT, 'src', 'prepack.js')], { cwd: ROOT, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /Prepack validation successful/);
 });
