@@ -1,0 +1,16 @@
+[
+  { "prompt": "Do a full review of this repository and find every bug", "skill": "sigmareview", "near": "sigmaimprove" },
+  { "prompt": "Run a security review and a performance audit of the repo", "skill": "sigmareview", "near": "sigmaimprove" },
+  { "prompt": "Hunt for bugs and security holes in my game", "skill": "sigmareview", "near": "sigmaimprove" },
+  { "prompt": "What should we improve or add next to this game?", "skill": "sigmaimprove", "near": "sigmareview" },
+  { "prompt": "Suggest what to redesign or cut to make the product better", "skill": "sigmaimprove", "near": "sigmareview" },
+  { "prompt": "Compare my app with the top products and list feature ideas", "skill": "sigmaimprove", "near": "sigmareview" },
+  { "prompt": "Write parallel agent briefs for these GitHub issues", "skill": "sigmabrief", "near": "sigmaship" },
+  { "prompt": "Give me a handoff prompt so a fresh agent can continue", "skill": "sigmabrief", "near": "sigmaship" },
+  { "prompt": "Implement and ship issue #12 end to end and merge the PR", "skill": "sigmaship", "near": "sigmabrief" },
+  { "prompt": "Build this ready ticket in a worktree with a draft PR", "skill": "sigmaship", "near": "sigmabrief" },
+  { "prompt": "Explain this in simplified technical English with less jargon", "skill": "sigmawrite", "near": "sigmabrief" },
+  { "prompt": "Rewrite this for an outsider: clear, no gibberish", "skill": "sigmawrite", "near": "sigmarefactor" },
+  { "prompt": "Review my large files and simplify them to reduce code size", "skill": "sigmarefactor", "near": "sigmareview" },
+  { "prompt": "Run a laloc scan and help me shrink the biggest files", "skill": "sigmarefactor", "near": "sigmaimprove" }
+]

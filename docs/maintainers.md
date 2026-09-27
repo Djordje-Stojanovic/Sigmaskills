@@ -10,7 +10,7 @@ Sigmaskills/
 ├── CONTEXT.md                Project words (Skill Pack, Agent Host, …)
 ├── README.md · CHANGELOG.md · LICENSE · package.json · manifest.json
 ├── bin/ · src/               The user CLI (Sigma Installer)
-├── scripts/                  Test runner, release, and registry automation (not published)
+├── scripts/                  Test runner, skill evals, release, and registry automation (not published)
 ├── registry/                 Agent Host registry and Release baselines
 ├── docs/                     Guides, decision records, audits
 ├── test/                     npm test
@@ -34,6 +34,8 @@ npm test
 ```
 
 They cover the installer, the package contents, and the repository itself: the skill registry, `SKILL.md` frontmatter, `agents/openai.yaml`, README and installer-guide install lines, the README length, the CHANGELOG, issue templates, and agent docs.
+
+`npm test` also checks each skill's output contract against good and bad sample outputs, and checks that near-miss prompts reach the right skill. To run the skills themselves on a small fixture game, use `node scripts/eval-skills.js [skill...]`. It calls Claude Code, costs money, and stays out of CI. The [skill evals guide](evals.md) has the method and the latest results.
 
 CI runs the same suite on Windows, macOS, and Linux with Node.js 22 and 24, plus Node.js 20 on Linux. It runs on every pull request and every push to `main`. The jobs use real junctions and symbolic links, copy fallback, different shells, and an isolated temporary file system. CI runs with a read-only token and pins every action to a full commit SHA.
 

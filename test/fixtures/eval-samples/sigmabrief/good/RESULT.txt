@@ -1,0 +1,20 @@
+### Dispatch
+
+```text
+wave 1 | #1 Wall collision | isolation: on | type: greenfield
+wave 1 | #2 Pause key | isolation: on | type: greenfield
+```
+
+### Briefs
+
+```text
+docs/issues/1-wall-collision.md
+Plan first. Wait for plan approval. Run the baseline checks. Do NOT merge.
+REPORT BACK: Status: DONE | DONE_WITH_CONCERNS | BLOCKED · PR URL · checks run · rulings/open questions · concerns.
+```
+
+```text
+docs/issues/2-pause.md
+Plan first. Wait for plan approval. Run the baseline checks. Do NOT merge.
+REPORT BACK: Status: DONE | DONE_WITH_CONCERNS | BLOCKED · PR URL · checks run · rulings/open questions · concerns.
+```
