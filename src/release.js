@@ -458,7 +458,7 @@ export function writeReleaseIdentities(rootDir, { now } = {}) {
   const outgoing = identities.packageJson.version;
   let outgoingSkills;
   try {
-    outgoingSkills = hashSkillsAtRef(rootDir, `v${outgoing}`);
+    outgoingSkills = hashSkillsAtRef(rootDir, `refs/tags/v${outgoing}`);
   } catch (err) {
     throw codedError(`cannot read tag v${outgoing} to record its skill baselines: ${err.message}`, 'missing-tag');
   }

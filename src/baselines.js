@@ -18,15 +18,21 @@ function git(rootDir, args, encoding = 'utf8') {
  */
 export function readSkillTreeAtRef(rootDir, ref, skillId) {
   const listing = git(rootDir, ['ls-tree', '-r', '-z', ref, '--', `${skillId}/`]);
-  const tree = {};
+  const entries = [];
   for (const line of listing.split('\0').filter(Boolean)) {
-    const [meta, filePath] = line.split('\t');
-    const [mode, type, object] = meta.split(' ');
+    const tab = line.indexOf('\t');
+    const [mode, type, object] = line.slice(0, tab).split(' ');
     // Symbolic links and submodules are not regular files; the revision hash skips them too.
     if (type !== 'blob' || mode === '120000') continue;
-    tree[filePath.slice(skillId.length + 1)] = git(rootDir, ['cat-file', 'blob', object], 'buffer');
+    entries.push({ rel: line.slice(tab + 1).slice(skillId.length + 1), object });
   }
-  return tree['SKILL.md'] ? tree : null;
+  // Read no blobs for folders that are not skills (src/, test/, ...).
+  if (!entries.some((entry) => entry.rel === 'SKILL.md')) return null;
+  const tree = {};
+  for (const { rel, object } of entries) {
+    tree[rel] = git(rootDir, ['cat-file', 'blob', object], 'buffer');
+  }
+  return tree;
 }
 
 /**
