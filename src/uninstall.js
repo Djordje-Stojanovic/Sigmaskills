@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { commitSkillBackup, copySkillTree, exportSkillTree, pruneOlderBackups } from './backup.js';
+import { commitSkillBackup, copySkillTree, exportSkillTree, getBackupRoot, pruneOlderBackups } from './backup.js';
 import { resolveHomeDir } from './destinations.js';
 import { createSkillLink, inspectManagedPath, pathExists, removeManagedPath } from './links.js';
 import { loadProjectLock, removeProjectLockSkill, saveProjectLock } from './project-lock.js';
@@ -9,7 +9,9 @@ import {
   getProjectStateDir,
   loadGlobalState,
   loadProjectState,
+  removeEmptyStateDir,
   removeSkillFromState,
+  STATE_FILENAME,
   saveGlobalState,
   saveProjectState,
   migrateStateForCommand,
@@ -505,6 +507,7 @@ export function executeUninstall(options = {}) {
   const stateDir = resolveStateDir(scope, root, customStateDir);
   const releaseLock = acquireConcurrencyLock(root, customStateDir);
   let state = loadState(scope, root, customStateDir);
+  let emptied = false;
   plan.startedAt = new Date().toISOString();
 
   const writeAllJournal = (status) => {
@@ -583,11 +586,17 @@ export function executeUninstall(options = {}) {
       plan.summary = summarize(plan.skills);
       if ((plan.summary.failed || []).length === 0) {
         clearJournal(stateDir);
+        emptied = Object.keys(state.skills || {}).length === 0 && !pathExists(getBackupRoot(stateDir));
       }
     }
     return { ...plan, dryRun: false, state };
   } finally {
     releaseLock();
+    // Nothing left to own and no kept backups: leave no private folder behind.
+    if (emptied) {
+      fs.rmSync(path.join(stateDir, STATE_FILENAME), { force: true });
+      removeEmptyStateDir(stateDir);
+    }
   }
 }
 

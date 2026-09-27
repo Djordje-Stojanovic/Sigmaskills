@@ -629,7 +629,7 @@ test('uninstall-all: project scope never touches Global Installation; global nev
     assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite')), false);
     assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), false);
     assert.equal(pathExists(globalDest), false);
-    assert.ok(!readState(projectRoot).skills.sigmawrite);
+    assert.equal(pathExists(path.join(projectRoot, '.agents', '.sigmaskills')), false);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
     fs.rmSync(homeDir, { recursive: true, force: true });

@@ -332,3 +332,22 @@ test('private state: a second process cannot migrate while the first one is mid-
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });
+
+test('private state: uninstall-all with no kept backups removes the private folder', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-private-all-clean-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    installWrite(projectRoot, 'sigmabrief');
+    executeUninstall({
+      catalog: getCatalog(ROOT),
+      projectRoot,
+      packageRoot: ROOT,
+      all: true,
+      yes: true,
+      clean: 'remove',
+    });
+    assert.equal(pathExists(path.join(projectRoot, '.agents', PRIVATE_STATE_DIRNAME)), false);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
