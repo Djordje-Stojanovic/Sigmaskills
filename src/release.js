@@ -454,13 +454,23 @@ export function writeReleaseIdentities(rootDir, { now } = {}) {
     sourceCommit: null,
   });
   if (plan.identitiesCommitted) return plan;
-  // Keep the outgoing Release's skill hashes so untouched copies of it are recognized later.
-  const outgoing = identities.packageJson.version;
-  let outgoingSkills;
-  try {
-    outgoingSkills = hashSkillsAtRef(rootDir, `refs/tags/v${outgoing}`);
-  } catch (err) {
-    throw codedError(`cannot read tag v${outgoing} to record its skill baselines: ${err.message}`, 'missing-tag');
+  // A prepared candidate is not a published Release. Find the preceding tagged
+  // changelog entry, and fold later fixes into the candidate instead of inventing a baseline.
+  const tags = new Set(execFileSync('git', ['tag', '--list'], { cwd: rootDir, encoding: 'utf8' }).trim().split(/\r?\n/));
+  const versions = [...identities.changelog.matchAll(/^## \[(\d+\.\d+\.\d+)\]/gm)].map((match) => match[1]);
+  const outgoing = versions.find((version) => tags.has(`v${version}`));
+  if (!outgoing) throw codedError('cannot find a tagged outgoing Release; fetch release tags first', 'missing-tag');
+  const outgoingSkills = hashSkillsAtRef(rootDir, `refs/tags/v${outgoing}`);
+  if (outgoing !== identities.packageJson.version) {
+    const candidate = identities.packageJson.version;
+    const escaped = candidate.replace(/\./g, '\\.');
+    identities.changelog = identities.changelog.replace(new RegExp(`^## \\[${escaped}\\][^\\n]*\\n`, 'm'), '');
+    plan.version = candidate;
+    plan.tag = `v${candidate}`;
+    plan.githubRelease = plan.tag;
+    plan.npmPackage = `${RELEASE_PACKAGE_NAME}@${candidate}`;
+    plan.changeSet = parseChangeSet(extractUnreleased(identities.changelog));
+    plan.bump = classifyChangelogBump(extractUnreleased(identities.changelog));
   }
   appendReleaseBaselines(rootDir, outgoing, outgoingSkills);
   const applied = applyReleaseIdentities({

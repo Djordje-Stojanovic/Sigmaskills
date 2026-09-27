@@ -14,7 +14,20 @@ function hashRealDirectory(dirPath) {
   if (!pathExists(dirPath)) return null;
   const stat = fs.lstatSync(dirPath);
   if (stat.isSymbolicLink() || !stat.isDirectory()) return null;
-  return computeSkillRevisionAndHashes(dirPath);
+  const hashed = computeSkillRevisionAndHashes(dirPath);
+  const excluded = [];
+  function inspect(dir, prefix = '') {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const rel = prefix + entry.name;
+      if (entry.isDirectory()) inspect(path.join(dir, entry.name), `${rel}/`);
+      else if (!entry.isFile()) excluded.push(rel);
+    }
+  }
+  inspect(dirPath);
+  // These entries have no official file hash, but replacing them still changes user content.
+  for (const rel of excluded) hashed.files[rel] = 'non-regular-entry';
+  return { ...hashed, excluded };
+
 }
 
 /**
@@ -83,7 +96,7 @@ function inspectLiveSkill(destPath, skillId) {
 }
 
 function findBaseline(hashed, bundledBaselines = []) {
-  if (!hashed) return null;
+  if (!hashed || hashed.excluded?.length) return null;
   return bundledBaselines.find((baseline) => baseline && baseline.revision === hashed.revision) || null;
 }
 
@@ -213,7 +226,7 @@ export function classifySkillPath(params) {
 
   if (sigmaOwned && !isLink) {
     const hashed = hashRealDirectory(destPath);
-    if (hashed && bundledRevision && hashed.revision === bundledRevision) {
+    if (hashed && !hashed.excluded.length && bundledRevision && hashed.revision === bundledRevision) {
       return classified({
         kind: 'sigma-state',
         adoptable: true,
@@ -253,7 +266,7 @@ export function classifySkillPath(params) {
       return classified({ kind: 'foreign', customization: live.customization });
     }
 
-    if (hashed && bundledRevision && hashed.revision === bundledRevision) {
+    if (hashed && !hashed.excluded.length && bundledRevision && hashed.revision === bundledRevision) {
       return classified({
         kind: 'exact-revision',
         adoptable: true,
@@ -292,7 +305,7 @@ export function classifySkillPath(params) {
   } catch {
     hashedTarget = null;
   }
-  const targetExact = Boolean(hashedTarget && bundledRevision && hashedTarget.revision === bundledRevision);
+  const targetExact = Boolean(hashedTarget && !hashedTarget.excluded.length && bundledRevision && hashedTarget.revision === bundledRevision);
   if (targetExact) {
     return classified({
       kind: 'recognized-link',

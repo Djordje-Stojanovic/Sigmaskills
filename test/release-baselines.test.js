@@ -124,6 +124,14 @@ test('baselines: release --write-identities appends the outgoing Release for eve
     fs.writeFileSync(path.join(rootDir, 'CHANGELOG.md'), '# Changelog\n\n## [Unreleased]\n\n### Fixed\n\n- Better.\n\n## [0.1.0] — 2026-01-01\n\n### Added\n\n- First.\n');
     writeReleaseIdentities(rootDir, { now: '2026-02-01T00:00:00Z' });
 
+    // More changes after preparing identities must refresh the same unpublished candidate.
+    const candidateLog = fs.readFileSync(path.join(rootDir, 'CHANGELOG.md'), 'utf8');
+    fs.writeFileSync(path.join(rootDir, 'CHANGELOG.md'), candidateLog.replace('## [Unreleased]', '## [Unreleased]\n\n### Fixed\n\n- Another fix.'));
+    const refreshed = writeReleaseIdentities(rootDir, { now: '2026-02-02T00:00:00Z' });
+    assert.equal(refreshed.version, '0.1.1');
+    assert.match(fs.readFileSync(path.join(rootDir, 'CHANGELOG.md'), 'utf8'), /Another fix/);
+    assert.equal((fs.readFileSync(path.join(rootDir, 'CHANGELOG.md'), 'utf8').match(/## \[0\.1\.1\]/g) || []).length, 1);
+
     const written = JSON.parse(fs.readFileSync(path.join(rootDir, 'registry', 'skill-baselines.json'), 'utf8'));
     assert.deepEqual(written.skills.demo, [{ release: '0.1.0', ...outgoing.demo }]);
 
@@ -144,4 +152,25 @@ test('baselines: release guidance names the baselines file among the files to co
   assert.match(human, /registry\/skill-baselines\.json/);
   const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
   assert.match(readme, /`--write-identities` writes[^\n]*?skill hashes[^\n]*?`registry\/skill-baselines\.json`/);
+});
+
+test('baselines: personal links prevent automatic legacy replacement and appear in the preview', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-baseline-link-'));
+  try {
+    const dest = path.join(projectRoot, '.agents', 'skills', 'sigmareview');
+    plantTree(dest, readSkillTreeAtRef(ROOT, 'v0.1.0', 'sigmareview'));
+    const personal = path.join(projectRoot, 'personal');
+    fs.mkdirSync(personal);
+    fs.writeFileSync(path.join(personal, 'note.txt'), 'keep me');
+    fs.symlinkSync(personal, path.join(dest, 'personal'), process.platform === 'win32' ? 'junction' : 'dir');
+    const options = { catalog: getCatalog(ROOT), skillId: 'sigmareview', projectRoot, packageRoot: ROOT };
+    const plan = createInstallPlan(options.catalog, options);
+    assert.notEqual(plan.destinations[0].recognition, 'legacy');
+    assert.ok(plan.destinations[0].diff.deleted.includes('personal'));
+    assert.throws(() => executeProjectInstall(options), /explicit replace, skip, or export/);
+    assert.ok(fs.lstatSync(path.join(dest, 'personal')).isSymbolicLink());
+    assert.equal(fs.readFileSync(path.join(personal, 'note.txt'), 'utf8'), 'keep me');
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
 });
