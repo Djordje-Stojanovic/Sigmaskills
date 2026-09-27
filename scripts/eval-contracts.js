@@ -1,0 +1,173 @@
+// Output-contract checks for the skill evals (issue #43).
+// Each check takes { files, result } and returns a list of problems; an empty list is a pass.
+// files maps repository-relative paths ('/' separators) to text; result is the agent's final chat reply.
+
+function headings(text) {
+  return [...text.matchAll(/^## (.+?)\s*$/gm)].map((m) => m[1]);
+}
+
+function requireInOrder(text, wanted, where) {
+  const found = headings(text);
+  const problems = [];
+  let at = -1;
+  for (const name of wanted) {
+    const i = found.indexOf(name, at + 1);
+    if (i === -1) problems.push(`${where}: missing or out-of-order section "## ${name}"`);
+    else at = i;
+  }
+  return problems;
+}
+
+function requireText(text, patterns, where) {
+  return patterns.filter((p) => !p.test(text)).map((p) => `${where}: missing ${p}`);
+}
+
+// Split a Markdown file into "### " blocks keyed by their heading line.
+function blocks(text, headingPattern) {
+  const parts = text.split(/^(?=### )/m).filter((part) => headingPattern.test(part.split('\n')[0]));
+  return parts;
+}
+
+function sigmareview({ files }) {
+  const names = Object.keys(files).filter((f) => /^SIGMAREVIEW-\d{4}-\d{2}-\d{2}\.md$/.test(f));
+  if (names.length !== 1) return [`expected one SIGMAREVIEW-YYYY-MM-DD.md at the root, found ${names.length}`];
+  const name = names[0];
+  const text = files[name];
+  const problems = [
+    ...requireText(text, [/^# SigmaReview — .+/m], name),
+    ...requireInOrder(
+      text,
+      ['Verdict', 'System and promises', 'Fix plan', 'Findings index', 'Findings', 'Coverage'],
+      name,
+    ),
+    ...requireText(
+      text,
+      [
+        /\|\s*Condition\s*\|/,
+        /\|\s*Release posture\s*\|/,
+        /\|\s*Confirmed findings\s*\|/,
+        /\|\s*Highest-leverage fix\s*\|/,
+        /\|\s*Wave\s*\|\s*Findings\s*\|\s*Action\s*\|\s*Depends on\s*\|\s*Done when\s*\|/,
+        /\|\s*ID\s*\|\s*Priority\s*\|\s*Evidence\s*\|/,
+      ],
+      name,
+    ),
+  ];
+  const findings = blocks(text, /^### SIG-\d{3} — /);
+  if (findings.length === 0) problems.push(`${name}: no "### SIG-### — " findings`);
+  findings.forEach((block, i) => {
+    const id = block.match(/SIG-\d{3}/)[0];
+    const expected = `SIG-${String(i + 1).padStart(3, '0')}`;
+    if (id !== expected) problems.push(`${name}: finding ${i + 1} is ${id}, expected ${expected}`);
+    if (!new RegExp(`\\|\\s*${id}\\s*\\|`).test(text)) problems.push(`${name}: ${id} missing from the findings index`);
+    problems.push(
+      ...requireText(
+        block,
+        [
+          /\|\s*Priority\s*\|\s*P[0-3]\b/,
+          /\|\s*Evidence\s*\|\s*M[12]\b/,
+          /\*\*Broken promise:\*\*/,
+          /\*\*What happens:\*\*/,
+          /\*\*Impact:\*\*/,
+          /\*\*Fix:\*\*/,
+          /\*\*Proof test:\*\*/,
+          /\*\*Done when:\*\*/,
+        ],
+        id,
+      ),
+    );
+  });
+  return problems;
+}
+
+function sigmaimprove({ files }) {
+  const names = Object.keys(files).filter((f) => /^\.scratch\/sigmaimprove\/[^/]+\.md$/.test(f));
+  if (names.length < 1 || names.length > 20) return [`expected 1–20 category files in .scratch/sigmaimprove/, found ${names.length}`];
+  const problems = [];
+  const groups = new Set();
+  let entries = 0;
+  for (const name of names) {
+    const text = files[name];
+    const title = text.match(/^# SigmaImprove · ([A-I])\d{1,2}\b.*$/m);
+    if (!title) problems.push(`${name}: first heading must be "# SigmaImprove · <category ID> <name>"`);
+    else groups.add(title[1]);
+    problems.push(
+      ...requireInOrder(text, ['Where we stand', 'Entries', 'History'], name),
+      ...requireText(text, [/\|\s*ID\s*\|\s*Type\s*\|\s*Title\s*\|\s*Impact\s*\|\s*Effort\s*\|\s*Status\s*\|/], name),
+    );
+    const found = blocks(text, /^### IMP-[A-I]\d{1,2}-\d{2} — .+\((Idea|Signal)\)/);
+    if (found.length === 0) problems.push(`${name}: no "### IMP-<cat>-NN — <name> (Idea|Signal)" entries`);
+    entries += found.length;
+    for (const block of found) {
+      const id = block.match(/IMP-[A-I]\d{1,2}-\d{2}/)[0];
+      const shape = /\(Idea\)/.test(block.split('\n')[0])
+        ? [/\*\*Problem:\*\*/, /\*\*Recommendation:\*\*/, /\*\*Done when:\*\*/]
+        : [/\*\*What we see:\*\*/, /\*\*Gap:\*\*/, /\*\*Questions to answer:\*\*/];
+      problems.push(...requireText(block, shape, id));
+    }
+  }
+  if (entries < 10) problems.push(`expected at least 10 entries in total, found ${entries}`);
+  if (groups.size < 5) problems.push(`expected entries in at least 5 category groups, found ${groups.size}`);
+  return problems;
+}
+
+function sigmaship({ files }) {
+  const body = files['PR-BODY.md'];
+  const cleanup = files['CLEANUP.md'];
+  if (!body) return ['missing PR-BODY.md (the drafted PR ledger)'];
+  const problems = [
+    ...requireText(body, [/^Closes #\d+/m, /Spec:.*Map:/], 'PR-BODY.md'),
+    ...requireInOrder(body, ['Acceptance', 'Rulings', 'Follow-ups (not in this PR)', 'Review rounds'], 'PR-BODY.md'),
+    ...requireText(body, [/^- \[x\] .+/m, /\|\s*Round\s*\|\s*Status\s*\|/], 'PR-BODY.md'),
+  ];
+  if (!cleanup) problems.push('missing CLEANUP.md (the cleanup verification output)');
+  else problems.push(...requireText(cleanup, [/main in sync/, /tree clean/], 'CLEANUP.md'));
+  return problems;
+}
+
+function sigmabrief({ files, result }) {
+  const problems = [];
+  if (Object.keys(files).some((f) => /(^|\/)SIGMABRIEF-[^/]*\.md$/.test(f))) problems.push('created a SIGMABRIEF-*.md file');
+  const dispatch = result.match(/^`?wave \d+ \| .+ \| isolation: (on|off|ask) \| type: (greenfield|finish-PR|skip|blocked|session)`?\s*$/gm) || [];
+  if (dispatch.length === 0) problems.push('reply has no dispatch line "wave N | … | isolation: … | type: …"');
+  const briefs = [...result.matchAll(/^```text\r?\n([\s\S]*?)^```/gm)].map((m) => m[1]).filter((b) => !/^wave \d+ \|/m.test(b));
+  if (briefs.length === 0) problems.push('reply has no fenced ```text brief');
+  briefs.forEach((brief, i) => {
+    problems.push(...requireText(brief, [/do not merge/i, /DONE \| DONE_WITH_CONCERNS \| BLOCKED/], `brief ${i + 1}`));
+  });
+  return problems;
+}
+
+const JARGON = /\b(orchestration|idempotently|hydrates?|ephemeral|synergistically|operationalize|leveraging|paradigm|facilitates|performant)\b/gi;
+
+function sigmawrite({ files }) {
+  const text = files['docs/NOTES.md'];
+  if (!text) return ['missing docs/NOTES.md'];
+  const problems = requireText(text, [/`step`/, /`saveBest`/, /`src\/scores\.js`/], 'docs/NOTES.md (code names must survive)');
+  const jargon = text.match(JARGON);
+  if (jargon) problems.push(`docs/NOTES.md: jargon left: ${[...new Set(jargon.map((w) => w.toLowerCase()))].join(', ')}`);
+  const prose = text.replace(/^#.*$/gm, '').replace(/`[^`]*`/g, 'x');
+  const sentences = prose.split(/[.!?](\s|$)/).map((s) => s.trim().split(/\s+/).filter(Boolean).length).filter((n) => n > 0);
+  const longest = Math.max(0, ...sentences);
+  if (longest > 30) problems.push(`docs/NOTES.md: a sentence has ${longest} words (limit 30)`);
+  return problems;
+}
+
+function sigmarefactor({ files }) {
+  const text = files['REFACTOR-SCAN.md'];
+  if (!text) return ['missing REFACTOR-SCAN.md'];
+  const problems = requireText(
+    text,
+    [/laloc|fallback/i, /src\/logic\.js[^\n]*\d/, /src\/game\.js[^\n]*\d/, /risk/i, /verif/i],
+    'REFACTOR-SCAN.md',
+  );
+  return problems;
+}
+
+export const CONTRACTS = { sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor };
+
+export function checkContract(skill, output) {
+  const check = CONTRACTS[skill];
+  if (!check) throw new Error(`no contract check for ${skill}`);
+  return check({ files: {}, result: '', ...output });
+}
