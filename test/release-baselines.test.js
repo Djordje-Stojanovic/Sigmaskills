@@ -93,6 +93,10 @@ test('baselines: plan labels files from the installer point of view', () => {
     const { diff } = plan.destinations[0];
     assert.deepEqual(diff.added, ['agents/openai.yaml']);
     assert.deepEqual(diff.deleted, ['extra.md']);
+    // A file the new Release adds is written, not replaced.
+    assert.ok(plan.writes.includes('.agents/skills/sigmawrite/agents/openai.yaml'));
+    assert.ok(!plan.replacements.includes('.agents/skills/sigmawrite/agents/openai.yaml'));
+    assert.ok(plan.replacements.includes('.agents/skills/sigmawrite/SKILL.md'));
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }

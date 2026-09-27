@@ -267,7 +267,10 @@ export function createInstallPlan(catalog, options) {
     if (dest.resolution === 'skip' || dest.resolution === 'export') return [];
     if (!pathExists(dest.destination)) return [];
     if (dest.method === 'copy') {
-      return skillFiles.map((file) => `${dest.relativeDestination}/${file}`);
+      // A file the new Release adds is a write, not a replacement.
+      return skillFiles
+        .filter((file) => pathExists(path.join(dest.destination, file)))
+        .map((file) => `${dest.relativeDestination}/${file}`);
     }
     return [dest.relativeDestination];
   });
