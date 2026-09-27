@@ -389,7 +389,7 @@ function execNpm(args, options = {}) {
   });
 }
 
-function parseNpmPackJson(output) {
+export function parseNpmPackJson(output) {
   const text = String(output);
   const start = text.search(/[\[{]/);
   if (start < 0) {

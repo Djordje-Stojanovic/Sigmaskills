@@ -35,7 +35,7 @@ npm test
 
 They cover the installer, the package contents, and the repository itself: the skill registry, `SKILL.md` frontmatter, `agents/openai.yaml`, README and installer-guide install lines, the README length, the CHANGELOG, issue templates, and agent docs.
 
-CI runs the same suite on Windows, macOS, and Linux, with Node.js 20 and 22. It runs on every pull request and every push to `main`. The jobs use real junctions and symbolic links, copy fallback, and an isolated temporary file system.
+CI runs the same suite on Windows, macOS, and Linux with Node.js 22 and 24, plus Node.js 20 on Linux. It runs on every pull request and every push to `main`. The jobs use real junctions and symbolic links, copy fallback, different shells, and an isolated temporary file system. CI runs with a read-only token and pins every action to a full commit SHA.
 
 ### Adding, renaming, or removing a skill
 
@@ -56,6 +56,8 @@ Releases run from a repository checkout, never from the published package. The n
 1. `npm run release -- --dry-run` previews the next Release.
 2. `npm run release -- --write-identities` writes the version identities. Commit them and merge.
 3. `npm run release -- --expected-commit <sha> --expected-version <version> --expected-digest <sha256>` dispatches `release.yml`.
+
+CI rehearses these steps on every pull request, together with the trusted `validate` and publish steps (`node scripts/release-rehearsal.js`). The rehearsal uses a real `npm pack` and stubs the network, dispatch, and publish.
 
 ### Preview
 
