@@ -424,3 +424,25 @@ test('private state: purge removes state.json temp files left by a crashed save'
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });
+
+test('private state: recovery after process exit at migration commit removes the legacy lock', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-migration-exit-'));
+  try {
+    installWrite(root, 'sigmawrite');
+    toLegacyLayout(root);
+    const legacy = path.join(root, '.agents');
+    const next = path.join(legacy, PRIVATE_STATE_DIRNAME);
+    const script = `import { migrateLegacyState } from ${JSON.stringify(new URL('../src/state.js', import.meta.url).href)};
+      migrateLegacyState(${JSON.stringify(legacy)}, ${JSON.stringify(next)}, { afterCommit: () => process.exit(0) });`;
+    execFileSync(process.execPath, ['--input-type=module', '-e', script]);
+    assert.ok(fs.existsSync(path.join(legacy, '.sigma.lock')));
+    migrateStateForCommand({ projectRoot: root });
+    assert.equal(fs.existsSync(path.join(legacy, '.sigma.lock')), false);
+    assert.equal(fs.existsSync(path.join(next, LEGACY_MIGRATION_MARKER)), false);
+    assert.ok(fs.existsSync(path.join(next, 'state.json')));
+    // A later crash can happen after marker cleanup but before releasing the old lock.
+    fs.writeFileSync(path.join(legacy, '.sigma.lock'), JSON.stringify({ pid: 99999999 }));
+    migrateStateForCommand({ projectRoot: root });
+    assert.equal(fs.existsSync(path.join(legacy, '.sigma.lock')), false);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});

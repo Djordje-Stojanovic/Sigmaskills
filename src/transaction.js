@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { acquireFileLock } from './concurrency-lock.js';
 import path from 'node:path';
 import { findPackageRoot, validateSkill } from './catalog.js';
 import { injectCustomContent, injectRawCustomContent } from './customization.js';
@@ -28,92 +29,10 @@ import { createSkillLink, pathExists, removeManagedPath } from './links.js';
  * @param {string} [customStateDir]
  * @returns {() => void} Release lock function
  */
-export function acquireConcurrencyLock(projectRoot, customStateDir) {
+export function acquireConcurrencyLock(projectRoot, customStateDir, hooks) {
   const stateDir = getProjectStateDir(projectRoot, customStateDir);
   ensureStateDir(stateDir);
-
-  const lockPath = path.join(stateDir, '.sigma.lock');
-
-  function tryCreateLock() {
-    try {
-      const fd = fs.openSync(lockPath, 'wx');
-      const payload = JSON.stringify({
-        pid: process.pid,
-        createdAt: new Date().toISOString(),
-      });
-      fs.writeFileSync(fd, payload, 'utf8');
-      fs.closeSync(fd);
-      return true;
-    } catch (err) {
-      if (err.code === 'EEXIST') {
-        return false;
-      }
-      throw err;
-    }
-  }
-
-  if (!tryCreateLock()) {
-    // Check if existing lock is stale
-    try {
-      const existing = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
-      const isAlive = isProcessAlive(existing.pid);
-      if (isAlive) {
-        throw new Error(
-          `Concurrent SigmaSkills operation in progress (PID ${existing.pid}). Aborting to prevent corruption.`,
-        );
-      }
-      // Stale lock from dead process: remove and retry
-      fs.unlinkSync(lockPath);
-      if (!tryCreateLock()) {
-        throw new Error('Failed to acquire lock after clearing stale lock file.');
-      }
-    } catch (readErr) {
-      if (readErr.message.includes('Concurrent SigmaSkills operation')) {
-        throw readErr;
-      }
-      // If reading/parsing failed, attempt unlink and recreate
-      try {
-        fs.unlinkSync(lockPath);
-        if (!tryCreateLock()) {
-          throw new Error('Failed to acquire lock.');
-        }
-      } catch {
-        throw new Error(`Failed to acquire project lock at ${lockPath}: ${readErr.message}`);
-      }
-    }
-  }
-
-  let released = false;
-  return function releaseLock() {
-    if (released) return;
-    released = true;
-    try {
-      if (fs.existsSync(lockPath)) {
-        const existing = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
-        if (existing.pid === process.pid) {
-          fs.unlinkSync(lockPath);
-        }
-      }
-    } catch {
-      // Best-effort cleanup
-    }
-  };
-}
-
-/**
- * Check if a process ID is currently running.
- *
- * @param {number} pid
- * @returns {boolean}
- */
-function isProcessAlive(pid) {
-  if (!pid || typeof pid !== 'number') return false;
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (err) {
-    return err.code === 'EPERM'; // Process exists but no permission
-  }
+  return acquireFileLock(path.join(stateDir, '.sigma.lock'), hooks);
 }
 
 /**
