@@ -172,6 +172,10 @@ export function validateSkill(skillDir, skillMetadata) {
     id: skillMetadata.id,
     title: skillMetadata.title,
     description,
+    // People read this; agents read `description`. Fall back to its first sentence.
+    shortDescription: yamlContent.match(/^\s*short_description:\s*(.+?)\s*$/m)?.[1]
+      || description.match(/^.+?[.!?](?=\s|$)/)?.[0]
+      || description,
     needsReferences: Boolean(skillMetadata.needsReferences),
     revision,
     files,

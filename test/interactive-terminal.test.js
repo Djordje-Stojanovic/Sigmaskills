@@ -329,7 +329,7 @@ test('long destination paths wrap instead of overflowing the documented narrow w
     const output = io.getStdout();
     assert.match(output, /Stage 1\/4/);
     const descriptionLines = output.split('\n').filter((line) => line.startsWith('xxx'));
-    assert.equal(descriptionLines.length, 1, 'focused description stays bounded');
+    assert.equal(descriptionLines.length, 2, 'focused description stays bounded to two lines');
     for (const line of descriptionLines) {
       assert.ok(line.length <= 50, `wrapped line too long: ${line.length}`);
     }
@@ -528,5 +528,35 @@ test('dynamic destination picker windows a short terminal and shows a path statu
     assert.equal(leave.length, 1);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('picker focus area shows each skill short description in normal, narrow, and plain modes', async (t) => {
+  const root = path.resolve(import.meta.dirname, '..');
+  const skills = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8')).skills.map((skill) => ({
+    title: skill.title,
+    short: fs.readFileSync(path.join(root, skill.id, 'agents', 'openai.yaml'), 'utf8').match(/short_description:\s*(.+?)\s*$/m)[1],
+  }));
+  assert.equal(skills.length, 6);
+  const modes = [
+    { name: 'normal', args: [], options: {} },
+    { name: 'narrow', args: ['--narrow'], options: { columns: 44 } },
+    { name: 'plain', args: ['--static'], options: { tty: false, forceNoColor: true } },
+  ];
+  for (const mode of modes) {
+    await t.test(mode.name, async () => {
+      const projectRoot = sandboxProject();
+      try {
+        const io = createSimulatedTerminal('\x1b[B'.repeat(skills.length - 1) + '\x1b', mode.options);
+        assert.equal(await runCli([...mode.args, '--project', projectRoot], io), 0);
+        const text = io.getStdout().replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '').replace(/\s+/g, ' ');
+        for (const skill of skills) {
+          assert.ok(text.includes(`Focused: ${skill.title} ${skill.short} `), `${mode.name}: ${skill.title} short description`);
+        }
+        assert.doesNotMatch(text, /Perform a one-shot/);
+      } finally {
+        fs.rmSync(projectRoot, { recursive: true, force: true });
+      }
+    });
   }
 });

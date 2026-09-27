@@ -186,3 +186,34 @@ test('catalog: dynamic catalog discovery does not hardcode skill count', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
+
+test('catalog: shortDescription comes from agents/openai.yaml for every real skill', () => {
+  const rootDir = path.resolve(import.meta.dirname, '..');
+  for (const skill of getCatalog(rootDir).skills) {
+    const yaml = fs.readFileSync(path.join(rootDir, skill.id, 'agents', 'openai.yaml'), 'utf8');
+    assert.equal(skill.shortDescription, yaml.match(/^\s*short_description:\s*(.+?)\s*$/m)[1]);
+  }
+});
+
+test('catalog: shortDescription falls back to the first sentence of the description', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-cat-short-'));
+  try {
+    const skillDir = path.join(tmpDir, 'plainskill');
+    fs.mkdirSync(path.join(skillDir, 'agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(skillDir, 'SKILL.md'),
+      '---\nname: plainskill\ndescription: Write clear text for people. Use when asked. Do not use for code.\n---\n# Plain Skill\n\n## Personal instructions\n\n<sigmaskills-custom>\n</sigmaskills-custom>\n',
+      'utf8',
+    );
+    fs.writeFileSync(
+      path.join(skillDir, 'agents', 'openai.yaml'),
+      'interface:\n  display_name: Plain Skill\n  default_prompt: Use $plainskill.\n',
+      'utf8',
+    );
+    const skill = validateSkill(skillDir, { id: 'plainskill', title: 'Plain Skill' });
+    assert.equal(skill.shortDescription, 'Write clear text for people.');
+    assert.equal(skill.description, 'Write clear text for people. Use when asked. Do not use for code.');
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});

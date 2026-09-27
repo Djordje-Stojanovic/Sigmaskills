@@ -500,7 +500,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         for (const skill of catalog.skills) {
           writeOut(`• ${skill.title} (${skill.id})`);
           writeOut(`  Revision: ${skill.revision}`);
-          writeOut(`  Description: ${skill.description}\n`);
+          writeOut(`  Description: ${skill.shortDescription}\n`);
         }
       }
       return 0;
