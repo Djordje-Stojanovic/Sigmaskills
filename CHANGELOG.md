@@ -4,8 +4,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `install` takes several skill ids (`install sigmawrite sigmareview`) or `--all`. Every skill is planned first, then all of them install in one transaction: if one fails, none stay installed, and `skills-lock.json` is written once. `--json` prints `{ schemaVersion, plans }` when there is more than one skill; one skill prints the same plan as before. (#38)
+
 ### Fixed
 
+- An unknown skill id now fails with `unknown skill '<id>'` before any planning, for `install`, `update`, `restore`, and `uninstall`. `uninstall --skill nope` said `stale-state` before. (#38)
+- A value flag with a missing, empty, or dash-prefixed value now fails with the flag name. Before, `--skill --yes` read `--yes` as a skill id, and a value flag at the end of the command was ignored. One flag table now parses and checks every flag; all current flags and aliases still work. (#38)
 - The registry sync test writes into a temporary folder instead of `registry/agent-hosts.json`, so parallel test files no longer read a half-written file and fail at random.
 - Update previews show the relevant release notes and correct running-version relation, omit empty sections, and ask for outside-edit choices only when needed. JSON field names and the installed-side relation remain compatible. (#36)
 - Lock recovery serializes competing takeovers, preserves fresh incomplete records, and checks unique ownership when releasing. Locks expire after 24 hours; a crash-leftover takeover guard stops safely with recovery instructions. Legacy migration uses the same lock. (#37)
