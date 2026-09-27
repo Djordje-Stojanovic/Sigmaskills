@@ -1,6 +1,10 @@
 // Output-contract checks for the skill evals (issue #43).
 // Each check takes { files, result } and returns a list of problems; an empty list is a pass.
 // files maps repository-relative paths ('/' separators) to text; result is the agent's final chat reply.
+import fs from 'node:fs';
+import path from 'node:path';
+
+const FIXTURE = path.resolve(import.meta.dirname, '..', 'test', 'fixtures', 'eval-repo');
 
 function headings(text) {
   return [...text.matchAll(/^## (.+?)\s*$/gm)].map((m) => m[1]);
@@ -131,6 +135,11 @@ function sigmaship({ files }) {
 function sigmabrief({ files, result }) {
   const problems = [];
   if (Object.keys(files).some((f) => /(^|\/)SIGMABRIEF-[^/]*\.md$/.test(f))) problems.push('created a SIGMABRIEF-*.md file');
+  // A brief factory leaves the target repository as it found it.
+  for (const [name, text] of Object.entries(files)) {
+    const original = path.join(FIXTURE, ...name.split('/'));
+    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed the target repository: ${name}`);
+  }
   const dispatch = result.match(/^`?wave \d+ \| .+ \| isolation: (on|off|ask) \| type: (greenfield|finish-PR|skip|blocked|session)`?\s*$/gm) || [];
   if (dispatch.length === 0) problems.push('reply has no dispatch line "wave N | … | isolation: … | type: …"');
   const briefs = [...result.matchAll(/^```text\r?\n([\s\S]*?)^```/gm)].map((m) => m[1]).filter((b) => !/^wave \d+ \|/m.test(b));

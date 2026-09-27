@@ -76,3 +76,13 @@ test('evals: sigmaship contract rejects unticked criteria and an empty review ro
   const noRounds = body.replace(/^\| 1 \|.*\n?/m, '');
   assert.notDeepEqual(checkContract('sigmaship', { ...sample, files: { ...sample.files, 'PR-BODY.md': noRounds } }), []);
 });
+
+test('evals: sigmabrief contract rejects edits to the target repository', () => {
+  const sample = loadSample(path.join(SAMPLES, 'sigmabrief', 'good'));
+  const logic = fs.readFileSync(path.join(ROOT, 'test', 'fixtures', 'eval-repo', 'src', 'logic.js'), 'utf8');
+  const fixture = { 'src/logic.js': logic };
+  assert.deepEqual(checkContract('sigmabrief', { ...sample, files: fixture }), []);
+  const edited = { 'src/logic.js': logic.replace('head[0] > WIDTH', 'head[0] >= WIDTH') };
+  assert.notDeepEqual(checkContract('sigmabrief', { ...sample, files: edited }), []);
+  assert.notDeepEqual(checkContract('sigmabrief', { ...sample, files: { ...fixture, 'PLAN.md': 'plan' } }), []);
+});
