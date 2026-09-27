@@ -81,7 +81,8 @@ function sigmareview({ files }) {
 }
 
 function sigmaimprove({ files }) {
-  const names = Object.keys(files).filter((f) => /^\.scratch\/sigmaimprove\/[^/]+\.md$/.test(f));
+  // Category files are named <category ID>-<slug>.md; other files there, such as an index, are not checked.
+  const names = Object.keys(files).filter((f) => /^\.scratch\/sigmaimprove\/[A-I]\d{1,2}-[^/]+\.md$/.test(f));
   if (names.length < 1 || names.length > 20) return [`expected 1–20 category files in .scratch/sigmaimprove/, found ${names.length}`];
   const problems = [];
   const groups = new Set();
