@@ -122,7 +122,7 @@ export function migrateLegacyState(legacyDir, newDir, hooks = {}) {
     throw new Error(
       `an interrupted SigmaSkills run left ${path.join(legacyDir, journal)}. `
       + 'Finish it with the version that started it, then run this command again: '
-      + 'npx @djordje-stojanovic/sigmaskills@0.4.0 uninstall --all --yes (or purge).',
+      + 'npx @djordje-stojanovic/sigmaskills@0.4.0 uninstall --all --yes, or purge --confirm-purge "purge SigmaSkills".',
     );
   }
   // Hold the old-layout lock so no other run (this version or 0.4.0) touches the files mid-copy.
