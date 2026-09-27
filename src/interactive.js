@@ -449,7 +449,7 @@ function menuLines(renderer, { heading, rows, cursor, details = [], footer, erro
     : footer;
   const tail = [compact(hints, width)];
   if (error) tail.unshift(compact('Error: ' + error, width));
-  if (renderer.height >= 16) tail.unshift(...details.slice(0, 2).map((line) => compact(line, width)));
+  if (renderer.height >= 16) tail.unshift(...details.slice(0, 3).map((line) => compact(line, width)));
   const limit = Math.max(1, Math.min(8, renderer.height - 2 - head.length - tail.length));
   const view = visibleDestinationItems(rows, cursor, limit);
   renderer.menuSize = limit;
@@ -459,12 +459,14 @@ function menuLines(renderer, { heading, rows, cursor, details = [], footer, erro
 
 function pickerLines(renderer, catalog, selected, cursor, error, scope) {
   const focused = catalog.skills[cursor];
+  // Wrap the short description onto at most two lines so narrow terminals show it whole.
+  const summary = wrapWords(focused?.shortDescription || focused?.description || '', Math.max(1, renderer.width - 1));
   const scopeLabel = scope === 'global' ? 'Global Installation' : 'Project Installation (default)';
   return menuLines(renderer, {
     heading: `${scopeLabel} · Stage 1/4`,
     rows: catalog.skills.map((skill, index) => `${index === cursor ? '>' : ' '} ${renderer.static ? (index + 1) + '. ' : ''}[${selected.has(skill.id) ? 'x' : ' '}] ${skill.title} (${skill.id})`),
     cursor,
-    details: [`Focused: ${focused?.title || ''}`, focused?.description || ''],
+    details: [`Focused: ${focused?.title || ''}`, summary[0], ...(summary.length > 1 ? [summary.slice(1).join(' ')] : [])],
     footer: renderer.static ? 'number toggle · a all · g global · enter next · esc cancel · ? help' : '↑↓ move · space toggle · a all · g global · enter next · esc cancel · ? help',
     error,
   });
