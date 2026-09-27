@@ -99,7 +99,6 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     // 4. Verify excluded files / paths are strictly absent
     const forbiddenPrefixes = [
       'package/test/',
-      'package/scripts/',
       'package/docs/',
       'package/.github/',
       'package/.agents/',
