@@ -99,6 +99,9 @@ test('AGENTS.md teaches registry discipline and SigmaWrite voice', () => {
   assert.match(agents, /CI fails on purpose/i);
   assert.match(agents, /SigmaWrite|sigmawrite/);
   assert.match(agents, /npm test/);
+  assert.match(agents, /\(docs\/installer\.md\)/, 'AGENTS.md must point at the installer guide');
+  assert.match(agents, /\(docs\/maintainers\.md\)/, 'AGENTS.md must point at the maintainer guide');
+  assert.doesNotMatch(agents, /output contracts for every host/i, 'AGENTS.md describes the old README');
   assert.doesNotMatch(agents, /maximum\s+\d+\s+words/i);
 });
 
