@@ -77,8 +77,7 @@ test('cli: list shows short descriptions for people; list --json keeps the full 
   assert.equal(await runCli(['list', '--json'], json), 0);
   const parsed = JSON.parse(json.getStdout());
   for (const skill of skills) {
-    assert.ok(human.getStdout().includes(`  Description: ${skill.shortDescription}
-`), skill.id);
+    assert.ok(human.getStdout().includes(`  Description: ${skill.shortDescription}\n`), skill.id);
     assert.ok(!human.getStdout().includes(skill.description), `${skill.id} full description stays out of human list`);
     assert.equal(parsed.skills.find((entry) => entry.id === skill.id).description, skill.description);
   }
