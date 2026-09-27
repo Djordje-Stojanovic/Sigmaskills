@@ -390,3 +390,20 @@ test('private state: a cancelled or unconfirmed purge does not migrate an old-la
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });
+
+test('private state: a private folder left without its ignore file by a crash is ignored again', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-private-no-ignore-'));
+  try {
+    // A crash between creating the folder and writing its .gitignore leaves an empty folder.
+    fs.mkdirSync(path.join(projectRoot, '.agents', PRIVATE_STATE_DIRNAME), { recursive: true });
+    installWrite(projectRoot, 'sigmawrite');
+    for (const file of stagedPaths(projectRoot)) {
+      assert.ok(
+        file === 'skills-lock.json' || file.startsWith('.agents/skills/'),
+        `unexpected staged file ${file}`,
+      );
+    }
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});

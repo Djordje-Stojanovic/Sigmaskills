@@ -22,15 +22,22 @@ const LEGACY_JOURNALS = ['uninstall-journal.json', 'purge-journal.json', '.sigma
 
 /**
  * Create a private state folder that ignores itself in Git.
- * The ignore file is written only into a folder this call creates,
+ * The ignore file is written only into a folder this call creates, or into the
+ * default .agents/.sigmaskills folder when a crash left it without one,
  * so a user's own --state-dir folder is never hidden.
  *
  * @param {string} stateDir
  */
 export function ensureStateDir(stateDir) {
-  if (fs.existsSync(stateDir)) return;
+  const ignorePath = path.join(stateDir, '.gitignore');
+  if (fs.existsSync(stateDir)) {
+    const isDefault = path.basename(stateDir) === PRIVATE_STATE_DIRNAME
+      && path.basename(path.dirname(stateDir)) === '.agents';
+    if (isDefault && !fs.existsSync(ignorePath)) fs.writeFileSync(ignorePath, IGNORE_ALL, 'utf8');
+    return;
+  }
   fs.mkdirSync(stateDir, { recursive: true });
-  fs.writeFileSync(path.join(stateDir, '.gitignore'), IGNORE_ALL, 'utf8');
+  fs.writeFileSync(ignorePath, IGNORE_ALL, 'utf8');
 }
 
 /**
