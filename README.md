@@ -42,7 +42,7 @@ npx @djordje-stojanovic/sigmaskills install --all --project .
 
 Then call a skill with your host's normal skill syntax (`$sigmawrite`, `/skill:sigmawrite`, the skill picker, …).
 
-The [installer guide](docs/installer.md) explains host folders, Global Installation, `status`, `update`, `restore`, `uninstall`, and `purge`.
+The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/installer.md) explains host folders, Global Installation, `status`, `update`, `restore`, `uninstall`, and `purge`.
 
 ---
 
@@ -97,7 +97,7 @@ Runs a `laloc` scan, reads the five largest maintained files, and explains safe 
 
 ## Install
 
-Pick one method. The [installer guide](docs/installer.md#other-install-methods) has the full per-skill commands and host folders.
+Pick one method. The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/installer.md#other-install-methods) has the full per-skill commands and host folders.
 
 | Method | Command | Best for |
 |--------|---------|----------|
@@ -178,12 +178,12 @@ Where skills mention shells or worktrees, they default to native Windows (PowerS
 
 ## Links
 
-- [Installer guide](docs/installer.md): every command, flag, and install method
-- [Maintainer guide](docs/maintainers.md): tests, CI, releases, and registry automation
+- [Installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/installer.md): every command, flag, and install method
+- [Maintainer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/maintainers.md): tests, CI, releases, and registry automation
 - [CHANGELOG.md](CHANGELOG.md): what changed in each Release
-- [AGENTS.md](AGENTS.md): the working rules for agents in this repository
-- [CONTEXT.md](CONTEXT.md): the words this project uses, such as Skill Pack and Agent Host
-- [Decision records](docs/adr/): why the installer works the way it does
+- [AGENTS.md](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/AGENTS.md): the working rules for agents in this repository
+- [CONTEXT.md](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/CONTEXT.md): the words this project uses, such as Skill Pack and Agent Host
+- [Decision records](https://github.com/Djordje-Stojanovic/Sigmaskills/tree/main/docs/adr): why the installer works the way it does
 - [New issue](https://github.com/Djordje-Stojanovic/Sigmaskills/issues/new/choose): bug, feature, improvement, or docs
 
 ## License

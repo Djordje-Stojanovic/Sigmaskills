@@ -146,7 +146,11 @@ test('README and the installer guide wire every skill for install and run', () =
   assert.match(readme, /npx skills add Djordje-Stojanovic\/Sigmaskills --all/);
   assert.match(readme, new RegExp(`v${pkg.version.replaceAll('.', '\\.')}`));
   assert.match(readme, /CHANGELOG\.md/);
-  assert.match(readme, /\(docs\/installer\.md\)/, 'README must link the installer guide');
+  assert.match(
+    readme,
+    /\(https:\/\/github\.com\/Djordje-Stojanovic\/Sigmaskills\/blob\/main\/docs\/installer\.md\)/,
+    'README must link the installer guide',
+  );
 
   for (const skill of KNOWN_SKILLS) {
     assert.match(readme, new RegExp(`### ${skill.title}\\b`));
@@ -167,6 +171,21 @@ test('README and the installer guide wire every skill for install and run', () =
     );
     assert.match(readme, new RegExp(`\\$${skill.id}\\b`), `README missing $${skill.id} invoke example`);
     assert.match(readme, new RegExp(`/skill:${skill.id}\\b`), `README missing /skill:${skill.id} example`);
+  }
+});
+
+// The README ships in the npm package and shows on npmjs.com, so a relative link
+// works only when its target ships too. Other targets need an absolute GitHub URL.
+test('README relative links point only at files in the npm package', () => {
+  const pkg = JSON.parse(read('package.json'));
+  const readme = read('README.md');
+  const targets = [...readme.matchAll(/\]\(([^)\s]+)\)/g)]
+    .map((match) => match[1])
+    .filter((target) => !/^(?:[a-z]+:|#)/i.test(target));
+  assert.ok(targets.length > 0, 'expected relative links such as CHANGELOG.md');
+  for (const target of targets) {
+    const top = target.split('#')[0].split('/')[0];
+    assert.ok(pkg.files.includes(top), `README link '${target}' is not in the npm package; use an absolute GitHub URL`);
   }
 });
 
