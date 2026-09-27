@@ -67,7 +67,7 @@ test('cli: install <skill> performs actual installation into project', async () 
     assert.match(io.getStdout(), /Installed SigmaWrite \(sigmawrite\) to \.agents\/skills\/sigmawrite/);
     assert.ok(fs.existsSync(path.join(tmpDir, '.agents', 'skills', 'sigmawrite', 'SKILL.md')));
     assert.ok(fs.existsSync(path.join(tmpDir, 'skills-lock.json')));
-    assert.ok(fs.existsSync(path.join(tmpDir, '.agents', 'state.json')));
+    assert.ok(fs.existsSync(path.join(tmpDir, '.agents', '.sigmaskills', 'state.json')));
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }

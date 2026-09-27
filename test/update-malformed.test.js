@@ -52,7 +52,7 @@ function skillDir(root, skillId) {
 }
 
 function readState(root) {
-  return JSON.parse(fs.readFileSync(path.join(root, '.agents', 'state.json'), 'utf8'));
+  return JSON.parse(fs.readFileSync(path.join(root, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
 }
 
 function snapshot(root) {
@@ -101,7 +101,7 @@ function ageOfficial(root, skillId) {
   const state = readState(root);
   state.skills[skillId].baseHashes = hashes.files;
   state.skills[skillId].revision = hashes.revision;
-  fs.writeFileSync(path.join(root, '.agents', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
+  fs.writeFileSync(path.join(root, '.agents', '.sigmaskills', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
 }
 
 test('update: malformed markers block automatic update and dry-run shows exact repair bytes', async () => {
@@ -326,7 +326,7 @@ test('packed CLI skips a malformed skill and updates a sibling Project Installat
       'utf8',
     );
     const briefLive = computeSkillRevisionAndHashes(skillDir(project, 'sigmabrief'));
-    const statePath = path.join(project, '.agents', 'state.json');
+    const statePath = path.join(project, '.agents', '.sigmaskills', 'state.json');
     const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
     state.skills.sigmabrief.baseHashes = briefLive.files;
     state.skills.sigmabrief.revision = briefLive.revision;

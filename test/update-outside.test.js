@@ -48,7 +48,7 @@ function skillDir(root, skillId) {
 }
 
 function readState(root) {
-  return JSON.parse(fs.readFileSync(path.join(root, '.agents', 'state.json'), 'utf8'));
+  return JSON.parse(fs.readFileSync(path.join(root, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
 }
 
 function plantPriorBackup(root, skillId, marker) {
@@ -59,7 +59,7 @@ function plantPriorBackup(root, skillId, marker) {
   fs.writeFileSync(path.join(backupDir, 'prior.txt'), marker, 'utf8');
   const state = readState(root);
   state.skills[skillId].lastBackup = `backups/${skillId}/${stamp}`;
-  fs.writeFileSync(path.join(root, '.agents', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
+  fs.writeFileSync(path.join(root, '.agents', '.sigmaskills', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
   return backupDir;
 }
 
@@ -137,7 +137,7 @@ test('update: prompts distinguish local-only, upstream-only, and concurrent chan
       fs.readFileSync(briefMd, 'utf8').replace('## Personal instructions', '<!-- sigma-older -->\n\n## Personal instructions'),
       'utf8',
     );
-    const hashes = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'));
+    const hashes = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
     const briefLive = computeSkillRevisionAndHashes(skillDir(projectRoot, 'sigmabrief'));
     hashes.skills.sigmabrief.baseHashes = briefLive.files;
     hashes.skills.sigmabrief.revision = briefLive.revision;
@@ -156,7 +156,7 @@ test('update: prompts distinguish local-only, upstream-only, and concurrent chan
     hashes.skills.sigmareview.baseHashes = reviewBase.files;
     hashes.skills.sigmareview.revision = reviewBase.revision;
     hashes.skills.sigmareview.release = '0.0.9';
-    fs.writeFileSync(path.join(projectRoot, '.agents', 'state.json'), `${JSON.stringify(hashes, null, 2)}\n`);
+    fs.writeFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), `${JSON.stringify(hashes, null, 2)}\n`);
     applyOutsideEdits(skillDir(projectRoot, 'sigmareview'));
 
     const io = createMockIo();
@@ -222,7 +222,7 @@ test('update: skip leaves that skill unchanged while another skill still updates
     const state = readState(projectRoot);
     state.skills.sigmabrief.baseHashes = briefLive.files;
     state.skills.sigmabrief.revision = briefLive.revision;
-    fs.writeFileSync(path.join(projectRoot, '.agents', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
+    fs.writeFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
     const writeNotes = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'notes.txt'), 'utf8');
     const writeStateBefore = JSON.stringify(readState(projectRoot).skills.sigmawrite);
 
@@ -340,7 +340,7 @@ test('update: failure injection keeps the live tree, prior backup, and ownership
     applyOutsideEdits(dest);
     const prior = plantPriorBackup(projectRoot, 'sigmawrite', 'owned-prior');
     const beforeNotes = fs.readFileSync(path.join(dest, 'notes.txt'));
-    const beforeState = fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'));
+    const beforeState = fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'));
 
     assert.throws(
       () => executeUpdate({
@@ -356,7 +356,7 @@ test('update: failure injection keeps the live tree, prior backup, and ownership
       /fail after backup/,
     );
     assert.deepEqual(fs.readFileSync(path.join(dest, 'notes.txt')), beforeNotes);
-    assert.equal(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'), beforeState.toString('utf8'));
+    assert.equal(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8'), beforeState.toString('utf8'));
     assert.equal(pathExists(prior), true);
 
     assert.throws(
@@ -373,7 +373,7 @@ test('update: failure injection keeps the live tree, prior backup, and ownership
       /fail after state/,
     );
     assert.deepEqual(fs.readFileSync(path.join(dest, 'notes.txt')), beforeNotes);
-    assert.equal(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'), beforeState.toString('utf8'));
+    assert.equal(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8'), beforeState.toString('utf8'));
     assert.equal(pathExists(prior), true);
     assert.equal(fs.readFileSync(path.join(prior, 'prior.txt'), 'utf8'), 'owned-prior');
   } finally {

@@ -8,6 +8,8 @@ import {
   STATE_FILENAME,
   getGlobalStateDir,
   getProjectStateDir,
+  removeEmptyStateDir,
+  migrateStateForCommand,
 } from './state.js';
 import { acquireConcurrencyLock } from './transaction.js';
 import { createUninstallPlan, UNINSTALL_JOURNAL_FILENAME } from './uninstall.js';
@@ -343,6 +345,7 @@ function finishCleanup(stateDir, plan) {
     const target = path.join(stateDir, name);
     if (pathExists(target)) fs.rmSync(target, { recursive: true, force: true });
   }
+  removeEmptyStateDir(stateDir);
 }
 
 /**
@@ -352,6 +355,7 @@ function finishCleanup(stateDir, plan) {
  * @returns {object}
  */
 export function executePurge(options = {}) {
+  migrateStateForCommand(options);
   const plan = createPurgePlan(options);
   if (options.dryRun) {
     return { ...plan, dryRun: true };

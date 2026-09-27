@@ -70,7 +70,7 @@ function skillDir(root, skillId, relativeRoot = UNIVERSAL_PROJECT_DESTINATION) {
 }
 
 function readState(root) {
-  return JSON.parse(fs.readFileSync(path.join(root, '.agents', 'state.json'), 'utf8'));
+  return JSON.parse(fs.readFileSync(path.join(root, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
 }
 
 function readLock(root) {
@@ -443,7 +443,7 @@ test('packed CLI covers cancellation, wrong phrase, crash retry, and complete pu
         if (!String(err.message).includes('packed crash point')) throw err;
       }
     `], { cwd: appDir, encoding: 'utf8' });
-    assert.equal(pathExists(path.join(project, '.agents', PURGE_QUARANTINE_DIRNAME)), true);
+    assert.equal(pathExists(path.join(project, '.agents', '.sigmaskills', PURGE_QUARANTINE_DIRNAME)), true);
 
     execFileSync(
       'node',
@@ -452,7 +452,7 @@ test('packed CLI covers cancellation, wrong phrase, crash retry, and complete pu
     );
     assert.equal(pathExists(dest), false);
     assert.equal(fs.readFileSync(path.join(stranger, 'leave-me.txt'), 'utf8'), 'unrelated');
-    assert.equal(pathExists(path.join(project, '.agents', 'state.json')), false);
+    assert.equal(pathExists(path.join(project, '.agents', '.sigmaskills', 'state.json')), false);
     assert.equal(pathExists(path.join(project, 'skills-lock.json')), false);
     assert.ok(fs.existsSync(path.join(packedRoot, 'src', 'purge.js')));
   } finally {

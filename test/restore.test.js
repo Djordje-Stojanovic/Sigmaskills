@@ -49,7 +49,7 @@ function skillDir(root, skillId) {
 }
 
 function readState(root) {
-  return JSON.parse(fs.readFileSync(path.join(root, '.agents', 'state.json'), 'utf8'));
+  return JSON.parse(fs.readFileSync(path.join(root, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
 }
 
 function backupAbs(root, skillId) {
@@ -174,7 +174,7 @@ test('restore: failure after staging leaves the live tree and retained backup in
     const beforeLive = inventorySkillTree(dest);
     const beforeBackup = backupAbs(projectRoot, 'sigmawrite');
     const beforeBackupBytes = fs.readFileSync(path.join(beforeBackup, 'local-keep.txt'), 'utf8');
-    const beforeState = fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8');
+    const beforeState = fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8');
 
     assert.throws(
       () => executeRestore({
@@ -191,7 +191,7 @@ test('restore: failure after staging leaves the live tree and retained backup in
     );
     assert.deepEqual(inventorySkillTree(dest).entries, beforeLive.entries);
     assert.equal(fs.readFileSync(path.join(beforeBackup, 'local-keep.txt'), 'utf8'), beforeBackupBytes);
-    assert.equal(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'), beforeState);
+    assert.equal(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8'), beforeState);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -302,7 +302,7 @@ test('restore: missing, truncated, tampered, schema-incompatible, insufficient-s
       fs.rmSync(occupiedDest, { recursive: true, force: true });
       const state = readState(occupiedRoot);
       delete state.skills.sigmawrite;
-      fs.writeFileSync(path.join(occupiedRoot, '.agents', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
+      fs.writeFileSync(path.join(occupiedRoot, '.agents', '.sigmaskills', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
       fs.mkdirSync(occupiedDest, { recursive: true });
       fs.writeFileSync(path.join(occupiedDest, 'stranger.txt'), 'not yours', 'utf8');
       assert.throws(
@@ -367,7 +367,7 @@ test('restore: a removed skill returns from portable ownership metadata without 
     fs.rmSync(dest, { recursive: true, force: true });
     const state = readState(projectRoot);
     delete state.skills.sigmawrite;
-    fs.writeFileSync(path.join(projectRoot, '.agents', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
+    fs.writeFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
 
     const stranger = path.join(projectRoot, '.claude', 'skills', 'sigmawrite');
     fs.mkdirSync(stranger, { recursive: true });

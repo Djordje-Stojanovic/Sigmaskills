@@ -22,6 +22,7 @@ import {
   getProjectStateDir,
   loadGlobalState,
   loadProjectState,
+  migrateStateForCommand,
 } from './state.js';
 import { collectStatus } from './status.js';
 import { executeProjectInstall } from './transaction.js';
@@ -563,6 +564,7 @@ function applyCanonicalRepair(skill, options) {
  * @returns {object}
  */
 export function executeUpdate(options = {}) {
+  migrateStateForCommand(options);
   const plan = createUpdatePlan(options);
   const requested = Array.isArray(options.skillIds) ? options.skillIds.filter(Boolean) : [];
   const selectedIds = selectSkills(plan, options);

@@ -253,7 +253,7 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
 
     runCli(bin, ['install', 'sigmabrief', '--project', project], { cwd: appDir, env: offline });
     runCli(bin, ['uninstall', '--all', '--yes', '--project', project], { cwd: appDir, env: offline });
-    const afterAll = JSON.parse(fs.readFileSync(path.join(project, '.agents', 'state.json'), 'utf8'));
+    const afterAll = JSON.parse(fs.readFileSync(path.join(project, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
     assert.deepEqual(afterAll.skills, {});
 
     runCli(bin, ['install', 'sigmawrite', '--project', project], { cwd: appDir, env: offline });
@@ -264,7 +264,7 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
 
     const schemaProject = path.join(tmpDir, 'schema-proj');
     runCli(bin, ['install', 'sigmawrite', '--project', schemaProject], { cwd: appDir, env: offline });
-    const schemaPath = path.join(schemaProject, '.agents', 'state.json');
+    const schemaPath = path.join(schemaProject, '.agents', '.sigmaskills', 'state.json');
     const schemaState = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
     schemaState.schemaVersion = 99;
     fs.writeFileSync(schemaPath, `${JSON.stringify(schemaState, null, 2)}\n`);
@@ -283,7 +283,7 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
     fs.mkdirSync(homeDir, { recursive: true });
     const globalEnv = offlineEnv({ HOME: homeDir, USERPROFILE: homeDir });
     runCli(bin, ['install', 'sigmawrite', '--global', '--yes'], { cwd: appDir, env: globalEnv });
-    const globalStatePath = path.join(homeDir, '.agents', 'state.json');
+    const globalStatePath = path.join(homeDir, '.agents', '.sigmaskills', 'state.json');
     const globalState = JSON.parse(fs.readFileSync(globalStatePath, 'utf8'));
     globalState.skills.sigmawrite.lastBackup = 'backups/sigmawrite/kept-ref';
     const migrated = {

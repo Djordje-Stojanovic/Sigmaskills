@@ -12,6 +12,7 @@ import {
   removeSkillFromState,
   saveGlobalState,
   saveProjectState,
+  migrateStateForCommand,
 } from './state.js';
 import { collectStatus } from './status.js';
 import { acquireConcurrencyLock } from './transaction.js';
@@ -474,6 +475,7 @@ function applyOneUninstall(options, skill) {
  * @returns {object}
  */
 export function executeUninstall(options = {}) {
+  migrateStateForCommand(options);
   const plan = createUninstallPlan(options);
   if (options.dryRun) {
     return { ...plan, dryRun: true };

@@ -106,7 +106,7 @@ test('state: record, save, load, and check destination ownership', () => {
 
     saveProjectState(tmpDir, updated);
 
-    const statePath = path.join(tmpDir, '.agents', STATE_FILENAME);
+    const statePath = path.join(tmpDir, '.agents', '.sigmaskills', STATE_FILENAME);
     assert.ok(fs.existsSync(statePath));
 
     const loaded = loadProjectState(tmpDir);
@@ -194,7 +194,7 @@ test('install: installs skill transactionally into universal destination', () =>
     assert.ok(state.skills.sigmabrief.baseHashes['SKILL.md']);
 
     // Staging directory must be cleaned up
-    const stagingDir = path.join(tmpDir, '.agents', '.sigma-staging');
+    const stagingDir = path.join(tmpDir, '.agents', '.sigmaskills', '.sigma-staging');
     assert.ok(!fs.existsSync(stagingDir));
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -226,7 +226,7 @@ test('install: fails closed on unowned existing destination', () => {
     assert.equal(fs.readFileSync(path.join(foreignDir, 'SKILL.md'), 'utf8'), 'foreign content');
     // Verify no lockfile or state was written
     assert.ok(!fs.existsSync(path.join(tmpDir, PROJECT_LOCK_FILENAME)));
-    assert.ok(!fs.existsSync(path.join(tmpDir, '.agents', STATE_FILENAME)));
+    assert.ok(!fs.existsSync(path.join(tmpDir, '.agents', '.sigmaskills', STATE_FILENAME)));
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
@@ -254,7 +254,7 @@ test('install: concurrency lock blocks parallel runs and cleans stale lock', () 
     release2();
 
     // Create a fake dead PID lock (PID 99999999)
-    const lockPath = path.join(tmpDir, '.agents', '.sigma.lock');
+    const lockPath = path.join(tmpDir, '.agents', '.sigmaskills', '.sigma.lock');
     fs.writeFileSync(lockPath, JSON.stringify({ pid: 99999999, createdAt: new Date().toISOString() }), 'utf8');
 
     // Acquiring should detect dead PID, clear stale lock, and succeed

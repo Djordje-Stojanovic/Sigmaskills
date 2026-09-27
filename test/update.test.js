@@ -80,7 +80,7 @@ function skillDir(root, skillId) {
 function refreshRecordedHashes(root, skillId, options = {}) {
   const dest = skillDir(root, skillId);
   const hashes = computeSkillRevisionAndHashes(dest);
-  const statePath = path.join(root, '.agents', 'state.json');
+  const statePath = path.join(root, '.agents', '.sigmaskills', 'state.json');
   const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
   const entry = state.skills[skillId];
   entry.baseHashes = hashes.files;
@@ -158,7 +158,7 @@ test('update: upstream-only change restores official files and reports older Rel
     assert.equal(code, 0);
     const md = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8');
     assert.equal(md.includes('<!-- sigma-older -->'), false);
-    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'));
+    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
     assert.equal(state.skills.sigmawrite.revision, getCatalog(ROOT).skills.find((s) => s.id === 'sigmawrite').revision);
     assert.equal(state.skills.sigmawrite.release, getCatalog(ROOT).manifest.version);
   } finally {
@@ -291,7 +291,7 @@ test('update: resource add, change, rename, and delete participate in the revisi
     assert.ok(fs.existsSync(path.join(dest, 'renamed-to.md')));
     assert.ok(!fs.existsSync(path.join(dest, 'legacy.txt')));
     assert.ok(!fs.existsSync(path.join(dest, 'renamed-from.md')));
-    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', 'state.json'), 'utf8'));
+    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
     assert.equal(state.skills.sigmawrite.revision, computed.revision);
     assert.deepEqual(state.skills.sigmawrite.baseHashes, computed.files);
   } finally {
@@ -378,7 +378,7 @@ test('update: unknown schema, missing bundled revision, and unsafe drift do not 
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-stop-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    const statePath = path.join(projectRoot, '.agents', 'state.json');
+    const statePath = path.join(projectRoot, '.agents', '.sigmaskills', 'state.json');
 
     const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
     state.schemaVersion = 99;
@@ -404,9 +404,9 @@ test('update: unknown schema, missing bundled revision, and unsafe drift do not 
     assert.equal(ghostCode, 1);
     assert.match(ghostIo.getStderr(), /missing bundled Skill Revision/);
     const afterGhost = snapshotTree(projectRoot);
-    delete afterGhost['.agents/state.json'];
+    delete afterGhost['.agents/.sigmaskills/state.json'];
     const beforeGhostFiles = { ...beforeGhost };
-    delete beforeGhostFiles['.agents/state.json'];
+    delete beforeGhostFiles['.agents/.sigmaskills/state.json'];
     assert.deepEqual(afterGhost, beforeGhostFiles);
 
     fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
@@ -431,7 +431,7 @@ test('update: newer Release relation is reported and Global Installation uses th
   const homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-global-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    const statePath = path.join(projectRoot, '.agents', 'state.json');
+    const statePath = path.join(projectRoot, '.agents', '.sigmaskills', 'state.json');
     const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
     state.skills.sigmawrite.release = '9.9.9';
     fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
@@ -514,7 +514,7 @@ test('packed CLI updates Project and Global Installation while preserving custom
     );
     fs.writeFileSync(skillMd, older, 'utf8');
     const hashes = computeSkillRevisionAndHashes(dest);
-    const statePath = path.join(project, '.agents', 'state.json');
+    const statePath = path.join(project, '.agents', '.sigmaskills', 'state.json');
     const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
     state.skills.sigmawrite.baseHashes = hashes.files;
     state.skills.sigmawrite.revision = hashes.revision;
@@ -557,7 +557,7 @@ test('packed CLI updates Project and Global Installation while preserving custom
       'utf8',
     );
     const globalHashes = computeSkillRevisionAndHashes(globalDest);
-    const globalStatePath = path.join(homeDir, '.agents', 'state.json');
+    const globalStatePath = path.join(homeDir, '.agents', '.sigmaskills', 'state.json');
     const globalState = JSON.parse(fs.readFileSync(globalStatePath, 'utf8'));
     globalState.skills.sigmabrief.baseHashes = globalHashes.files;
     globalState.skills.sigmabrief.revision = globalHashes.revision;
@@ -584,7 +584,7 @@ test('update: a retired skill is reported and left untouched instead of blocking
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-retired-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    const statePath = path.join(projectRoot, '.agents', 'state.json');
+    const statePath = path.join(projectRoot, '.agents', '.sigmaskills', 'state.json');
     const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
     const retiredDir = path.join(projectRoot, '.agents', 'skills', 'sigmaperformance');
     fs.cpSync(path.join(projectRoot, '.agents', 'skills', 'sigmawrite'), retiredDir, { recursive: true });
