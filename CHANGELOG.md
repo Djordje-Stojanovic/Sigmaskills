@@ -6,10 +6,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Fixed
 
+- Update previews show the relevant release notes and correct running-version relation, omit empty sections, and ask for outside-edit choices only when needed. JSON field names and the installed-side relation remain compatible. (#36)
 - Lock recovery serializes competing takeovers, preserves fresh incomplete records, and checks unique ownership when releasing. Locks expire after 24 hours; a crash-leftover takeover guard stops safely with recovery instructions. Legacy migration uses the same lock. (#37)
-
-### Fixed
-
 - Untouched copies of earlier Releases are recognized again. `registry/skill-baselines.json` now holds the file hashes of 0.1.0, 0.2.0, 0.2.1, and 0.3.0, rebuilt from their git tags (`node scripts/backfill-baselines.js <tag>...`), and `release --write-identities` adds the outgoing Release each time. Such a copy shows as `legacy` with high provenance and upgrades with no `--adopt-*` flag; a changed copy still needs a choice. (#35)
 - Install plans now label files from the installer's point of view: *Additions* are files the new Release brings, *Deletions* are files the install removes. They were swapped before. (#35)
 
