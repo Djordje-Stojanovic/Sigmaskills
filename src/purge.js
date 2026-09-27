@@ -332,15 +332,6 @@ function finishCleanup(stateDir, plan) {
   }
   const leftoverJournal = path.join(stateDir, PURGE_JOURNAL_FILENAME);
   if (pathExists(leftoverJournal)) fs.rmSync(leftoverJournal, { force: true });
-  const lockPath = path.join(stateDir, '.sigma.lock');
-  if (pathExists(lockPath)) {
-    try {
-      const existing = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
-      if (!existing.pid || existing.pid === process.pid) fs.rmSync(lockPath, { force: true });
-    } catch {
-      // Lock removal is best-effort after the ownership plan is complete.
-    }
-  }
   for (const name of [...PRIVATE_STAGING, 'backups']) {
     const target = path.join(stateDir, name);
     if (pathExists(target)) fs.rmSync(target, { recursive: true, force: true });
@@ -447,6 +438,7 @@ export function executePurge(options = {}) {
     return { ...plan, dryRun: false, resumed: false };
   } finally {
     releaseLock();
+    removeEmptyStateDir(stateDir);
   }
 }
 
