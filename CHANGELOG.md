@@ -4,31 +4,6 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
-### Added
-
-- `install` takes several skill ids (`install sigmawrite sigmareview`) or `--all`. Every skill is planned first, then all of them install in one transaction: if one fails, none stay installed, and `skills-lock.json` is written once. `--json` prints `{ schemaVersion, plans }` when there is more than one skill; one skill prints the same plan as before. (#38)
-- Skill evals. `npm test` now checks the output contract of every skill against good and bad sample outputs, and checks that near-miss prompts route to the right skill. `node scripts/eval-skills.js [skill...]` runs the real skills on a small fixture game with Claude Code, on demand only. See `docs/evals.md`. (#43)
-
-### Fixed
-
-- An unknown skill id now fails with `unknown skill '<id>'` before any planning, for `install`, `update`, `restore`, and `uninstall`. `uninstall --skill nope` said `stale-state` before. (#38)
-- A value flag with a missing, empty, or dash-prefixed value now fails with the flag name. Before, `--skill --yes` read `--yes` as a skill id, and a value flag at the end of the command was ignored. One flag table now parses and checks every flag; all current flags and aliases still work. (#38)
-- The registry sync test writes into a temporary folder instead of `registry/agent-hosts.json`, so parallel test files no longer read a half-written file and fail at random.
-- Update previews show the relevant release notes and correct running-version relation, omit empty sections, and ask for outside-edit choices only when needed. JSON field names and the installed-side relation remain compatible. (#36)
-- Lock recovery serializes competing takeovers, preserves fresh incomplete records, and checks unique ownership when releasing. Locks expire after 24 hours; a crash-leftover takeover guard stops safely with recovery instructions. Legacy migration uses the same lock. (#37)
-- Untouched copies of earlier Releases are recognized again. `registry/skill-baselines.json` now holds the file hashes of 0.1.0, 0.2.0, 0.2.1, and 0.3.0, rebuilt from their git tags (`node scripts/backfill-baselines.js <tag>...`), and `npm run release -- --write-identities` adds the outgoing Release each time. Such a copy shows as `legacy` with high provenance and upgrades with no `--adopt-*` flag; a changed copy still needs a choice. (#35)
-- Install plans now label files from the installer's point of view: *Additions* are files the new Release brings, *Deletions* are files the install removes. They were swapped before. (#35)
-
-### Changed
-
-- The skill picker and `list` now show each skill's short description for people (`short_description` in `agents/openai.yaml`) instead of the agent-facing description cut off mid-word. The picker wraps it onto at most two lines, so narrow terminals show it whole. A skill without that line shows the first sentence of its description. `list --json` still gives the full description. (#39)
-- The installer's private files (state, lock, backups, journals, staging) now live in `.agents/.sigmaskills/` (global: `~/.agents/.sigmaskills/`). The folder ignores itself in Git, so `git add -A` no longer stages `.agents/state.json` or backups. Older projects move there on the next write command; `status` and `--dry-run` still read the old layout and write nothing. `--state-dir` and `SIGMA_STATE_DIR` are unchanged. (#34)
-- The npm package now ships only the user CLI: about 110 KB smaller unpacked and 10 fewer files. Release and registry automation moved to `scripts/` in the repository, and `sigmaskills release` is gone from the published CLI. Maintainers run `npm run release -- <flags>` from a checkout; the checks it makes are unchanged. (#40)
-- Every pull request now rehearses the Release path. A CI job commits the Release identities in a throwaway worktree, then runs the preview, the dispatch checks, and the trusted `validate` and publish steps with a real `npm pack` (`node scripts/release-rehearsal.js`). npm and GitHub lookups, dispatch, and publish are stubbed, so the job needs no secrets. A pull request that breaks packing, such as the `npm pack` JSON bug fixed in 0.2.1, now fails before merge. (#41)
-- CI now runs with a read-only token (`permissions: contents: read`) and pins every action to a full commit SHA, like the Release workflows. (#41)
-- CI now tests Node.js 22 and 24 on Windows, macOS, and Linux. Node.js 20 reached end of life on 2026-04-30, but `engines` stays at `>=20` for this Release so current users on Node.js 20 can still install; one Linux job on Node.js 20 keeps that promise tested. A later Release may raise it. (#41)
-- The README is short again. It keeps the quick start, the skills, one install table, and run examples. Command details moved to [`docs/installer.md`](docs/installer.md); releases, registry automation, tests, and CI moved to [`docs/maintainers.md`](docs/maintainers.md). A test keeps it under 1,500 words, with no paragraph over 80 words. (#42)
-
 ## [0.4.0] — 2026-09-27
 
 ### Added
@@ -36,11 +11,21 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - SigmaImprove (`sigmaimprove`) finds what would make a product, game, codebase, or system clearly better. It scans a full list of improvement categories (value, speed, control, look and feel, reach, intelligence, trust, engineering, and games) and compares the product with the world's top one to three products and with published bars such as Core Web Vitals and WCAG 2.2. It keeps at least ten entries: ideas with 3–5 weighed options and text sketches, and signals that flag a gap for a person to think about. It files one living issue per category (1–20 per run) and updates those issues on later runs instead of duplicating them. It never edits the system. It grew out of the SigmaCheck draft, which was never released.
 - The first SigmaCheck audit of this repository is kept in `docs/audits/SIGMACHECK-2026-09-26.md` as a baseline.
 - SigmaShip (`sigmaship`) ships one planned GitHub issue end to end: a feature worktree and branch, a draft PR linked to the ticket, spec, and map, test-first commits pushed as it goes, review rounds by fresh agents until one finds nothing at P0–P2, then merge, ticket closed, branches and worktree deleted, and local `main` verified equal to `origin/main`. It refuses tickets without checkable acceptance criteria and names the skill to run first. It builds on Matt Pocock's `implement` skill.
+- `install` takes several skill ids (`install sigmawrite sigmareview`) or `--all`. Every skill is planned first, then all of them install in one transaction: if one fails, none stay installed, and `skills-lock.json` is written once. `--json` prints `{ schemaVersion, plans }` when there is more than one skill; one skill prints the same plan as before. (#38)
+- Skill evals. `npm test` now checks the output contract of every skill against good and bad sample outputs, and checks that near-miss prompts route to the right skill. `node scripts/eval-skills.js [skill...]` runs the real skills on a small fixture game with Claude Code, on demand only. See `docs/evals.md`. (#43)
 
 ### Changed
 
 - SigmaReview (`sigmareview`) now covers correctness, security (source review plus safe tests on a local instance), and measured performance in one run. It reports every finding with no cap, each written as a self-contained fix brief that an LLM can act on, grouped into waves that can be fixed in parallel. It still never changes code: it publishes one feature-branch pull request with the review file. The report file is now `SIGMAREVIEW-YYYY-MM-DD.md`.
 - SigmaBrief (`sigmabrief`) accepts SigmaReview reports and SigmaImprove issues as input and groups briefs into waves, so only independent items run in parallel. Every brief now asks for green baseline checks before changes and ends with a fixed report (`DONE`, `DONE_WITH_CONCERNS`, or `BLOCKED`, plus PR, checks, and open questions). `approval: auto` lets agents record their decisions as rulings instead of waiting. A host's native worktree tool is preferred over manual `git worktree`. A new `session` brief hands the current conversation to a fresh agent.
+- The skill picker and `list` now show each skill's short description for people (`short_description` in `agents/openai.yaml`) instead of the agent-facing description cut off mid-word. The picker wraps it onto at most two lines, so narrow terminals show it whole. A skill without that line shows the first sentence of its description. `list --json` still gives the full description. (#39)
+- The installer's private files (state, lock, backups, journals, staging) now live in `.agents/.sigmaskills/` (global: `~/.agents/.sigmaskills/`). The folder ignores itself in Git, so `git add -A` no longer stages `.agents/state.json` or backups. Older projects move there on the next write command; `status` and `--dry-run` still read the old layout and write nothing. `--state-dir` and `SIGMA_STATE_DIR` are unchanged. (#34)
+- The npm package now ships only the user CLI: about 110 KB smaller unpacked and 10 fewer files. Release and registry automation moved to `scripts/` in the repository, and `sigmaskills release` is gone from the published CLI. Maintainers run `npm run release -- <flags>` from a checkout; the checks it makes are unchanged. (#40)
+- Every pull request now rehearses the Release path. A CI job commits the Release identities in a throwaway worktree, then runs the preview, the dispatch checks, and the trusted `validate` and publish steps with a real `npm pack` (`node scripts/release-rehearsal.js`). npm and GitHub lookups, dispatch, and publish are stubbed, so the job needs no secrets. A pull request that breaks packing, such as the `npm pack` JSON bug fixed in 0.2.1, now fails before merge. (#41)
+- CI now runs with a read-only token (`permissions: contents: read`) and pins every action to a full commit SHA, like the Release workflows. (#41)
+- CI now tests Node.js 22 and 24 on Windows, macOS, and Linux. Node.js 20 reached end of life on 2026-04-30, but `engines` stays at `>=20` for this Release so current users on Node.js 20 can still install; one Linux job on Node.js 20 keeps that promise tested. A later Release may raise it. (#41)
+- The README is short again. It keeps the quick start, the skills, one install table, and run examples. Command details moved to [`docs/installer.md`](docs/installer.md); releases, registry automation, tests, and CI moved to [`docs/maintainers.md`](docs/maintainers.md). A test keeps it under 1,500 words, with no paragraph over 80 words. (#42)
+- The Agent Host registry follows `vercel-labs/skills` at `7407f38`: Droid and Kilo read project skills from `.agents/skills` (Kilo global: `~/.kilo/skills`), fx and sarvam-code are new hosts, and Antigravity, antigravity-cli, and deepagents leave the universal-prompt list. Existing installs keep their recorded paths.
 
 ### Removed
 
@@ -52,7 +37,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - The README no longer points to the v0.2.1 zip as the latest Release.
 - The finished 0.3.0 `plan.md` is removed from the repository root; its content lives in issue #3 and PR #29.
 - `update` no longer stops when a skill that left the Skill Pack is still installed. The manifest lists retired skills (`sigmaperformance`); `update` leaves them unchanged, lists them under *Retired skills*, and names the `uninstall` command that removes them.
-
+- An unknown skill id now fails with `unknown skill '<id>'` before any planning, for `install`, `update`, `restore`, and `uninstall`. `uninstall --skill nope` said `stale-state` before. (#38)
+- A value flag with a missing, empty, or dash-prefixed value now fails with the flag name. Before, `--skill --yes` read `--yes` as a skill id, and a value flag at the end of the command was ignored. One flag table now parses and checks every flag; all current flags and aliases still work. (#38)
+- The registry sync test writes into a temporary folder instead of `registry/agent-hosts.json`, so parallel test files no longer read a half-written file and fail at random.
+- Update previews show the relevant release notes and correct running-version relation, omit empty sections, and ask for outside-edit choices only when needed. JSON field names and the installed-side relation remain compatible. (#36)
+- Lock recovery serializes competing takeovers, preserves fresh incomplete records, and checks unique ownership when releasing. Locks expire after 24 hours; a crash-leftover takeover guard stops safely with recovery instructions. Legacy migration uses the same lock. (#37)
+- Untouched copies of earlier Releases are recognized again. `registry/skill-baselines.json` now holds the file hashes of 0.1.0, 0.2.0, 0.2.1, and 0.3.0, rebuilt from their git tags (`node scripts/backfill-baselines.js <tag>...`), and `npm run release -- --write-identities` adds the outgoing Release each time. Such a copy shows as `legacy` with high provenance and upgrades with no `--adopt-*` flag; a changed copy still needs a choice. (#35)
+- Install plans now label files from the installer's point of view: *Additions* are files the new Release brings, *Deletions* are files the install removes. They were swapped before. (#35)
 
 ## [0.3.0] — 2026-09-08
 
