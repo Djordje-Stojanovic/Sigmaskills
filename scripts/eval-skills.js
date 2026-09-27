@@ -5,7 +5,8 @@
 //
 // For each skill: copy test/fixtures/eval-repo to a temp Git repository with a local bare "origin",
 // install the skill in .claude/skills/, run `claude -p` headless, then check the output contract.
-// Nothing leaves the temp folder: user settings, MCP servers, gh, and web tools are all off.
+// User settings, MCP servers, gh, and web tools are off, and the only remote is a local folder.
+// This is a guard, not a sandbox: allowed git and node commands could still reach the network.
 import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';

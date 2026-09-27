@@ -30,7 +30,7 @@ For each skill, the runner copies `test/fixtures/eval-repo` (Snake Lite, a tiny 
 
 The fixture has seeded defects: the snake survives one cell past two walls, food scores 10 instead of the documented 1, `src/scores.js` runs `eval` on a file, and one weak test. It also has obvious gaps for SigmaImprove: no pause, no difficulty levels, no color.
 
-Isolation: `--setting-sources project` drops the user's settings, permissions, and personal skills; `--strict-mcp-config` loads no MCP servers; `gh`, WebFetch, and WebSearch are denied; Bash is limited to `git`, `node`, `npm test`, `ls`, and `wc`; edits are allowed only in the temp folder. The prompt tells each skill that the run is offline. Skills whose real output is a GitHub artifact write it to a file instead. Each run is capped at $4 and the whole run at $15.
+Isolation: `--setting-sources project` drops the user's settings, permissions, and personal skills; `--strict-mcp-config` loads no MCP servers; `gh`, WebFetch, and WebSearch are denied; Bash is limited to `git`, `node`, `npm test`, `ls`, and `wc`; edits are allowed only in the temp folder. The prompt tells each skill that the run is offline. Skills whose real output is a GitHub artifact write it to a file instead. Each run is capped at $4 and the whole run at $15. This is a guard, not a sandbox: the allowed `git` and `node` commands could still reach the network if a skill ignored the prompt.
 
 ## First run: 2026-09-27
 
