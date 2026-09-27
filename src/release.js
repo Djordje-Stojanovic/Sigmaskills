@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { appendReleaseBaselines, hashSkillsAtRef } from './baselines.js';
 import { getCatalog } from './catalog.js';
 
 export const RELEASE_SCHEMA_VERSION = 1;
@@ -453,6 +454,15 @@ export function writeReleaseIdentities(rootDir, { now } = {}) {
     sourceCommit: null,
   });
   if (plan.identitiesCommitted) return plan;
+  // Keep the outgoing Release's skill hashes so untouched copies of it are recognized later.
+  const outgoing = identities.packageJson.version;
+  let outgoingSkills;
+  try {
+    outgoingSkills = hashSkillsAtRef(rootDir, `v${outgoing}`);
+  } catch (err) {
+    throw codedError(`cannot read tag v${outgoing} to record its skill baselines: ${err.message}`, 'missing-tag');
+  }
+  appendReleaseBaselines(rootDir, outgoing, outgoingSkills);
   const applied = applyReleaseIdentities({
     ...identities,
     version: plan.version,

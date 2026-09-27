@@ -96,7 +96,8 @@ function sigmaLookingMigration(params) {
     owned,
     extra = {},
   } = params;
-  const vsUpstream = diffSkillFiles(hashed?.files || {}, bundledFiles);
+  // Installer's view: added = the new Release brings it, deleted = the install removes it.
+  const vsUpstream = diffSkillFiles(bundledFiles, hashed?.files || {});
   const baseline = findBaseline(hashed, bundledBaselines);
   const customization = live.customization;
 
@@ -239,7 +240,7 @@ export function classifySkillPath(params) {
       confidence: 'high',
       revision: hashed?.revision || sigmaRevision,
       files: hashed?.files,
-      diff: diffSkillFiles(hashed?.files || {}, bundledFiles),
+      diff: diffSkillFiles(bundledFiles, hashed?.files || {}),
       customization: live.customization,
     });
   }
@@ -274,7 +275,7 @@ export function classifySkillPath(params) {
     return classified({
       kind: 'foreign',
       customization: live.customization,
-      diff: diffSkillFiles(hashed?.files || {}, bundledFiles),
+      diff: diffSkillFiles(bundledFiles, hashed?.files || {}),
     });
   }
 

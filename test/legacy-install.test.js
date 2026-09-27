@@ -59,10 +59,10 @@ test('plan: dry-run shows additions, replacements, deletions, and low provenance
 
     assert.equal(plan.destinations[0].recognition, 'unverified');
     assert.equal(plan.destinations[0].confidence, 'low');
-    assert.ok(plan.destinations[0].diff.added.includes('extra.md'));
+    assert.ok(plan.destinations[0].diff.deleted.includes('extra.md'));
     assert.equal(plan.requiresApproval, true);
     const human = formatPlanHuman(plan);
-    assert.match(human, /Additions:\s+extra\.md/);
+    assert.match(human, /Deletions:\s+extra\.md/);
     assert.match(human, /Provenance:\s+low/);
     assert.equal(fs.readFileSync(path.join(dest, 'extra.md'), 'utf8'), 'local extra');
   } finally {
@@ -350,7 +350,7 @@ test('packed CLI classifies, backups, and exports changed Sigma-looking trees', 
     const dryPlan = JSON.parse(dry);
     assert.equal(dryPlan.destinations[0].recognition, 'unverified');
     assert.equal(dryPlan.destinations[0].confidence, 'low');
-    assert.ok(dryPlan.destinations[0].diff.added.includes('extra.md'));
+    assert.ok(dryPlan.destinations[0].diff.deleted.includes('extra.md'));
 
     execFileSync(
       'node',

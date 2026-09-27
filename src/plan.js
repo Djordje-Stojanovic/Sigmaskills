@@ -24,7 +24,8 @@ function resolutionFor(classification, relativeDestination, options = {}) {
   const explicit = options.resolutions?.[relativeDestination];
   if (explicit) return explicit;
   if (classification?.kind === 'changed') return options.adoptChanged;
-  if (classification?.kind === 'legacy') return options.adoptLegacy;
+  // An untouched official copy of an earlier Release upgrades without a flag.
+  if (classification?.kind === 'legacy') return options.adoptLegacy || 'replace';
   if (classification?.kind === 'unverified') return options.adoptUnverified;
   if (classification?.kind === 'malformed-custom') return options.adoptMalformed;
   return undefined;
