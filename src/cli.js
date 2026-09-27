@@ -102,8 +102,67 @@ ${skillsList}
 `;
 }
 
+const COMMANDS = ['list', 'verify', 'check', 'install', 'add', 'status', 'update', 'restore', 'uninstall', 'purge', 'release'];
+const SKILL_COMMANDS = ['install', 'add', 'update', 'restore', 'uninstall'];
+const RESOLUTIONS = ['replace', 'skip', 'export'];
+
+/**
+ * Every CLI flag. A flag with `value` takes the next argument (or `--flag=value`);
+ * `values` lists the allowed values; `repeatable` collects every value in an array.
+ */
+const FLAGS = [
+  { name: '--help', alias: '-h', key: 'help' },
+  { name: '--version', alias: '-v', key: 'version' },
+  { name: '--all', key: 'all' },
+  { name: '--dry-run', key: 'dryRun' },
+  { name: '--json', key: 'json' },
+  { name: '--yes', alias: '-y', key: 'yes' },
+  { name: '--global', alias: '-g', key: 'global' },
+  { name: '--no-color', key: 'noColor' },
+  { name: '--static', key: 'static' },
+  { name: '--narrow', key: 'narrow' },
+  { name: '--copy', key: 'copy' },
+  { name: '--link', key: 'link' },
+  { name: '--list', key: 'list' },
+  { name: '--write-identities', key: 'writeIdentities' },
+  { name: '--skill', key: 'skillIds', value: true, repeatable: true },
+  { name: '--destination', key: 'destinations', value: true, repeatable: true },
+  { name: '--project', alias: '--cwd', key: 'projectRoot', value: true },
+  { name: '--state-dir', key: 'stateDir', value: true },
+  { name: '--export-dir', key: 'exportDir', value: true },
+  { name: '--adopt-changed', key: 'adoptChanged', value: true, values: RESOLUTIONS },
+  { name: '--adopt-legacy', key: 'adoptLegacy', value: true, values: RESOLUTIONS },
+  { name: '--adopt-unverified', key: 'adoptUnverified', value: true, values: RESOLUTIONS },
+  { name: '--adopt-malformed', key: 'adoptMalformed', value: true, values: RESOLUTIONS },
+  { name: '--outside-edit', key: 'outsideEdit', value: true, values: RESOLUTIONS },
+  { name: '--malformed-markers', key: 'malformedMarkers', value: true, values: ['skip', 'repair', 'replace'] },
+  { name: '--clean', key: 'clean', value: true, values: ['remove', 'keep'] },
+  { name: '--changed', key: 'changed', value: true, values: ['backup', 'keep', 'export', 'delete'] },
+  { name: '--confirm-purge', key: 'confirmPurge', value: true, allowEmpty: true },
+  { name: '--expected-commit', key: 'expectedCommit', value: true },
+  { name: '--expected-version', key: 'expectedVersion', value: true },
+  { name: '--expected-digest', key: 'expectedDigest', value: true },
+];
+
+function formatChoices(values) {
+  return values.length === 2
+    ? values.join(' or ')
+    : `${values.slice(0, -1).join(', ')}, or ${values[values.length - 1]}`;
+}
+
+function readFlagValue(flag, value) {
+  if (value === undefined || (value === '' && !flag.allowEmpty)) {
+    throw new Error(`${flag.name} requires a value`);
+  }
+  if (flag.values && !flag.values.includes(value)) {
+    throw new Error(`${flag.name} must be ${formatChoices(flag.values)}`);
+  }
+  return value;
+}
+
 /**
  * Parse CLI arguments into structured options.
+ * Throws when a value flag has a missing, dash-prefixed, or disallowed value.
  *
  * @param {string[]} args
  * @returns {object}
@@ -111,155 +170,44 @@ ${skillsList}
 export function parseCliArgs(args) {
   const parsed = {
     command: null,
-    skillId: null,
     skillIds: [],
-    projectRoot: null,
-    stateDir: null,
-    dryRun: false,
-    json: false,
-    help: false,
-    version: false,
-    yes: false,
-    global: false,
-    noColor: false,
-    static: false,
-    narrow: false,
-    method: null,
     destinations: [],
-    adoptChanged: null,
-    adoptLegacy: null,
-    adoptUnverified: null,
-    adoptMalformed: null,
-    outsideEdit: null,
-    malformedMarkers: null,
-    clean: null,
-    changed: null,
-    exportDir: null,
-    all: false,
-    confirmPurge: undefined,
-    writeIdentities: false,
-    expectedCommit: null,
-    expectedVersion: null,
-    expectedDigest: null,
     unknown: [],
   };
+  for (const flag of FLAGS) {
+    if (!(flag.key in parsed)) parsed[flag.key] = flag.value ? null : false;
+  }
+  parsed.confirmPurge = undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg === '-h' || arg === '--help') {
-      parsed.help = true;
-    } else if (arg === '-v' || arg === '--version') {
-      parsed.version = true;
-    } else if (arg === '--all') {
-      parsed.all = true;
-    } else if (arg === '--dry-run') {
-      parsed.dryRun = true;
-    } else if (arg === '--json') {
-      parsed.json = true;
-    } else if (arg === '-y' || arg === '--yes') {
-      parsed.yes = true;
-    } else if (arg === '-g' || arg === '--global') {
-      parsed.global = true;
-    } else if (arg === '--no-color') {
-      parsed.noColor = true;
-    } else if (arg === '--static') {
-      parsed.static = true;
-    } else if (arg === '--narrow') {
-      parsed.narrow = true;
-    } else if (arg === '--copy') {
-      parsed.method = parsed.method && parsed.method !== 'copy' ? 'conflict' : 'copy';
-    } else if (arg === '--link') {
-      parsed.method = parsed.method && parsed.method !== 'link' ? 'conflict' : 'link';
-    } else if (arg === '--adopt-changed') {
-      parsed.adoptChanged = args[++i];
-    } else if (arg.startsWith('--adopt-changed=')) {
-      parsed.adoptChanged = arg.slice('--adopt-changed='.length);
-    } else if (arg === '--adopt-legacy') {
-      parsed.adoptLegacy = args[++i];
-    } else if (arg.startsWith('--adopt-legacy=')) {
-      parsed.adoptLegacy = arg.slice('--adopt-legacy='.length);
-    } else if (arg === '--adopt-unverified') {
-      parsed.adoptUnverified = args[++i];
-    } else if (arg.startsWith('--adopt-unverified=')) {
-      parsed.adoptUnverified = arg.slice('--adopt-unverified='.length);
-    } else if (arg === '--adopt-malformed') {
-      parsed.adoptMalformed = args[++i];
-    } else if (arg.startsWith('--adopt-malformed=')) {
-      parsed.adoptMalformed = arg.slice('--adopt-malformed='.length);
-    } else if (arg === '--outside-edit') {
-      parsed.outsideEdit = args[++i];
-    } else if (arg.startsWith('--outside-edit=')) {
-      parsed.outsideEdit = arg.slice('--outside-edit='.length);
-    } else if (arg === '--malformed-markers') {
-      parsed.malformedMarkers = args[++i];
-    } else if (arg.startsWith('--malformed-markers=')) {
-      parsed.malformedMarkers = arg.slice('--malformed-markers='.length);
-    } else if (arg === '--clean') {
-      parsed.clean = args[++i];
-    } else if (arg.startsWith('--clean=')) {
-      parsed.clean = arg.slice('--clean='.length);
-    } else if (arg === '--changed') {
-      parsed.changed = args[++i];
-    } else if (arg.startsWith('--changed=')) {
-      parsed.changed = arg.slice('--changed='.length);
-    } else if (arg === '--export-dir') {
-      parsed.exportDir = args[++i];
-    } else if (arg.startsWith('--export-dir=')) {
-      parsed.exportDir = arg.slice('--export-dir='.length);
-    } else if (arg === '--write-identities') {
-      parsed.writeIdentities = true;
-    } else if (arg === '--expected-commit') {
-      parsed.expectedCommit = args[++i];
-    } else if (arg.startsWith('--expected-commit=')) {
-      parsed.expectedCommit = arg.slice('--expected-commit='.length);
-    } else if (arg === '--expected-version') {
-      parsed.expectedVersion = args[++i];
-    } else if (arg.startsWith('--expected-version=')) {
-      parsed.expectedVersion = arg.slice('--expected-version='.length);
-    } else if (arg === '--expected-digest') {
-      parsed.expectedDigest = args[++i];
-    } else if (arg.startsWith('--expected-digest=')) {
-      parsed.expectedDigest = arg.slice('--expected-digest='.length);
-    } else if (arg === '--confirm-purge') {
-      parsed.confirmPurge = args[++i] ?? '';
-    } else if (arg.startsWith('--confirm-purge=')) {
-      parsed.confirmPurge = arg.slice('--confirm-purge='.length);
-    } else if (arg === '--destination') {
-      parsed.destinations.push(args[++i]);
-    } else if (arg.startsWith('--destination=')) {
-      parsed.destinations.push(arg.slice('--destination='.length));
-    } else if (arg === '--skill') {
-      parsed.skillId = args[++i];
-      if (parsed.skillId) parsed.skillIds.push(parsed.skillId);
-    } else if (arg.startsWith('--skill=')) {
-      parsed.skillId = arg.slice('--skill='.length);
-      if (parsed.skillId) parsed.skillIds.push(parsed.skillId);
-    } else if (arg === '--project' || arg === '--cwd') {
-      parsed.projectRoot = args[++i];
-    } else if (arg.startsWith('--project=')) {
-      parsed.projectRoot = arg.slice('--project='.length);
-    } else if (arg.startsWith('--cwd=')) {
-      parsed.projectRoot = arg.slice('--cwd='.length);
-    } else if (arg === '--state-dir') {
-      parsed.stateDir = args[++i];
-    } else if (arg.startsWith('--state-dir=')) {
-      parsed.stateDir = arg.slice('--state-dir='.length);
-    } else if (
-      !parsed.command &&
-      (arg === 'list' || arg === 'verify' || arg === 'check' || arg === 'install' || arg === 'add' || arg === 'status' || arg === 'update' || arg === 'restore' || arg === 'uninstall' || arg === 'purge' || arg === 'release')
-    ) {
+    const eq = arg.startsWith('--') ? arg.indexOf('=') : -1;
+    const name = eq === -1 ? arg : arg.slice(0, eq);
+    const flag = FLAGS.find((item) => item.name === name || item.alias === name);
+
+    if (flag && flag.value) {
+      let value;
+      if (eq !== -1) {
+        value = arg.slice(eq + 1);
+      } else if (args[i + 1] !== undefined && !args[i + 1].startsWith('-')) {
+        value = args[++i];
+      }
+      value = readFlagValue(flag, value);
+      if (flag.repeatable) parsed[flag.key].push(value);
+      else parsed[flag.key] = value;
+    } else if (flag && eq === -1) {
+      parsed[flag.key] = true;
+    } else if (!parsed.command && COMMANDS.includes(arg)) {
       parsed.command = arg;
-    } else if (!parsed.skillId && (parsed.command === 'install' || parsed.command === 'add')) {
-      parsed.skillId = arg;
-    } else if ((parsed.command === 'update' || parsed.command === 'restore' || parsed.command === 'uninstall') && !arg.startsWith('-')) {
+    } else if (SKILL_COMMANDS.includes(parsed.command) && !arg.startsWith('-')) {
       parsed.skillIds.push(arg);
-    } else if (arg === '--list') {
-      parsed.command = 'list';
     } else {
       parsed.unknown.push(arg);
     }
   }
 
+  if (parsed.list) parsed.command = 'list';
+  parsed.method = parsed.copy && parsed.link ? 'conflict' : parsed.copy ? 'copy' : parsed.link ? 'link' : null;
   return parsed;
 }
 
@@ -323,39 +271,6 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
 
     if (opts.method === 'conflict') {
       writeErr('sigmaskills error: use either --link or --copy, not both');
-      return 1;
-    }
-
-    const adoptFlags = [
-      ['--adopt-changed', opts.adoptChanged],
-      ['--adopt-legacy', opts.adoptLegacy],
-      ['--adopt-unverified', opts.adoptUnverified],
-      ['--adopt-malformed', opts.adoptMalformed],
-    ];
-    for (const [flag, value] of adoptFlags) {
-      if (value && value !== 'replace' && value !== 'skip' && value !== 'export') {
-        writeErr(`sigmaskills error: ${flag} must be replace, skip, or export`);
-        return 1;
-      }
-    }
-
-    if (opts.outsideEdit && opts.outsideEdit !== 'replace' && opts.outsideEdit !== 'skip' && opts.outsideEdit !== 'export') {
-      writeErr('sigmaskills error: --outside-edit must be replace, skip, or export');
-      return 1;
-    }
-
-    if (opts.malformedMarkers && opts.malformedMarkers !== 'replace' && opts.malformedMarkers !== 'skip' && opts.malformedMarkers !== 'repair') {
-      writeErr('sigmaskills error: --malformed-markers must be skip, repair, or replace');
-      return 1;
-    }
-
-    if (opts.clean && opts.clean !== 'remove' && opts.clean !== 'keep') {
-      writeErr('sigmaskills error: --clean must be remove or keep');
-      return 1;
-    }
-
-    if (opts.changed && opts.changed !== 'backup' && opts.changed !== 'keep' && opts.changed !== 'export' && opts.changed !== 'delete') {
-      writeErr('sigmaskills error: --changed must be backup, keep, export, or delete');
       return 1;
     }
 
@@ -534,7 +449,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       return 0;
     }
 
-    if (opts.command === 'list' || (!opts.command && opts.json && !opts.skillId)) {
+    if (opts.command === 'list' || (!opts.command && opts.json && opts.skillIds.length === 0)) {
       if (opts.json) {
         const payload = {
           name: catalog.manifest.name,
@@ -570,8 +485,8 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       return 0;
     }
 
-    if (opts.command === 'install' || opts.command === 'add' || opts.skillId) {
-      if (!opts.skillId) {
+    if (opts.command === 'install' || opts.command === 'add' || opts.skillIds.length > 0) {
+      if (opts.skillIds.length === 0) {
         writeErr("sigmaskills error: missing required skill name for install command (e.g. 'sigmaskills install sigmawrite')");
         return 1;
       }
@@ -584,7 +499,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       const env = io.env || process.env;
       const result = executeProjectInstall({
         catalog,
-        skillId: opts.skillId,
+        skillId: opts.skillIds[0],
         projectRoot: opts.projectRoot,
         homeDir: resolveHomeDir(env),
         scope: opts.global ? 'global' : 'project',
@@ -620,7 +535,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       return 0;
     }
 
-    if (!opts.command && !opts.skillId && !opts.dryRun && !opts.yes) {
+    if (!opts.command && opts.skillIds.length === 0 && !opts.dryRun && !opts.yes) {
       return await runProjectInstaller({
         catalog,
         packageRoot: rootDir,
