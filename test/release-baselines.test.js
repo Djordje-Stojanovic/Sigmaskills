@@ -5,10 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { loadSkillBaselines } from '../src/adoption.js';
-import { hashSkillsAtRef, readSkillTreeAtRef } from '../src/baselines.js';
+import { hashSkillsAtRef, readSkillTreeAtRef } from '../scripts/baselines.js';
 import { getCatalog, findPackageRoot } from '../src/catalog.js';
 import { createInstallPlan } from '../src/plan.js';
-import { formatReleaseHuman, writeReleaseIdentities } from '../src/release.js';
+import { formatReleaseHuman, writeReleaseIdentities } from '../scripts/release.js';
 import { computeSkillRevision } from '../src/revision.js';
 import { executeProjectInstall } from '../src/transaction.js';
 

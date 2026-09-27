@@ -149,7 +149,7 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
       assert.equal(skill.revision, computeSkillRevision(path.join(packedRoot, skill.id)));
     }
 
-    const { executeRelease } = await import(pathToFileURL(path.join(packedRoot, 'src', 'release.js')).href);
+    const { executeRelease } = await import(pathToFileURL(path.join(ROOT, 'scripts', 'release.js')).href);
     const preview = executeRelease({
       rootDir: packedRoot,
       dryRun: true,

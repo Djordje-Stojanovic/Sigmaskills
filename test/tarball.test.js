@@ -9,6 +9,29 @@ import { extractRawCustomContent, injectRawCustomContent } from '../src/customiz
 const ROOT = path.resolve(import.meta.dirname, '..');
 const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
 const MANIFEST = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
+// Every module a user runs. Release and registry automation live in scripts/ and never ship.
+const USER_SRC_FILES = [
+  'adoption.js',
+  'backup.js',
+  'catalog.js',
+  'cli.js',
+  'concurrency-lock.js',
+  'customization.js',
+  'destinations.js',
+  'interactive.js',
+  'links.js',
+  'plan.js',
+  'prepack.js',
+  'project-lock.js',
+  'purge.js',
+  'restore.js',
+  'revision.js',
+  'state.js',
+  'status.js',
+  'transaction.js',
+  'uninstall.js',
+  'update.js',
+];
 
 function listFiles(root, relative = '') {
   const current = path.join(root, relative);
@@ -55,46 +78,23 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       .map((f) => f.trim().replace(/\\/g, '/'))
       .filter(Boolean);
 
-    // 3. Verify required package files and every declared skill file are included
-    const requiredFiles = [
+    // 3. The tarball holds exactly the user package: no more, no less
+    const expectedFiles = [
       'package/package.json',
       'package/README.md',
       'package/LICENSE',
       'package/CHANGELOG.md',
       'package/manifest.json',
       'package/bin/sigmaskills.js',
+      'package/registry/agent-hosts.json',
+      'package/registry/schema.json',
       'package/registry/skill-baselines.json',
-      'package/src/adoption.js',
-      'package/src/backup.js',
-      'package/src/catalog.js',
-      'package/src/cli.js',
-      'package/src/customization.js',
-      'package/src/destinations.js',
-      'package/src/interactive.js',
-      'package/src/links.js',
-      'package/src/plan.js',
-      'package/src/prepack.js',
-      'package/src/project-lock.js',
-      'package/src/purge.js',
-      'package/src/release.js',
-      'package/src/release-ci.js',
-      'package/src/revision.js',
-      'package/src/restore.js',
-      'package/src/state.js',
-      'package/src/status.js',
-      'package/src/transaction.js',
-      'package/src/uninstall.js',
-      'package/src/update.js',
+      'package/registry/source.json',
+      ...USER_SRC_FILES.map((file) => `package/src/${file}`),
       ...MANIFEST.skills.flatMap((skill) => listFiles(path.join(ROOT, skill.id))
         .map((file) => `package/${skill.id}/${file}`)),
-    ];
-
-    for (const req of requiredFiles) {
-      assert.ok(
-        packedFiles.includes(req),
-        `tarball is missing required file: ${req}`,
-      );
-    }
+    ].sort();
+    assert.deepEqual([...packedFiles].sort(), expectedFiles);
 
     // 4. Verify excluded files / paths are strictly absent
     const forbiddenPrefixes = [
@@ -105,10 +105,15 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       'package/.agents/',
       'package/.cursor/',
       'package/.git/',
+      'package/scripts/',
+      'package/src/registry/',
     ];
     const forbiddenExact = [
       'package/skills-lock.json',
       'package/.env',
+      'package/src/release.js',
+      'package/src/release-ci.js',
+      'package/src/baselines.js',
     ];
 
     for (const file of packedFiles) {
@@ -154,6 +159,8 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.match(helpOut, /sigmabrief/);
     assert.match(helpOut, /sigmawrite/);
     assert.match(helpOut, /sigmarefactor/);
+    assert.doesNotMatch(helpOut, /release/);
+    assert.doesNotMatch(helpOut, /--write-identities|--expected-(?:commit|version|digest)/);
 
     // Spawn list --json
     const jsonOut = execFileSync('node', [installedBin, 'list', '--json'], {

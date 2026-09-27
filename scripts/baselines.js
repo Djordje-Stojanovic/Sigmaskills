@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { BASELINES_FILENAME } from './adoption.js';
+import { BASELINES_FILENAME } from '../src/adoption.js';
 
 function git(rootDir, args, encoding = 'utf8') {
   return execFileSync('git', args, { cwd: rootDir, encoding, maxBuffer: 64 * 1024 * 1024 });

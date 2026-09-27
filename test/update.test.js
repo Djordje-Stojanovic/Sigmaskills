@@ -19,6 +19,7 @@ import { executeProjectInstall } from '../src/transaction.js';
 import {
   UPDATE_SCHEMA_VERSION,
   createUpdatePlan,
+  formatUpdateHuman,
   executeUpdate,
 } from '../src/update.js';
 
@@ -128,7 +129,8 @@ test('update: no-op when installed Release matches the running CLI', async () =>
     assert.equal(plan.release.relation, 'same');
     assert.equal(plan.changed.length, 0);
     assert.equal(plan.unchanged[0].comparison, 'no-op');
-    assert.match(plan.changelog, /Unreleased/);
+    assert.equal(plan.changelog, '');
+    assert.doesNotMatch(formatUpdateHuman(plan), /Blocked skills:|Malformed markers:|\(none\)/);
 
     const io = createMockIo();
     const code = await runCli(['update', '--yes', '--project', projectRoot], io);
@@ -151,6 +153,8 @@ test('update: upstream-only change restores official files and reports older Rel
     });
     assert.equal(plan.release.relation, 'older');
     assert.equal(plan.changed[0].comparison, 'upstream-only');
+    assert.match(formatUpdateHuman(plan), /Running Release:.*\(newer\)/);
+    assert.doesNotMatch(formatUpdateHuman(plan), /Prompt:/);
     assert.ok(plan.changed[0].diff.replaced.includes('SKILL.md'));
 
     const io = createMockIo();
@@ -473,8 +477,16 @@ test('cli: update --dry-run groups skills and writes nothing; missing flags fail
     const code = await runCli(['update', '--dry-run', '--project', projectRoot], io);
     assert.equal(code, 0);
     assert.match(io.getStdout(), /Changed skills:/);
-    assert.match(io.getStdout(), /Unchanged skills:/);
+    assert.doesNotMatch(io.getStdout(), /Unchanged skills:/);
     assert.match(io.getStdout(), /Changelog:/);
+    const jsonIo = createMockIo();
+    assert.equal(await runCli(['update', '--dry-run', '--json', '--project', projectRoot], jsonIo), 0);
+    const payload = JSON.parse(jsonIo.getStdout());
+    assert.deepEqual(Object.keys(payload), ['schemaVersion', 'command', 'scope', 'dryRun', 'release', 'changelog',
+      'owner', 'prompt', 'changed', 'unchanged', 'blocked', 'needsResolution', 'needsMarkerResolution', 'retired', 'skills',
+      'selected', 'skipped', 'outsideEdit', 'malformedMarkers', 'results']);
+    assert.deepEqual(Object.keys(payload.release), ['installed', 'running', 'relation']);
+    assert.equal(payload.release.relation, 'older');
     assert.deepEqual(snapshotTree(projectRoot), before);
 
     const failIo = createMockIo();
@@ -604,5 +616,32 @@ test('update: a retired skill is reported and left untouched instead of blocking
     assert.deepEqual(JSON.parse(jsonIo.getStdout()).retired, ['sigmaperformance']);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('update preview: release relation is shown from the running version perspective', () => {
+  for (const [relation, label] of [['older', 'newer'], ['same', 'same'], ['newer', 'older']]) {
+    const plan = { release: { installed: '1.0.0', running: '2.0.0', relation }, skills: [] };
+    assert.match(formatUpdateHuman(plan), new RegExp(`Running Release:.*\\(${label}\\)`));
+    assert.equal(plan.release.relation, relation);
+  }
+});
+
+test('update preview: includes each release newer than installed through running only', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-notes-'));
+  const packageRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-log-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    refreshRecordedHashes(projectRoot, 'sigmawrite', { release: '0.1.0' });
+    const catalog = getCatalog(ROOT);
+    catalog.manifest.version = '0.3.0';
+    fs.writeFileSync(path.join(packageRoot, 'CHANGELOG.md'), '# Changelog\n\n## [Unreleased]\n\n- future\n\n## [0.4.0]\n- fourth\n\n## [0.3.0]\n- third\n\n## [0.2.0]\n- second\n\n## [0.1.0]\n- first\n');
+    const plan = createUpdatePlan({ catalog, projectRoot, packageRoot });
+    assert.match(plan.changelog, /third/);
+    assert.match(plan.changelog, /second/);
+    assert.doesNotMatch(plan.changelog, /future|fourth|first/);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+    fs.rmSync(packageRoot, { recursive: true, force: true });
   }
 });

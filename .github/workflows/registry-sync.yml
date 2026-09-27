@@ -41,7 +41,7 @@ jobs:
           EXPECTED_HEAD: ${{ inputs.expected_head || github.sha }}
           UPSTREAM_REVISION: ${{ inputs.upstream_revision }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node ./src/registry/automation-ci.js generate
+        run: node ./scripts/registry/automation-ci.js generate
 
   auto-merge:
     name: Auto-merge safe registry patch
@@ -68,4 +68,4 @@ jobs:
           EXPECTED_HEAD: ${{ inputs.expected_head || github.sha }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_WORKFLOW_FILE: registry-sync.yml
-        run: node ./src/registry/automation-ci.js auto-merge
+        run: node ./scripts/registry/automation-ci.js auto-merge
