@@ -274,6 +274,16 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       return 1;
     }
 
+    const installing = opts.command === 'install' || opts.command === 'add' || (!opts.command && opts.skillIds.length > 0);
+    const knownIds = catalog.skills.map((skill) => skill.id)
+      .concat(installing ? [] : catalog.manifest.retired || []);
+    const unknownId = opts.skillIds.find((id) => !knownIds.includes(id));
+    if (unknownId !== undefined) {
+      writeErr(`sigmaskills error: unknown skill '${unknownId}'`);
+      writeErr(`The skill '${unknownId}' was not found in Skill Pack ${catalog.manifest.name}. Run 'sigmaskills list' to see skill ids.`);
+      return 1;
+    }
+
     if (opts.command === 'release') {
       const adapters = io.release || {};
       const result = executeRelease({
