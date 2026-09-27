@@ -5,11 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { parseAgents, extractEnvVars } from '../src/registry/parse.js';
-import { validateSnapshot, assertSafePath, SUPPORTED_PLATFORMS } from '../src/registry/validate.js';
-import { diffSnapshots } from '../src/registry/diff.js';
-import { normalizeHost, buildSnapshot, compareIds } from '../src/registry/normalize.js';
-import { loadPin, syncRegistry, runSync, fetchPinnedSource, canonicalSourceText } from '../src/registry/sync.js';
+import { parseAgents, extractEnvVars } from '../scripts/registry/parse.js';
+import { validateSnapshot, assertSafePath, SUPPORTED_PLATFORMS } from '../scripts/registry/validate.js';
+import { diffSnapshots } from '../scripts/registry/diff.js';
+import { normalizeHost, buildSnapshot, compareIds } from '../scripts/registry/normalize.js';
+import { loadPin, syncRegistry, runSync, fetchPinnedSource, canonicalSourceText } from '../scripts/registry/sync.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
