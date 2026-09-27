@@ -440,5 +440,9 @@ test('private state: recovery after process exit at migration commit removes the
     assert.equal(fs.existsSync(path.join(legacy, '.sigma.lock')), false);
     assert.equal(fs.existsSync(path.join(next, LEGACY_MIGRATION_MARKER)), false);
     assert.ok(fs.existsSync(path.join(next, 'state.json')));
+    // A later crash can happen after marker cleanup but before releasing the old lock.
+    fs.writeFileSync(path.join(legacy, '.sigma.lock'), JSON.stringify({ pid: 99999999 }));
+    migrateStateForCommand({ projectRoot: root });
+    assert.equal(fs.existsSync(path.join(legacy, '.sigma.lock')), false);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

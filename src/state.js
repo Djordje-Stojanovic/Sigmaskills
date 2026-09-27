@@ -98,7 +98,8 @@ function finishLegacyCleanup(legacyDir, newDir) {
 export function migrateLegacyState(legacyDir, newDir, hooks = {}) {
   const tempDir = path.join(legacyDir, `${PRIVATE_STATE_DIRNAME}.migrating`);
   if (fs.existsSync(newDir)) {
-    if (!fs.existsSync(path.join(newDir, LEGACY_MIGRATION_MARKER))) return;
+    if (!fs.existsSync(path.join(newDir, LEGACY_MIGRATION_MARKER))
+      && !fs.existsSync(path.join(legacyDir, '.sigma.lock'))) return;
     const release = acquireFileLock(path.join(legacyDir, '.sigma.lock'));
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
