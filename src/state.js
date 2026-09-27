@@ -117,28 +117,56 @@ export function migrateLegacyState(legacyDir, newDir, hooks = {}) {
       + 'npx @djordje-stojanovic/sigmaskills@0.4.0 uninstall --all --yes (or purge).',
     );
   }
-  if (isLiveLock(path.join(legacyDir, '.sigma.lock'))) {
-    throw new Error(`another SigmaSkills run holds ${path.join(legacyDir, '.sigma.lock')}. Wait for it, then try again.`);
+  // Hold the old-layout lock so no other run (this version or 0.4.0) touches the files mid-copy.
+  const lockPath = path.join(legacyDir, '.sigma.lock');
+  if (!takeLegacyLock(lockPath)) {
+    throw new Error(`another SigmaSkills run holds ${lockPath}. Wait for it, then try again.`);
   }
-
-  fs.rmSync(tempDir, { recursive: true, force: true });
-  fs.mkdirSync(tempDir, { recursive: true });
-  fs.writeFileSync(path.join(tempDir, '.gitignore'), IGNORE_ALL, 'utf8');
-  for (const name of present) {
-    if (name === '.sigma.lock') continue;
-    copyNoFollow(path.join(legacyDir, name), path.join(tempDir, name));
-  }
-  fs.writeFileSync(path.join(tempDir, LEGACY_MIGRATION_MARKER), `${JSON.stringify({ entries: present })}\n`, 'utf8');
-  hooks.beforeCommit?.();
   try {
-    fs.renameSync(tempDir, newDir);
-  } catch (err) {
+    if (fs.existsSync(newDir)) {
+      finishLegacyCleanup(legacyDir, newDir);
+      return;
+    }
+    const entries = LEGACY_ENTRIES.filter((name) => fs.existsSync(path.join(legacyDir, name)));
     fs.rmSync(tempDir, { recursive: true, force: true });
-    if (!fs.existsSync(newDir)) throw err;
-    // Another process committed first; its marker drives the cleanup below.
+    fs.mkdirSync(tempDir, { recursive: true });
+    fs.writeFileSync(path.join(tempDir, '.gitignore'), IGNORE_ALL, 'utf8');
+    for (const name of entries) {
+      if (name === '.sigma.lock') continue;
+      copyNoFollow(path.join(legacyDir, name), path.join(tempDir, name));
+    }
+    fs.writeFileSync(path.join(tempDir, LEGACY_MIGRATION_MARKER), `${JSON.stringify({ entries })}\n`, 'utf8');
+    hooks.beforeCommit?.();
+    fs.renameSync(tempDir, newDir);
+    hooks.afterCommit?.();
+    finishLegacyCleanup(legacyDir, newDir);
+  } finally {
+    releaseLegacyLock(lockPath);
   }
-  hooks.afterCommit?.();
-  finishLegacyCleanup(legacyDir, newDir);
+}
+
+function takeLegacyLock(lockPath) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const fd = fs.openSync(lockPath, 'wx');
+      fs.writeFileSync(fd, JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() }), 'utf8');
+      fs.closeSync(fd);
+      return true;
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
+      if (isLiveLock(lockPath)) return false;
+      fs.rmSync(lockPath, { force: true });
+    }
+  }
+  return false;
+}
+
+function releaseLegacyLock(lockPath) {
+  try {
+    if (JSON.parse(fs.readFileSync(lockPath, 'utf8')).pid === process.pid) fs.rmSync(lockPath, { force: true });
+  } catch {
+    // Already removed by the cleanup, or never ours.
+  }
 }
 
 // Read-only: an unmigrated project keeps working from the old layout until a write command migrates it.

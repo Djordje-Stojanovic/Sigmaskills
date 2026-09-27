@@ -297,3 +297,38 @@ test('private state: migration keeps links inside old backups as links', () => {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });
+
+test('private state: a second process cannot migrate while the first one is mid-migration', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-private-race-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    forceBackup(projectRoot, 'sigmawrite', 'old-backup');
+    const before = ownership(projectRoot);
+    toLegacyLayout(projectRoot);
+    const legacyDir = path.join(projectRoot, '.agents');
+    const newDir = path.join(legacyDir, PRIVATE_STATE_DIRNAME);
+    const stateModule = new URL('../src/state.js', import.meta.url).href;
+    const script = `import { migrateLegacyState } from ${JSON.stringify(stateModule)};
+      migrateLegacyState(${JSON.stringify(legacyDir)}, ${JSON.stringify(newDir)});`;
+
+    let second;
+    migrateLegacyState(legacyDir, newDir, {
+      beforeCommit: () => {
+        try {
+          execFileSync(process.execPath, ['--input-type=module', '-e', script], { stdio: 'pipe' });
+          second = 'migrated';
+        } catch (err) {
+          second = String(err.stderr);
+        }
+      },
+    });
+
+    assert.match(second, /another SigmaSkills run holds/);
+    assert.equal(ownership(projectRoot), before);
+    assert.equal(pathExists(path.join(legacyDir, '.sigma.lock')), false);
+    assert.equal(pathExists(path.join(newDir, LEGACY_MIGRATION_MARKER)), false);
+    assert.ok(fs.readdirSync(path.join(newDir, 'backups')).includes('sigmawrite'));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
