@@ -479,6 +479,14 @@ test('cli: update --dry-run groups skills and writes nothing; missing flags fail
     assert.match(io.getStdout(), /Changed skills:/);
     assert.doesNotMatch(io.getStdout(), /Unchanged skills:/);
     assert.match(io.getStdout(), /Changelog:/);
+    const jsonIo = createMockIo();
+    assert.equal(await runCli(['update', '--dry-run', '--json', '--project', projectRoot], jsonIo), 0);
+    const payload = JSON.parse(jsonIo.getStdout());
+    assert.deepEqual(Object.keys(payload), ['schemaVersion', 'command', 'scope', 'dryRun', 'release', 'changelog',
+      'owner', 'prompt', 'changed', 'unchanged', 'blocked', 'needsResolution', 'needsMarkerResolution', 'retired', 'skills',
+      'selected', 'skipped', 'outsideEdit', 'malformedMarkers', 'results']);
+    assert.deepEqual(Object.keys(payload.release), ['installed', 'running', 'relation']);
+    assert.equal(payload.release.relation, 'older');
     assert.deepEqual(snapshotTree(projectRoot), before);
 
     const failIo = createMockIo();
