@@ -107,6 +107,26 @@ export function classifySemanticAuthority(diff) {
   };
 }
 
+/**
+ * True only when a failed gh, npm, or git lookup says the thing does not exist.
+ * A missing binary, a network error, or a 5xx is not "absent".
+ */
+export function isNotFoundError(err) {
+  if (!err || err.code === 'ENOENT') return false;
+  const text = `${err.message || ''}\n${err.stderr || ''}\n${err.stdout || ''}`;
+  return /\bE404\b|\bHTTP 404\b|\b404 Not Found\b|\b(?:release|tag|run|package|version) not found\b|unknown revision/i.test(text);
+}
+
+/** Run a lookup. A 404 gives `absent`; any other error stops the run. */
+export function absentOn404(lookup, absent) {
+  try {
+    return lookup();
+  } catch (err) {
+    if (isNotFoundError(err)) return absent;
+    throw err;
+  }
+}
+
 export function evaluateAutoAuthorization(input) {
   const deniedReasons = [];
   if (input.origin === 'fork') deniedReasons.push('fork pull requests cannot be auto-authorized');

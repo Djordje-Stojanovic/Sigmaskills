@@ -7,6 +7,7 @@ import {
   GENERATED_BRANCH_PREFIX,
   REGISTRY_ALLOWLIST,
   REGISTRY_SYNC_WORKFLOW_FILE,
+  absentOn404,
   classifySemanticAuthority,
   executeRegistryAutomation,
 } from './automation.js';
@@ -81,79 +82,62 @@ function openGeneratedPullRequestExists(branch, env) {
   return Array.isArray(prs) && prs.length > 0;
 }
 
+// Lookups here fail closed: only a 404 means "absent"; any other error stops the run.
 function npmVersions() {
-  try {
+  return absentOn404(() => {
     const raw = execFileSync('npm', ['view', RELEASE_PACKAGE_NAME, 'versions', '--json'], {
       encoding: 'utf8',
     });
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [parsed];
-  } catch {
-    return [];
-  }
+  }, []);
 }
 
 function githubVersions(env) {
-  try {
-    return ghJson(['release', 'list', '--limit', '20', '--json', 'tagName'], env)
-      .map((item) => String(item.tagName || '').replace(/^v/, ''))
-      .filter((value) => /^\d+\.\d+\.\d+$/.test(value));
-  } catch {
-    return [];
-  }
+  return absentOn404(() => ghJson(['release', 'list', '--limit', '20', '--json', 'tagName'], env)
+    .map((item) => String(item.tagName || '').replace(/^v/, ''))
+    .filter((value) => /^\d+\.\d+\.\d+$/.test(value)), []);
 }
 
 function probePublication(version, env) {
-  let npmPackage = { exists: false, versions: {} };
-  try {
-    const name = execFileSync('npm', ['view', RELEASE_PACKAGE_NAME, 'name'], { encoding: 'utf8' }).trim();
-    npmPackage.exists = name === RELEASE_PACKAGE_NAME;
-    if (npmPackage.exists) {
-      try {
-        const integrity = execFileSync(
-          'npm',
-          ['view', `${RELEASE_PACKAGE_NAME}@${version}`, 'dist.integrity'],
-          { encoding: 'utf8' },
-        ).trim();
-        if (integrity) npmPackage.versions[version] = { integrity };
-      } catch {
-        // Unpublished version; reservation still counts.
-      }
-    }
-  } catch {
-    npmPackage = { exists: false, versions: {} };
+  const npmPackage = { exists: false, versions: {} };
+  const name = absentOn404(
+    () => execFileSync('npm', ['view', RELEASE_PACKAGE_NAME, 'name'], { encoding: 'utf8' }).trim(),
+    '',
+  );
+  npmPackage.exists = name === RELEASE_PACKAGE_NAME;
+  if (npmPackage.exists) {
+    const integrity = absentOn404(() => execFileSync(
+      'npm',
+      ['view', `${RELEASE_PACKAGE_NAME}@${version}`, 'dist.integrity'],
+      { encoding: 'utf8' },
+    ).trim(), '');
+    if (integrity) npmPackage.versions[version] = { integrity };
   }
 
-  let githubRelease = null;
-  let gitTag = null;
   const tag = `v${version}`;
-  try {
-    const parsed = ghJson(['release', 'view', tag, '--json', 'tagName,targetCommitish'], env);
-    githubRelease = { tag: parsed.tagName, targetCommit: parsed.targetCommitish };
-  } catch {
-    githubRelease = null;
-  }
-  try {
-    gitTag = { name: tag, commit: git(['rev-list', '-n', '1', tag]) };
-  } catch {
-    gitTag = null;
-  }
+  const parsedRelease = absentOn404(
+    () => ghJson(['release', 'view', tag, '--json', 'tagName,targetCommitish'], env),
+    null,
+  );
+  const githubRelease = parsedRelease
+    ? { tag: parsedRelease.tagName, targetCommit: parsedRelease.targetCommitish }
+    : null;
+  const tagCommit = absentOn404(() => git(['rev-list', '-n', '1', tag]), null);
+  const gitTag = tagCommit === null ? null : { name: tag, commit: tagCommit };
 
-  let environment = null;
-  try {
-    const repo = env.GITHUB_REPOSITORY || 'Djordje-Stojanovic/Sigmaskills';
-    const parsed = JSON.parse(execFileSync(
-      'gh',
-      ['api', `repos/${repo}/environments/${RELEASE_ENVIRONMENT}`],
-      { encoding: 'utf8', env },
-    ));
-    environment = {
-      name: parsed.name,
-      protected: Array.isArray(parsed.protection_rules) && parsed.protection_rules.length > 0,
-    };
-  } catch {
-    environment = null;
-  }
+  const repo = env.GITHUB_REPOSITORY || 'Djordje-Stojanovic/Sigmaskills';
+  const parsedEnvironment = absentOn404(() => JSON.parse(execFileSync(
+    'gh',
+    ['api', `repos/${repo}/environments/${RELEASE_ENVIRONMENT}`],
+    { encoding: 'utf8', env },
+  )), null);
+  const environment = parsedEnvironment
+    ? {
+      name: parsedEnvironment.name,
+      protected: Array.isArray(parsedEnvironment.protection_rules) && parsedEnvironment.protection_rules.length > 0,
+    }
+    : null;
 
   return { npmPackage, githubRelease, gitTag, environment, trustedPublisher: env.GITHUB_ACTIONS === 'true' };
 }
@@ -164,12 +148,8 @@ function createRealIo(env, mode) {
   return {
     converterSha: async () => (env.GITHUB_SHA || git(['rev-parse', 'HEAD'])).trim(),
     currentDefaultSha: async () => {
-      try {
-        git(['fetch', 'origin', 'main'], { stdio: 'ignore' });
-        return git(['rev-parse', 'origin/main']);
-      } catch {
-        return git(['rev-parse', 'HEAD']);
-      }
+      git(['fetch', 'origin', 'main'], { stdio: 'ignore' });
+      return git(['rev-parse', 'origin/main']);
     },
     resolveUpstreamRevision: async () => {
       const commits = await fetchJson(
@@ -187,14 +167,11 @@ function createRealIo(env, mode) {
     ),
     readPin: async () => loadPin(),
     readSnapshot: async () => JSON.parse(fs.readFileSync(path.join(ROOT, 'registry/agent-hosts.json'), 'utf8')),
+    // A failed lookup throws. It never means "no concurrent run".
     hasConcurrentRun: async () => {
-      try {
-        const prs = ghJson(['pr', 'list', '--state', 'open', '--json', 'headRefName'], env)
-          .filter((pr) => String(pr.headRefName || '').startsWith(GENERATED_BRANCH_PREFIX));
-        return mode === 'auto-merge' ? prs.length > 1 : prs.length > 0;
-      } catch {
-        return false;
-      }
+      const prs = ghJson(['pr', 'list', '--state', 'open', '--json', 'headRefName'], env)
+        .filter((pr) => String(pr.headRefName || '').startsWith(GENERATED_BRANCH_PREFIX));
+      return mode === 'auto-merge' ? prs.length > 1 : prs.length > 0;
     },
     writeAllowlisted: async (plan) => writeAllowlisted(plan),
     inspectGeneratedBranch: async (branch) => ({
@@ -320,6 +297,8 @@ function createRealIo(env, mode) {
       }
       return classifySemanticAuthority(diffSnapshots(readSnapshot('main'), current));
     },
+    // Not a real lock: it only checks for another in-progress run. A failed lookup throws,
+    // and the caller stops before it publishes.
     acquireVersionLock: async () => {
       const runs = ghJson(['run', 'list', '--workflow', REGISTRY_SYNC_WORKFLOW_FILE, '--status', 'in_progress', '--json', 'databaseId'], env);
       if (runs.length > 1) throw new Error('concurrent registry-sync run holds the version lock');
