@@ -20,6 +20,7 @@ const USER_SRC_FILES = [
   'destinations.js',
   'interactive.js',
   'links.js',
+  'paths.js',
   'plan.js',
   'prepack.js',
   'project-lock.js',

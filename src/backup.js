@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathExists } from './links.js';
+import { isPathInside } from './paths.js';
 
 export const BACKUP_METADATA_NAME = '.sigma-backup.json';
 export const BACKUP_SCHEMA_VERSION = 1;
@@ -20,11 +21,6 @@ function filesystemSafeStamp(now = new Date()) {
 
 function hashBytes(bytes) {
   return crypto.createHash('sha256').update(bytes).digest('hex');
-}
-
-function isInsideRoot(root, absolutePath) {
-  const relative = path.relative(path.resolve(root), path.resolve(absolutePath));
-  return relative === '' || (Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative));
 }
 
 /**
@@ -76,7 +72,7 @@ export function inventorySkillTree(dir) {
         entries[rel] = {
           kind: 'symlink',
           target,
-          escaped: !isInsideRoot(dir, resolved),
+          escaped: !isPathInside(dir, resolved),
         };
         continue;
       }
