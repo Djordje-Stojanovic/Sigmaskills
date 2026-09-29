@@ -183,8 +183,11 @@ export function applyRegistryPatchIdentities({ packageJson, manifest, changelog,
       changelog,
     };
   }
-  const insertion = `## [Unreleased]\n\n## [${version}] — ${date}\n\n### Changed\n\n- ${note}\n`;
-  const nextChangelog = String(changelog).replace(/## \[Unreleased\]\s*\n/, () => `${insertion}\n`);
+  // The patch section goes after the whole Unreleased section, so owner notes stay under [Unreleased].
+  const nextChangelog = String(changelog).replace(
+    /## \[Unreleased\]\s*\n[\s\S]*?(?=\n## \[|\n\[[^\]\n]+\]: |$)/,
+    (section) => `${section.trimEnd()}\n\n## [${version}] — ${date}\n\n### Changed\n\n- ${note}\n`,
+  );
   return {
     packageJson: { ...packageJson, version },
     manifest: { ...manifest, version },

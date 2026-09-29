@@ -25,6 +25,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 - The release tool keeps release notes exactly as written. Notes with `$&`, `$'`, or `` $` `` are no longer changed when the version is applied, and a changelog with only `## [Unreleased]` now gets its version heading. (#68)
 - Applying a release now adds the new compare link (`[X.Y.Z]: …/compare/vPREV...vX.Y.Z`) and moves `[Unreleased]` to compare from the new tag. The registry patch release does the same. (#68)
+- A registry patch Release now puts its version heading after the whole `[Unreleased]` section. Before, it went right under `## [Unreleased]`, so the owner's unreleased notes ended up under the patch version. (#70)
 - The auto-merge check now says no when any required input is missing (head SHA, generated SHA, expected SHA, default-branch SHA, check result, or classification) or when a SHA is not 40-hex. Before, a missing input skipped its check. (#68)
 - Registry automation stops when a `gh`, `npm`, or `git` lookup fails for any reason other than "not found". Before, a network error counted as "no npm versions", "no concurrent run", or "no release", so a version could be reused. (#68)
 - `npm run registry:sync -- --dry-run` now writes nothing, including with `--fetch` (it used to overwrite the fixture). The dead `fetchPinnedSourceSync` branch is gone. Registry validation rejects destinations under `.git`, `.github/workflows`, and `.ssh`, so a new host with such a path needs owner review. (#68)

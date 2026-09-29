@@ -16,6 +16,7 @@ import {
   calculateReleasePlan,
   classifyChangelogBump,
   extractUnreleased,
+  extractVersionSection,
   evaluatePublicationGate,
   executeRelease,
   executeTrustedPatchRelease,
@@ -687,4 +688,20 @@ test('the real CHANGELOG Unreleased section reads as breaking and plans 0.5.0 wh
   const plan = calculateReleasePlan({ packageVersion: pkg.version, manifestVersion: pkg.version, changelog, sourceCommit: 'abc' });
   assert.equal(plan.bump, 'major');
   assert.equal(plan.version, '0.5.0');
+});
+
+test('registry patch identities leave the owner note under [Unreleased] (#70)', () => {
+  const changelog = `${changelogWith('### Added\n\n- Owner minor work.\n')}
+[Unreleased]: https://github.com/o/r/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/o/r/releases/tag/v0.1.0
+`;
+  const { changelog: out } = applyRegistryPatchIdentities({
+    packageJson: {}, manifest: {}, changelog, version: '0.1.1', date: '2026-08-20', note: 'Registry sync.',
+  });
+  assert.match(extractUnreleased(out), /Owner minor work\./);
+  assert.doesNotMatch(extractUnreleased(out), /Registry sync\./);
+  assert.doesNotMatch(extractVersionSection(out, '0.1.1'), /Owner minor work/);
+  assert.match(extractVersionSection(out, '0.1.1'), /- Registry sync\./);
+  assert.ok(out.indexOf('## [Unreleased]') < out.indexOf('## [0.1.1]') && out.indexOf('## [0.1.1]') < out.indexOf('## [0.1.0]'));
+  assert.equal(classifyChangelogBump(extractUnreleased(out)), 'minor');
 });
