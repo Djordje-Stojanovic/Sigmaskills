@@ -18,6 +18,7 @@ const LEGACY_ENTRIES = [
   '.sigma-uninstall-staging',
   '.sigma-restore-staging',
 ];
+
 // state.json and backups are generic names. They count as ours only beside a Sigma-shaped state.json;
 // the other entries carry a Sigma name. Another tool's files in .agents/ are never moved or removed.
 function isSigmaStateFile(file) {
@@ -249,11 +250,6 @@ export function loadProjectState(projectRoot, customStateDir) {
 }
 
 /**
- * Validate that a project state structure is valid.
- *
- * @param {object} state
- */
-/**
  * Reject a recorded path that leaves its base folder. State and journals sit on disk where
  * anyone can edit them, so no recorded path may reach outside the project, home, or state dir.
  *
@@ -281,6 +277,13 @@ function assertStateInside(skillId, skillState, bounds) {
   }
 }
 
+/**
+ * Validate that a managed state structure is valid. With bounds, recorded paths must stay inside them.
+ *
+ * @param {object} state
+ * @param {'project'|'global'} expectedScope
+ * @param {{ root: string, stateDir: string }} [bounds]
+ */
 function validateManagedState(state, expectedScope, bounds) {
   const label = expectedScope === 'global' ? 'global state' : 'project state';
   if (!state || typeof state !== 'object') {
