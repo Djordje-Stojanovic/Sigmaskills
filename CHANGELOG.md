@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-09-29
+
 ### Changed
 
 - CI and release jobs use current actions and Node.js. `actions/checkout` is v7.0.1 and `actions/setup-node` is v7.0.0, both pinned by full SHA. The release, registry-sync, and rehearsal jobs run on Node.js 24.21.0, whose bundled npm 11.19 supports trusted publishing, so the extra `npm install -g npm@11.5.1` step is gone. The `package-manager-cache: false` setting is now a valid input, and the runner no longer warns about Node 20 actions. (#69)
@@ -20,12 +22,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Removed
 
-- **BREAKING CHANGE:** Node.js 20 is no longer supported. `package.json` `engines.node` is now `>=22`, and CI no longer runs a Node.js 20 job. Because this is a breaking change before 1.0.0, the next Release is 0.5.0. (#70)
+- **BREAKING CHANGE:** Node.js 20 is no longer supported. `package.json` `engines.node` is now `>=22`, and CI no longer runs a Node.js 20 job. Use Node.js 22 or newer. (#70)
 - A private homelab plan that did not belong to this project (`.cursor/plans/`). `.cursor/` is now ignored. (#64)
 - Signal handlers in the install transaction that could never run, the unused `MIGRATABLE_KINDS` list, a `keypress` `removeListener` call that removed nothing, and the lossy `injectCustomContent` helper. (#67)
 
 ### Fixed
 
+- `npm run release` works on Windows when Git Bash's `tar` comes first on `PATH`. It lists the tarball by file name inside its folder, because GNU tar reads `C:` in a path as a remote host. It also starts npm through Node instead of a shell, so Node no longer prints the DEP0190 warning.
+- The README no longer claims that every GitHub Release is on npm, and its run section names only real hosts.
 - The release tool keeps release notes exactly as written. Notes with `$&`, `$'`, or `` $` `` are no longer changed when the version is applied, and a changelog with only `## [Unreleased]` now gets its version heading. (#68)
 - Applying a release now adds the new compare link (`[X.Y.Z]: …/compare/vPREV...vX.Y.Z`) and moves `[Unreleased]` to compare from the new tag. The registry patch release does the same. (#68)
 - A registry patch Release now puts its version heading after the whole `[Unreleased]` section. Before, it went right under `## [Unreleased]`, so the owner's unreleased notes ended up under the patch version. (#70)
@@ -37,7 +41,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - SigmaBrief now sets `allow_implicit_invocation: false`, so the host no longer starts it on its own. (#65)
 - Two broken `measure.md` links in `sigmareview/references/method.md` now resolve. (#65)
 - The migration error message, its comments, and the installer guide now name 0.3.0 as the last version with the old state layout. 0.4.0 already uses the new layout, so the old advice to run `@0.4.0` failed in the same place. (#64)
-- The README host list names only hosts that exist in the registry.
+- The README host list names only hosts that exist in the registry. (#64)
 - A project `skills-lock.json` from another tool is never rewritten. When the file is a generic (non-Sigma) lock, `install`, `uninstall`, and `restore` leave it byte-identical, print a notice, and still finish the install, uninstall, or restore. The Sigma lock is only written when the file is missing or already a Sigma lock. (#66)
 - State and purge-journal paths that escape the project, home, or state folder are rejected when they load, with an error that says the path "escapes" its folder. A crafted `../victim` destination in `state.json` can no longer make `uninstall` or `purge` delete a folder outside the project. (#66)
 - `restore` now stops with `occupied-unowned` when a recorded host destination (for example `.claude/skills/<skill>`) holds files Sigma does not own. Before, it deleted those files and put the skill there. (#66)
@@ -185,7 +189,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.2.1

@@ -396,11 +396,11 @@ function defaultGit(rootDir) {
 }
 
 function execNpm(args, options = {}) {
-  const isWin = process.platform === 'win32';
-  return execFileSync(isWin ? 'npm.cmd' : 'npm', args, {
-    ...options,
-    shell: isWin ? true : options.shell,
-  });
+  if (process.platform !== 'win32') return execFileSync('npm', args, options);
+  // Run npm's own entry point with Node, so no shell joins the arguments (DEP0190).
+  const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+  if (fs.existsSync(npmCli)) return execFileSync(process.execPath, [npmCli, ...args], options);
+  return execFileSync('npm.cmd', args, { ...options, shell: true });
 }
 
 export function parseNpmPackJson(output) {
@@ -423,7 +423,8 @@ function defaultPack(rootDir) {
   const tarballPath = path.join(dest, info.filename);
   const bytes = fs.readFileSync(tarballPath);
   const digest = crypto.createHash('sha256').update(bytes).digest('hex');
-  const contents = execFileSync('tar', ['-tf', tarballPath], { encoding: 'utf8' })
+  // A bare file name: GNU tar reads `C:` in a Windows path as a remote host.
+  const contents = execFileSync('tar', ['-tf', info.filename], { cwd: dest, encoding: 'utf8' })
     .split(/\r?\n/)
     .map((line) => line.trim().replace(/\\/g, '/'))
     .filter(Boolean);

@@ -300,7 +300,7 @@ Safety:
 
 These methods copy skills without the Sigma Installer. They have no `status`, `update`, `restore`, or `uninstall`. The Sigma Installer can adopt these copies later; see [Existing copies](#existing-copies).
 
-Every [GitHub Release](https://github.com/Djordje-Stojanovic/Sigmaskills/releases) has a matching git tag. npm has 0.2.0, 0.3.0, and 0.4.0. 0.1.0 and 0.2.1 are GitHub Releases only. A skill that is in the repository but not yet in a Release is available only from the repository source.
+Every [GitHub Release](https://github.com/Djordje-Stojanovic/Sigmaskills/releases) has a matching git tag. Every Release from 0.2.0 on is also on npm, except 0.2.1. 0.1.0 and 0.2.1 are GitHub Releases only. A skill that is in the repository but not yet in a Release is available only from the repository source.
 
 ### `npx skills`
 
@@ -341,7 +341,7 @@ $skill-installer install sigmarefactor from https://github.com/Djordje-Stojanovi
 
 ### Manual copy
 
-Use this when a host only watches a skills folder: Pi, LAPI mirrors, custom TUIs, or air-gapped machines.
+Use this when a host only watches a skills folder: Pi, custom TUIs, or air-gapped machines.
 
 **POSIX**
 
