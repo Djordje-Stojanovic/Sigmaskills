@@ -12,8 +12,8 @@
 
 | Actor | May ask |
 |-------|---------|
-| **SigmaBrief** | At most one question if the work target is missing (`Which issue URL(s), work statement, or repo for all open?`). Full grill-me only if the user explicitly asks SigmaBrief to grill them. |
-| **Executing agent** (in the brief) | Plan first; `/grill-me` or focused questions when trade-offs exist — including whether to create an isolated Windows git worktree. |
+| **SigmaBrief** | At most one question if the work target is missing (`Which issue URL(s), work statement, or repo for all open?`). Full `/grilling` only if the user explicitly asks SigmaBrief to grill them. |
+| **Executing agent** (in the brief) | Plan first; `/grilling` or focused questions when trade-offs exist — including whether to create an isolated git worktree. |
 
 SigmaBrief itself stays thin: research enough to write good simple briefs, then emit.
 
@@ -60,7 +60,7 @@ Assign one prompt type:
 | Type | When |
 |------|------|
 | `greenfield` | No open PR addresses the work |
-| `finish-PR` | Open PR/branch already addresses it — rebase/finish only; never a second implementation |
+| `finish-PR` | Open PR/branch already addresses it — finish only; never a second implementation |
 | `skip` | Already on default branch / fixed / user said skip |
 | `blocked` | Upstream-only or human-gate; smallest workaround or tracking note, no giant fork |
 | `session` | Hand the current conversation to a fresh agent: goal, current state, decisions and their reasons, next step, suggested skills. Link specs, issues, PRs, commits, and files instead of copying them. Redact secrets and personal data. |

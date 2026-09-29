@@ -91,7 +91,7 @@ A writing voice inspired by **ASD-STE100 Simplified Technical English**. It give
 
 ### SigmaRefactor
 
-Runs a `laloc` scan, reads the five largest maintained files, and explains safe refactoring choices. It waits for your approval before it edits. It keeps behavior, tests, interfaces, and your own changes intact. At the end it reports lines removed apart from lines moved into new modules.
+Counts lines (with `laloc` if you have it, or by itself), reads the five largest maintained files, and explains safe refactoring choices. It waits for your approval before it edits. It keeps behavior, tests, interfaces, and your own changes intact. At the end it reports lines removed apart from lines moved into new modules.
 
 ---
 
@@ -170,9 +170,11 @@ $sigmarefactor
 | SigmaShip | Push rights and GitHub tooling (`gh` or connector) to open, merge, and close; the repository's test commands |
 | SigmaBrief | `gh` read access when briefing from issues or PRs · **no** push to the product repo |
 | SigmaWrite | Nothing beyond chat |
-| SigmaRefactor | Read access to the target repository and `laloc` when available |
+| SigmaRefactor | Read access to the target repository · `laloc` is optional; without it the skill counts lines itself |
 
-Where skills mention shells or worktrees, they default to native Windows (PowerShell-friendly; no WSL assumed).
+Skills use the shell native to the machine that runs the agent (PowerShell on Windows, POSIX shell elsewhere). They do not assume WSL.
+
+SigmaShip and SigmaBrief work best with optional companion skills from [mattpocock/skills](https://github.com/mattpocock/skills): `/to-spec` and `/to-tickets` turn an idea into a ticket with acceptance criteria, `/grilling` settles open decisions, and `/tdd` guides test-first work. Without them, the skills fall back to plain steps.
 
 ---
 

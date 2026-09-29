@@ -89,13 +89,13 @@ Model the assets, entry points, trust boundaries, and attacker capabilities firs
 - CI/CD: workflow token permissions, untrusted pull-request code, unpinned actions, dependency confusion, and artifact provenance.
 - AI features: prompt-injection paths to tools or data, output validation, and cost abuse.
 
-**Dynamic testing (authority B, local instance only):** follow [measure.md](references/measure.md). Test authorization with two users (can user A read or change user B's objects?), fuzz the main inputs, try the injection classes that the source review marked as plausible, and run the dependency-advisory and secret scanners that are already available. Never probe a system you did not start yourself, and never use payloads that can destroy shared data.
+**Dynamic testing (authority B, local instance only):** follow [measure.md](measure.md). Test authorization with two users (can user A read or change user B's objects?), fuzz the main inputs, try the injection classes that the source review marked as plausible, and run the dependency-advisory and secret scanners that are already available. Never probe a system you did not start yourself, and never use payloads that can destroy shared data.
 
 State preconditions and the data flow for every vulnerability. Never print a live secret. If a real credential was committed, rotation is part of the fix; deleting it from the tree is not enough. Use OWASP ASVS, the OWASP Top 10 lists (web, API, LLM), CWE, and language-specific secure-coding guides only where they apply. Repository evidence outranks checklist matching.
 
 ## Pass 6 — Performance and resource use
 
-Find the real bottleneck on the path that users feel. Measure before you claim (see [measure.md](references/measure.md)).
+Find the real bottleneck on the path that users feel. Measure before you claim (see [measure.md](measure.md)).
 
 1. **Work and data movement:** repeated scans, parsing, serialization, hashing, and copies; bad complexity; wrong data structures; eager work; missing batching, streaming, or pagination.
 2. **Database:** N+1 queries, missing or bad indexes, over-fetching, long transactions, pool exhaustion, and lock contention.

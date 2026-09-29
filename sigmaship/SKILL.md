@@ -24,6 +24,8 @@ The ticket is ready when it has **acceptance criteria you can check**: a list of
 | Several tickets to run in parallel | SigmaBrief |
 | Open blocker | Ship the blocker first |
 
+If those skills are not installed, write the acceptance criteria into the issue by hand.
+
 ## 2. Set up
 
 1. Sync: `git fetch origin`, and confirm the base branch (usually `main`) from the repository.
