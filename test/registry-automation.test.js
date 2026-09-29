@@ -610,3 +610,28 @@ test('auto-merge: partial trusted patch success is recoverable and never overwri
   assert.match(clash.errors.join('\n'), /different digest|immutable/i);
 });
 
+
+test('registry automation: auto-authorization denies when a required input is missing or a SHA is not 40-hex (#68 B3)', () => {
+  const eligible = eligibleAuthorization();
+  const missing = ['headSha', 'expectedGeneratedSha', 'expectedHeadSha', 'currentDefaultSha', 'checkConclusion', 'classification'];
+  for (const key of missing) {
+    const input = { ...eligible };
+    delete input[key];
+    const result = evaluateAutoAuthorization(input);
+    assert.equal(result.autoAuthorized, false, key);
+    assert.equal(result.actions.merge, false, key);
+    assert.equal(result.actions.publishNpm, false, key);
+  }
+  for (const key of ['headSha', 'expectedGeneratedSha', 'expectedHeadSha', 'currentDefaultSha']) {
+    const result = evaluateAutoAuthorization({ ...eligible, [key]: 'missing-generated-sha' });
+    assert.equal(result.autoAuthorized, false, key);
+  }
+  const bare = evaluateAutoAuthorization({
+    origin: 'same-repo',
+    headRef: `${GENERATED_BRANCH_PREFIX}abc`,
+    files: [...REGISTRY_ALLOWLIST],
+    fromTrustedWorkflow: true,
+    defaultBranchProtected: true,
+  });
+  assert.equal(bare.autoAuthorized, false);
+});

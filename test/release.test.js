@@ -605,3 +605,67 @@ test('prepack logs to stderr so npm pack --json stdout stays JSON (dd35041)', ()
   assert.equal(result.stdout, '');
   assert.match(result.stderr, /Prepack validation successful/);
 });
+
+test('release identities: notes with $&, $\' and $` stay verbatim (#68 B1)', () => {
+  const notes = "### Fixed\n\n- Quote `$'` and `$&` and `$`` handling.\n";
+  const applied = applyReleaseIdentities({
+    packageJson: { version: '0.1.0' },
+    manifest: { version: '0.1.0' },
+    changelog: changelogWith(notes),
+    version: '0.1.1',
+    date: '2026-08-19',
+  });
+  assert.ok(applied.changelog.includes("- Quote `$'` and `$&` and `$`` handling."));
+  assert.equal(applied.changelog.match(/## \[0\.1\.0\]/g).length, 1);
+  assert.equal(applied.changelog.match(/First public release\./g).length, 1);
+});
+
+test('release identities: a changelog with only Unreleased still gets its version heading (#68 B1)', () => {
+  const applied = applyReleaseIdentities({
+    packageJson: { version: '0.0.0' },
+    manifest: { version: '0.0.0' },
+    changelog: '# Changelog\n\n## [Unreleased]\n\n### Added\n\n- First.\n',
+    version: '0.1.0',
+    date: '2026-08-19',
+  });
+  assert.match(applied.changelog, /## \[Unreleased\]\s*\n\s*\n## \[0\.1\.0\] — 2026-08-19\s*\n\s*\n### Added\s*\n\s*\n- First\./);
+});
+
+test('release identities: the link list is not swallowed by a lone Unreleased section (#68 B1)', () => {
+  const changelog = '# C\n\n## [Unreleased]\n\n### Added\n\n- First.\n\n[Unreleased]: https://github.com/o/r/compare/v0.0.9...HEAD\n';
+  const applied = applyReleaseIdentities({
+    packageJson: {}, manifest: {}, changelog, version: '0.1.0', date: '2026-08-19',
+  });
+  assert.equal(applied.changelog.match(/- First\./g).length, 1);
+  assert.match(applied.changelog, /^\[0\.1\.0\]: https:\/\/github\.com\/o\/r\/compare\/v0\.0\.9\.\.\.v0\.1\.0$/m);
+});
+
+test('release identities: the new compare link is added and Unreleased compares from the new tag (#68 B2)', () => {
+  const changelog = `${changelogWith('### Added\n\n- New.\n')}
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.1.0
+`;
+  const applied = applyReleaseIdentities({
+    packageJson: {}, manifest: {}, changelog, version: '0.2.0', date: '2026-08-19',
+  });
+  const base = 'https://github.com/Djordje-Stojanovic/Sigmaskills';
+  const lines = applied.changelog.split('\n');
+  const at = lines.indexOf(`[Unreleased]: ${base}/compare/v0.2.0...HEAD`);
+  assert.ok(at >= 0, applied.changelog);
+  assert.equal(lines[at + 1], `[0.2.0]: ${base}/compare/v0.1.0...v0.2.0`);
+  assert.equal(lines[at + 2], `[0.1.0]: ${base}/releases/tag/v0.1.0`);
+  assert.equal(applied.changelog.match(/^\[Unreleased\]:/gm).length, 1);
+});
+
+test('registry patch identities: note with $& is verbatim and links are maintained (#68 B1, B2)', () => {
+  const changelog = `${changelogWith('')}
+[Unreleased]: https://github.com/o/r/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/o/r/releases/tag/v0.1.0
+`;
+  const applied = applyRegistryPatchIdentities({
+    packageJson: {}, manifest: {}, changelog, version: '0.1.1', date: '2026-08-20', note: "ids `$&` and $' here",
+  });
+  assert.ok(applied.changelog.includes("- ids `$&` and $' here"));
+  assert.match(applied.changelog, /^\[Unreleased\]: https:\/\/github\.com\/o\/r\/compare\/v0\.1\.1\.\.\.HEAD$/m);
+  assert.match(applied.changelog, /^\[0\.1\.1\]: https:\/\/github\.com\/o\/r\/compare\/v0\.1\.0\.\.\.v0\.1\.1$/m);
+});
