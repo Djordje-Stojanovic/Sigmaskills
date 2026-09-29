@@ -39,10 +39,16 @@ export function assertSafePath(path, where) {
   if (ABSOLUTE_PREFIX.test(path)) {
     return `${where}: absolute/root destination path ${JSON.stringify(path)}`;
   }
-  for (const segment of path.split('/')) {
+  const segments = path.split('/');
+  for (const segment of segments) {
     if (TRAVERSAL_SEGMENT.test(segment)) {
       return `${where}: traversal segment in destination path ${JSON.stringify(path)}`;
     }
+  }
+  const lower = segments.map((segment) => segment.toLowerCase());
+  const underWorkflows = lower.some((segment, i) => segment === '.github' && lower[i + 1] === 'workflows');
+  if (lower.includes('.git') || lower.includes('.ssh') || underWorkflows) {
+    return `${where}: protected location (.git, .github/workflows, or .ssh) in destination path ${JSON.stringify(path)}`;
   }
   return null;
 }
