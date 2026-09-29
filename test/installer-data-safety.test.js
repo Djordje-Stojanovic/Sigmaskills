@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { verifyBackupIntegrity } from '../src/backup.js';
+import { findPackageRoot } from '../src/catalog.js';
 import { runCli } from '../src/cli.js';
 
 function makeDirs() {
@@ -193,4 +195,37 @@ test('A7: status, update, and uninstall agree on a link a user added inside a sk
   r = await run(dirs, ['uninstall', '--all', '--yes']);
   assert.doesNotMatch(r.stdout, /Review: clean/);
   assert.ok(fs.existsSync(path.join(external, 'keep.txt')));
+}));
+
+const ADOPT_FLAGS = (choice) => ['--adopt-unverified', choice, '--adopt-changed', choice, '--adopt-legacy', choice];
+
+function plantLinkToEditedCopy(dirs) {
+  const edited = path.join(dirs.project, 'my-sigmawrite');
+  fs.cpSync(path.join(findPackageRoot(), 'sigmawrite'), edited, { recursive: true });
+  fs.writeFileSync(path.join(edited, 'EDIT.txt'), 'user edit');
+  const link = path.join(dirs.project, '.claude', 'skills', 'sigmawrite');
+  fs.mkdirSync(path.dirname(link), { recursive: true });
+  fs.symlinkSync(edited, link, 'junction');
+  return { edited, link };
+}
+
+test('A8: --adopt-* export over a junction exports the linked content', withDirs(async (dirs) => {
+  const { edited, link } = plantLinkToEditedCopy(dirs);
+  const r = await run(dirs, ['install', 'sigmawrite', '--destination', '.claude/skills', ...ADOPT_FLAGS('export')]);
+  assert.equal(r.code, 0, r.stderr);
+  const exported = path.join(dirs.project, '.sigma-export', 'sigmawrite');
+  assert.equal(fs.readFileSync(path.join(exported, 'EDIT.txt'), 'utf8'), 'user edit');
+  assert.ok(fs.existsSync(path.join(edited, 'EDIT.txt')));
+  assert.ok(fs.existsSync(link));
+}));
+
+test('A8: --adopt-* replace over a junction keeps a backup that passes the integrity check', withDirs(async (dirs) => {
+  const { edited } = plantLinkToEditedCopy(dirs);
+  const r = await run(dirs, ['install', 'sigmawrite', '--destination', '.claude/skills', ...ADOPT_FLAGS('replace')]);
+  assert.equal(r.code, 0, r.stderr);
+  const { state } = readStateFile(dirs.project);
+  const backupDir = path.join(dirs.project, '.agents', '.sigmaskills', state.skills.sigmawrite.lastBackup);
+  const verified = verifyBackupIntegrity({ backupDir, skillId: 'sigmawrite' });
+  assert.ok(verified.inventory.entries['EDIT.txt']);
+  assert.ok(fs.existsSync(path.join(edited, 'EDIT.txt')));
 }));

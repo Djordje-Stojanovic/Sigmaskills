@@ -128,6 +128,15 @@ export function inventoriesMatch(left, right) {
   return true;
 }
 
+// A skill destination can be a link (symlink or Windows junction). Back up or export the folder it points to.
+function followTopLink(dir) {
+  try {
+    return fs.lstatSync(dir).isSymbolicLink() ? fs.realpathSync(dir) : dir;
+  } catch {
+    return dir;
+  }
+}
+
 export function copySkillTree(sourceDir, destDir) {
   copyTreeNoFollow(sourceDir, destDir);
 }
@@ -292,7 +301,8 @@ function copyTreeNoFollow(sourceDir, destDir) {
  * @returns {string} Backup directory
  */
 export function commitSkillBackup(params) {
-  const { stateDir, skillId, sourceDir, now = new Date() } = params;
+  const { stateDir, skillId, now = new Date() } = params;
+  const sourceDir = followTopLink(params.sourceDir);
   if (!pathExists(sourceDir)) {
     throw new Error(`cannot backup missing skill tree at ${sourceDir}`);
   }
@@ -386,7 +396,8 @@ export function collisionSafeExportDir(exportRoot, skillId) {
  * @returns {string}
  */
 export function exportSkillTree(params) {
-  const { sourceDir, exportRoot, skillId, dest: plannedDest, refuseCollision = false, copyFn } = params;
+  const { exportRoot, skillId, dest: plannedDest, refuseCollision = false, copyFn } = params;
+  const sourceDir = followTopLink(params.sourceDir);
   const dest = plannedDest || collisionSafeExportDir(exportRoot, skillId);
   if (!pathExists(sourceDir)) {
     throw new Error(`failed to export '${skillId}' to '${dest}': missing source tree`);
