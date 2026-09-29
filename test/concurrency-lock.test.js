@@ -73,3 +73,25 @@ test('lock: release waits for a competing guard and permits the next operation',
     assert.equal(await exited, 0);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
+
+test('lock: a guard folder left by a hard kill is reported with its path and the safe fix (#70)', () => {
+  const { root, file } = fixture();
+  const guardDir = `${file}.guard`;
+  try {
+    fs.mkdirSync(guardDir);
+    // A fresh guard is a live operation: keep the short retry message.
+    assert.throws(() => acquireConcurrencyLock(root), (err) => err.code === 'lock-busy');
+    const old = new Date(Date.now() - 10 * 60 * 1000);
+    fs.utimesSync(guardDir, old, old);
+    assert.throws(() => acquireConcurrencyLock(root), (err) => {
+      assert.equal(err.code, 'lock-guard-stale');
+      assert.ok(err.message.includes(guardDir), 'names the guard folder');
+      assert.match(err.message, /stop all SigmaSkills processes/i);
+      assert.match(err.message, /remove/i);
+      return true;
+    });
+    assert.equal(fs.existsSync(guardDir), true, 'the guard is never deleted automatically');
+    fs.rmdirSync(guardDir);
+    acquireConcurrencyLock(root)();
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});

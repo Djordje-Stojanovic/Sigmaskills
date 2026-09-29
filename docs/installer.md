@@ -140,7 +140,7 @@ Only one write command runs at a time in a scope. The `.sigma.lock` file enforce
 - An incomplete lock record gets a five-second grace period.
 - A short-lived `.sigma.lock.guard` folder serializes lock takeover and release.
 
-If a crash leaves the guard folder, stop all SigmaSkills processes. Then remove the guard folder and retry.
+A guard folder normally lives for milliseconds. If a crash leaves one, a command that finds it older than one minute stops with a `lock-guard-stale` error that names the folder. The installer never deletes it for you. Stop all SigmaSkills processes, remove that folder, and retry.
 
 ### Projects from 0.3.0 and older
 
