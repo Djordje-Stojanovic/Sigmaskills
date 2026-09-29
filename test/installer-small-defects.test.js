@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { runCli } from '../src/cli.js';
+import { isCiEnv } from '../src/interactive.js';
 
 function makeDirs() {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-small-'));
@@ -70,3 +71,9 @@ test('A10: replacing a changed skill keeps a CRLF customization block byte for b
   const after = /<sigmaskills-custom>([\s\S]*)<\/sigmaskills-custom>/.exec(fs.readFileSync(skillMd, 'utf8'));
   assert.equal(after[1], raw);
 }));
+
+test('A12: CI counts only when set and not empty, 0, or false in any case', () => {
+  for (const value of ['1', 'true', 'TRUE', 'yes', 'github']) assert.equal(isCiEnv({ CI: value }), true, value);
+  for (const value of [undefined, '', '0', 'false', 'False', 'FALSE']) assert.equal(isCiEnv({ CI: value }), false, String(value));
+  assert.equal(isCiEnv({}), false);
+});

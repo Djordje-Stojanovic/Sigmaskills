@@ -7,7 +7,6 @@ import { inspectManagedPath, pathExists, recommendedLinkMethod } from './links.j
 import { computeSkillRevisionAndHashes } from './revision.js';
 
 export const RECOGNITION_PRECEDENCE = ['sigma-state', 'exact-revision', 'recognized-link'];
-export const MIGRATABLE_KINDS = ['legacy', 'changed', 'unverified', 'malformed-custom'];
 export const BASELINES_FILENAME = 'skill-baselines.json';
 
 function hashRealDirectory(dirPath) {

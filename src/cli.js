@@ -1,6 +1,6 @@
 import { getCatalog, findPackageRoot } from './catalog.js';
 import { formatPlanHuman, formatPlanJson } from './plan.js';
-import { runProjectInstaller } from './interactive.js';
+import { isCiEnv, runProjectInstaller } from './interactive.js';
 import { collectStatus, formatStatusHuman, formatStatusJson } from './status.js';
 import { executeUpdate, formatUpdateHuman, formatUpdateJson } from './update.js';
 import { FOREIGN_LOCK_NOTICE } from './project-lock.js';
@@ -272,9 +272,8 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       const stdin = io.stdin || process.stdin;
       let confirmPurge = opts.confirmPurge;
       if (!opts.dryRun && confirmPurge === undefined) {
-        const ci = env.CI;
         const nonInteractive = Boolean(opts.json)
-          || (ci !== undefined && ci !== '' && ci !== '0' && String(ci).toLowerCase() !== 'false')
+          || isCiEnv(env)
           || !stdin.isTTY;
         if (nonInteractive) {
           writeErr('sigmaskills error: purge requires --confirm-purge with the typed confirmation phrase; --yes, CI, non-TTY, and JSON are not authority');
