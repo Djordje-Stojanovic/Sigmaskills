@@ -223,7 +223,7 @@ export function loadProjectState(projectRoot, customStateDir) {
   try {
     const raw = fs.readFileSync(statePath, 'utf8');
     const parsed = JSON.parse(raw);
-    validateProjectState(parsed);
+    validateProjectState(parsed, { root: projectRoot, stateDir: getProjectStateDir(projectRoot, customStateDir) });
     return parsed;
   } catch (err) {
     throw new Error(`failed to read project state at ${statePath}: ${err.message}`);
@@ -235,7 +235,35 @@ export function loadProjectState(projectRoot, customStateDir) {
  *
  * @param {object} state
  */
-function validateManagedState(state, expectedScope) {
+/**
+ * Reject a recorded path that leaves its base folder. State and journals sit on disk where
+ * anyone can edit them, so no recorded path may reach outside the project, home, or state dir.
+ *
+ * @param {string} base
+ * @param {string} recorded
+ * @param {string} what
+ */
+export function assertPathInside(base, recorded, what) {
+  const relative = path.relative(path.resolve(base), path.resolve(base, recorded));
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error(`${what} '${recorded}' escapes ${base}`);
+  }
+}
+
+function assertStateInside(skillId, skillState, bounds) {
+  const inside = (recorded, what) => assertPathInside(bounds.root, recorded, `state entry '${skillId}' ${what}`);
+  inside(skillState.destination, 'destination');
+  for (const owned of skillState.ownedPaths) if (typeof owned === 'string') inside(owned, 'owned path');
+  for (const copy of skillState.copies || []) {
+    inside(copy.destination, 'destination');
+    for (const owned of copy.ownedPaths) if (typeof owned === 'string') inside(owned, 'owned path');
+  }
+  if (typeof skillState.lastBackup === 'string') {
+    assertPathInside(bounds.stateDir, skillState.lastBackup, `state entry '${skillId}' backup`);
+  }
+}
+
+function validateManagedState(state, expectedScope, bounds) {
   const label = expectedScope === 'global' ? 'global state' : 'project state';
   if (!state || typeof state !== 'object') {
     throw new Error(`invalid ${label}: expected JSON object`);
@@ -313,6 +341,7 @@ function validateManagedState(state, expectedScope) {
         }
       }
     }
+    if (bounds) assertStateInside(skillId, skillState, bounds);
   }
 }
 
@@ -321,8 +350,8 @@ function validateManagedState(state, expectedScope) {
  *
  * @param {object} state
  */
-export function validateProjectState(state) {
-  validateManagedState(state, 'project');
+export function validateProjectState(state, bounds) {
+  validateManagedState(state, 'project', bounds);
 }
 
 /**
@@ -330,8 +359,8 @@ export function validateProjectState(state) {
  *
  * @param {object} state
  */
-export function validateGlobalState(state) {
-  validateManagedState(state, 'global');
+export function validateGlobalState(state, bounds) {
+  validateManagedState(state, 'global', bounds);
 }
 
 /**
@@ -472,7 +501,7 @@ export function loadGlobalState(homeDir, customStateDir) {
       );
     }
     if (parsed?.schemaVersion === STATE_SCHEMA_VERSION && parsed.scope === 'global') {
-      validateGlobalState(parsed);
+      validateGlobalState(parsed, { root: homeDir, stateDir: getGlobalStateDir(homeDir, customStateDir) });
       return parsed;
     }
     if (parsed?.schemaVersion === STATE_SCHEMA_VERSION) {

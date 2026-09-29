@@ -94,8 +94,7 @@ test('install: generic-CLI link to an exact copy is adopted by resolved target',
       skills: {
         sigmawrite: { source: 'npx', sourceUrl: 'https://example.invalid/skills' },
       },
-    }, null, 2)}
-`;
+    }, null, 2)}\n`;
     fs.writeFileSync(path.join(projectRoot, PROJECT_LOCK_FILENAME), genericLock);
     const beforeCanonical = skillBytes(canonical);
     const beforeHostMtime = fs.lstatSync(host).mtimeMs;

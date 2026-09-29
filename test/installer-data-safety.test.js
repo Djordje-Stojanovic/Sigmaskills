@@ -68,3 +68,51 @@ test('A1: generic skills-lock.json stays byte-identical through install, restore
   assert.equal(r.code, 0, r.stderr);
   assert.equal(fs.readFileSync(lockPath, 'utf8'), GENERIC_LOCK);
 }));
+
+function readStateFile(project) {
+  const statePath = path.join(project, '.agents', '.sigmaskills', 'state.json');
+  return { statePath, state: JSON.parse(fs.readFileSync(statePath, 'utf8')) };
+}
+
+test('A2: a crafted ../victim destination in state is rejected and never removed', withDirs(async (dirs) => {
+  const victim = path.join(dirs.base, 'victim');
+  fs.mkdirSync(victim);
+  fs.writeFileSync(path.join(victim, 'precious.txt'), 'keep me');
+
+  let r = await run(dirs, ['install', 'sigmawrite']);
+  assert.equal(r.code, 0, r.stderr);
+  const { statePath, state } = readStateFile(dirs.project);
+  const entry = state.skills.sigmawrite;
+  entry.destination = '../victim';
+  entry.copies = [{ kind: 'canonical', destination: '../victim', method: 'copy', hostIds: [], ownedPaths: [] }];
+  fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+
+  r = await run(dirs, ['uninstall', '--all', '--yes']);
+  assert.notEqual(r.code, 0);
+  assert.match(r.stderr, /escapes/);
+  assert.equal(fs.readFileSync(path.join(victim, 'precious.txt'), 'utf8'), 'keep me');
+}));
+
+test('A2: a crafted purge journal path outside the project is rejected and never removed', withDirs(async (dirs) => {
+  const victim = path.join(dirs.base, 'victim');
+  fs.mkdirSync(victim);
+  fs.writeFileSync(path.join(victim, 'precious.txt'), 'keep me');
+
+  let r = await run(dirs, ['install', 'sigmawrite']);
+  assert.equal(r.code, 0, r.stderr);
+  const stateDir = path.join(dirs.project, '.agents', '.sigmaskills');
+  fs.writeFileSync(path.join(stateDir, 'purge-journal.json'), JSON.stringify({
+    schemaVersion: 1,
+    command: 'purge',
+    scope: 'project',
+    status: 'quarantined',
+    quarantineDir: '../victim',
+    items: [{ kind: 'manifest', relative: 'x', absolutePath: victim, status: 'pending' }],
+    skills: [],
+  }));
+
+  r = await run(dirs, ['purge', '--confirm-purge', 'purge SigmaSkills']);
+  assert.notEqual(r.code, 0);
+  assert.match(r.stderr, /escapes/);
+  assert.equal(fs.readFileSync(path.join(victim, 'precious.txt'), 'utf8'), 'keep me');
+}));

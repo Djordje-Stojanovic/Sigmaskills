@@ -21,6 +21,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - The migration error message, its comments, and the installer guide now name 0.3.0 as the last version with the old state layout. 0.4.0 already uses the new layout, so the old advice to run `@0.4.0` failed in the same place. (#64)
 - The README host list names only hosts that exist in the registry.
 - A project `skills-lock.json` from another tool is never rewritten. When the file is a generic (non-Sigma) lock, `install`, `uninstall`, and `restore` leave it byte-identical, print a notice, and still finish the install, uninstall, or restore. The Sigma lock is only written when the file is missing or already a Sigma lock. (#66)
+- State and purge-journal paths that escape the project, home, or state folder are rejected when they load, with an error that says the path "escapes" its folder. A crafted `../victim` destination in `state.json` can no longer make `uninstall` or `purge` delete a folder outside the project. (#66)
 
 ### Removed
 
