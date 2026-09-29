@@ -173,3 +173,24 @@ test('A6: reinstalling over an owned link with the wrong target never reports In
   }
   assert.ok(fs.existsSync(path.join(other, 'x')));
 }));
+
+test('A7: status, update, and uninstall agree on a link a user added inside a skill', withDirs(async (dirs) => {
+  let r = await run(dirs, ['install', 'sigmawrite']);
+  assert.equal(r.code, 0, r.stderr);
+  const skill = path.join(dirs.project, '.agents', 'skills', 'sigmawrite');
+  const external = path.join(dirs.project, 'external-data');
+  fs.mkdirSync(external);
+  fs.writeFileSync(path.join(external, 'keep.txt'), 'external');
+  fs.symlinkSync(external, path.join(skill, 'extlink'), 'junction');
+
+  r = await run(dirs, ['status']);
+  assert.match(r.stdout, /Drift:\s+Yes/);
+  assert.match(r.stdout, /Classification:\s+outside-addition/);
+
+  r = await run(dirs, ['update', '--dry-run']);
+  assert.match(r.stdout, /\[local-only\]/);
+
+  r = await run(dirs, ['uninstall', '--all', '--yes']);
+  assert.doesNotMatch(r.stdout, /Review: clean/);
+  assert.ok(fs.existsSync(path.join(external, 'keep.txt')));
+}));

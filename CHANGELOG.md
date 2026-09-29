@@ -25,6 +25,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - `restore` now stops with `occupied-unowned` when a recorded host destination (for example `.claude/skills/<skill>`) holds files Sigma does not own. Before, it deleted those files and put the skill there. (#66)
 - A foreign `.agents/state.json` or `.agents/backups/` from another tool is no longer moved into the private folder or removed. Those two names count as Sigma's old layout only beside a `state.json` that has Sigma's shape. `install` no longer fails on such a project. (#66)
 - Reinstalling over a Sigma-owned link that points to the wrong target now stops with a `wrong-target` error. Before, it printed "Installed" with exit code 0 and left the wrong link in place. (#66)
+- `status`, `update`, and `uninstall` now classify a link that a user added inside a skill the same way, as a local addition. They share one tree walker. Before, `status` and `uninstall` called such a skill clean while `update` called it changed. (#66)
 
 ### Removed
 

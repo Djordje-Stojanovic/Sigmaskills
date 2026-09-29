@@ -1,6 +1,6 @@
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { walkLiveFiles } from './backup.js';
 import { findPackageRoot } from './catalog.js';
 import { inspectCustomizationBlock, CUSTOM_BLOCK_END, CUSTOM_BLOCK_START } from './customization.js';
 import {
@@ -16,10 +16,6 @@ import { inspectProjectLock } from './project-lock.js';
 import { loadGlobalState, loadProjectState } from './state.js';
 
 export const STATUS_SCHEMA_VERSION = 1;
-
-function hashBytes(bytes) {
-  return crypto.createHash('sha256').update(bytes).digest('hex');
-}
 
 function samePath(a, b) {
   const left = path.resolve(a);
@@ -54,41 +50,6 @@ function relativeRootOf(relativeDestination, skillId) {
 function hostIdsFor(groups, relativeRoot) {
   const group = (groups || []).find((item) => item.relativeRoot === relativeRoot);
   return group ? group.hosts.map((host) => host.id) : [];
-}
-
-function walkLiveFiles(dir) {
-  const files = {};
-  if (!pathExists(dir)) return files;
-  const top = fs.lstatSync(dir);
-  if (top.isSymbolicLink() || !top.isDirectory()) return files;
-
-  const visit = (current) => {
-    let entries;
-    try {
-      entries = fs.readdirSync(current, { withFileTypes: true });
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      const full = path.join(current, entry.name);
-      let stat;
-      try {
-        stat = fs.lstatSync(full);
-      } catch {
-        continue;
-      }
-      if (stat.isSymbolicLink()) continue;
-      if (stat.isDirectory()) {
-        visit(full);
-      } else if (stat.isFile()) {
-        const rel = path.relative(dir, full).replace(/\\/g, '/');
-        files[rel] = hashBytes(fs.readFileSync(full));
-      }
-    }
-  };
-
-  visit(dir);
-  return files;
 }
 
 function officialMarkdownShell(markdown) {
@@ -329,7 +290,11 @@ export function collectStatus(options = {}) {
         continue;
       }
 
-      const liveFiles = walkLiveFiles(resolved.destination);
+      const { files: liveFiles, inventory } = walkLiveFiles(resolved.destination);
+      // A link inside the skill is a file the user added.
+      for (const [rel, entry] of Object.entries(inventory.entries)) {
+        if (entry.kind === 'symlink') liveFiles[rel] = `symlink:${entry.target}`;
+      }
       let skillMarkdown;
       const skillMdPath = path.join(resolved.destination, 'SKILL.md');
       if (pathExists(skillMdPath) && fs.lstatSync(skillMdPath).isFile()) {

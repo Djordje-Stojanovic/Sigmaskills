@@ -99,6 +99,22 @@ export function inventorySkillTree(dir) {
   return { entries };
 }
 
+/**
+ * Walk a live skill tree once for status and update. Links are never followed.
+ * `files` holds the regular files. `inventory` also lists links and folders.
+ *
+ * @param {string} dir
+ * @returns {{ files: Record<string, string>, inventory: { entries: Record<string, object> } }}
+ */
+export function walkLiveFiles(dir) {
+  const files = {};
+  const inventory = inventorySkillTree(dir);
+  for (const [rel, entry] of Object.entries(inventory.entries || {})) {
+    if (entry.kind === 'file') files[rel] = entry.hash;
+  }
+  return { files, inventory };
+}
+
 export function inventoriesMatch(left, right) {
   const leftKeys = Object.keys(left.entries || {}).sort();
   const rightKeys = Object.keys(right.entries || {}).sort();
