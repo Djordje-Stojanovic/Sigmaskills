@@ -60,7 +60,7 @@ function sectionBody(changelog, headingTest) {
   if (start < 0) return '';
   let end = lines.length;
   for (let i = start + 1; i < lines.length; i += 1) {
-    if (/^## \[/.test(lines[i])) {
+    if (/^## \[/.test(lines[i]) || /^\[[^\]]+\]: /.test(lines[i])) {
       end = i;
       break;
     }
@@ -151,16 +151,27 @@ export function calculateReleasePlan({ packageVersion, manifestVersion, changelo
   };
 }
 
+// Move `[Unreleased]` to compare from the new tag and add the new version's compare link.
+function updateCompareLinks(changelog, version) {
+  const link = /^\[Unreleased\]: (\S+)\/compare\/(v\S+?)\.\.\.HEAD[ \t]*$/m.exec(changelog);
+  if (!link) return changelog;
+  const [line, base, previousTag] = link;
+  return changelog.replace(
+    line,
+    () => `[Unreleased]: ${base}/compare/v${version}...HEAD\n[${version}]: ${base}/compare/${previousTag}...v${version}`,
+  );
+}
+
 export function applyReleaseIdentities({ packageJson, manifest, changelog, version, date }) {
   const unreleased = extractUnreleased(changelog).replace(/^\s+|\s+$/g, '');
-  const nextChangelog = String(changelog).replace(
-    /## \[Unreleased\]\s*\n[\s\S]*?(?=\n## \[)/,
-    `## [Unreleased]\n\n## [${version}] — ${date}\n\n${unreleased}\n\n`,
+  const replaced = String(changelog).replace(
+    /## \[Unreleased\]\s*\n[\s\S]*?(?=\n## \[|\n\[[^\]\n]+\]: |$)/,
+    () => `## [Unreleased]\n\n## [${version}] — ${date}\n\n${unreleased}\n`,
   );
   return {
     packageJson: { ...packageJson, version },
     manifest: { ...manifest, version },
-    changelog: nextChangelog,
+    changelog: updateCompareLinks(replaced, version),
   };
 }
 
@@ -173,11 +184,11 @@ export function applyRegistryPatchIdentities({ packageJson, manifest, changelog,
     };
   }
   const insertion = `## [Unreleased]\n\n## [${version}] — ${date}\n\n### Changed\n\n- ${note}\n`;
-  const nextChangelog = String(changelog).replace(/## \[Unreleased\]\s*\n/, `${insertion}\n`);
+  const nextChangelog = String(changelog).replace(/## \[Unreleased\]\s*\n/, () => `${insertion}\n`);
   return {
     packageJson: { ...packageJson, version },
     manifest: { ...manifest, version },
-    changelog: nextChangelog,
+    changelog: updateCompareLinks(nextChangelog, version),
   };
 }
 

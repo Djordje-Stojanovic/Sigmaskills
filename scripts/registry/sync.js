@@ -93,8 +93,9 @@ export function loadPin(pinPath = PIN_PATH) {
  * and save it as the local pinned fixture. Verifies the content hash.
  * @param {object} pin loaded pin record
  * @param {string} [fixturePath] where to save the fetched content
+ * @param {boolean} [save] false verifies and returns the text without writing
  */
-export async function fetchPinnedSource(pin, fixturePath = FIXTURE_PATH) {
+export async function fetchPinnedSource(pin, fixturePath = FIXTURE_PATH, save = true) {
   const url = `https://raw.githubusercontent.com/${pin.repository}/${pin.pinnedRevision}/${pin.upstreamFile}`;
   let res;
   try {
@@ -112,16 +113,18 @@ export async function fetchPinnedSource(pin, fixturePath = FIXTURE_PATH) {
       `fetched content hash ${digest} does not match pinned contentSha256 ${pin.contentSha256} for ${pin.pinnedRevision}`
     );
   }
-  fs.mkdirSync(path.dirname(fixturePath), { recursive: true });
-  fs.writeFileSync(fixturePath, text, 'utf8');
+  if (save) {
+    fs.mkdirSync(path.dirname(fixturePath), { recursive: true });
+    fs.writeFileSync(fixturePath, text, 'utf8');
+  }
   return text;
 }
 
 /**
  * Synchronize the registry from the pinned upstream source.
  *
- * @param {object} args { fetch, dryRun, allowReview, source? }
- * @param {object} [options] { pin?, previous?, fixturePath? }
+ * @param {object} args { dryRun, allowReview, source? }
+ * @param {object} [options] { pin?, previous?, fixturePath?, sourceText? }
  * @returns {object} { ok, snapshot, validation, diff, shouldWrite, errors? }
  */
 export function syncRegistry(args, options = {}) {
@@ -129,10 +132,9 @@ export function syncRegistry(args, options = {}) {
   const fixturePath = options.fixturePath ?? FIXTURE_PATH;
   const sourcePath = args.source ?? fixturePath;
 
-  let sourceText;
-  if (args.fetch) {
-    sourceText = fetchPinnedSourceSync(pin, fixturePath);
-  } else {
+  // sourceText comes from fetchPinnedSource, which has already checked the pinned hash.
+  let sourceText = options.sourceText;
+  if (sourceText === undefined) {
     sourceText = canonicalSourceText(fs.readFileSync(sourcePath, 'utf8'));
     const digest = sha256(sourceText);
     if (digest !== pin.contentSha256) {
@@ -178,12 +180,6 @@ export function syncRegistry(args, options = {}) {
   };
 }
 
-// Small sync wrapper so syncRegistry stays pure for tests.
-function fetchPinnedSourceSync(pin, fixturePath) {
-  const url = `https://raw.githubusercontent.com/${pin.repository}/${pin.pinnedRevision}/${pin.upstreamFile}`;
-  throw new Error(`sync --fetch requires async fetch; use runSync() instead (${url})`);
-}
-
 /**
  * Async entrypoint used by the CLI. Fetches when requested, then syncs.
  * @param {object} args CLI args
@@ -192,9 +188,10 @@ function fetchPinnedSourceSync(pin, fixturePath) {
 export async function runSync(args, options = {}) {
   const pin = options.pin ?? loadPin();
   if (args.fetch) {
-    await fetchPinnedSource(pin, options.fixturePath ?? FIXTURE_PATH);
+    const sourceText = await fetchPinnedSource(pin, options.fixturePath ?? FIXTURE_PATH, !args.dryRun);
+    return syncRegistry(args, { ...options, sourceText });
   }
-  return syncRegistry({ ...args, fetch: false }, options);
+  return syncRegistry(args, options);
 }
 
 function main() {

@@ -254,3 +254,52 @@ test('registry: no upstream detector code executes — snapshot is pure data', (
   assert.doesNotMatch(text, /existsSync/);
   assert.doesNotMatch(text, /=>/);
 });
+
+test('registry: validate rejects destinations under .git, .github/workflows, and .ssh, and they are not safe additions (#68 B5)', () => {
+  for (const bad of ['.git/hooks', '.github/workflows', '.github/workflows/x', '.ssh/skills', 'a/.git/hooks', '.GIT/hooks', '.SSH']) {
+    assert.match(assertSafePath(bad, 'w') || '', /protected|\.git|\.ssh|workflows/i, bad);
+  }
+  assert.equal(assertSafePath('.github/skills', 'w'), null);
+  assert.equal(assertSafePath('.gitignore-skills/skills', 'w'), null);
+  const host = (destinations) => ({
+    id: 'evil', name: 'evil', displayName: 'Evil', universal: true, universalPrompt: true, destinations,
+    aliases: [], platforms: [], detection: { envVars: [] }, attribution: { upstreamFile: 'src/agents.ts', upstreamLine: 1 },
+  });
+  for (const destinations of [
+    { project: { kind: 'literal', path: '.git/hooks' }, global: { kind: 'none' } },
+    { project: { kind: 'literal', path: '.x/skills' }, global: { kind: 'join', base: 'home', segments: ['.ssh'] } },
+  ]) {
+    const snapshot = { schemaVersion: 1, hosts: [host(destinations)] };
+    assert.equal(validateSnapshot(snapshot).valid, false);
+    const change = diffSnapshots({ hosts: [] }, snapshot).changes[0];
+    assert.equal(change.kind, 'addition');
+    assert.equal(change.authority, 'review');
+  }
+  assert.equal(validateSnapshot(loadSnapshot()).valid, true);
+});
+
+test('registry: sync --dry-run writes nothing, including the fixture, with and without --fetch (#68 B5)', async () => {
+  const pin = loadPin();
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-registry-dry-'));
+  const realFetch = globalThis.fetch;
+  const upstream = fs.readFileSync(FIXTURE, 'utf8');
+  globalThis.fetch = async () => ({ ok: true, status: 200, text: async () => upstream });
+  try {
+    const paths = {
+      fixturePath: path.join(tmpDir, 'agents.ts'),
+      snapshotPath: path.join(tmpDir, 'agent-hosts.json'),
+      pinPath: path.join(tmpDir, 'source.json'),
+    };
+    const dry = await runSync({ fetch: true, dryRun: true, allowReview: true }, { pin, previous: loadSnapshot(), ...paths });
+    assert.equal(dry.ok, true, (dry.errors || []).join('\n'));
+    assert.equal(dry.shouldWrite, false);
+    assert.deepEqual(fs.readdirSync(tmpDir), []);
+
+    const real = await runSync({ fetch: true, allowReview: true }, { pin, previous: loadSnapshot(), ...paths });
+    assert.equal(real.ok, true);
+    assert.deepEqual(fs.readdirSync(tmpDir).sort(), ['agent-hosts.json', 'agents.ts', 'source.json']);
+  } finally {
+    globalThis.fetch = realFetch;
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});

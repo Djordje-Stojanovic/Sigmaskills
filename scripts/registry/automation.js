@@ -107,20 +107,50 @@ export function classifySemanticAuthority(diff) {
   };
 }
 
+/**
+ * True only when a failed gh, npm, or git lookup says the thing does not exist.
+ * A missing binary, a network error, or a 5xx is not "absent".
+ */
+export function isNotFoundError(err) {
+  if (!err || err.code === 'ENOENT') return false;
+  const text = `${err.message || ''}\n${err.stderr || ''}\n${err.stdout || ''}`;
+  return /\bE404\b|\bHTTP 404\b|\b404 Not Found\b|\b(?:release|tag|run|package|version) not found\b|unknown revision/i.test(text);
+}
+
+/** Run a lookup. A 404 gives `absent`; any other error stops the run. */
+export function absentOn404(lookup, absent) {
+  try {
+    return lookup();
+  } catch (err) {
+    if (isNotFoundError(err)) return absent;
+    throw err;
+  }
+}
+
 export function evaluateAutoAuthorization(input) {
   const deniedReasons = [];
   if (input.origin === 'fork') deniedReasons.push('fork pull requests cannot be auto-authorized');
   if (!String(input.headRef || '').startsWith(GENERATED_BRANCH_PREFIX)) {
     deniedReasons.push('human branches cannot be auto-authorized; ref is not a generated registry-sync branch');
   }
-  if (input.headSha && input.expectedGeneratedSha && input.headSha !== input.expectedGeneratedSha) {
+  for (const [name, value] of [
+    ['headSha', input.headSha],
+    ['expectedGeneratedSha', input.expectedGeneratedSha],
+    ['expectedHeadSha', input.expectedHeadSha],
+    ['currentDefaultSha', input.currentDefaultSha],
+  ]) {
+    if (!REVISION_PATTERN.test(String(value || ''))) {
+      deniedReasons.push(`${name} is missing or not a 40-hex SHA; auto-authorization needs every input`);
+    }
+  }
+  if (input.headSha !== input.expectedGeneratedSha) {
     deniedReasons.push('stale generated head cannot be auto-authorized');
   }
-  if (input.currentDefaultSha && input.expectedHeadSha && input.currentDefaultSha !== input.expectedHeadSha) {
+  if (input.currentDefaultSha !== input.expectedHeadSha) {
     deniedReasons.push('moved default branch cannot be auto-authorized');
   }
-  if (input.checkConclusion && input.checkConclusion !== 'success') {
-    deniedReasons.push('failed or incomplete checks cannot be auto-authorized');
+  if (input.checkConclusion !== 'success') {
+    deniedReasons.push('failed, missing, or incomplete checks cannot be auto-authorized');
   }
   if (input.concurrentRun) deniedReasons.push('concurrent registry-sync runs cannot be auto-authorized');
   if (input.fromTrustedWorkflow !== true) {
@@ -136,8 +166,11 @@ export function evaluateAutoAuthorization(input) {
   if (!input.files || input.files.length === 0) {
     deniedReasons.push('generated changes are missing; empty diffs cannot be auto-authorized');
   }
-  if (input.classification && input.classification.autoEligible === false) {
-    deniedReasons.push(...(input.classification.blockedReasons || ['semantic classification is blocked']));
+  if (!input.classification) {
+    deniedReasons.push('semantic classification is missing; it cannot be auto-authorized');
+  } else if (input.classification.autoEligible !== true) {
+    const reasons = input.classification.blockedReasons || [];
+    deniedReasons.push(...(reasons.length > 0 ? reasons : ['semantic classification is blocked']));
   }
   const autoAuthorized = deniedReasons.length === 0;
   return {

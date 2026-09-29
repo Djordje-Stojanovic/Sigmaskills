@@ -13,7 +13,9 @@ import {
   classifySemanticAuthority,
   evaluateAutoAuthorization,
   executeRegistryAutomation,
+  absentOn404,
   formatRegistryPrBody,
+  isNotFoundError,
   inspectRegistrySyncWorkflow,
   planGeneratedBranchCleanup,
   planGeneratedBranchPush,
@@ -610,3 +612,48 @@ test('auto-merge: partial trusted patch success is recoverable and never overwri
   assert.match(clash.errors.join('\n'), /different digest|immutable/i);
 });
 
+
+test('registry automation: auto-authorization denies when a required input is missing or a SHA is not 40-hex (#68 B3)', () => {
+  const eligible = eligibleAuthorization();
+  const missing = ['headSha', 'expectedGeneratedSha', 'expectedHeadSha', 'currentDefaultSha', 'checkConclusion', 'classification'];
+  for (const key of missing) {
+    const input = { ...eligible };
+    delete input[key];
+    const result = evaluateAutoAuthorization(input);
+    assert.equal(result.autoAuthorized, false, key);
+    assert.equal(result.actions.merge, false, key);
+    assert.equal(result.actions.publishNpm, false, key);
+  }
+  for (const key of ['headSha', 'expectedGeneratedSha', 'expectedHeadSha', 'currentDefaultSha']) {
+    const result = evaluateAutoAuthorization({ ...eligible, [key]: 'missing-generated-sha' });
+    assert.equal(result.autoAuthorized, false, key);
+  }
+  const bare = evaluateAutoAuthorization({
+    origin: 'same-repo',
+    headRef: `${GENERATED_BRANCH_PREFIX}abc`,
+    files: [...REGISTRY_ALLOWLIST],
+    fromTrustedWorkflow: true,
+    defaultBranchProtected: true,
+  });
+  assert.equal(bare.autoAuthorized, false);
+});
+
+test('registry automation: only a 404 counts as absent; every other lookup error rethrows (#68 B4)', () => {
+  const failure = (message, extra = {}) => Object.assign(new Error(message), extra);
+  assert.equal(isNotFoundError(failure('Command failed', { stderr: 'npm error code E404\nnpm error 404 Not Found' })), true);
+  assert.equal(isNotFoundError(failure('Command failed', { stderr: 'release not found' })), true);
+  assert.equal(isNotFoundError(failure('Command failed', { stderr: 'HTTP 404: Not Found (https://api.github.com/x)' })), true);
+  assert.equal(isNotFoundError(failure('fatal: ambiguous', { stderr: "fatal: ambiguous argument 'v9': unknown revision or path" })), true);
+  for (const err of [
+    failure('spawnSync gh ENOENT', { code: 'ENOENT' }),
+    failure('Command failed', { stderr: 'HTTP 502: Bad Gateway' }),
+    failure('Command failed', { stderr: 'npm error code ENOTFOUND registry.npmjs.org' }),
+    failure('Command failed', { stderr: 'HTTP 403: rate limit exceeded' }),
+    failure('getaddrinfo EAI_AGAIN'),
+  ]) {
+    assert.equal(isNotFoundError(err), false, err.message + (err.stderr || ''));
+    assert.throws(() => absentOn404(() => { throw err; }, []), (thrown) => thrown === err);
+  }
+  assert.deepEqual(absentOn404(() => { throw failure('x', { stderr: 'E404' }); }, []), []);
+  assert.deepEqual(absentOn404(() => ['0.1.0'], []), ['0.1.0']);
+});
