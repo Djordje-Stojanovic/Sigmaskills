@@ -20,6 +20,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Removed
 
 - **BREAKING CHANGE:** Node.js 20 is no longer supported. `package.json` `engines.node` is now `>=22`, and CI no longer runs a Node.js 20 job. Because this is a breaking change before 1.0.0, the next Release is 0.5.0. (#70)
+- A private homelab plan that did not belong to this project (`.cursor/plans/`). `.cursor/` is now ignored. (#64)
+- Signal handlers in the install transaction that could never run, the unused `MIGRATABLE_KINDS` list, a `keypress` `removeListener` call that removed nothing, and the lossy `injectCustomContent` helper. (#67)
 
 ### Fixed
 
@@ -49,11 +51,6 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - The install lock is released when setup code fails right after the lock is taken. Before, a failure there left the lock behind until its owner stopped. (#67)
 - `CI=false` and `CI=0` now mean "not CI" in the interactive installer, the same as in the `purge` check. (#67)
 - When `update` fails on a later skill, it still lists the skills it already updated after the error message. (#67)
-
-### Removed
-
-- A private homelab plan that did not belong to this project (`.cursor/plans/`). `.cursor/` is now ignored. (#64)
-- Signal handlers in the install transaction that could never run, the unused `MIGRATABLE_KINDS` list, a `keypress` `removeListener` call that removed nothing, and the lossy `injectCustomContent` helper. (#67)
 
 ## [0.4.0] — 2026-09-27
 
