@@ -12,8 +12,8 @@ export const RELEASE_WORKFLOW_FILE = 'release.yml';
 export const RELEASE_ENVIRONMENT = 'release';
 export const RELEASE_DIST_TAG = 'latest';
 export const RELEASE_PACKAGE_NAME = '@djordje-stojanovic/sigmaskills';
-export const CHECKOUT_ACTION_PIN = '11bd71901bbe5b1630ceea73d27597364c9af683';
-export const SETUP_NODE_ACTION_PIN = '49933ea5288caeca8642d1e84afbd3f7d6820020';
+export const CHECKOUT_ACTION_PIN = '3d3c42e5aac5ba805825da76410c181273ba90b1';
+export const SETUP_NODE_ACTION_PIN = '820762786026740c76f36085b0efc47a31fe5020';
 
 function codedError(message, code) {
   const err = new Error(message);

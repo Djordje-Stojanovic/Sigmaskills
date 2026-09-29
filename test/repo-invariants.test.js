@@ -265,6 +265,40 @@ test('CI reads the repository only, pins actions by SHA, and rehearses the Relea
   assert.match(ci, /release-rehearsal:[\s\S]*github\.event\.pull_request\.head\.sha[\s\S]*node \.\/scripts\/release-rehearsal\.js/);
 });
 
+test('release, registry, and rehearsal jobs share one Node LTS patch, need no npm upgrade, and have timeouts', () => {
+  const ci = read('.github/workflows/ci.yml');
+  const release = read('.github/workflows/release.yml');
+  const registry = read('.github/workflows/registry-sync.yml');
+  const rehearsal = ci.match(/release-rehearsal:[\s\S]*?node-version:\s*'([^']+)'/)[1];
+  assert.match(rehearsal, /^24\.\d+\.\d+$/);
+  for (const [name, text] of [['release', release], ['registry-sync', registry]]) {
+    const versions = [...text.matchAll(/node-version:\s*'([^']+)'/g)].map((m) => m[1]);
+    assert.ok(versions.length > 0, `${name}.yml pins Node`);
+    for (const v of versions) assert.equal(v, rehearsal, `${name}.yml must use the rehearsal Node`);
+    assert.doesNotMatch(text, /npm install -g npm@/, `${name}.yml must not install npm on its own`);
+    const jobs = (text.match(/^ {4}runs-on:/gm) || []).length;
+    assert.equal((text.match(/^ {4}timeout-minutes:\s*\d+/gm) || []).length, jobs, `${name}.yml jobs need timeout-minutes`);
+  }
+});
+
+test('Dependabot keeps GitHub Actions pins current in one weekly group', () => {
+  const dependabot = read('.github/dependabot.yml');
+  assert.match(dependabot, /package-ecosystem:\s*github-actions/);
+  assert.match(dependabot, /interval:\s*weekly/);
+  assert.match(dependabot, /groups:/);
+  assert.match(dependabot, /prefix:\s*ci/);
+});
+
+test('bug template and PR template cover the installer CLI', () => {
+  const bug = read('.github/ISSUE_TEMPLATE/01-bug-report.yml');
+  assert.match(bug, /Sigma Installer \(CLI\)/);
+  for (const id of ['cli-version', 'node-version', 'os']) assert.match(bug, new RegExp(`id: ${id}(?:\\s|$)`));
+  const pr = read('.github/pull_request_template.md');
+  assert.match(pr, /- \[ \] `npm test` passes/);
+  assert.match(pr, /- \[ \] CHANGELOG `\[Unreleased\]`/);
+  assert.match(pr, /installer CLI/);
+});
+
 test('GitHub issue kit templates remain present', () => {
   for (const rel of ISSUE_TEMPLATES) {
     assert.ok(exists(path.join('.github', rel)), `missing .github/${rel}`);

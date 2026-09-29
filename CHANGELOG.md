@@ -6,6 +6,9 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
+- CI and release jobs use current actions and Node.js. `actions/checkout` is v7.0.1 and `actions/setup-node` is v7.0.0, both pinned by full SHA. The release, registry-sync, and rehearsal jobs run on Node.js 24.21.0, whose bundled npm 11.19 supports trusted publishing, so the extra `npm install -g npm@11.5.1` step is gone. The `package-manager-cache: false` setting is now a valid input, and the runner no longer warns about Node 20 actions. (#69)
+- `.github/dependabot.yml` opens one weekly pull request to keep the `github-actions` pins current. (#69)
+- The bug template has a "Sigma Installer (CLI)" area and optional fields for CLI version, Node.js version, and OS. The pull request template adds `npm test` and CHANGELOG checkboxes and covers the CLI. Every job in `release.yml` and `registry-sync.yml` has `timeout-minutes: 30`. (#69)
 - The six skills now agree with each other. SigmaShip and SigmaBrief both merge the base branch into a pushed branch (no rebase), use `<base>` (default `main`), delete a squash-merged branch with `git branch -D` only after the PR shows merged, define P1 as SigmaReview does, and use the shell native to the executing machine. In a SigmaShip review round, the `CLEAN | FIXED | BLOCKED` report wins over SigmaBrief's format. The grilling skill is called `/grilling` everywhere. SigmaShip says to write the acceptance criteria by hand when `/to-spec`, `/to-tickets`, or `/grilling` are missing. The README lists these optional companion skills from `mattpocock/skills`. (#65)
 - SigmaBrief examples now use its own dispatch format and generic content. (#65)
 - SigmaRefactor and the README no longer name a private repository, and they say `laloc` is optional. (#65)
