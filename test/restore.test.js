@@ -349,6 +349,41 @@ test('restore: missing, truncated, tampered, schema-incompatible, insufficient-s
   }
 });
 
+test('restore: backup metadata paths that escape the project stop the restore (#67)', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-restore-escape-'));
+  try {
+    const dest = replaceWithOutsideEdit(projectRoot, 'sigmawrite', 'guarded');
+    const metaPath = path.join(backupAbs(projectRoot, 'sigmawrite'), BACKUP_METADATA_NAME);
+    const original = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    const liveBefore = fs.readFileSync(path.join(dest, 'SKILL.md'), 'utf8');
+    const outside = path.join(path.dirname(projectRoot), 'sigma-escaped');
+
+    const tampered = [
+      { ...original, canonicalTarget: '../sigma-escaped' },
+      { ...original, copies: [...(original.copies || []), { destination: '../sigma-escaped', method: 'copy' }] },
+      { ...original, canonicalTarget: path.join(path.dirname(projectRoot), 'sigma-escaped') },
+    ];
+    for (const metadata of tampered) {
+      fs.writeFileSync(metaPath, `${JSON.stringify(metadata, null, 2)}
+`);
+      assert.throws(
+        () => executeRestore({
+          catalog: getCatalog(ROOT),
+          projectRoot,
+          packageRoot: ROOT,
+          skillIds: ['sigmawrite'],
+          yes: true,
+        }),
+        /escapes/,
+      );
+      assert.equal(fs.existsSync(outside), false);
+      assert.equal(fs.readFileSync(path.join(dest, 'SKILL.md'), 'utf8'), liveBefore);
+    }
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
 test('restore: a removed skill returns from portable ownership metadata without claiming unrelated paths', () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-restore-removed-'));
   try {

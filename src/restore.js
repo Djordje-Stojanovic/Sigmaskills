@@ -11,6 +11,7 @@ import {
   verifyBackupIntegrity,
 } from './backup.js';
 import { resolveHomeDir } from './destinations.js';
+import { assertPathInside } from './paths.js';
 import { createSkillLink, pathExists, removeManagedPath } from './links.js';
 import { isForeignProjectLock, FOREIGN_LOCK_NOTICE, loadProjectLock, saveProjectLock, updateProjectLockSkill } from './project-lock.js';
 import { computeSkillRevisionAndHashes } from './revision.js';
@@ -114,6 +115,19 @@ function classifyRestoreSkill(options, skillId) {
   try {
     const verified = verifyBackupIntegrity({ backupDir, skillId });
     const metadata = verified.metadata;
+    // Backup metadata sits on disk where anyone can edit it, so its paths must stay inside the root.
+    const recordedPaths = [
+      metadata.canonicalTarget,
+      ...(Array.isArray(metadata.copies) ? metadata.copies.map((copy) => copy?.destination) : []),
+    ];
+    for (const recorded of recordedPaths) {
+      if (!recorded) continue;
+      try {
+        assertPathInside(root, String(recorded), 'backup metadata path');
+      } catch (err) {
+        throw codedError(err.message, 'unsafe-path');
+      }
+    }
     const canonicalRel = metadata.canonicalTarget || fallbackRel;
     const canonicalAbs = path.resolve(root, ...canonicalRel.split('/'));
     const blockedReasons = [];
