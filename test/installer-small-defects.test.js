@@ -3,8 +3,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { findPackageRoot, getCatalog } from '../src/catalog.js';
 import { runCli } from '../src/cli.js';
 import { isCiEnv } from '../src/interactive.js';
+import { executeProjectInstall } from '../src/transaction.js';
+
+const ROOT = findPackageRoot();
 
 function makeDirs() {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-small-'));
@@ -77,3 +81,15 @@ test('A12: CI counts only when set and not empty, 0, or false in any case', () =
   for (const value of [undefined, '', '0', 'false', 'False', 'FALSE']) assert.equal(isCiEnv({ CI: value }), false, String(value));
   assert.equal(isCiEnv({}), false);
 });
+
+test('A12: the concurrency lock is released when setup code right after taking it throws', withDirs((dirs) => {
+  const catalog = getCatalog(ROOT);
+  const params = { catalog, skillId: 'sigmawrite', projectRoot: dirs.project, homeDir: dirs.home, packageRoot: ROOT };
+  const failing = {
+    ...params,
+    get saveState() { throw new Error('setup exploded'); },
+  };
+  assert.throws(() => executeProjectInstall(failing), /setup exploded/);
+  const retry = executeProjectInstall(params);
+  assert.equal(retry.success, true);
+}));
