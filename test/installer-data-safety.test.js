@@ -116,3 +116,23 @@ test('A2: a crafted purge journal path outside the project is rejected and never
   assert.match(r.stderr, /escapes/);
   assert.equal(fs.readFileSync(path.join(victim, 'precious.txt'), 'utf8'), 'keep me');
 }));
+
+test('A3: restore stops on an unowned host destination and keeps the user files there', withDirs(async (dirs) => {
+  let r = await run(dirs, ['install', 'sigmawrite', '--destination', '.agents/skills', '--destination', '.claude/skills', '--copy']);
+  assert.equal(r.code, 0, r.stderr);
+  for (const root of ['.agents', '.claude']) {
+    fs.writeFileSync(path.join(dirs.project, root, 'skills', 'sigmawrite', 'EDIT.txt'), 'x');
+  }
+  r = await run(dirs, ['uninstall', '--all', '--yes']);
+  assert.equal(r.code, 0, r.stderr);
+
+  const host = path.join(dirs.project, '.claude', 'skills', 'sigmawrite');
+  fs.mkdirSync(host, { recursive: true });
+  fs.writeFileSync(path.join(host, 'MINE.md'), 'unrelated user skill content');
+
+  r = await run(dirs, ['restore', '--skill', 'sigmawrite', '--yes']);
+  assert.notEqual(r.code, 0);
+  assert.match(r.stderr, /occupied-unowned/);
+  assert.deepEqual(fs.readdirSync(host), ['MINE.md']);
+  assert.equal(fs.readFileSync(path.join(host, 'MINE.md'), 'utf8'), 'unrelated user skill content');
+}));

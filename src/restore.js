@@ -141,6 +141,14 @@ function classifyRestoreSkill(options, skillId) {
     if (liveExists && !weOwn) {
       blockedReasons.push('occupied-unowned');
     }
+    const hostCopies = Array.isArray(metadata.copies) ? metadata.copies : [];
+    for (const copy of hostCopies) {
+      const rel = String(copy.destination || '').replace(/\\/g, '/');
+      if (!rel || rel === canonicalRel) continue;
+      if (pathExists(path.resolve(root, ...rel.split('/'))) && ownerOfPath(state, rel) !== skillId) {
+        blockedReasons.push('occupied-unowned');
+      }
+    }
 
     const needed = Math.max(verified.sizeBytes, 1) * 3;
     const statfs = options.statfs || (typeof fs.statfsSync === 'function' ? fs.statfsSync.bind(fs) : null);
