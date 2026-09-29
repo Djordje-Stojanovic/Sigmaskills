@@ -151,3 +151,25 @@ test('A4: a foreign .agents/state.json and .agents/backups are left alone and in
   assert.ok(fs.existsSync(path.join(agents, '.sigmaskills', 'state.json')));
   assert.ok(!fs.existsSync(path.join(agents, '.sigmaskills', 'backups', 'mine.txt')));
 }));
+
+test('A6: reinstalling over an owned link with the wrong target never reports Installed with exit 0', withDirs(async (dirs) => {
+  let r = await run(dirs, ['install', 'sigmawrite', '--destination', '.claude/skills']);
+  assert.equal(r.code, 0, r.stderr);
+
+  const link = path.join(dirs.project, '.claude', 'skills', 'sigmawrite');
+  const other = path.join(dirs.project, 'other');
+  fs.mkdirSync(other);
+  fs.writeFileSync(path.join(other, 'x'), 'x');
+  fs.unlinkSync(link);
+  fs.symlinkSync(other, link, 'junction');
+
+  r = await run(dirs, ['install', 'sigmawrite', '--destination', '.claude/skills']);
+  const repaired = fs.realpathSync(link) === fs.realpathSync(path.join(dirs.project, '.agents', 'skills', 'sigmawrite'));
+  if (r.code === 0) {
+    assert.ok(repaired, 'exit 0 needs a repaired link');
+  } else {
+    assert.match(r.stderr, /wrong-target/);
+    assert.ok(!/Installed/.test(r.stdout));
+  }
+  assert.ok(fs.existsSync(path.join(other, 'x')));
+}));

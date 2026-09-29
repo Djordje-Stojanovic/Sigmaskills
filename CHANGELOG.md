@@ -24,6 +24,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - State and purge-journal paths that escape the project, home, or state folder are rejected when they load, with an error that says the path "escapes" its folder. A crafted `../victim` destination in `state.json` can no longer make `uninstall` or `purge` delete a folder outside the project. (#66)
 - `restore` now stops with `occupied-unowned` when a recorded host destination (for example `.claude/skills/<skill>`) holds files Sigma does not own. Before, it deleted those files and put the skill there. (#66)
 - A foreign `.agents/state.json` or `.agents/backups/` from another tool is no longer moved into the private folder or removed. Those two names count as Sigma's old layout only beside a `state.json` that has Sigma's shape. `install` no longer fails on such a project. (#66)
+- Reinstalling over a Sigma-owned link that points to the wrong target now stops with a `wrong-target` error. Before, it printed "Installed" with exit code 0 and left the wrong link in place. (#66)
 
 ### Removed
 

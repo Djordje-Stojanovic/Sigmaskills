@@ -212,7 +212,8 @@ export function classifySkillPath(params) {
   const isLink = fs.lstatSync(destPath).isSymbolicLink();
   const live = isLink ? inspectLiveSkill(inspected.target || destPath, skillId) : inspectLiveSkill(destPath, skillId);
 
-  if (sigmaOwned && isLink) {
+  // An owned link that points somewhere else is not Sigma's link. It falls through and is not adopted.
+  if (sigmaOwned && isLink && !inspected.wrongTarget) {
     return classified({
       kind: 'sigma-state',
       adoptable: true,
