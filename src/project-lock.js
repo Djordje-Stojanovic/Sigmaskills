@@ -43,6 +43,18 @@ export function inspectProjectLock(projectRoot) {
   return { kind: 'sigma', lock: parsed };
 }
 
+export const FOREIGN_LOCK_NOTICE = 'Project lock: skills-lock.json left alone because another tool owns it.';
+
+/**
+ * True when skills-lock.json exists and belongs to another tool. Sigma never writes to it.
+ *
+ * @param {string} projectRoot
+ * @returns {boolean}
+ */
+export function isForeignProjectLock(projectRoot) {
+  return inspectProjectLock(projectRoot).kind === 'generic';
+}
+
 /**
  * Load the Sigma project lock. Generic `skills-lock.json` files yield an empty Sigma lock.
  *

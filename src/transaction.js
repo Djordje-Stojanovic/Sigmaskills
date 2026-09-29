@@ -5,7 +5,7 @@ import { findPackageRoot, validateSkill } from './catalog.js';
 import { injectCustomContent, injectRawCustomContent } from './customization.js';
 import { commitSkillBackup, exportSkillTree, getBackupRoot, pruneOlderBackups } from './backup.js';
 import { createInstallPlan } from './plan.js';
-import { loadProjectLock, saveProjectLock, updateProjectLockSkill, PROJECT_LOCK_FILENAME } from './project-lock.js';
+import { isForeignProjectLock, loadProjectLock, saveProjectLock, updateProjectLockSkill, PROJECT_LOCK_FILENAME } from './project-lock.js';
 import { resolveHomeDir } from './destinations.js';
 import {
   ensureStateDir,
@@ -138,7 +138,8 @@ export function executeProjectInstall(params) {
   const committed = [];
   const privateBackups = [];
 
-  const useProjectLock = scope !== 'global';
+  const lockLeftAlone = scope !== 'global' && isForeignProjectLock(root);
+  const useProjectLock = scope !== 'global' && !lockLeftAlone;
   const lockPath = path.join(root, PROJECT_LOCK_FILENAME);
   const lockExisted = useProjectLock && fs.existsSync(lockPath);
   const originalLockBytes = lockExisted ? fs.readFileSync(lockPath) : null;
@@ -560,6 +561,7 @@ export function executeProjectInstall(params) {
       dryRun: false,
       plan,
       lock: updatedLock,
+      lockLeftAlone,
       state: updatedState,
     };
   } catch (err) {

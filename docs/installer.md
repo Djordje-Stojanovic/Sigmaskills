@@ -88,7 +88,7 @@ What happens:
 - `--dry-run` shows the plan and writes nothing.
 - `--json` prints the plan as JSON.
 
-Several skills install in one transaction. The installer plans every skill first. If one skill fails, none stay installed. It writes `skills-lock.json` once. With `--json`, several skills print `{ "schemaVersion": 1, "plans": [...] }`, and one skill prints one plan.
+Several skills install in one transaction. The installer plans every skill first. If one skill fails, none stay installed. It writes `skills-lock.json` once. If `skills-lock.json` already exists and belongs to another tool (it has no Sigma `schemaVersion`), the installer leaves that file byte-identical, prints a notice, and skips the lock update. This holds for `install`, `uninstall`, and `restore`. The skill work itself still succeeds. With `--json`, several skills print `{ "schemaVersion": 1, "plans": [...] }`, and one skill prints one plan.
 
 The installer checks input before it plans anything:
 
