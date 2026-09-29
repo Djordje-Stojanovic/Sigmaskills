@@ -13,8 +13,11 @@ Sigmaskills/
 ├── scripts/                  Test runner, skill evals, release, and registry automation (not published)
 ├── registry/                 Agent Host registry and Release baselines
 ├── docs/                     Guides, decision records, audits
+│   └── agents/               Issue tracker, triage, and domain notes for agents
 ├── test/                     npm test
 ├── .github/                  Issue forms · PR template · CI
+├── .agents/skills/           Vendored dev skills for people who work here (not shipped)
+├── skills-lock.json          Pins those dev skills; see below
 ├── sigmareview/              SKILL.md · agents/ · references/
 ├── sigmaimprove/             SKILL.md · agents/ · references/
 ├── sigmabrief/               SKILL.md · agents/ · references/
@@ -24,6 +27,12 @@ Sigmaskills/
 ```
 
 Each top-level folder with a `SKILL.md` is one installable skill. The folder name, the frontmatter `name`, and the `--skill` id are the same.
+
+### Dev skills and `skills-lock.json`
+
+`.agents/skills/` holds 25 dev skills vendored from `mattpocock/skills`. They help maintainers and agents work in this repository. They are not part of the Skill Pack, and the npm package does not ship them.
+
+`skills-lock.json` pins them. It also does a second job: `npx skills add Djordje-Stojanovic/Sigmaskills --all` (the `vercel-labs/skills` CLI) skips skills that the lock lists. Without the lock, that command would offer these 25 dev skills to users. Do not delete the lock or remove entries from it.
 
 ## Tests and CI
 
@@ -50,6 +59,11 @@ Change these together in one pull request:
 - the CHANGELOG.
 
 If one is missing, CI fails on purpose.
+
+### Registry scripts
+
+- `npm run registry:sync` rebuilds `registry/agent-hosts.json` from the pinned `vercel-labs/skills` revision. Flags: `--fetch` (download the pinned revision), `--dry-run`, `--allow-review` (write even when the diff needs owner review).
+- `npm run registry:validate` checks the snapshot against `registry/schema.json` and the safety rules. `npm test` runs the same checks.
 
 ## Releases
 

@@ -8,4 +8,4 @@ The Sigma Installer is about 11,000 lines of code that deliver about 100 KB of M
 
 ## Consequences
 
-0.4.0 ships with no flag migration, so no user script breaks in this Release. New installer features need a written reason that names the user problem. The flag merge is tracked as its own ticket.
+0.4.0 ships with no flag migration, so no user script breaks in this Release. New installer features need a written reason that names the user problem. The flag merge was tracked as ticket #51. That ticket was closed as not planned, so the four `--adopt-*` flags stay as they are and nothing merges them for now.
