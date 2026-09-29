@@ -136,3 +136,18 @@ test('A3: restore stops on an unowned host destination and keeps the user files 
   assert.deepEqual(fs.readdirSync(host), ['MINE.md']);
   assert.equal(fs.readFileSync(path.join(host, 'MINE.md'), 'utf8'), 'unrelated user skill content');
 }));
+
+test('A4: a foreign .agents/state.json and .agents/backups are left alone and install succeeds', withDirs(async (dirs) => {
+  const agents = path.join(dirs.project, '.agents');
+  fs.mkdirSync(path.join(agents, 'backups'), { recursive: true });
+  const foreignState = JSON.stringify({ other: 'tool', data: [1, 2, 3] });
+  fs.writeFileSync(path.join(agents, 'state.json'), foreignState);
+  fs.writeFileSync(path.join(agents, 'backups', 'mine.txt'), 'other tool backup');
+
+  const r = await run(dirs, ['install', 'sigmawrite']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(fs.readFileSync(path.join(agents, 'state.json'), 'utf8'), foreignState);
+  assert.equal(fs.readFileSync(path.join(agents, 'backups', 'mine.txt'), 'utf8'), 'other tool backup');
+  assert.ok(fs.existsSync(path.join(agents, '.sigmaskills', 'state.json')));
+  assert.ok(!fs.existsSync(path.join(agents, '.sigmaskills', 'backups', 'mine.txt')));
+}));
