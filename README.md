@@ -6,7 +6,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 
 | | |
 |---|---|
-| **Release** | [**v0.4.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.4.0) |
+| **Release** | [**v0.5.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.5.0) |
 | **Changelog** | [CHANGELOG.md](CHANGELOG.md) |
 | **License** | [MIT](LICENSE) |
 | **Spec** | [agentskills.io](https://agentskills.io/) |
@@ -106,7 +106,7 @@ Pick one method. The [installer guide](https://github.com/Djordje-Stojanovic/Sig
 | **Codex** | `$skill-installer install <id> from https://github.com/Djordje-Stojanovic/Sigmaskills` | Codex only |
 | **Manual copy** | `git clone` this repository, then copy `<id>/` into `~/.agents/skills/` | Air-gapped machines and hosts that only watch a folder |
 
-Every [GitHub Release](https://github.com/Djordje-Stojanovic/Sigmaskills/releases) matches the npm package of the same version.
+Every [GitHub Release](https://github.com/Djordje-Stojanovic/Sigmaskills/releases) from 0.2.0 on is also on npm, except 0.2.1.
 
 ---
 
@@ -149,7 +149,7 @@ $sigmarefactor
 </tr>
 </table>
 
-**Claude Code · Cursor · OpenCode · ChatGPT/Codex UI · Reasonix-class · Kimi/Muse · others:** use the skill picker, an `@` or `$` mention, or whatever the product documents for Agent Skills. The folder name is the skill id and the call token.
+**Claude Code · Cursor · OpenCode · ChatGPT/Codex UI · Reasonix · Kimi Code CLI · others:** use the skill picker, an `@` or `$` mention, or whatever the product documents for Agent Skills. The folder name is the skill id and the call token.
 
 | Skill | Typical input | Notes |
 |-------|---------------|-------|

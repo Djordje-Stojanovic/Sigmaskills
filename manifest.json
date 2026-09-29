@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "sigmaskills",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Portable Agent Skills monorepo and first-party Sigma Installer",
   "skills": [
     {
