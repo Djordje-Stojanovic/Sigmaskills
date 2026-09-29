@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { acquireFileLock } from './concurrency-lock.js';
 import path from 'node:path';
 import { findPackageRoot, validateSkill } from './catalog.js';
-import { injectCustomContent, injectRawCustomContent } from './customization.js';
+import { injectRawCustomContent } from './customization.js';
 import { commitSkillBackup, exportSkillTree, getBackupRoot, pruneOlderBackups } from './backup.js';
 import { createInstallPlan } from './plan.js';
 import { isForeignProjectLock, loadProjectLock, saveProjectLock, updateProjectLockSkill, PROJECT_LOCK_FILENAME } from './project-lock.js';
@@ -427,7 +427,7 @@ export function executeProjectInstall(params) {
           const current = fs.readFileSync(skillMd, 'utf8');
           fs.writeFileSync(
             skillMd,
-            injectCustomContent(current, dest.customization.customContent || '', skillId),
+            injectRawCustomContent(current, dest.customization.rawCustomContent ?? '\n', skillId),
             'utf8',
           );
         }

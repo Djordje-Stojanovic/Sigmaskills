@@ -6,7 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { exportSkillTree } from '../src/backup.js';
 import { getCatalog, findPackageRoot } from '../src/catalog.js';
-import { CUSTOM_BLOCK_END, CUSTOM_BLOCK_START, extractCustomContent, injectCustomContent } from '../src/customization.js';
+import { CUSTOM_BLOCK_END, CUSTOM_BLOCK_START, extractCustomContent, injectRawCustomContent } from '../src/customization.js';
 import { createInstallPlan, formatPlanHuman } from '../src/plan.js';
 import { loadProjectLock, PROJECT_LOCK_FILENAME } from '../src/project-lock.js';
 import { getProjectStateDir, loadProjectState, STATE_FILENAME } from '../src/state.js';
@@ -208,7 +208,7 @@ test('install: valid customization is preserved on replace; malformed markers st
     plantSkill(dest);
     const skillMd = path.join(dest, 'SKILL.md');
     const official = fs.readFileSync(skillMd, 'utf8');
-    fs.writeFileSync(skillMd, injectCustomContent(official, 'Always prefer tables.\n', 'sigmawrite'), 'utf8');
+    fs.writeFileSync(skillMd, injectRawCustomContent(official, '\nAlways prefer tables.\n', 'sigmawrite'), 'utf8');
 
     const catalog = getCatalog(ROOT);
     executeProjectInstall({

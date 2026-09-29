@@ -6,7 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { getCatalog, findPackageRoot } from '../src/catalog.js';
 import { runCli } from '../src/cli.js';
-import { injectCustomContent } from '../src/customization.js';
+import { injectRawCustomContent } from '../src/customization.js';
 import {
   UNIVERSAL_PROJECT_DESTINATION,
   listProjectDestinationGroups,
@@ -124,7 +124,7 @@ test('status: valid Skill Customization is drift without corruption', () => {
   try {
     installWrite(projectRoot, 'sigmawrite');
     const skillMd = path.join(projectRoot, '.agents', 'skills', 'sigmawrite', 'SKILL.md');
-    const next = injectCustomContent(fs.readFileSync(skillMd, 'utf8'), 'Prefer short answers.\n');
+    const next = injectRawCustomContent(fs.readFileSync(skillMd, 'utf8'), '\nPrefer short answers.\n');
     fs.writeFileSync(skillMd, next, 'utf8');
 
     const report = collectStatus({

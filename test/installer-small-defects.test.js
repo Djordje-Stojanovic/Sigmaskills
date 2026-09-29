@@ -54,3 +54,19 @@ test('A9: a project lock with a newer schemaVersion fails the install without a 
   assert.equal(fs.readFileSync(lockPath, 'utf8'), NEWER_LOCK);
   assert.equal(fs.existsSync(path.join(dirs.project, '.agents', 'skills', 'sigmawrite')), false);
 }));
+
+test('A10: replacing a changed skill keeps a CRLF customization block byte for byte', withDirs(async (dirs) => {
+  assert.equal((await run(dirs, ['install', 'sigmawrite'])).code, 0);
+  const skillDir = path.join(dirs.project, '.agents', 'skills', 'sigmawrite');
+  const skillMd = path.join(skillDir, 'SKILL.md');
+  const raw = '\r\nmy rule\r\nsecond\r\n';
+  const block = /<sigmaskills-custom>[\s\S]*<\/sigmaskills-custom>/;
+  fs.writeFileSync(skillMd, fs.readFileSync(skillMd, 'utf8').replace(block, () => `<sigmaskills-custom>${raw}</sigmaskills-custom>`));
+  fs.writeFileSync(path.join(skillDir, 'EXTRA.txt'), 'x');
+
+  const replaced = await run(dirs, ['install', 'sigmawrite', '--adopt-changed', 'replace']);
+  assert.equal(replaced.code, 0, replaced.stderr);
+  assert.equal(fs.existsSync(path.join(skillDir, 'EXTRA.txt')), false);
+  const after = /<sigmaskills-custom>([\s\S]*)<\/sigmaskills-custom>/.exec(fs.readFileSync(skillMd, 'utf8'));
+  assert.equal(after[1], raw);
+}));
