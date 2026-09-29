@@ -40,7 +40,7 @@ test('plan: default Project Installation resolves only the universal destination
     assert.equal(plan.destinations[0].destination, path.resolve(projectRoot, '.agents', 'skills', 'sigmawrite'));
     assert.ok(plan.destinations[0].hosts.some((host) => host.id === 'codex'));
     assert.ok(plan.destinations[0].hosts.some((host) => host.id === 'cursor'));
-    assert.ok(!plan.destinations[0].hosts.some((host) => host.id === 'pi'));
+    assert.ok(plan.destinations[0].hosts.some((host) => host.id === 'pi'));
 
     const human = formatPlanHuman(plan);
     assert.match(human, /Resolved destinations:/);

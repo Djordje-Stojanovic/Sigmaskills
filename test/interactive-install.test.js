@@ -315,17 +315,17 @@ test('escape, EOF, Ctrl+C, and confirmation cancellation write nothing and resto
 test('interactive destinations keep every Agent Host searchable and never auto-select host-specific paths', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-search-'));
   try {
-    const io = createTerminalIo(' \rp\x1b\x1b');
+    const io = createTerminalIo(' \rclaude\x1b\x1b');
     const code = await runCli(['--static', '--no-color', '--project', projectRoot], io);
 
     assert.equal(code, 0);
     const output = io.getStdout();
-    assert.match(output, /Search: p/);
-    assert.match(output, /Pi \(pi\)/);
-    assert.match(output, /\.pi\/skills/);
+    assert.match(output, /Search: claude/);
+    assert.match(output, /Claude Code \(claude-code\)/);
+    assert.match(output, /\.claude\/skills/);
     assert.match(output, /\/search/);
     assert.ok(!fs.existsSync(path.join(projectRoot, '.agents')));
-    assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));
+    assert.ok(!fs.existsSync(path.join(projectRoot, '.claude')));
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }

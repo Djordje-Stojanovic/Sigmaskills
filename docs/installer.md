@@ -41,7 +41,7 @@ npx @djordje-stojanovic/sigmaskills
 
 The installer reads the Skill Pack from `manifest.json` and the Agent Host registry that ships with it. It opens straight to the skill picker, under a small Sigma heading in the warm LAPI palette. Each skill shows its short description (`short_description` in `agents/openai.yaml`) on at most two lines.
 
-Next, you choose destinations. Only the universal `.agents/skills/` folder is selected by default. The installer lists the Agent Hosts that read that folder. Host folders such as `.claude/skills` or `.pi/skills` stay unselected until you choose them, even for detected hosts. Search finds every supported Agent Host, detected or not. A destination page shows at most eight rows and fits the terminal height. The first Escape on this page clears the search; a second Escape cancels.
+Next, you choose destinations. Only the universal `.agents/skills/` folder is selected by default. The installer lists the Agent Hosts that read that folder. Host folders such as `.claude/skills` stay unselected until you choose them, even for detected hosts. Search finds every supported Agent Host, detected or not. A destination page shows at most eight rows and fits the terminal height. The first Escape on this page clears the search; a second Escape cancels.
 
 If you chose a host folder, the next page is the Link/Copy page. **Link** (the default) keeps one canonical copy in `.agents/skills` and links the host folder to it. **Copy** writes a full copy into each host folder. If you chose only `.agents/skills`, this page does not appear.
 
@@ -373,9 +373,8 @@ Point other hosts at the same folders, or copy again:
 
 | Host family | Typical skills path |
 |-------------|---------------------|
-| Universal / Codex-style | `~/.agents/skills/<id>/` |
+| Universal (Codex-style hosts, Pi) | `~/.agents/skills/<id>/` |
 | Cursor | `~/.cursor/skills/<id>/` or project `.agents/skills/` |
 | Claude Code | `~/.claude/skills/<id>/` |
-| Pi / LAPI-style | `~/.pi/agent/skills/<id>/` |
 | OpenCode | `~/.config/opencode/skills/<id>/` |
 | Codex | `~/.codex/skills/<id>/` |
