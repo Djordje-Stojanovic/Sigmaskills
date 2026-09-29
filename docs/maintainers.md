@@ -46,7 +46,7 @@ They cover the installer, the package contents, and the repository itself: the s
 
 `npm test` also checks each skill's output contract against good and bad sample outputs, and checks that near-miss prompts reach the right skill. To run the skills themselves on a small fixture game, use `node scripts/eval-skills.js [skill...]`. It calls Claude Code, costs money, and stays out of CI. The [skill evals guide](evals.md) has the method and the latest results.
 
-CI runs the same suite on Windows, macOS, and Linux with Node.js 22 and 24, plus Node.js 20 on Linux. It runs on every pull request and every push to `main`. The jobs use real junctions and symbolic links, copy fallback, different shells, and an isolated temporary file system. CI runs with a read-only token and pins every action to a full commit SHA.
+CI runs the same suite on Windows, macOS, and Linux with Node.js 22 and 24, plus Node.js 20 on Linux. It runs on every pull request and every push to `main`. The jobs use real junctions and symbolic links, copy fallback, different shells, and an isolated temporary file system. CI runs with a read-only token and pins every action to a full commit SHA. Dependabot opens one weekly pull request to bump the pinned actions (`.github/dependabot.yml`). The release, registry-sync, and rehearsal jobs run on Node.js 24.21.0. Its bundled npm (11.19) supports trusted publishing, so no job installs npm on its own. Keep the rehearsal on the same Node.js as `release.yml`.
 
 ### Adding, renaming, or removing a skill
 
@@ -102,6 +102,7 @@ The trusted `release.yml` workflow then checks everything again on its own:
 - Validation runs with `contents: read` only.
 - Only the final job gets `id-token: write`, `contents: write`, and the protected `release` environment.
 - Every action is pinned by commit SHA.
+- Every job has a 30-minute timeout.
 
 Publishing fails closed, with setup guidance, when the npm name is not reserved, the trusted publisher or environment protection is missing, or a version, tag, or GitHub Release conflicts. A matching npm provenance or an existing GitHub Release at the same commit is skipped. It is never overwritten or duplicated.
 
