@@ -554,11 +554,23 @@ function applyCanonicalRepair(skill, options) {
 
 /**
  * Apply a planned update through the shared install transaction.
+ * When a later skill fails, the thrown error carries `updatedSkills`: the results of skills already done.
  *
  * @param {object} options
  * @returns {object}
  */
 export function executeUpdate(options = {}) {
+  const updated = [];
+  try {
+    return runUpdate(options, updated);
+  } catch (err) {
+    // Skills that finished before the failure stay updated, so the caller can still report them.
+    if (updated.length > 0) err.updatedSkills = updated;
+    throw err;
+  }
+}
+
+function runUpdate(options, updated) {
   migrateStateForCommand(options);
   const plan = createUpdatePlan(options);
   const requested = Array.isArray(options.skillIds) ? options.skillIds.filter(Boolean) : [];
@@ -601,7 +613,7 @@ export function executeUpdate(options = {}) {
     skipped: skipped.map((skill) => skill.id),
     outsideEdit,
     malformedMarkers,
-    results: [],
+    results: updated,
   };
 
   if (options.dryRun) return result;

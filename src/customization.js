@@ -270,6 +270,7 @@ export function inspectCustomizationBlock(markdownContent, skillId = 'skill') {
     return {
       status: result.customContent ? 'valid' : 'empty',
       customContent: result.customContent,
+      rawCustomContent: result.rawCustomContent,
     };
   } catch (err) {
     return { status: 'malformed', error: err.message };
@@ -315,27 +316,6 @@ export function injectRawCustomContent(baseMarkdownContent, rawCustomContent, sk
   const startIndex = baseMarkdownContent.indexOf(CUSTOM_BLOCK_START);
   const endIndex = baseMarkdownContent.indexOf(CUSTOM_BLOCK_END);
   return `${baseMarkdownContent.slice(0, startIndex + CUSTOM_BLOCK_START.length)}${rawCustomContent}${baseMarkdownContent.slice(endIndex)}`;
-}
-
-/**
- * Inject user-customized instructions into a base skill markdown string.
- *
- * @param {string} baseMarkdownContent
- * @param {string} customContent
- * @param {string} [skillId]
- * @returns {string}
- */
-export function injectCustomContent(baseMarkdownContent, customContent, skillId = 'skill') {
-  validateCustomizationBlock(baseMarkdownContent, skillId);
-
-  const startIndex = baseMarkdownContent.indexOf(CUSTOM_BLOCK_START);
-  const endIndex = baseMarkdownContent.indexOf(CUSTOM_BLOCK_END);
-
-  const before = baseMarkdownContent.slice(0, startIndex + CUSTOM_BLOCK_START.length);
-  const after = baseMarkdownContent.slice(endIndex);
-
-  const formattedCustom = customContent ? `\n${customContent}` : '\n';
-  return `${before}${formattedCustom}${after}`;
 }
 
 export function escapeRegExp(string) {

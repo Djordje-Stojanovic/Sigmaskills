@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { isPathInside } from './paths.js';
 
 /**
  * Recommended on-disk link method for this operating system.
@@ -24,11 +25,6 @@ export function pathExists(destPath) {
     if (err.code === 'ENOENT' || err.code === 'ENOTDIR') return false;
     throw err;
   }
-}
-
-function isInsideProject(projectRoot, absolutePath) {
-  const relative = path.relative(path.resolve(projectRoot), path.resolve(absolutePath));
-  return relative === '' || (relative && !relative.startsWith('..') && !path.isAbsolute(relative));
 }
 
 /**
@@ -111,10 +107,10 @@ export function createSkillLink(linkPath, targetPath, projectRoot) {
   const method = recommendedLinkMethod();
 
   if (projectRoot) {
-    if (!isInsideProject(projectRoot, resolvedLink)) {
+    if (!isPathInside(projectRoot, resolvedLink)) {
       throw new Error(`link destination '${resolvedLink}' escapes the project`);
     }
-    if (!isInsideProject(projectRoot, resolvedTarget)) {
+    if (!isPathInside(projectRoot, resolvedTarget)) {
       throw new Error(`link target '${resolvedTarget}' escapes the project`);
     }
   }

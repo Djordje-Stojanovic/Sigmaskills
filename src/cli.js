@@ -1,6 +1,6 @@
 import { getCatalog, findPackageRoot } from './catalog.js';
 import { formatPlanHuman, formatPlanJson } from './plan.js';
-import { runProjectInstaller } from './interactive.js';
+import { isCiEnv, runProjectInstaller } from './interactive.js';
 import { collectStatus, formatStatusHuman, formatStatusJson } from './status.js';
 import { executeUpdate, formatUpdateHuman, formatUpdateJson } from './update.js';
 import { FOREIGN_LOCK_NOTICE } from './project-lock.js';
@@ -272,9 +272,8 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       const stdin = io.stdin || process.stdin;
       let confirmPurge = opts.confirmPurge;
       if (!opts.dryRun && confirmPurge === undefined) {
-        const ci = env.CI;
         const nonInteractive = Boolean(opts.json)
-          || (ci !== undefined && ci !== '' && ci !== '0' && String(ci).toLowerCase() !== 'false')
+          || isCiEnv(env)
           || !stdin.isTTY;
         if (nonInteractive) {
           writeErr('sigmaskills error: purge requires --confirm-purge with the typed confirmation phrase; --yes, CI, non-TTY, and JSON are not authority');
@@ -547,6 +546,9 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     return 1;
   } catch (err) {
     writeErr(`sigmaskills error: ${err.message}`);
+    if (err.updatedSkills) {
+      writeErr(`Updated before the failure: ${err.updatedSkills.map((entry) => entry.id).join(', ')}`);
+    }
     if (err.linkFailure) {
       writeErr(`Link failed for '${err.linkFailure.relativeDestination || err.linkFailure.destination}'.`);
       writeErr('The installer did not change method. Re-run with --copy to install a complete managed copy at this destination.');

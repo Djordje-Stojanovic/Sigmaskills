@@ -17,6 +17,17 @@ import {
 } from './destinations.js';
 import { recommendedLinkMethod } from './links.js';
 
+/**
+ * CI counts only when the variable is set and is not empty, '0', or 'false' in any case.
+ *
+ * @param {NodeJS.ProcessEnv} env
+ * @returns {boolean}
+ */
+export function isCiEnv(env) {
+  const ci = env?.CI;
+  return ci !== undefined && ci !== '' && ci !== '0' && String(ci).toLowerCase() !== 'false';
+}
+
 export const EMBERFORGE_PALETTE = Object.freeze({
   base: '#1a1714',
   crust: '#0e0c0a',
@@ -134,7 +145,7 @@ class TerminalRenderer {
       options.static ||
       options.json ||
       this.noColor ||
-      this.env.CI ||
+      isCiEnv(this.env) ||
       !this.stdin.isTTY ||
       !this.stdout.isTTY,
     );
@@ -343,7 +354,6 @@ class KeyInput {
   close() {
     if (this.closed) return;
     this.closed = true;
-    this.stdin.removeListener('keypress', this.onKeypress);
     if (this.lines) {
       this.lines.removeListener('close', this.onEnd);
       this.lines.close();

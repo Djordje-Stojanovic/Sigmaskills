@@ -378,6 +378,40 @@ test('update: independent managed copies receive the canonical customization tog
   }
 });
 
+test('update: a failure on a later skill still reports the skills already updated (#67)', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-partial-'));
+  try {
+    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmawrite');
+    ageOfficial(projectRoot, 'sigmabrief');
+    const writeMd = path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md');
+    fs.writeFileSync(writeMd, fs.readFileSync(writeMd, 'utf8').replace('<sigmaskills-custom>', '<sigmaskills-custom>\n<sigmaskills-custom>'), 'utf8');
+
+    assert.throws(
+      () => executeUpdate({
+        catalog: getCatalog(ROOT),
+        projectRoot,
+        packageRoot: ROOT,
+        malformedMarkers: 'repair',
+        skillIds: ['sigmabrief', 'sigmawrite'],
+      }),
+      (err) => /invalid repair/.test(err.message)
+        && err.updatedSkills.length === 1
+        && err.updatedSkills[0].id === 'sigmabrief'
+        && err.updatedSkills[0].success === true,
+    );
+
+    ageOfficial(projectRoot, 'sigmabrief');
+    const io = createMockIo();
+    const code = await runCli(['update', '--yes', '--malformed-markers', 'repair', '--project', projectRoot], io);
+    assert.equal(code, 1);
+    assert.match(io.getStderr(), /invalid repair/);
+    assert.match(io.getStderr(), /Updated before the failure: sigmabrief/);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
 test('update: unknown schema, missing bundled revision, and unsafe drift do not mutate', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-stop-'));
   try {

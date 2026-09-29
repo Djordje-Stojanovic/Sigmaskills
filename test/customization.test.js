@@ -7,7 +7,6 @@ import {
   validateCustomizationBlock,
   extractCustomContent,
   extractRawCustomContent,
-  injectCustomContent,
   injectRawCustomContent,
   diagnoseCustomizationMarkers,
   applyProposedRepair,
@@ -107,10 +106,11 @@ test('customization: raw bytes between tags survive inject including CRLF and no
   );
 });
 
-test('customization: injectCustomContent replaces custom block byte-for-byte', () => {
+test('customization: injectRawCustomContent replaces the custom block and extractCustomContent reads it back', () => {
   const base = `# Sample Skill\n\n${SECTION_HEADING}\n\n${CUSTOM_BLOCK_START}\n${CUSTOM_BLOCK_END}\n`;
   const custom = 'My specific instructions.\nLine 2.\n';
-  const injected = injectCustomContent(base, custom);
+  const injected = injectRawCustomContent(base, `
+${custom}`);
   assert.equal(
     injected,
     `# Sample Skill\n\n${SECTION_HEADING}\n\n${CUSTOM_BLOCK_START}\n${custom}${CUSTOM_BLOCK_END}\n`,

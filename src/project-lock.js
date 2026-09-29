@@ -80,6 +80,9 @@ export function validateProjectLock(lock) {
   if (typeof lock.schemaVersion !== 'number' || lock.schemaVersion < 1) {
     throw new Error('invalid project lock: missing or invalid schemaVersion');
   }
+  if (lock.schemaVersion > PROJECT_LOCK_SCHEMA_VERSION) {
+    throw new Error(`invalid project lock: schemaVersion ${lock.schemaVersion} is newer than the supported version ${PROJECT_LOCK_SCHEMA_VERSION}; update SigmaSkills`);
+  }
   if (lock.release !== null && typeof lock.release !== 'string') {
     throw new Error('invalid project lock: release must be string or null');
   }

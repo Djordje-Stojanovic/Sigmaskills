@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { walkLiveFiles } from './backup.js';
 import { findPackageRoot } from './catalog.js';
+import { isPathInside } from './paths.js';
 import { inspectCustomizationBlock, CUSTOM_BLOCK_END, CUSTOM_BLOCK_START } from './customization.js';
 import {
   UNIVERSAL_PROJECT_DESTINATION,
@@ -131,11 +132,6 @@ function classifyLiveTree({ liveFiles, bundledFiles, skillId, skillMarkdown, bun
   };
 }
 
-function isInsideRoot(root, absolutePath) {
-  const relative = path.relative(path.resolve(root), path.resolve(absolutePath));
-  return relative === '' || (Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative));
-}
-
 function inspectLink(destPath, ownedAbsPaths, expectedTarget, root) {
   const method = recommendedLinkMethod();
   let raw;
@@ -148,7 +144,7 @@ function inspectLink(destPath, ownedAbsPaths, expectedTarget, root) {
   const resolved = path.resolve(path.dirname(destPath), raw);
   const ownedHit = ownedAbsPaths.some((owned) => samePath(owned, resolved));
   if (!ownedHit) {
-    if (!isInsideRoot(root, resolved)) {
+    if (!isPathInside(root, resolved)) {
       return { method, wrongTarget: true, target: resolved };
     }
     if (!pathExists(resolved)) {

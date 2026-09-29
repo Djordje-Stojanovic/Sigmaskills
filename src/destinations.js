@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { findPackageRoot } from './catalog.js';
 import { inspectManagedPath, pathExists } from './links.js';
+import { isPathInside } from './paths.js';
 
 export const UNIVERSAL_PROJECT_DESTINATION = '.agents/skills';
 
@@ -150,11 +151,6 @@ export function searchHosts(groups, query) {
   });
 }
 
-function isInsideProject(projectRoot, absolutePath) {
-  const relative = path.relative(path.resolve(projectRoot), path.resolve(absolutePath));
-  return relative === '' || (relative && !relative.startsWith('..') && !path.isAbsolute(relative));
-}
-
 /**
  * Resolve one skill folder under a project destination root.
  *
@@ -170,7 +166,7 @@ export function resolveSkillPath(projectRoot, relativeRoot, skillId) {
   }
 
   const destination = path.resolve(projectRoot, ...normalizedRoot.split('/'), skillId);
-  if (!isInsideProject(projectRoot, destination)) {
+  if (!isPathInside(projectRoot, destination)) {
     throw new Error(`invalid destination '${relativeRoot}': resolved path escapes the project`);
   }
 
@@ -223,11 +219,6 @@ function isFilesystemRoot(absolutePath) {
   return resolved === parsed.root || posixPath(resolved) === '/' || /^[A-Za-z]:[\\/]?$/.test(resolved);
 }
 
-function isInsideHome(homeDir, absolutePath) {
-  const relative = path.relative(path.resolve(homeDir), path.resolve(absolutePath));
-  return relative === '' || (relative && !relative.startsWith('..') && !path.isAbsolute(relative));
-}
-
 function assertSafeUserPath(homeDir, absolutePath, label, { allowHome = false } = {}) {
   const resolved = path.resolve(absolutePath);
   if (isUncPath(resolved) || isUncPath(absolutePath)) {
@@ -236,7 +227,7 @@ function assertSafeUserPath(homeDir, absolutePath, label, { allowHome = false } 
   if (isFilesystemRoot(resolved)) {
     throw new Error(`invalid destination '${label}': filesystem root`);
   }
-  if (!isInsideHome(homeDir, resolved)) {
+  if (!isPathInside(homeDir, resolved)) {
     throw new Error(`invalid destination '${label}': resolved path escapes the user home`);
   }
   if (!allowHome && path.resolve(resolved) === path.resolve(homeDir)) {
@@ -298,7 +289,7 @@ export function expandGlobalDestination(formula, homeDir, env = process.env) {
       }
       const probeParts = splitSafeSegments(option.probe, label);
       const probePath = path.resolve(base, ...probeParts);
-      if (isInsideHome(homeDir, probePath) && fs.existsSync(probePath)) {
+      if (isPathInside(homeDir, probePath) && fs.existsSync(probePath)) {
         return expandGlobalDestination(option.formula, homeDir, env);
       }
     }
@@ -312,7 +303,7 @@ function expandGlobalRelativeRoot(formula, homeDir, env) {
     const absoluteRoot = expandGlobalDestination(formula, homeDir, env);
     if (!absoluteRoot) return null;
     const relativeRoot = path.relative(path.resolve(homeDir), absoluteRoot).replace(/\\/g, '/');
-    if (!relativeRoot || relativeRoot.startsWith('..') || path.isAbsolute(relativeRoot)) return null;
+    if (!relativeRoot || !isPathInside(homeDir, absoluteRoot)) return null;
     return { relativeRoot, absoluteRoot };
   } catch {
     return null;

@@ -27,10 +27,18 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - Reinstalling over a Sigma-owned link that points to the wrong target now stops with a `wrong-target` error. Before, it printed "Installed" with exit code 0 and left the wrong link in place. (#66)
 - `status`, `update`, and `uninstall` now classify a link that a user added inside a skill the same way, as a local addition. They share one tree walker. Before, `status` and `uninstall` called such a skill clean while `update` called it changed. (#66)
 - `--adopt-* replace` and `--adopt-* export` over a junction or symlink now work. The backup or export holds the folder the link points to, and the backup passes the integrity check. Before, both failed with `EEXIST`. (#66)
+- A project `skills-lock.json` with a newer `schemaVersion` than Sigma supports now stops the command with an error. Before, Sigma read it as version 1 and wrote it back without the newer fields. (#67)
+- Replacing a changed skill (`--adopt-* replace`, `update --outside-edit replace`) keeps the customization block byte for byte. A block that began with a Windows line ending lost one byte before. (#67)
+- A destination folder whose name starts with two dots, such as `..cache/skills`, is accepted. `..`, `../x`, and absolute paths that leave the project or home are still rejected. One shared check now does this everywhere. (#67)
+- `restore` rejects a backup whose metadata names a `canonicalTarget` or a copy destination outside the project or home folder. (#67)
+- The install lock is released when setup code fails right after the lock is taken. Before, a failure there left the lock behind until its owner stopped. (#67)
+- `CI=false` and `CI=0` now mean "not CI" in the interactive installer, the same as in the `purge` check. (#67)
+- When `update` fails on a later skill, it still lists the skills it already updated after the error message. (#67)
 
 ### Removed
 
 - A private homelab plan that did not belong to this project (`.cursor/plans/`). `.cursor/` is now ignored. (#64)
+- Signal handlers in the install transaction that could never run, the unused `MIGRATABLE_KINDS` list, a `keypress` `removeListener` call that removed nothing, and the lossy `injectCustomContent` helper. (#67)
 
 ## [0.4.0] — 2026-09-27
 

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { acquireFileLock } from './concurrency-lock.js';
 import path from 'node:path';
 import { resolveHomeDir, UNIVERSAL_PROJECT_DESTINATION } from './destinations.js';
+import { assertPathInside } from './paths.js';
 
 export const STATE_FILENAME = 'state.json';
 export const STATE_SCHEMA_VERSION = 1;
@@ -246,21 +247,6 @@ export function loadProjectState(projectRoot, customStateDir) {
     return parsed;
   } catch (err) {
     throw new Error(`failed to read project state at ${statePath}: ${err.message}`);
-  }
-}
-
-/**
- * Reject a recorded path that leaves its base folder. State and journals sit on disk where
- * anyone can edit them, so no recorded path may reach outside the project, home, or state dir.
- *
- * @param {string} base
- * @param {string} recorded
- * @param {string} what
- */
-export function assertPathInside(base, recorded, what) {
-  const relative = path.relative(path.resolve(base), path.resolve(base, recorded));
-  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
-    throw new Error(`${what} '${recorded}' escapes ${base}`);
   }
 }
 

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { acquireFileLock } from './concurrency-lock.js';
 import path from 'node:path';
 import { findPackageRoot, validateSkill } from './catalog.js';
-import { injectCustomContent, injectRawCustomContent } from './customization.js';
+import { injectRawCustomContent } from './customization.js';
 import { commitSkillBackup, exportSkillTree, getBackupRoot, pruneOlderBackups } from './backup.js';
 import { createInstallPlan } from './plan.js';
 import { isForeignProjectLock, loadProjectLock, saveProjectLock, updateProjectLockSkill, PROJECT_LOCK_FILENAME } from './project-lock.js';
@@ -122,455 +122,447 @@ export function executeProjectInstall(params) {
 
   if (plan.requiresApproval) throw createNeedsResolutionError(plan);
 
-  // Inside a batch, the batch holds the concurrency lock and owns rollback, signals, the lock file, and cleanup.
+  // Inside a batch, the batch holds the concurrency lock and owns rollback, the lock file, and cleanup.
   const { batch } = params;
   const releaseLock = batch ? () => {} : acquireConcurrencyLock(root, customStateDir);
+  // The outer finally frees the lock even when setup code below throws before the transaction starts.
+  try {
+    const stagingParent = path.join(
+      scope === 'global' ? getGlobalStateDir(root, customStateDir) : getProjectStateDir(root, customStateDir),
+      '.sigma-staging',
+    );
+    const stagingDir = path.join(
+      stagingParent,
+      `${skillId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    );
 
-  const stagingParent = path.join(
-    scope === 'global' ? getGlobalStateDir(root, customStateDir) : getProjectStateDir(root, customStateDir),
-    '.sigma-staging',
-  );
-  const stagingDir = path.join(
-    stagingParent,
-    `${skillId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-  );
+    const committed = [];
+    const privateBackups = [];
 
-  const committed = [];
-  const privateBackups = [];
+    const lockLeftAlone = scope !== 'global' && isForeignProjectLock(root);
+    const useProjectLock = scope !== 'global' && !lockLeftAlone;
+    const lockPath = path.join(root, PROJECT_LOCK_FILENAME);
+    const lockExisted = useProjectLock && fs.existsSync(lockPath);
+    const originalLockBytes = lockExisted ? fs.readFileSync(lockPath) : null;
+    const originalLock = useProjectLock ? loadProjectLock(root) : { skills: {} };
 
-  const lockLeftAlone = scope !== 'global' && isForeignProjectLock(root);
-  const useProjectLock = scope !== 'global' && !lockLeftAlone;
-  const lockPath = path.join(root, PROJECT_LOCK_FILENAME);
-  const lockExisted = useProjectLock && fs.existsSync(lockPath);
-  const originalLockBytes = lockExisted ? fs.readFileSync(lockPath) : null;
-  const originalLock = useProjectLock ? loadProjectLock(root) : { skills: {} };
+    const statePath = scope === 'global'
+      ? getGlobalStatePath(root, customStateDir)
+      : getProjectStatePath(root, customStateDir);
+    const stateExisted = fs.existsSync(statePath);
+    const originalStateBytes = stateExisted ? fs.readFileSync(statePath) : null;
+    const originalState = scope === 'global'
+      ? loadGlobalState(root, customStateDir)
+      : loadProjectState(root, customStateDir);
+    const persistState = params.saveState || (scope === 'global' ? saveGlobalState : saveProjectState);
+    const stateDirForBackups = scope === 'global'
+      ? getGlobalStateDir(root, customStateDir)
+      : getProjectStateDir(root, customStateDir);
 
-  const statePath = scope === 'global'
-    ? getGlobalStatePath(root, customStateDir)
-    : getProjectStatePath(root, customStateDir);
-  const stateExisted = fs.existsSync(statePath);
-  const originalStateBytes = stateExisted ? fs.readFileSync(statePath) : null;
-  const originalState = scope === 'global'
-    ? loadGlobalState(root, customStateDir)
-    : loadProjectState(root, customStateDir);
-  const persistState = params.saveState || (scope === 'global' ? saveGlobalState : saveProjectState);
-  const stateDirForBackups = scope === 'global'
-    ? getGlobalStateDir(root, customStateDir)
-    : getProjectStateDir(root, customStateDir);
-
-  const cleanupStaging = () => {
-    try {
-      if (fs.existsSync(stagingDir)) {
-        fs.rmSync(stagingDir, { recursive: true, force: true });
+    const cleanupStaging = () => {
+      try {
+        if (fs.existsSync(stagingDir)) {
+          fs.rmSync(stagingDir, { recursive: true, force: true });
+        }
+        if (fs.existsSync(stagingParent) && fs.readdirSync(stagingParent).length === 0) {
+          fs.rmSync(stagingParent, { recursive: true, force: true });
+        }
+      } catch {
+        // Staging cleanup is best-effort
       }
-      if (fs.existsSync(stagingParent) && fs.readdirSync(stagingParent).length === 0) {
-        fs.rmSync(stagingParent, { recursive: true, force: true });
-      }
-    } catch {
-      // Staging cleanup is best-effort
-    }
-  };
+    };
 
-  const rollback = () => {
-    try {
-      for (const entry of committed.splice(0).reverse()) {
-        if (entry.adopted) continue;
-        try {
-          if (entry.backupDir && pathExists(entry.backupDir)) {
-            if (pathExists(entry.destDir)) {
+    const rollback = () => {
+      try {
+        for (const entry of committed.splice(0).reverse()) {
+          if (entry.adopted) continue;
+          try {
+            if (entry.backupDir && pathExists(entry.backupDir)) {
+              if (pathExists(entry.destDir)) {
+                removeManagedPath(entry.destDir);
+              }
+              fs.renameSync(entry.backupDir, entry.destDir);
+            } else if (pathExists(entry.destDir)) {
               removeManagedPath(entry.destDir);
             }
-            fs.renameSync(entry.backupDir, entry.destDir);
-          } else if (pathExists(entry.destDir)) {
-            removeManagedPath(entry.destDir);
+          } catch {
+            // Per-destination rollback is best-effort
           }
-        } catch {
-          // Per-destination rollback is best-effort
         }
-      }
-      for (const backupPath of privateBackups.splice(0)) {
-        try {
-          if (pathExists(backupPath)) removeManagedPath(backupPath);
-        } catch {
-          // Private backup cleanup is best-effort
+        for (const backupPath of privateBackups.splice(0)) {
+          try {
+            if (pathExists(backupPath)) removeManagedPath(backupPath);
+          } catch {
+            // Private backup cleanup is best-effort
+          }
         }
+        // Restore state and lock or remove if they didn't exist before
+        if (stateExisted && originalStateBytes) {
+          fs.writeFileSync(statePath, originalStateBytes);
+        } else if (fs.existsSync(statePath)) {
+          fs.unlinkSync(statePath);
+        }
+
+        if (useProjectLock && lockExisted && originalLockBytes) {
+          fs.writeFileSync(lockPath, originalLockBytes);
+        } else if (useProjectLock && fs.existsSync(lockPath)) {
+          fs.unlinkSync(lockPath);
+        }
+      } catch {
+        // Rollback is best-effort
+      } finally {
+        cleanupStaging();
+        releaseLock();
       }
-      // Restore state and lock or remove if they didn't exist before
-      if (stateExisted && originalStateBytes) {
-        fs.writeFileSync(statePath, originalStateBytes);
-      } else if (fs.existsSync(statePath)) {
-        fs.unlinkSync(statePath);
+    };
+
+    if (batch) batch.rollbacks.push(rollback);
+
+    try {
+      const willWrite = (dest) => (
+        !dest.adoption
+        && dest.resolution !== 'skip'
+        && dest.resolution !== 'export'
+      );
+      const allAdopted = plan.destinations.every((dest) => dest.adoption);
+      const needsSkillWrite = plan.destinations.some(willWrite);
+      const existingEntry = originalState.skills?.[skillId];
+      const existingDests = new Set(
+        (existingEntry?.copies || []).map((copy) => String(copy.destination || '').replace(/\\/g, '/')),
+      );
+      const plannedDests = plan.destinations.map((dest) => dest.relativeDestination);
+      const sameManagedLayout = existingEntry
+        && existingEntry.revision === plan.sourceRevision
+        && plannedDests.every((dest) => existingDests.has(dest))
+        && existingDests.size === plannedDests.length
+        && (scope === 'global' || originalLock.skills?.[skillId]?.revision === plan.sourceRevision);
+      if (allAdopted && sameManagedLayout) {
+        cleanupStaging();
+        releaseLock();
+        return {
+          success: true,
+          dryRun: false,
+          plan,
+          lock: originalLock,
+          state: originalState,
+        };
       }
 
-      if (useProjectLock && lockExisted && originalLockBytes) {
-        fs.writeFileSync(lockPath, originalLockBytes);
-      } else if (useProjectLock && fs.existsSync(lockPath)) {
-        fs.unlinkSync(lockPath);
+      const catalogSkill = catalog.skills.find((item) => item.id === skillId);
+      let fileHashes = catalogSkill?.files || {};
+
+      if (needsSkillWrite) {
+        fs.mkdirSync(stagingDir, { recursive: true });
+        const sourceSkillDir = path.join(packageRoot, skillId);
+        if (!fs.existsSync(sourceSkillDir)) {
+          throw new Error(`source skill directory missing at ${sourceSkillDir}`);
+        }
+
+        fs.cpSync(sourceSkillDir, stagingDir, { recursive: true });
+
+        const manifestMetadata = catalog.manifest.skills.find((s) => s.id === skillId);
+        const validatedStaged = validateSkill(stagingDir, manifestMetadata);
+        if (validatedStaged.revision !== plan.sourceRevision) {
+          throw new Error(
+            `staged skill revision '${validatedStaged.revision}' does not match catalog revision '${plan.sourceRevision}'`,
+          );
+        }
+        fileHashes = validatedStaged.files;
+        if (params.preservedCustomRaw !== undefined) {
+          const stagedSkillMd = path.join(stagingDir, 'SKILL.md');
+          if (pathExists(stagedSkillMd)) {
+            const stagedMarkdown = fs.readFileSync(stagedSkillMd, 'utf8');
+            fs.writeFileSync(
+              stagedSkillMd,
+              injectRawCustomContent(stagedMarkdown, params.preservedCustomRaw, skillId),
+              'utf8',
+            );
+          }
+        }
       }
-    } catch {
-      // Rollback is best-effort
+
+      const createLink = params.createLink || ((linkPath, targetPath) => (
+        createSkillLink(linkPath, targetPath, root)
+      ));
+      const canonicalDest = plan.destinations.find((dest) => dest.kind === 'canonical')
+        || plan.destinations[0];
+
+      const restoreBackup = (destDir, backupDir) => {
+        if (backupDir && pathExists(backupDir)) {
+          if (pathExists(destDir)) removeManagedPath(destDir);
+          fs.renameSync(backupDir, destDir);
+        } else if (pathExists(destDir)) {
+          removeManagedPath(destDir);
+        }
+      };
+
+      const prepareDestination = (destDir) => {
+        const destParent = path.dirname(destDir);
+        if (!fs.existsSync(destParent)) {
+          fs.mkdirSync(destParent, { recursive: true });
+        }
+        let backupDir = null;
+        if (pathExists(destDir)) {
+          backupDir = path.join(
+            destParent,
+            `.${skillId}-backup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          );
+          fs.renameSync(destDir, backupDir);
+        }
+        return backupDir;
+      };
+
+      const commitCopy = (destDir) => {
+        const backupDir = prepareDestination(destDir);
+        try {
+          fs.cpSync(stagingDir, destDir, { recursive: true });
+          committed.push({ destDir, backupDir });
+        } catch (copyErr) {
+          restoreBackup(destDir, backupDir);
+          throw new Error(`failed to write destination '${destDir}': ${copyErr.message}`);
+        }
+      };
+
+      const commitLink = (dest) => {
+        const destDir = dest.destination;
+        const backupDir = prepareDestination(destDir);
+        try {
+          createLink(destDir, canonicalDest.destination, root);
+          committed.push({ destDir, backupDir });
+        } catch (linkErr) {
+          restoreBackup(destDir, backupDir);
+          const failure = {
+            destination: dest.destination,
+            relativeDestination: dest.relativeDestination,
+            relativeRoot: dest.relativeRoot,
+            method: dest.method,
+            cause: linkErr.message,
+            code: linkErr.code,
+          };
+          const decision = typeof params.onLinkFailure === 'function'
+            ? params.onLinkFailure(failure)
+            : 'abort';
+          if (decision !== 'copy') {
+            const wrapped = new Error(linkErr.message);
+            wrapped.cause = linkErr;
+            wrapped.code = linkErr.code;
+            wrapped.linkFailure = failure;
+            throw wrapped;
+          }
+          dest.fallbackFrom = dest.method;
+          dest.method = 'copy';
+          dest.dependsOn = null;
+          commitCopy(destDir);
+        }
+      };
+
+      const ordered = [...plan.destinations].sort((a, b) => {
+        if (a.kind === 'canonical' && b.kind !== 'canonical') return -1;
+        if (b.kind === 'canonical' && a.kind !== 'canonical') return 1;
+        return 0;
+      });
+
+      for (const dest of ordered) {
+        if (dest.adoption) {
+          committed.push({ destDir: dest.destination, backupDir: null, adopted: true });
+          continue;
+        }
+        if (dest.resolution === 'skip') {
+          dest.exportPath = null;
+          continue;
+        }
+        if (dest.resolution === 'export') {
+          const exportRoot = plan.exportDir || path.join(root, '.sigma-export');
+          const exporter = params.exportSkill || exportSkillTree;
+          dest.exportPath = exporter({
+            sourceDir: dest.destination,
+            exportRoot,
+            skillId,
+            dest: dest.exportPath,
+          });
+          continue;
+        }
+        if (dest.resolution === 'replace' && pathExists(dest.destination)) {
+          const backupFn = params.backupSkill || commitSkillBackup;
+          const existing = originalState.skills?.[skillId];
+          const privateBackup = backupFn({
+            stateDir: stateDirForBackups,
+            skillId,
+            sourceDir: dest.destination,
+            ownership: {
+              scope,
+              release: existing?.release || plan.release || null,
+              revision: existing?.revision || null,
+              method: existing?.method || dest.method,
+              canonicalTarget: existing?.destination || dest.relativeDestination,
+              copies: existing?.copies || [],
+              ownedPaths: existing?.ownedPaths || [dest.relativeDestination],
+            },
+          });
+          privateBackups.push(privateBackup);
+          dest.privateBackup = privateBackup;
+          if (typeof params.afterBackup === 'function') {
+            params.afterBackup(privateBackup);
+          }
+        }
+        if (dest.method === 'copy') commitCopy(dest.destination);
+        else commitLink(dest);
+        const customStatus = dest.customization?.status;
+        if (
+          params.preservedCustomRaw === undefined
+          && dest.resolution === 'replace'
+          && (customStatus === 'valid' || customStatus === 'empty')
+        ) {
+          const skillMd = path.join(dest.destination, 'SKILL.md');
+          if (pathExists(skillMd)) {
+            const current = fs.readFileSync(skillMd, 'utf8');
+            fs.writeFileSync(
+              skillMd,
+              injectRawCustomContent(current, dest.customization.rawCustomContent ?? '\n', skillId),
+              'utf8',
+            );
+          }
+        }
+      }
+
+      const copies = plan.destinations
+        .filter((dest) => dest.adoption || dest.resolution === 'replace' || (!dest.migratable && dest.resolution !== 'skip' && dest.resolution !== 'export'))
+        .map((dest) => {
+        const independent = dest.method === 'copy';
+        return {
+          kind: dest.kind,
+          destination: dest.relativeDestination,
+          method: dest.method,
+          dependsOn: dest.dependsOn || null,
+          hostIds: (dest.hosts || []).map((host) => host.id),
+          ownedPaths: independent
+            ? plan.files.map((file) => `${dest.relativeDestination}/${file}`)
+            : [dest.relativeDestination],
+          ...(independent ? { baseHashes: dest.baseHashes && dest.resolution !== 'replace' ? dest.baseHashes : fileHashes } : {}),
+        };
+      });
+      if (copies.length === 0) {
+        cleanupStaging();
+        releaseLock();
+        return {
+          success: true,
+          dryRun: false,
+          plan,
+          lock: originalLock,
+          state: originalState,
+        };
+      }
+      const primary = copies.find((copy) => copy.kind === 'canonical') || copies[0];
+
+      const lastBackup = privateBackups.length > 0
+        ? path.relative(stateDirForBackups, privateBackups[privateBackups.length - 1]).replace(/\\/g, '/')
+        : undefined;
+      const updatedState = recordSkillInState(originalState, {
+        skillId,
+        release: plan.release,
+        revision: plan.sourceRevision,
+        method: plan.method,
+        destination: primary.destination,
+        projectRoot: root,
+        ownedPaths: primary.ownedPaths,
+        baseHashes: primary.baseHashes || fileHashes,
+        copies,
+        scope,
+        lastBackup,
+        cleanupDebt: [],
+      });
+      persistState(root, updatedState, customStateDir);
+
+      let updatedLock = originalLock;
+      if (useProjectLock && batch) {
+        batch.lockSkills.push([skillId, plan.sourceRevision, plan.release]);
+      } else if (useProjectLock) {
+        updatedLock = updateProjectLockSkill(
+          originalLock,
+          skillId,
+          plan.sourceRevision,
+          plan.release,
+        );
+        saveProjectLock(root, updatedLock);
+      }
+
+      // 5. Cleanup backups after state & lock write succeed (a batch runs this after its lock write)
+      const finalize = () => {
+        for (const entry of committed) {
+          if (entry.backupDir && pathExists(entry.backupDir)) {
+            removeManagedPath(entry.backupDir);
+            entry.backupDir = null;
+          }
+        }
+        for (const backupPath of privateBackups) {
+          let debt = [];
+          try {
+            const pruneFn = params.pruneBackups || pruneOlderBackups;
+            const result = pruneFn({
+              stateDir: stateDirForBackups,
+              skillId,
+              keepPath: backupPath,
+            });
+            if (result && Array.isArray(result.debt)) debt = result.debt;
+          } catch {
+            const dir = path.join(getBackupRoot(stateDirForBackups), skillId);
+            if (pathExists(dir)) {
+              const keep = path.resolve(backupPath);
+              for (const name of fs.readdirSync(dir)) {
+                const full = path.resolve(dir, name);
+                if (full !== keep) {
+                  debt.push(path.relative(stateDirForBackups, full).replace(/\\/g, '/'));
+                }
+              }
+            }
+          }
+          if (debt.length > 0) {
+            try {
+              const debtBase = batch
+                ? (scope === 'global' ? loadGlobalState(root, customStateDir) : loadProjectState(root, customStateDir))
+                : updatedState;
+              persistState(root, recordSkillInState(debtBase, {
+                skillId,
+                release: plan.release,
+                revision: plan.sourceRevision,
+                method: plan.method,
+                destination: primary.destination,
+                projectRoot: root,
+                ownedPaths: primary.ownedPaths,
+                baseHashes: primary.baseHashes || fileHashes,
+                copies,
+                scope,
+                lastBackup,
+                cleanupDebt: debt,
+              }), customStateDir);
+            } catch {
+              // Two backups remain; recording debt is best-effort.
+            }
+          }
+        }
+      };
+      if (batch) batch.finalizers.push(finalize);
+      else finalize();
+
+      cleanupStaging();
+      releaseLock();
+
+      return {
+        success: true,
+        dryRun: false,
+        plan,
+        lock: updatedLock,
+        lockLeftAlone,
+        state: updatedState,
+      };
+    } catch (err) {
+      rollback();
+      throw err;
     } finally {
       cleanupStaging();
       releaseLock();
     }
-  };
-
-  // Register signal listeners during transaction
-  const signalHandler = () => {
-    rollback();
-    process.exit(130);
-  };
-  if (batch) {
-    batch.rollbacks.push(rollback);
-  } else {
-    process.once('SIGINT', signalHandler);
-    process.once('SIGTERM', signalHandler);
-  }
-
-  try {
-    const willWrite = (dest) => (
-      !dest.adoption
-      && dest.resolution !== 'skip'
-      && dest.resolution !== 'export'
-    );
-    const allAdopted = plan.destinations.every((dest) => dest.adoption);
-    const needsSkillWrite = plan.destinations.some(willWrite);
-    const existingEntry = originalState.skills?.[skillId];
-    const existingDests = new Set(
-      (existingEntry?.copies || []).map((copy) => String(copy.destination || '').replace(/\\/g, '/')),
-    );
-    const plannedDests = plan.destinations.map((dest) => dest.relativeDestination);
-    const sameManagedLayout = existingEntry
-      && existingEntry.revision === plan.sourceRevision
-      && plannedDests.every((dest) => existingDests.has(dest))
-      && existingDests.size === plannedDests.length
-      && (scope === 'global' || originalLock.skills?.[skillId]?.revision === plan.sourceRevision);
-    if (allAdopted && sameManagedLayout) {
-      cleanupStaging();
-      releaseLock();
-      return {
-        success: true,
-        dryRun: false,
-        plan,
-        lock: originalLock,
-        state: originalState,
-      };
-    }
-
-    const catalogSkill = catalog.skills.find((item) => item.id === skillId);
-    let fileHashes = catalogSkill?.files || {};
-
-    if (needsSkillWrite) {
-      fs.mkdirSync(stagingDir, { recursive: true });
-      const sourceSkillDir = path.join(packageRoot, skillId);
-      if (!fs.existsSync(sourceSkillDir)) {
-        throw new Error(`source skill directory missing at ${sourceSkillDir}`);
-      }
-
-      fs.cpSync(sourceSkillDir, stagingDir, { recursive: true });
-
-      const manifestMetadata = catalog.manifest.skills.find((s) => s.id === skillId);
-      const validatedStaged = validateSkill(stagingDir, manifestMetadata);
-      if (validatedStaged.revision !== plan.sourceRevision) {
-        throw new Error(
-          `staged skill revision '${validatedStaged.revision}' does not match catalog revision '${plan.sourceRevision}'`,
-        );
-      }
-      fileHashes = validatedStaged.files;
-      if (params.preservedCustomRaw !== undefined) {
-        const stagedSkillMd = path.join(stagingDir, 'SKILL.md');
-        if (pathExists(stagedSkillMd)) {
-          const stagedMarkdown = fs.readFileSync(stagedSkillMd, 'utf8');
-          fs.writeFileSync(
-            stagedSkillMd,
-            injectRawCustomContent(stagedMarkdown, params.preservedCustomRaw, skillId),
-            'utf8',
-          );
-        }
-      }
-    }
-
-    const createLink = params.createLink || ((linkPath, targetPath) => (
-      createSkillLink(linkPath, targetPath, root)
-    ));
-    const canonicalDest = plan.destinations.find((dest) => dest.kind === 'canonical')
-      || plan.destinations[0];
-
-    const restoreBackup = (destDir, backupDir) => {
-      if (backupDir && pathExists(backupDir)) {
-        if (pathExists(destDir)) removeManagedPath(destDir);
-        fs.renameSync(backupDir, destDir);
-      } else if (pathExists(destDir)) {
-        removeManagedPath(destDir);
-      }
-    };
-
-    const prepareDestination = (destDir) => {
-      const destParent = path.dirname(destDir);
-      if (!fs.existsSync(destParent)) {
-        fs.mkdirSync(destParent, { recursive: true });
-      }
-      let backupDir = null;
-      if (pathExists(destDir)) {
-        backupDir = path.join(
-          destParent,
-          `.${skillId}-backup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        );
-        fs.renameSync(destDir, backupDir);
-      }
-      return backupDir;
-    };
-
-    const commitCopy = (destDir) => {
-      const backupDir = prepareDestination(destDir);
-      try {
-        fs.cpSync(stagingDir, destDir, { recursive: true });
-        committed.push({ destDir, backupDir });
-      } catch (copyErr) {
-        restoreBackup(destDir, backupDir);
-        throw new Error(`failed to write destination '${destDir}': ${copyErr.message}`);
-      }
-    };
-
-    const commitLink = (dest) => {
-      const destDir = dest.destination;
-      const backupDir = prepareDestination(destDir);
-      try {
-        createLink(destDir, canonicalDest.destination, root);
-        committed.push({ destDir, backupDir });
-      } catch (linkErr) {
-        restoreBackup(destDir, backupDir);
-        const failure = {
-          destination: dest.destination,
-          relativeDestination: dest.relativeDestination,
-          relativeRoot: dest.relativeRoot,
-          method: dest.method,
-          cause: linkErr.message,
-          code: linkErr.code,
-        };
-        const decision = typeof params.onLinkFailure === 'function'
-          ? params.onLinkFailure(failure)
-          : 'abort';
-        if (decision !== 'copy') {
-          const wrapped = new Error(linkErr.message);
-          wrapped.cause = linkErr;
-          wrapped.code = linkErr.code;
-          wrapped.linkFailure = failure;
-          throw wrapped;
-        }
-        dest.fallbackFrom = dest.method;
-        dest.method = 'copy';
-        dest.dependsOn = null;
-        commitCopy(destDir);
-      }
-    };
-
-    const ordered = [...plan.destinations].sort((a, b) => {
-      if (a.kind === 'canonical' && b.kind !== 'canonical') return -1;
-      if (b.kind === 'canonical' && a.kind !== 'canonical') return 1;
-      return 0;
-    });
-
-    for (const dest of ordered) {
-      if (dest.adoption) {
-        committed.push({ destDir: dest.destination, backupDir: null, adopted: true });
-        continue;
-      }
-      if (dest.resolution === 'skip') {
-        dest.exportPath = null;
-        continue;
-      }
-      if (dest.resolution === 'export') {
-        const exportRoot = plan.exportDir || path.join(root, '.sigma-export');
-        const exporter = params.exportSkill || exportSkillTree;
-        dest.exportPath = exporter({
-          sourceDir: dest.destination,
-          exportRoot,
-          skillId,
-          dest: dest.exportPath,
-        });
-        continue;
-      }
-      if (dest.resolution === 'replace' && pathExists(dest.destination)) {
-        const backupFn = params.backupSkill || commitSkillBackup;
-        const existing = originalState.skills?.[skillId];
-        const privateBackup = backupFn({
-          stateDir: stateDirForBackups,
-          skillId,
-          sourceDir: dest.destination,
-          ownership: {
-            scope,
-            release: existing?.release || plan.release || null,
-            revision: existing?.revision || null,
-            method: existing?.method || dest.method,
-            canonicalTarget: existing?.destination || dest.relativeDestination,
-            copies: existing?.copies || [],
-            ownedPaths: existing?.ownedPaths || [dest.relativeDestination],
-          },
-        });
-        privateBackups.push(privateBackup);
-        dest.privateBackup = privateBackup;
-        if (typeof params.afterBackup === 'function') {
-          params.afterBackup(privateBackup);
-        }
-      }
-      if (dest.method === 'copy') commitCopy(dest.destination);
-      else commitLink(dest);
-      const customStatus = dest.customization?.status;
-      if (
-        params.preservedCustomRaw === undefined
-        && dest.resolution === 'replace'
-        && (customStatus === 'valid' || customStatus === 'empty')
-      ) {
-        const skillMd = path.join(dest.destination, 'SKILL.md');
-        if (pathExists(skillMd)) {
-          const current = fs.readFileSync(skillMd, 'utf8');
-          fs.writeFileSync(
-            skillMd,
-            injectCustomContent(current, dest.customization.customContent || '', skillId),
-            'utf8',
-          );
-        }
-      }
-    }
-
-    const copies = plan.destinations
-      .filter((dest) => dest.adoption || dest.resolution === 'replace' || (!dest.migratable && dest.resolution !== 'skip' && dest.resolution !== 'export'))
-      .map((dest) => {
-      const independent = dest.method === 'copy';
-      return {
-        kind: dest.kind,
-        destination: dest.relativeDestination,
-        method: dest.method,
-        dependsOn: dest.dependsOn || null,
-        hostIds: (dest.hosts || []).map((host) => host.id),
-        ownedPaths: independent
-          ? plan.files.map((file) => `${dest.relativeDestination}/${file}`)
-          : [dest.relativeDestination],
-        ...(independent ? { baseHashes: dest.baseHashes && dest.resolution !== 'replace' ? dest.baseHashes : fileHashes } : {}),
-      };
-    });
-    if (copies.length === 0) {
-      cleanupStaging();
-      releaseLock();
-      return {
-        success: true,
-        dryRun: false,
-        plan,
-        lock: originalLock,
-        state: originalState,
-      };
-    }
-    const primary = copies.find((copy) => copy.kind === 'canonical') || copies[0];
-
-    const lastBackup = privateBackups.length > 0
-      ? path.relative(stateDirForBackups, privateBackups[privateBackups.length - 1]).replace(/\\/g, '/')
-      : undefined;
-    const updatedState = recordSkillInState(originalState, {
-      skillId,
-      release: plan.release,
-      revision: plan.sourceRevision,
-      method: plan.method,
-      destination: primary.destination,
-      projectRoot: root,
-      ownedPaths: primary.ownedPaths,
-      baseHashes: primary.baseHashes || fileHashes,
-      copies,
-      scope,
-      lastBackup,
-      cleanupDebt: [],
-    });
-    persistState(root, updatedState, customStateDir);
-
-    let updatedLock = originalLock;
-    if (useProjectLock && batch) {
-      batch.lockSkills.push([skillId, plan.sourceRevision, plan.release]);
-    } else if (useProjectLock) {
-      updatedLock = updateProjectLockSkill(
-        originalLock,
-        skillId,
-        plan.sourceRevision,
-        plan.release,
-      );
-      saveProjectLock(root, updatedLock);
-    }
-
-    // 5. Cleanup backups after state & lock write succeed (a batch runs this after its lock write)
-    const finalize = () => {
-      for (const entry of committed) {
-        if (entry.backupDir && pathExists(entry.backupDir)) {
-          removeManagedPath(entry.backupDir);
-          entry.backupDir = null;
-        }
-      }
-      for (const backupPath of privateBackups) {
-        let debt = [];
-        try {
-          const pruneFn = params.pruneBackups || pruneOlderBackups;
-          const result = pruneFn({
-            stateDir: stateDirForBackups,
-            skillId,
-            keepPath: backupPath,
-          });
-          if (result && Array.isArray(result.debt)) debt = result.debt;
-        } catch {
-          const dir = path.join(getBackupRoot(stateDirForBackups), skillId);
-          if (pathExists(dir)) {
-            const keep = path.resolve(backupPath);
-            for (const name of fs.readdirSync(dir)) {
-              const full = path.resolve(dir, name);
-              if (full !== keep) {
-                debt.push(path.relative(stateDirForBackups, full).replace(/\\/g, '/'));
-              }
-            }
-          }
-        }
-        if (debt.length > 0) {
-          try {
-            const debtBase = batch
-              ? (scope === 'global' ? loadGlobalState(root, customStateDir) : loadProjectState(root, customStateDir))
-              : updatedState;
-            persistState(root, recordSkillInState(debtBase, {
-              skillId,
-              release: plan.release,
-              revision: plan.sourceRevision,
-              method: plan.method,
-              destination: primary.destination,
-              projectRoot: root,
-              ownedPaths: primary.ownedPaths,
-              baseHashes: primary.baseHashes || fileHashes,
-              copies,
-              scope,
-              lastBackup,
-              cleanupDebt: debt,
-            }), customStateDir);
-          } catch {
-            // Two backups remain; recording debt is best-effort.
-          }
-        }
-      }
-    };
-    if (batch) batch.finalizers.push(finalize);
-    else finalize();
-
-    cleanupStaging();
-    releaseLock();
-
-    return {
-      success: true,
-      dryRun: false,
-      plan,
-      lock: updatedLock,
-      lockLeftAlone,
-      state: updatedState,
-    };
-  } catch (err) {
-    rollback();
-    throw err;
   } finally {
-    process.removeListener('SIGINT', signalHandler);
-    process.removeListener('SIGTERM', signalHandler);
-    cleanupStaging();
     releaseLock();
   }
 }
@@ -603,13 +595,6 @@ export function executeProjectInstallBatch(params) {
   const rollbackAll = () => {
     for (const rollback of batch.rollbacks.splice(0).reverse()) rollback();
   };
-  const signalHandler = () => {
-    rollbackAll();
-    releaseLock();
-    process.exit(130);
-  };
-  process.once('SIGINT', signalHandler);
-  process.once('SIGTERM', signalHandler);
 
   try {
     let results;
@@ -629,8 +614,6 @@ export function executeProjectInstallBatch(params) {
     for (const finalize of batch.finalizers) finalize();
     return results;
   } finally {
-    process.removeListener('SIGINT', signalHandler);
-    process.removeListener('SIGTERM', signalHandler);
     releaseLock();
   }
 }
