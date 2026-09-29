@@ -73,7 +73,7 @@ test('only .agents/skills is selected by default and lists every affected Agent 
   assert.equal(universal.selectedByDefault, true);
   assert.ok(universal.hosts.some((host) => host.id === 'codex'));
   assert.ok(universal.hosts.some((host) => host.id === 'cursor'));
-  assert.ok(!universal.hosts.some((host) => host.id === 'pi'));
+  assert.ok(universal.hosts.some((host) => host.id === 'pi'));
   assert.ok(!universal.hosts.some((host) => host.id === 'claude-code'));
   assert.ok(universal.hosts.length >= 2);
   assert.equal(path.basename(path.dirname(universal.absoluteRoot)), '.agents');
