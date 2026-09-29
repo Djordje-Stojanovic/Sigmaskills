@@ -10,9 +10,10 @@ body:
   - type: markdown
     attributes:
       value: |
-        SigmaSkills ships Agent Skills (SKILL.md, references, install/run docs) —
-        not an app. Fill the required fields so someone can reproduce the skill
-        or docs failure without guessing. Skip optional fields for a quick note.
+        SigmaSkills ships Agent Skills (SKILL.md, references, install/run docs)
+        and the Sigma Installer CLI (`npx @djordje-stojanovic/sigmaskills`) —
+        not an app. Fill the required fields so someone can reproduce the skill,
+        docs, or installer failure without guessing. Skip optional fields for a quick note.
 
   - type: textarea
     id: what-broke
@@ -81,6 +82,7 @@ body:
         - sigmabrief
         - sigmaship
         - sigmawrite
+        - Sigma Installer (CLI)
         - Shared (README / install / repo-wide)
         - Other / not sure
         - New skill (not shipped yet)
@@ -105,6 +107,27 @@ body:
     attributes:
       label: Version or commit (optional)
       placeholder: main @ 8dcf2b4, or the skill folder you copied
+
+  - type: input
+    id: cli-version
+    attributes:
+      label: Installer CLI version (optional)
+      description: For installer bugs. Run `npx @djordje-stojanovic/sigmaskills --version`.
+      placeholder: 0.4.0
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version (optional)
+      description: For installer bugs. Run `node --version`.
+      placeholder: v24.21.0
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system (optional)
+      description: For installer bugs.
+      placeholder: Windows 11, macOS 15, Ubuntu 24.04
 
   - type: dropdown
     id: frequency
