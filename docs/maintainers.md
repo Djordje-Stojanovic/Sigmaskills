@@ -46,7 +46,7 @@ They cover the installer, the package contents, and the repository itself: the s
 
 `npm test` also checks each skill's output contract against good and bad sample outputs, and checks that near-miss prompts reach the right skill. To run the skills themselves on a small fixture game, use `node scripts/eval-skills.js [skill...]`. It calls Claude Code, costs money, and stays out of CI. The [skill evals guide](evals.md) has the method and the latest results.
 
-CI runs the same suite on Windows, macOS, and Linux with Node.js 22 and 24, plus Node.js 20 on Linux. It runs on every pull request and every push to `main`. The jobs use real junctions and symbolic links, copy fallback, different shells, and an isolated temporary file system. CI runs with a read-only token and pins every action to a full commit SHA. Dependabot opens one weekly pull request to bump the pinned actions (`.github/dependabot.yml`). The release, registry-sync, and rehearsal jobs run on Node.js 24.21.0. Its bundled npm (11.19) supports trusted publishing, so no job installs npm on its own. Keep the rehearsal on the same Node.js as `release.yml`.
+CI runs the same suite on Windows, macOS, and Linux with Node.js 22 and 24. `package.json` requires Node.js 22 or newer (`engines.node`), so CI has no older job. It runs on every pull request and every push to `main`. The jobs use real junctions and symbolic links, copy fallback, different shells, and an isolated temporary file system. CI runs with a read-only token and pins every action to a full commit SHA. Dependabot opens one weekly pull request to bump the pinned actions (`.github/dependabot.yml`). The release, registry-sync, and rehearsal jobs run on Node.js 24.21.0. Its bundled npm (11.19) supports trusted publishing, so no job installs npm on its own. Keep the rehearsal on the same Node.js as `release.yml`.
 
 ### Adding, renaming, or removing a skill
 
@@ -129,6 +129,8 @@ A generated pull request auto-merges only when all of these hold:
 - all required checks pass.
 
 Validated host additions and description-only edits can then publish a patch Release. They use the same idempotent, trusted publication step as owner Releases. Changes to a path, ID, alias, detection rule, platform, membership, removal, unknown field, or any failed validation stay blocked for owner review.
+
+`main` is not protected today, so auto-merge never runs. The owner reviews and merges every registry sync pull request by hand, like any other pull request. Turn auto-merge on only after `main` has branch protection with required checks.
 
 ### Versions and branches
 

@@ -307,7 +307,9 @@ test('registry automation: pull request body carries upstream commit, semantic d
     validation: { valid: true, errors: [], hostErrors: {} },
     classification: { autoEligible: true, blockedReasons: [] },
   });
-  assert.match(safeBody, /may auto-merge/i);
+  assert.match(safeBody, /auto-merge only runs when `main` is protected with required checks/i);
+  assert.match(safeBody, /owner reviews and merges/i);
+  assert.doesNotMatch(safeBody, /may auto-merge/i);
   assert.match(safeBody, /patch/i);
 });
 

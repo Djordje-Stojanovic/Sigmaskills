@@ -240,11 +240,11 @@ test('CHANGELOG mentions every shipped skill id', () => {
   }
 });
 
-test('CI covers Node.js 22 and 24 on Windows, macOS, and Linux, plus Node.js 20 on Linux', () => {
+test('CI covers Node.js 22 and 24 on Windows, macOS, and Linux, and no older Node.js', () => {
   const ci = read('.github/workflows/ci.yml');
   assert.match(ci, /os:\s*\[ubuntu-latest,\s*windows-latest,\s*macos-latest\]/);
   assert.match(ci, /node-version:\s*\[22,\s*24\]/);
-  assert.match(ci, /include:\s*\n(?:\s*#[^\n]*\n)*\s*- os: ubuntu-latest\s*\n\s*node-version: 20\s*\n/);
+  assert.doesNotMatch(ci, /node-version:\s*20\b/, 'Node 20 is not supported');
   assert.match(ci, /npm test/);
   assert.match(ci, /sigma-test-fs/);
   assert.match(ci, /fetch-depth: 0/);
@@ -323,12 +323,12 @@ test('SigmaWrite stays soft-steer and Karpathy-sized', () => {
   assert.doesNotMatch(body, /^\s*\d+\.\s+Use only approved words/im);
 });
 
-test('package.json is publishable, requires Node 20+, exposes bin, and defines files allowlist', () => {
+test('package.json is publishable, requires Node 22+, exposes bin, and defines files allowlist', () => {
   const pkg = JSON.parse(read('package.json'));
   assert.equal(pkg.name, '@djordje-stojanovic/sigmaskills');
   assert.equal(pkg.type, 'module');
   assert.equal(pkg.private, undefined, 'root package must be publishable (not private)');
-  assert.match(pkg.engines?.node, />=\s*20/, 'requires Node.js 20+');
+  assert.equal(pkg.engines?.node, '>=22', 'requires Node.js 22+');
   assert.equal(pkg.bin?.sigmaskills, 'bin/sigmaskills.js', 'exposes sigmaskills binary');
   assert.ok(Array.isArray(pkg.files), 'package.json must specify explicit files allowlist');
   assert.ok(pkg.files.includes('bin'));
