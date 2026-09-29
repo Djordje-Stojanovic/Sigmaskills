@@ -2,6 +2,8 @@
 
 This guide covers the Sigma Installer (`npx @djordje-stojanovic/sigmaskills`) and the other ways to install SigmaSkills. For a first install, the [README quick start](../README.md#quick-start) is enough.
 
+The Sigma Installer needs Node.js 22 or newer.
+
 Run `npx @djordje-stojanovic/sigmaskills --help` for the full flag list of the Release you run.
 
 Some short forms are hidden from `--help` on purpose. They work, and scripts may use them: `-g` (for `--global`), `--cwd` (for `--project`), `--list` (for the `list` command), and the `check` command (for `verify`).
@@ -138,7 +140,7 @@ Only one write command runs at a time in a scope. The `.sigma.lock` file enforce
 - An incomplete lock record gets a five-second grace period.
 - A short-lived `.sigma.lock.guard` folder serializes lock takeover and release.
 
-If a crash leaves the guard folder, stop all SigmaSkills processes. Then remove the guard folder and retry.
+A guard folder normally lives for milliseconds. If a crash leaves one, a command that finds it older than one minute stops with a `lock-guard-stale` error that names the folder. The installer never deletes it for you. Stop all SigmaSkills processes, remove that folder, and retry.
 
 ### Projects from 0.3.0 and older
 

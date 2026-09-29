@@ -15,11 +15,20 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - Tests check that `openai.yaml` lists only Codex products (`chatgpt`, `codex`, `atlas`), that every skill name and description follows the Agent Skills limits, and that every relative link and `#anchor` in the skill folders resolves. (#65)
 - Package metadata: `package.json` now has `license` (`MIT`), `bugs`, and `keywords`, so npm shows the license. (#64)
 - Docs and changelog match 0.4.0. The CHANGELOG compare links and the 0.4.0 package-size note are fixed, 0.2.1 is marked as a GitHub Release only, and the 0.2.0 sections follow Keep a Changelog order. The installer guide now covers the Link/Copy page, the `a` key, plain mode with `TERM=dumb` and `--json`, Escape in the destination search, and the hidden aliases (`-g`, `--cwd`, `--list`, `check`). The maintainer guide covers `registry:sync`, `registry:validate`, and the role of `.agents/skills` and `skills-lock.json`. ADRs 0005 and 0006 and the wayfinder label note are corrected. (#64)
+- The generated registry pull request no longer says it "may auto-merge". It says auto-merge only runs when `main` is protected with required checks, and the owner merges by hand otherwise. `main` is not protected, so registry sync pull requests are reviewed and merged by hand. The maintainer guide says so, and ADR 0004 has a status note. (#70)
+
+### Removed
+
+- **BREAKING CHANGE:** Node.js 20 is no longer supported. `package.json` `engines.node` is now `>=22`, and CI no longer runs a Node.js 20 job. Because this is a breaking change before 1.0.0, the next Release is 0.5.0. (#70)
+- A private homelab plan that did not belong to this project (`.cursor/plans/`). `.cursor/` is now ignored. (#64)
+- Signal handlers in the install transaction that could never run, the unused `MIGRATABLE_KINDS` list, a `keypress` `removeListener` call that removed nothing, and the lossy `injectCustomContent` helper. (#67)
 
 ### Fixed
 
 - The release tool keeps release notes exactly as written. Notes with `$&`, `$'`, or `` $` `` are no longer changed when the version is applied, and a changelog with only `## [Unreleased]` now gets its version heading. (#68)
 - Applying a release now adds the new compare link (`[X.Y.Z]: …/compare/vPREV...vX.Y.Z`) and moves `[Unreleased]` to compare from the new tag. The registry patch release does the same. (#68)
+- A registry patch Release now puts its version heading after the whole `[Unreleased]` section. Before, it went right under `## [Unreleased]`, so the owner's unreleased notes ended up under the patch version. (#70)
+- A `.sigma.lock.guard` folder left by a hard kill is now detected. When it is older than one minute, the command stops with a `lock-guard-stale` error that names the folder and says to stop all SigmaSkills processes and remove it. Before, every run failed with a bare `lock-busy` message. The installer does not delete the folder itself, because two processes could both decide it is stale. (#70)
 - The auto-merge check now says no when any required input is missing (head SHA, generated SHA, expected SHA, default-branch SHA, check result, or classification) or when a SHA is not 40-hex. Before, a missing input skipped its check. (#68)
 - Registry automation stops when a `gh`, `npm`, or `git` lookup fails for any reason other than "not found". Before, a network error counted as "no npm versions", "no concurrent run", or "no release", so a version could be reused. (#68)
 - `npm run registry:sync -- --dry-run` now writes nothing, including with `--fetch` (it used to overwrite the fixture). The dead `fetchPinnedSourceSync` branch is gone. Registry validation rejects destinations under `.git`, `.github/workflows`, and `.ssh`, so a new host with such a path needs owner review. (#68)
@@ -42,11 +51,6 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - The install lock is released when setup code fails right after the lock is taken. Before, a failure there left the lock behind until its owner stopped. (#67)
 - `CI=false` and `CI=0` now mean "not CI" in the interactive installer, the same as in the `purge` check. (#67)
 - When `update` fails on a later skill, it still lists the skills it already updated after the error message. (#67)
-
-### Removed
-
-- A private homelab plan that did not belong to this project (`.cursor/plans/`). `.cursor/` is now ignored. (#64)
-- Signal handlers in the install transaction that could never run, the unused `MIGRATABLE_KINDS` list, a `keypress` `removeListener` call that removed nothing, and the lossy `injectCustomContent` helper. (#67)
 
 ## [0.4.0] — 2026-09-27
 

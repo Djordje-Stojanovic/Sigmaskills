@@ -352,7 +352,7 @@ export function formatRegistryPrBody(plan) {
     ...(blocked.length ? blocked.map((reason) => `- ${reason}`) : ['- none; classified as later-auto-mergeable']),
     '',
     plan.classification && plan.classification.autoEligible
-      ? 'This pull request may auto-merge and publish a patch Release after required checks pass. It will not close unrelated issues or pull requests, delete human branches, or publish a major or minor Release.'
+      ? 'This change is safe enough for a patch Release, but auto-merge only runs when `main` is protected with required checks. If `main` is not protected, the owner reviews and merges this pull request by hand. Automation will not close unrelated issues or pull requests, delete human branches, or publish a major or minor Release.'
       : 'This pull request requires owner review and will not auto-merge, publish npm, close unrelated issues or pull requests, or delete unrelated branches.',
     '',
   ].filter((line) => line !== null).join('\n');

@@ -3,6 +3,8 @@ import fs from 'node:fs';
 
 export const LOCK_GRACE_MS = 5000;
 export const LOCK_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+// A healthy guard lives for milliseconds. One older than this was left by a hard kill.
+export const LOCK_GUARD_STALE_MS = 60 * 1000;
 
 function alive(pid) {
   if (!Number.isInteger(pid) || pid <= 0) return false;
@@ -17,6 +19,15 @@ function guard(lockPath, action) {
   try { fs.mkdirSync(dir); }
   catch (err) {
     if (err.code !== 'EEXIST') throw err;
+    let guardAge = 0;
+    try { guardAge = Date.now() - fs.statSync(dir).mtimeMs; }
+    catch { /* The holder just finished; report a normal busy guard. */ }
+    if (guardAge > LOCK_GUARD_STALE_MS) {
+      // Removing it here is not safe: two processes could both decide it is stale and both continue.
+      const stale = new Error(`A SigmaSkills lock guard folder is stale: ${dir}. A crashed or killed process left it. To fix this, stop all SigmaSkills processes, remove that folder, and retry.`);
+      stale.code = 'lock-guard-stale';
+      throw stale;
+    }
     const busy = new Error(`Concurrent SigmaSkills operation in progress at ${dir}. Retry shortly. If a crash left this guard, stop all SigmaSkills processes before removing it.`);
     busy.code = 'lock-busy';
     throw busy;
