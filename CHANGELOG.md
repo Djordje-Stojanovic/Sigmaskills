@@ -20,6 +20,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - Two broken `measure.md` links in `sigmareview/references/method.md` now resolve. (#65)
 - The migration error message, its comments, and the installer guide now name 0.3.0 as the last version with the old state layout. 0.4.0 already uses the new layout, so the old advice to run `@0.4.0` failed in the same place. (#64)
 - The README host list names only hosts that exist in the registry.
+- A project `skills-lock.json` from another tool is never rewritten. When the file is a generic (non-Sigma) lock, `install`, `uninstall`, and `restore` leave it byte-identical, print a notice, and still finish the install, uninstall, or restore. The Sigma lock is only written when the file is missing or already a Sigma lock. (#66)
+- State and purge-journal paths that escape the project, home, or state folder are rejected when they load, with an error that says the path "escapes" its folder. A crafted `../victim` destination in `state.json` can no longer make `uninstall` or `purge` delete a folder outside the project. (#66)
+- `restore` now stops with `occupied-unowned` when a recorded host destination (for example `.claude/skills/<skill>`) holds files Sigma does not own. Before, it deleted those files and put the skill there. (#66)
+- A foreign `.agents/state.json` or `.agents/backups/` from another tool is no longer moved into the private folder or removed. Those two names count as Sigma's old layout only beside a `state.json` that has Sigma's shape. `install` no longer fails on such a project. (#66)
+- Reinstalling over a Sigma-owned link that points to the wrong target now stops with a `wrong-target` error. Before, it printed "Installed" with exit code 0 and left the wrong link in place. (#66)
+- `status`, `update`, and `uninstall` now classify a link that a user added inside a skill the same way, as a local addition. They share one tree walker. Before, `status` and `uninstall` called such a skill clean while `update` called it changed. (#66)
+- `--adopt-* replace` and `--adopt-* export` over a junction or symlink now work. The backup or export holds the folder the link points to, and the backup passes the integrity check. Before, both failed with `EEXIST`. (#66)
 
 ### Removed
 

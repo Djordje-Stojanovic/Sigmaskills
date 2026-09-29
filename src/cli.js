@@ -3,6 +3,7 @@ import { formatPlanHuman, formatPlanJson } from './plan.js';
 import { runProjectInstaller } from './interactive.js';
 import { collectStatus, formatStatusHuman, formatStatusJson } from './status.js';
 import { executeUpdate, formatUpdateHuman, formatUpdateJson } from './update.js';
+import { FOREIGN_LOCK_NOTICE } from './project-lock.js';
 import { executeRestore, formatRestoreHuman, formatRestoreJson } from './restore.js';
 import { executeUninstall, formatUninstallHuman, formatUninstallJson } from './uninstall.js';
 import {
@@ -508,7 +509,9 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
             }
             writeOut(`  Revision: ${plan.sourceRevision}`);
           }
-          if (results[0].plan.scope !== 'global') {
+          if (results.some((result) => result.lockLeftAlone)) {
+            writeOut(`  ${FOREIGN_LOCK_NOTICE}`);
+          } else if (results[0].plan.scope !== 'global') {
             writeOut(`  Project lock: skills-lock.json updated`);
           }
         }

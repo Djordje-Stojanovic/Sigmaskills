@@ -90,11 +90,12 @@ test('install: generic-CLI link to an exact copy is adopted by resolved target',
       host,
       process.platform === 'win32' ? 'junction' : 'dir',
     );
-    fs.writeFileSync(path.join(projectRoot, PROJECT_LOCK_FILENAME), `${JSON.stringify({
+    const genericLock = `${JSON.stringify({
       skills: {
         sigmawrite: { source: 'npx', sourceUrl: 'https://example.invalid/skills' },
       },
-    }, null, 2)}\n`);
+    }, null, 2)}\n`;
+    fs.writeFileSync(path.join(projectRoot, PROJECT_LOCK_FILENAME), genericLock);
     const beforeCanonical = skillBytes(canonical);
     const beforeHostMtime = fs.lstatSync(host).mtimeMs;
 
@@ -118,9 +119,8 @@ test('install: generic-CLI link to an exact copy is adopted by resolved target',
     assert.equal(fs.lstatSync(host).mtimeMs, beforeHostMtime);
     assert.equal(fs.realpathSync(host), fs.realpathSync(canonical));
 
-    const lock = loadProjectLock(projectRoot);
-    assert.equal(lock.skills.sigmawrite.revision, result.plan.sourceRevision);
-    assert.ok(!('source' in lock.skills.sigmawrite));
+    assert.equal(result.lockLeftAlone, true);
+    assert.equal(fs.readFileSync(path.join(projectRoot, PROJECT_LOCK_FILENAME), 'utf8'), genericLock);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }

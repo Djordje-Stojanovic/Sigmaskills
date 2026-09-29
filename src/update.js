@@ -26,7 +26,7 @@ import {
 } from './state.js';
 import { collectStatus } from './status.js';
 import { executeProjectInstall } from './transaction.js';
-import { commitSkillBackup, exportSkillTree, inventorySkillTree } from './backup.js';
+import { commitSkillBackup, exportSkillTree, walkLiveFiles } from './backup.js';
 
 export const UPDATE_SCHEMA_VERSION = 1;
 export const CANONICAL_CUSTOMIZATION_OWNER = 'canonical';
@@ -76,15 +76,6 @@ function relativeRootOf(relativeDestination, skillId) {
   const suffix = `/${skillId}`;
   if (posix.endsWith(suffix)) return posix.slice(0, -suffix.length);
   return posix.split('/').slice(0, -1).join('/') || UNIVERSAL_PROJECT_DESTINATION;
-}
-
-function walkLiveFiles(dir) {
-  const files = {};
-  const inventory = inventorySkillTree(dir);
-  for (const [rel, entry] of Object.entries(inventory.entries || {})) {
-    if (entry.kind === 'file') files[rel] = entry.hash;
-  }
-  return { files, inventory };
 }
 
 function detectRenames(deleted, added, fromFiles, toFiles) {

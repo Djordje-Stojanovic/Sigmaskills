@@ -18,6 +18,24 @@ const LEGACY_ENTRIES = [
   '.sigma-uninstall-staging',
   '.sigma-restore-staging',
 ];
+
+// state.json and backups are generic names. They count as ours only beside a Sigma-shaped state.json;
+// the other entries carry a Sigma name. Another tool's files in .agents/ are never moved or removed.
+function isSigmaStateFile(file) {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return typeof parsed?.schemaVersion === 'number' && parsed.skills !== null && typeof parsed.skills === 'object';
+  } catch {
+    return false;
+  }
+}
+
+function presentLegacyEntries(legacyDir) {
+  const generic = new Set([STATE_FILENAME, 'backups']);
+  const sigmaState = isSigmaStateFile(path.join(legacyDir, STATE_FILENAME));
+  return LEGACY_ENTRIES.filter((name) => fs.existsSync(path.join(legacyDir, name)) && (sigmaState || !generic.has(name)));
+}
+
 // Journals store absolute paths, so an interrupted run must finish where it started.
 const LEGACY_JOURNALS = ['uninstall-journal.json', 'purge-journal.json', '.sigma-purge-quarantine'];
 
@@ -107,7 +125,7 @@ export function migrateLegacyState(legacyDir, newDir, hooks = {}) {
     } finally { release(); }
     return;
   }
-  const present = LEGACY_ENTRIES.filter((name) => fs.existsSync(path.join(legacyDir, name)));
+  const present = presentLegacyEntries(legacyDir);
   if (present.length === 0) {
     fs.rmSync(tempDir, { recursive: true, force: true });
     return;
@@ -132,7 +150,7 @@ export function migrateLegacyState(legacyDir, newDir, hooks = {}) {
       finishLegacyCleanup(legacyDir, newDir);
       return;
     }
-    const entries = LEGACY_ENTRIES.filter((name) => fs.existsSync(path.join(legacyDir, name)));
+    const entries = presentLegacyEntries(legacyDir);
     fs.rmSync(tempDir, { recursive: true, force: true });
     fs.mkdirSync(tempDir, { recursive: true });
     fs.writeFileSync(path.join(tempDir, '.gitignore'), IGNORE_ALL, 'utf8');
@@ -155,7 +173,8 @@ function defaultStateDir(base) {
   const legacyDir = path.join(path.resolve(base), '.agents');
   const stateDir = path.join(legacyDir, PRIVATE_STATE_DIRNAME);
   if (fs.existsSync(stateDir)) return stateDir;
-  const legacy = [...LEGACY_ENTRIES, ...LEGACY_JOURNALS].some((name) => fs.existsSync(path.join(legacyDir, name)));
+  const legacy = presentLegacyEntries(legacyDir).length > 0
+    || LEGACY_JOURNALS.some((name) => fs.existsSync(path.join(legacyDir, name)));
   return legacy ? legacyDir : stateDir;
 }
 
@@ -223,7 +242,7 @@ export function loadProjectState(projectRoot, customStateDir) {
   try {
     const raw = fs.readFileSync(statePath, 'utf8');
     const parsed = JSON.parse(raw);
-    validateProjectState(parsed);
+    validateProjectState(parsed, { root: projectRoot, stateDir: getProjectStateDir(projectRoot, customStateDir) });
     return parsed;
   } catch (err) {
     throw new Error(`failed to read project state at ${statePath}: ${err.message}`);
@@ -231,11 +250,41 @@ export function loadProjectState(projectRoot, customStateDir) {
 }
 
 /**
- * Validate that a project state structure is valid.
+ * Reject a recorded path that leaves its base folder. State and journals sit on disk where
+ * anyone can edit them, so no recorded path may reach outside the project, home, or state dir.
+ *
+ * @param {string} base
+ * @param {string} recorded
+ * @param {string} what
+ */
+export function assertPathInside(base, recorded, what) {
+  const relative = path.relative(path.resolve(base), path.resolve(base, recorded));
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error(`${what} '${recorded}' escapes ${base}`);
+  }
+}
+
+function assertStateInside(skillId, skillState, bounds) {
+  const inside = (recorded, what) => assertPathInside(bounds.root, recorded, `state entry '${skillId}' ${what}`);
+  inside(skillState.destination, 'destination');
+  for (const owned of skillState.ownedPaths) if (typeof owned === 'string') inside(owned, 'owned path');
+  for (const copy of skillState.copies || []) {
+    inside(copy.destination, 'destination');
+    for (const owned of copy.ownedPaths) if (typeof owned === 'string') inside(owned, 'owned path');
+  }
+  if (typeof skillState.lastBackup === 'string') {
+    assertPathInside(bounds.stateDir, skillState.lastBackup, `state entry '${skillId}' backup`);
+  }
+}
+
+/**
+ * Validate that a managed state structure is valid. With bounds, recorded paths must stay inside them.
  *
  * @param {object} state
+ * @param {'project'|'global'} expectedScope
+ * @param {{ root: string, stateDir: string }} [bounds]
  */
-function validateManagedState(state, expectedScope) {
+function validateManagedState(state, expectedScope, bounds) {
   const label = expectedScope === 'global' ? 'global state' : 'project state';
   if (!state || typeof state !== 'object') {
     throw new Error(`invalid ${label}: expected JSON object`);
@@ -313,6 +362,7 @@ function validateManagedState(state, expectedScope) {
         }
       }
     }
+    if (bounds) assertStateInside(skillId, skillState, bounds);
   }
 }
 
@@ -321,8 +371,8 @@ function validateManagedState(state, expectedScope) {
  *
  * @param {object} state
  */
-export function validateProjectState(state) {
-  validateManagedState(state, 'project');
+export function validateProjectState(state, bounds) {
+  validateManagedState(state, 'project', bounds);
 }
 
 /**
@@ -330,8 +380,8 @@ export function validateProjectState(state) {
  *
  * @param {object} state
  */
-export function validateGlobalState(state) {
-  validateManagedState(state, 'global');
+export function validateGlobalState(state, bounds) {
+  validateManagedState(state, 'global', bounds);
 }
 
 /**
@@ -472,7 +522,7 @@ export function loadGlobalState(homeDir, customStateDir) {
       );
     }
     if (parsed?.schemaVersion === STATE_SCHEMA_VERSION && parsed.scope === 'global') {
-      validateGlobalState(parsed);
+      validateGlobalState(parsed, { root: homeDir, stateDir: getGlobalStateDir(homeDir, customStateDir) });
       return parsed;
     }
     if (parsed?.schemaVersion === STATE_SCHEMA_VERSION) {

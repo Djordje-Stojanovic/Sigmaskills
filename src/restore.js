@@ -12,7 +12,7 @@ import {
 } from './backup.js';
 import { resolveHomeDir } from './destinations.js';
 import { createSkillLink, pathExists, removeManagedPath } from './links.js';
-import { loadProjectLock, saveProjectLock, updateProjectLockSkill } from './project-lock.js';
+import { isForeignProjectLock, FOREIGN_LOCK_NOTICE, loadProjectLock, saveProjectLock, updateProjectLockSkill } from './project-lock.js';
 import { computeSkillRevisionAndHashes } from './revision.js';
 import {
   getGlobalStateDir,
@@ -140,6 +140,14 @@ function classifyRestoreSkill(options, skillId) {
     const weOwn = ownerOfPath(state, canonicalRel) === skillId;
     if (liveExists && !weOwn) {
       blockedReasons.push('occupied-unowned');
+    }
+    const hostCopies = Array.isArray(metadata.copies) ? metadata.copies : [];
+    for (const copy of hostCopies) {
+      const rel = String(copy.destination || '').replace(/\\/g, '/');
+      if (!rel || rel === canonicalRel) continue;
+      if (pathExists(path.resolve(root, ...rel.split('/'))) && ownerOfPath(state, rel) !== skillId) {
+        blockedReasons.push('occupied-unowned');
+      }
     }
 
     const needed = Math.max(verified.sizeBytes, 1) * 3;
@@ -453,6 +461,7 @@ export function executeRestore(options = {}) {
   const releaseLock = acquireConcurrencyLock(root, customStateDir);
   let state = loadState(scope, root, customStateDir);
 
+  let lockLeftAlone = false;
   try {
     for (const skill of plan.skills) {
       if (skill.identical) {
@@ -463,7 +472,9 @@ export function executeRestore(options = {}) {
       state = recordRestoredSkill(state, skill, root, undoBackup, resolveStateDir(scope, root, customStateDir));
       const persist = options.saveState || (scope === 'global' ? saveGlobalState : saveProjectState);
       persist(root, state, customStateDir);
-      if (scope !== 'global' && skill.metadata.revision) {
+      if (scope !== 'global' && isForeignProjectLock(root)) {
+        lockLeftAlone = true;
+      } else if (scope !== 'global' && skill.metadata.revision) {
         const lock = loadProjectLock(root);
         saveProjectLock(root, updateProjectLockSkill(lock, skill.id, skill.metadata.revision, skill.metadata.release));
       }
@@ -476,7 +487,7 @@ export function executeRestore(options = {}) {
       }
       skill.action = 'restored';
     }
-    return { ...plan, dryRun: false, state };
+    return { ...plan, dryRun: false, state, lockLeftAlone };
   } finally {
     releaseLock();
   }

@@ -6,6 +6,7 @@ import { createSkillLink, inspectManagedPath, pathExists, removeManagedPath } fr
 import { inspectProjectLock, PROJECT_LOCK_FILENAME } from './project-lock.js';
 import {
   STATE_FILENAME,
+  assertPathInside,
   getGlobalStateDir,
   getProjectStateDir,
   removeEmptyStateDir,
@@ -161,6 +162,20 @@ function collectPrivateItems(root, stateDir) {
   return items;
 }
 
+function assertJournalInside(journal, root, stateDir) {
+  const inside = (recorded, what) => {
+    try {
+      assertPathInside(root, recorded, what);
+    } catch {
+      assertPathInside(stateDir, recorded, what);
+    }
+  };
+  for (const item of journal.items) {
+    if (item?.absolutePath) inside(item.absolutePath, 'purge journal path');
+  }
+  if (journal.quarantineDir) inside(journal.quarantineDir, 'purge journal quarantine folder');
+}
+
 function findResumeJournal(stateDir) {
   const primary = path.join(stateDir, PURGE_JOURNAL_FILENAME);
   const nested = path.join(stateDir, PURGE_QUARANTINE_DIRNAME, PURGE_JOURNAL_FILENAME);
@@ -185,6 +200,7 @@ export function createPurgePlan(options = {}) {
   const stateDir = resolveStateDir(scope, root, options.customStateDir);
   const resume = findResumeJournal(stateDir);
   if (resume?.journal?.items && (resume.journal.status === 'quarantined' || resume.journal.status === 'cleanup')) {
+    assertJournalInside(resume.journal, root, stateDir);
     return {
       schemaVersion: PURGE_SCHEMA_VERSION,
       command: 'purge',

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { commitSkillBackup, copySkillTree, exportSkillTree, getBackupRoot, pruneOlderBackups } from './backup.js';
 import { resolveHomeDir } from './destinations.js';
 import { createSkillLink, inspectManagedPath, pathExists, removeManagedPath } from './links.js';
-import { loadProjectLock, removeProjectLockSkill, saveProjectLock } from './project-lock.js';
+import { FOREIGN_LOCK_NOTICE, isForeignProjectLock, loadProjectLock, removeProjectLockSkill, saveProjectLock } from './project-lock.js';
 import {
   getGlobalStateDir,
   getProjectStateDir,
@@ -507,6 +507,7 @@ export function executeUninstall(options = {}) {
   const stateDir = resolveStateDir(scope, root, customStateDir);
   const releaseLock = acquireConcurrencyLock(root, customStateDir);
   let state = loadState(scope, root, customStateDir);
+  let lockLeftAlone = false;
   let emptied = false;
   plan.startedAt = new Date().toISOString();
 
@@ -543,7 +544,9 @@ export function executeUninstall(options = {}) {
         try {
           state = removeSkillFromState(state, skill.id);
           persist(root, state, customStateDir);
-          if (scope !== 'global') {
+          if (scope !== 'global' && isForeignProjectLock(root)) {
+            lockLeftAlone = true;
+          } else if (scope !== 'global') {
             const lock = loadProjectLock(root);
             saveProjectLock(root, removeProjectLockSkill(lock, skill.id));
           }
@@ -589,7 +592,7 @@ export function executeUninstall(options = {}) {
         emptied = Object.keys(state.skills || {}).length === 0 && !pathExists(getBackupRoot(stateDir));
       }
     }
-    return { ...plan, dryRun: false, state };
+    return { ...plan, dryRun: false, state, lockLeftAlone };
   } finally {
     releaseLock();
     // Nothing left to own and no kept backups: leave no private folder behind.
