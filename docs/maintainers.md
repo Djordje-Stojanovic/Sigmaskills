@@ -130,6 +130,8 @@ A generated pull request auto-merges only when all of these hold:
 
 Validated host additions and description-only edits can then publish a patch Release. They use the same idempotent, trusted publication step as owner Releases. Changes to a path, ID, alias, detection rule, platform, membership, removal, unknown field, or any failed validation stay blocked for owner review.
 
+`main` is not protected today, so auto-merge never runs. The owner reviews and merges every registry sync pull request by hand, like any other pull request. Turn auto-merge on only after `main` has branch protection with required checks.
+
 ### Versions and branches
 
 Version calculation serializes concurrent runs. It reconciles npm and GitHub before the patch. The generated branch is deleted only after a verified merge and matching npm and GitHub results.
