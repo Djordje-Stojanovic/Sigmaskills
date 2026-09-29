@@ -69,7 +69,7 @@ function stagedPaths(projectRoot) {
     .filter(Boolean);
 }
 
-// Turn a current-layout project back into the 0.3.0/0.4.0 layout: private files straight in .agents/.
+// Turn a current-layout project back into the 0.3.0 and older layout: private files straight in .agents/.
 function toLegacyLayout(base) {
   const legacyDir = path.join(base, '.agents');
   const stateDir = path.join(legacyDir, PRIVATE_STATE_DIRNAME);
@@ -230,7 +230,7 @@ test('private state: an interrupted old-layout uninstall journal stops migration
     const legacyDir = path.join(projectRoot, '.agents');
     fs.writeFileSync(path.join(legacyDir, 'uninstall-journal.json'), '{"status":"in-progress"}', 'utf8');
     assert.equal(getProjectStateDir(projectRoot), legacyDir);
-    assert.throws(() => migrateStateForCommand({ projectRoot }), /uninstall-journal\.json.*0\.4\.0/s);
+    assert.throws(() => migrateStateForCommand({ projectRoot }), /uninstall-journal\.json.*0\.3\.0/s);
     assert.ok(pathExists(path.join(legacyDir, 'state.json')));
     assert.equal(pathExists(path.join(legacyDir, PRIVATE_STATE_DIRNAME)), false);
   } finally {

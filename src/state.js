@@ -9,7 +9,7 @@ export const PRIVATE_STATE_DIRNAME = '.sigmaskills';
 export const LEGACY_MIGRATION_MARKER = 'legacy-migration.json';
 const IGNORE_ALL = '*\n';
 
-// Private entries that 0.4.0 and older kept straight in .agents/, next to the committed skills.
+// Private entries that 0.3.0 and older kept straight in .agents/, next to the committed skills.
 const LEGACY_ENTRIES = [
   STATE_FILENAME,
   '.sigma.lock',
@@ -87,7 +87,7 @@ function finishLegacyCleanup(legacyDir, newDir) {
 }
 
 /**
- * Move 0.4.0-layout private state from legacyDir into newDir.
+ * Move 0.3.0-layout private state from legacyDir into newDir.
  * One directory rename is the commit point: a crash before it leaves the old layout,
  * a crash after it leaves the new layout plus a marker that finishes the cleanup next run.
  *
@@ -117,10 +117,10 @@ export function migrateLegacyState(legacyDir, newDir, hooks = {}) {
     throw new Error(
       `an interrupted SigmaSkills run left ${path.join(legacyDir, journal)}. `
       + 'Finish it with the version that started it, then run this command again: '
-      + 'npx @djordje-stojanovic/sigmaskills@0.4.0 uninstall --all --yes, or purge --confirm-purge "purge SigmaSkills".',
+      + 'npx @djordje-stojanovic/sigmaskills@0.3.0 uninstall --all --yes, or purge --confirm-purge "purge SigmaSkills".',
     );
   }
-  // Hold the old-layout lock so no other run (this version or 0.4.0) touches the files mid-copy.
+  // Hold the old-layout lock so no other run (this version or 0.3.0) touches the files mid-copy.
   const lockPath = path.join(legacyDir, '.sigma.lock');
   let release;
   try { release = acquireFileLock(lockPath); }

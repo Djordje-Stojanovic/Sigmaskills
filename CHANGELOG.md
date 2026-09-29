@@ -4,6 +4,20 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- Package metadata: `package.json` now has `license` (`MIT`), `bugs`, and `keywords`, so npm shows the license. (#64)
+- Docs and changelog match 0.4.0. The CHANGELOG compare links and the 0.4.0 package-size note are fixed, 0.2.1 is marked as a GitHub Release only, and the 0.2.0 sections follow Keep a Changelog order. The installer guide now covers the Link/Copy page, the `a` key, plain mode with `TERM=dumb` and `--json`, Escape in the destination search, and the hidden aliases (`-g`, `--cwd`, `--list`, `check`). The maintainer guide covers `registry:sync`, `registry:validate`, and the role of `.agents/skills` and `skills-lock.json`. ADRs 0005 and 0006 and the wayfinder label note are corrected. (#64)
+
+### Fixed
+
+- The migration error message, its comments, and the installer guide now name 0.3.0 as the last version with the old state layout. 0.4.0 already uses the new layout, so the old advice to run `@0.4.0` failed in the same place. (#64)
+- The README host list names only hosts that exist in the registry.
+
+### Removed
+
+- A private homelab plan that did not belong to this project (`.cursor/plans/`). `.cursor/` is now ignored. (#64)
+
 ## [0.4.0] — 2026-09-27
 
 ### Added
@@ -20,7 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - SigmaBrief (`sigmabrief`) accepts SigmaReview reports and SigmaImprove issues as input and groups briefs into waves, so only independent items run in parallel. Every brief now asks for green baseline checks before changes and ends with a fixed report (`DONE`, `DONE_WITH_CONCERNS`, or `BLOCKED`, plus PR, checks, and open questions). `approval: auto` lets agents record their decisions as rulings instead of waiting. A host's native worktree tool is preferred over manual `git worktree`. A new `session` brief hands the current conversation to a fresh agent.
 - The skill picker and `list` now show each skill's short description for people (`short_description` in `agents/openai.yaml`) instead of the agent-facing description cut off mid-word. The picker wraps it onto at most two lines, so narrow terminals show it whole. A skill without that line shows the first sentence of its description. `list --json` still gives the full description. (#39)
 - The installer's private files (state, lock, backups, journals, staging) now live in `.agents/.sigmaskills/` (global: `~/.agents/.sigmaskills/`). The folder ignores itself in Git, so `git add -A` no longer stages `.agents/state.json` or backups. Older projects move there on the next write command; `status` and `--dry-run` still read the old layout and write nothing. `--state-dir` and `SIGMA_STATE_DIR` are unchanged. (#34)
-- The npm package now ships only the user CLI: about 110 KB smaller unpacked and 10 fewer files. Release and registry automation moved to `scripts/` in the repository, and `sigmaskills release` is gone from the published CLI. Maintainers run `npm run release -- <flags>` from a checkout; the checks it makes are unchanged. (#40)
+- The npm package now ships only the user CLI: about 88 KB smaller unpacked (500,482 B instead of 588,522 B) and 3 fewer files (53 instead of 56). Release and registry automation moved to `scripts/` in the repository, and `sigmaskills release` is gone from the published CLI. Maintainers run `npm run release -- <flags>` from a checkout; the checks it makes are unchanged. (#40)
 - Every pull request now rehearses the Release path. A CI job commits the Release identities in a throwaway worktree, then runs the preview, the dispatch checks, and the trusted `validate` and publish steps with a real `npm pack` (`node scripts/release-rehearsal.js`). npm and GitHub lookups, dispatch, and publish are stubbed, so the job needs no secrets. A pull request that breaks packing, such as the `npm pack` JSON bug fixed in 0.2.1, now fails before merge. (#41)
 - CI now runs with a read-only token (`permissions: contents: read`) and pins every action to a full commit SHA, like the Release workflows. (#41)
 - CI now tests Node.js 22 and 24 on Windows, macOS, and Linux. Node.js 20 reached end of life on 2026-04-30, but `engines` stays at `>=20` for this Release so current users on Node.js 20 can still install; one Linux job on Node.js 20 keeps that promise tested. A later Release may raise it. (#41)
@@ -57,8 +71,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - The installer opens directly to skill selection, keeps destination pages within eight rows, and offers line-based commands in plain terminals. Help preserves cancellation, and short terminals keep focus and controls visible.
 - Package tests compare complete trees and bytes for all five skills, including customized reinstall protection and updates.
 
-
-## [0.2.1] — 2026-08-27
+## [0.2.1] — 2026-08-27 (GitHub Release only)
 
 ### Changed
 
@@ -70,12 +83,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - Registry Sync no longer fails when a leftover `registry/sync-*` branch still exists: it replaces that generated branch, or reuses a matching open pull request, and still refuses human branches.
 - Release packing reads `npm pack --json` after prepack logs, so publication can rebuild the tarball digest.
 
-
 ## [0.2.0] — 2026-08-20
-
-### Fixed
-
-- `npm test` lists `test/*.test.js` files in a runner script so Node.js 20 CI runs the suite without glob expansion. Registry pin hashing ignores CRLF from Windows checkout so the fixture still matches `contentSha256`.
 
 ### Added
 
@@ -102,6 +110,9 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - Structural regression tests (`npm test`) and GitHub Actions CI so skill registry, README wiring, templates, and SigmaWrite soft-steer invariants cannot silently drift.
 - Root [`AGENTS.md`](AGENTS.md): mandatory work rules and clear-writing rules, project map, and the `KNOWN_SKILLS` + README + CHANGELOG update rule.
 
+### Fixed
+
+- `npm test` lists `test/*.test.js` files in a runner script so Node.js 20 CI runs the suite without glob expansion. Registry pin hashing ignores CRLF from Windows checkout so the fixture still matches `contentSha256`.
 
 ## [0.1.0] — 2026-08-11
 
@@ -139,7 +150,9 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.1.0

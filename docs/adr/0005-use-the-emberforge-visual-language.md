@@ -8,4 +8,4 @@ Open directly to a small Sigma heading and stage progress. Use short skill rows 
 
 ## Primary source
 
-The throwaway prototype is at `C:\AI\TEMP\sigmaskills-installer-prototype` and runs with `npm start`.
+The throwaway prototype was not kept in this repository. The installer in `src/` replaced it.

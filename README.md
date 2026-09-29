@@ -2,7 +2,7 @@
 
 **High-rigor Agent Skills for every serious coding agent.**
 
-Portable [Agent Skills](https://agentskills.io/) that install once and run on **Codex**, **Claude Code**, **Cursor**, **Pi**, **OpenCode**, **LAPI**, Reasonix-class TUIs, Kimi/Muse-style hosts, and any tool that reads a `SKILL.md`.
+Portable [Agent Skills](https://agentskills.io/) that install once and run on **Codex**, **Claude Code**, **Cursor**, **Pi**, **OpenCode**, **Reasonix**, **Kimi Code CLI**, and any tool that reads a `SKILL.md`.
 
 | | |
 |---|---|

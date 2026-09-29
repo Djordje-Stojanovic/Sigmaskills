@@ -4,6 +4,8 @@ This guide covers the Sigma Installer (`npx @djordje-stojanovic/sigmaskills`) an
 
 Run `npx @djordje-stojanovic/sigmaskills --help` for the full flag list of the Release you run.
 
+Some short forms are hidden from `--help` on purpose. They work, and scripts may use them: `-g` (for `--global`), `--cwd` (for `--project`), `--list` (for the `list` command), and the `check` command (for `verify`).
+
 ## Contents
 
 - [Scopes](#scopes)
@@ -37,13 +39,15 @@ npx @djordje-stojanovic/sigmaskills
 
 The installer reads the Skill Pack from `manifest.json` and the Agent Host registry that ships with it. It opens straight to the skill picker, under a small Sigma heading in the warm LAPI palette. Each skill shows its short description (`short_description` in `agents/openai.yaml`) on at most two lines.
 
-Next, you choose destinations. Only the universal `.agents/skills/` folder is selected by default. The installer lists the Agent Hosts that read that folder. Host folders such as `.claude/skills` or `.pi/skills` stay unselected until you choose them, even for detected hosts. Search finds every supported Agent Host, detected or not. A destination page shows at most eight rows and fits the terminal height.
+Next, you choose destinations. Only the universal `.agents/skills/` folder is selected by default. The installer lists the Agent Hosts that read that folder. Host folders such as `.claude/skills` or `.pi/skills` stay unselected until you choose them, even for detected hosts. Search finds every supported Agent Host, detected or not. A destination page shows at most eight rows and fits the terminal height. The first Escape on this page clears the search; a second Escape cancels.
+
+If you chose a host folder, the next page is the Link/Copy page. **Link** (the default) keeps one canonical copy in `.agents/skills` and links the host folder to it. **Copy** writes a full copy into each host folder. If you chose only `.agents/skills`, this page does not appear.
 
 The last page is the confirmation plan. It shows every full destination path and method. Long paths wrap onto more pages. Escape, EOF, Ctrl+C, or a "no" at the confirmation exits without writing. When the installer stops, it restores the cursor, raw mode, input, and listeners.
 
 ### Plain mode
 
-The installer uses plain, line-based prompts with `--static`, `--no-color`, `NO_COLOR`, `CI`, redirected output, or a session that is not a TTY. Enter one command per line:
+The installer uses plain, line-based prompts with `--static`, `--no-color`, `--json`, `NO_COLOR`, `TERM=dumb`, `CI`, redirected output, or a session that is not a TTY. Enter one command per line:
 
 | Input | Effect |
 |-------|--------|
@@ -51,7 +55,7 @@ The installer uses plain, line-based prompts with `--static`, `--no-color`, `NO_
 | `/claude` | Search destinations for "claude" |
 | `/` | Clear the search |
 | `next`, `prev` | Change page (arrow keys do the same in interactive mode) |
-| `a` | Select all skills |
+| `a` | Select all skills, or clear all when every skill is already selected |
 | `g` | Switch to Global Installation (shows the scope warning) |
 | `?` | Help |
 | `esc` | Cancel |
@@ -136,11 +140,11 @@ Only one write command runs at a time in a scope. The `.sigma.lock` file enforce
 
 If a crash leaves the guard folder, stop all SigmaSkills processes. Then remove the guard folder and retry.
 
-### Projects from 0.4.0 and older
+### Projects from 0.3.0 and older
 
 Older projects keep these files directly in `.agents/`. `status` and every `--dry-run` read them there and write nothing. The next `install`, `update`, `uninstall`, `restore`, or `purge` moves them into `.agents/.sigmaskills/` in one step. A crash leaves either the old layout or the new one, never a mix.
 
-If an interrupted `uninstall` or `purge` journal is still in the old layout, the installer stops. Finish that run with 0.4.0 first.
+If an interrupted `uninstall` or `purge` journal is still in the old layout, the installer stops. Finish that run with 0.3.0 first: `npx @djordje-stojanovic/sigmaskills@0.3.0 uninstall --all --yes`. 0.4.0 already uses the new layout, so it cannot finish that run.
 
 ## status
 
@@ -294,7 +298,7 @@ Safety:
 
 These methods copy skills without the Sigma Installer. They have no `status`, `update`, `restore`, or `uninstall`. The Sigma Installer can adopt these copies later; see [Existing copies](#existing-copies).
 
-Every [GitHub Release](https://github.com/Djordje-Stojanovic/Sigmaskills/releases) matches the npm package of the same version. A skill that is in the repository but not yet in a Release is available only from the repository source.
+Every [GitHub Release](https://github.com/Djordje-Stojanovic/Sigmaskills/releases) has a matching git tag. npm has 0.2.0, 0.3.0, and 0.4.0. 0.1.0 and 0.2.1 are GitHub Releases only. A skill that is in the repository but not yet in a Release is available only from the repository source.
 
 ### `npx skills`
 
