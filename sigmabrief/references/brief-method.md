@@ -13,7 +13,7 @@
 | Actor | May ask |
 |-------|---------|
 | **SigmaBrief** | At most one question if the work target is missing (`Which issue URL(s), work statement, or repo for all open?`). Full `/grilling` only if the user explicitly asks SigmaBrief to grill them. |
-| **Executing agent** (in the brief) | Plan first; `/grilling` or focused questions when trade-offs exist — including whether to create an isolated Windows git worktree. |
+| **Executing agent** (in the brief) | Plan first; `/grilling` or focused questions when trade-offs exist — including whether to create an isolated git worktree. |
 
 SigmaBrief itself stays thin: research enough to write good simple briefs, then emit.
 
