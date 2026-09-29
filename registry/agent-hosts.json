@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generatedFrom": {
     "repository": "vercel-labs/skills",
-    "pinnedRevision": "7407f3893ad4dceab546ac002c3ef806e4000c73",
+    "pinnedRevision": "d153383032d08aacc312a47cfec960175c90ed60",
     "upstreamFile": "src/agents.ts"
   },
   "hosts": [
