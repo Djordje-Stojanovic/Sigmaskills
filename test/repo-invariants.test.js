@@ -339,3 +339,160 @@ test('every shipped skill contains approved Personal instructions customization 
     assert.equal(endCount, 1, `${skill.id}: must have exactly 1 end tag`);
   }
 });
+
+const CODEX_PRODUCTS = ['chatgpt', 'codex', 'atlas'];
+
+function yamlProducts(yaml) {
+  const block = yaml.match(/products:\s*\n((?:\s+-\s*\S+\s*\n)+)/);
+  assert.ok(block, 'openai.yaml needs a products list');
+  return [...block[1].matchAll(/-\s*(\S+)/g)].map((m) => m[1]);
+}
+
+test('every openai.yaml lists only products that Codex knows', () => {
+  for (const skill of KNOWN_SKILLS) {
+    const products = yamlProducts(read(path.join(skill.id, 'agents', 'openai.yaml')));
+    for (const product of products) {
+      assert.ok(CODEX_PRODUCTS.includes(product), `${skill.id}: unknown product "${product}" (allowed: ${CODEX_PRODUCTS.join(', ')})`);
+    }
+  }
+});
+
+test('SigmaBrief is explicit-only in every host', () => {
+  assert.match(read('sigmabrief/agents/openai.yaml'), /allow_implicit_invocation:\s*false/);
+});
+
+test('skill names and descriptions follow the Agent Skills limits', () => {
+  for (const skill of KNOWN_SKILLS) {
+    const { name, description } = parseFrontmatter(read(path.join(skill.id, 'SKILL.md')));
+    assert.match(name, /^[a-z0-9]+(-[a-z0-9]+)*$/, `${skill.id}: name must be lowercase letters, digits, and single hyphens`);
+    assert.ok(name.length <= 64, `${skill.id}: name is over 64 characters`);
+    assert.ok(description.length <= 1024, `${skill.id}: description has ${description.length} characters (max 1024)`);
+  }
+});
+
+function githubSlug(heading) {
+  return heading
+    .trim()
+    .toLowerCase()
+    .replace(/[`*_~]/g, '')
+    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+    .replace(/\s/g, '-');
+}
+
+function headingSlugs(md) {
+  const seen = new Map();
+  const slugs = new Set();
+  let fence = false;
+  for (const line of md.split(/\r?\n/)) {
+    if (/^\s*(```|~~~)/.test(line)) fence = !fence;
+    const m = !fence && line.match(/^#{1,6}\s+(.+?)\s*#*\s*$/);
+    if (!m) continue;
+    const base = githubSlug(m[1].replace(/\[([^\]]*)\]\([^)]*\)/g, '$1'));
+    const n = seen.get(base) ?? 0;
+    seen.set(base, n + 1);
+    slugs.add(n === 0 ? base : `${base}-${n}`);
+  }
+  return slugs;
+}
+
+function walkFiles(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name);
+    return entry.isDirectory() ? walkFiles(full) : [full];
+  });
+}
+
+function brokenLinks(file) {
+  const problems = [];
+  let fence = false;
+  const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
+  for (const line of lines) {
+    if (/^\s*(```|~~~)/.test(line)) fence = !fence;
+    if (fence) continue;
+    const text = line.replace(/`[^`]*`/g, '');
+    for (const m of text.matchAll(/\[[^\]]*\]\(([^)\s]+)\)/g)) {
+      const href = m[1];
+      if (/^[a-z][a-z0-9+.-]*:/i.test(href)) continue;
+      const [rel, anchor] = href.split('#');
+      const target = rel === '' ? file : path.resolve(path.dirname(file), decodeURIComponent(rel));
+      if (!fs.existsSync(target)) {
+        problems.push(`${path.relative(ROOT, file)}: ${href} does not exist`);
+      } else if (anchor && target.endsWith('.md') && !headingSlugs(fs.readFileSync(target, 'utf8')).has(anchor)) {
+        problems.push(`${path.relative(ROOT, file)}: ${href} has no matching heading`);
+      }
+    }
+  }
+  return problems;
+}
+
+test('link checker finds a missing file and a missing heading', () => {
+  const tmp = fs.mkdtempSync(path.join(ROOT, 'test', 'link-check-'));
+  try {
+    fs.writeFileSync(path.join(tmp, 'a.md'), '# Top\n\n[ok](b.md#real-one) [bad](b.md#nope) [gone](c.md) [self](#top)\n');
+    fs.writeFileSync(path.join(tmp, 'b.md'), '## Real one\n');
+    assert.deepEqual(
+      brokenLinks(path.join(tmp, 'a.md')).map((p) => p.replace(/^.*?: /, '')),
+      ['b.md#nope has no matching heading', 'c.md does not exist'],
+    );
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('every relative link and anchor in the skill folders resolves', () => {
+  const problems = KNOWN_SKILLS.flatMap((skill) =>
+    walkFiles(path.join(ROOT, skill.id))
+      .filter((f) => f.endsWith('.md'))
+      .flatMap(brokenLinks),
+  );
+  assert.deepEqual(problems, []);
+});
+
+test('skills name one grilling skill and no private tools', () => {
+  const files = KNOWN_SKILLS.flatMap((skill) => walkFiles(path.join(ROOT, skill.id))).filter((f) => f.endsWith('.md'));
+  for (const file of [...files, path.join(ROOT, 'README.md')]) {
+    const text = fs.readFileSync(file, 'utf8');
+    const rel = path.relative(ROOT, file);
+    assert.doesNotMatch(text, /Thinkcenter_Setup/, `${rel} names a private repository`);
+    assert.doesNotMatch(text, /grill-me/, `${rel} must call the grilling skill /grilling`);
+  }
+});
+
+test('README lists the optional companion skills and says laloc is optional', () => {
+  const readme = read('README.md');
+  for (const name of ['to-spec', 'to-tickets', 'grilling', 'tdd']) {
+    assert.match(readme, new RegExp(`\`/${name}\``), `README requirements should list /${name}`);
+  }
+  assert.match(readme, /mattpocock\/skills/);
+  assert.match(readme, /laloc[^\n]*(optional|if you have)/i);
+});
+
+test('SigmaShip and SigmaBrief agree on git and review rules', () => {
+  const brief = [
+    'sigmabrief/SKILL.md',
+    'sigmabrief/references/brief-method.md',
+    'sigmabrief/references/prompt-contract.md',
+  ].map(read).join('\n');
+  const ship = ['sigmaship/SKILL.md', 'sigmaship/references/review-round.md', 'sigmaship/references/land.md']
+    .map(read)
+    .join('\n');
+  assert.doesNotMatch(brief, /(?<!never )\brebase\b/i, 'SigmaBrief must merge the base branch, not rebase a pushed branch');
+  assert.doesNotMatch(brief, /git branch -d\b/, 'SigmaBrief must use git branch -D after a confirmed merge');
+  assert.doesNotMatch(brief, /origin\/main|latest `?main`?/, 'SigmaBrief must say <base>, not hard-code main');
+  assert.match(ship, /\/grilling/);
+  assert.match(ship, /by hand/i, 'SigmaShip needs a fallback when companion skills are missing');
+  assert.match(read('sigmaship/references/review-round.md'), /CLEAN \| FIXED \| BLOCKED[\s\S]*wins/i);
+  assert.doesNotMatch(read('sigmaship/references/review-round.md'), /P1 \(a criterion fails/);
+  assert.match(read('sigmaship/references/review-round.md'), /P1 \(a primary journey is broken, insecure, or breaks its budget\)/);
+  assert.match(read('README.md'), /shell native to the machine/i);
+});
+
+test('SigmaBrief examples follow its own dispatch format', () => {
+  const contract = read('sigmabrief/references/prompt-contract.md');
+  const lines = contract.split(/\r?\n/).filter((l) => /\|\s*isolation:/.test(l) && !/^\s*wave N/.test(l));
+  for (const line of lines) {
+    assert.match(line, /^wave \d+ \| .+ \| isolation: (on|off|ask) \| type: (greenfield|finish-PR|skip|blocked|session)\s*$/, `bad dispatch example: ${line}`);
+  }
+  assert.ok(lines.length >= 3, 'expected dispatch examples in the contract');
+  assert.doesNotMatch(contract, /Open WebUI|Symfonium|CrowdSec|C:\AI\RepoName/i, 'examples must be generic');
+});

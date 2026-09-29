@@ -4,7 +4,7 @@
 
 1. Chat output shape
 2. Invariants every brief must carry
-3. Worktree create (Windows)
+3. Worktree create
 4. Cleanup (worktree-on only)
 5. Brief skeletons
 6. Dry-run examples
@@ -32,8 +32,8 @@ Only when useful: overlaps, upstream waits, already fixed, human-only tests.
 ## 2. Invariants every brief must carry
 
 1. Exact work target (issue URL and/or plain task).
-2. Plan first. With `approval: plan` (default), wait for approval; if trade-offs exist, use `/grill-me` or focused questions — including worktree yes/no (parallel → on; sequential single → off OK). With `approval: auto`, decide, record each decision as `Ruling: <what> — <why> — <cost if wrong>` in the PR body, and stop only for irreversible, security-sensitive, or outside-the-branch actions.
-3. Branch from latest `main` **or** continue existing PR branch (never duplicate in-flight work).
+2. Plan first. With `approval: plan` (default), wait for approval; if trade-offs exist, use `/grilling` or focused questions — including worktree yes/no (parallel → on; sequential single → off OK). With `approval: auto`, decide, record each decision as `Ruling: <what> — <why> — <cost if wrong>` in the PR body, and stop only for irreversible, security-sensitive, or outside-the-branch actions.
+3. Branch from latest `<base>` (default `main`) **or** continue existing PR branch (never duplicate in-flight work).
 4. One-sentence definition of done.
 5. Required reads when discoverable (concrete paths, not “read the docs”).
 6. Baseline first: run the project's checks before changing anything, and report a red baseline instead of building on it. Then validate (tests/checkpoints if known; else smoke the failure mode + adjust tests if present). For a SigmaReview finding, its proof test must fail before the fix and pass after.
@@ -41,11 +41,11 @@ Only when useful: overlaps, upstream waits, already fixed, human-only tests.
 8. **Do not merge.**
 9. Self-review: high quality, docs, validation, low regression risk before opening the PR.
 10. Explicit out-of-scope / do-not-touch list.
-11. Windows-native commands/paths. No WSL assumptions.
+11. Use the shell native to the executing machine (PowerShell on Windows, POSIX shell elsewhere). No WSL assumptions.
 12. **Do not merge. Keep any worktree while the PR is open. Cleanup only after human merge or user cancel/abandon.**
 13. Report back in this format: `Status: DONE | DONE_WITH_CONCERNS | BLOCKED` · PR URL · checks run and results · rulings or open questions · concerns.
 
-## 3. Worktree create (Windows)
+## 3. Worktree create
 
 When isolation is on, the **executing agent** creates the worktree (Approach A). If the host has a native worktree tool (for example Cursor `/worktree`, a `--worktree` flag, or an `EnterWorktree` tool), use it: the host can then see and clean up the worktree. Otherwise use the git commands below. If the agent already runs inside a linked worktree, it creates no second one.
 
@@ -58,10 +58,10 @@ When isolation is on, the **executing agent** creates the worktree (Approach A).
 
 **Failure line:** if `git worktree add` fails, fix the prerequisite. Do **not** fall back to editing the shared main checkout while other writers are active.
 
-```powershell
+```text
 git fetch origin
-git worktree add -b <branch> <sibling-path> origin/main
-# Example: C:\AI\RepoName_issue12
+git worktree add -b <branch> <sibling-path> origin/<base>
+# Example: ../repo-issue12
 # Do all edits only inside <sibling-path>
 ```
 
@@ -70,7 +70,7 @@ Rules: one branch ↔ one worktree; sibling path next to the main repo (not unde
 
 ### Finish-PR isolation
 
-Continue the existing PR branch. Create a worktree for that branch only if other writers will run in parallel. Otherwise continue on a normal checkout of the PR branch. Always: rebase on latest `main`, resolve conflicts carefully (keep both additive doc entries when both valid), re-validate, push, confirm mergeable. Do not start a second greenfield implementation.
+Continue the existing PR branch. Create a worktree for that branch only if other writers will run in parallel. Otherwise continue on a normal checkout of the PR branch. Always: merge the latest `origin/<base>` into the branch (never rebase a pushed branch), resolve conflicts carefully (keep both additive doc entries when both valid), re-validate, push, confirm mergeable. Do not start a second greenfield implementation.
 
 ## 4. Cleanup (worktree-on only)
 
@@ -80,13 +80,13 @@ Every worktree-enabled brief must mention cleanup in **three** places:
 2. **Definition of Done / PR section:** after **human merge** or abandon — not after `gh pr create` — run the cleanup block.
 3. **End checklist** with commands:
 
-```powershell
+```text
 # Only after human merge OR abandon — never while PR still open
 gh pr view <N> --json state,mergedAt
 git push origin --delete <branch>   # if remote still exists
 git worktree remove <sibling-path>  # --force only if required
 git worktree prune
-git branch -d <branch>              # or -D if already gone remotely
+git branch -D <branch>              # only after the PR shows merged; a squash merge makes -d refuse
 git worktree list                   # path must be gone
 ```
 
@@ -102,9 +102,9 @@ Sequential briefs with isolation off: cleanup block is `N/A — no worktree`.
 <issue-url or task>
 
 Research the local repo and this work item (gh issue/PR if applicable; web only if needed).
-Plan first. If trade-offs exist, use /grill-me or ask focused questions — including whether to create an isolated Windows git worktree (recommended for parallel agents; optional for one sequential task). Wait for plan approval.
+Plan first. If trade-offs exist, use /grilling or ask focused questions — including whether to create an isolated git worktree (recommended for parallel agents; optional for one sequential task). Wait for plan approval.
 
-If isolation is on: YOU create the worktree (git fetch; verify clean-enough main checkout, unique branch, free sibling path; then git worktree add -b <branch> <Windows-sibling-path> origin/main). Do all work there. You own cleanup — do not leave worktrees/branches behind (see cleanup at end; this is critical). Do not merge. Keep the worktree while the PR is open. Cleanup only after human merge or abandon.
+If isolation is on: YOU create the worktree (git fetch; verify clean-enough main checkout, unique branch, free sibling path; then git worktree add -b <branch> <sibling-path> origin/<base>). Do all work there. You own cleanup — do not leave worktrees/branches behind (see cleanup at end; this is critical). Do not merge. Keep the worktree while the PR is open. Cleanup only after human merge or abandon.
 
 Solve the work. Follow repo standards and these required reads: <paths>.
 Run the baseline checks before any change; if they are red, stop and report. Validate with: <tests/smoke>. Update docs/LEARNINGS only when something non-obvious was learned.
@@ -130,8 +130,8 @@ REPORT BACK: Status: DONE | DONE_WITH_CONCERNS | BLOCKED · PR URL · checks run
 Existing PR: <pr-url> (branch <name>)
 
 Read the issue and the existing PR. Make a plan first. Do NOT start a second implementation.
-Continue the existing PR branch. Rebase on latest main, resolve conflicts carefully, re-validate, push, confirm mergeable.
-Ask whether other writers are running in parallel; create a Windows worktree for this PR branch only if yes (same create/cleanup rules as greenfield). Otherwise stay on a normal checkout of the PR branch.
+Continue the existing PR branch. Merge the latest origin/<base> into the branch (never rebase a pushed branch), resolve conflicts carefully, re-validate, push, confirm mergeable.
+Ask whether other writers are running in parallel; create a worktree for this PR branch only if yes (same create/cleanup rules as greenfield). Otherwise stay on a normal checkout of the PR branch.
 Do NOT merge. Open/update the PR for review only after self-review for quality, docs, validation, and low bug risk.
 Out of scope: unrelated issues.
 
@@ -164,7 +164,7 @@ Same as greenfield but state `Isolation: off (sequential). Cleanup: N/A — no w
 Dispatch:
 
 ```text
-#12 Update Open WebUI safely | isolation: off | type: greenfield
+wave 1 | #12 Add CSV export to the report page | isolation: off | type: greenfield
 ```
 
 Brief (shape only):
@@ -174,7 +174,7 @@ https://github.com/owner/repo/issues/12
 
 Research local repo + issue. Plan first; ask worktree only if unclear — recommend off for this sequential run. Wait for approval.
 Isolation: off (sequential). Cleanup: N/A — no worktree.
-Solve per issue. Required reads: CLAUDE.md, USER_GUIDE_OPENWEBUI.md.
+Solve per issue. Required reads: AGENTS.md, docs/exports.md.
 Validate against those docs. Commit, push, PR with Closes #12. Do NOT merge.
 Self-review before opening PR. Out of scope: other open issues.
 ```
@@ -184,8 +184,8 @@ Self-review before opening PR. Out of scope: other open issues.
 Dispatch:
 
 ```text
-#8 Lazy toolkit path parsing | isolation: on | type: greenfield
-#11 Symfonium CrowdSec bans | isolation: on | type: greenfield
+wave 1 | #8 Parse config paths lazily | isolation: on | type: greenfield
+wave 1 | #11 Rate-limit failed logins | isolation: on | type: greenfield
 ```
 
-Each brief: isolation on; Windows sibling paths (`C:\AI\Repo_issue8`, `C:\AI\Repo_issue11`); create prereqs; cleanup ×3 (top ownership, DoD after human merge/abandon, end checklist); do not touch the other issue’s paths; do not merge; keep worktree while PR open.
+Each brief: isolation on; sibling paths (`../repo-issue8`, `../repo-issue11`); create prereqs; cleanup ×3 (top ownership, DoD after human merge/abandon, end checklist); do not touch the other issue’s paths; do not merge; keep worktree while PR open.

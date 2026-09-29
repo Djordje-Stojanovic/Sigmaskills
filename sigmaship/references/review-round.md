@@ -1,6 +1,6 @@
 # Review rounds
 
-A review round gives the finished branch to an agent that has never seen the work. A fresh context catches what the builder's context hides. Use SigmaBrief to write the handoff when it is installed. Otherwise write it from the template below. Either way, the handoff must stand alone.
+A review round gives the finished branch to an agent that has never seen the work. A fresh context catches what the builder's context hides. Write the handoff from the template below. SigmaBrief can help as a skeleton when it is installed, but its brief rules do not apply here: the reviewer fixes findings on the branch without waiting for approval, and reports in the `CLEAN | FIXED | BLOCKED` form below. That form wins. The handoff must stand alone.
 
 ## Handoff template
 
@@ -13,7 +13,7 @@ Setup:
 Review, in this order:
 2. Spec: read <issue-url> and <spec link>. For each acceptance criterion, confirm that the code meets it and that a test proves it. List every gap.
 3. Defects in the diff (git diff origin/<base>...HEAD), using the SigmaReview lenses: correctness and edge cases, error handling, security (authorization, input handling, secrets), performance on the hot path, tests that would miss a real failure, and this repository's documented standards.
-4. Rate each finding P0 (exploitable or data loss), P1 (a criterion fails or a primary path breaks), P2 (material but bounded), or P3 (nit). Keep only findings with a concrete location and trigger.
+4. Rate each finding P0 (exploitable now, data loss, or the system is unusable), P1 (a primary journey is broken, insecure, or breaks its budget), P2 (material but bounded), or P3 (small, with a demonstrated cost). A failed acceptance criterion is at least P2. Keep only findings with a concrete location and trigger.
 
 Fix:
 5. For each P0–P2 finding: write a test that fails, fix it, run the full suite, commit as fix(#<issue>): <what>, and push. Keep the fix inside the ticket.

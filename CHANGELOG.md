@@ -6,11 +6,18 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
+- The six skills now agree with each other. SigmaShip and SigmaBrief both merge the base branch into a pushed branch (no rebase), use `<base>` (default `main`), delete a squash-merged branch with `git branch -D` only after the PR shows merged, define P1 as SigmaReview does, and use the shell native to the executing machine. In a SigmaShip review round, the `CLEAN | FIXED | BLOCKED` report wins over SigmaBrief's format. The grilling skill is called `/grilling` everywhere. SigmaShip says to write the acceptance criteria by hand when `/to-spec`, `/to-tickets`, or `/grilling` are missing. The README lists these optional companion skills from `mattpocock/skills`. (#65)
+- SigmaBrief examples now use its own dispatch format and generic content. (#65)
+- SigmaRefactor and the README no longer name a private repository, and they say `laloc` is optional. (#65)
+- Tests check that `openai.yaml` lists only Codex products (`chatgpt`, `codex`, `atlas`), that every skill name and description follows the Agent Skills limits, and that every relative link and `#anchor` in the skill folders resolves. (#65)
 - Package metadata: `package.json` now has `license` (`MIT`), `bugs`, and `keywords`, so npm shows the license. (#64)
 - Docs and changelog match 0.4.0. The CHANGELOG compare links and the 0.4.0 package-size note are fixed, 0.2.1 is marked as a GitHub Release only, and the 0.2.0 sections follow Keep a Changelog order. The installer guide now covers the Link/Copy page, the `a` key, plain mode with `TERM=dumb` and `--json`, Escape in the destination search, and the hidden aliases (`-g`, `--cwd`, `--list`, `check`). The maintainer guide covers `registry:sync`, `registry:validate`, and the role of `.agents/skills` and `skills-lock.json`. ADRs 0005 and 0006 and the wayfinder label note are corrected. (#64)
 
 ### Fixed
 
+- `agents/openai.yaml` no longer lists the invalid product `api` in any skill. Codex could ignore a metadata file with an unknown product. (#65)
+- SigmaBrief now sets `allow_implicit_invocation: false`, so the host no longer starts it on its own. (#65)
+- Two broken `measure.md` links in `sigmareview/references/method.md` now resolve. (#65)
 - The migration error message, its comments, and the installer guide now name 0.3.0 as the last version with the old state layout. 0.4.0 already uses the new layout, so the old advice to run `@0.4.0` failed in the same place. (#64)
 - The README host list names only hosts that exist in the registry.
 

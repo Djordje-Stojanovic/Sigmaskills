@@ -1,13 +1,13 @@
 ---
 name: sigmarefactor
-description: Guide safe, user-approved reduction of repository code size after a laloc scan. Use when the user wants large files reviewed and simplified without losing behavior. Do not use for an unattended rewrite, a line-count contest, or a performance audit.
+description: Guide safe, user-approved reduction of repository code size after a size scan. Use when the user wants large files reviewed and simplified without losing behavior. Do not use for an unattended rewrite, a line-count contest, or a performance audit.
 ---
 
 # SigmaRefactor
 
 Reduce unnecessary code with the user. Keep behavior, tests, public interfaces, and user data intact.
 
-Read [scan.md](references/scan.md) before the first scan. It defines the file inventory, counting rules, and `laloc` limits.
+Read [scan.md](references/scan.md) before the first scan. It defines the file inventory, the counting rules, and the fallback when `laloc` is missing.
 
 ## Workflow
 

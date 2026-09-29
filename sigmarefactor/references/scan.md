@@ -4,7 +4,7 @@ Use this reference for the first step of SigmaRefactor. Keep the scan reproducib
 
 ## Preferred command
 
-The PowerShell `laloc` implementation in Thinkcenter_Setup counts physical lines. It accepts `-p <path>`, `-m <minimum>`, and one `-x` string-array parameter. Run it as:
+`laloc` is optional. If you have it, it counts physical lines. It accepts `-p <path>`, `-m <minimum>`, and one `-x` string-array parameter. Run it as:
 
 ```powershell
 laloc -p '<root>' -m 0 -x '*.md','*.mdx','*.rst','*.adoc','*.lock','package-lock.json','npm-shrinkwrap.json','pnpm-lock.yaml','yarn.lock'
@@ -16,7 +16,7 @@ Use the repository root as `<root>`. The command reports buckets and a total. `-
 
 Build a second inventory with `git -C <root> ls-files --cached --others --exclude-standard -z`. Parse NUL separators and deduplicate paths. This includes maintained untracked files. Without Git, use a native inventory with the repository's ignore rules. Include maintained source, tests, scripts, and configuration. Exclude generated output, dependency trees, binary files, prose, and lockfiles. Show exclusions and their reasons. Inspect file purpose: `CMakeLists.txt` is configuration, and tracked files can still be generated. Compare the inventory with the `laloc` paths, removing ineligible results as well as adding omitted eligible files.
 
-The current Thinkcenter_Setup implementation skips names such as `bin`, `packages`, `node_modules`, `dist`, `build`, `.git`, `.scratch`, `tmp`, and `temp`. Some repositories maintain source in those folders. Report every eligible omitted file and count it with the fallback method before ranking.
+The `laloc` tool may skip names such as `bin`, `packages`, `node_modules`, `dist`, `build`, `.git`, `.scratch`, `tmp`, and `temp`. Some repositories maintain source in those folders. Report every eligible omitted file and count it with the fallback method before ranking.
 
 Rank by physical line count. Break equal counts by the normalized repository-relative path in ordinal ascending order. A repository with fewer than five eligible files is still a valid result.
 

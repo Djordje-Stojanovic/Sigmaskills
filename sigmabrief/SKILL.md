@@ -16,15 +16,15 @@ Apply these invariants throughout the run:
 - **Explicit-only.** Invoke this skill only when the user asks for briefs, handoffs, spawn/dispatch prompts, or parallel agent prompts. Never treat ambient chat, implement requests, or audit requests as SigmaBrief work even if the host allows implicit skill invocation.
 - **Brief factory only.** Do not implement, branch, commit, push, or open fix pull requests in the *target* product repository. Do not create `SIGMABRIEF-*.md` or other files there.
 - **One shot for briefing.** When work items are present, research → synthesize → return briefs in chat. Do not pause for taste questions.
-- **Ask at most one question** when no work target can be resolved: which issue URL(s), work statement, or repo for `all open`. Do not run a full grill-me session unless the user explicitly asks SigmaBrief to grill them. Planning depth and the worktree question belong in the *generated* brief for the *executing* agent.
+- **Ask at most one question** when no work target can be resolved: which issue URL(s), work statement, or repo for `all open`. Do not run a full `/grilling` session unless the user explicitly asks SigmaBrief to grill them. Planning depth and the worktree question belong in the *generated* brief for the *executing* agent.
 - **Accept anything actionable:** issue URLs, `#N`, `all open` (optionally filtered), a SigmaReview report or one of its waves, SigmaImprove category issues or chosen entries, features, upgrades, bugs, plain English work, or `this session`, plus optional constraints (`do not merge`, skip N, max agents, `approval: auto`).
 - **Waves before parallelism.** Items that touch the same files, schema, or shared state run one after another in the same lane. Only independent items run in parallel. Honor `Depends on` lines from SigmaReview.
-- **Light research then emit.** Read local standards when present (`CLAUDE.md`, `AGENTS.md`, `README`, `CONTRIBUTING`, LEARNINGS, version pins). For GitHub work, inspect issues and open PRs so an in-flight PR becomes a finish/rebase brief, never a second greenfield. Use the web only when needed.
+- **Light research then emit.** Read local standards when present (`CLAUDE.md`, `AGENTS.md`, `README`, `CONTRIBUTING`, LEARNINGS, version pins). For GitHub work, inspect issues and open PRs so an in-flight PR becomes a finish brief, never a second greenfield. Use the web only when needed.
 - **Simple briefs.** Short fenced `text` blocks. No collision-matrix novels. Still mark overlaps and out-of-scope boundaries when obvious.
-- **Quality gate in every brief:** plan first → (executing agent may use `/grill-me` or focused questions, including worktree yes/no) → wait for plan approval → baseline checks green → execute → validate → update docs only when needed → commit → push → open PR (`Closes #N` when applicable) → **do not merge** → self-review for high quality, docs, validation, and low bug-introduction risk before opening the PR → report back in the fixed format.
+- **Quality gate in every brief:** plan first → (executing agent may use `/grilling` or focused questions, including worktree yes/no) → wait for plan approval → baseline checks green → execute → validate → update docs only when needed → commit → push → open PR (`Closes #N` when applicable) → **do not merge** → self-review for high quality, docs, validation, and low bug-introduction risk before opening the PR → report back in the fixed format.
 - **Approval modes.** `approval: plan` (default) waits for plan approval. `approval: auto` lets the agent decide ambiguities itself, record each decision as a ruling in the PR body, and stop only for irreversible or destructive actions, security-sensitive actions, or side effects outside its branch.
 - **Do not merge. Keep any worktree while the PR is open. Cleanup only after human merge or user cancel/abandon.**
-- **Shell native to the executing machine:** PowerShell commands and Windows sibling paths by default; POSIX when the user or repository says so. Do not assume WSL.
+- **Shell native to the executing machine:** use the shell of the machine that runs the agent: PowerShell and Windows paths on Windows, POSIX shell elsewhere. Do not assume WSL.
 - **No secrets** in briefs. Redact tokens, keys, and credentials from issue bodies or notes.
 
 ## Resolve inputs
@@ -35,7 +35,7 @@ Resolve work items in this order:
 2. Otherwise the current Git repository’s open issues when the user asked for `all open` / dispatch without listing IDs.
 3. Otherwise ask only for the missing work target.
 
-Apply user constraints already present (skip N, do not merge, prefer rebase for PR M, max agents) without re-asking.
+Apply user constraints already present (skip N, do not merge, max agents) without re-asking.
 
 ## Execute
 
