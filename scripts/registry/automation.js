@@ -113,14 +113,24 @@ export function evaluateAutoAuthorization(input) {
   if (!String(input.headRef || '').startsWith(GENERATED_BRANCH_PREFIX)) {
     deniedReasons.push('human branches cannot be auto-authorized; ref is not a generated registry-sync branch');
   }
-  if (input.headSha && input.expectedGeneratedSha && input.headSha !== input.expectedGeneratedSha) {
+  for (const [name, value] of [
+    ['headSha', input.headSha],
+    ['expectedGeneratedSha', input.expectedGeneratedSha],
+    ['expectedHeadSha', input.expectedHeadSha],
+    ['currentDefaultSha', input.currentDefaultSha],
+  ]) {
+    if (!REVISION_PATTERN.test(String(value || ''))) {
+      deniedReasons.push(`${name} is missing or not a 40-hex SHA; auto-authorization needs every input`);
+    }
+  }
+  if (input.headSha !== input.expectedGeneratedSha) {
     deniedReasons.push('stale generated head cannot be auto-authorized');
   }
-  if (input.currentDefaultSha && input.expectedHeadSha && input.currentDefaultSha !== input.expectedHeadSha) {
+  if (input.currentDefaultSha !== input.expectedHeadSha) {
     deniedReasons.push('moved default branch cannot be auto-authorized');
   }
-  if (input.checkConclusion && input.checkConclusion !== 'success') {
-    deniedReasons.push('failed or incomplete checks cannot be auto-authorized');
+  if (input.checkConclusion !== 'success') {
+    deniedReasons.push('failed, missing, or incomplete checks cannot be auto-authorized');
   }
   if (input.concurrentRun) deniedReasons.push('concurrent registry-sync runs cannot be auto-authorized');
   if (input.fromTrustedWorkflow !== true) {
@@ -136,8 +146,11 @@ export function evaluateAutoAuthorization(input) {
   if (!input.files || input.files.length === 0) {
     deniedReasons.push('generated changes are missing; empty diffs cannot be auto-authorized');
   }
-  if (input.classification && input.classification.autoEligible === false) {
-    deniedReasons.push(...(input.classification.blockedReasons || ['semantic classification is blocked']));
+  if (!input.classification) {
+    deniedReasons.push('semantic classification is missing; it cannot be auto-authorized');
+  } else if (input.classification.autoEligible !== true) {
+    const reasons = input.classification.blockedReasons || [];
+    deniedReasons.push(...(reasons.length > 0 ? reasons : ['semantic classification is blocked']));
   }
   const autoAuthorized = deniedReasons.length === 0;
   return {
