@@ -14,6 +14,8 @@ import {
   applyReleaseIdentities,
   applyRegistryPatchIdentities,
   calculateReleasePlan,
+  classifyChangelogBump,
+  extractUnreleased,
   evaluatePublicationGate,
   executeRelease,
   executeTrustedPatchRelease,
@@ -668,4 +670,21 @@ test('registry patch identities: note with $& is verbatim and links are maintain
   assert.ok(applied.changelog.includes("- ids `$&` and $' here"));
   assert.match(applied.changelog, /^\[Unreleased\]: https:\/\/github\.com\/o\/r\/compare\/v0\.1\.1\.\.\.HEAD$/m);
   assert.match(applied.changelog, /^\[0\.1\.1\]: https:\/\/github\.com\/o\/r\/compare\/v0\.1\.0\.\.\.v0\.1\.1$/m);
+});
+
+test('a Removed breaking entry makes the next Release a minor step before 1.0.0 (#70)', () => {
+  const changelog = changelogWith('### Removed\n\n- **BREAKING CHANGE:** Node.js 20 is no longer supported. (#70)\n', '0.4.0');
+  assert.equal(classifyChangelogBump(extractUnreleased(changelog)), 'major');
+  const plan = calculateReleasePlan({ packageVersion: '0.4.0', manifestVersion: '0.4.0', changelog, sourceCommit: 'abc' });
+  assert.equal(plan.bump, 'major');
+  assert.equal(plan.version, '0.5.0');
+});
+
+test('the real CHANGELOG Unreleased section reads as breaking and plans 0.5.0 while 0.4.0 is current (#70)', (t) => {
+  const changelog = fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8');
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  if (pkg.version !== '0.4.0') return t.skip('the 0.5.0 Release already happened');
+  const plan = calculateReleasePlan({ packageVersion: pkg.version, manifestVersion: pkg.version, changelog, sourceCommit: 'abc' });
+  assert.equal(plan.bump, 'major');
+  assert.equal(plan.version, '0.5.0');
 });

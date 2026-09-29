@@ -165,6 +165,7 @@ $sigmarefactor
 | Skill | Needs |
 |-------|--------|
 | All | An agent that can load Agent Skills (`SKILL.md`) |
+| Sigma Installer | Node.js 22 or newer |
 | SigmaReview | Read access to the target repo · GitHub tooling to push a branch or fork and open a PR · execution authority only if you want measured findings |
 | SigmaImprove | Read access to the target · GitHub issue access only if tickets go to GitHub |
 | SigmaShip | Push rights and GitHub tooling (`gh` or connector) to open, merge, and close; the repository's test commands |

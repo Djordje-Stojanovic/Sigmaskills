@@ -16,6 +16,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - Package metadata: `package.json` now has `license` (`MIT`), `bugs`, and `keywords`, so npm shows the license. (#64)
 - Docs and changelog match 0.4.0. The CHANGELOG compare links and the 0.4.0 package-size note are fixed, 0.2.1 is marked as a GitHub Release only, and the 0.2.0 sections follow Keep a Changelog order. The installer guide now covers the Link/Copy page, the `a` key, plain mode with `TERM=dumb` and `--json`, Escape in the destination search, and the hidden aliases (`-g`, `--cwd`, `--list`, `check`). The maintainer guide covers `registry:sync`, `registry:validate`, and the role of `.agents/skills` and `skills-lock.json`. ADRs 0005 and 0006 and the wayfinder label note are corrected. (#64)
 
+### Removed
+
+- **BREAKING CHANGE:** Node.js 20 is no longer supported. `package.json` `engines.node` is now `>=22`, and CI no longer runs a Node.js 20 job. Because this is a breaking change before 1.0.0, the next Release is 0.5.0. (#70)
+
 ### Fixed
 
 - The release tool keeps release notes exactly as written. Notes with `$&`, `$'`, or `` $` `` are no longer changed when the version is applied, and a changelog with only `## [Unreleased]` now gets its version heading. (#68)

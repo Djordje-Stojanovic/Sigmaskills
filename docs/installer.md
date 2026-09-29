@@ -2,6 +2,8 @@
 
 This guide covers the Sigma Installer (`npx @djordje-stojanovic/sigmaskills`) and the other ways to install SigmaSkills. For a first install, the [README quick start](../README.md#quick-start) is enough.
 
+The Sigma Installer needs Node.js 22 or newer.
+
 Run `npx @djordje-stojanovic/sigmaskills --help` for the full flag list of the Release you run.
 
 Some short forms are hidden from `--help` on purpose. They work, and scripts may use them: `-g` (for `--global`), `--cwd` (for `--project`), `--list` (for the `list` command), and the `check` command (for `verify`).
