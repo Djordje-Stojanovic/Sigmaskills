@@ -546,6 +546,9 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     return 1;
   } catch (err) {
     writeErr(`sigmaskills error: ${err.message}`);
+    if (err.updatedSkills) {
+      writeErr(`Updated before the failure: ${err.updatedSkills.map((entry) => entry.id).join(', ')}`);
+    }
     if (err.linkFailure) {
       writeErr(`Link failed for '${err.linkFailure.relativeDestination || err.linkFailure.destination}'.`);
       writeErr('The installer did not change method. Re-run with --copy to install a complete managed copy at this destination.');
