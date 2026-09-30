@@ -14,7 +14,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Changed
 
 - The install transaction, the interactive installer, and the release tool are split into smaller named steps and modules. Behavior is unchanged. (#81, #82, #83)
-- The release preview docs say that a `### Removed` heading or the text `BREAKING CHANGE` in `[Unreleased]` counts as breaking. (#PR)
+- The release preview docs say which changelog entries count as breaking before 1.0.0. (#PR)
 - SigmaShip now says to use the shell native to the executing machine, and to use `/tdd` when it is installed. Its `land.md` commands are shell-neutral. (#PR)
 - The bug template no longer shows an old version number as the CLI version placeholder. (#PR)
 
