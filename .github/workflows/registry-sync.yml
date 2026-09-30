@@ -1,17 +1,16 @@
 name: Registry sync
 
+# Runs on demand, as the first step of a Release (see docs/maintainers.md). No schedule, so no daily pull requests.
 on:
-  schedule:
-    - cron: '17 7 * * *'
   workflow_dispatch:
     inputs:
       expected_head:
-        description: Exact default-branch SHA whose converter must run
-        required: true
+        description: Exact default-branch SHA whose converter must run (default the dispatched commit)
+        required: false
         type: string
       upstream_revision:
-        description: Pinned 40-hex upstream revision
-        required: true
+        description: Pinned 40-hex upstream revision (default the latest upstream commit that changed the agent list)
+        required: false
         type: string
 
 permissions: {}
@@ -35,7 +34,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24.21.0'
+          node-version: '24'
           package-manager-cache: false
       - name: Generate allowlisted registry pull request
         env:
@@ -60,7 +59,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24.21.0'
+          node-version: '24'
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - name: Merge and publish a safe registry patch Release

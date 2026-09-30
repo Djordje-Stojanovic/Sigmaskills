@@ -4,6 +4,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- No bot opens recurring pull requests any more. Dependabot is gone, because its pin bumps always failed CI: the tests compare the action pins with constants in the release scripts. The action pins are now checked as a step before each Release. The Agent Host registry sync no longer runs every day; it runs on demand as the first step of a Release, and both of its inputs are optional.
+- The release, registry-sync, and rehearsal jobs run on the latest Node.js 24 LTS (`node-version: '24'`) instead of one fixed patch, so that pin never goes stale.
+
 ## [0.5.1] — 2026-09-30
 
 ### Fixed
