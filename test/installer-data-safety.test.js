@@ -122,6 +122,35 @@ test('A2: a crafted purge journal path outside the project is rejected and never
   assert.equal(fs.readFileSync(path.join(victim, 'precious.txt'), 'utf8'), 'keep me');
 }));
 
+test('A12: crafted purge journal quarantine and link-target paths outside the project are rejected', withDirs(async (dirs) => {
+  const victim = path.join(dirs.base, 'victim');
+  fs.mkdirSync(victim);
+  fs.writeFileSync(path.join(victim, 'precious.txt'), 'keep me');
+
+  let r = await run(dirs, ['install', 'sigmawrite']);
+  assert.equal(r.code, 0, r.stderr);
+  const stateDir = path.join(dirs.project, '.agents', '.sigmaskills');
+  const journalPath = path.join(stateDir, 'purge-journal.json');
+  const inside = path.join(dirs.project, '.agents', 'skills', 'sigmawrite');
+  for (const item of [
+    { kind: 'link', relative: 'x', absolutePath: inside, quarantinePath: victim, status: 'quarantined' },
+    { kind: 'link', relative: 'x', absolutePath: inside, quarantinePath: path.join(stateDir, 'q'), target: victim, status: 'quarantined' },
+  ]) {
+    fs.writeFileSync(journalPath, JSON.stringify({
+      schemaVersion: 1,
+      command: 'purge',
+      scope: 'project',
+      status: 'quarantined',
+      items: [item],
+      skills: [],
+    }));
+    r = await run(dirs, ['purge', '--confirm-purge', 'purge SigmaSkills']);
+    assert.notEqual(r.code, 0);
+    assert.match(r.stderr, /escapes/);
+    assert.equal(fs.readFileSync(path.join(victim, 'precious.txt'), 'utf8'), 'keep me');
+  }
+}));
+
 test('A9: a crafted ../ skill id in state.json is rejected and never deletes outside the backups', withDirs(async (dirs) => {
   const victim = path.join(dirs.base, 'victim');
   fs.mkdirSync(victim);

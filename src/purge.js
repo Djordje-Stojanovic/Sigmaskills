@@ -172,6 +172,8 @@ function assertJournalInside(journal, root, stateDir) {
   };
   for (const item of journal.items) {
     if (item?.absolutePath) inside(item.absolutePath, 'purge journal path');
+    if (item?.quarantinePath) inside(item.quarantinePath, 'purge journal quarantine path');
+    if (item?.target) inside(item.target, 'purge journal link target');
   }
   if (journal.quarantineDir) inside(journal.quarantineDir, 'purge journal quarantine folder');
 }
