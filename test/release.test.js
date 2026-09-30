@@ -23,6 +23,7 @@ import {
   formatReleaseHuman,
   formatReleaseJson,
   inspectReleaseWorkflow,
+  lastReleasedVersion,
   parseNpmPackJson,
   parseReleaseArgs,
   planIdempotentPublish,
@@ -704,4 +705,46 @@ test('registry patch identities leave the owner note under [Unreleased] (#70)', 
   assert.match(extractVersionSection(out, '0.1.1'), /- Registry sync\./);
   assert.ok(out.indexOf('## [Unreleased]') < out.indexOf('## [0.1.1]') && out.indexOf('## [0.1.1]') < out.indexOf('## [0.1.0]'));
   assert.equal(classifyChangelogBump(extractUnreleased(out)), 'minor');
+});
+
+test('registry patch identities put the patch heading before older versions when Unreleased is empty', () => {
+  const changelog = changelogWith('');
+  const { changelog: out } = applyRegistryPatchIdentities({
+    packageJson: {}, manifest: {}, changelog, version: '0.1.1', date: '2026-08-20', note: 'Registry sync.',
+  });
+  assert.ok(out.indexOf('## [0.1.1]') > out.indexOf('## [Unreleased]'));
+  assert.ok(out.indexOf('## [0.1.1]') < out.indexOf('## [0.1.0]'));
+  assert.equal(lastReleasedVersion(out), '0.1.1');
+});
+
+test('registry patch identities keep heading order on the shape of the real CHANGELOG', () => {
+  const changelog = `# Changelog
+
+## [Unreleased]
+
+## [0.5.0] — 2026-09-29
+
+### Changed
+
+- Five.
+
+## [0.4.0] — 2026-09-01
+
+### Added
+
+- Four.
+
+[Unreleased]: https://github.com/o/r/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/o/r/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/o/r/releases/tag/v0.4.0
+`;
+  const { changelog: out } = applyRegistryPatchIdentities({
+    packageJson: {}, manifest: {}, changelog, version: '0.5.1', date: '2026-10-01', note: 'Registry sync.',
+  });
+  const headings = [...out.matchAll(/^## \[([^\]]+)\]/gm)].map((match) => match[1]);
+  assert.deepEqual(headings, ['Unreleased', '0.5.1', '0.5.0', '0.4.0']);
+  assert.equal(lastReleasedVersion(out), '0.5.1');
+  assert.match(out, /^\[Unreleased\]: .*\/compare\/v0\.5\.1\.\.\.HEAD$/m);
+  assert.match(out, /^\[0\.5\.1\]: .*\/compare\/v0\.5\.0\.\.\.v0\.5\.1$/m);
+  assert.equal(extractUnreleased(out).trim(), '');
 });
