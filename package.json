@@ -1,6 +1,6 @@
 {
   "name": "@djordje-stojanovic/sigmaskills",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Portable Agent Skills monorepo and first-party Sigma Installer",
   "type": "module",
   "license": "MIT",

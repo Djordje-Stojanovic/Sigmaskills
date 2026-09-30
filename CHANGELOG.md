@@ -4,8 +4,15 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-09-30
+
 ### Fixed
 
+- A crafted skill name in `state.json` or the Sigma `skills-lock.json` (such as `../../victim`) is now rejected when the file loads. Before, `uninstall --all` could use it to delete a folder outside the project while pruning backups. Backup commit and prune also check that they stay inside the backups folder. (#84)
+- `restore` rejects a backup whose metadata lists owned paths or a link dependency outside the project or home folder, before any write. Before, such a backup was restored and left `state.json` unreadable for every later command. (#84)
+- `uninstall` and `restore` now print the notice that `skills-lock.json` was left alone when another tool owns it, as `install` already did. (#84)
+- A resumed `purge` journal is checked for every recorded path, including the quarantine path and link target. A crafted journal can no longer make rollback remove or move a folder outside the project. (#86)
+- The release preview no longer prints expected "not found" errors from npm, GitHub, and git to the terminal.
 - Applying a registry patch Release no longer puts the new version heading after the wrong section when `[Unreleased]` is empty. The next owner Release would have failed with an identity mismatch. (#85)
 - Running `release --write-identities` again on a prepared candidate no longer adds a second, self-comparing `[X]` compare link. (#85)
 - The registry path check now rejects protected locations written as `.github//workflows`, `.github/./workflows`, or `.git.` and `.git ` (Windows ignores trailing dots and spaces). (#85)
@@ -207,7 +214,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.2.1...v0.3.0

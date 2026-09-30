@@ -3,9 +3,12 @@ import { RELEASE_ENVIRONMENT, RELEASE_PACKAGE_NAME, RELEASE_WORKFLOW_FILE } from
 import { absentOn404, execNpm } from './release-util.js';
 
 const DEFAULT_TOOLS = { execFileSync, execNpm };
+// Capture stderr: an expected not-found (E404, missing tag) would otherwise print to the terminal.
+// Node still puts it on a thrown error, so absentOn404 can read it.
+const QUIET = ['ignore', 'pipe', 'pipe'];
 
 export function defaultGit(rootDir) {
-  const run = (args) => execFileSync('git', args, { cwd: rootDir, encoding: 'utf8' }).trim();
+  const run = (args) => execFileSync('git', args, { cwd: rootDir, encoding: 'utf8', stdio: QUIET }).trim();
   return {
     revParse: (ref = 'HEAD') => run(['rev-parse', ref]),
     show: (spec) => run(['show', spec]),
@@ -19,14 +22,14 @@ export function defaultGit(rootDir) {
 // Only a 404 means "absent"; any other error stops the release.
 function probeNpm(version, tools) {
   const name = absentOn404(
-    () => tools.execNpm(['view', RELEASE_PACKAGE_NAME, 'name'], { encoding: 'utf8' }).trim(),
+    () => tools.execNpm(['view', RELEASE_PACKAGE_NAME, 'name'], { encoding: 'utf8', stdio: QUIET }).trim(),
     '',
   );
   const npmPackage = { exists: name === RELEASE_PACKAGE_NAME, versions: {} };
   if (npmPackage.exists) {
     // A version that is not published still counts as a reservation.
     const integrity = absentOn404(
-      () => tools.execNpm(['view', `${RELEASE_PACKAGE_NAME}@${version}`, 'dist.integrity'], { encoding: 'utf8' }).trim(),
+      () => tools.execNpm(['view', `${RELEASE_PACKAGE_NAME}@${version}`, 'dist.integrity'], { encoding: 'utf8', stdio: QUIET }).trim(),
       '',
     );
     if (integrity) npmPackage.versions[version] = { integrity };
@@ -39,6 +42,7 @@ function probeGithubRelease(tag, git, rootDir, tools) {
     () => tools.execFileSync('gh', ['release', 'view', tag, '--json', 'tagName,targetCommitish'], {
       cwd: rootDir,
       encoding: 'utf8',
+      stdio: QUIET,
     }),
     null,
   );
@@ -60,7 +64,7 @@ function probeGithubRelease(tag, git, rootDir, tools) {
 function probeEnvironment(tools) {
   const repo = process.env.GITHUB_REPOSITORY || 'Djordje-Stojanovic/Sigmaskills';
   const raw = absentOn404(
-    () => tools.execFileSync('gh', ['api', `repos/${repo}/environments/${RELEASE_ENVIRONMENT}`], { encoding: 'utf8' }),
+    () => tools.execFileSync('gh', ['api', `repos/${repo}/environments/${RELEASE_ENVIRONMENT}`], { encoding: 'utf8', stdio: QUIET }),
     null,
   );
   if (raw === null) return null;
