@@ -45,7 +45,10 @@ export function assertSafePath(path, where) {
       return `${where}: traversal segment in destination path ${JSON.stringify(path)}`;
     }
   }
-  const lower = segments.map((segment) => segment.toLowerCase());
+  // Windows ignores trailing dots and spaces, and paths ignore empty and `.` segments.
+  const lower = segments
+    .map((segment) => segment.replace(/[. ]+$/, '').toLowerCase())
+    .filter(Boolean);
   const underWorkflows = lower.some((segment, i) => segment === '.github' && lower[i + 1] === 'workflows');
   if (lower.includes('.git') || lower.includes('.ssh') || underWorkflows) {
     return `${where}: protected location (.git, .github/workflows, or .ssh) in destination path ${JSON.stringify(path)}`;

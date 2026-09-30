@@ -86,6 +86,22 @@ test('registry: snapshot ordering is bytewise and locale-independent', () => {
   assert.deepEqual(['b', 'A', 'a'].sort(compareIds), ['A', 'a', 'b']);
 });
 
+test('registry: validate rejects protected locations written in disguise', () => {
+  for (const path of [
+    '.github//workflows',
+    '.github/./workflows',
+    '.github/workflows.',
+    '.github./workflows',
+    'a/.git.',
+    'a/.git ',
+    '.GIT./x',
+    '.ssh. /x',
+  ]) {
+    assert.match(assertSafePath(path, 'test'), /protected location/, path);
+  }
+  assert.equal(assertSafePath('.github/other', 'test'), null);
+});
+
 test('registry: validate rejects unsafe traversal and roots', () => {
   assert.match(assertSafePath('../escape', 'test'), /traversal/);
   assert.match(assertSafePath('/absolute', 'test'), /absolute/);
