@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathExists } from './links.js';
-import { isPathInside } from './paths.js';
+import { assertPathInside, isPathInside } from './paths.js';
 
 export const BACKUP_METADATA_NAME = '.sigma-backup.json';
 export const BACKUP_SCHEMA_VERSION = 1;
@@ -303,6 +303,7 @@ export function commitSkillBackup(params) {
     throw new Error(`cannot backup missing skill tree at ${sourceDir}`);
   }
   const dest = path.join(getBackupRoot(stateDir), skillId, filesystemSafeStamp(now));
+  assertPathInside(getBackupRoot(stateDir), dest, 'backup folder');
   fs.mkdirSync(dest, { recursive: true });
   try {
     copyTreeNoFollow(sourceDir, dest);
@@ -344,6 +345,7 @@ export function commitSkillBackup(params) {
 export function pruneOlderBackups(params) {
   const { stateDir, skillId, keepPath } = params;
   const dir = path.join(getBackupRoot(stateDir), skillId);
+  assertPathInside(getBackupRoot(stateDir), dir, 'backup folder');
   const debt = [];
   if (!pathExists(dir)) return { debt };
   const keep = path.resolve(keepPath);

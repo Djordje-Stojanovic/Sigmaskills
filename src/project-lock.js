@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { assertSafeSkillId } from './paths.js';
 
 export const PROJECT_LOCK_FILENAME = 'skills-lock.json';
 export const PROJECT_LOCK_SCHEMA_VERSION = 1;
@@ -91,6 +92,7 @@ export function validateProjectLock(lock) {
   }
 
   for (const [skillId, skillData] of Object.entries(lock.skills)) {
+    assertSafeSkillId(skillId, 'invalid project lock');
     if (!skillData || typeof skillData !== 'object') {
       throw new Error(`invalid project lock skill entry for '${skillId}'`);
     }

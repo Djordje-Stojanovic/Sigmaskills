@@ -6,6 +6,7 @@ import test from 'node:test';
 import { verifyBackupIntegrity } from '../src/backup.js';
 import { findPackageRoot } from '../src/catalog.js';
 import { runCli } from '../src/cli.js';
+import { validateProjectLock } from '../src/project-lock.js';
 
 function makeDirs() {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-safety-'));
@@ -60,10 +61,12 @@ test('A1: generic skills-lock.json stays byte-identical through install, restore
   fs.writeFileSync(path.join(dirs.project, '.agents', 'skills', 'sigmawrite', 'EDIT.txt'), 'x');
   r = await run(dirs, ['uninstall', '--skill', 'sigmawrite', '--changed', 'backup', '--yes']);
   assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /skills-lock\.json left alone because another tool owns it/);
   assert.equal(fs.readFileSync(lockPath, 'utf8'), GENERIC_LOCK);
 
   r = await run(dirs, ['restore', '--skill', 'sigmawrite', '--yes']);
   assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /skills-lock\.json left alone because another tool owns it/);
   assert.equal(fs.readFileSync(lockPath, 'utf8'), GENERIC_LOCK);
 
   r = await run(dirs, ['uninstall', '--all', '--yes']);
@@ -119,6 +122,52 @@ test('A2: a crafted purge journal path outside the project is rejected and never
   assert.equal(fs.readFileSync(path.join(victim, 'precious.txt'), 'utf8'), 'keep me');
 }));
 
+test('A9: a crafted ../ skill id in state.json is rejected and never deletes outside the backups', withDirs(async (dirs) => {
+  const victim = path.join(dirs.base, 'victim');
+  fs.mkdirSync(victim);
+  fs.writeFileSync(path.join(victim, 'important.txt'), 'keep me');
+
+  let r = await run(dirs, ['install', 'sigmawrite']);
+  assert.equal(r.code, 0, r.stderr);
+  const { statePath, state } = readStateFile(dirs.project);
+  state.skills['../../../../victim'] = structuredClone(state.skills.sigmawrite);
+  fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+
+  r = await run(dirs, ['uninstall', '--all', '--changed', 'backup', '--yes']);
+  assert.notEqual(r.code, 0);
+  assert.match(r.stderr, /victim/);
+  assert.equal(fs.readFileSync(path.join(victim, 'important.txt'), 'utf8'), 'keep me');
+}));
+
+test('A10: a crafted ../ skill id in the project lock is rejected', () => {
+  assert.throws(
+    () => validateProjectLock({ schemaVersion: 1, release: null, skills: { '../victim': { revision: 'abc' } } }),
+    /victim/,
+  );
+});
+
+test('A11: restore rejects tampered ownedPaths in backup metadata and leaves state unchanged', withDirs(async (dirs) => {
+  let r = await run(dirs, ['install', 'sigmawrite']);
+  assert.equal(r.code, 0, r.stderr);
+  fs.writeFileSync(path.join(dirs.project, '.agents', 'skills', 'sigmawrite', 'EDIT.txt'), 'x');
+  r = await run(dirs, ['uninstall', '--all', '--changed', 'backup', '--yes']);
+  assert.equal(r.code, 0, r.stderr);
+
+  const stateDir = path.join(dirs.project, '.agents', '.sigmaskills');
+  const backupBase = path.join(stateDir, 'backups', 'sigmawrite');
+  const [stamp] = fs.readdirSync(backupBase);
+  const metaPath = path.join(backupBase, stamp, '.sigma-backup.json');
+  const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+  meta.ownedPaths = ['../../victim'];
+  fs.writeFileSync(metaPath, JSON.stringify(meta));
+  const before = fs.readFileSync(path.join(stateDir, 'state.json'), 'utf8');
+
+  r = await run(dirs, ['restore', '--skill', 'sigmawrite', '--yes']);
+  assert.notEqual(r.code, 0);
+  assert.match(r.stderr, /backup metadata path '\.\.\/\.\.\/victim' escapes/);
+  assert.equal(fs.readFileSync(path.join(stateDir, 'state.json'), 'utf8'), before);
+}));
+
 test('A3: restore stops on an unowned host destination and keeps the user files there', withDirs(async (dirs) => {
   let r = await run(dirs, ['install', 'sigmawrite', '--destination', '.agents/skills', '--destination', '.claude/skills', '--copy']);
   assert.equal(r.code, 0, r.stderr);
@@ -166,13 +215,9 @@ test('A6: reinstalling over an owned link with the wrong target never reports In
   fs.symlinkSync(other, link, 'junction');
 
   r = await run(dirs, ['install', 'sigmawrite', '--destination', '.claude/skills']);
-  const repaired = fs.realpathSync(link) === fs.realpathSync(path.join(dirs.project, '.agents', 'skills', 'sigmawrite'));
-  if (r.code === 0) {
-    assert.ok(repaired, 'exit 0 needs a repaired link');
-  } else {
-    assert.match(r.stderr, /wrong-target/);
-    assert.ok(!/Installed/.test(r.stdout));
-  }
+  assert.notEqual(r.code, 0);
+  assert.match(r.stderr, /wrong-target/);
+  assert.ok(!/Installed/.test(r.stdout));
   assert.ok(fs.existsSync(path.join(other, 'x')));
 }));
 

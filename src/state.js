@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { acquireFileLock } from './concurrency-lock.js';
 import path from 'node:path';
 import { resolveHomeDir, UNIVERSAL_PROJECT_DESTINATION } from './destinations.js';
-import { assertPathInside } from './paths.js';
+import { assertPathInside, assertSafeSkillId } from './paths.js';
 
 export const STATE_FILENAME = 'state.json';
 export const STATE_SCHEMA_VERSION = 1;
@@ -257,6 +257,7 @@ function assertStateInside(skillId, skillState, bounds) {
   for (const copy of skillState.copies || []) {
     inside(copy.destination, 'destination');
     for (const owned of copy.ownedPaths) if (typeof owned === 'string') inside(owned, 'owned path');
+    if (typeof copy.dependsOn === 'string') inside(copy.dependsOn, 'dependency path');
   }
   if (typeof skillState.lastBackup === 'string') {
     assertPathInside(bounds.stateDir, skillState.lastBackup, `state entry '${skillId}' backup`);
@@ -291,6 +292,7 @@ function validateManagedState(state, expectedScope, bounds) {
   }
 
   for (const [skillId, skillState] of Object.entries(state.skills)) {
+    assertSafeSkillId(skillId, `invalid ${label}`);
     if (!skillState || typeof skillState !== 'object') {
       throw new Error(`invalid ${label} entry for '${skillId}'`);
     }
