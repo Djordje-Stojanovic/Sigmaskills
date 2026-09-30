@@ -1,8 +1,9 @@
 import { RELEASE_DIST_TAG, RELEASE_PACKAGE_NAME } from './release-publication.js';
 import { codedError, versionPattern } from './release-util.js';
 
-// The whole `## [Unreleased]` section, up to the next version heading or link list.
-const UNRELEASED_SECTION = /## \[Unreleased\]\s*\n[\s\S]*?(?=\n## \[|\n\[[^\]\n]+\]: |$)/;
+// The whole `## [Unreleased]` section, line by line, up to the next version heading or link list.
+// An empty section still ends at the next heading.
+const UNRELEASED_SECTION = /^## \[Unreleased\][^\n]*(?:\n(?!## \[|\[[^\]\n]+\]: )[^\n]*)*/m;
 
 export function bumpSemver(version, kind) {
   const match = String(version || '').match(/^(\d+)\.(\d+)\.(\d+)$/);

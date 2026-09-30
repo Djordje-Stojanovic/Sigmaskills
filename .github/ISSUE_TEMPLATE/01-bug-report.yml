@@ -113,7 +113,7 @@ body:
     attributes:
       label: Installer CLI version (optional)
       description: For installer bugs. Run `npx @djordje-stojanovic/sigmaskills --version`.
-      placeholder: 0.4.0
+      placeholder: The output of `--version`
 
   - type: input
     id: node-version

@@ -11,6 +11,7 @@ import {
   classifySemanticAuthority,
   executeRegistryAutomation,
 } from './automation.js';
+import { createGitTag } from '../release-util.js';
 import { diffSnapshots } from './diff.js';
 import { validateSnapshot } from './validate.js';
 import {
@@ -357,11 +358,7 @@ function createRealIo(env, mode) {
         ...probes,
         publishers: {
           createTag: (preview) => {
-            try {
-              execFileSync('git', ['tag', preview.tag, preview.commit], { cwd: rootDir, encoding: 'utf8' });
-            } catch {
-              // Tag may already exist at this commit.
-            }
+            createGitTag(preview.tag, preview.commit, { cwd: rootDir });
             execFileSync('git', ['push', 'origin', preview.tag], { cwd: rootDir, encoding: 'utf8' });
           },
           createGithubRelease: (preview) => {

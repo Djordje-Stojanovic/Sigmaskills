@@ -23,11 +23,14 @@ import {
   formatReleaseHuman,
   formatReleaseJson,
   inspectReleaseWorkflow,
+  lastReleasedVersion,
   parseNpmPackJson,
   parseReleaseArgs,
   planIdempotentPublish,
   runReleaseCli,
 } from '../scripts/release.js';
+import { defaultGit, defaultProbes } from '../scripts/release-probes.js';
+import { createGitTag } from '../scripts/release-util.js';
 
 const ROOT = findPackageRoot();
 
@@ -704,4 +707,110 @@ test('registry patch identities leave the owner note under [Unreleased] (#70)', 
   assert.match(extractVersionSection(out, '0.1.1'), /- Registry sync\./);
   assert.ok(out.indexOf('## [Unreleased]') < out.indexOf('## [0.1.1]') && out.indexOf('## [0.1.1]') < out.indexOf('## [0.1.0]'));
   assert.equal(classifyChangelogBump(extractUnreleased(out)), 'minor');
+});
+
+function failure(message, extra = {}) {
+  return Object.assign(new Error(message), extra);
+}
+
+const NPM_404 = failure('Command failed', { stderr: 'npm error code E404' });
+const GH_404 = failure('Command failed', { stderr: 'HTTP 404: Not Found' });
+const GH_RELEASE_404 = failure('Command failed', { stderr: 'release not found' });
+const NETWORK = failure('Command failed', { stderr: 'getaddrinfo ENOTFOUND registry.npmjs.org' });
+const HTTP_500 = failure('Command failed', { stderr: 'HTTP 502: Bad Gateway' });
+
+function stubTools(handler) {
+  return {
+    execFileSync: (cmd, args) => handler(cmd, args),
+    execNpm: (args) => handler('npm', args),
+  };
+}
+
+const probeInput = { git: { tagCommit: () => null }, expected: { version: '0.1.1', tag: 'v0.1.1' }, rootDir: '.' };
+
+test('owner release probes count a real not-found as absent', () => {
+  const probes = defaultProbes({
+    ...probeInput,
+    tools: stubTools((cmd, args) => {
+      if (cmd === 'npm') throw NPM_404;
+      throw args[0] === 'api' ? GH_404 : GH_RELEASE_404;
+    }),
+  });
+  assert.deepEqual(probes.npmPackage, { exists: false, versions: {} });
+  assert.equal(probes.githubRelease, null);
+  assert.equal(probes.environment, null);
+});
+
+test('owner release probes throw on any other error instead of reporting absent', () => {
+  const cases = [
+    ['npm network error', (cmd) => { if (cmd === 'npm') throw NETWORK; throw GH_404; }],
+    ['gh release server error', (cmd, args) => { if (cmd === 'npm') throw NPM_404; throw args[0] === 'api' ? GH_404 : HTTP_500; }],
+    ['gh api server error', (cmd, args) => { if (cmd === 'npm') throw NPM_404; throw args[0] === 'api' ? HTTP_500 : GH_RELEASE_404; }],
+    ['missing gh binary', (cmd, args) => { if (cmd === 'npm') throw NPM_404; throw failure('spawn gh ENOENT', { code: 'ENOENT' }); }],
+  ];
+  for (const [name, handler] of cases) {
+    assert.throws(() => defaultProbes({ ...probeInput, tools: stubTools(handler) }), (err) => err instanceof Error, name);
+  }
+});
+
+test('git tagCommit returns null for a missing tag and throws on other git errors', () => {
+  const root = tmpTree({ 'a.txt': 'x' });
+  try {
+    for (const args of [['init', '-q'], ['config', 'user.email', 't@example.com'], ['config', 'user.name', 'T'], ['add', '-A'], ['commit', '-q', '-m', 'one']]) {
+      assert.equal(spawnSync('git', args, { cwd: root }).status, 0);
+    }
+    assert.equal(defaultGit(root).tagCommit('v9.9.9'), null);
+    assert.throws(() => defaultGit(path.join(root, 'no-such-dir')).tagCommit('v9.9.9'));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('createGitTag ignores only an already-exists error', () => {
+  const run = (err) => () => { throw err; };
+  createGitTag('v1', 'abc', { run: run(failure('x', { stderr: "fatal: tag 'v1' already exists" })) });
+  assert.throws(() => createGitTag('v1', 'abc', { run: run(failure('fatal: not a git repository')) }), /not a git repository/);
+  assert.throws(() => createGitTag('v1', 'abc', { run: run(failure('spawn git ENOENT', { code: 'ENOENT' })) }), /ENOENT/);
+});
+
+test('registry patch identities put the patch heading before older versions when Unreleased is empty', () => {
+  const changelog = changelogWith('');
+  const { changelog: out } = applyRegistryPatchIdentities({
+    packageJson: {}, manifest: {}, changelog, version: '0.1.1', date: '2026-08-20', note: 'Registry sync.',
+  });
+  assert.ok(out.indexOf('## [0.1.1]') > out.indexOf('## [Unreleased]'));
+  assert.ok(out.indexOf('## [0.1.1]') < out.indexOf('## [0.1.0]'));
+  assert.equal(lastReleasedVersion(out), '0.1.1');
+});
+
+test('registry patch identities keep heading order on the shape of the real CHANGELOG', () => {
+  const changelog = `# Changelog
+
+## [Unreleased]
+
+## [0.5.0] — 2026-09-29
+
+### Changed
+
+- Five.
+
+## [0.4.0] — 2026-09-01
+
+### Added
+
+- Four.
+
+[Unreleased]: https://github.com/o/r/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/o/r/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/o/r/releases/tag/v0.4.0
+`;
+  const { changelog: out } = applyRegistryPatchIdentities({
+    packageJson: {}, manifest: {}, changelog, version: '0.5.1', date: '2026-10-01', note: 'Registry sync.',
+  });
+  const headings = [...out.matchAll(/^## \[([^\]]+)\]/gm)].map((match) => match[1]);
+  assert.deepEqual(headings, ['Unreleased', '0.5.1', '0.5.0', '0.4.0']);
+  assert.equal(lastReleasedVersion(out), '0.5.1');
+  assert.match(out, /^\[Unreleased\]: .*\/compare\/v0\.5\.1\.\.\.HEAD$/m);
+  assert.match(out, /^\[0\.5\.1\]: .*\/compare\/v0\.5\.0\.\.\.v0\.5\.1$/m);
+  assert.equal(extractUnreleased(out).trim(), '');
 });

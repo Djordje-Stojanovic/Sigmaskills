@@ -519,6 +519,9 @@ test('SigmaShip and SigmaBrief agree on git and review rules', () => {
   assert.doesNotMatch(read('sigmaship/references/review-round.md'), /P1 \(a criterion fails/);
   assert.match(read('sigmaship/references/review-round.md'), /P1 \(a primary journey is broken, insecure, or breaks its budget\)/);
   assert.match(read('README.md'), /shell native to the machine/i);
+  assert.match(read('sigmaship/SKILL.md'), /shell native to the (executing )?machine/i, 'SigmaShip needs the shell rule the changelog promises');
+  assert.doesNotMatch(read('sigmaship/references/land.md'), /```(bash|sh)\b/, 'land.md commands must be shell-neutral');
+  assert.match(read('sigmaship/SKILL.md'), /\/tdd/, 'README says SigmaShip works best with /tdd');
 });
 
 test('SigmaBrief examples follow its own dispatch format', () => {

@@ -43,9 +43,9 @@ Then:
 
 ## Clean up
 
-Run these from the main checkout, not from inside the worktree:
+Run these from the main checkout, not from inside the worktree. The lines show POSIX shell; run the equivalent in the machine's shell (PowerShell on Windows).
 
-```bash
+```text
 git worktree remove <worktree-path>   # add --force only for untracked build output
 git worktree prune
 git branch -D <branch>                # only after the PR shows merged; a squash merge makes -d refuse
@@ -59,9 +59,9 @@ If the host created the worktree with a native tool, remove it with that tool in
 
 ## Verify
 
-Each line must print the expected result. Report the output.
+Each line must print the expected result. Report the output. Run the equivalent in the machine's shell (PowerShell on Windows).
 
-```bash
+```text
 test "$(git rev-parse <base>)" = "$(git rev-parse origin/<base>)" && echo "main in sync"
 test -z "$(git status --porcelain)" && echo "tree clean"
 git worktree list                      # no entry for the ship worktree

@@ -4,7 +4,25 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- Applying a registry patch Release no longer puts the new version heading after the wrong section when `[Unreleased]` is empty. The next owner Release would have failed with an identity mismatch. (#85)
+- Running `release --write-identities` again on a prepared candidate no longer adds a second, self-comparing `[X]` compare link. (#85)
+- The registry path check now rejects protected locations written as `.github//workflows`, `.github/./workflows`, or `.git.` and `.git ` (Windows ignores trailing dots and spaces). (#85)
+- The owner Release checks (npm, GitHub Release, environment, git tag) count only a real "not found" as absent, and any other error stops the Release. Tag creation ignores only an "already exists" error. (#85)
+
+### Changed
+
+- The install transaction, the interactive installer, and the release tool are split into smaller named steps and modules. Behavior is unchanged. (#81, #82, #83)
+- The release preview docs say which changelog entries count as breaking before 1.0.0. (#85)
+- SigmaShip now says to use the shell native to the executing machine, and to use `/tdd` when it is installed. Its `land.md` commands are shell-neutral. (#85)
+- The bug template no longer shows an old version number as the CLI version placeholder. (#85)
+
 ## [0.5.0] — 2026-09-29
+
+### Added
+
+- The 2026-09-29 full audit of 0.4.0 is kept in `docs/audits/AUDIT-2026-09-29.md`. (#71)
 
 ### Changed
 

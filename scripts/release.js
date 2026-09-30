@@ -22,7 +22,7 @@ import {
   evaluatePublication,
   inspectReleaseWorkflow,
 } from './release-publication.js';
-import { codedError, execNpm, persistJson, readJson, versionPattern } from './release-util.js';
+import { codedError, createGitTag, execNpm, persistJson, readJson, versionPattern } from './release-util.js';
 
 // Public surface: other scripts and tests import these from release.js.
 export * from './release-changelog.js';
@@ -116,7 +116,14 @@ export function writeReleaseIdentities(rootDir, { now } = {}) {
   const outgoingSkills = hashSkillsAtRef(rootDir, `refs/tags/v${outgoing}`);
   if (outgoing !== identities.packageJson.version) {
     const candidate = identities.packageJson.version;
-    identities.changelog = identities.changelog.replace(new RegExp(`^## \\[${versionPattern(candidate)}\\][^\\n]*\\n`, 'm'), '');
+    // Remove the candidate heading and link, and compare [Unreleased] from the outgoing tag again.
+    identities.changelog = identities.changelog
+      .replace(new RegExp(`^## \\[${versionPattern(candidate)}\\][^\\n]*\\n`, 'm'), '')
+      .replace(new RegExp(`^\\[${versionPattern(candidate)}\\]: [^\\n]*\\n`, 'm'), '')
+      .replace(
+        new RegExp(`^(\\[Unreleased\\]: \\S+/compare/)v${versionPattern(candidate)}(\\.\\.\\.HEAD)`, 'm'),
+        (_, before, after) => `${before}v${outgoing}${after}`,
+      );
     plan.version = candidate;
     plan.tag = `v${candidate}`;
     plan.githubRelease = plan.tag;
@@ -379,11 +386,7 @@ export async function runTrustedValidate(env, options = {}) {
 // Tag, GitHub Release, then npm, each only when the recovery plan asks for it.
 function publishWithTools(preview, recovery, rootDir) {
   if (recovery.createTag) {
-    try {
-      execFileSync('git', ['tag', preview.tag, preview.commit], { cwd: rootDir, encoding: 'utf8' });
-    } catch {
-      // Tag may already exist at this commit.
-    }
+    createGitTag(preview.tag, preview.commit, { cwd: rootDir });
     execFileSync('git', ['push', 'origin', preview.tag], { cwd: rootDir, encoding: 'utf8' });
   }
   if (recovery.createGithubRelease) {
