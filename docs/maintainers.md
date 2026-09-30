@@ -85,7 +85,7 @@ CI rehearses these steps on every pull request, together with the trusted `valid
 - each Skill Revision;
 - the git tag, the GitHub Release, the npm package, and the `latest` dist-tag.
 
-Before 1.0.0, a breaking change raises the minor version, as SemVer allows for 0.y.z versions.
+Before 1.0.0, a breaking change raises the minor version, as SemVer allows for 0.y.z versions. A `### Removed` heading, or the text `BREAKING CHANGE`, in `[Unreleased]` counts as breaking. Put non-breaking cleanups under `### Changed`.
 
 ### Identities
 
