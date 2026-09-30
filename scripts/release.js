@@ -116,7 +116,14 @@ export function writeReleaseIdentities(rootDir, { now } = {}) {
   const outgoingSkills = hashSkillsAtRef(rootDir, `refs/tags/v${outgoing}`);
   if (outgoing !== identities.packageJson.version) {
     const candidate = identities.packageJson.version;
-    identities.changelog = identities.changelog.replace(new RegExp(`^## \\[${versionPattern(candidate)}\\][^\\n]*\\n`, 'm'), '');
+    // Remove the candidate heading and link, and compare [Unreleased] from the outgoing tag again.
+    identities.changelog = identities.changelog
+      .replace(new RegExp(`^## \\[${versionPattern(candidate)}\\][^\\n]*\\n`, 'm'), '')
+      .replace(new RegExp(`^\\[${versionPattern(candidate)}\\]: [^\\n]*\\n`, 'm'), '')
+      .replace(
+        new RegExp(`^(\\[Unreleased\\]: \\S+/compare/)v${versionPattern(candidate)}(\\.\\.\\.HEAD)`, 'm'),
+        (_, before, after) => `${before}v${outgoing}${after}`,
+      );
     plan.version = candidate;
     plan.tag = `v${candidate}`;
     plan.githubRelease = plan.tag;

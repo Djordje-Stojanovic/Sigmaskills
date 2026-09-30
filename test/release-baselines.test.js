@@ -147,6 +147,44 @@ test('baselines: release --write-identities appends the outgoing Release for eve
   }
 });
 
+test('release --write-identities run twice leaves one candidate compare link', () => {
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-fold-links-'));
+  const git = (...args) => execFileSync('git', args, { cwd: rootDir, encoding: 'utf8' });
+  const changelogPath = path.join(rootDir, 'CHANGELOG.md');
+  try {
+    git('init', '-q');
+    git('config', 'user.email', 'test@example.com');
+    git('config', 'user.name', 'Test');
+    git('config', 'core.autocrlf', 'false');
+    fs.writeFileSync(path.join(rootDir, 'package.json'), `${JSON.stringify({ name: 'x', version: '0.1.0' }, null, 2)}\n`);
+    fs.writeFileSync(path.join(rootDir, 'manifest.json'), `${JSON.stringify({ version: '0.1.0', skills: [{ id: 'demo' }] }, null, 2)}\n`);
+    fs.writeFileSync(changelogPath, [
+      '# Changelog', '', '## [Unreleased]', '', '## [0.1.0] — 2026-01-01', '', '### Added', '', '- First.', '',
+      '[Unreleased]: https://github.com/o/r/compare/v0.1.0...HEAD',
+      '[0.1.0]: https://github.com/o/r/releases/tag/v0.1.0', '',
+    ].join('\n'));
+    fs.mkdirSync(path.join(rootDir, 'demo'));
+    fs.writeFileSync(path.join(rootDir, 'demo', 'SKILL.md'), '---\nname: demo\n---\nold\n');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'v0.1.0');
+    git('tag', 'v0.1.0');
+
+    fs.writeFileSync(changelogPath, fs.readFileSync(changelogPath, 'utf8').replace('## [Unreleased]\n', '## [Unreleased]\n\n### Fixed\n\n- Better.\n'));
+    writeReleaseIdentities(rootDir, { now: '2026-02-01T00:00:00Z' });
+    const prepared = fs.readFileSync(changelogPath, 'utf8');
+    fs.writeFileSync(changelogPath, prepared.replace('## [Unreleased]\n', '## [Unreleased]\n\n### Fixed\n\n- Another fix.\n'));
+    writeReleaseIdentities(rootDir, { now: '2026-02-02T00:00:00Z' });
+
+    const out = fs.readFileSync(changelogPath, 'utf8');
+    assert.equal((out.match(/^\[0\.1\.1\]:/gm) || []).length, 1);
+    assert.match(out, /^\[0\.1\.1\]: https:\/\/github\.com\/o\/r\/compare\/v0\.1\.0\.\.\.v0\.1\.1$/m);
+    assert.match(out, /^\[Unreleased\]: https:\/\/github\.com\/o\/r\/compare\/v0\.1\.1\.\.\.HEAD$/m);
+    assert.equal((out.match(/^\[Unreleased\]:/gm) || []).length, 1);
+  } finally {
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test('baselines: release guidance names the baselines file among the files to commit', () => {
   const human = formatReleaseHuman({ identitiesCommitted: false, skills: [] });
   assert.match(human, /registry\/skill-baselines\.json/);
