@@ -11,8 +11,8 @@ import {
   loadHostRegistry,
   resolveGlobalSkillPath,
   resolveHomeDir,
-  searchHosts,
 } from './destinations.js';
+import { destinationRowTitle, isSearchChar, pickerItems, selectableGroups, visibleDestinationItems } from './destination-items.js';
 import { recommendedLinkMethod } from './links.js';
 import { EMBERFORGE_PALETTE, TerminalRenderer, isCiEnv, wrapWords } from './terminal.js';
 import { KeyInput } from './key-input.js';
@@ -41,6 +41,13 @@ function helpLines(renderer) {
   ];
 }
 
+const PAGE_KEYS = ['next', 'prev', 'right', 'left'];
+
+function turnPage(renderer, key) {
+  const step = ['next', 'right'].includes(key.name) ? 1 : -1;
+  renderer.page = Math.max(0, Math.min(renderer.pages - 1, renderer.page + step));
+}
+
 async function readKeyedScreen(renderer, input, paint) {
   renderer.page = 0;
   renderer.paint = paint;
@@ -48,8 +55,8 @@ async function readKeyedScreen(renderer, input, paint) {
     paint();
     const key = await input.next();
     if (key.name === 'input-error') throw key.error;
-    if (renderer.pages > 1 && ['next', 'prev', 'right', 'left'].includes(key.name)) {
-      renderer.page = Math.max(0, Math.min(renderer.pages - 1, renderer.page + (['next', 'right'].includes(key.name) ? 1 : -1)));
+    if (renderer.pages > 1 && PAGE_KEYS.includes(key.name)) {
+      turnPage(renderer, key);
       continue;
     }
     if (isHelpKey(key)) {
@@ -69,8 +76,8 @@ async function showHelp(renderer, input) {
   while (true) {
     const key = await input.next();
     if (key.name === 'input-error') throw key.error;
-    if (['next', 'prev', 'right', 'left'].includes(key.name)) {
-      renderer.page = Math.max(0, Math.min(renderer.pages - 1, renderer.page + (['next', 'right'].includes(key.name) ? 1 : -1)));
+    if (PAGE_KEYS.includes(key.name)) {
+      turnPage(renderer, key);
       paint();
     } else return key;
   }
@@ -129,9 +136,9 @@ function globalWarningLines(renderer) {
   ];
 }
 
-async function confirmGlobalWarning(renderer, input) {
+async function confirmYesNo(renderer, input, lines) {
   while (true) {
-    const { help, key } = await readKeyedScreen(renderer, input, () => renderer.screen(globalWarningLines(renderer)));
+    const { help, key } = await readKeyedScreen(renderer, input, () => renderer.screen(lines()));
     if (help) continue;
     if (key.name === 'y') return { confirmed: true, exitCode: 0 };
     if (key.name === 'ctrl-c') return { confirmed: false, exitCode: 130 };
@@ -139,6 +146,10 @@ async function confirmGlobalWarning(renderer, input) {
       return { confirmed: false, exitCode: 0 };
     }
   }
+}
+
+function confirmGlobalWarning(renderer, input) {
+  return confirmYesNo(renderer, input, () => globalWarningLines(renderer));
 }
 
 async function selectSkills(renderer, input, catalog, initialScope = 'project') {
@@ -205,43 +216,6 @@ function persistOutput(renderer, text) {
   renderer.line(text);
 }
 
-
-
-function visibleDestinationItems(items, cursor, limit) {
-  if (!items.length || items.length <= limit) {
-    return { items, start: 0, total: items.length };
-  }
-  const half = Math.floor(limit / 2);
-  let start = Math.max(0, cursor - half);
-  if (start + limit > items.length) start = items.length - limit;
-  return {
-    items: items.slice(start, start + limit),
-    start,
-    total: items.length,
-  };
-}
-
-function destinationRowTitle(item) {
-  const detectedMark = item.detected || (item.hosts || []).some((host) => host.detected)
-    ? ' [detected]'
-    : '';
-  if (item.kind === 'host') {
-    return `${item.relativeRoot}  ${item.displayName} (${item.id})${detectedMark}`;
-  }
-  const hosts = item.hosts || [];
-  const detectedCount = hosts.filter((host) => host.detected).length;
-  if (item.universal) {
-    const extra = detectedCount ? ` · ${detectedCount} detected` : '';
-    return `${item.relativeRoot}  (universal default · ${hosts.length} hosts${extra})`;
-  }
-  if (hosts.length <= 2) {
-    const names = hosts.map((host) => host.displayName).join(', ');
-    const ids = hosts.map((host) => host.id).join(', ');
-    return `${item.relativeRoot}  ${names} (${ids})${detectedMark}`;
-  }
-  return `${item.relativeRoot}  ${hosts[0].displayName} +${hosts.length - 1}${detectedMark}`;
-}
-
 function destinationPickerLines(renderer, items, selectedRoots, cursor, query, error, scope) {
   const scopeLabel = scope === 'global' ? 'Global Installation' : 'Project Installation';
   return menuLines(renderer, {
@@ -252,53 +226,6 @@ function destinationPickerLines(renderer, items, selectedRoots, cursor, query, e
     footer: renderer.static ? 'number toggle · /search · next/prev · enter next · esc cancel · ? help' : '↑↓ move · type search · space toggle · enter next · esc cancel · ? help',
     error,
   });
-}
-
-function selectableGroups(groups) {
-  return groups.filter((group) => group.selectable);
-}
-
-function pickerItems(groups, query) {
-  if (query) {
-    const matches = searchHosts(groups, query).filter((host) => host.relativeRoot);
-    const byRoot = new Map();
-    for (const host of matches) {
-      const existing = byRoot.get(host.relativeRoot);
-      if (!existing) {
-        byRoot.set(host.relativeRoot, {
-          kind: 'host',
-          id: host.id,
-          displayName: host.displayName,
-          relativeRoot: host.relativeRoot,
-          absoluteRoot: host.group?.absoluteRoot || '',
-          detected: host.detected,
-          universal: host.relativeRoot === UNIVERSAL_PROJECT_DESTINATION,
-          hosts: [host],
-        });
-        continue;
-      }
-      existing.hosts.push(host);
-      existing.detected = existing.detected || host.detected;
-      existing.kind = 'group';
-      existing.universal = existing.universal || host.relativeRoot === UNIVERSAL_PROJECT_DESTINATION;
-    }
-    return [...byRoot.values()];
-  }
-  return selectableGroups(groups).map((group) => ({
-    kind: 'group',
-    relativeRoot: group.relativeRoot,
-    absoluteRoot: group.absoluteRoot,
-    universal: group.universal,
-    hosts: group.hosts,
-  }));
-}
-
-function isSearchChar(key) {
-  if (!key) return false;
-  if (key.name === 'space' || key.name === 'return' || key.name === 'escape') return false;
-  const ch = key.ch || '';
-  if (ch.length === 1 && /[A-Za-z0-9._/-]/.test(ch)) return true;
-  return Boolean(key.name && key.name.length === 1 && /[A-Za-z0-9._/-]/.test(key.name));
 }
 
 async function selectDestinations(renderer, input, groups, scope = 'project') {
@@ -483,16 +410,8 @@ async function offerCopyFallback(renderer, input, failure) {
   }
 }
 
-async function confirmPlans(renderer, input, plans, scope = 'project') {
-  while (true) {
-    const { help, key } = await readKeyedScreen(renderer, input, () => renderer.screen(summaryLines(renderer, plans, scope)));
-    if (help) continue;
-    if (key.name === 'ctrl-c') return { confirmed: false, exitCode: 130 };
-    if (key.name === 'eof' || key.name === 'escape' || key.name === 'n' || key.name === 'return') {
-      return { confirmed: false, exitCode: 0 };
-    }
-    if (key.name === 'y') return { confirmed: true, exitCode: 0 };
-  }
+function confirmPlans(renderer, input, plans, scope = 'project') {
+  return confirmYesNo(renderer, input, () => summaryLines(renderer, plans, scope));
 }
 
 /**

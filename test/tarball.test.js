@@ -17,6 +17,7 @@ const USER_SRC_FILES = [
   'cli.js',
   'concurrency-lock.js',
   'customization.js',
+  'destination-items.js',
   'destinations.js',
   'interactive.js',
   'key-input.js',
