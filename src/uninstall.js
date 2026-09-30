@@ -657,5 +657,6 @@ export function formatUninstallHuman(result) {
     lines.push(`Failed: ${(result.summary.failed || []).join(', ') || 'none'}`);
     lines.push('');
   }
+  if (result.lockLeftAlone) lines.push(FOREIGN_LOCK_NOTICE, '');
   return lines.join('\n');
 }

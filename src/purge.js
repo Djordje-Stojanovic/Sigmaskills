@@ -3,7 +3,7 @@ import path from 'node:path';
 import { copySkillTree, getBackupRoot } from './backup.js';
 import { resolveHomeDir } from './destinations.js';
 import { createSkillLink, inspectManagedPath, pathExists, removeManagedPath } from './links.js';
-import { assertPathInside } from './paths.js';
+import { assertPathInside, isPathInside } from './paths.js';
 import { inspectProjectLock, PROJECT_LOCK_FILENAME } from './project-lock.js';
 import {
   STATE_FILENAME,
@@ -51,7 +51,7 @@ function posix(value) {
 
 function relativeToRoot(root, absolutePath) {
   const rel = path.relative(root, absolutePath);
-  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) {
+  if (!rel || !isPathInside(root, absolutePath)) {
     return posix(path.basename(absolutePath));
   }
   return posix(rel);

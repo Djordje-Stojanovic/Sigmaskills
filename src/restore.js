@@ -118,7 +118,10 @@ function classifyRestoreSkill(options, skillId) {
     // Backup metadata sits on disk where anyone can edit it, so its paths must stay inside the root.
     const recordedPaths = [
       metadata.canonicalTarget,
-      ...(Array.isArray(metadata.copies) ? metadata.copies.map((copy) => copy?.destination) : []),
+      ...(Array.isArray(metadata.ownedPaths) ? metadata.ownedPaths : []),
+      ...(Array.isArray(metadata.copies)
+        ? metadata.copies.flatMap((copy) => [copy?.destination, copy?.dependsOn, ...(Array.isArray(copy?.ownedPaths) ? copy.ownedPaths : [])])
+        : []),
     ];
     for (const recorded of recordedPaths) {
       if (!recorded) continue;
@@ -541,5 +544,6 @@ export function formatRestoreHuman(result) {
     if (skill.blockedReasons?.length) lines.push(`  Blocked: ${skill.blockedReasons.join(', ')}`);
     lines.push('');
   }
+  if (result.lockLeftAlone) lines.push(FOREIGN_LOCK_NOTICE, '');
   return lines.join('\n');
 }

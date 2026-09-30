@@ -26,3 +26,15 @@ export function assertPathInside(base, recorded, what) {
     throw new Error(`${what} '${recorded}' escapes ${base}`);
   }
 }
+
+/**
+ * Reject a skill id that could act as a path. Ids become folder names, so `../x` must never pass.
+ *
+ * @param {string} skillId
+ * @param {string} what
+ */
+export function assertSafeSkillId(skillId, what) {
+  if (!/^[a-z0-9][a-z0-9._-]*$/.test(skillId) || skillId === '.' || skillId === '..') {
+    throw new Error(`${what}: unsafe skill id '${skillId}'`);
+  }
+}
