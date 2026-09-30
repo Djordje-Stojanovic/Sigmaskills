@@ -22,7 +22,7 @@ import {
   evaluatePublication,
   inspectReleaseWorkflow,
 } from './release-publication.js';
-import { codedError, execNpm, persistJson, readJson, versionPattern } from './release-util.js';
+import { codedError, createGitTag, execNpm, persistJson, readJson, versionPattern } from './release-util.js';
 
 // Public surface: other scripts and tests import these from release.js.
 export * from './release-changelog.js';
@@ -386,11 +386,7 @@ export async function runTrustedValidate(env, options = {}) {
 // Tag, GitHub Release, then npm, each only when the recovery plan asks for it.
 function publishWithTools(preview, recovery, rootDir) {
   if (recovery.createTag) {
-    try {
-      execFileSync('git', ['tag', preview.tag, preview.commit], { cwd: rootDir, encoding: 'utf8' });
-    } catch {
-      // Tag may already exist at this commit.
-    }
+    createGitTag(preview.tag, preview.commit, { cwd: rootDir });
     execFileSync('git', ['push', 'origin', preview.tag], { cwd: rootDir, encoding: 'utf8' });
   }
   if (recovery.createGithubRelease) {
