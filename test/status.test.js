@@ -144,6 +144,30 @@ test('status: valid Skill Customization is drift without corruption', () => {
   }
 });
 
+test('status: a local front-matter description is a Skill Customization, not corruption (#94)', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-status-description-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    const skillMd = path.join(projectRoot, '.agents', 'skills', 'sigmawrite', 'SKILL.md');
+    const local = fs.readFileSync(skillMd, 'utf8')
+      .replace(/^description:.*\n/m, 'description: >-\n  Short local text. Do not use for code.\n');
+    fs.writeFileSync(skillMd, local, 'utf8');
+
+    const report = collectStatus({
+      catalog: getCatalog(ROOT),
+      projectRoot,
+      packageRoot: ROOT,
+      scope: 'project',
+    });
+    const dest = destOf(report, '.agents/skills/sigmawrite');
+    assert.equal(report.drift, true);
+    assert.equal(report.skills[0].corruption, false);
+    assert.deepEqual(dest.classifications, ['valid-customization']);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
 test('status: classifies outside edits, extra and missing resources, and malformed markers', () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-status-drift-'));
   try {

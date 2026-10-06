@@ -3,7 +3,12 @@ import path from 'node:path';
 import { walkLiveFiles } from './backup.js';
 import { findPackageRoot } from './catalog.js';
 import { isPathInside } from './paths.js';
-import { inspectCustomizationBlock, CUSTOM_BLOCK_END, CUSTOM_BLOCK_START } from './customization.js';
+import {
+  inspectCustomizationBlock,
+  withOfficialDescription,
+  CUSTOM_BLOCK_END,
+  CUSTOM_BLOCK_START,
+} from './customization.js';
 import {
   UNIVERSAL_PROJECT_DESTINATION,
   listGlobalDestinationGroups,
@@ -62,14 +67,15 @@ function officialMarkdownShell(markdown) {
 
 function inspectSkillMarkdown(liveMarkdown, skillId, liveHash, bundledMarkdown, bundledHash) {
   const inspection = inspectCustomizationBlock(liveMarkdown, skillId);
-  if (inspection.status !== 'valid') {
+  const live = inspection.status === 'malformed' ? liveMarkdown : withOfficialDescription(liveMarkdown, bundledMarkdown);
+  if (inspection.status !== 'valid' && live === liveMarkdown) {
     return {
       status: inspection.status,
       officialHash: liveHash,
       hasCustomContent: false,
     };
   }
-  if (typeof bundledMarkdown === 'string' && officialMarkdownShell(liveMarkdown) === officialMarkdownShell(bundledMarkdown)) {
+  if (typeof bundledMarkdown === 'string' && officialMarkdownShell(live) === officialMarkdownShell(bundledMarkdown)) {
     return {
       status: 'valid',
       officialHash: bundledHash || liveHash,

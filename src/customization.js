@@ -318,6 +318,57 @@ export function injectRawCustomContent(baseMarkdownContent, rawCustomContent, sk
   return `${baseMarkdownContent.slice(0, startIndex + CUSTOM_BLOCK_START.length)}${rawCustomContent}${baseMarkdownContent.slice(endIndex)}`;
 }
 
+function descriptionSpan(markdown) {
+  const lines = markdown.split(/(?<=\n)/);
+  const bare = (line) => line.replace(/\r?\n$/, '');
+  if (bare(lines[0] || '') !== '---') return null;
+  const close = lines.findIndex((line, index) => index > 0 && bare(line) === '---');
+  const start = lines.findIndex((line, index) => index > 0 && index < close && /^description\s*:/.test(line));
+  if (close === -1 || start === -1) return null;
+  let stop = start + 1;
+  while (stop < close && /^[ \t]/.test(lines[stop])) stop += 1;
+  return { lines, start, stop };
+}
+
+/**
+ * The raw front-matter `description` entry: its key line and indented continuation lines.
+ *
+ * @param {string} markdown
+ * @returns {string|null}
+ */
+export function readDescriptionEntry(markdown) {
+  const span = typeof markdown === 'string' ? descriptionSpan(markdown) : null;
+  return span ? span.lines.slice(span.start, span.stop).join('') : null;
+}
+
+/**
+ * Put a raw `description` entry into the front matter, in the file's own line endings.
+ * Returns the markdown unchanged when it has no description entry or no entry is given.
+ *
+ * @param {string} markdown
+ * @param {string|null} entry
+ * @returns {string}
+ */
+export function replaceDescriptionEntry(markdown, entry) {
+  const span = typeof entry === 'string' ? descriptionSpan(markdown) : null;
+  if (!span) return markdown;
+  const eol = span.lines[0].endsWith('\r\n') ? '\r\n' : '\n';
+  const lines = [...span.lines];
+  lines.splice(span.start, span.stop - span.start, entry.replace(/\r?\n/g, eol));
+  return lines.join('');
+}
+
+/**
+ * The live markdown with the official front-matter description in place of the local one.
+ *
+ * @param {string} liveMarkdown
+ * @param {string|null} officialMarkdown
+ * @returns {string}
+ */
+export function withOfficialDescription(liveMarkdown, officialMarkdown) {
+  return replaceDescriptionEntry(liveMarkdown, readDescriptionEntry(officialMarkdown));
+}
+
 export function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
