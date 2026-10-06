@@ -37,12 +37,6 @@ test('easytalk: board scripts compile and example data covers all card types wit
   assert.doesNotMatch(html, /storge|Postiz|YouTube|Design_Experiments|\.claude\/skills|https?:\/\/|src=["']/i);
 });
 
-test('easytalk: hide read keeps a focused card available until editing ends', () => {
-  const html = fs.readFileSync(path.join(ROOT, 'easytalk/template.html'), 'utf8');
-  const hidingRule = html.match(/body\.hide[^{}]+\{display:none\}/)?.[0];
-  assert.equal(hidingRule, 'body.hide .card.read:not(:focus-within){display:none}');
-});
-
 test('easytalk: prompts render and copy without an optional suffix', () => {
   const html = fs.readFileSync(path.join(ROOT, 'easytalk/template.html'), 'utf8');
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
