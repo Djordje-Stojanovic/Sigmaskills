@@ -10,6 +10,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const KNOWN_SKILLS = [
   {
+    id: 'sigmaresearch',
+    title: 'SigmaResearch',
+    needsReferences: true,
+  },
+  {
     id: 'sigmareview',
     title: 'SigmaReview',
     needsReferences: true,
