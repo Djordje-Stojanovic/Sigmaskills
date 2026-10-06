@@ -18,15 +18,18 @@ What each check requires:
 | SigmaShip | `PR-BODY.md` and `CLEANUP.md` (the runner asks for them) | `Closes #N`, spec and map line, Acceptance with every box ticked, Rulings, Follow-ups, Review rounds table with at least one round; cleanup output shows `main in sync` and `tree clean` |
 | SigmaWrite | `docs/NOTES.md` in the fixture, rewritten | Code names `step`, `saveBest`, `src/scores.js` survive; the planted jargon is gone; no sentence over 30 words |
 | SigmaRefactor | `REFACTOR-SCAN.md` (the runner asks for it) | Counting method named (`laloc` or fallback); ranked files with line counts; choices with risk and verification |
+| SigmaResearch | Final chat reply | Sources table with platform, URL, publication/access dates, route, scope and evidence (or None with a gap); explicit Access gaps section |
 
 ## Layer 2: live runs on demand (not in CI)
 
 ```bash
-node scripts/eval-skills.js                 # all six skills
+node scripts/eval-skills.js                 # all skills
 node scripts/eval-skills.js sigmareview     # one or more skills
 ```
 
 For each skill, the runner copies `test/fixtures/eval-repo` (Snake Lite, a tiny terminal game) to a temp folder, makes it a Git repository with a local bare `origin`, installs the skill in `.claude/skills/`, and runs `claude -p` headless. Then it runs the skill's contract check and prints pass or fail, wall time, cost, and tokens. The run folders stay on disk for inspection.
+
+SigmaResearch receives an offline HN record, a Reddit 429 log and unavailable Chrome tools. Its eval checks honest source scope and access gaps, not current platform access. Contract checks validate output structure; they cannot prove factual accuracy, pacing or browser behavior. Independent scenario review covers those instructions.
 
 The fixture has seeded defects: the snake survives one cell past two walls, food scores 10 instead of the documented 1, `src/scores.js` runs `eval` on a file, and one weak test. It also has obvious gaps for SigmaImprove: no pause, no difficulty levels, no color.
 

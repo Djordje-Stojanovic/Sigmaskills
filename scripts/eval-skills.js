@@ -28,6 +28,7 @@ function prompts(out) {
     sigmaship: `/sigmaship Ship issue #1, described in docs/issues/1-wall-collision.md. ${OFFLINE} There is no pull request or CI: write the PR ledger body to ${out}/PR-BODY.md instead of opening a PR, keep it updated, and treat local \`npm test\` as CI. Do one review round yourself. Then merge the branch into main locally, push main to origin, clean up as land.md says, and write the output of the Verify commands to ${out}/CLEANUP.md.`,
     sigmawrite: `/sigmawrite Rewrite docs/NOTES.md in place so an outsider can follow it. Keep its meaning.`,
     sigmarefactor: `/sigmarefactor Run steps 1 to 3 on this repository. ${OFFLINE} Do not edit any code. Instead of waiting for agreement, write the scan, your reading notes, and the choices you would offer to REFACTOR-SCAN.md at the repository root, then stop.`,
+    sigmaresearch: `/sigmaresearch Research what these supplied records establish about community agreement. ${OFFLINE} Return the answer in chat. The only available source is an offline HN item: URL https://news.ycombinator.com/item?id=8863, published 2007-04-04, title My YC app: Dropbox - Throw away your USB drive, author dhouston, content: author announced a demo. No replies supplied. Access date ${today}. Reddit access log: https://www.reddit.com/r/LocalLLaMA/top/.rss?t=month returned 429; no body was read. Claude in Chrome is unavailable. Do not try live access or claim community consensus.`,
   };
 }
 

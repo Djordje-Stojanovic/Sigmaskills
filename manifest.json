@@ -5,11 +5,6 @@
   "description": "Portable Agent Skills monorepo and first-party Sigma Installer",
   "skills": [
     {
-      "id": "sigmaresearch",
-      "title": "SigmaResearch",
-      "needsReferences": true
-    },
-    {
       "id": "sigmareview",
       "title": "SigmaReview",
       "needsReferences": true
@@ -37,6 +32,11 @@
     {
       "id": "sigmarefactor",
       "title": "SigmaRefactor",
+      "needsReferences": true
+    },
+    {
+      "id": "sigmaresearch",
+      "title": "SigmaResearch",
       "needsReferences": true
     }
   ],
