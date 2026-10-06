@@ -168,6 +168,32 @@ test('status: a local front-matter description is a Skill Customization, not cor
   }
 });
 
+test('status: an untouched older Release whose description changed upstream is not a customization (#94)', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-status-description-old-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    const skillMd = path.join(projectRoot, '.agents', 'skills', 'sigmawrite', 'SKILL.md');
+    const older = fs.readFileSync(skillMd, 'utf8')
+      .replace(/^description:.*\n/m, 'description: Older official text. Do not use for code.\n');
+    fs.writeFileSync(skillMd, older, 'utf8');
+    const statePath = path.join(projectRoot, '.agents', '.sigmaskills', 'state.json');
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    const hash = crypto.createHash('sha256').update(Buffer.from(older, 'utf8')).digest('hex');
+    state.skills.sigmawrite.baseHashes['SKILL.md'] = hash;
+    for (const copy of state.skills.sigmawrite.copies || []) {
+      if (copy.baseHashes) copy.baseHashes['SKILL.md'] = hash;
+    }
+    fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
+
+    const report = collectStatus({ catalog: getCatalog(ROOT), projectRoot, packageRoot: ROOT, scope: 'project' });
+    const dest = destOf(report, '.agents/skills/sigmawrite');
+    assert.ok(dest.classifications.includes('outside-change'));
+    assert.ok(!dest.classifications.includes('valid-customization'));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
 test('status: classifies outside edits, extra and missing resources, and malformed markers', () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-status-drift-'));
   try {

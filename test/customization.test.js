@@ -10,6 +10,8 @@ import {
   injectRawCustomContent,
   diagnoseCustomizationMarkers,
   applyProposedRepair,
+  readDescriptionEntry,
+  replaceDescriptionEntry,
 } from '../src/customization.js';
 
 test('customization: validates well-formed empty custom block', () => {
@@ -225,4 +227,16 @@ test('customization: applyProposedRepair writes only approved bytes and rejects 
     }),
     /invalid repair|editor/i,
   );
+});
+
+test('description entry: block scalars keep inner blank lines; other keys and the body stay intact (#94)', () => {
+  const md = '---\nname: x\ndescription: >-\n  First part.\n\n  Second part.\nlicense: MIT\n---\n# Body\n---\n';
+  assert.equal(readDescriptionEntry(md), 'description: >-\n  First part.\n\n  Second part.\n');
+  const next = replaceDescriptionEntry(md, 'description: Short.\r\n');
+  assert.equal(next, '---\nname: x\ndescription: Short.\nlicense: MIT\n---\n# Body\n---\n');
+  const last = '---\r\nname: x\r\ndescription: Old.\r\n\r\n---\r\nBody\r\n';
+  assert.equal(replaceDescriptionEntry(last, 'description: New.\n'), '---\r\nname: x\r\ndescription: New.\r\n\r\n---\r\nBody\r\n');
+  assert.equal(readDescriptionEntry('# no front matter\n'), null);
+  assert.equal(replaceDescriptionEntry('---\nname: x\n---\n', 'description: y\n'), '---\nname: x\n---\n');
+  assert.equal(readDescriptionEntry('\uFEFF---\ndescription: x\n---\n'), null);
 });

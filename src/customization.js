@@ -325,8 +325,12 @@ function descriptionSpan(markdown) {
   const close = lines.findIndex((line, index) => index > 0 && bare(line) === '---');
   const start = lines.findIndex((line, index) => index > 0 && index < close && /^description\s*:/.test(line));
   if (close === -1 || start === -1) return null;
+  // Continuation lines are indented; blank lines inside a block scalar belong to it too.
   let stop = start + 1;
-  while (stop < close && /^[ \t]/.test(lines[stop])) stop += 1;
+  for (let index = start + 1; index < close; index += 1) {
+    if (/^[ \t]+\S/.test(lines[index])) stop = index + 1;
+    else if (bare(lines[index]).trim() !== '') break;
+  }
   return { lines, start, stop };
 }
 

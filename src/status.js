@@ -65,9 +65,13 @@ function officialMarkdownShell(markdown) {
   return `${markdown.slice(0, start + CUSTOM_BLOCK_START.length)}${markdown.slice(end)}`;
 }
 
-function inspectSkillMarkdown(liveMarkdown, skillId, liveHash, bundledMarkdown, bundledHash) {
+function inspectSkillMarkdown(liveMarkdown, skillId, liveHash, bundledMarkdown, bundledHash, installedHash) {
   const inspection = inspectCustomizationBlock(liveMarkdown, skillId);
-  const live = inspection.status === 'malformed' ? liveMarkdown : withOfficialDescription(liveMarkdown, bundledMarkdown);
+  // An untouched copy of the installed Release is not a local description, even when the new Release changed it.
+  const localEdit = Boolean(installedHash) && liveHash !== installedHash;
+  const live = inspection.status === 'malformed' || !localEdit
+    ? liveMarkdown
+    : withOfficialDescription(liveMarkdown, bundledMarkdown);
   if (inspection.status !== 'valid' && live === liveMarkdown) {
     return {
       status: inspection.status,
@@ -93,7 +97,7 @@ function isPackagedResource(file) {
   return /^(references|scripts|assets|agents)\//.test(file);
 }
 
-function classifyLiveTree({ liveFiles, bundledFiles, skillId, skillMarkdown, bundledMarkdown }) {
+function classifyLiveTree({ liveFiles, bundledFiles, skillId, skillMarkdown, bundledMarkdown, installedFiles }) {
   const classifications = [];
   const officialFiles = { ...liveFiles };
 
@@ -104,6 +108,7 @@ function classifyLiveTree({ liveFiles, bundledFiles, skillId, skillMarkdown, bun
       liveFiles['SKILL.md'],
       bundledMarkdown,
       bundledFiles['SKILL.md'],
+      installedFiles?.['SKILL.md'],
     );
     officialFiles['SKILL.md'] = markdown.officialHash;
     if (markdown.status === 'malformed') classifications.push('malformed-markers');
@@ -314,6 +319,7 @@ export function collectStatus(options = {}) {
         skillId,
         skillMarkdown,
         bundledMarkdown,
+        installedFiles: copyEntry?.baseHashes || entry?.baseHashes,
       });
       destinations.push({
         relativeDestination,
