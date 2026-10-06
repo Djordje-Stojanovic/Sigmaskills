@@ -26,6 +26,7 @@ function prompts(out) {
     sigmaimprove: `/sigmaimprove Improve this product. ${OFFLINE} Use the local-file tracker under .scratch/sigmaimprove/ and compare with the leaders from your own knowledge.`,
     sigmabrief: `/sigmabrief Write briefs for the two local issues docs/issues/1-wall-collision.md and docs/issues/2-pause.md. approval: auto. ${OFFLINE} The issues are local files, not GitHub issues.`,
     sigmaship: `/sigmaship Ship issue #1, described in docs/issues/1-wall-collision.md. ${OFFLINE} There is no pull request or CI: write the PR ledger body to ${out}/PR-BODY.md instead of opening a PR, keep it updated, and treat local \`npm test\` as CI. Do one review round yourself. Then merge the branch into main locally, push main to origin, clean up as land.md says, and write the output of the Verify commands to ${out}/CLEANUP.md.`,
+    easytalk: `/easytalk Give a status report for this repository with one question, one prompt, one manual task, an answer to "Can I use it in another project?", and one FYI card. ${OFFLINE} Save the board as status-board.html in the repository root and link it in the final reply.`,
     sigmawrite: `/sigmawrite Rewrite docs/NOTES.md in place so an outsider can follow it. Keep its meaning.`,
     sigmarefactor: `/sigmarefactor Run steps 1 to 3 on this repository. ${OFFLINE} Do not edit any code. Instead of waiting for agreement, write the scan, your reading notes, and the choices you would offer to REFACTOR-SCAN.md at the repository root, then stop.`,
   };

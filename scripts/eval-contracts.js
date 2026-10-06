@@ -3,6 +3,7 @@
 // files maps repository-relative paths ('/' separators) to text; result is the agent's final chat reply.
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 
 const FIXTURE = path.resolve(import.meta.dirname, '..', 'test', 'fixtures', 'eval-repo');
 
@@ -177,7 +178,29 @@ function sigmarefactor({ files }) {
   return problems;
 }
 
-export const CONTRACTS = { sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor };
+function easytalk({ files, result }) {
+  const board = files['status-board.html'];
+  if (!board) return ['missing status-board.html'];
+  const problems = [];
+  const template = fs.readFileSync(new URL('../easytalk/template.html', import.meta.url), 'utf8');
+  const dataBlock = /\/\* ===== DATA:[\s\S]*?\/\* ===== END DATA ===== \*\//;
+  const normalize = (text) => text.replaceAll('\r\n', '\n').replace(dataBlock, 'DATA');
+  if (!dataBlock.test(board)) problems.push('status-board.html: missing DATA block');
+  if (normalize(board) !== normalize(template)) problems.push('status-board.html: template changed outside DATA');
+  const data = board.match(dataBlock)?.[0] ?? '';
+  for (const name of ['PAGE', 'DO', 'ANS', 'FYI']) {
+    if (!new RegExp('const ' + name + '\\s*=').test(data)) problems.push('status-board.html: missing ' + name);
+  }
+  try {
+    new vm.Script(data);
+  } catch {
+    problems.push('status-board.html: invalid JavaScript data');
+  }
+  if (!result.includes('status-board.html')) problems.push('reply: missing board link');
+  return problems;
+}
+
+export const CONTRACTS = { easytalk, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

@@ -12,5 +12,7 @@
   { "prompt": "Explain this in simplified technical English with less jargon", "skill": "sigmawrite", "near": "sigmabrief" },
   { "prompt": "Rewrite this for an outsider: clear, no gibberish", "skill": "sigmawrite", "near": "sigmarefactor" },
   { "prompt": "Review my large files and simplify them to reduce code size", "skill": "sigmarefactor", "near": "sigmareview" },
-  { "prompt": "Run a laloc scan and help me shrink the biggest files", "skill": "sigmarefactor", "near": "sigmaimprove" }
+  { "prompt": "Run a laloc scan and help me shrink the biggest files", "skill": "sigmarefactor", "near": "sigmaimprove" },
+  { "prompt": "Easy talk: make an interactive status board with questions", "skill": "easytalk", "near": "sigmawrite" },
+  { "prompt": "Handle my EASYTALK REPLY and bring unread cards to the next board", "skill": "easytalk", "near": "sigmabrief" }
 ]

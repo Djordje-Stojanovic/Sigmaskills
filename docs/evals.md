@@ -18,11 +18,12 @@ What each check requires:
 | SigmaShip | `PR-BODY.md` and `CLEANUP.md` (the runner asks for them) | `Closes #N`, spec and map line, Acceptance with every box ticked, Rulings, Follow-ups, Review rounds table with at least one round; cleanup output shows `main in sync` and `tree clean` |
 | SigmaWrite | `docs/NOTES.md` in the fixture, rewritten | Code names `step`, `saveBest`, `src/scores.js` survive; the planted jargon is gone; no sentence over 30 words |
 | SigmaRefactor | `REFACTOR-SCAN.md` (the runner asks for it) | Counting method named (`laloc` or fallback); ranked files with line counts; choices with risk and verification |
+| EasyTalk | `status-board.html` and final chat reply | Installed template preserved outside its DATA block; valid JavaScript with PAGE, DO, ANS, FYI; reply links the saved board |
 
 ## Layer 2: live runs on demand (not in CI)
 
 ```bash
-node scripts/eval-skills.js                 # all six skills
+node scripts/eval-skills.js                 # all skills
 node scripts/eval-skills.js sigmareview     # one or more skills
 ```
 

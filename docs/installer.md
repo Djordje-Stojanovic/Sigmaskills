@@ -316,7 +316,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaimprove -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmabrief -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaship -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmarefactor
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmarefactor -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill easytalk -g
 
 # Pin to specific hosts
@@ -370,7 +370,7 @@ Copy-Item -Recurse Sigmaskills\sigmabrief    "$HOME\.agents\skills\sigmabrief"
 Copy-Item -Recurse Sigmaskills\sigmaship     "$HOME\.agents\skills\sigmaship"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
 Copy-Item -Recurse Sigmaskills\sigmarefactor "$HOME\.agents\skills\sigmarefactor"
-Copy-Item -Recurse Sigmaskills\easytalk     "$HOME\.agents\skills\easytalk"
+Copy-Item -Recurse Sigmaskills\easytalk      "$HOME\.agents\skills\easytalk"
 ```
 
 Point other hosts at the same folders, or copy again:

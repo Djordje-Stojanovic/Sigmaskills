@@ -57,7 +57,6 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaShip** | `sigmaship` | Ship one planned ticket: build, review rounds, merge, clean up | One merged PR, closed ticket, main in sync |
 | **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
 | **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
-
 | **EasyTalk** | `easytalk` | Plain chat with status and question boards | Interactive HTML board and copied replies |
 
 ### Which one do I need?
@@ -96,11 +95,11 @@ A writing voice inspired by **ASD-STE100 Simplified Technical English**. It give
 
 Counts lines (with `laloc` if you have it, or by itself), reads the five largest maintained files, and explains safe refactoring choices. It waits for your approval before it edits. It keeps behavior, tests, interfaces, and your own changes intact. At the end it reports lines removed apart from lines moved into new modules.
 
----
-
 ### EasyTalk
 
 Keeps replies short and puts status reports or question batches on one interactive board. Read ticks, recommended options, task statuses, and free text feed a **Copy my answers** reply that names every unread card. Open it with an HTML preview tool or as a local browser file. Say “easy talk off” to stop.
+
+---
 
 ## Install
 
@@ -168,7 +167,6 @@ $easytalk
 | `sigmaship` | issue URL · `#N` | Refuses tickets without checkable acceptance criteria |
 | `sigmawrite` | (no input) | Session writing voice until you turn it off |
 | `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
-
 | `easytalk` | “easy talk” · status or question batch · `EASYTALK REPLY` | Conversation mode until “easy talk off” |
 
 ### Requirements
@@ -183,7 +181,6 @@ $easytalk
 | SigmaBrief | `gh` read access when briefing from issues or PRs · **no** push to the product repo |
 | SigmaWrite | Nothing beyond chat |
 | SigmaRefactor | Read access to the target repository · `laloc` is optional; without it the skill counts lines itself |
-
 | EasyTalk | A writable output folder and a browser or HTML preview; chat fallback when unavailable |
 
 Skills use the shell native to the machine that runs the agent (PowerShell on Windows, POSIX shell elsewhere). They do not assume WSL.
