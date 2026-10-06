@@ -30,7 +30,7 @@ nav a{font-size:13px;color:var(--fg);background:var(--chip);border-radius:999px;
 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:6px 0;display:grid;gap:6px;scroll-margin:60px 0 90px}
 .card:focus-visible,.card:focus-within{outline:2px solid var(--acc);outline-offset:1px}
 .card.read{box-shadow:inset 4px 0 0 var(--ok);opacity:.8}
-body.hide .card.read{display:none}
+body.hide .card.read:not(:focus-within){display:none}
 .top{display:flex;gap:8px;align-items:center}
 .top input{width:18px;height:18px;flex:none;margin:0}
 .id{font:600 12px ui-monospace,monospace;background:var(--chip);color:var(--mut);border-radius:4px;padding:1px 6px;flex:none}
@@ -68,12 +68,12 @@ G.forEach(([h,items],i)=>{if(!items||!items.length)return;$("#main").insertAdjac
   let x=it.q?`<div class="q">You asked: “${esc(it.q)}”</div>`:"";
   x+=`<div class="top"><input type="checkbox" aria-label="read"><span class="id">${it.id}</span><span class="t">${it.t}</span>${it.tag?`<span class="tag ${it.tc||""}">${it.tag}</span>`:""}</div>`;
   if(it.b)x+=`<div class="b">${it.b}</div>`;
-  if(it.p)x+=`<div class="p"><code>${esc(it.p+PAGE.suffix)}</code><button type="button">copy</button></div>`;
+  if(it.p)x+=`<div class="p"><code>${esc(it.p+(PAGE.suffix??""))}</code><button type="button">copy</button></div>`;
   if(it.p||it.act)x+=seg(it.id+":s",STAT);
   if(it.o)x+=seg(it.id+":a",it.o,it.rec);
   x+=`<textarea placeholder="${it.o?"Your own answer or comment…":"Comment…"}"></textarea>`;
   d.innerHTML=x;$("#main").append(d);
-  if(it.p){const b=d.querySelector("button");b.onclick=()=>cp(it.p+PAGE.suffix,b,"copy");}});});
+  if(it.p){const b=d.querySelector("button");b.onclick=()=>cp(it.p+(PAGE.suffix??""),b,"copy");}});});
 $("#nav").insertAdjacentHTML("beforeend",`<a href="#x">General</a>`);
 const cards=[...document.querySelectorAll(".card")],chk=c=>c.querySelector(".top input");
 function mark(c,on){if(on!==undefined)chk(c).checked=on;c.classList.toggle("read",chk(c).checked);}

@@ -36,3 +36,35 @@ test('easytalk: board scripts compile and example data covers all card types wit
   assert.equal(new Set(ids).size, ids.length);
   assert.doesNotMatch(html, /storge|Postiz|YouTube|Design_Experiments|\.claude\/skills|https?:\/\/|src=["']/i);
 });
+
+test('easytalk: hide read keeps a focused card available until editing ends', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'easytalk/template.html'), 'utf8');
+  const hidingRule = html.match(/body\.hide[^{}]+\{display:none\}/)?.[0];
+  assert.equal(hidingRule, 'body.hide .card.read:not(:focus-within){display:none}');
+});
+
+test('easytalk: prompts render and copy without an optional suffix', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'easytalk/template.html'), 'utf8');
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  const cards = [];
+  const nodes = new Map();
+  let copied;
+  const document = {
+    querySelector(selector) {
+      if (!nodes.has(selector)) nodes.set(selector, { insertAdjacentHTML() {}, append(card) { cards.push(card); } });
+      return nodes.get(selector);
+    },
+    createElement() {
+      const button = {};
+      return { dataset: {}, querySelector() { return button; } };
+    },
+  };
+  vm.runInNewContext(scripts[0].replace(',suffix:""', '') + scripts[1].split('const cards=')[0], {
+    document,
+    cp(text) { copied = text; },
+  });
+  const prompt = cards.find((card) => card.dataset.id === 'D1');
+  assert.match(prompt.innerHTML, /<code>Check that the project docs describe the latest change\.<\/code>/);
+  prompt.querySelector('button').onclick();
+  assert.equal(copied, 'Check that the project docs describe the latest change.');
+});

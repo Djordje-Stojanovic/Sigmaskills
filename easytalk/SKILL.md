@@ -50,7 +50,7 @@ If the host has an HTML Artifact or preview tool, follow that tool's required co
 | `act: 1` | Manual task with the same status choices, without a prompt |
 | `o`, `rec` | Question options and recommended index. Put the recommendation first, at index 0; it shows ★ |
 
-Each card has a read tick and free text. Typing or picking marks it read. The General answers box holds comments about the whole board. Drafts stay in this browser; copying produces text to paste back and does not send it.
+Each card has a read tick and free text. Typing or picking marks it read. With hide read enabled, the card stays visible while it has focus so the user can finish editing. The General answers box holds comments about the whole board. Drafts stay in this browser; copying produces text to paste back and does not send it.
 
 Generate valid JavaScript strings when replacing DATA: escape quotes, backslashes, line breaks, and `<` as `\u003c` so pasted text cannot end a script block. HTML fields are for agent-authored markup; HTML-escape untrusted text embedded in `t`, `b`, or `tag`. Keep ids simple letters and digits, and `tc` within the listed classes.
 
