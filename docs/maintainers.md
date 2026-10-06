@@ -23,7 +23,7 @@ Sigmaskills/
 ├── sigmabrief/               SKILL.md · agents/ · references/
 ├── sigmaship/                SKILL.md · agents/ · references/
 ├── sigmawrite/               SKILL.md · agents/
-├── sigmaresearch/            SKILL.md · agents/ · references/
+├── sigmaresearch/             SKILL.md · agents/ · references/
 ├── sigmarefactor/            SKILL.md · agents/ · references/
 └── easytalk/                 SKILL.md · agents/ · template.html
 ```
