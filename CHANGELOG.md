@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmaresearch` (SigmaResearch) is a portable general research skill for Reddit, X, Hacker News, GitHub and Hugging Face. It carries the Reddit RSS and owner-session Chrome recipes tested on 2026-10-04, records source dates and read scope, and reports access gaps. It never logs in or evades bot checks, and stops platform access on 403/429. Install it from repository source until the next Release. (#90)
+
 ### Changed
 
 - No bot opens recurring pull requests any more. Dependabot is gone, because its pin bumps always failed CI: the tests compare the action pins with constants in the release scripts. The action pins are now checked as a step before each Release. The Agent Host registry sync no longer runs every day; it runs on demand as the first step of a Release, and both of its inputs are optional.

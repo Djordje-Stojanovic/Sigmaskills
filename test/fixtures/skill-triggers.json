@@ -1,4 +1,6 @@
 [
+  { "prompt": "Research Reddit RSS and X threads for source evidence", "skill": "sigmaresearch", "near": "sigmareview" },
+  { "prompt": "Read Hacker News and Hugging Face public sources for research", "skill": "sigmaresearch", "near": "sigmabrief" },
   { "prompt": "Do a full review of this repository and find every bug", "skill": "sigmareview", "near": "sigmaimprove" },
   { "prompt": "Run a security review and a performance audit of the repo", "skill": "sigmareview", "near": "sigmaimprove" },
   { "prompt": "Hunt for bugs and security holes in my game", "skill": "sigmareview", "near": "sigmaimprove" },

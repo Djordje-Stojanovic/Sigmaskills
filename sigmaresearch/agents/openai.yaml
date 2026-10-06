@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaResearch
+  short_description: Read Reddit, X and public sources with clear evidence
+  default_prompt: Use $sigmaresearch to research this topic with source links,
+    dates, read scope and access gaps.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: true

@@ -33,6 +33,11 @@
       "id": "sigmarefactor",
       "title": "SigmaRefactor",
       "needsReferences": true
+    },
+    {
+      "id": "sigmaresearch",
+      "title": "SigmaResearch",
+      "needsReferences": true
     }
   ],
   "retired": [

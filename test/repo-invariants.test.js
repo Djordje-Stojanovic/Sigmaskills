@@ -39,6 +39,11 @@ const KNOWN_SKILLS = [
     title: 'SigmaRefactor',
     needsReferences: true,
   },
+  {
+    id: 'sigmaresearch',
+    title: 'SigmaResearch',
+    needsReferences: true,
+  },
 ];
 
 const ISSUE_TEMPLATES = [
