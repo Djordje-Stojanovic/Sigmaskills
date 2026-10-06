@@ -32,8 +32,8 @@ Use primary sources for technical claims and numbers. Community posts provide ex
 
 Return a concise answer with links near the claims, followed by these sections:
 
-- **Sources:** use a table with columns `Platform | URL | Published | Accessed | Route | Scope | Evidence`. Use canonical web URLs, dates as `YYYY-MM-DD`, and `unknown` for a missing publication date. Describe partial reads in Scope. Escape literal pipes in cells. Write `None` if no sources could be read.
-- **Access gaps:** blocked, missing-tool, missing-session and partial-read limits, and what they leave unanswered. Write `None` when there are no gaps.
+- `## Sources`: use a table with columns `Platform | URL | Published | Accessed | Route | Scope | Evidence`. Use canonical web URLs, dates as `YYYY-MM-DD`, and `unknown` for a missing publication date. Describe partial reads in Scope. Escape literal pipes in cells. Write `None` if no sources could be read.
+- `## Access gaps`: blocked, missing-tool, missing-session and partial-read limits, and what they leave unanswered. Write `None` when there are no gaps.
 
 Use the user's requested artifact or location; otherwise return this in chat. Do not create repo files just to hold a research log. Finish when the accessible evidence answers the question at the requested depth, or explain what remains unverified. Never claim live access from a recipe's past test date.
 
