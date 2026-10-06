@@ -1,0 +1,102 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Easy Talk Board</title>
+<script>
+/* ===== DATA: edit only this block ===== */
+const PAGE={title:"Project status",sub:"Tick what you read, answer, then Copy my answers and paste it in the chat.",suffix:""};
+const DO=[ // Your action: questions (o, rec) and tasks (p = prompt, act:1 = by hand)
+ {id:"Q1",t:"Proceed with the smaller change?",o:["proceed","revise"],rec:0,b:"The checks pass. The change covers the requested behavior."},
+ {id:"D1",t:"Ask the agent to check the docs",p:"Check that the project docs describe the latest change."},
+ {id:"D2",t:"Try the updated workflow",act:1}];
+const ANS=[ // Answers: q = the user's question, short quote
+ {id:"A1",q:"Can I use this in another project?",t:"Yes. Copy the installed skill and use that project's facts.",tag:"answered",tc:"ok",b:"<ul><li>The board works as a local HTML file.</li></ul>"}];
+const FYI=[ // What changed and good to know
+ {id:"F1",t:"All required checks pass",tag:"new",tc:"acc"}];
+/* ===== END DATA ===== */
+</script>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--fg:#1d1c1a;--mut:#6b6760;--line:#dedad3;--acc:#c8341f;--ok:#2f7d4f;--warn:#b7791f;--chip:#f0ede7}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141312;--card:#1e1d1b;--fg:#ecebe8;--mut:#a29d95;--line:#33312d;--acc:#ff6b55;--ok:#5fc48a;--warn:#e0b04d;--chip:#2a2825;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141312;--card:#1e1d1b;--fg:#ecebe8;--mut:#a29d95;--line:#33312d;--acc:#ff6b55;--ok:#5fc48a;--warn:#e0b04d;--chip:#2a2825;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:16px 16px 150px}
+h1{font-size:22px;margin:0 0 2px;text-wrap:balance}
+h2{font-size:16px;margin:22px 0 6px;padding-bottom:3px;border-bottom:2px solid var(--acc);scroll-margin-top:8px}
+.sub{color:var(--mut);margin:0;font-size:14px}
+nav{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+nav a{font-size:13px;color:var(--fg);background:var(--chip);border-radius:999px;padding:2px 10px;text-decoration:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:6px 0;display:grid;gap:6px;scroll-margin:60px 0 90px}
+.card:focus-visible,.card:focus-within{outline:2px solid var(--acc);outline-offset:1px}
+.card.read{box-shadow:inset 4px 0 0 var(--ok);opacity:.8}
+body.hide .card.read:not(:focus-within){display:none}
+.top{display:flex;gap:8px;align-items:center}
+.top input{width:18px;height:18px;flex:none;margin:0}
+.id{font:600 12px ui-monospace,monospace;background:var(--chip);color:var(--mut);border-radius:4px;padding:1px 6px;flex:none}
+.t{font-weight:650;flex:1;min-width:0}
+.q{color:var(--mut);font-size:14px;font-style:italic;border-left:3px solid var(--line);padding-left:8px}
+.tag{font-size:12px;font-weight:600;padding:0 7px;border-radius:999px;border:1px solid currentColor;flex:none}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.acc{color:var(--acc)}
+.b{font-size:14px;min-width:0}.b ul{margin:2px 0 0 18px;padding:0}
+code{font:13px ui-monospace,monospace;background:var(--chip);padding:2px 6px;border-radius:4px;overflow-wrap:anywhere}
+.p{display:flex;gap:6px;align-items:flex-start}.p code{flex:1;min-width:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{display:flex;gap:4px;align-items:center;background:var(--chip);border-radius:6px;padding:3px 9px;font-size:14px;cursor:pointer}
+.seg label.rec{box-shadow:inset 0 0 0 1px var(--acc);font-weight:600}
+.seg label:has(input:checked){outline:2px solid var(--acc)}
+.n{font:11px ui-monospace,monospace;color:var(--mut)}.card:not(:focus-within) .n{display:none}
+textarea{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:inherit;font-size:14px;min-height:32px;resize:vertical}
+button{font:600 13px system-ui,sans-serif;border:1px solid var(--line);background:var(--chip);color:var(--fg);border-radius:6px;padding:4px 10px;cursor:pointer}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:8px 16px calc(8px + env(safe-area-inset-bottom,0px));display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.bar .go{background:var(--acc);color:var(--card);border:0;padding:8px 18px;font-size:15px}
+kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-radius:3px;padding:0 3px}
+@media (max-width:640px){#keys{display:none}}
+#out{display:none;max-width:860px;min-height:110px}
+</style>
+<div class="wrap"><h1 id="h"></h1><p class="sub" id="s"></p><nav id="nav"></nav><div id="main"></div>
+<h2 id="x">General answers</h2><textarea id="any" style="min-height:80px" placeholder="Anything else: ideas, worries, orders, questions…"></textarea></div>
+<div class="bar"><span id="cnt" class="sub"></span><label class="sub"><input type="checkbox" id="hide"> hide read</label><span id="keys" class="sub"><kbd>j</kbd>/<kbd>k</kbd> move · <kbd>x</kbd> read · <kbd>1</kbd>–<kbd>9</kbd> pick · <kbd>e</kbd> write · <kbd>Esc</kbd> back · <kbd>g</kbd> general · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> copy</span><button class="go" id="copy">Copy my answers</button><textarea id="out" readonly></textarea></div>
+<script>
+const STAT=["done","doing","not now"],$=s=>document.querySelector(s),KEY="easytalk:"+PAGE.title;
+const G=[["Your action",DO],["Answers to your questions",ANS],["FYI",FYI]];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const seg=(n,o,rec)=>`<div class="seg">${o.map((x,i)=>`<label${i===rec?' class="rec"':""}><input type="radio" name="${n}" value="${esc(x)}${i===rec?" ★":""}"><span class="n">${i+1}</span>${esc(x)}${i===rec?" ★":""}</label>`).join("")}</div>`;
+$("#h").textContent=PAGE.title;$("#s").textContent=PAGE.sub;document.title=PAGE.title;
+G.forEach(([h,items],i)=>{if(!items||!items.length)return;$("#main").insertAdjacentHTML("beforeend",`<h2 id="g${i}">${h}</h2>`);$("#nav").insertAdjacentHTML("beforeend",`<a href="#g${i}">${h} ${items.length}</a>`);
+ items.forEach(it=>{const d=document.createElement("div");d.className="card";d.tabIndex=0;d.dataset.id=it.id;
+  let x=it.q?`<div class="q">You asked: “${esc(it.q)}”</div>`:"";
+  x+=`<div class="top"><input type="checkbox" aria-label="read"><span class="id">${it.id}</span><span class="t">${it.t}</span>${it.tag?`<span class="tag ${it.tc||""}">${it.tag}</span>`:""}</div>`;
+  if(it.b)x+=`<div class="b">${it.b}</div>`;
+  if(it.p)x+=`<div class="p"><code>${esc(it.p+(PAGE.suffix??""))}</code><button type="button">copy</button></div>`;
+  if(it.p||it.act)x+=seg(it.id+":s",STAT);
+  if(it.o)x+=seg(it.id+":a",it.o,it.rec);
+  x+=`<textarea placeholder="${it.o?"Your own answer or comment…":"Comment…"}"></textarea>`;
+  d.innerHTML=x;$("#main").append(d);
+  if(it.p){const b=d.querySelector("button");b.onclick=()=>cp(it.p+(PAGE.suffix??""),b,"copy");}});});
+$("#nav").insertAdjacentHTML("beforeend",`<a href="#x">General</a>`);
+const cards=[...document.querySelectorAll(".card")],chk=c=>c.querySelector(".top input");
+function mark(c,on){if(on!==undefined)chk(c).checked=on;c.classList.toggle("read",chk(c).checked);}
+function upd(){$("#cnt").textContent=cards.filter(c=>c.classList.contains("read")).length+" of "+cards.length+" read";save();}
+function state(){const o={any:$("#any").value,c:{}};cards.forEach(c=>o.c[c.dataset.id]={r:chk(c).checked,t:c.querySelector("textarea").value,v:[...c.querySelectorAll("input[type=radio]:checked")].map(r=>r.name+"="+r.value)});return o;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state()))}catch(e){}}
+try{const o=JSON.parse(localStorage.getItem(KEY)||"null");if(o){$("#any").value=o.any||"";cards.forEach(c=>{const s=o.c[c.dataset.id];if(!s)return;mark(c,s.r);c.querySelector("textarea").value=s.t||"";c.querySelectorAll("input[type=radio]").forEach(r=>r.checked=s.v.includes(r.name+"="+r.value));});}}catch(e){}
+cards.forEach(c=>{chk(c).onchange=()=>{mark(c);upd();};c.oninput=e=>{if(e.target.type!=="checkbox"){mark(c,true);upd();}};});
+$("#any").oninput=save;$("#hide").onchange=e=>document.body.classList.toggle("hide",e.target.checked);upd();
+document.addEventListener("keydown",e=>{const k=e.key,tg=e.target,c=tg.closest&&tg.closest(".card");
+ if((e.ctrlKey||e.metaKey)&&k==="Enter"){e.preventDefault();$("#copy").click();return;}
+ if(tg.tagName==="TEXTAREA"){if(k==="Escape")(c||$("#copy")).focus();return;}
+ if(e.altKey||e.ctrlKey||e.metaKey)return;
+ if(k==="j"||k==="k"){e.preventDefault();const v=cards.filter(x=>x.offsetParent),i=v.indexOf(c);const n=v[Math.max(0,Math.min(v.length-1,k==="j"?i+1:i-1))];if(n){n.focus();n.scrollIntoView({block:"nearest"});}return;}
+ if(k==="g"){e.preventDefault();$("#any").focus();return;}
+ if(!c)return;
+ if(k==="x"){mark(c,!chk(c).checked);upd();}
+ else if(k==="e"||(k==="Enter"&&tg===c)){e.preventDefault();c.querySelector("textarea").focus();}
+ else if(k==="c")c.querySelector(".p button")?.click();
+ else if(/^[1-9]$/.test(k)){const r=c.querySelectorAll("input[type=radio]")[k-1];if(r){r.checked=true;mark(c,true);upd();}}});
+function cp(t,b,label){const ok=()=>{b.textContent="copied";setTimeout(()=>b.textContent=label,1500)};try{navigator.clipboard.writeText(t).then(ok,()=>fb(t))}catch(e){fb(t)}}
+function fb(t){const o=$("#out");o.style.display="block";o.value=t;o.select();}
+$("#copy").onclick=function(){const R=[],U=[],L=[];cards.forEach(c=>{const id=c.dataset.id;(c.classList.contains("read")?R:U).push(id);
+ const p=[...c.querySelectorAll("input[type=radio]:checked")].map(r=>r.value),t=c.querySelector("textarea").value.trim();if(t)p.push("“"+t+"”");if(p.length)L.push(id+": "+p.join(" | "));});
+ const a=$("#any").value.trim();cp(`EASYTALK REPLY: ${PAGE.title}\nNot read (bring back next board): ${U.join(", ")||"none"}\nRead: ${R.join(", ")||"none"}\n${L.join("\n")||"(no answers or comments)"}${a?"\nGeneral: "+a:""}`,this,"Copy my answers");};
+</script>

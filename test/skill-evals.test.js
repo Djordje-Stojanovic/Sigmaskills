@@ -119,3 +119,14 @@ test('evals: sigmawrite contract counts list items and paragraphs as separate se
   ].join('\n');
   assert.deepEqual(checkContract('sigmawrite', { files: { 'docs/NOTES.md': text } }), []);
 });
+
+test('evals: easytalk rejects broken data and changed board controls', () => {
+  const sample = loadSample(path.join(SAMPLES, 'easytalk', 'good'));
+  const board = sample.files['status-board.html'];
+  const check = (html) => checkContract('easytalk', { ...sample, files: { 'status-board.html': html } });
+  assert.deepEqual(check(board.replace('Project status', 'Release progress')), []);
+  assert.notDeepEqual(check(board.replace('const FYI=', 'const INFO=')), []);
+  assert.notDeepEqual(check(board.replace('const DO=[', 'const DO=[;')), []);
+  assert.notDeepEqual(check(board.replace('Copy my answers</button>', 'Continue</button>')), []);
+  assert.notDeepEqual(checkContract('easytalk', { ...sample, result: 'Done.' }), []);
+});

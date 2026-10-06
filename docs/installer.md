@@ -317,6 +317,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmabrief -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaship -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmarefactor -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill easytalk -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaresearch -g
 
 # Pin to specific hosts
@@ -338,6 +339,7 @@ $skill-installer install sigmabrief from https://github.com/Djordje-Stojanovic/S
 $skill-installer install sigmaship from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmarefactor from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install easytalk from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaresearch from https://github.com/Djordje-Stojanovic/Sigmaskills
 ```
 
@@ -356,6 +358,7 @@ cp -R Sigmaskills/sigmabrief ~/.agents/skills/sigmabrief
 cp -R Sigmaskills/sigmaship ~/.agents/skills/sigmaship
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
 cp -R Sigmaskills/sigmarefactor ~/.agents/skills/sigmarefactor
+cp -R Sigmaskills/easytalk ~/.agents/skills/easytalk
 cp -R Sigmaskills/sigmaresearch ~/.agents/skills/sigmaresearch
 ```
 
@@ -370,6 +373,7 @@ Copy-Item -Recurse Sigmaskills\sigmabrief    "$HOME\.agents\skills\sigmabrief"
 Copy-Item -Recurse Sigmaskills\sigmaship     "$HOME\.agents\skills\sigmaship"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
 Copy-Item -Recurse Sigmaskills\sigmarefactor "$HOME\.agents\skills\sigmarefactor"
+Copy-Item -Recurse Sigmaskills\easytalk      "$HOME\.agents\skills\easytalk"
 Copy-Item -Recurse Sigmaskills\sigmaresearch "$HOME\.agents\skills\sigmaresearch"
 ```
 
