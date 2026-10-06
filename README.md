@@ -6,7 +6,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 
 | | |
 |---|---|
-| **Release** | [**v0.5.1**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.5.1) |
+| **Release** | [**v0.6.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.6.0) |
 | **Changelog** | [CHANGELOG.md](CHANGELOG.md) |
 | **License** | [MIT](LICENSE) |
 | **Spec** | [agentskills.io](https://agentskills.io/) |
@@ -103,7 +103,7 @@ Keeps replies short and puts status reports or question batches on one interacti
 
 ### SigmaResearch
 
-Reads public sources with platform-specific routes: Reddit RSS, X through Claude in Chrome on the owner's existing session, and public HN, GitHub and Hugging Face pages. It reports blocked or partial reads and stops on 403/429. It never logs in or evades bot checks. Available from repository source until the next Release.
+Reads public sources with platform-specific routes: Reddit RSS, X through Claude in Chrome on the owner's existing session, and public HN, GitHub and Hugging Face pages. It reports blocked or partial reads and stops on 403/429. It never logs in or evades bot checks.
 
 ---
 

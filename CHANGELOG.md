@@ -4,10 +4,12 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-10-06
+
 ### Added
 
 - `easytalk` brings plain chat and interactive status or question boards to any project. It includes read ticks, recommended options, task statuses, free text, keyboard controls, and copied replies that name every unread card. The self-contained HTML template works with an Artifact tool or a local browser file. (#89)
-- `sigmaresearch` (SigmaResearch) is a portable general research skill for Reddit, X, Hacker News, GitHub and Hugging Face. It carries the Reddit RSS and owner-session Chrome recipes tested on 2026-10-04, records source dates and read scope, and reports access gaps. It never logs in or evades bot checks, and stops platform access on 403/429. Install it from repository source until the next Release. (#90)
+- `sigmaresearch` (SigmaResearch) is a portable general research skill for Reddit, X, Hacker News, GitHub and Hugging Face. It carries the Reddit RSS and owner-session Chrome recipes tested on 2026-10-04, records source dates and read scope, and reports access gaps. It never logs in or evades bot checks, and stops platform access on 403/429. (#90)
 
 ### Changed
 
@@ -224,7 +226,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.3.0...v0.4.0
