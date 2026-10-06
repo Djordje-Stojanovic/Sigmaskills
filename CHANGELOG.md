@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- A changed front-matter `description` in `SKILL.md` now counts as a Skill Customization. `status` reports it as `valid-customization`, not as corruption. `update --yes` keeps your description when it installs a new Release. If the new Release changes the description itself, `update` still asks for `--outside-edit` first. (#94)
+
 ## [0.6.0] — 2026-10-06
 
 ### Added

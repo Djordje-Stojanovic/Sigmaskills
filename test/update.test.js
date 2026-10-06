@@ -223,6 +223,139 @@ test('update: upstream plus populated custom preserves exact raw bytes', async (
   }
 });
 
+function setLocalDescription(root, skillId, entry = 'description: >-\n  Short local text. Do not use for code.\n') {
+  const skillMd = path.join(skillDir(root, skillId), 'SKILL.md');
+  fs.writeFileSync(skillMd, fs.readFileSync(skillMd, 'utf8').replace(/^description:.*\n/m, entry), 'utf8');
+  return skillMd;
+}
+
+test('update: a local description alone is customization-only and a no-op (#94)', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-desc-noop-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    setLocalDescription(projectRoot, 'sigmawrite');
+    const before = snapshotTree(projectRoot);
+    const plan = createUpdatePlan({ catalog: getCatalog(ROOT), projectRoot, packageRoot: ROOT });
+    assert.equal(plan.changed.length, 0);
+    assert.equal(plan.unchanged[0].comparison, 'customization-only');
+
+    const io = createMockIo();
+    const code = await runCli(['update', '--yes', '--project', projectRoot], io);
+    assert.equal(code, 0, io.getStderr());
+    assert.deepEqual(snapshotTree(projectRoot), before);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('update: upstream change keeps the local description and ships the new files (#94)', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-desc-up-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    ageOfficial(projectRoot, 'sigmawrite');
+    const entry = 'description: >-\r\n  Short local text. Do not use for code.\r\n';
+    const skillMd = setLocalDescription(projectRoot, 'sigmawrite', entry);
+
+    const plan = createUpdatePlan({ catalog: getCatalog(ROOT), projectRoot, packageRoot: ROOT });
+    assert.equal(plan.changed[0].comparison, 'upstream-and-customization');
+    assert.match(formatUpdateHuman(plan), /local description: kept/);
+
+    const io = createMockIo();
+    const code = await runCli(['update', '--yes', '--project', projectRoot], io);
+    assert.equal(code, 0, io.getStderr());
+    const after = fs.readFileSync(skillMd, 'utf8');
+    assert.equal(after.includes('<!-- sigma-older -->'), false);
+    assert.match(after, /^description: >-\n  Short local text\. Do not use for code\.\n/m);
+    const official = fs.readFileSync(path.join(ROOT, 'sigmawrite', 'SKILL.md'), 'utf8');
+    assert.equal(after.replace(/^description:[^]*?\n(?=\S)/m, ''), official.replace(/^description:.*\n/m, ''));
+    const state = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
+    assert.deepEqual(state.skills.sigmawrite.baseHashes, getCatalog(ROOT).skills.find((s) => s.id === 'sigmawrite').files);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('update: an upstream description change with a local description still asks first (#94)', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-desc-both-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    setLocalDescription(projectRoot, 'sigmawrite', 'description: Older official text. Do not use for code.\n');
+    refreshRecordedHashes(projectRoot, 'sigmawrite', { release: '0.0.9' });
+    setLocalDescription(projectRoot, 'sigmawrite');
+    const before = snapshotTree(projectRoot);
+
+    const plan = createUpdatePlan({ catalog: getCatalog(ROOT), projectRoot, packageRoot: ROOT });
+    assert.equal(plan.changed[0].comparison, 'concurrent');
+
+    const io = createMockIo();
+    const code = await runCli(['update', '--yes', '--project', projectRoot], io);
+    assert.equal(code, 1);
+    assert.match(io.getStderr(), /--outside-edit/);
+    assert.deepEqual(snapshotTree(projectRoot), before);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('update: an untouched copy whose description changed upstream stays upstream-only (#94)', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-desc-untouched-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    const skillMd = setLocalDescription(projectRoot, 'sigmawrite', 'description: Older official text. Do not use for code.\n');
+    refreshRecordedHashes(projectRoot, 'sigmawrite', { release: '0.0.9' });
+
+    const plan = createUpdatePlan({ catalog: getCatalog(ROOT), projectRoot, packageRoot: ROOT });
+    assert.equal(plan.changed[0].comparison, 'upstream-only');
+    assert.equal(plan.changed[0].localDescription, false);
+
+    const io = createMockIo();
+    assert.equal(await runCli(['update', '--yes', '--project', projectRoot], io), 0, io.getStderr());
+    assert.equal(fs.readFileSync(skillMd, 'utf8'), fs.readFileSync(path.join(ROOT, 'sigmawrite', 'SKILL.md'), 'utf8'));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('update: links, managed copies, and Global Installation all keep the local description (#94)', async () => {
+  const entry = 'description: >-\n  Short local text. Do not use for code.\n';
+  const linked = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-desc-link-'));
+  const copied = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-desc-copies-'));
+  const homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-desc-global-'));
+  try {
+    installWrite(linked, 'sigmawrite', { selectedRoots: [UNIVERSAL_PROJECT_DESTINATION, '.claude/skills'], method: 'link' });
+    ageOfficial(linked, 'sigmawrite');
+    setLocalDescription(linked, 'sigmawrite', entry);
+    executeUpdate({ catalog: getCatalog(ROOT), projectRoot: linked, packageRoot: ROOT, skillIds: ['sigmawrite'] });
+    const linkedHost = fs.readFileSync(path.join(linked, '.claude', 'skills', 'sigmawrite', 'SKILL.md'), 'utf8');
+    assert.ok(linkedHost.includes(entry));
+    assert.equal(linkedHost.includes('<!-- sigma-older -->'), false);
+
+    installWrite(copied, 'sigmawrite', { selectedRoots: [UNIVERSAL_PROJECT_DESTINATION, '.claude/skills'], method: 'copy' });
+    ageOfficial(copied, 'sigmawrite');
+    const host = path.join(copied, '.claude', 'skills', 'sigmawrite');
+    fs.cpSync(skillDir(copied, 'sigmawrite'), host, { recursive: true, force: true });
+    fs.copyFileSync(setLocalDescription(copied, 'sigmawrite', entry), path.join(host, 'SKILL.md'));
+    executeUpdate({ catalog: getCatalog(ROOT), projectRoot: copied, packageRoot: ROOT, skillIds: ['sigmawrite'] });
+    for (const dir of [skillDir(copied, 'sigmawrite'), host]) {
+      const md = fs.readFileSync(path.join(dir, 'SKILL.md'), 'utf8');
+      assert.ok(md.includes(entry));
+      assert.equal(md.includes('<!-- sigma-older -->'), false);
+    }
+
+    const env = { ...process.env, HOME: homeDir, USERPROFILE: homeDir };
+    executeProjectInstall({ catalog: getCatalog(ROOT), skillId: 'sigmawrite', scope: 'global', homeDir, packageRoot: ROOT, env });
+    ageOfficial(homeDir, 'sigmawrite');
+    const globalMd = setLocalDescription(homeDir, 'sigmawrite', entry);
+    const io = createMockIo(env);
+    assert.equal(await runCli(['update', '--global', '--yes'], io), 0, io.getStderr());
+    const after = fs.readFileSync(globalMd, 'utf8');
+    assert.ok(after.includes(entry));
+    assert.equal(after.includes('<!-- sigma-older -->'), false);
+  } finally {
+    for (const dir of [linked, copied, homeDir]) fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('update: empty customization plus upstream still ships the empty block', () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-empty-'));
   try {

@@ -3,7 +3,12 @@ import path from 'node:path';
 import { walkLiveFiles } from './backup.js';
 import { findPackageRoot } from './catalog.js';
 import { isPathInside } from './paths.js';
-import { inspectCustomizationBlock, CUSTOM_BLOCK_END, CUSTOM_BLOCK_START } from './customization.js';
+import {
+  inspectCustomizationBlock,
+  withOfficialDescription,
+  CUSTOM_BLOCK_END,
+  CUSTOM_BLOCK_START,
+} from './customization.js';
 import {
   UNIVERSAL_PROJECT_DESTINATION,
   listGlobalDestinationGroups,
@@ -60,16 +65,21 @@ function officialMarkdownShell(markdown) {
   return `${markdown.slice(0, start + CUSTOM_BLOCK_START.length)}${markdown.slice(end)}`;
 }
 
-function inspectSkillMarkdown(liveMarkdown, skillId, liveHash, bundledMarkdown, bundledHash) {
+function inspectSkillMarkdown(liveMarkdown, skillId, liveHash, bundledMarkdown, bundledHash, installedHash) {
   const inspection = inspectCustomizationBlock(liveMarkdown, skillId);
-  if (inspection.status !== 'valid') {
+  // An untouched copy of the installed Release is not a local description, even when the new Release changed it.
+  const localEdit = Boolean(installedHash) && liveHash !== installedHash;
+  const live = inspection.status === 'malformed' || !localEdit
+    ? liveMarkdown
+    : withOfficialDescription(liveMarkdown, bundledMarkdown);
+  if (inspection.status !== 'valid' && live === liveMarkdown) {
     return {
       status: inspection.status,
       officialHash: liveHash,
       hasCustomContent: false,
     };
   }
-  if (typeof bundledMarkdown === 'string' && officialMarkdownShell(liveMarkdown) === officialMarkdownShell(bundledMarkdown)) {
+  if (typeof bundledMarkdown === 'string' && officialMarkdownShell(live) === officialMarkdownShell(bundledMarkdown)) {
     return {
       status: 'valid',
       officialHash: bundledHash || liveHash,
@@ -87,7 +97,7 @@ function isPackagedResource(file) {
   return /^(references|scripts|assets|agents)\//.test(file);
 }
 
-function classifyLiveTree({ liveFiles, bundledFiles, skillId, skillMarkdown, bundledMarkdown }) {
+function classifyLiveTree({ liveFiles, bundledFiles, skillId, skillMarkdown, bundledMarkdown, installedFiles }) {
   const classifications = [];
   const officialFiles = { ...liveFiles };
 
@@ -98,6 +108,7 @@ function classifyLiveTree({ liveFiles, bundledFiles, skillId, skillMarkdown, bun
       liveFiles['SKILL.md'],
       bundledMarkdown,
       bundledFiles['SKILL.md'],
+      installedFiles?.['SKILL.md'],
     );
     officialFiles['SKILL.md'] = markdown.officialHash;
     if (markdown.status === 'malformed') classifications.push('malformed-markers');
@@ -308,6 +319,7 @@ export function collectStatus(options = {}) {
         skillId,
         skillMarkdown,
         bundledMarkdown,
+        installedFiles: copyEntry?.baseHashes || entry?.baseHashes,
       });
       destinations.push({
         relativeDestination,

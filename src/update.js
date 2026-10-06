@@ -8,6 +8,8 @@ import {
   extractRawCustomContent,
   injectRawCustomContent,
   inspectCustomizationBlock,
+  readDescriptionEntry,
+  withOfficialDescription,
 } from './customization.js';
 import {
   UNIVERSAL_PROJECT_DESTINATION,
@@ -190,20 +192,25 @@ function readSkillMarkdown(absDir) {
   return fs.readFileSync(skillMd, 'utf8');
 }
 
-function officialLiveFiles(liveFiles, liveMarkdown, bundledMarkdown, skillId) {
+function officialLiveFiles(liveFiles, liveMarkdown, bundledMarkdown, skillId, baseHashes) {
   const next = { ...liveFiles };
   if (typeof liveMarkdown !== 'string' || typeof bundledMarkdown !== 'string' || !next['SKILL.md']) {
-    return next;
+    return { files: next, localDescription: false };
   }
   const inspection = inspectCustomizationBlock(liveMarkdown, skillId);
-  if (inspection.status !== 'valid' && inspection.status !== 'empty') return next;
-  const emptied = injectRawCustomContent(
-    liveMarkdown,
-    extractRawCustomContent(bundledMarkdown, skillId),
-    skillId,
-  );
-  next['SKILL.md'] = hashBytes(Buffer.from(emptied, 'utf8'));
-  return next;
+  if (inspection.status !== 'valid' && inspection.status !== 'empty') return { files: next, localDescription: false };
+  const officialHash = (markdown) => hashBytes(Buffer.from(
+    injectRawCustomContent(markdown, extractRawCustomContent(bundledMarkdown, skillId), skillId),
+    'utf8',
+  ));
+  next['SKILL.md'] = officialHash(liveMarkdown);
+  // A local description counts as customization only when it is the one difference from the installed Release.
+  const withDescription = withOfficialDescription(liveMarkdown, bundledMarkdown);
+  const localDescription = withDescription !== liveMarkdown
+    && next['SKILL.md'] !== baseHashes['SKILL.md']
+    && officialHash(withDescription) === baseHashes['SKILL.md'];
+  if (localDescription) next['SKILL.md'] = baseHashes['SKILL.md'];
+  return { files: next, localDescription };
 }
 
 function customizationKind(markdown, skillId) {
@@ -236,7 +243,13 @@ function compareSkill(options) {
   const diagnosis = typeof liveMarkdown === 'string'
     ? diagnoseCustomizationMarkers(liveMarkdown, skillId)
     : { status: 'absent', shape: 'missing-file', repairable: false };
-  const officialLive = officialLiveFiles(liveFiles, liveMarkdown, bundledMarkdown, skillId);
+  const { files: officialLive, localDescription } = officialLiveFiles(
+    liveFiles,
+    liveMarkdown,
+    bundledMarkdown,
+    skillId,
+    baseHashes,
+  );
   const liveChanged = !mapsEqual(officialLive, baseHashes)
     || symlinkEffects(inventory).length > 0
     || detectTypeChanges(baseHashes, inventory).length > 0;
@@ -264,13 +277,13 @@ function compareSkill(options) {
   } else if (liveChanged) {
     comparison = 'local-only';
     changeKind = 'local-only';
-  } else if (upstreamChanged && customKind === 'populated') {
+  } else if (upstreamChanged && (customKind === 'populated' || localDescription)) {
     comparison = 'upstream-and-customization';
     changeKind = 'upstream-only';
   } else if (upstreamChanged) {
     comparison = 'upstream-only';
     changeKind = 'upstream-only';
-  } else if (customKind === 'populated') {
+  } else if (customKind === 'populated' || localDescription) {
     comparison = 'customization-only';
   }
 
@@ -348,6 +361,8 @@ function compareSkill(options) {
     rawCustom: (customKind === 'populated' || customKind === 'empty') && typeof liveMarkdown === 'string'
       ? extractRawCustomContent(liveMarkdown, skillId)
       : undefined,
+    localDescription,
+    rawDescription: localDescription ? readDescriptionEntry(liveMarkdown) : undefined,
     backup: { required: needsResolution },
     exportPath,
     exportCollision: pathExists(exportPath),
@@ -504,6 +519,7 @@ function installOptionsFor(skill, options, scope) {
     adoptChanged: 'replace',
     adoptMalformed: options.malformedMarkers === 'replace' ? 'replace' : undefined,
     preservedCustomRaw: skill.rawCustom !== undefined ? skill.rawCustom : undefined,
+    preservedDescription: skill.rawDescription,
     registry: options.registry || loadHostRegistry(findPackageRoot()),
     afterBackup: options.afterBackup,
     saveState: options.saveState,
@@ -776,6 +792,7 @@ export function formatUpdateHuman(plan) {
     lines.push(`${title}:`);
     for (const skill of skills) {
       lines.push(`  ${skill.title} (${skill.id}) [${skill.comparison}]`);
+      if (skill.localDescription) lines.push('    local description: kept');
       if (skill.changelog) {
         lines.push('    Whole-skill diff:');
         for (const line of skill.changelog.split('\n')) lines.push(`      ${line}`);

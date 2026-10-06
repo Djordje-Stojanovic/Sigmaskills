@@ -191,6 +191,8 @@ A skill that left the Skill Pack stays untouched. `update` lists it under *Retir
 
 Each `SKILL.md` has a Skill Customization block between markers. `update` copies the bytes in that block onto the new official `SKILL.md` exactly. The canonical `.agents/skills/<id>` copy owns the customization. Links and matching managed copies follow it.
 
+The front-matter `description` is part of the customization too. If you change it, for example to fit a host's skill-list limit, `status` reports drift, not damage, and `update` keeps your text on the new `SKILL.md`. Two limits apply. If the new Release changes the official description, `update` cannot tell your edit from the old official text, so it asks for `--outside-edit` first. To get the official description back, run `install <id> --adopt-changed replace`.
+
 ### Edits outside the customization block
 
 `update` classifies them as local-only or concurrent with an upstream change. The preview names each case and the overwrite or delete effect. You must choose `--outside-edit replace|skip|export` before `update` writes:
