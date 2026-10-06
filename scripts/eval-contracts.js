@@ -200,7 +200,35 @@ function easytalk({ files, result }) {
   return problems;
 }
 
-export const CONTRACTS = { easytalk, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor };
+function sigmaresearch({ result }) {
+  const problems = requireInOrder(result, ['Sources', 'Access gaps'], 'reply');
+  const sources = result.split(/^## Sources\s*$/m)[1]?.split(/^## /m)[0]?.trim() || '';
+  const gaps = result.match(/^## Access gaps\s*\n([\s\S]*)/m)?.[1]?.trim() || '';
+  if (!gaps) problems.push('reply: access gaps must be explicit, or None');
+  if (/^None\.?$/i.test(sources)) {
+    if (!gaps || /^None\.?$/i.test(gaps)) problems.push('reply: no sources requires an access gap');
+    return problems;
+  }
+  const rows = sources.split('\n').filter((line) => /^\|/.test(line.trim()))
+    .map((line) => line.trim().slice(1, -1).split(/(?<!\\)\|/).map((cell) => cell.trim()));
+  const columns = ['Platform', 'URL', 'Published', 'Accessed', 'Route', 'Scope', 'Evidence'];
+  if (rows[0]?.join('|') !== columns.join('|') || rows.length < 3) {
+    problems.push('reply: Sources needs the documented source table and at least one source');
+    return problems;
+  }
+  for (const row of rows.slice(2)) {
+    if (row.length !== columns.length || row.some((cell) => !cell)) {
+      problems.push('reply: every source needs all provenance fields');
+      continue;
+    }
+    if (!/^https?:\/\/\S+$/.test(row[1])) problems.push('reply: source URL must be a web link');
+    if (!/^(\d{4}-\d{2}-\d{2}|unknown)$/i.test(row[2])) problems.push('reply: publication date must be dated or unknown');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(row[3])) problems.push('reply: access date is required');
+  }
+  return problems;
+}
+
+export const CONTRACTS = { easytalk, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

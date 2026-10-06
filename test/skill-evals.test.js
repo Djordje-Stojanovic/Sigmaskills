@@ -26,6 +26,26 @@ test('evals: every skill folder has a contract check', () => {
   assert.deepEqual(SKILLS.slice().sort(), skills.sort());
 });
 
+test('evals: sigmaresearch requires source provenance and explicit access gaps', () => {
+  const sample = loadSample(path.join(SAMPLES, 'sigmaresearch', 'good'));
+  assert.deepEqual(checkContract('sigmaresearch', sample), []);
+  for (const [label, result] of [
+    ['missing URL', sample.result.replace('https://news.ycombinator.com/item?id=8863', 'snippet')],
+    ['missing access date', sample.result.replace('| 2026-10-06 |', '| unknown |')],
+    ['missing scope', sample.result.replace('Partial: story only; replies not supplied', '')],
+    ['missing gaps', sample.result.replace(/## Access gaps[\s\S]*/, '## Access gaps\n')],
+  ]) {
+    assert.notDeepEqual(checkContract('sigmaresearch', { ...sample, result }), [], label);
+  }
+  assert.deepEqual(checkContract('sigmaresearch', {
+    ...sample,
+    result: sample.result.replace('| 2007-04-04 |', '| unknown |').replace(/## Access gaps[\s\S]*/, '## Access gaps\nNone.\n'),
+  }), [], 'unknown publication date and no gaps are valid');
+  assert.deepEqual(checkContract('sigmaresearch', {
+    result: 'No sources were accessible.\n\n## Sources\nNone.\n\n## Access gaps\nReddit returned 403; no posts read.\n',
+  }), [], 'a wholly blocked run can honestly report no sources');
+});
+
 for (const skill of SKILLS) {
   test(`evals: ${skill} contract accepts the good sample and rejects the bad one`, () => {
     assert.deepEqual(checkContract(skill, loadSample(path.join(SAMPLES, skill, 'good'))), []);

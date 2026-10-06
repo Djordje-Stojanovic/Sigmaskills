@@ -29,6 +29,7 @@ function prompts(out) {
     easytalk: `/easytalk Give a status report for this repository with one question, one prompt, one manual task, an answer to "Can I use it in another project?", and one FYI card. ${OFFLINE} Save the board as status-board.html in the repository root and link it in the final reply.`,
     sigmawrite: `/sigmawrite Rewrite docs/NOTES.md in place so an outsider can follow it. Keep its meaning.`,
     sigmarefactor: `/sigmarefactor Run steps 1 to 3 on this repository. ${OFFLINE} Do not edit any code. Instead of waiting for agreement, write the scan, your reading notes, and the choices you would offer to REFACTOR-SCAN.md at the repository root, then stop.`,
+    sigmaresearch: `/sigmaresearch Research what these supplied records establish about community agreement. ${OFFLINE} Return the answer in chat. The only available source is an offline HN item: URL https://news.ycombinator.com/item?id=8863, published 2007-04-04, title My YC app: Dropbox - Throw away your USB drive, author dhouston, content: author announced a demo. No replies supplied. Access date ${today}. Reddit access log: https://www.reddit.com/r/LocalLLaMA/top/.rss?t=month returned 429; no body was read. Claude in Chrome is unavailable. Do not try live access or claim community consensus.`,
   };
 }
 

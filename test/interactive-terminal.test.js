@@ -537,7 +537,7 @@ test('picker focus area shows each skill short description in normal, narrow, an
     title: skill.title,
     short: fs.readFileSync(path.join(root, skill.id, 'agents', 'openai.yaml'), 'utf8').match(/short_description:\s*(.+?)\s*$/m)[1],
   }));
-  assert.equal(skills.length, 7);
+  assert.equal(skills.length, 8);
   const modes = [
     { name: 'normal', args: [], options: {} },
     { name: 'narrow', args: ['--narrow'], options: { columns: 44 } },

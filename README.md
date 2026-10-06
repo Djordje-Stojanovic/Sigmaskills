@@ -19,6 +19,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
   Σ  ship       →  one planned ticket to a merged, cleaned-up PR
   Σ  write      →  clear STE-inspired technical English
      easytalk   →  plain chat and interactive status or question boards
+  Σ  research   →  read public sources, record evidence and access gaps
 ```
 
 ---
@@ -58,6 +59,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
 | **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
 | **EasyTalk** | `easytalk` | Plain chat with status and question boards | Interactive HTML board and copied replies |
+| **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub and Hugging Face for research | Answer with source links, dates, read scope and access gaps |
 
 ### Which one do I need?
 
@@ -99,6 +101,10 @@ Counts lines (with `laloc` if you have it, or by itself), reads the five largest
 
 Keeps replies short and puts status reports or question batches on one interactive board. Read ticks, recommended options, task statuses, and free text feed a **Copy my answers** reply that names every unread card. Open it with an HTML preview tool or as a local browser file. Say “easy talk off” to stop.
 
+### SigmaResearch
+
+Reads public sources with platform-specific routes: Reddit RSS, X through Claude in Chrome on the owner's existing session, and public HN, GitHub and Hugging Face pages. It reports blocked or partial reads and stops on 403/429. It never logs in or evades bot checks. Available from repository source until the next Release.
+
 ---
 
 ## Install
@@ -135,6 +141,7 @@ $sigmaship https://github.com/owner/repo/issues/42
 $sigmawrite
 $sigmarefactor
 $easytalk
+$sigmaresearch Research recent discussions about local language models
 ```
 
 </td>
@@ -151,6 +158,7 @@ $easytalk
 /skill:sigmawrite
 /skill:sigmarefactor
 /skill:easytalk
+/skill:sigmaresearch Research recent discussions about local language models
 ```
 
 </td>
@@ -168,6 +176,7 @@ $easytalk
 | `sigmawrite` | (no input) | Session writing voice until you turn it off |
 | `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
 | `easytalk` | “easy talk” · status or question batch · `EASYTALK REPLY` | Conversation mode until “easy talk off” |
+| `sigmaresearch` | topic · date range · depth | Reports sources actually read and access gaps |
 
 ### Requirements
 
@@ -182,6 +191,7 @@ $easytalk
 | SigmaWrite | Nothing beyond chat |
 | SigmaRefactor | Read access to the target repository · `laloc` is optional; without it the skill counts lines itself |
 | EasyTalk | A writable output folder and a browser or HTML preview; chat fallback when unavailable |
+| SigmaResearch | Public fetch/search tools · curl for Reddit · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
 
 Skills use the shell native to the machine that runs the agent (PowerShell on Windows, POSIX shell elsewhere). They do not assume WSL.
 

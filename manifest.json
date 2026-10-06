@@ -35,6 +35,11 @@
       "needsReferences": true
     },
     {
+      "id": "sigmaresearch",
+      "title": "SigmaResearch",
+      "needsReferences": true
+    },
+    {
       "id": "easytalk",
       "title": "EasyTalk",
       "needsReferences": false
