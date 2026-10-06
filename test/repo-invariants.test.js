@@ -9,6 +9,7 @@ import { CHECKOUT_ACTION_PIN, SETUP_NODE_ACTION_PIN } from '../scripts/release.j
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const KNOWN_SKILLS = [
+  { id: 'easytalk', title: 'EasyTalk', needsReferences: false },
   {
     id: 'sigmareview',
     title: 'SigmaReview',

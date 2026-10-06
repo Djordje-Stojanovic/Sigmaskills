@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `easytalk` brings plain chat and interactive status or question boards to any project. It includes read ticks, recommended options, task statuses, free text, keyboard controls, and copied replies that name every unread card. The self-contained HTML template works with an Artifact tool or a local browser file. (#89)
+
 ### Changed
 
 - No bot opens recurring pull requests any more. Dependabot is gone, because its pin bumps always failed CI: the tests compare the action pins with constants in the release scripts. The action pins are now checked as a step before each Release. The Agent Host registry sync no longer runs every day; it runs on demand as the first step of a Release, and both of its inputs are optional.

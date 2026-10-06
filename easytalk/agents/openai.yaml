@@ -1,0 +1,11 @@
+interface:
+  display_name: EasyTalk
+  short_description: Plain chat and interactive status or question boards
+  default_prompt: Use $easytalk for plain, short replies and an interactive board
+    for status reports or batches of questions.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: true

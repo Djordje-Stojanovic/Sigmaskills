@@ -33,6 +33,11 @@
       "id": "sigmarefactor",
       "title": "SigmaRefactor",
       "needsReferences": true
+    },
+    {
+      "id": "easytalk",
+      "title": "EasyTalk",
+      "needsReferences": false
     }
   ],
   "retired": [

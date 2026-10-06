@@ -23,7 +23,8 @@ Sigmaskills/
 ├── sigmabrief/               SKILL.md · agents/ · references/
 ├── sigmaship/                SKILL.md · agents/ · references/
 ├── sigmawrite/               SKILL.md · agents/
-└── sigmarefactor/            SKILL.md · agents/ · references/
+├── sigmarefactor/            SKILL.md · agents/ · references/
+└── easytalk/                 SKILL.md · agents/ · template.html
 ```
 
 Each top-level folder with a `SKILL.md` is one installable skill. The folder name, the frontmatter `name`, and the `--skill` id are the same.
