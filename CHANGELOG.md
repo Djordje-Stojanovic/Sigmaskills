@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.6.1] — 2026-10-06
+
 ### Changed
 
 - A changed front-matter `description` in `SKILL.md` now counts as a Skill Customization. `status` reports it as `valid-customization`, not as corruption. `update --yes` keeps your description when it installs a new Release. If the new Release changes the description itself, `update` still asks for `--outside-edit` first. (#94)
@@ -230,7 +232,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.4.0...v0.5.0
