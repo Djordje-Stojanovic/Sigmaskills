@@ -1,0 +1,2 @@
+The arena is ready: 4 options, 1 group, 1 metric. The self-test printed PASS.
+Open http://127.0.0.1:3410/ and rank when you like; you decide when it is enough.

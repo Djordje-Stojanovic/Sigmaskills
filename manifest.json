@@ -43,6 +43,11 @@
       "id": "easytalk",
       "title": "EasyTalk",
       "needsReferences": false
+    },
+    {
+      "id": "storgestudio-arena-create",
+      "title": "Arena Create",
+      "needsReferences": true
     }
   ],
   "retired": [

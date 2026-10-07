@@ -200,6 +200,32 @@ function easytalk({ files, result }) {
   return problems;
 }
 
+function storgestudioArenaCreate({ files, result }) {
+  const problems = [];
+  const raw = files['arena/arena.json'];
+  if (!raw) return ['missing arena/arena.json'];
+  let cfg;
+  try {
+    cfg = JSON.parse(raw);
+  } catch {
+    return ['arena/arena.json: invalid JSON'];
+  }
+  if (!cfg.title || !cfg.question) problems.push('arena.json: needs title and question');
+  if (!Array.isArray(cfg.metrics) || cfg.metrics.length < 1) problems.push('arena.json: needs at least one metric');
+  const groups = Object.keys(cfg.groups || {});
+  const players = Object.keys(cfg.players || {});
+  if (!groups.length) problems.push('arena.json: needs at least one group');
+  if (players.length < 4) problems.push('arena.json: needs at least four players');
+  const items = cfg.items || [];
+  if (!items.length) problems.push('arena.json: no items');
+  for (const item of items) {
+    if (!players.includes(item.player) || !groups.includes(item.group)) problems.push('arena.json: item ' + item.id + ' names an unknown player or group');
+  }
+  if (files['arena/picks.jsonl']) problems.push('arena/picks.jsonl must not exist before the user ranks');
+  if (!/http:\/\/127\.0\.0\.1:34\d\d/.test(result)) problems.push('reply: missing the local arena link (port 3410-3499)');
+  return problems;
+}
+
 function sigmaresearch({ result }) {
   const problems = requireInOrder(result, ['Sources', 'Access gaps'], 'reply');
   const sources = result.split(/^## Sources\s*$/m)[1]?.split(/^## /m)[0]?.trim() || '';
@@ -228,7 +254,7 @@ function sigmaresearch({ result }) {
   return problems;
 }
 
-export const CONTRACTS = { easytalk, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch };
+export const CONTRACTS = { 'storgestudio-arena-create': storgestudioArenaCreate, easytalk, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

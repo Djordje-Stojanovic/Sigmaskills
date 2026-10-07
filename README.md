@@ -19,6 +19,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
   Σ  ship       →  one planned ticket to a merged, cleaned-up PR
   Σ  write      →  clear STE-inspired technical English
      easytalk   →  plain chat and interactive status or question boards
+     arena      →  blind pairs that rank any options by Elo
   Σ  research   →  read public sources, record evidence and access gaps
 ```
 
@@ -59,6 +60,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
 | **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
 | **EasyTalk** | `easytalk` | Plain chat with status and question boards | Interactive HTML board and copied replies |
+| **Arena Create** | `storgestudio-arena-create` | Blind-pairs arena that ranks any options by Elo per metric | Local arena page, Elo board with ranges and costs |
 | **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub and Hugging Face for research | Answer with source links, dates, read scope and access gaps |
 
 ### Which one do I need?
@@ -101,6 +103,10 @@ Counts lines (with `laloc` if you have it, or by itself), reads the five largest
 
 Keeps replies short and puts status reports or question batches on one interactive board. Read ticks, recommended options, task statuses, and free text feed a **Copy my answers** reply that names every unread card. Open it with an HTML preview tool or as a local browser file. Say “easy talk off” to stop.
 
+### Arena Create
+
+Ranks many options by your taste. After a short grilling round it builds an **arena**: two options side by side, names hidden, sides random. You pick per metric. A Bradley-Terry fit turns the picks into an Elo board with 95 % ranges, so overlapping bars read as a tie. The kit is a standard-library Python server and one HTML page: local only, no install. Available from repository source until the next Release.
+
 ### SigmaResearch
 
 Reads public sources with platform-specific routes: Reddit RSS, X through Claude in Chrome on the owner's existing session, and public HN, GitHub and Hugging Face pages. It reports blocked or partial reads and stops on 403/429. It never logs in or evades bot checks.
@@ -141,6 +147,7 @@ $sigmaship https://github.com/owner/repo/issues/42
 $sigmawrite
 $sigmarefactor
 $easytalk
+$storgestudio-arena-create Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
 ```
 
@@ -158,6 +165,7 @@ $sigmaresearch Research recent discussions about local language models
 /skill:sigmawrite
 /skill:sigmarefactor
 /skill:easytalk
+/skill:storgestudio-arena-create Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
 ```
 
@@ -176,6 +184,7 @@ $sigmaresearch Research recent discussions about local language models
 | `sigmawrite` | (no input) | Session writing voice until you turn it off |
 | `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
 | `easytalk` | “easy talk” · status or question batch · `EASYTALK REPLY` | Conversation mode until “easy talk off” |
+| `storgestudio-arena-create` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth | Reports sources actually read and access gaps |
 
 ### Requirements
@@ -191,6 +200,7 @@ $sigmaresearch Research recent discussions about local language models
 | SigmaWrite | Nothing beyond chat |
 | SigmaRefactor | Read access to the target repository · `laloc` is optional; without it the skill counts lines itself |
 | EasyTalk | A writable output folder and a browser or HTML preview; chat fallback when unavailable |
+| Arena Create | Python 3 (standard library only) and a browser; the server listens on 127.0.0.1 |
 | SigmaResearch | Public fetch/search tools · curl for Reddit · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
 
 Skills use the shell native to the machine that runs the agent (PowerShell on Windows, POSIX shell elsewhere). They do not assume WSL.
