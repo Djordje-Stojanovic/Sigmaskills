@@ -14,6 +14,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
+- `storgestudio-arena-create` (Arena Create) builds a blind-pairs arena so a user ranks any options by Elo per metric: models, voices, captions, thumbnails, outfits. It grills first, then copies a bundled kit (stdlib Python server and one HTML page, no install) and reads the board back with ranges and costs. Install it from repository source until the next Release.
 - `easytalk` brings plain chat and interactive status or question boards to any project. It includes read ticks, recommended options, task statuses, free text, keyboard controls, and copied replies that name every unread card. The self-contained HTML template works with an Artifact tool or a local browser file. (#89)
 - `sigmaresearch` (SigmaResearch) is a portable general research skill for Reddit, X, Hacker News, GitHub and Hugging Face. It carries the Reddit RSS and owner-session Chrome recipes tested on 2026-10-04, records source dates and read scope, and reports access gaps. It never logs in or evades bot checks, and stops platform access on 403/429. (#90)
 

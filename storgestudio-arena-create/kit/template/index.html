@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arena</title>
+<style>
+:root{
+  --bg:#0b0d12; --bg2:#11141b; --card:#161a23; --card2:#1c2130; --line:#262c3b; --text:#e9ecf3; --mute:#8b93a7;
+  --a:#5b8cff; --b:#ff6b8b; --same:#a78bfa; --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --r:16px;
+  --font:"Inter","Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:radial-gradient(1200px 600px at 10% -10%,#1a2240 0%,transparent 60%),radial-gradient(900px 500px at 110% 0%,#2a1630 0%,transparent 55%),var(--bg);
+  color:var(--text);font:15px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+kbd{font:600 11px/1 var(--font);padding:3px 6px;border-radius:6px;background:#0007;border:1px solid #fff2;color:#cfd5e4}
+header{position:sticky;top:0;z-index:5;display:flex;gap:16px;align-items:center;padding:12px 20px;background:#0b0d12cc;backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.brand{font-weight:800;letter-spacing:.2px;font-size:17px;white-space:nowrap}
+.brand small{display:block;font-weight:500;color:var(--mute);font-size:12px}
+.tabs{display:flex;gap:4px;background:var(--bg2);padding:4px;border-radius:12px;border:1px solid var(--line)}
+.tabs button{border:0;background:none;padding:7px 14px;border-radius:9px;cursor:pointer;color:var(--mute);font-weight:600}
+.tabs button.on{background:var(--card2);color:var(--text);box-shadow:0 1px 0 #fff1 inset}
+.grow{flex:1}
+.stat{color:var(--mute);font-size:13px;white-space:nowrap}
+.stat b{color:var(--text)}
+main{max-width:1500px;margin:0 auto;padding:18px 20px 120px}
+.prompt{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start}
+.prompt .tag{flex:none;font-weight:700;font-size:12px;padding:4px 8px;border-radius:8px;background:#5b8cff22;color:#9db8ff}
+.prompt .txt{color:#cfd5e4;font-size:14px;max-height:4.4em;overflow:auto}
+.repeat{display:none;margin-left:auto;flex:none;font-size:12px;font-weight:700;color:var(--warn)}
+.repeat.on{display:block}
+.duel{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:900px){.duel{grid-template-columns:1fr}}
+.side{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;min-height:260px;display:flex;flex-direction:column;transition:transform .12s,box-shadow .2s,border-color .2s}
+.side .lab{position:absolute;top:10px;left:10px;z-index:2;font-weight:800;font-size:13px;padding:4px 10px;border-radius:999px;background:#000a;border:1px solid #fff2}
+.side.L .lab{color:#9db8ff}.side.R .lab{color:#ffa3b6}
+.side.win-a.L,.side.win-b.R{border-color:var(--ok);box-shadow:0 0 0 2px #34d39955,0 10px 40px #34d39922}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;background:#07080c;min-height:260px;cursor:zoom-in}
+.stage img,.stage video{max-width:100%;max-height:calc(100vh - var(--chrome,360px));display:block;object-fit:contain}
+.stage.text{cursor:default;background:linear-gradient(160deg,#141826,#0c0e15);padding:34px 30px;align-items:center}
+.stage.text .t{font-size:clamp(18px,2.1vw,30px);line-height:1.35;font-weight:650;white-space:pre-wrap;text-align:center;letter-spacing:-.2px}
+.stage.audio{flex-direction:column;gap:14px;cursor:default;background:linear-gradient(160deg,#151a2a,#0c0e15)}
+.play{width:84px;height:84px;border-radius:50%;border:0;cursor:pointer;background:linear-gradient(145deg,#2b3550,#1a2033);box-shadow:0 8px 30px #0008,inset 0 1px 0 #fff2;font-size:30px}
+.side.R .play{background:linear-gradient(145deg,#4a2a3a,#22151c)}
+.bar{width:80%;height:6px;border-radius:9px;background:#ffffff14;overflow:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--a),var(--same))}
+.side.R .bar i{background:linear-gradient(90deg,var(--b),var(--same))}
+.stage iframe{width:100%;height:60vh;border:0;background:#fff}
+.judge{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:8px}
+.row{display:grid;grid-template-columns:1fr minmax(130px,190px) 1fr;gap:8px;align-items:center;padding:4px 6px}
+.row+.row{border-top:1px solid #ffffff08}
+.row .mid{display:flex;flex-direction:column;align-items:center;gap:3px}
+.row .name{text-align:center;font-weight:700;font-size:13px;color:var(--mute);line-height:1.15}
+.row .name small{font-weight:500;font-size:11px;color:#69718a;margin-left:5px}
+.opt{border:1px solid var(--line);background:var(--bg2);border-radius:12px;padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;justify-content:center;font-weight:700;transition:all .12s}
+.opt:hover{border-color:#ffffff30;transform:translateY(-1px)}
+.opt.a.on{background:#5b8cff26;border-color:var(--a);color:#cdd9ff}
+.opt.b.on{background:#ff6b8b26;border-color:var(--b);color:#ffd0da}
+.opt.s{padding:2px 12px;font-size:11px;color:var(--mute);border-radius:999px}
+.opt.s.on{background:#a78bfa22;border-color:var(--same);color:#e2d8ff}
+.actions{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:10px;justify-content:center;align-items:center;padding:12px;background:linear-gradient(0deg,#0b0d12 60%,transparent)}
+.btn{border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:11px 16px;cursor:pointer;font-weight:700;display:flex;gap:8px;align-items:center}
+.btn.go{background:linear-gradient(135deg,#5b8cff,#a78bfa);border:0;color:#fff;box-shadow:0 8px 30px #5b8cff44;padding:12px 22px}
+.btn.go:disabled{opacity:.35;box-shadow:none;cursor:default}
+.btn.badb:hover{border-color:var(--bad);color:#ffc4c4}
+.note{flex:0 1 320px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;color:var(--text);font:inherit}
+.why{text-align:center;color:#69718a;font-size:12px;margin-top:10px}
+.toast{position:fixed;left:50%;top:70px;transform:translateX(-50%) translateY(-20px);opacity:0;background:#0f1a14;border:1px solid #34d39966;color:#a7f3d0;padding:8px 14px;border-radius:10px;font-weight:700;transition:all .2s;z-index:9}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.done{text-align:center;padding:80px 20px;color:var(--mute)}.done h2{color:var(--text)}
+/* zoom */
+.zoom{position:fixed;inset:0;z-index:20;background:#000e;display:none;align-items:center;justify-content:center;cursor:zoom-out}
+.zoom.on{display:flex}.zoom img,.zoom video{max-width:98vw;max-height:94vh}
+.zoom .zl{position:absolute;top:16px;left:50%;transform:translateX(-50%);font-weight:800;padding:6px 14px;border-radius:999px;background:#000a;border:1px solid #fff3}
+/* board */
+.boards{display:none}.boards.on{display:block}
+.btabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.btabs button{border:1px solid var(--line);background:var(--bg2);padding:7px 12px;border-radius:999px;cursor:pointer;color:var(--mute);font-weight:600}
+.btabs button.on{background:var(--card2);color:var(--text);border-color:#ffffff30}
+table{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+th,td{padding:10px 12px;text-align:left;font-size:14px;border-bottom:1px solid #ffffff08;white-space:nowrap}
+th{font-size:12px;color:var(--mute);font-weight:700;background:var(--bg2);text-transform:uppercase;letter-spacing:.4px}
+td.n{font-variant-numeric:tabular-nums}
+tr.out td{opacity:.38}
+.rng{position:relative;height:8px;min-width:160px;border-radius:9px;background:#ffffff0d}
+.rng i{position:absolute;top:0;height:100%;border-radius:9px;background:linear-gradient(90deg,#5b8cff99,#a78bfa99)}
+.rng b{position:absolute;top:-3px;width:3px;height:14px;border-radius:2px;background:#fff}
+.medal{display:inline-flex;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;font-weight:800;font-size:12px;background:#ffffff10}
+tr:nth-child(2) .medal{background:linear-gradient(135deg,#fde68a,#f59e0b);color:#3b2400}
+tr:nth-child(3) .medal{background:linear-gradient(135deg,#e5e7eb,#9ca3af);color:#1f2937}
+tr:nth-child(4) .medal{background:linear-gradient(135deg,#fdba74,#b45309);color:#2b1300}
+.legend{color:var(--mute);font-size:13px;margin:10px 2px}
+.help{display:none;max-width:780px}.help.on{display:block}
+.help .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin-bottom:12px}
+.help td,.help th{white-space:normal}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand" id="title">Arena<small id="sub">blind pairs · Elo</small></div>
+  <div class="tabs"><button class="on" data-tab="rank">Rank</button><button data-tab="board">Board</button><button data-tab="help">Keys</button></div>
+  <div class="grow"></div>
+  <div class="stat"><b id="np">0</b> picks · consistency <b id="cons">–</b></div>
+</header>
+
+<main>
+  <section id="rank">
+    <div class="prompt"><span class="tag" id="gl">Group</span><div class="txt" id="gp"></div><span class="repeat" id="rep">↺ consistency check</span></div>
+    <div class="duel">
+      <div class="side L" id="sL"><span class="lab">A · left</span><div class="stage" id="mL"></div></div>
+      <div class="side R" id="sR"><span class="lab">B · right</span><div class="stage" id="mR"></div></div>
+    </div>
+    <div class="judge" id="judge"></div>
+    <div class="why" id="why"></div>
+  </section>
+
+  <section class="boards" id="board">
+    <div class="btabs" id="btabs"></div>
+    <div id="btable"></div>
+    <div class="legend">Elo points: 1000 = average, +100 = wins 64 % of the time. The bar is the 95 % range: when two bars overlap, that order is not settled yet. Grey = out (clearly not in the top). Looking here before you finish breaks blindness a little: rank first.</div>
+  </section>
+
+  <section class="help" id="help">
+    <div class="card"><h3 style="margin-top:0">How it works</h3>
+    Two options of the same group, side by side, names hidden, sides random. Judge one metric or all; only the metrics you answer count.
+    Pairs are chosen where your pick teaches the most. Every ~14 picks a pair you already judged comes back with sides swapped (consistency check). You decide when it is enough.</div>
+    <div class="card"><table id="keys"><tr><th>Key</th><th>Does</th></tr></table></div>
+  </section>
+</main>
+
+<div class="actions" id="actions">
+  <button class="btn" id="undo" title="Undo the last pick"><kbd>⌫</kbd> Undo</button>
+  <button class="btn badb" id="bad" title="Both are bad (a tie that is flagged)"><kbd>B</kbd> Both bad</button>
+  <input class="note" id="note" placeholder="Note (optional, N)…">
+  <button class="btn go" id="go" disabled><kbd style="background:#0003;border-color:#fff4;color:#fff">↵</kbd> Next</button>
+</div>
+<div class="zoom" id="zoom"><span class="zl" id="zl"></span><div id="zc"></div></div>
+<div class="toast" id="toast">Saved</div>
+
+<script>
+const ROWKEYS=[["ArrowLeft","ArrowDown","ArrowRight","←","↓","→"],["q","w","e","Q","W","E"],["a","s","d","A","S","D"],["z","x","c","Z","X","C"],["u","i","o","U","I","O"],["j","k","l","J","K","L"]];
+let C=null,P=null,ans={},t0=0,zoomSide=null,busy=false;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function j(u,o){const r=await fetch(u,o);return r.json()}
+
+function stage(el,it,side){
+  el.className="stage";el.innerHTML="";
+  if(it.kind==="image"){el.innerHTML=`<img src="${it.url}" alt="">`;el.onclick=()=>zoom(side)}
+  else if(it.kind==="video"){el.innerHTML=`<video src="${it.url}" autoplay loop muted playsinline></video>`;el.onclick=()=>zoom(side)}
+  else if(it.kind==="audio"){el.className="stage audio";el.innerHTML=`<button class="play">▶</button><div class="bar"><i></i></div><audio src="${it.url}" preload="auto"></audio>`;
+    const au=el.querySelector("audio"),b=el.querySelector(".play"),bar=el.querySelector(".bar i");
+    b.onclick=()=>playOnly(side);au.ontimeupdate=()=>bar.style.width=(100*au.currentTime/(au.duration||1))+"%";au.onended=()=>b.textContent="▶";
+    au.onplay=()=>b.textContent="❚❚";au.onpause=()=>b.textContent="▶"}
+  else if(it.kind==="html"){el.innerHTML=`<iframe src="${it.url}" sandbox></iframe>`}
+  else{el.className="stage text";el.innerHTML=`<div class="t">${esc(it.text)}</div>`}
+}
+function audios(){return {L:$("mL").querySelector("audio"),R:$("mR").querySelector("audio")}}
+function playOnly(side){const a=audios(),me=a[side],other=a[side==="L"?"R":"L"];if(other)other.pause();if(!me)return;if(me.paused){me.currentTime=me.ended?0:me.currentTime;me.play()}else me.pause()}
+function zoom(side){if(!P)return;const it=side==="L"?P.left:P.right;if(it.kind!=="image"&&it.kind!=="video")return;zoomSide=side;
+  $("zc").innerHTML=it.kind==="image"?`<img src="${it.url}">`:`<video src="${it.url}" autoplay loop muted playsinline></video>`;
+  $("zl").textContent=side==="L"?"A · left  (Space switches)":"B · right  (Space switches)";$("zoom").classList.add("on")}
+function unzoom(){zoomSide=null;$("zoom").classList.remove("on");$("zc").innerHTML=""}
+
+function judge(){
+  const ms=C.metrics,h=ms.map((m,i)=>{const k=ROWKEYS[i]||["","","","","",""];return `<div class="row" data-m="${m.id}">
+    <button class="opt a" data-v="a"><kbd>${k[3]}</kbd> A is better</button>
+    <div class="mid"><div class="name">${esc(m.label)}${m.hint?`<small>${esc(m.hint)}</small>`:""}</div><button class="opt s" data-v="same"><kbd>${k[4]}</kbd> same</button></div>
+    <button class="opt b" data-v="b">B is better <kbd>${k[5]}</kbd></button></div>`}).join("");
+  requestAnimationFrame(()=>document.documentElement.style.setProperty("--chrome",(300+$("judge").offsetHeight)+"px"));
+  $("judge").innerHTML=h;
+  $("judge").querySelectorAll(".opt").forEach(b=>b.onclick=()=>{set(b.closest(".row").dataset.m,b.dataset.v)});
+}
+function set(m,v){ans[m]=ans[m]===v?undefined:v;if(ans[m]===undefined)delete ans[m];paint();
+  if(C.metrics.every(x=>ans[x.id]))setTimeout(()=>{if(C.metrics.every(x=>ans[x.id]))submit()},170)}
+function paint(){document.querySelectorAll(".row").forEach(r=>r.querySelectorAll(".opt").forEach(b=>b.classList.toggle("on",ans[r.dataset.m]===b.dataset.v)));
+  const vals=Object.values(ans),a=vals.filter(v=>v==="a").length,b=vals.filter(v=>v==="b").length;
+  $("sL").classList.toggle("win-a",a>b);$("sR").classList.toggle("win-b",b>a);$("go").disabled=!vals.length}
+
+async function next(){
+  busy=true;ans={};unzoom();$("note").value="";
+  P=await j("/api/next");busy=false;
+  if(P.error){$("rank").innerHTML=`<div class="done"><h2>Nothing left to rank</h2><p>${esc(P.error)}</p><p>Open the Board tab for the results.</p></div>`;return}
+  $("gl").textContent=P.group.label||"Pair";$("gp").textContent=P.group.prompt||C.question;$("rep").classList.toggle("on",P.repeat);
+  stage($("mL"),P.left,"L");stage($("mR"),P.right,"R");paint();$("why").textContent=P.why;$("np").textContent=P.picks;t0=performance.now();
+}
+async function submit(bad){
+  if(busy||!P||P.error)return;if(!bad&&!Object.keys(ans).length)return;busy=true;
+  await j("/api/pick",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({left:P.left.code,right:P.right.code,answers:bad?{}:ans,bad:!!bad,
+    repeat_of:P.repeat_of,ms:Math.round(performance.now()-t0),note:$("note").value})});
+  toast(bad?"Both bad, saved":"Saved");Object.values(audios()).forEach(a=>a&&a.pause());await next();refreshStat();
+}
+async function undo(){await j("/api/undo",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});toast("Undone");next();refreshStat()}
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),700)}
+
+let S=null,btab="__overall__";
+async function refreshStat(){S=await j("/api/state");$("np").textContent=S.picks;$("cons").textContent=S.agreement.rate==null?"–":Math.round(S.agreement.rate*100)+"% ("+S.agreement.checks+")";if($("board").classList.contains("on"))drawBoard()}
+function drawBoard(){
+  const ids=Object.keys(S.boards);$("btabs").innerHTML=ids.map(id=>`<button class="${id===btab?"on":""}" data-b="${id}">${id==="__overall__"?"Overall":esc((S.metrics.find(m=>m.id===id)||{}).label||id)}</button>`).join("");
+  $("btabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{btab=b.dataset.b;drawBoard()});
+  const rows=S.boards[btab]||[],keys=[...new Set(Object.values(S.meta).flatMap(m=>Object.keys(m).filter(k=>k!=="label")))];
+  const lo=Math.min(...rows.map(r=>r.lo),900),hi=Math.max(...rows.map(r=>r.hi),1100),x=v=>(100*(v-lo)/(hi-lo)).toFixed(1);
+  $("btable").innerHTML=`<table><tr><th>#</th><th>Option</th><th>Elo</th><th>Range</th><th></th><th>Games</th><th>W-L-T</th>${keys.map(k=>`<th>${esc(k)}</th>`).join("")}</tr>`+
+   rows.map((r,i)=>`<tr class="${r.out?"out":""}"><td><span class="medal">${i+1}</span></td><td><b>${esc((S.meta[r.player]||{}).label||r.player)}</b></td><td class="n"><b>${r.rating}</b></td><td class="n">${r.lo}–${r.hi}</td>
+   <td><div class="rng"><i style="left:${x(r.lo)}%;width:${(x(r.hi)-x(r.lo)).toFixed(1)}%"></i><b style="left:${x(r.rating)}%"></b></div></td><td class="n">${r.games}</td><td class="n">${r.w}-${r.l}-${r.t}</td>
+   ${keys.map(k=>`<td class="n">${(S.meta[r.player]||{})[k]??""}</td>`).join("")}</tr>`).join("")+`</table>`;
+}
+
+function keysHelp(){const r=C.metrics.map((m,i)=>{const k=ROWKEYS[i];return k?`<tr><td><kbd>${k[3]}</kbd> <kbd>${k[4]}</kbd> <kbd>${k[5]}</kbd></td><td>${esc(m.label)}: A better · same · B better</td></tr>`:""}).join("");
+  $("keys").innerHTML+=r+`<tr><td><kbd>↵</kbd></td><td>Next (saves the metrics you answered; all answered = saves by itself)</td></tr>
+  <tr><td><kbd>B</kbd></td><td>Both bad</td></tr><tr><td><kbd>⌫</kbd></td><td>Undo the last pick</td></tr>
+  <tr><td><kbd>F</kbd> / <kbd>G</kbd> or click</td><td>Full size of A / B; <kbd>Space</kbd> switches, <kbd>Esc</kbd> closes</td></tr>
+  <tr><td><kbd>1</kbd> / <kbd>2</kbd></td><td>Play A / B (audio; stops the other)</td></tr><tr><td><kbd>N</kbd></td><td>Write a note</td></tr>`}
+
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT"){if(e.key==="Enter"){e.target.blur();submit()}if(e.key==="Escape")e.target.blur();return}
+  if(!$("rank").offsetParent)return;
+  if(zoomSide){if(e.key===" "){e.preventDefault();zoom(zoomSide==="L"?"R":"L");return}if(e.key==="Escape"||e.key==="f"||e.key==="g"){unzoom();return}}
+  for(let i=0;i<C.metrics.length&&i<ROWKEYS.length;i++){const k=ROWKEYS[i],ix=k.slice(0,3).indexOf(e.key);
+    if(ix>=0){e.preventDefault();set(C.metrics[i].id,["a","same","b"][ix]);return}}
+  if(e.key==="Enter"){e.preventDefault();submit()}
+  else if(e.key==="b"||e.key==="B")submit(true);
+  else if(e.key==="Backspace"){e.preventDefault();undo()}
+  else if(e.key==="f")zoom("L");else if(e.key==="g")zoom("R");
+  else if(e.key==="1")playOnly("L");else if(e.key==="2")playOnly("R");
+  else if(e.key==="n"||e.key==="N"){e.preventDefault();$("note").focus()}
+});
+$("zoom").onclick=unzoom;$("go").onclick=()=>submit();$("bad").onclick=()=>submit(true);$("undo").onclick=undo;
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  ["rank","board","help"].forEach(id=>$(id).classList.toggle("on",id===b.dataset.tab));$("rank").style.display=b.dataset.tab==="rank"?"":"none";
+  $("actions").style.display=b.dataset.tab==="rank"?"":"none";if(b.dataset.tab==="board")refreshStat()});
+(async()=>{C=await j("/api/config");document.title=C.title;$("title").innerHTML=`${esc(C.title)}<small>${C.players} options · ${C.items} items · blind pairs · Elo</small>`;
+  judge();keysHelp();await next();refreshStat();
+  const h=location.hash.slice(1);if(h=="board"||h=="help")document.querySelector(`.tabs button[data-tab=${h}]`).click()})();
+</script>
+</body>
+</html>

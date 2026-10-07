@@ -19,6 +19,7 @@ What each check requires:
 | SigmaWrite | `docs/NOTES.md` in the fixture, rewritten | Code names `step`, `saveBest`, `src/scores.js` survive; the planted jargon is gone; no sentence over 30 words |
 | SigmaRefactor | `REFACTOR-SCAN.md` (the runner asks for it) | Counting method named (`laloc` or fallback); ranked files with line counts; choices with risk and verification |
 | EasyTalk | `status-board.html` and final chat reply | Installed template preserved outside its DATA block; valid JavaScript with PAGE, DO, ANS, FYI; reply links the saved board |
+| Arena Create | `arena/arena.json` and final chat reply | Valid config with title, question, metrics, groups, at least four players and items that name known players and groups; no `picks.jsonl`; reply links the local arena (port 3410-3499) |
 | SigmaResearch | Final chat reply | Sources table with platform, URL, publication/access dates, route, scope and evidence (or None with a gap); explicit Access gaps section |
 
 ## Layer 2: live runs on demand (not in CI)

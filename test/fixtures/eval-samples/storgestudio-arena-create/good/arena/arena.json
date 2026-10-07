@@ -1,0 +1,50 @@
+{
+ "title": "Caption arena",
+ "question": "Which caption makes you click?",
+ "metrics": [
+  {
+   "id": "click",
+   "label": "Click",
+   "hint": "would you tap it?",
+   "weight": 2
+  }
+ ],
+ "groups": {
+  "thumb": {
+   "label": "Thumbnail text",
+   "prompt": "Text on the thumbnail of a boxing video."
+  }
+ },
+ "players": {
+  "punchy": "Punchy",
+  "question": "Question",
+  "stat": "Stat",
+  "plain": "Plain"
+ },
+ "items": [
+  {
+   "id": "punchy__thumb",
+   "player": "punchy",
+   "group": "thumb",
+   "text": "One of them lied."
+  },
+  {
+   "id": "question__thumb",
+   "player": "question",
+   "group": "thumb",
+   "text": "Can $50 beat $5,000?"
+  },
+  {
+   "id": "stat__thumb",
+   "player": "stat",
+   "group": "thumb",
+   "text": "100x the price, 1x the punch"
+  },
+  {
+   "id": "plain__thumb",
+   "player": "plain",
+   "group": "thumb",
+   "text": "A boxing glove test."
+  }
+ ]
+}

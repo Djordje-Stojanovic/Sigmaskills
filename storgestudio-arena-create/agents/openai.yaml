@@ -1,0 +1,11 @@
+interface:
+  display_name: Arena Create
+  short_description: Blind-pairs arena that ranks any options by Elo per metric
+  default_prompt: Use $storgestudio-arena-create to build a blind-pairs arena that
+    ranks these options by Elo per metric.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: true

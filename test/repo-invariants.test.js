@@ -10,6 +10,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const KNOWN_SKILLS = [
   { id: 'easytalk', title: 'EasyTalk', needsReferences: false },
+  { id: 'storgestudio-arena-create', title: 'Arena Create', needsReferences: true },
   {
     id: 'sigmareview',
     title: 'SigmaReview',

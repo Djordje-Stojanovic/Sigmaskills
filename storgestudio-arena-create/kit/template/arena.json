@@ -1,0 +1,158 @@
+{
+ "title": "Caption arena (example)",
+ "question": "Which caption makes you click?",
+ "metrics": [
+  {
+   "id": "click",
+   "label": "Click",
+   "hint": "would you tap it?",
+   "weight": 2
+  },
+  {
+   "id": "clear",
+   "label": "Clear",
+   "hint": "understood in 1 s"
+  },
+  {
+   "id": "voice",
+   "label": "On brand",
+   "hint": "sounds like the channel"
+  }
+ ],
+ "groups": {
+  "thumb": {
+   "label": "Thumbnail text",
+   "prompt": "Fair Fight #9: $50 vs $5,000 boxing gloves. Text on the thumbnail."
+  },
+  "short": {
+   "label": "Short caption",
+   "prompt": "The first line of the TikTok / Shorts caption for the same film."
+  }
+ },
+ "players": {
+  "punchy": "Punchy",
+  "question": "Question",
+  "stat": "Stat-led",
+  "hype": "All-caps hype",
+  "story": "First-person story",
+  "plain": "Plain"
+ },
+ "items": [
+  {
+   "id": "punchy__thumb",
+   "player": "punchy",
+   "group": "thumb",
+   "text": "$50 gloves vs $5,000 gloves. One of them lied.",
+   "meta": {
+    "words": 9
+   }
+  },
+  {
+   "id": "punchy__short",
+   "player": "punchy",
+   "group": "short",
+   "text": "He paid 100x more. Did it hit 100x harder?",
+   "meta": {
+    "words": 9
+   }
+  },
+  {
+   "id": "question__thumb",
+   "player": "question",
+   "group": "thumb",
+   "text": "Can a $50 glove beat a $5,000 one?",
+   "meta": {
+    "words": 8
+   }
+  },
+  {
+   "id": "question__short",
+   "player": "question",
+   "group": "short",
+   "text": "Would you pay $5,000 for a punch?",
+   "meta": {
+    "words": 7
+   }
+  },
+  {
+   "id": "stat__thumb",
+   "player": "stat",
+   "group": "thumb",
+   "text": "100x the price. 3% more power. We measured.",
+   "meta": {
+    "words": 8
+   }
+  },
+  {
+   "id": "stat__short",
+   "player": "stat",
+   "group": "short",
+   "text": "We tested 2 gloves on 400 punches. The gap is tiny.",
+   "meta": {
+    "words": 11
+   }
+  },
+  {
+   "id": "hype__thumb",
+   "player": "hype",
+   "group": "thumb",
+   "text": "THE MOST EXPENSIVE PUNCH ON YOUTUBE 🥊",
+   "meta": {
+    "words": 7
+   }
+  },
+  {
+   "id": "hype__short",
+   "player": "hype",
+   "group": "short",
+   "text": "CHEAP VS LUXURY: WHO WINS?! 🔥",
+   "meta": {
+    "words": 6
+   }
+  },
+  {
+   "id": "story__thumb",
+   "player": "story",
+   "group": "thumb",
+   "text": "My coach handed me a $50 glove and said: prove it.",
+   "meta": {
+    "words": 11
+   }
+  },
+  {
+   "id": "story__short",
+   "player": "story",
+   "group": "short",
+   "text": "I spent my rent on one glove. Here's what happened.",
+   "meta": {
+    "words": 10
+   }
+  },
+  {
+   "id": "plain__thumb",
+   "player": "plain",
+   "group": "thumb",
+   "text": "Comparing a cheap and an expensive boxing glove.",
+   "meta": {
+    "words": 8
+   }
+  },
+  {
+   "id": "plain__short",
+   "player": "plain",
+   "group": "short",
+   "text": "Budget vs premium boxing gloves, tested.",
+   "meta": {
+    "words": 6
+   }
+  }
+ ],
+ "settings": {
+  "prior": 1.0,
+  "bootstrap": 100,
+  "repeat_every": 14,
+  "out_after_losses": 3,
+  "top_k": 3,
+  "min_games": 6
+ }
+}
