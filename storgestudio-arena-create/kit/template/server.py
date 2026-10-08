@@ -9,7 +9,7 @@ results.json / results.md (rewritten on every board view). Media paths in arena.
 """
 import json, mimetypes, os, random, socket, string, sys, threading, time, uuid, webbrowser
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse, unquote
+from urllib.parse import urlparse, unquote, quote
 
 import arena
 
@@ -42,6 +42,15 @@ def codes(c):
     if changed:
         arena.save("codes.json", k)
     return k, {v: i for i, v in k.items()}
+
+
+def public_refs(g, gv):
+    """A group's "refs": ["refs/a.jpg", {"src": "refs/b.wav", "label": "voice"}, ...] -> [{url, label, kind}] for the prompt bar."""
+    out = []
+    for i, r in enumerate(gv.get("refs") or []):
+        src, label = (r.get("src", ""), r.get("label", "")) if isinstance(r, dict) else (r, "")
+        out.append({"url": f"/g/{quote(g)}/{i}", "label": label, "kind": kind_of({"src": src})})
+    return out
 
 
 def public_item(it, code):
@@ -92,11 +101,18 @@ class H(BaseHTTPRequestHandler):
             g = a.get("group")
             gv = c["groups"].get(g, {})
             return self.send(200, {"token": uuid.uuid4().hex[:10], "left": public_item(L, k[L["id"]]), "right": public_item(R, k[R["id"]]),
-                                   "group": {"id": g, "label": gv.get("label", g or ""), "prompt": gv.get("prompt", "")},
+                                   "group": {"id": g, "label": gv.get("label", g or ""), "prompt": gv.get("prompt", ""), "refs": public_refs(g, gv)},
                                    "repeat": bool(n.get("repeat_of")), "repeat_of": n.get("repeat_of"), "why": n["why"], "picks": len(ps)})
         if p == "/api/state":
             with LOCK:
                 return self.send(200, arena.state(c))
+        if p.startswith("/g/"):  # a group's reference media (the photos or voice the options must match): not a player, so not blind
+            g, _, i = unquote(p[3:]).rpartition("/")
+            refs = (c["groups"].get(g) or {}).get("refs") or []
+            if not i.isdigit() or int(i) >= len(refs):
+                return self.send(404, {"error": "unknown reference"})
+            r = refs[int(i)]
+            return self.file(os.path.join(HERE, r["src"] if isinstance(r, dict) else r))
         if p.startswith("/m/"):
             _, rev = codes(c)
             iid = rev.get(unquote(p[3:]))
@@ -148,7 +164,7 @@ class H(BaseHTTPRequestHandler):
                 a, b = rev.get(body.get("left")), rev.get(body.get("right"))
                 if not a or not b:
                     return self.send(400, {"error": "unknown codes"})
-                # stored with a = left item: "a"/"b" answers mean left/right as the user saw them
+                # stored with a = left item: "a"/"b" answers mean left/right as the owner saw them
                 rec = {"id": uuid.uuid4().hex[:12], "t": time.strftime("%Y-%m-%d %H:%M:%S"), "a": a, "b": b, "left": a,
                        "answers": {m: v for m, v in (body.get("answers") or {}).items() if v in ("a", "b", "same")},
                        "bad": bool(body.get("bad")), "ms": body.get("ms"), "note": (body.get("note") or "")[:500]}

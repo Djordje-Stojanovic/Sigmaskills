@@ -22,7 +22,8 @@ Use the arena for / keep elsewhere:
 ```
 <project>/arena/               (any folder inside the project)
   server.py  arena.py  index.html  make_items.py  selftest.py   ← copied from kit/template/
-  arena.json                     ← title, question, metrics, groups (prompts), players (labels), items, settings
+  arena.json                     ← title, question, metrics, groups (prompts, refs), players (labels), anchors, items, settings
+  refs/                          ← optional reference media per group (the photos or voice every option must match)
   media/<player>__<group>[__<take>].<ext>  (+ same-name .json sidecar: seconds, GiB, cost ...)
   picks.jsonl                    ← append-only, one line per pick (undo = a line that cancels one)
   codes.json                     ← the blind codes (the page never sees a name or file name)
@@ -34,11 +35,19 @@ Use the arena for / keep elsewhere:
 1. **Grill** (the skill does it): what is ranked, the groups, the metrics, how many options and takes, who makes them, how long it may take, what decides at the end.
 2. **Make the options**, at most ~20 players; 2–3 takes each where chance plays a role (seeds, voice takes). Put the measured cost in a sidecar per item (seconds, GiB, money).
 3. `python make_items.py media/` (or `options.tsv` for text), then set the labels, groups and metrics in `arena.json`.
-4. `python selftest.py` (engine check, 5 s), `python server.py --open`. Ports: **3410–3499** (the server takes the first free port; keep other servers off this range).
+4. `python selftest.py` (engine, anchors and refs check, ~20 s), `python server.py --open`. Ports: **3410–3499** (the server takes the first free port; keep other servers off this range).
 5. Tell the user the link and the keys. The user ranks; the agent watches `results.md` and answers questions with the numbers.
 6. **The user says when it is enough.** Then the winners become defaults, the losers are deleted, and the board goes into the ticket or the project notes.
 
-Keys: per metric row `← ↓ →`, `Q W E`, `A S D`, `Z X C`, `U I O`, `J K L` (A better · same · B better). `↵` next (saves the answered metrics; all answered = saves by itself), `B` both bad, `⌫` undo, `F`/`G` or a click = full size of A/B (`Space` switches, `Esc` closes), `1`/`2` play A/B (audio), `N` note. `#board` in the URL opens the board.
+Keys: per metric row `Q W E`, `A S D`, `Y X C` (`Z X C` on QWERTY), `U I O`, `J K L` (A better · same · B better). The page reads the key position (`e.code`), not the letter, so the left hand works on QWERTZ and QWERTY. The arrows do not vote. `↵` next (saves the answered metrics; all answered = saves by itself), `B` both bad, `⌫` undo, `F`/`G` or a click = full size of A/B (`Space` switches, `Esc` closes), `1`/`2` play A/B (audio), `N` note. `#board` in the URL opens the board.
+
+Refs: click a reference thumbnail = full size, `←`/`→` = next reference, `R` = all references in a grid. `F`/`G` show the references in a column beside the option.
+
+## Refs and anchors (config)
+
+- **Refs:** a group can have `"refs": ["refs/a.jpg", {"src": "refs/b.wav", "label": "voice"}]`. The page shows them as thumbnails in the prompt bar. Their size follows the window height. Refs are per group, the same for both sides, so they do not break blindness. An arena without refs works as before.
+- **Anchors:** `"anchors": ["gpt", "old-default"]` lists reference players (a cloud model, today's default). They get a rating on the board, but they never take a top-K place: the top-K boost and the "out" cut count non-anchors only. When an anchor has `settings.anchor_games` games (default 8), its pairs get ×0.1 weight, so the picks go to the real candidates.
+- **Metric weight:** `{"id": "likeness", "weight": 2}` makes a metric count ×2 in Overall.
 
 ## How the ranking works (and why)
 
@@ -58,12 +67,13 @@ Keys: per metric row `← ↓ →`, `Q W E`, `A S D`, `Z X C`, `U I O`, `J K L` 
 | Every ~14 picks a judged pair comes back with sides swapped | Consistency: the user's normal is ~65–70 %; below ~55 % the metric or the options are unclear |
 | Retire a group (`"retired": true`), never overwrite it | Old picks stay valid when a prompt is swapped (image arena) |
 | `skip` per group: `{"P5": ["gpt"]}` | A cloud model that refuses a prompt sits it out without a loss (image arena) |
+| Anchors: rated, never a top-K place, ×0.1 picks after `anchor_games` | A strong reference in the top K took the top-K boost and soaked up picks; a real candidate was cut as "out" (image arena, round 3) |
 
 ## Lessons for great arenas
 
 1. **Hard groups decide, easy ones don't.** Pick prompts or briefs where the options can fail: many named people, lettering, uncensored content, a specific date or opponent the user can check. Easy prompts left the image board flat (image arena).
 2. **Test on the user's own prompts, not only ours.** The video leader on our prompts lost on their 3 ideas (video arena).
-3. **Keep today's default in as a baseline,** and a strong outside reference (GPT Image, a pro thumbnail) when one exists: the gap tells whether local is good enough.
+3. **Keep today's default in as a baseline,** and a strong outside reference (GPT Image, a pro thumbnail) when one exists: the gap tells whether local is good enough. **Make every reference player an anchor** (`"anchors"`). If not, the top-K boost feeds it picks, and it pushes real candidates out (image arena, round 3).
 4. **Write down where each option came from** (Reddit, the official README, the agent's own idea). The only certain loser in the image arena was the agent's untested LoRA stack; say so plainly.
 5. **Measure the cost of every option** (seconds, GiB, money) in a sidecar: the board shows it next to the rating, and ties go to the cheaper one. Speed breaks ties unless the user says speed matters more.
 6. **Change one thing per option** when you test settings (quant, steps, size), or the board can't tell what helped.
@@ -75,6 +85,8 @@ Keys: per metric row `← ↓ →`, `Q W E`, `A S D`, `Z X C`, `U I O`, `J K L` 
 12. **Blind means blind:** no names, file names or sizes on the rank page; random sides; equal display size; the board tab warns that looking breaks blindness.
 13. **Never present an idea as the user's** and never edit the user's picks; `picks.jsonl` is append-only.
 14. **Don't break a live arena.** Back up every file before editing a running one; restart only your own server PID.
+15. **Show the references when likeness counts.** Put the photos in the group's `refs`. The user must see them big: click for full size, `R` for all, and a column beside the zoomed option (image arena, round 3).
+16. **Keys go by position, not by letter.** On QWERTZ the bottom-left row is `Y X C`. The arrows no longer vote, because they now move between references (image arena, round 3).
 
 ## Rules and gotchas
 
