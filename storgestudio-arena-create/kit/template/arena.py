@@ -7,6 +7,8 @@ Bradley-Terry (the model behind LMArena's Elo board), fitted by the MM algorithm
   - one rating per player: the takes of one player (seeds, versions) pool into one player
   - one board per metric (only the picks that answered that metric) + Overall (weighted mean of the answered metrics)
 Pairs are drawn LMArena-style: same group only, most informative first, never the same pair over and over.
+Anchors (config "anchors": player ids) are reference players: rated on the board, but they never take a top-K place
+(the top-K boost and the "out" cut count non-anchors only), and once they have `anchor_games` games their pairs get x0.1 weight.
 """
 import json, math, os, random
 
@@ -36,7 +38,7 @@ def cfg():
     c.setdefault("groups", {})
     c.setdefault("items", [])
     s = c.setdefault("settings", {})
-    for k, v in {"prior": 1.0, "bootstrap": 100, "repeat_every": 14, "out_after_losses": 3, "top_k": 5, "min_games": 6}.items():
+    for k, v in {"prior": 1.0, "bootstrap": 100, "repeat_every": 14, "out_after_losses": 3, "top_k": 5, "min_games": 6, "anchor_games": 8}.items():
         s.setdefault(k, v)
     return c
 
@@ -127,10 +129,12 @@ def board(c, ps, metric, rng=None, B=None):
                      "games": w + l + t, "w": w, "l": l, "t": t})
     rows.sort(key=lambda r: -r["rating"])
     s = c["settings"]
-    kth = rows[min(s["top_k"], len(rows)) - 1]["lo"] if rows else 0
+    anchors = set(c.get("anchors") or [])  # reference players (e.g. a cloud model, an old baseline): rated, but never hold a top-K place
+    live = [r for r in rows if r["player"] not in anchors]
+    kth = live[min(s["top_k"], len(live)) - 1]["lo"] if live else 0
     for r in rows:  # out: never won after N losses, or clearly below the top K (its best case under the K-th's worst case)
         r["out"] = bool((r["w"] == 0 and r["t"] == 0 and r["l"] >= s["out_after_losses"])
-                        or (r["games"] >= s["min_games"] and r["hi"] < kth and rows.index(r) >= s["top_k"]))
+                        or (r["games"] >= s["min_games"] and r["hi"] < kth and r in live and live.index(r) >= s["top_k"]))
     return rows
 
 
@@ -237,7 +241,8 @@ def next_pair(c=None, ps=None, rng=random):
         for x in (p["a"], p["b"]):
             if x in items:
                 recent.add(items[x]["player"])
-    top = {r["player"] for r in sorted(rows.values(), key=lambda r: -r["lo"])[: s["top_k"]]}
+    anchors = set(c.get("anchors") or [])
+    top = {r["player"] for r in sorted((r for r in rows.values() if r["player"] not in anchors), key=lambda r: -r["lo"])[: s["top_k"]]}
     cands = []
     for g, pl in by.items():
         names = sorted(pl)
@@ -253,6 +258,8 @@ def next_pair(c=None, ps=None, rng=random):
                 v = (0.25 + pw * (1 - pw)) * (u(r1) + u(r2)) / (1 + n) ** 1.5
                 if n >= 3:
                     v *= 0.05  # met 3+ times: nearly retired
+                if any(p in anchors and rows[p]["games"] >= s.get("anchor_games", 8) for p in (p1, p2)):
+                    v *= 0.1  # a reference with enough games: its place is known, spend the picks on the real candidates
                 if p1 in recent or p2 in recent:
                     v *= 0.4
                 few1, few2 = r1["games"] < 4, r2["games"] < 4

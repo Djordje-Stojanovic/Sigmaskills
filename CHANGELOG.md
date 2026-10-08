@@ -4,6 +4,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `storgestudio-arena-create`: optional reference media per group (`refs`). The page shows them as thumbnails sized by the window. Click one for full size, `←`/`→` for the next, `R` for all in a grid; `F`/`G` show them in a column beside the option. Optional `anchors` (reference players): they get a rating but never take a top-K place, and after `settings.anchor_games` games (default 8) their pairs get ×0.1 weight. The self-test covers both.
+
+### Changed
+
+- `storgestudio-arena-create`: the metric row keys go by key position (`e.code`), so QWERTZ and QWERTY both work (`Q W E`, `A S D`, `Y X C`/`Z X C`, `U I O`, `J K L`). The arrows no longer vote; they move between references. The page uses the full window width.
+
 ## [0.6.1] — 2026-10-06
 
 ### Changed

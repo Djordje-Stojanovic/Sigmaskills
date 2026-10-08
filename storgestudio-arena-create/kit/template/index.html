@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Arena</title>
+<link rel="icon" href="data:,">
 <style>
 :root{
   --bg:#0b0d12; --bg2:#11141b; --card:#161a23; --card2:#1c2130; --line:#262c3b; --text:#e9ecf3; --mute:#8b93a7;
@@ -25,10 +26,18 @@ header{position:sticky;top:0;z-index:5;display:flex;gap:16px;align-items:center;
 .grow{flex:1}
 .stat{color:var(--mute);font-size:13px;white-space:nowrap}
 .stat b{color:var(--text)}
-main{max-width:1500px;margin:0 auto;padding:18px 20px 120px}
+main{max-width:2600px;margin:0 auto;padding:10px 14px 120px}
 .prompt{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start}
 .prompt .tag{flex:none;font-weight:700;font-size:12px;padding:4px 8px;border-radius:8px;background:#5b8cff22;color:#9db8ff}
 .prompt .txt{color:#cfd5e4;font-size:14px;max-height:4.4em;overflow:auto}
+.prompt .txt{flex:1}
+.refs{flex:none;display:flex;gap:6px;align-items:flex-end;max-width:60%;overflow-x:auto;padding-bottom:2px}
+.refs figure{margin:0;text-align:center}
+.refs img{height:clamp(70px,10vh,140px);width:auto;border-radius:6px;border:1px solid var(--line);cursor:zoom-in;display:block;transition:transform .15s}
+.refs img:hover{outline:2px solid #9db8ff}
+.refs figcaption{font-size:10px;color:var(--mute);max-width:70px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.refs button{height:34px;border-radius:8px}
+@media (max-width:700px){.prompt{flex-wrap:wrap}.refs{max-width:100%}}
 .repeat{display:none;margin-left:auto;flex:none;font-size:12px;font-weight:700;color:var(--warn)}
 .repeat.on{display:block}
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -71,7 +80,16 @@ main{max-width:1500px;margin:0 auto;padding:18px 20px 120px}
 .done{text-align:center;padding:80px 20px;color:var(--mute)}.done h2{color:var(--text)}
 /* zoom */
 .zoom{position:fixed;inset:0;z-index:20;background:#000e;display:none;align-items:center;justify-content:center;cursor:zoom-out}
-.zoom.on{display:flex}.zoom img,.zoom video{max-width:98vw;max-height:94vh}
+.zoom.on{display:flex}.zoom img,.zoom video{max-width:98vw;max-height:96vh}
+#zc{display:flex;gap:10px;align-items:center;justify-content:center;width:100vw;height:100vh;padding:8px;box-sizing:border-box}
+#zc .main{max-width:calc(100vw - 22vw);max-height:96vh;object-fit:contain}
+#zc .rcol{display:flex;flex-direction:column;gap:6px;max-height:96vh;overflow:auto;width:20vw}
+#zc .rcol img{width:100%;max-height:none;border-radius:6px}
+#zc .rgrid{display:grid;gap:8px;width:100%;height:100%;grid-auto-rows:minmax(0,1fr)}
+#zc .rgrid figure{margin:0;display:flex;flex-direction:column;align-items:center;min-height:0}
+#zc .rgrid img{max-width:100%;max-height:calc(100% - 22px);object-fit:contain;border-radius:6px}
+#zc figcaption{font-size:13px;color:#cfd5e4}
+#zc .one{max-width:98vw;max-height:90vh;object-fit:contain}
 .zoom .zl{position:absolute;top:16px;left:50%;transform:translateX(-50%);font-weight:800;padding:6px 14px;border-radius:999px;background:#000a;border:1px solid #fff3}
 /* board */
 .boards{display:none}.boards.on{display:block}
@@ -106,7 +124,7 @@ tr:nth-child(4) .medal{background:linear-gradient(135deg,#fdba74,#b45309);color:
 
 <main>
   <section id="rank">
-    <div class="prompt"><span class="tag" id="gl">Group</span><div class="txt" id="gp"></div><span class="repeat" id="rep">↺ consistency check</span></div>
+    <div class="prompt"><span class="tag" id="gl">Group</span><div class="txt" id="gp"></div><div class="refs" id="grefs"></div><span class="repeat" id="rep">↺ consistency check</span></div>
     <div class="duel">
       <div class="side L" id="sL"><span class="lab">A · left</span><div class="stage" id="mL"></div></div>
       <div class="side R" id="sR"><span class="lab">B · right</span><div class="stage" id="mR"></div></div>
@@ -139,7 +157,8 @@ tr:nth-child(4) .medal{background:linear-gradient(135deg,#fdba74,#b45309);color:
 <div class="toast" id="toast">Saved</div>
 
 <script>
-const ROWKEYS=[["ArrowLeft","ArrowDown","ArrowRight","←","↓","→"],["q","w","e","Q","W","E"],["a","s","d","A","S","D"],["z","x","c","Z","X","C"],["u","i","o","U","I","O"],["j","k","l","J","K","L"]];
+// physical key positions (e.code), so the left hand works on QWERTZ and QWERTY alike: row 3 is the bottom-left Y/Z key
+const ROWKEYS=[["KeyQ","KeyW","KeyE","Q","W","E"],["KeyA","KeyS","KeyD","A","S","D"],["KeyZ","KeyX","KeyC","Y","X","C"],["KeyU","KeyI","KeyO","U","I","O"],["KeyJ","KeyK","KeyL","J","K","L"]];
 let C=null,P=null,ans={},t0=0,zoomSide=null,busy=false;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -159,16 +178,24 @@ function stage(el,it,side){
 function audios(){return {L:$("mL").querySelector("audio"),R:$("mR").querySelector("audio")}}
 function playOnly(side){const a=audios(),me=a[side],other=a[side==="L"?"R":"L"];if(other)other.pause();if(!me)return;if(me.paused){me.currentTime=me.ended?0:me.currentTime;me.play()}else me.pause()}
 function zoom(side){if(!P)return;const it=side==="L"?P.left:P.right;if(it.kind!=="image"&&it.kind!=="video")return;zoomSide=side;
-  $("zc").innerHTML=it.kind==="image"?`<img src="${it.url}">`:`<video src="${it.url}" autoplay loop muted playsinline></video>`;
+  const rs=imgRefs();$("zc").innerHTML=(it.kind==="image"?`<img class="main" src="${it.url}">`:`<video class="main" src="${it.url}" autoplay loop muted playsinline></video>`)+(rs.length?`<div class="rcol">${rs.map(r=>`<img src="${r.url}" title="${esc(r.label||"")}">`).join("")}</div>`:"");
   $("zl").textContent=side==="L"?"A · left  (Space switches)":"B · right  (Space switches)";$("zoom").classList.add("on")}
-function unzoom(){zoomSide=null;$("zoom").classList.remove("on");$("zc").innerHTML=""}
+function imgRefs(){return ((P&&P.group&&P.group.refs)||[]).filter(r=>r.kind!=="audio")}
+let refIx=null;
+function zoomRef(i){const rs=imgRefs();if(!rs.length)return;refIx=(i+rs.length)%rs.length;zoomSide="ref";const r=rs[refIx];
+  $("zc").innerHTML=`<figure style="margin:0;text-align:center"><img class="one" src="${r.url}"><figcaption>${esc(r.label||"")} · ${refIx+1}/${rs.length} (← → next, R all, Esc close)</figcaption></figure>`;
+  $("zl").textContent="Reference";$("zoom").classList.add("on")}
+function zoomRefs(){const rs=imgRefs();if(!rs.length)return;refIx=null;zoomSide="refs";const c=Math.min(rs.length,Math.ceil(Math.sqrt(rs.length*1.8)));
+  $("zc").innerHTML=`<div class="rgrid" style="grid-template-columns:repeat(${c},1fr)">${rs.map((r,i)=>`<figure><img src="${r.url}" onclick="event.stopPropagation();zoomRef(${i})"><figcaption>${esc(r.label||"")}</figcaption></figure>`).join("")}</div>`;
+  $("zl").textContent="All references (click one, Esc close)";$("zoom").classList.add("on")}
+function unzoom(){zoomSide=null;refIx=null;$("zoom").classList.remove("on");$("zc").innerHTML=""}
 
 function judge(){
   const ms=C.metrics,h=ms.map((m,i)=>{const k=ROWKEYS[i]||["","","","","",""];return `<div class="row" data-m="${m.id}">
     <button class="opt a" data-v="a"><kbd>${k[3]}</kbd> A is better</button>
     <div class="mid"><div class="name">${esc(m.label)}${m.hint?`<small>${esc(m.hint)}</small>`:""}</div><button class="opt s" data-v="same"><kbd>${k[4]}</kbd> same</button></div>
     <button class="opt b" data-v="b">B is better <kbd>${k[5]}</kbd></button></div>`}).join("");
-  requestAnimationFrame(()=>document.documentElement.style.setProperty("--chrome",(300+$("judge").offsetHeight)+"px"));
+  requestAnimationFrame(()=>document.documentElement.style.setProperty("--chrome",(200+$("judge").offsetHeight)+"px"));
   $("judge").innerHTML=h;
   $("judge").querySelectorAll(".opt").forEach(b=>b.onclick=()=>{set(b.closest(".row").dataset.m,b.dataset.v)});
 }
@@ -178,11 +205,16 @@ function paint(){document.querySelectorAll(".row").forEach(r=>r.querySelectorAll
   const vals=Object.values(ans),a=vals.filter(v=>v==="a").length,b=vals.filter(v=>v==="b").length;
   $("sL").classList.toggle("win-a",a>b);$("sR").classList.toggle("win-b",b>a);$("go").disabled=!vals.length}
 
+function refs(list){  // the group's reference media (photos, a voice): what every option must match
+  $("grefs").innerHTML=list.map((r,i)=>r.kind==="audio"
+    ?`<figure><button class="btn" onclick="(this.a=this.a||new Audio('${r.url}')).paused?this.a.play():this.a.pause()">▶ ref</button><figcaption>${esc(r.label||"")}</figcaption></figure>`
+    :`<figure><img src="${r.url}" alt="reference ${i+1}" loading="lazy" onclick="zoomRef(${i})"><figcaption>${esc(r.label||"")}</figcaption></figure>`).join("");
+}
 async function next(){
   busy=true;ans={};unzoom();$("note").value="";
   P=await j("/api/next");busy=false;
   if(P.error){$("rank").innerHTML=`<div class="done"><h2>Nothing left to rank</h2><p>${esc(P.error)}</p><p>Open the Board tab for the results.</p></div>`;return}
-  $("gl").textContent=P.group.label||"Pair";$("gp").textContent=P.group.prompt||C.question;$("rep").classList.toggle("on",P.repeat);
+  $("gl").textContent=P.group.label||"Pair";$("gp").textContent=P.group.prompt||C.question;refs(P.group.refs||[]);$("rep").classList.toggle("on",P.repeat);
   stage($("mL"),P.left,"L");stage($("mR"),P.right,"R");paint();$("why").textContent=P.why;$("np").textContent=P.picks;t0=performance.now();
 }
 async function submit(bad){
@@ -211,13 +243,18 @@ function keysHelp(){const r=C.metrics.map((m,i)=>{const k=ROWKEYS[i];return k?`<
   $("keys").innerHTML+=r+`<tr><td><kbd>↵</kbd></td><td>Next (saves the metrics you answered; all answered = saves by itself)</td></tr>
   <tr><td><kbd>B</kbd></td><td>Both bad</td></tr><tr><td><kbd>⌫</kbd></td><td>Undo the last pick</td></tr>
   <tr><td><kbd>F</kbd> / <kbd>G</kbd> or click</td><td>Full size of A / B; <kbd>Space</kbd> switches, <kbd>Esc</kbd> closes</td></tr>
-  <tr><td><kbd>1</kbd> / <kbd>2</kbd></td><td>Play A / B (audio; stops the other)</td></tr><tr><td><kbd>N</kbd></td><td>Write a note</td></tr>`}
+  <tr><td><kbd>1</kbd> / <kbd>2</kbd></td><td>Play A / B (audio; stops the other)</td></tr><tr><td><kbd>N</kbd></td><td>Write a note</td></tr>
+  <tr><td>click a reference</td><td>Full size; <kbd>←</kbd> / <kbd>→</kbd> next reference, <kbd>Esc</kbd> closes</td></tr>
+  <tr><td><kbd>R</kbd></td><td>All references in one grid (F / G also shows them in a column)</td></tr>
+  <tr><td colspan="2">Row keys go by key position, not letter: the bottom-left key is Y on QWERTZ and Z on QWERTY.</td></tr>`}
 
 document.addEventListener("keydown",e=>{
   if(e.target.tagName==="INPUT"){if(e.key==="Enter"){e.target.blur();submit()}if(e.key==="Escape")e.target.blur();return}
   if(!$("rank").offsetParent)return;
-  if(zoomSide){if(e.key===" "){e.preventDefault();zoom(zoomSide==="L"?"R":"L");return}if(e.key==="Escape"||e.key==="f"||e.key==="g"){unzoom();return}}
-  for(let i=0;i<C.metrics.length&&i<ROWKEYS.length;i++){const k=ROWKEYS[i],ix=k.slice(0,3).indexOf(e.key);
+  if(zoomSide==="ref"||zoomSide==="refs"){e.preventDefault();if(e.key==="ArrowRight"||e.key===" ")zoomRef((refIx??-1)+1);else if(e.key==="ArrowLeft")zoomRef((refIx??1)-1);else if(e.key==="r"||e.key==="R")zoomSide==="refs"?unzoom():zoomRefs();else if(e.key==="Escape")unzoom();return}
+  if(zoomSide){if(e.key===" "){e.preventDefault();zoom(zoomSide==="L"?"R":"L");return}if(e.key==="Escape"||e.key==="f"||e.key==="g"){unzoom();return}if(e.key==="r"||e.key==="R"){zoomRefs();return}}
+  if(e.key==="r"||e.key==="R"){e.preventDefault();zoomRefs();return}
+  for(let i=0;i<C.metrics.length&&i<ROWKEYS.length;i++){const k=ROWKEYS[i],ix=k.slice(0,3).indexOf(e.code);
     if(ix>=0){e.preventDefault();set(C.metrics[i].id,["a","same","b"][ix]);return}}
   if(e.key==="Enter"){e.preventDefault();submit()}
   else if(e.key==="b"||e.key==="B")submit(true);
