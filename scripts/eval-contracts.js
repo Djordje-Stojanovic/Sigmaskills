@@ -227,7 +227,7 @@ function storgestudioArenaCreate({ files, result }) {
 }
 
 function sigmaresearch({ result }) {
-  const problems = requireInOrder(result, ['Sources', 'Access gaps'], 'reply');
+  const problems = requireInOrder(result, ['Sources', 'Contradictions', 'Access gaps'], 'reply');
   const sources = result.split(/^## Sources\s*$/m)[1]?.split(/^## /m)[0]?.trim() || '';
   const gaps = result.match(/^## Access gaps\s*\n([\s\S]*)/m)?.[1]?.trim() || '';
   if (!gaps) problems.push('reply: access gaps must be explicit, or None');
