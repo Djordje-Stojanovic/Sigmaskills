@@ -1,0 +1,80 @@
+[
+ {
+  "data": {
+   "children": [
+    {
+     "kind": "t3",
+     "data": {
+      "title": "Is X faster than Y?",
+      "selftext": "Benchmarks inside.",
+      "score": 321,
+      "created_utc": 1760000000,
+      "author": "alice",
+      "subreddit": "python",
+      "permalink": "/r/python/comments/abc123/is_x_faster/",
+      "num_comments": 4
+     }
+    }
+   ]
+  }
+ },
+ {
+  "data": {
+   "children": [
+    {
+     "kind": "t1",
+     "data": {
+      "body": "Yes, by 2x on my machine.",
+      "score": 50,
+      "created_utc": 1760000100,
+      "author": "bob",
+      "permalink": "/r/python/comments/abc123/is_x_faster/c1/",
+      "replies": {
+       "data": {
+        "children": [
+         {
+          "kind": "t1",
+          "data": {
+           "body": "Not on Windows.",
+           "score": 70,
+           "created_utc": 1760000200,
+           "author": "carol",
+           "permalink": "/r/python/comments/abc123/is_x_faster/c2/",
+           "replies": ""
+          }
+         }
+        ]
+       }
+      }
+     }
+    },
+    {
+     "kind": "t1",
+     "data": {
+      "body": "[deleted]",
+      "score": 999,
+      "created_utc": 1760000300,
+      "author": "[deleted]",
+      "permalink": "/r/python/comments/abc123/is_x_faster/c3/",
+      "replies": ""
+     }
+    },
+    {
+     "kind": "t1",
+     "data": {
+      "body": "Depends on the workload.",
+      "score": 5,
+      "created_utc": 1760000400,
+      "author": "dave",
+      "permalink": "/r/python/comments/abc123/is_x_faster/c4/",
+      "replies": ""
+     }
+    },
+    {
+     "kind": "more",
+     "data": {}
+    }
+   ]
+  }
+ }
+]

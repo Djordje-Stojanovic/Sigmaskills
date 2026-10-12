@@ -109,7 +109,7 @@ Ranks many options by your taste. After a short grilling round it builds an **ar
 
 ### SigmaResearch
 
-Reads public sources with platform-specific routes: Reddit RSS, X through Claude in Chrome on the owner's existing session, and public HN, GitHub and Hugging Face pages. It reports blocked or partial reads and stops on 403/429. It never logs in or evades bot checks.
+Reads public sources with bundled stdlib Python readers for Reddit, Hacker News, GitHub, Stack Overflow and YouTube comments, plus X through Claude in Chrome on the owner's existing session. One interface (`read.py`), a 24-hour cache, per-host rate limits and source scoring. Reports contradictions, blocked and partial reads. It never logs in, solves CAPTCHAs or evades bot checks.
 
 ---
 
@@ -201,7 +201,7 @@ $sigmaresearch Research recent discussions about local language models
 | SigmaRefactor | Read access to the target repository · `laloc` is optional; without it the skill counts lines itself |
 | EasyTalk | A writable output folder and a browser or HTML preview; chat fallback when unavailable |
 | Arena Create | Python 3 (standard library only) and a browser; the server listens on 127.0.0.1 |
-| SigmaResearch | Public fetch/search tools · curl for Reddit · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
+| SigmaResearch | Python 3 for the bundled readers · `yt-dlp` for YouTube comments · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
 
 Skills use the shell native to the machine that runs the agent (PowerShell on Windows, POSIX shell elsewhere). They do not assume WSL.
 

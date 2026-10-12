@@ -6,6 +6,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
+- `sigmaresearch` v2: bundled stdlib Python readers behind one interface (`scripts/read.py <platform> <query|url> [--limit N] [--json]`) for Reddit (JSON, then RSS, then a search-engine or archive fallback), Hacker News, GitHub, Stack Overflow and YouTube comments, plus a normalizer for X text copied from the owner's signed-in Chrome. Adds parallel fetch with per-host rate limits and bounded 429 backoff, a 24-hour cache in `~/.cache/sigmaresearch`, source scoring (votes, recency, independence), a Contradictions section in the report, a depth and early-stop rule, and `read.py selftest`. Blocked hosts are reported, never bypassed. (#99)
 - `storgestudio-arena-create`: optional reference media per group (`refs`). The page shows them as thumbnails sized by the window. Click one for full size, `←`/`→` for the next, `R` for all in a grid; `F`/`G` show them in a column beside the option. Optional `anchors` (reference players): they get a rating but never take a top-K place, and after `settings.anchor_games` games (default 8) their pairs get ×0.1 weight. The self-test covers both.
 
 ### Changed

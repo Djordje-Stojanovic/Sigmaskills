@@ -1,0 +1,11 @@
+{
+ "https://html.duckduckgo.com/html/?q=site%3Areddit.com%20python": "872a96f411.txt",
+ "https://hn.algolia.com/api/v1/search?query=sqlite&tags=story&hitsPerPage=3": "3b3957977e.txt",
+ "https://hn.algolia.com/api/v1/items/27016630": "078106b2f4.txt",
+ "https://api.github.com/repos/yt-dlp/yt-dlp": "dc3209ce17.txt",
+ "https://api.github.com/repos/yt-dlp/yt-dlp/releases?per_page=5": "430002526d.txt",
+ "https://api.github.com/search/issues?q=repo%3Ayt-dlp%2Fyt-dlp%20is%3Aissue%20bug&sort=reactions&per_page=3": "755391ddc3.txt",
+ "https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=votes&q=python%20asyncio&site=stackoverflow&pagesize=3&filter=withbody": "cf96a6a861.txt",
+ "https://api.stackexchange.com/2.3/questions/27435284/answers?order=desc&sort=votes&site=stackoverflow&pagesize=3&filter=withbody": "f870d4af6d.txt",
+ "https://html.duckduckgo.com/html/?q=site%3Areddit.com%20sqlite": "b46748f6a1.txt"
+}

@@ -42,7 +42,7 @@ test('evals: sigmaresearch requires source provenance and explicit access gaps',
     result: sample.result.replace('| 2007-04-04 |', '| unknown |').replace(/## Access gaps[\s\S]*/, '## Access gaps\nNone.\n'),
   }), [], 'unknown publication date and no gaps are valid');
   assert.deepEqual(checkContract('sigmaresearch', {
-    result: 'No sources were accessible.\n\n## Sources\nNone.\n\n## Access gaps\nReddit returned 403; no posts read.\n',
+    result: 'No sources were accessible.\n\n## Sources\nNone.\n\n## Contradictions\nNone found.\n\n## Access gaps\nReddit returned 403; no posts read.\n',
   }), [], 'a wholly blocked run can honestly report no sources');
 });
 

@@ -1,6 +1,6 @@
 interface:
   display_name: SigmaResearch
-  short_description: Read Reddit, X and public sources with clear evidence
+  short_description: Read Reddit, X, HN, GitHub and more with scored evidence
   default_prompt: Use $sigmaresearch to research this topic with source links,
     dates, read scope and access gaps.
 policy:

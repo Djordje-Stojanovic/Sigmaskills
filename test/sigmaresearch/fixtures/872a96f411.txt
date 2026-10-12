@@ -1,0 +1,626 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<!--[if IE 6]><html class="ie6" xmlns="http://www.w3.org/1999/xhtml"><![endif]-->
+<!--[if IE 7]><html class="lt-ie8 lt-ie9" xmlns="http://www.w3.org/1999/xhtml"><![endif]-->
+<!--[if IE 8]><html class="lt-ie9" xmlns="http://www.w3.org/1999/xhtml"><![endif]-->
+<!--[if gt IE 8]><!--><html xmlns="http://www.w3.org/1999/xhtml"><!--<![endif]-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=1" />
+  <meta name="referrer" content="origin" />
+  <meta name="HandheldFriendly" content="true" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>site:reddit.com python at DuckDuckGo</title>
+  <link title="DuckDuckGo (HTML)" type="application/opensearchdescription+xml" rel="search" href="//duckduckgo.com/opensearch_html_v2.xml" />
+  <link href="//duckduckgo.com/favicon.ico" rel="shortcut icon" />
+  <link rel="icon" href="//duckduckgo.com/favicon.ico" type="image/x-icon" />
+  <link id="icon60" rel="apple-touch-icon" href="//duckduckgo.com/assets/icons/meta/DDG-iOS-icon_60x60.png?v=2"/>
+  <link id="icon76" rel="apple-touch-icon" sizes="76x76" href="//duckduckgo.com/assets/icons/meta/DDG-iOS-icon_76x76.png?v=2"/>
+  <link id="icon120" rel="apple-touch-icon" sizes="120x120" href="//duckduckgo.com/assets/icons/meta/DDG-iOS-icon_120x120.png?v=2"/>
+  <link id="icon152" rel="apple-touch-icon" sizes="152x152" href="//duckduckgo.com/assets/icons/meta/DDG-iOS-icon_152x152.png?v=2"/>
+  <link rel="image_src" href="//duckduckgo.com/assets/icons/meta/DDG-icon_256x256.png">
+  <link rel="stylesheet" media="handheld, all" href="//duckduckgo.com/dist/h.12e359033b8c1146e5f7.css" type="text/css"/>
+</head>
+
+<body class="body--html">
+  <a name="top" id="top"></a>
+
+  <form action="/html/" method="post">
+    <input type="text" name="state_hidden" id="state_hidden" />
+  </form>
+
+  <div>
+    <div class="site-wrapper-border"></div>
+
+    <div id="header" class="header cw header--html">
+      <a title="DuckDuckGo" href="/html/" class="header__logo-wrap"></a>
+
+      <form name="x" class="header__form" action="/html/" method="post">
+        <div class="search search--header">
+          <input name="q" autocomplete="off" class="search__input" id="search_form_input_homepage" type="text" value="site:reddit.com python" />
+          <input name="b" id="search_button_homepage" class="search__button search__button--html" value="" title="Search" alt="Search" type="submit" />
+        </div>
+
+        
+        
+        
+        
+
+        <div class="frm__select">
+          <select name="kl">
+            
+              <option value="" >All Regions</option>
+            
+              <option value="ar-es" >Argentina</option>
+            
+              <option value="au-en" >Australia</option>
+            
+              <option value="at-de" >Austria</option>
+            
+              <option value="be-fr" >Belgium (fr)</option>
+            
+              <option value="be-nl" >Belgium (nl)</option>
+            
+              <option value="br-pt" >Brazil</option>
+            
+              <option value="bg-bg" >Bulgaria</option>
+            
+              <option value="ca-en" >Canada (en)</option>
+            
+              <option value="ca-fr" >Canada (fr)</option>
+            
+              <option value="ct-ca" >Catalonia</option>
+            
+              <option value="cl-es" >Chile</option>
+            
+              <option value="cn-zh" >China</option>
+            
+              <option value="co-es" >Colombia</option>
+            
+              <option value="hr-hr" >Croatia</option>
+            
+              <option value="cz-cs" >Czech Republic</option>
+            
+              <option value="dk-da" >Denmark</option>
+            
+              <option value="ee-et" >Estonia</option>
+            
+              <option value="fi-fi" >Finland</option>
+            
+              <option value="fr-fr" >France</option>
+            
+              <option value="de-de" >Germany</option>
+            
+              <option value="gr-el" >Greece</option>
+            
+              <option value="hk-tzh" >Hong Kong</option>
+            
+              <option value="hu-hu" >Hungary</option>
+            
+              <option value="is-is" >Iceland</option>
+            
+              <option value="in-en" >India (en)</option>
+            
+              <option value="id-en" >Indonesia (en)</option>
+            
+              <option value="ie-en" >Ireland</option>
+            
+              <option value="il-en" >Israel (en)</option>
+            
+              <option value="it-it" >Italy</option>
+            
+              <option value="jp-jp" >Japan</option>
+            
+              <option value="kr-kr" >Korea</option>
+            
+              <option value="lv-lv" >Latvia</option>
+            
+              <option value="lt-lt" >Lithuania</option>
+            
+              <option value="my-en" >Malaysia (en)</option>
+            
+              <option value="mx-es" >Mexico</option>
+            
+              <option value="nl-nl" >Netherlands</option>
+            
+              <option value="nz-en" >New Zealand</option>
+            
+              <option value="no-no" >Norway</option>
+            
+              <option value="pk-en" >Pakistan (en)</option>
+            
+              <option value="pe-es" >Peru</option>
+            
+              <option value="ph-en" >Philippines (en)</option>
+            
+              <option value="pl-pl" >Poland</option>
+            
+              <option value="pt-pt" >Portugal</option>
+            
+              <option value="ro-ro" >Romania</option>
+            
+              <option value="ru-ru" >Russia</option>
+            
+              <option value="xa-ar" >Saudi Arabia</option>
+            
+              <option value="sg-en" >Singapore</option>
+            
+              <option value="sk-sk" >Slovakia</option>
+            
+              <option value="sl-sl" >Slovenia</option>
+            
+              <option value="za-en" >South Africa</option>
+            
+              <option value="es-ca" >Spain (ca)</option>
+            
+              <option value="es-es" >Spain (es)</option>
+            
+              <option value="se-sv" >Sweden</option>
+            
+              <option value="ch-de" >Switzerland (de)</option>
+            
+              <option value="ch-fr" >Switzerland (fr)</option>
+            
+              <option value="tw-tzh" >Taiwan</option>
+            
+              <option value="th-en" >Thailand (en)</option>
+            
+              <option value="tr-tr" >Turkey</option>
+            
+              <option value="us-en" >US (English)</option>
+            
+              <option value="us-es" >US (Spanish)</option>
+            
+              <option value="ua-uk" >Ukraine</option>
+            
+              <option value="uk-en" >United Kingdom</option>
+            
+              <option value="vn-en" >Vietnam (en)</option>
+            
+          </select>
+        </div>
+
+        <div class="frm__select frm__select--last">
+          <select class="" name="df">
+            
+              <option value="" selected>Any Time</option>
+            
+              <option value="d" >Past Day</option>
+            
+              <option value="w" >Past Week</option>
+            
+              <option value="m" >Past Month</option>
+            
+              <option value="y" >Past Year</option>
+            
+          </select>
+        </div>
+      </form>
+    </div>
+
+    
+
+    
+      <!-- Web results are present -->
+      <div>
+        <div class="serp__results">
+          <div id="links" class="results">
+            
+
+            
+              
+                <div class="result results_links results_links_deep web-result ">
+                  <div class="links_main links_deep result__body"> <!-- This is the visible part -->
+                    
+                      <h2 class="result__title">
+                        <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPython%2Fwiki%2Findex%2F&amp;rut=8764657635af2616436b16ef2330a810280dcd665eb71a78e0c25f12fc64db2c">Python - Reddit</a>
+                      </h2>
+
+                    
+
+                    
+                      <div class="result__extras">
+                        <div class="result__extras__url">
+                          <span class="result__icon">
+                            <a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPython%2Fwiki%2Findex%2F&amp;rut=8764657635af2616436b16ef2330a810280dcd665eb71a78e0c25f12fc64db2c">
+                              <img class="result__icon__img" width="16" height="16" alt="" src="//external-content.duckduckgo.com/ip3/www.reddit.com.ico" name="i15" />
+                            </a>
+                          </span>
+                          <a class="result__url" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPython%2Fwiki%2Findex%2F&amp;rut=8764657635af2616436b16ef2330a810280dcd665eb71a78e0c25f12fc64db2c">
+                            www.reddit.com/r/Python/wiki/index/
+                          </a>
+                          
+                        </div>
+                      </div>
+                    
+
+                    
+                      
+                        <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPython%2Fwiki%2Findex%2F&amp;rut=8764657635af2616436b16ef2330a810280dcd665eb71a78e0c25f12fc64db2c">The official <b>Python</b> community for Reddit! Stay up to date with the latest news, packages, and meta information relating to the <b>Python</b> programming language. If you have something to teach others post here. If you have questions or are new to <b>Python</b> use r/learnpython</a>
+                      
+                    
+
+                    <div class="clear"></div>
+                  </div>
+                </div>
+              
+            
+              
+                <div class="result results_links results_links_deep web-result ">
+                  <div class="links_main links_deep result__body"> <!-- This is the visible part -->
+                    
+                      <h2 class="result__title">
+                        <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPythonLearning%2F&amp;rut=ec7729c16534963f041e7f21b9b2e91e891a29af2dfb7c26cc48bbde4e268520">PythonLearning - Reddit</a>
+                      </h2>
+
+                    
+
+                    
+                      <div class="result__extras">
+                        <div class="result__extras__url">
+                          <span class="result__icon">
+                            <a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPythonLearning%2F&amp;rut=ec7729c16534963f041e7f21b9b2e91e891a29af2dfb7c26cc48bbde4e268520">
+                              <img class="result__icon__img" width="16" height="16" alt="" src="//external-content.duckduckgo.com/ip3/www.reddit.com.ico" name="i15" />
+                            </a>
+                          </span>
+                          <a class="result__url" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPythonLearning%2F&amp;rut=ec7729c16534963f041e7f21b9b2e91e891a29af2dfb7c26cc48bbde4e268520">
+                            www.reddit.com/r/PythonLearning/
+                          </a>
+                          
+                        </div>
+                      </div>
+                    
+
+                    
+                      
+                        <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPythonLearning%2F&amp;rut=ec7729c16534963f041e7f21b9b2e91e891a29af2dfb7c26cc48bbde4e268520">Everything about learning the programming language <b>Python</b>.</a>
+                      
+                    
+
+                    <div class="clear"></div>
+                  </div>
+                </div>
+              
+            
+              
+                <div class="result results_links results_links_deep web-result ">
+                  <div class="links_main links_deep result__body"> <!-- This is the visible part -->
+                    
+                      <h2 class="result__title">
+                        <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPython%2Fcomments%2F10tezc6%2Ffake_python_website_be_carefull%2F&amp;rut=3042888e53336d2ee6b7e1862f92e64ccbb26115aa4348ef2a747aa7536e3e5b">Fake python website Be carefull!!! : r/Python - Reddit</a>
+                      </h2>
+
+                    
+
+                    
+                      <div class="result__extras">
+                        <div class="result__extras__url">
+                          <span class="result__icon">
+                            <a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPython%2Fcomments%2F10tezc6%2Ffake_python_website_be_carefull%2F&amp;rut=3042888e53336d2ee6b7e1862f92e64ccbb26115aa4348ef2a747aa7536e3e5b">
+                              <img class="result__icon__img" width="16" height="16" alt="" src="//external-content.duckduckgo.com/ip3/www.reddit.com.ico" name="i15" />
+                            </a>
+                          </span>
+                          <a class="result__url" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPython%2Fcomments%2F10tezc6%2Ffake_python_website_be_carefull%2F&amp;rut=3042888e53336d2ee6b7e1862f92e64ccbb26115aa4348ef2a747aa7536e3e5b">
+                            www.reddit.com/r/Python/comments/10tezc6/fake_python_website_be_carefull/
+                          </a>
+                          
+                        </div>
+                      </div>
+                    
+
+                    
+                      
+                        <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2FPython%2Fcomments%2F10tezc6%2Ffake_python_website_be_carefull%2F&amp;rut=3042888e53336d2ee6b7e1862f92e64ccbb26115aa4348ef2a747aa7536e3e5b">The official <b>Python</b> community for Reddit! Stay up to date with the latest news, packages, and meta information relating to the <b>Python</b> programming language. --- If you have questions or are new to <b>Python</b> use r/LearnPython MembersOnline • Iddk___ ADMIN MOD</a>
+                      
+                    
+
+                    <div class="clear"></div>
+                  </div>
+                </div>
+              
+            
+              
+                <div class="result results_links results_links_deep web-result ">
+                  <div class="links_main links_deep result__body"> <!-- This is the visible part -->
+                    
+                      <h2 class="result__title">
+                        <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F18l6y75%2Fhow_to_start_python_for_a_complete_noob%2F&amp;rut=7ad3659ab8bf9b98397e3fa04ee12fe3a9c3d0287bd966482d1e9266748aa94f">How to start python for a complete noob? : r/learnpython - Reddit</a>
+                      </h2>
+
+                    
+
+                    
+                      <div class="result__extras">
+                        <div class="result__extras__url">
+                          <span class="result__icon">
+                            <a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F18l6y75%2Fhow_to_start_python_for_a_complete_noob%2F&amp;rut=7ad3659ab8bf9b98397e3fa04ee12fe3a9c3d0287bd966482d1e9266748aa94f">
+                              <img class="result__icon__img" width="16" height="16" alt="" src="//external-content.duckduckgo.com/ip3/www.reddit.com.ico" name="i15" />
+                            </a>
+                          </span>
+                          <a class="result__url" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F18l6y75%2Fhow_to_start_python_for_a_complete_noob%2F&amp;rut=7ad3659ab8bf9b98397e3fa04ee12fe3a9c3d0287bd966482d1e9266748aa94f">
+                            www.reddit.com/r/learnpython/comments/18l6y75/how_to_start_python_for_a_complete_noob/
+                          </a>
+                          
+                        </div>
+                      </div>
+                    
+
+                    
+                      
+                        <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F18l6y75%2Fhow_to_start_python_for_a_complete_noob%2F&amp;rut=7ad3659ab8bf9b98397e3fa04ee12fe3a9c3d0287bd966482d1e9266748aa94f">Start with the basics: <b>Python</b> is a high-level, user-friendly programming language, so it&#x27;s perfect for beginners. Start by learning the basic syntax, data types, and control structures.</a>
+                      
+                    
+
+                    <div class="clear"></div>
+                  </div>
+                </div>
+              
+            
+              
+                <div class="result results_links results_links_deep web-result ">
+                  <div class="links_main links_deep result__body"> <!-- This is the visible part -->
+                    
+                      <h2 class="result__title">
+                        <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnprogramming%2Fcomments%2Ff7z0vz%2Fhow_do_you_actually_use_python_on_your_computer%2F&amp;rut=4e4c4634000615de959de5b049f76e116ce628328bc05e0898ffaae5ddd65dba">How do you *actually* use python on your computer? - Reddit</a>
+                      </h2>
+
+                    
+
+                    
+                      <div class="result__extras">
+                        <div class="result__extras__url">
+                          <span class="result__icon">
+                            <a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnprogramming%2Fcomments%2Ff7z0vz%2Fhow_do_you_actually_use_python_on_your_computer%2F&amp;rut=4e4c4634000615de959de5b049f76e116ce628328bc05e0898ffaae5ddd65dba">
+                              <img class="result__icon__img" width="16" height="16" alt="" src="//external-content.duckduckgo.com/ip3/www.reddit.com.ico" name="i15" />
+                            </a>
+                          </span>
+                          <a class="result__url" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnprogramming%2Fcomments%2Ff7z0vz%2Fhow_do_you_actually_use_python_on_your_computer%2F&amp;rut=4e4c4634000615de959de5b049f76e116ce628328bc05e0898ffaae5ddd65dba">
+                            www.reddit.com/r/learnprogramming/comments/f7z0vz/how_do_you_actually_use_python_on_your_computer/
+                          </a>
+                          
+                        </div>
+                      </div>
+                    
+
+                    
+                      
+                        <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnprogramming%2Fcomments%2Ff7z0vz%2Fhow_do_you_actually_use_python_on_your_computer%2F&amp;rut=4e4c4634000615de959de5b049f76e116ce628328bc05e0898ffaae5ddd65dba"><b>Python</b> doesn&#x27;t need an IDE to run, though. The <b>Python</b> interpreter can be ran using any shell. If you don&#x27;t know what a shell is: the most popular in Linux is bash (often just called the terminal), and Windows uses the command prompt (currently being phased out/revamped) or the PowerShell.</a>
+                      
+                    
+
+                    <div class="clear"></div>
+                  </div>
+                </div>
+              
+            
+              
+                <div class="result results_links results_links_deep web-result ">
+                  <div class="links_main links_deep result__body"> <!-- This is the visible part -->
+                    
+                      <h2 class="result__title">
+                        <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F10k55u9%2Fbest_resources_to_study_python%2F&amp;rut=c44946e5c593e58d664c4b7b7d5632f9219108d8c087e4cb426a4cd3948d02d5">Best resources to study Python : r/learnpython - Reddit</a>
+                      </h2>
+
+                    
+
+                    
+                      <div class="result__extras">
+                        <div class="result__extras__url">
+                          <span class="result__icon">
+                            <a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F10k55u9%2Fbest_resources_to_study_python%2F&amp;rut=c44946e5c593e58d664c4b7b7d5632f9219108d8c087e4cb426a4cd3948d02d5">
+                              <img class="result__icon__img" width="16" height="16" alt="" src="//external-content.duckduckgo.com/ip3/www.reddit.com.ico" name="i15" />
+                            </a>
+                          </span>
+                          <a class="result__url" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F10k55u9%2Fbest_resources_to_study_python%2F&amp;rut=c44946e5c593e58d664c4b7b7d5632f9219108d8c087e4cb426a4cd3948d02d5">
+                            www.reddit.com/r/learnpython/comments/10k55u9/best_resources_to_study_python/
+                          </a>
+                          
+                        </div>
+                      </div>
+                    
+
+                    
+                      
+                        <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F10k55u9%2Fbest_resources_to_study_python%2F&amp;rut=c44946e5c593e58d664c4b7b7d5632f9219108d8c087e4cb426a4cd3948d02d5">It covers everything related to <b>python</b> in depth. From Basics, oop, Data Analysis, Machine learning, image/video processing , Deep learning, User Interfaces, RPG game development.</a>
+                      
+                    
+
+                    <div class="clear"></div>
+                  </div>
+                </div>
+              
+            
+              
+                <div class="result results_links results_links_deep web-result ">
+                  <div class="links_main links_deep result__body"> <!-- This is the visible part -->
+                    
+                      <h2 class="result__title">
+                        <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F9soa3h%2Fwhat_do_you_guys_use_python_for%2F&amp;rut=1c19a50d2ade8b6b1d9f435b92f2ca52b9baa9b9fce6c73fd8226a87006ac7a1">What do you guys use Python for? : r/learnpython - Reddit</a>
+                      </h2>
+
+                    
+
+                    
+                      <div class="result__extras">
+                        <div class="result__extras__url">
+                          <span class="result__icon">
+                            <a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F9soa3h%2Fwhat_do_you_guys_use_python_for%2F&amp;rut=1c19a50d2ade8b6b1d9f435b92f2ca52b9baa9b9fce6c73fd8226a87006ac7a1">
+                              <img class="result__icon__img" width="16" height="16" alt="" src="//external-content.duckduckgo.com/ip3/www.reddit.com.ico" name="i15" />
+                            </a>
+                          </span>
+                          <a class="result__url" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F9soa3h%2Fwhat_do_you_guys_use_python_for%2F&amp;rut=1c19a50d2ade8b6b1d9f435b92f2ca52b9baa9b9fce6c73fd8226a87006ac7a1">
+                            www.reddit.com/r/learnpython/comments/9soa3h/what_do_you_guys_use_python_for/
+                          </a>
+                          
+                        </div>
+                      </div>
+                    
+
+                    
+                      
+                        <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F9soa3h%2Fwhat_do_you_guys_use_python_for%2F&amp;rut=1c19a50d2ade8b6b1d9f435b92f2ca52b9baa9b9fce6c73fd8226a87006ac7a1">Power- <b>Python</b> can do pretty much anything any other language can do, but has incredible handling of data in it&#x27;s libraries. Reply reply More repliesMore repliesMore repliesMore replies mephistophyles • Here&#x27;s an overview of what I&#x27;ve used <b>Python</b> for in the past 6 months:</a>
+                      
+                    
+
+                    <div class="clear"></div>
+                  </div>
+                </div>
+              
+            
+              
+                <div class="result results_links results_links_deep web-result ">
+                  <div class="links_main links_deep result__body"> <!-- This is the visible part -->
+                    
+                      <h2 class="result__title">
+                        <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnprogramming%2Fcomments%2F195sc9e%2Fis_python_really_worth_learning_if_you_dont_plan%2F&amp;rut=b0eca9671384030deb444c925f98b48f69e0ef35fec18cef0ec9f19675824b92">Is Python really worth learning if you don&#x27;t plan on doing ... - Reddit</a>
+                      </h2>
+
+                    
+
+                    
+                      <div class="result__extras">
+                        <div class="result__extras__url">
+                          <span class="result__icon">
+                            <a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnprogramming%2Fcomments%2F195sc9e%2Fis_python_really_worth_learning_if_you_dont_plan%2F&amp;rut=b0eca9671384030deb444c925f98b48f69e0ef35fec18cef0ec9f19675824b92">
+                              <img class="result__icon__img" width="16" height="16" alt="" src="//external-content.duckduckgo.com/ip3/www.reddit.com.ico" name="i15" />
+                            </a>
+                          </span>
+                          <a class="result__url" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnprogramming%2Fcomments%2F195sc9e%2Fis_python_really_worth_learning_if_you_dont_plan%2F&amp;rut=b0eca9671384030deb444c925f98b48f69e0ef35fec18cef0ec9f19675824b92">
+                            www.reddit.com/r/learnprogramming/comments/195sc9e/is_python_really_worth_learning_if_you_dont_plan/
+                          </a>
+                          
+                        </div>
+                      </div>
+                    
+
+                    
+                      
+                        <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnprogramming%2Fcomments%2F195sc9e%2Fis_python_really_worth_learning_if_you_dont_plan%2F&amp;rut=b0eca9671384030deb444c925f98b48f69e0ef35fec18cef0ec9f19675824b92"><b>Python</b> is touted as the best general purpose language but it seems that most <b>Python</b> jobs are in data science and machine learning. Is it really worth it learning if you want to do more generic development like web stuff or are you better off just focussing on JS and Java/C#? Share Add a Comment Sort by: Best Open comment sort options Best Top New Controversial Old Q&amp;A AutoModerator ...</a>
+                      
+                    
+
+                    <div class="clear"></div>
+                  </div>
+                </div>
+              
+            
+              
+                <div class="result results_links results_links_deep web-result ">
+                  <div class="links_main links_deep result__body"> <!-- This is the visible part -->
+                    
+                      <h2 class="result__title">
+                        <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F1cy3s8f%2Fhow_does_python_work%2F&amp;rut=d82ef005004d140af63b37d543539c6577892d4cca1453647d802987ef336967">&quot;how&quot; does python work? : r/learnpython - Reddit</a>
+                      </h2>
+
+                    
+
+                    
+                      <div class="result__extras">
+                        <div class="result__extras__url">
+                          <span class="result__icon">
+                            <a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F1cy3s8f%2Fhow_does_python_work%2F&amp;rut=d82ef005004d140af63b37d543539c6577892d4cca1453647d802987ef336967">
+                              <img class="result__icon__img" width="16" height="16" alt="" src="//external-content.duckduckgo.com/ip3/www.reddit.com.ico" name="i15" />
+                            </a>
+                          </span>
+                          <a class="result__url" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F1cy3s8f%2Fhow_does_python_work%2F&amp;rut=d82ef005004d140af63b37d543539c6577892d4cca1453647d802987ef336967">
+                            www.reddit.com/r/learnpython/comments/1cy3s8f/how_does_python_work/
+                          </a>
+                          
+                        </div>
+                      </div>
+                    
+
+                    
+                      
+                        <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Flearnpython%2Fcomments%2F1cy3s8f%2Fhow_does_python_work%2F&amp;rut=d82ef005004d140af63b37d543539c6577892d4cca1453647d802987ef336967">Essentially, <b>Python</b> &quot;borrows&quot; the speed of C for performance-sensitive tasks by calling those C functions, but you get the ease-of-use and quick iteration of <b>Python</b> not doing all your basic IO (input/output) in C. As for games, it&#x27;s somewhat true that modern games are poorly optimized, but this isn&#x27;t actually due to programming language.</a>
+                      
+                    
+
+                    <div class="clear"></div>
+                  </div>
+                </div>
+              
+            
+              
+                <div class="result results_links results_links_deep web-result ">
+                  <div class="links_main links_deep result__body"> <!-- This is the visible part -->
+                    
+                      <h2 class="result__title">
+                        <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fpythoncoding%2F&amp;rut=ff4bc961908dd2432cb2347946313d7bb9723392304639beb227c5e6ab5e0397">Python Coding: a subreddit for advanced Python content</a>
+                      </h2>
+
+                    
+
+                    
+                      <div class="result__extras">
+                        <div class="result__extras__url">
+                          <span class="result__icon">
+                            <a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fpythoncoding%2F&amp;rut=ff4bc961908dd2432cb2347946313d7bb9723392304639beb227c5e6ab5e0397">
+                              <img class="result__icon__img" width="16" height="16" alt="" src="//external-content.duckduckgo.com/ip3/www.reddit.com.ico" name="i15" />
+                            </a>
+                          </span>
+                          <a class="result__url" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fpythoncoding%2F&amp;rut=ff4bc961908dd2432cb2347946313d7bb9723392304639beb227c5e6ab5e0397">
+                            www.reddit.com/r/pythoncoding/
+                          </a>
+                          
+                        </div>
+                      </div>
+                    
+
+                    
+                      
+                        <a class="result__snippet" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fpythoncoding%2F&amp;rut=ff4bc961908dd2432cb2347946313d7bb9723392304639beb227c5e6ab5e0397">**/r/Pythoncoding is a subreddit for advanced <b>Python</b> content.** Developers can share articles and news about the <b>Python</b> ecosystem, deep dives into <b>Python</b> intricacies, or showcase advanced projects they are working on.</a>
+                      
+                    
+
+                    <div class="clear"></div>
+                  </div>
+                </div>
+              
+            
+
+            
+              
+              
+                <div class="nav-link">
+                  <form action="/html/" method="post">
+                    <input type="submit" class='btn btn--alt' value="Next" />
+                    <input type="hidden" name="q" value="site:reddit.com python" />
+                    <input type="hidden" name="s" value="10" />
+                    <input type="hidden" name="nextParams" value="" />
+                    <input type="hidden" name="v" value="l" />
+                    <input type="hidden" name="o" value="json" />
+                    <input type="hidden" name="dc" value="11" />
+                    <input type="hidden" name="api" value="d.js" />
+                    <input type="hidden" name="vqd" value="4-42091677161509407767154133474423098117" />
+
+                    
+                    
+                    
+                      <input name="kl" value="wt-wt" type="hidden" />
+                    
+                    
+                    
+                    
+                  </form>
+                </div>
+              
+            
+
+            <div class="feedback-btn">
+              <a rel="nofollow" href="//duckduckgo.com/feedback.html" target="_new">Feedback</a>
+            </div>
+            <div class="clear"></div>
+          </div>
+        </div>
+      </div> <!-- links wrapper //-->
+    
+  </div>
+
+  <div id="bottom_spacing2"></div>
+
+  
+    <img src="//duckduckgo.com/t/sl_h"/>
+  
+</body>
+</html>
