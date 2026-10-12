@@ -39,7 +39,7 @@ def reddit_plan(target, limit):
     if m:
         path = m.group(1).rstrip("/")
         return ("thread", f"https://old.reddit.com{path}.json?limit={limit * 3}&depth=3&sort=top",
-                f"https://www.reddit.com{path}/.rss?limit={min(limit * 3, 100)}", "")
+                f"https://www.reddit.com{path}.rss?limit={min(limit * 3, 100)}", "")
     m = re.match(r"https?://(?:www\.|old\.)?reddit\.com/r/([^/?#]+)/?$", t)
     sub, query = (m.group(1), "") if m else (None, t)
     if not m:
@@ -140,15 +140,49 @@ def parse_archive_html(html_text, url):
     return out
 
 
+def _norm(s):
+    return " " + re.sub(r"[\W_]+", " ", (s or "").lower()).strip() + " "
+
+
+def query_terms(query):
+    """Quoted phrases stay whole; other words are single terms. Hyphens and underscores count as spaces."""
+    phrases = re.findall(r'"([^"]+)"', query)
+    rest = re.sub(r'"[^"]+"', " ", query)
+    return [t for t in (_norm(x).strip() for x in phrases + rest.split()) if t]
+
+
+def relevant(it, terms):
+    hay = _norm(it["title"] + " " + it["text"])
+    return all(t in hay for t in terms)
+
+
+def keep_relevant(items, query):
+    """Search hits count only if they hold every query term (or quoted phrase). Returns (kept, dropped_count)."""
+    terms = query_terms(query)
+    if not terms:
+        return items, 0
+    kept = [i for i in items if relevant(i, terms)]
+    return kept, len(items) - len(kept)
+
+
 def read_reddit(target, limit=10, depth=3, threads=2):
     kind, jurl, rurl, query = reddit_plan(target, limit)
     gaps = []
-    items, route = [], "json"
+    items, route, dropped = [], "json", 0
+
+    def screen(found):  # search hits must be on topic; thread and sub reads are the page asked for
+        nonlocal dropped
+        if kind != "search":
+            return found
+        found, n = keep_relevant(found, query)
+        dropped = n  # per route attempt, so a retry does not double count
+        return found
+
     r = core.get(jurl)
     if r.ok:
         try:
             d = r.json()
-            items = parse_reddit_thread(d, limit, depth) if kind == "thread" else parse_reddit_listing(d)
+            items = screen(parse_reddit_thread(d, limit, depth) if kind == "thread" else parse_reddit_listing(d))
         except (ValueError, KeyError, IndexError):
             gaps.append("reddit json unparseable")
     else:
@@ -158,7 +192,7 @@ def read_reddit(target, limit=10, depth=3, threads=2):
         r = core.get(rurl)
         if r.ok:
             try:
-                items = parse_reddit_rss(r.text, kind)
+                items = screen(parse_reddit_rss(r.text, kind))
             except ET.ParseError:
                 gaps.append("reddit rss unparseable")
         else:
@@ -166,7 +200,7 @@ def read_reddit(target, limit=10, depth=3, threads=2):
     if not items:
         route = "search-engine"
         if kind == "thread":
-            snap = core.get("https://archive.org/wayback/available?url=" + _q(rurl.split("/.rss")[0].replace("www.", "old.")))
+            snap = core.get("https://archive.org/wayback/available?url=" + _q(rurl.split(".rss")[0].replace("www.", "old.")))
             snap_url = ""
             try:
                 snap_url = snap.json()["archived_snapshots"]["closest"]["url"] if snap.ok else ""
@@ -184,9 +218,13 @@ def read_reddit(target, limit=10, depth=3, threads=2):
             q = "site:reddit.com " + (query or re.sub(r"https?://[^/]+/", "", target))
             r = core.get("https://html.duckduckgo.com/html/?q=" + _q(q))
             if r.ok:
-                items = parse_ddg(r.text)[:limit]
+                items = screen(parse_ddg(r.text))[:limit]
             else:
                 gaps.append(_blocked("duckduckgo.com", r))
+    if dropped:
+        gaps.append(f"relevance filter dropped {dropped} off-topic item(s) that lacked the query terms")
+    if kind == "thread" and not items:
+        gaps.append("BLOCKED: no comments could be read for this thread (json, rss and archive all failed); open it in a browser")
     # Open the top threads of a search so comments get read, not only titles.
     if kind != "thread" and threads and route in ("json", "rss") and items:
         top = sorted([i for i in items if "/comments/" in i["url"]], key=lambda i: -(i["score"] or 0))[:threads]
@@ -194,7 +232,9 @@ def read_reddit(target, limit=10, depth=3, threads=2):
             sub = read_reddit(p["url"], limit=max(3, limit // 2), depth=depth, threads=0)
             items += [i for i in sub["items"] if i["kind"] == "comment"]
             gaps += sub["gaps"]
-    return _result(items, gaps, route)
+    res = _result(items, gaps, route)
+    res["dropped"] = dropped
+    return res
 
 
 # ============================ Hacker News ============================

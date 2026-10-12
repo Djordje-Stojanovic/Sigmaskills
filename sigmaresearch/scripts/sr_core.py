@@ -220,7 +220,13 @@ def score_items(items, now=None):
             indep = 0.0
         seen.add(sig)
         it["rank"] = round(0.40 * votes + 0.35 * recency + 0.25 * indep, 3)
-    return sorted(items, key=lambda i: -i["rank"])
+    # Items with no date rank below every dated item (search-engine snippets carry neither date nor score).
+    dated = [i["rank"] for i in items if i["date"]]
+    if dated:
+        for it in items:
+            if not it["date"]:
+                it["rank"] = round(min(it["rank"], min(dated) - 0.001), 3)
+    return sorted(items, key=lambda i: (not i["date"], -i["rank"]))
 
 
 def unique_sources(items):
