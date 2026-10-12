@@ -25,7 +25,7 @@ R_SEARCH = "https://www.reddit.com/r/programming/search.rss?q=python&restrict_sr
 R_SEARCH_JSON = "https://old.reddit.com/r/programming/search.json?q=python&restrict_sr=1&sort=top&t=year&limit=3"
 INDEX[R_SEARCH] = (FX / "reddit_search.rss.xml").read_text(encoding="utf-8")
 THREAD = "https://www.reddit.com/r/programming/comments/1x1pypx/python_release_python_3150/"
-INDEX[THREAD.rstrip("/") + "/.rss?limit=9"] = (FX / "reddit_thread.rss.xml").read_text(encoding="utf-8")
+INDEX[THREAD.rstrip("/") + ".rss?limit=9"] = (FX / "reddit_thread.rss.xml").read_text(encoding="utf-8")
 
 
 class Fake:
@@ -66,7 +66,7 @@ class TestReddit(Base):
         self.assertNotIn("submitted by", " ".join(i["text"] for i in items))
 
     def test_rss_thread_post_then_comments(self):
-        items = rd.parse_reddit_rss(INDEX[THREAD.rstrip("/") + "/.rss?limit=9"], "thread")
+        items = rd.parse_reddit_rss(INDEX[THREAD.rstrip("/") + ".rss?limit=9"], "thread")
         self.assertEqual(items[0]["kind"], "post")
         self.assertTrue(all(i["kind"] == "comment" for i in items[1:]))
         self.assertGreaterEqual(len(items), 5)
@@ -114,9 +114,51 @@ class TestReddit(Base):
     def test_opens_top_threads_for_comments(self):
         f = self.use(Fake(blocked={"https://old.reddit.com": 401}))
         first = rd.parse_reddit_rss(INDEX[R_SEARCH], "search")[0]["url"]  # threads sort ties by feed order
-        f.pages[first.rstrip("/") + "/.rss?limit=9"] = INDEX[THREAD.rstrip("/") + "/.rss?limit=9"]
+        f.pages[first.rstrip("/") + ".rss?limit=9"] = INDEX[THREAD.rstrip("/") + ".rss?limit=9"]
         r = rd.read_reddit("r/programming python", limit=3, threads=1)
         self.assertTrue(any(i["kind"] == "comment" for i in r["items"]))
+
+    def test_query_terms_phrase_and_hyphen(self):
+        self.assertEqual(rd.query_terms('social-auto-upload "tiktok uploader"'), ["tiktok uploader", "social auto upload"])
+        self.assertEqual(rd.query_terms("r/x"), ["r x"])
+
+    def test_relevance_filter_drops_offtopic_and_counts(self):
+        items = rd.parse_reddit_rss((FX / "reddit_offtopic_search.rss.xml").read_text(encoding="utf-8"), "search")
+        self.assertEqual(len(items), 6)  # recorded live: r/onlyfansadvice, r/SideHustleGold ... none mention the query
+        kept, dropped = rd.keep_relevant(items, "social-auto-upload tiktok")
+        self.assertEqual((kept, dropped), ([], 6))
+
+    def test_relevance_keeps_hits_with_all_terms_or_phrase(self):
+        a = core.item("reddit", "u1", "Social Auto Upload for TikTok", "")
+        b = core.item("reddit", "u2", "Side hustles", "we use social_auto_upload and tiktok daily")
+        c = core.item("reddit", "u3", "Side hustles", "only tiktok here")
+        kept, dropped = rd.keep_relevant([a, b, c], "social-auto-upload tiktok")
+        self.assertEqual((kept, dropped), ([a, b], 1))
+        self.assertEqual(rd.keep_relevant([a, c], '"auto upload for tiktok"')[1], 1)
+
+    def test_read_reddit_search_reports_dropped_and_opens_no_offtopic_threads(self):
+        url = "https://www.reddit.com/search.rss?q=social-auto-upload%20tiktok&sort=top&t=year&limit=8"
+        f = self.use(Fake(extra={url: (FX / "reddit_offtopic_search.rss.xml").read_text(encoding="utf-8")},
+                          blocked={"https://old.reddit.com": 401, "https://html.duckduckgo.com": 403}))
+        r = rd.read_reddit("social-auto-upload tiktok", limit=8, threads=2)
+        self.assertEqual(r["items"], [])
+        self.assertEqual(r["dropped"], 6)
+        self.assertTrue(any("dropped 6" in g for g in r["gaps"]))
+        self.assertFalse(any("/comments/" in c for c in f.calls))
+
+    def test_thread_reads_dot_rss_form(self):
+        f = self.use(Fake(blocked={"https://old.reddit.com": 401}))
+        r = rd.read_reddit(THREAD, limit=3, threads=0)
+        self.assertEqual(r["route"], "rss")
+        self.assertIn(THREAD.rstrip("/") + ".rss?limit=9", f.calls)
+        self.assertTrue(any(i["kind"] == "comment" for i in r["items"]))
+        self.assertFalse(any("BLOCKED" in g for g in r["gaps"]))
+
+    def test_thread_with_nothing_loading_says_blocked(self):
+        self.use(Fake(blocked={"https://old.reddit.com": 401, "https://www.reddit.com": 429, "https://archive.org": 403}))
+        r = rd.read_reddit(THREAD, limit=3, threads=0)
+        self.assertEqual(r["items"], [])
+        self.assertTrue(any(g.startswith("BLOCKED") for g in r["gaps"]))
 
 
 class TestPlatforms(Base):
@@ -294,6 +336,14 @@ class TestScoringAndCli(Base):
         it = self.make(score=None, date="")
         core.score_items([it])
         self.assertTrue(0 < it["rank"] < 1)
+
+    def test_undated_items_rank_below_dated_even_with_votes(self):
+        now = datetime(2026, 10, 12, tzinfo=timezone.utc)
+        undated = self.make(score=5000, date="", text="snippet")
+        dated = self.make(score=0, date="2020-01-01T00:00:00+00:00", text="old post")
+        out = core.score_items([undated, dated], now)
+        self.assertEqual(out[0], dated)
+        self.assertLess(undated["rank"], dated["rank"])
 
     def test_unique_sources_counts_platform_source_pairs(self):
         items = [self.make(source="a"), self.make(source="a"), self.make(source="b"), self.make(platform="reddit", source="a")]

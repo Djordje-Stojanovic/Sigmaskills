@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmaresearch` Reddit reader: a search hit counts only if its title or text holds every query term (or quoted phrase), and the count of dropped items is reported as a gap and in `stats.dropped`. Thread URLs read `<thread>.rss` and report `BLOCKED` when no route loads. Items without a date rank below dated items. (#101)
+
 ### Added
 
 - `sigmaresearch` v2: bundled stdlib Python readers behind one interface (`scripts/read.py <platform> <query|url> [--limit N] [--json]`) for Reddit (JSON, then RSS, then a search-engine or archive fallback), Hacker News, GitHub, Stack Overflow and YouTube comments, plus a normalizer for X text copied from the owner's signed-in Chrome. Adds parallel fetch with per-host rate limits and bounded 429 backoff, a 24-hour cache in `~/.cache/sigmaresearch`, source scoring (votes, recency, independence), a Contradictions section in the report, a depth and early-stop rule, and `read.py selftest`. Blocked hosts are reported, never bypassed. (#99)

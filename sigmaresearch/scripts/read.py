@@ -38,15 +38,16 @@ def run(platforms, target, limit=10, depth=3, threads=None, from_json=None):
 
     with ThreadPoolExecutor(max(1, len(names))) as ex:
         results = list(ex.map(one, names))
-    items, gaps, routes = [], [], {}
+    items, gaps, routes, dropped = [], [], {}, 0
     for name, r in results:
         items += r["items"]
         gaps += [{"platform": name, "gap": g} for g in r["gaps"]]
         routes[name] = r["route"]
+        dropped += r.get("dropped", 0)
     items = core.score_items(items)
     stats = {"items": len(items), "platforms": sorted({i["platform"] for i in items}),
              "unique_sources": core.unique_sources(items), "pages": len({i.get("thread") or i["url"] for i in items}),
-             "routes": routes}
+             "routes": routes, "dropped": dropped}
     return {"query": target, "items": items, "gaps": gaps, "stats": stats}
 
 
