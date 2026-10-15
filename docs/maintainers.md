@@ -23,7 +23,7 @@ Sigmaskills/
 ├── sigmabrief/               SKILL.md · agents/ · references/
 ├── sigmaship/                SKILL.md · agents/ · references/
 ├── sigmawrite/               SKILL.md · agents/
-├── sigmaresearch/             SKILL.md · agents/ · references/ · scripts/ (readers)
+├── sigmaresearch/             SKILL.md · agents/ · references/ · scripts/ (readers, source-log counter)
 ├── sigmarefactor/            SKILL.md · agents/ · references/
 ├── easytalk/                 SKILL.md · agents/ · template.html
 └── storgestudio-arena-create/ SKILL.md · agents/ · references/ · kit/
