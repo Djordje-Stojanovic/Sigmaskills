@@ -61,7 +61,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
 | **EasyTalk** | `easytalk` | Plain chat with status and question boards | Interactive HTML board and copied replies |
 | **Arena Create** | `storgestudio-arena-create` | Blind-pairs arena that ranks any options by Elo per metric | Local arena page, Elo board with ranges and costs |
-| **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub and Hugging Face for research | Answer with source links, dates, read scope and access gaps |
+| **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub, Hugging Face, video sites and non-English pages; counts sources read in full | Answer with source links, dates, read scope and access gaps |
 
 ### Which one do I need?
 
@@ -185,7 +185,7 @@ $sigmaresearch Research recent discussions about local language models
 | `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
 | `easytalk` | “easy talk” · status or question batch · `EASYTALK REPLY` | Conversation mode until “easy talk off” |
 | `storgestudio-arena-create` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
-| `sigmaresearch` | topic · date range · depth | Reports sources actually read and access gaps |
+| `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |
 
 ### Requirements
 
