@@ -6,7 +6,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 
 | | |
 |---|---|
-| **Release** | [**v0.6.1**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.6.1) |
+| **Release** | [**v0.7.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.7.0) |
 | **Changelog** | [CHANGELOG.md](CHANGELOG.md) |
 | **License** | [MIT](LICENSE) |
 | **Spec** | [agentskills.io](https://agentskills.io/) |
@@ -105,7 +105,7 @@ Keeps replies short and puts status reports or question batches on one interacti
 
 ### Arena Create
 
-Ranks many options by your taste. After a short grilling round it builds an **arena**: two options side by side, names hidden, sides random. You pick per metric. A Bradley-Terry fit turns the picks into an Elo board with 95 % ranges, so overlapping bars read as a tie. The kit is a standard-library Python server and one HTML page: local only, no install. Available from repository source until the next Release.
+Ranks many options by your taste. After a short grilling round it builds an **arena**: two options side by side, names hidden, sides random. You pick per metric. A Bradley-Terry fit turns the picks into an Elo board with 95 % ranges, so overlapping bars read as a tie. The kit is a standard-library Python server and one HTML page: local only, no install.
 
 ### SigmaResearch
 
