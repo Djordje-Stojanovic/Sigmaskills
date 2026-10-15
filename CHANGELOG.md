@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-10-15
+
 ### Fixed
 
 - `sigmaresearch` Reddit reader: a search hit counts only if its title or text holds every query term (or quoted phrase), and the count of dropped items is reported as a gap and in `stats.dropped`. Thread URLs read `<thread>.rss` and report `BLOCKED` when no route loads. Items without a date rank below dated items. (#101)
@@ -249,7 +251,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.5.0...v0.5.1
