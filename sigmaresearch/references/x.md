@@ -9,4 +9,4 @@ Adapted from the owner's `research-access.md` recipe, tested 2026-10-04. Availab
 5. Open relevant status permalinks for threads and visible replies. Scroll and read more within the requested depth. Label omitted, unavailable or collapsed material as partial; the browser view does not prove all replies were read.
 6. Close the tab you created. Leave the owner's other tabs intact.
 
-Stop on a bot check, access denial, 403 or 429. Do not replay requests, extract session tokens, invoke private endpoints or try mirrors after a block. If no permitted route succeeds, finish with an explicit X access gap and sources from other platforms.
+Stop on a bot check, access denial, 403 or 429. Do not replay requests, extract session tokens or invoke private endpoints after a block. If no permitted route succeeds, finish with an explicit X access gap and sources from other platforms.

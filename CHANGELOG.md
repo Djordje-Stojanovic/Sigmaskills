@@ -6,10 +6,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
+- `sigmaresearch`: an **access ladder** for every URL (public JSON, RSS or Atom, old or lite HTML, official API, archive mirror, the host's browser, the owner's browser session, video subtitles or audio with speech-to-text). When a rung is blocked, the skill takes the next one and logs which rung worked, instead of giving up on a reachable platform. Pages in another language are fetched in the original, translated inline, with the original quote and URL kept.
+- `sigmaresearch`: **counting rules** for depth. A source is one unique page read in full; snippets and digests count 0; the same URL counts once; at most `per` count per meta source (a site or platform family taken from the URL). A source-log contract (`N. meta source | URL | date | language | read=full|digest | words read | takeaway`) and `scripts/source-log.mjs`, which counts a log against plan words (`meta= per= full= split= must=`) and exits 1 when the plan is not met. New tests in `test/sigmaresearch.test.js`.
 - `storgestudio-arena-create`: optional reference media per group (`refs`). The page shows them as thumbnails sized by the window. Click one for full size, `←`/`→` for the next, `R` for all in a grid; `F`/`G` show them in a column beside the option. Optional `anchors` (reference players): they get a rating but never take a top-K place, and after `settings.anchor_games` games (default 8) their pairs get ×0.1 weight. The self-test covers both.
 
 ### Changed
 
+- `sigmaresearch`: a **429** now means wait 45 to 60 seconds and retry that URL once; a 403, login wall or bot check ends that route for that URL and the skill takes the next rung of the ladder. Before, it stopped all requests to the platform and tried no other route. It still never logs in, solves a CAPTCHA, uses cookies or tokens, or gets past a paywall. Reddit now starts with the thread `.json`, then RSS.
 - `storgestudio-arena-create`: the metric row keys go by key position (`e.code`), so QWERTZ and QWERTY both work (`Q W E`, `A S D`, `Y X C`/`Z X C`, `U I O`, `J K L`). The arrows no longer vote; they move between references. The page uses the full window width.
 
 ## [0.6.1] — 2026-10-06

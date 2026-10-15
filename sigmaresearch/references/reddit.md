@@ -1,6 +1,8 @@
 # Reddit RSS
 
-Adapted from the owner's `research-access.md` recipe, tested 2026-10-04. That is historical evidence, not a fresh availability check. Follow the access boundaries in [SigmaResearch](../SKILL.md#access-boundaries); the original recipe's 429 retry is intentionally omitted.
+Adapted from the owner's `research-access.md` recipe, tested 2026-10-04 and 2026-10-15. That is historical evidence, not a fresh availability check. Follow the access boundaries in [SigmaResearch](../SKILL.md#access-boundaries) and the [access ladder](access-ladder.md).
+
+**Rung 1, JSON:** add `.json?limit=500` to a thread URL (`https://www.reddit.com/r/SUB/comments/ID/slug/.json?limit=500`; also on `old.reddit.com`). It returns the post and every comment. Some networks get 403 here: take the RSS feeds below, which are rung 2.
 
 Use `curl` for public feeds, without cookies or login. On PowerShell, call `curl.exe` to avoid the `curl` alias. Keep requests sequential and wait about **10 seconds between requests**, including requests across different subreddits. Do not parallelize them.
 
@@ -30,8 +32,8 @@ curl --silent --show-error --max-time 30 --dump-header reddit-headers.txt --outp
 sleep 10
 ```
 
-Write temporary response files in a task-owned temporary directory. The user agent is ordinary request metadata, not a way to defeat a block. No automatic retries or redirect following: inspect a redirect before deciding whether it still points to a public feed. A transport error, non-feed body or unexpected status is an access gap. On 403/429, stop all Reddit requests for this run.
+Write temporary response files in a task-owned temporary directory. The user agent is ordinary request metadata, not a way to defeat a block. No automatic retries (one manual retry after a 429 wait) or redirect following: inspect a redirect before deciding whether it still points to a public feed. A transport error, non-feed body or unexpected status is an access gap. On 429 wait 45 to 60 seconds and retry that URL once. On 403 or a second 429, stop that route and take the next rung of the ladder.
 
 Feeds use Atom XML: parse with its namespace `http://www.w3.org/2005/Atom`. Each `entry` has a link, date fields and HTML content. Decode HTML entities and strip markup while preserving text and links; never execute the HTML. Keep the canonical thread/comment URL beside extracted evidence.
 
-The feed limit is a requested cap, not a guarantee of the whole post plus 24 comments. Deleted, omitted or truncated material stays unknown. Record the entries actually read and whether replies are partial. Do not switch to `.json`, `api.reddit.com`, mirrors or archives after a block.
+`limit=100` returned a post with 95 comments on 2026-10-15; `limit=25` returns about 24. The feed limit is a requested cap, not a guarantee of the whole post. Deleted, omitted or truncated material stays unknown. Record the entries actually read and whether replies are partial.
