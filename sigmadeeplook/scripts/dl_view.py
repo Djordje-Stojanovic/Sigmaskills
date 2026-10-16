@@ -187,6 +187,8 @@ def direct_cost(d):
 def deeplook_cost(d, look_md):
     first = core.direct_tokens(len(look_md.encode("utf-8")))
     arts = sum(a.get("tokens_est", 0) for a in d["artifacts"] if a.get("kind") != "internal")
+    if d["tier"] == "direct":  # the Read next of a direct look is the file itself: LOOK.md (tiny) plus the file
+        arts = core.direct_tokens(d["size"])
     return first, first + arts
 
 

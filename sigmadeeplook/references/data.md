@@ -6,20 +6,20 @@ CSV, TSV, JSON, JSONL, Parquet, Arrow, SQLite, XML, YAML, TOML. Give the agent t
 
 - Anything that needs the whole table: sums, joins, filters, group-bys. Write SQL (DuckDB, SQLite) or pandas against the file on disk, run it, and quote the result with the query. Never total rows by eye.
 - Legacy `.xls` and database dumps for servers other than SQLite: convert first (LibreOffice or csvkit `in2csv`).
-- A huge file: the look samples (flag `SAMPLED`) and counts rows by streaming. Say which part was read.
+- A huge file: CSV is profiled over every row by streaming (a time cap of 30 s gives flag `PARTIAL`); only `sample.md` rows come from the first 20,000. Say which part was read.
 - Meaning of columns: names and types are facts; what a column means is a question for the human.
 
 ## Pipeline
 
 1. Triage as bytes: size, encoding and BOM, line endings, delimiter (`csv.Sniffer`), header or not, streaming row count.
 2. RFC 4180 checks: wrong field count per line, quotes inside unquoted fields. Bad rows go to `rejects.csv` and a `REJECT-ROW` flag; the good rows still load. DuckDB with `store_rejects` when present.
-3. Schema from a 20,000-row sample (`schema.json`): type, null percent, distinct count, min and max, five examples per column. `sample.md`: 5 head, 5 tail and 10 random rows.
+3. CSV and TSV: a full-pass profile per column (`schema.json`): type mix, empty percent, distinct count, range and median, top values. It raises leads: `REPEATED-HEADER`, `DUPLICATE-KEYS`, `MIXED-TYPES`, `MIXED-DATE-FORMATS`, `NULL-TOKENS`, `OUTLIER`, `NEGATIVE-VALUES`, `CASE-VARIANTS`, `REJECT-ROW`. `sample.md`: 5 head, 5 tail and 10 random rows.
 4. JSON: a skeleton of keys, types and array lengths (`skeleton.json`). JSONL: first and bad lines.
 5. SQLite: opened read-only and immutable (`mode=ro&immutable=1`); tables, columns, row counts, indexes. Parquet and Arrow: schema and row groups from the footer (pyarrow or DuckDB). XML: element tree skeleton, with entity declarations refused. YAML and TOML: parsed structure.
 
 ## Failure modes
 
-- Type sniffing runs on a sample, so a bad value late in the file fails a load. Raise the sample size or force a type.
+- Other formats (JSON, JSONL) are typed from what is read; a bad value late in a huge file can still fail a load. Force a type.
 - Latin-1 read as UTF-8 gives mojibake; the look reports the encoding it chose and why.
 - Leading zeros, long IDs and dates become numbers or floats in pandas and Excel; a column of ZIP codes is text.
 - pandas turns `NA`, `null` and `N/A` text into NaN by default.
