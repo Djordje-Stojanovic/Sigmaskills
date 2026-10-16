@@ -676,6 +676,10 @@ def archive_overview(members):
 def look_archive(look):
     p = look.path
     st = look.subtype
+    if st == "gitbundle":
+        import dl_extra
+        dl_extra.look_gitbundle(look)
+        return
     members, extra = [], {}
     single = st in ("gzip", "bzip2", "xz")
     try:
@@ -774,8 +778,11 @@ def look_archive(look):
             look.flag("EXTRACT-STOPPED", "extract", str(e)[:150], "")
     elif look.extract and refusals:
         look.line("--extract was given but the screen refused: nothing was written.")
-    elif not look.extract:
+    elif not look.extract and st != "epub":
         look.skip("member contents", "listed only; pass --extract (or --recurse N) after the screen passes", None, "python look.py FILE --extract")
+    if st == "epub" and not refusals:
+        import dl_extra
+        dl_extra.epub_extras(look)
     look.step("list and screen", "stdlib")
     look.ask_human("Do you trust where this archive came from?", "Should the members be extracted and looked at (--extract / --recurse N)?")
 

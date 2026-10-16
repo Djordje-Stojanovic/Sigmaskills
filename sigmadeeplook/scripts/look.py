@@ -35,7 +35,8 @@ HANDLERS = {  # type -> (module, function)
     "email": ("dl_docs", "look_email"), "web": ("dl_docs", "look_web"),
     "binary": ("dl_bins", "look_binary"), "archive": ("dl_bins", "look_archive"), "font": ("dl_bins", "look_font"),
     "3d": ("dl_3d", "look_3d"), "code": ("dl_bins", "look_code"), "data": ("dl_data", "look_data"),
-    "unknown": ("dl_bins", "look_unknown"),
+    "unknown": ("dl_bins", "look_unknown"), "log": ("dl_logs", "look_log"), "subtitle": ("dl_logs", "look_subtitle"),
+    "cert": ("dl_extra", "look_cert"), "model": ("dl_extra", "look_model"), "diskimage": ("dl_extra", "look_diskimage"),
 }
 DRILL_FLAGS = ("page", "sheet", "sql", "table", "func", "member", "grep", "speaker")
 

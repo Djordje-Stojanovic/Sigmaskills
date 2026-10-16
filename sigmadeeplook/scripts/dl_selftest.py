@@ -80,7 +80,7 @@ def contract(out, lj):
         return "identity line lacks sha or folder"
     plain = re.sub(r"```.*?```", "", md, flags=re.S)
     heads = re.findall(r"^## (.+?)\s*$", plain, re.M)
-    base = [re.sub(r" \(continued\)$", "", h) for h in heads]
+    base = [re.sub(r" \(continued\)$", "", h) for h in heads if not h.startswith("Content: ")]
     order = [SECTIONS.index(h) for h in base if h in SECTIONS]
     if len(order) != len(base) or order != sorted(order):
         return f"sections {heads}"

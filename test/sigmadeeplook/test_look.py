@@ -44,6 +44,7 @@ class Contract(unittest.TestCase):
         r, out = look("bad.csv")
         self.assertEqual(r.returncode, 0, r.stderr)
         heads = re.findall(r"^## (.+?)\s*$", re.sub(r"```.*?```", "", r.stdout, flags=re.S), re.M)
+        heads = [h for h in heads if not h.startswith("Content: ")]
         self.assertEqual([h for h in SECTIONS if h in heads], heads)
         self.assertIn("Key facts", heads)
         self.assertEqual((out / "LOOK.md").read_text(encoding="utf-8").strip(), r.stdout.strip())

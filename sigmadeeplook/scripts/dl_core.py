@@ -36,7 +36,7 @@ BIG_ARTIFACT_TOKENS = 5_000  # a text artifact above this is searched or sliced,
 TIERS = ("quick", "standard", "deep")
 DIRECT_KINDS = {  # type -> subtypes that are plain text (None = every file of that type)
     "data": {"csv", "tsv", "json", "jsonl", "xml", "yaml", "toml"},
-    "code": None, "email": {"eml", "mbox", "ics", "vcf"}, "web": {"html"}, "notebook": {"ipynb"},
+    "code": None, "email": {"eml", "mbox", "ics", "vcf"}, "web": {"html"}, "notebook": {"ipynb"}, "log": None, "subtitle": None,
 }
 
 # ---------------------------------------------------------------- install hints (one home)
@@ -364,7 +364,9 @@ def detect(path):
     def is_(*prefixes):
         return any(h.startswith(x) for x in prefixes)
 
-    if is_(b"MZ"):
+    if ext in (".pkl", ".pickle", ".pt", ".pth", ".ckpt", ".joblib") and h[:1] in (b"c", b"(", b"]", b"}", b"I", b"S") and size < (1 << 31) and _peek(p, size - 1, 1) == b".":
+        t, st, mg = "model", "pickle", "pickle protocol 0/1 (ASCII opcodes, never loaded)"
+    elif is_(b"MZ"):
         t, st, mg = "binary", "pe", "MZ (PE)"
         try:
             off = struct.unpack_from("<I", h, 0x3C)[0]
@@ -473,6 +475,34 @@ def detect(path):
         t, st, mg = "3d", "fbx", "Kaydara FBX Binary"
     elif is_(b"PXR-USDC"):
         t, st, mg = "3d", "usd", "PXR-USDC"
+    elif is_(b"GGUF"):
+        t, st, mg = "model", "gguf", "GGUF"
+    elif is_(b"\x89HDF\r\n\x1a\n"):
+        t, st, mg = "model", "hdf5", "HDF5 (Keras/H5 weights)"
+    elif is_(b"\xfe\xed\xfe\xed", b"\xce\xce\xce\xce"):
+        t, st, mg = "cert", "jks", "Java keystore"
+    elif is_(b"vhdxfile"):
+        t, st, mg = "diskimage", "vhdx", "vhdxfile"
+    elif is_(b"QFI\xfb"):
+        t, st, mg = "diskimage", "qcow2", "QFI"
+    elif is_(b"KDMV"):
+        t, st, mg = "diskimage", "vmdk", "KDMV (sparse VMDK)"
+    elif is_(b"conectix"):
+        t, st, mg = "diskimage", "vhd", "conectix (VHD)"
+    elif is_(b"# v2 git bundle", b"# v3 git bundle"):
+        t, st, mg = "archive", "gitbundle", "git bundle header"
+    elif len(h) > 16 and struct.unpack_from("<Q", h, 0)[0] < (1 << 27) and h[8:9] == b"{" and ext in (".safetensors", ".st", ".sft", ""):
+        t, st, mg = "model", "safetensors", "safetensors (8-byte header length, JSON header)"
+    elif ext in (".pt", ".pth", ".ckpt", ".pkl", ".pickle") and (h[:1] == b"\x80" or h[:2] == b"PK"):
+        t, st, mg = "model", "pickle", "pickle stream (never loaded)"
+    elif ext == ".onnx":
+        t, st, mg = "model", "onnx", "extension .onnx (protobuf)"
+    elif ext in (".p12", ".pfx") and h[:1] == b"\x30":
+        t, st, mg = "cert", "pkcs12", "ASN.1 DER (PKCS#12)"
+    elif ext in (".der", ".cer", ".crt") and h[:1] == b"\x30":
+        t, st, mg = "cert", "der", "ASN.1 DER certificate"
+    elif ext in (".vhd", ".img", ".dmg", ".raw") and size > 1 << 20 and not st and b"\0" in h[:512]:
+        t, st, mg = "diskimage", ext[1:], f"extension {ext} (binary image)"
     elif size >= 84 and not h.lstrip().startswith(b"solid") and struct.unpack_from("<I", h, 80)[0] * 50 + 84 == size:
         t, st, mg = "3d", "stl", "binary STL (size matches the triangle count)"
     if t is None:
@@ -510,6 +540,8 @@ def zip_kind(p):
         for k, v in sub.items():
             if k in mt:
                 return "office", v, "PK + mimetype (ODF)"
+    if any(n.endswith("data.pkl") for n in lower):
+        return "model", "torch-zip", "PK + data.pkl (PyTorch checkpoint)"
     if "androidmanifest.xml" in lower:
         return "archive", "apk", "PK + AndroidManifest.xml"
     if "meta-inf/manifest.mf" in lower:
@@ -517,6 +549,29 @@ def zip_kind(p):
     if p.suffix.lower() == ".usdz":
         return "3d", "usdz", "PK (usdz)"
     return "archive", "zip", "PK (zip)"
+
+
+TS_RE = re.compile(r"^\s*(\[?\d{4}[-/]\d{2}[-/]\d{2}[T ]\d{2}:\d{2}|[A-Z][a-z]{2}\s+\d{1,2}\s\d{2}:\d{2}:\d{2}|\d{2}/[A-Z][a-z]{2}/\d{4}|\d{10}(\.\d+)?\s|\[\d{2}:\d{2}:\d{2}|\d{2}:\d{2}:\d{2}[.,]\d+\s)")
+
+
+def log_density(s):
+    """Share of the first 60 non-empty lines that start with a timestamp (0..1)."""
+    lines = [x for x in s[:30000].splitlines() if x.strip()][:60]
+    return sum(1 for x in lines if TS_RE.match(x)) / len(lines) if len(lines) >= 5 else 0.0
+
+
+def subtitle_sniff(s, low, ext):
+    if s.startswith("WEBVTT"):
+        return "vtt"
+    if "[script info]" in low[:300]:
+        return "ass"
+    if re.match(r"\d+\s*\r?\n\d{1,2}:\d{2}:\d{2}[,.]\d{1,3} --> ", s):
+        return "srt"
+    if ext == ".sbv" and re.match(r"\d+:\d{2}:\d{2}\.\d{3},", s):
+        return "sbv"
+    if ext == ".lrc" and re.search(r"(?m)^\[\d{2}:\d{2}[.:]\d{2}\]", s[:4000]):
+        return "lrc"
+    return None
 
 
 def text_sniff(p, h, ext, size):
@@ -529,6 +584,11 @@ def text_sniff(p, h, ext, size):
     s = text.lstrip("\ufeff \t\r\n")
     low = s[:4000].lower()
     j = s[:1].strip()
+    sub = subtitle_sniff(s, low, ext)
+    if sub:
+        return "subtitle", sub, f"subtitle text ({sub})"
+    if s.startswith("-----BEGIN ") or re.match(r"(ssh-(rsa|ed25519|dss)|ecdsa-sha2-\S+|sk-ssh-\S+) AAAA", s):
+        return "cert", "pem" if s.startswith("-----BEGIN ") else "sshpub", "PEM block" if s.startswith("-----BEGIN ") else "OpenSSH public key"
     if j in "{[":
         if '"nbformat"' in s[:4000]:
             return "notebook", "ipynb", "JSON with nbformat"
@@ -560,6 +620,8 @@ def text_sniff(p, h, ext, size):
         return "3d", "obj", "OBJ v/f lines"
     if ext in (".xml", ".svg") and s.startswith("<?xml") or s.startswith("<?xml"):
         return ("image", "svg", "<svg>") if "<svg" in low else ("data", "xml", "XML")
+    if ext in (".log", ".out", ".err") or (ext not in (".csv", ".tsv", ".json", ".jsonl", ".md", ".txt") and log_density(s) >= 0.6):
+        return "log", "log", "timestamped lines" if ext not in (".log", ".out", ".err") else f"extension {ext} (text)"
     if ext in (".yaml", ".yml"):
         return "data", "yaml", "extension .yaml (text)"
     if ext == ".toml":
@@ -760,7 +822,7 @@ class Look:
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
 
-    def write_text(self, name, text, what, kind="text", cost=True):
+    def write_text(self, name, text, what, kind="text", cost=True, value=None, inline=None, slice_cmd=None):
         p = self.path_for(name)
         data = text if isinstance(text, str) else str(text)
         b = data.encode("utf-8", "replace")
@@ -768,12 +830,14 @@ class Look:
             b = b[:MAX_TEXT]
             self.flag("TRUNCATED", name, f"{MAX_TEXT} bytes", "artifact capped at 2 MB; the file has more")
         p.write_bytes(b)
-        self.add(p, kind, what)
+        self.add(p, kind, what, value=value, inline=inline, slice_cmd=slice_cmd)
         return p
 
-    def add(self, path, kind, what, px=None, pages=None, tokens=None, secret=False, value=None, slice_cmd=None):
+    def add(self, path, kind, what, px=None, pages=None, tokens=None, secret=False, value=None, slice_cmd=None, inline=None):
         p = Path(path)
         a = {"path": str(p), "kind": kind, "what": what}
+        if inline is not None:
+            a["inline"] = inline
         if value is not None:
             a["value"] = value
         if slice_cmd:
