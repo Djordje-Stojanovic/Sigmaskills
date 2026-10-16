@@ -88,7 +88,7 @@ def table_rows(cols, rows):
     return "\n".join(out)
 
 
-def sqlite_con(path):
+def sqlite_con(path, pragmas=False):
     uri = "file:" + str(path).replace("\\", "/").replace("?", "%3f") + "?mode=ro&immutable=1"
     if not uri.startswith("file:///"):
         uri = "file:///" + uri[5:].lstrip("/")
@@ -97,6 +97,8 @@ def sqlite_con(path):
 
     def auth(action, a, b, db, trig):
         ok = {sqlite3.SQLITE_SELECT, sqlite3.SQLITE_READ, sqlite3.SQLITE_FUNCTION, getattr(sqlite3, "SQLITE_RECURSIVE", 33)}
+        if action == sqlite3.SQLITE_PRAGMA and pragmas and str(a).lower() in ("table_info", "table_xinfo", "foreign_key_list", "index_list"):
+            return sqlite3.SQLITE_OK
         return sqlite3.SQLITE_OK if action in ok else sqlite3.SQLITE_DENY
     con.set_authorizer(auth)
     return con
