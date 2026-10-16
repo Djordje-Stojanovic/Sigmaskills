@@ -46,6 +46,11 @@ const KNOWN_SKILLS = [
     title: 'SigmaResearch',
     needsReferences: true,
   },
+  {
+    id: 'sigmadeeplook',
+    title: 'SigmaDeepLook',
+    needsReferences: true,
+  },
 ];
 
 const ISSUE_TEMPLATES = [

@@ -18,5 +18,7 @@
   { "prompt": "Easy talk: make an interactive status board with questions", "skill": "easytalk", "near": "sigmawrite" },
   { "prompt": "Handle my EASYTALK REPLY and bring unread cards to the next board", "skill": "easytalk", "near": "sigmabrief" },
   { "prompt": "Build a blind arena to rank these voices and models by Elo", "skill": "storgestudio-arena-create", "near": "sigmaimprove" },
-  { "prompt": "Compare many captions and thumbnails and pick the best by taste", "skill": "storgestudio-arena-create", "near": "sigmawrite" }
+  { "prompt": "Compare many captions and thumbnails and pick the best by taste", "skill": "storgestudio-arena-create", "near": "sigmawrite" },
+  { "prompt": "Analyse this video file and show what is inside it", "skill": "sigmadeeplook", "near": "sigmaresearch" },
+  { "prompt": "Inspect this binary and tell me what is inside the file", "skill": "sigmadeeplook", "near": "sigmareview" }
 ]

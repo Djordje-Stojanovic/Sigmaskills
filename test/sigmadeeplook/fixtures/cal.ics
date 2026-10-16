@@ -1,0 +1,12 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//deeplook//fixture//EN
+BEGIN:VEVENT
+UID:ev1@example.invalid
+SUMMARY:Team sync
+DTSTART;TZID=Europe/Vienna:20260105T090000
+DTEND;TZID=Europe/Vienna:20260105T100000
+DESCRIPTION:Team sync with a very long description that is folded across li
+ nes by the iCalendar line folding rule so a naive reader would cut it
+END:VEVENT
+END:VCALENDAR

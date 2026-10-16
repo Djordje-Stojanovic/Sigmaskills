@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaDeepLook
+  short_description: See inside any video, audio, PDF, Office, binary or other file
+  default_prompt: Use $sigmadeeplook to look inside this file, read the evidence it
+    writes, and report what it shows and what it could not look at.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: true

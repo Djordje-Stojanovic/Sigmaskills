@@ -2,3 +2,4 @@ node_modules/
 .scratch/
 *.log
 .cursor/
+__pycache__/

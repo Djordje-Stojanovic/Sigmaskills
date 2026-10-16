@@ -4,6 +4,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmadeeplook` (SigmaDeepLook): see inside any file. One standard-library Python entry script (`scripts/look.py`) turns a video, audio file, image, PDF, Office file, source file or repository, binary, font, archive, data file, notebook, HTML page, 3D model or mail file into machine facts (`look.json`), readable text, and a few pictures sized for the model (3x3 sheets at 2000 px), plus a side-by-side `view.html`. It never runs the input, uses no network unless `--allow-network` is given, refuses unsafe archives before extracting, keeps private values out of the summary, and turns every missing tool into a Not-looked-at row with an install line. `look.py doctor`, `selftest` and `gallery` are built in. 14 per-type reference files and an output contract.
+- `.gitignore` ignores `__pycache__/`.
+
 ## [0.7.0] — 2026-10-15
 
 ### Fixed

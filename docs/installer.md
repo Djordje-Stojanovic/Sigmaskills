@@ -322,6 +322,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmarefactor -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill easytalk -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill storgestudio-arena-create -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaresearch -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadeeplook -g
 
 # Pin to specific hosts
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g -a cursor -a claude-code -a codex -a opencode -a pi
@@ -345,6 +346,7 @@ $skill-installer install sigmarefactor from https://github.com/Djordje-Stojanovi
 $skill-installer install easytalk from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install storgestudio-arena-create from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaresearch from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmadeeplook from https://github.com/Djordje-Stojanovic/Sigmaskills
 ```
 
 ### Manual copy
@@ -365,6 +367,7 @@ cp -R Sigmaskills/sigmarefactor ~/.agents/skills/sigmarefactor
 cp -R Sigmaskills/easytalk ~/.agents/skills/easytalk
 cp -R Sigmaskills/storgestudio-arena-create ~/.agents/skills/storgestudio-arena-create
 cp -R Sigmaskills/sigmaresearch ~/.agents/skills/sigmaresearch
+cp -R Sigmaskills/sigmadeeplook ~/.agents/skills/sigmadeeplook
 ```
 
 **Windows (PowerShell)**
@@ -381,6 +384,7 @@ Copy-Item -Recurse Sigmaskills\sigmarefactor "$HOME\.agents\skills\sigmarefactor
 Copy-Item -Recurse Sigmaskills\easytalk      "$HOME\.agents\skills\easytalk"
 Copy-Item -Recurse Sigmaskills\storgestudio-arena-create "$HOME\.agents\skills\storgestudio-arena-create"
 Copy-Item -Recurse Sigmaskills\sigmaresearch "$HOME\.agents\skills\sigmaresearch"
+Copy-Item -Recurse Sigmaskills\sigmadeeplook "$HOME\.agents\skills\sigmadeeplook"
 ```
 
 Point other hosts at the same folders, or copy again:
