@@ -20,7 +20,8 @@ import dl_core as core
 
 HERE = Path(__file__).resolve().parent
 LOOK = HERE / "look.py"
-SECTIONS = ["Identity", "Summary", "Read next", "Flags", "Not looked at", "Ask the human"]
+SECTIONS = ["Key facts", "Watch out", "Map", "Read next", "Not looked at"]
+STEP1_MAX = 1150   # step 1 prints about 1,000 tokens; the header and the footer line are the slack
 CHECKS = ["exit code", "type", "LOOK.md contract", "seeded facts", "image budget", "no stray writes", "no network", "nothing executed", "time", "view.html"]
 LIMIT = {"bare": 10.0, "full": 60.0}
 
@@ -67,21 +68,36 @@ def hay_of(out):
 
 
 def contract(out, lj):
+    """The LOOK.md v2 contract: title, identity line, sections in order, footer line, step 1 within ~1,000 tokens, Read-next files exist."""
+    import dl_util
     md = (out / "LOOK.md").read_text(encoding="utf-8")
-    md = re.sub(r"```.*?```", "", md, flags=re.S)  # quoted file content sits in fences
-    heads = re.findall(r"^## (.+?)\s*$", md, re.M)
-    if heads != SECTIONS:
+    if lj.get("tier") == "direct":
+        return None if re.match(r"Read this file directly: .+ \(~\d+ tokens\)", md) else "direct look lacks the one-line verdict"
+    if not md.startswith("# "):
+        return "no title line"
+    lines = md.splitlines()
+    if not re.search(r"sha [0-9a-f]{12}\b", lines[1]) or "folder:" not in lines[1]:
+        return "identity line lacks sha or folder"
+    plain = re.sub(r"```.*?```", "", md, flags=re.S)
+    heads = re.findall(r"^## (.+?)\s*$", plain, re.M)
+    base = [re.sub(r" \(continued\)$", "", h) for h in heads]
+    order = [SECTIONS.index(h) for h in base if h in SECTIONS]
+    if len(order) != len(base) or order != sorted(order):
         return f"sections {heads}"
-    ident = md.split("## Summary")[0]
-    if not re.search(r"sha256: [0-9a-f]{64}", ident) or "type:" not in ident:
-        return "Identity lacks sha256 or type"
-    rn = md.split("## Read next")[1].split("## Flags")[0]
-    for m in re.finditer(r"^\d+\. `([^`]+)`", rn, re.M):
-        p = Path(m.group(1))
+    if not [x for x in lines if x.strip()][-1].startswith("-- chunks"):
+        return "no footer line"
+    n = dl_util.est_tokens(md)
+    if n > STEP1_MAX:
+        return f"step 1 is {n} tokens (limit {STEP1_MAX})"
+    rn = plain.split("## Read next")[1] if "## Read next" in plain else ""
+    rn = re.split(r"\n## |\n-- chunks", rn)[0]
+    for m in re.finditer(r"^- `([^`]+)`:", rn, re.M):
+        if m.group(1).startswith(("--", "python")):
+            continue
+        p = out / m.group(1)
         if not p.exists() or p.stat().st_size == 0:
-            return f"Read next path missing or empty: {p.name}"
+            return f"Read next path missing or empty: {m.group(1)}"
     return None
-
 
 def image_problem(lj):
     try:

@@ -16,7 +16,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 LOOK = ROOT / "sigmadeeplook" / "scripts" / "look.py"
 FX = HERE / "fixtures"
-SECTIONS = ["Identity", "Summary", "Read next", "Flags", "Not looked at", "Ask the human"]
+SECTIONS = ["Key facts", "Watch out", "Map", "Read next", "Not looked at"]
 
 
 def run(args, **kw):
@@ -41,14 +41,15 @@ class Fixtures(unittest.TestCase):
 
 class Contract(unittest.TestCase):
     def test_sections_in_order_and_files_written(self):
-        r, out = look("tool.py")
+        r, out = look("bad.csv")
         self.assertEqual(r.returncode, 0, r.stderr)
         heads = re.findall(r"^## (.+?)\s*$", re.sub(r"```.*?```", "", r.stdout, flags=re.S), re.M)
-        self.assertEqual(heads, SECTIONS)
+        self.assertEqual([h for h in SECTIONS if h in heads], heads)
+        self.assertIn("Key facts", heads)
         self.assertEqual((out / "LOOK.md").read_text(encoding="utf-8").strip(), r.stdout.strip())
         lj = json.loads((out / "look.json").read_text(encoding="utf-8"))
         self.assertEqual(lj["schema"], 1)
-        self.assertEqual(lj["type"], "code")
+        self.assertEqual(lj["type"], "data")
         self.assertTrue((out / "view.html").exists())
 
     def test_same_file_same_folder(self):
@@ -109,7 +110,7 @@ class DirectTier(unittest.TestCase):
         r, out, lj = look_bytes("rows.csv", b"id,name,note\n1,a,x\n2,b\n3,c,z\n")
         self.assertEqual(lj["tier"], "direct")
         self.assertEqual(lj["artifacts"], [])
-        self.assertEqual(sorted(p.name for p in out.iterdir()), ["LOOK.md", "look.json", "view.html"])
+        self.assertEqual(sorted(p.name for p in out.iterdir()), ["LOOK.md", "cursor.json", "look.json", "view.html"])
         self.assertIn("REJECT-ROW", (out / "LOOK.md").read_text(encoding="utf-8"))
         self.assertEqual(lj["facts"]["rejects"], 1)
 
@@ -187,7 +188,7 @@ class Refusals(unittest.TestCase):
         for name in ("empty.bin", "noise.bin"):
             r, _ = look(name)
             self.assertEqual(r.returncode, 3, name)
-            self.assertIn("## Identity", r.stdout)
+            self.assertIn("sha ", r.stdout)
 
     def test_url_needs_the_network_flag(self):
         r = run(["https://example.invalid/page.html", "--no-tools"])
