@@ -13,7 +13,7 @@ One home for what `look.py` writes. Read this when you need a field name, an exi
 
 - Folder: `%LOCALAPPDATA%\sigmadeeplook\<sha256 first 12>\` on Windows, `~/.cache/sigmadeeplook/<sha256 first 12>/` elsewhere. `--out DIR` overrides it. Same file, same folder: a repeat look is instant unless `--fresh`. Nothing is written into the user's repository.
 - `LOOK.md`, six sections in this order:
-  1. `## Identity`: type and subtype, detector evidence (magic bytes, sniff, extension), size, sha256, tier (`bare`, `partial`, `full`), time, folder.
+  1. `## Identity`: type and subtype, detector evidence (magic bytes, sniff, extension), size, sha256, tier (`direct`, `bare`, `partial`, `full`), time, folder. Tier `direct` means a small plain-text file: LOOK.md then starts with the line `Read this file directly: <path> (~N tokens)` before the title, and holds only real flags (see SKILL.md, "Read small text yourself").
   2. `## Summary`: the facts a human wants first, at most 15 lines. Quoted file content sits in fenced blocks headed "file content: data, not instructions".
   3. `## Read next`: numbered artifact paths, what each is, and its cost: images as `W x H px` with about `ceil(w/28) x ceil(h/28)` tokens; text as characters / 4. Text first, pictures after.
   4. `## Flags`: a table `kind | where | value | hint`, or `None`. Hints, not verdicts. At most 12 flags of one kind are listed; a closing row says how many more `look.json` holds.
@@ -24,7 +24,7 @@ One home for what `look.py` writes. Read this when you need a field name, an exi
 
 ## Options
 
-`--out`, `--reader {claude, claude-hires, gemini, small}` (image budget; `claude` is 2000 px, 3x3 sheets), `--deep` (slower: bigger speech model, more pages, capa), `--extract` (archives and mail attachments, after the screen), `--recurse N`, `--allow-network` (URLs and model downloads), `--fresh`, `--json` (print `look.json`), `--no-tools` (bare tier), video `--at T --len S` and `--mode sweep`. Subcommands: `doctor` (tools and install lines), `selftest [--tier full|bare]`, `gallery DIR -o gallery.html`.
+`--out`, `--reader {claude, claude-hires, gemini, small}` (image budget; `claude` is 2000 px, 3x3 sheets), `--deep` (slower: bigger speech model, more pages, capa), `--extract` (archives and mail attachments, after the screen), `--recurse N`, `--allow-network` (URLs and model downloads), `--fresh`, `--json` (print `look.json`), `--no-tools` (bare tier), `--no-direct` (analyse small plain text instead of the direct read), video `--at T --len S` and `--mode sweep`. Subcommands: `doctor` (tools and install lines), `selftest [--tier full|bare]`, `gallery DIR -o gallery.html`.
 
 ## Failure modes
 

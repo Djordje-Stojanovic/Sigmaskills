@@ -20,6 +20,12 @@ python scripts/look.py doctor                        # what this machine has, wi
 
 It prints `LOOK.md` and writes `look.json`, `view.html` and artifacts into one folder (named in the Identity section; same file, same folder; nothing is written into the user's repo). Exit `0` looked, `1` internal error, `2` refused by a safety rule, `3` unknown type. [Output contract](references/output.md).
 
+## Read small text yourself
+
+If the first line of `LOOK.md` is `Read this file directly: <path> (~N tokens)`, open that file with your own tools and stop: this look adds nothing. It applies to valid UTF-8 text of at most `DIRECT_MAX_BYTES` (50,000 bytes, about 12k tokens; the one constant, in `scripts/dl_core.py`) of these kinds: csv, tsv, json, jsonl, xml, yaml, toml, plain text and source files, md, eml, mbox, ics, vcf, html, ipynb. Tier `direct` lists only real flags (hidden Unicode, reject rows, link mismatch, key-like strings). A small file that is not valid UTF-8 gets the full look, which reports the encoding as a Flag. `--no-direct` forces the full analysis of a small file.
+
+Where this skill helps: files you cannot read (video, audio, images, PDF, Office, binaries, fonts, archives, databases, 3D) and text files over the limit (it gives schema, row counts, rejects, outline, a sample, instead of tens of thousands of tokens). Where it is a no-op: any small text file you can already read.
+
 Read in this order:
 
 1. `LOOK.md`: Identity, Summary, Read next, Flags, Not looked at, Ask the human.

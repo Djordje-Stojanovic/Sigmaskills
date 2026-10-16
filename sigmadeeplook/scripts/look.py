@@ -6,7 +6,7 @@ Stdout is LOOK.md. Core is stdlib only; optional tools are used when found and b
 Use `python` on Windows and `python3` elsewhere. Do not run it with -I (that hides installed packages).
 
   look.py FILE [--out DIR] [--reader claude|claude-hires|gemini|small] [--deep] [--extract] [--recurse N]
-               [--allow-network] [--fresh] [--json] [--no-tools] [--at SEC --len SEC] [--mode overview|sweep]
+               [--allow-network] [--fresh] [--json] [--no-tools] [--no-direct] [--at SEC --len SEC] [--mode overview|sweep]
   look.py doctor                          # which tools and packages are present, with install lines
   look.py selftest [--tier full|bare]     # the 10 numeric checks on the bundled fixtures (needs a repo checkout)
   look.py gallery DIR -o gallery.html     # one page over many looks
@@ -45,12 +45,15 @@ def analyse(path, out, opts, sha=None, depth=0):
     look.detector = {"magic": d["magic"], "ext": d["ext"], "mismatch": d["mismatch"]}
     if d["mismatch"]:
         look.flag("MISMATCH", "extension", d["mismatch"], "the extension lies or the file was renamed; trust the bytes")
+    direct = not getattr(opts, "no_direct", False) and depth == 0 and core.direct_eligible(p, look.type, look.subtype, look.size)
     mod, fn = HANDLERS.get(look.type, HANDLERS["unknown"])
     try:
         getattr(__import__(mod), fn)(look)
     except Exception as e:  # one broken step must never lose the Identity block
         look.exit_code = 1
         look.flag("INTERNAL-ERROR", f"{mod}.{fn}", f"{type(e).__name__}: {e}", traceback.format_exc().strip().splitlines()[-2][:200])
+    if direct:
+        core.collapse_direct(look)
     look.finish()
     return look
 
@@ -106,6 +109,7 @@ def main(argv):
     ap.add_argument("--allow-network", action="store_true", help="allow URLs and model downloads (off by default)")
     ap.add_argument("--fresh", action="store_true", help="ignore a stored look of the same file")
     ap.add_argument("--json", action="store_true", help="print look.json instead of LOOK.md")
+    ap.add_argument("--no-direct", action="store_true", help="analyse small plain text too (by default it is a direct read: no analysis)")
     ap.add_argument("--no-tools", action="store_true", help="bare tier: Python standard library only")
     ap.add_argument("--at", type=float, help="video: zoom window start (seconds)")
     ap.add_argument("--len", type=float, default=10.0, dest="length", help="video: zoom window length (seconds)")

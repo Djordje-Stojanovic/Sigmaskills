@@ -58,6 +58,87 @@ class Contract(unittest.TestCase):
         self.assertEqual(json.loads(a.stdout)["sha256"], json.loads(b.stdout)["sha256"])
 
 
+def look_bytes(name, data, *extra):
+    d = Path(tempfile.mkdtemp(prefix="sdl-in-"))
+    f = d / name
+    f.write_bytes(data)
+    out = tempfile.mkdtemp(prefix="sdl-out-")
+    r = run([str(f), "--out", out, "--fresh", "--no-tools", "--json", *extra])
+    return r, Path(out), (json.loads(r.stdout) if r.stdout.strip().startswith("{") else None)
+
+
+def threshold():
+    sys.dont_write_bytecode = True
+    sys.path.insert(0, str(LOOK.parent))
+    import dl_core
+    return dl_core.DIRECT_MAX_BYTES
+
+
+def csv_of_size(n):
+    """Exactly n bytes of well-formed, valid UTF-8 CSV (the last line is padded)."""
+    lines, size, i = ["id,name,note"], 13, 0
+    while size < n - 60:
+        line = f"{i},name{i},some plain note text"
+        lines.append(line)
+        size += len(line) + 1
+        i += 1
+    lines.append("end,pad," + "x" * (n - size - len("end,pad,") - 1))
+    data = ("\n".join(lines) + "\n").encode()
+    assert len(data) == n, (len(data), n)
+    return data
+
+
+class DirectTier(unittest.TestCase):
+    def test_threshold_boundary(self):
+        n = threshold()
+        under, out_u, lj_u = look_bytes("under.csv", csv_of_size(n))
+        over, out_o, lj_o = look_bytes("over.csv", csv_of_size(n + 1))
+        self.assertEqual(under.returncode, 0, under.stderr)
+        self.assertEqual(lj_u["size"], n)
+        self.assertEqual(lj_u["tier"], "direct")
+        self.assertEqual(lj_o["size"], n + 1)
+        self.assertNotEqual(lj_o["tier"], "direct")
+        md_u = (out_u / "LOOK.md").read_text(encoding="utf-8")
+        md_o = (out_o / "LOOK.md").read_text(encoding="utf-8")
+        self.assertTrue(md_u.startswith("Read this file directly: "), md_u[:80])
+        self.assertRegex(md_u.splitlines()[0], r"\(~\d+ tokens\)$")
+        self.assertFalse(md_o.startswith("Read this file directly"))
+        self.assertTrue(any(a["kind"] != "internal" for a in lj_o["artifacts"]), "over the line keeps the usual artifacts")
+
+    def test_direct_writes_no_artifacts_and_keeps_real_flags(self):
+        r, out, lj = look_bytes("rows.csv", b"id,name,note\n1,a,x\n2,b\n3,c,z\n")
+        self.assertEqual(lj["tier"], "direct")
+        self.assertEqual(lj["artifacts"], [])
+        self.assertEqual(sorted(p.name for p in out.iterdir()), ["LOOK.md", "look.json", "view.html"])
+        self.assertIn("REJECT-ROW", (out / "LOOK.md").read_text(encoding="utf-8"))
+        self.assertEqual(lj["facts"]["rejects"], 1)
+
+    def test_invalid_utf8_small_file_is_not_direct_and_is_flagged(self):
+        r, out, lj = look_bytes("latin.csv", b"id,name\n1,Caf\xe9\n2,Zo\xeb\n3,x\n")
+        self.assertNotEqual(lj["tier"], "direct")
+        self.assertIn("ENCODING", [f["kind"] for f in lj["flags"]])
+
+    def test_binary_and_media_are_never_direct(self):
+        for name in ("app.sqlite", "clip.mp4", "hello.exe", "chart.png", "logo.svg", "mixed.pdf"):
+            r, out = look(name)
+            self.assertNotEqual(json.loads((out / "look.json").read_text(encoding="utf-8"))["tier"], "direct", name)
+        r, out, lj = look_bytes("nul.txt", b"hello\x00world\n" * 4)
+        self.assertNotEqual(lj["tier"], "direct")
+
+    def test_no_direct_switch(self):
+        r, out, lj = look_bytes("small.csv", b"a,b\n1,2\n3,4\n", "--no-direct")
+        self.assertNotEqual(lj["tier"], "direct")
+
+    def test_small_text_kinds_are_direct(self):
+        for name in ("plain.txt", "tool.py", "events.jsonl", "box.mbox", "cal.ics", "nb.ipynb"):
+            r, out = look(name)
+            lj = json.loads((out / "look.json").read_text(encoding="utf-8"))
+            self.assertEqual(lj["tier"], "direct", name)
+            self.assertTrue((out / "LOOK.md").read_text(encoding="utf-8").startswith("Read this file directly: "), name)
+        r, out = look("tool.py")
+        self.assertIn("U+200B", r.stdout)  # hidden Unicode is a real flag and survives
+
+
 class Refusals(unittest.TestCase):
     def test_unsafe_archives_exit_2_and_write_nothing(self):
         for name in ("slip.zip", "ratio.zip", "nested.zip", "links.tar"):

@@ -1,5 +1,5 @@
 {
-  "_readme": "Seeded truth for the fixtures. 'facts' are regular expressions run over LOOK.md, look.json and the text artifacts. 'needs' lists the tools or packages a fact depends on: empty means the standard library reaches it (bare tier). A fact whose tool is missing must appear as a Not-looked-at row with an install line. 'questions' are for the agent-level check (3 per type, known answers). Written from the generator's seeds, never from the tool's output.",
+  "_readme": "Seeded truth for the fixtures. 'facts' are regular expressions run over LOOK.md, look.json and the text artifacts. 'needs' lists the tools or packages a fact depends on: empty means the standard library reaches it (bare tier). A fact whose tool is missing must appear as a Not-looked-at row with an install line. 'questions' are for the agent-level check (3 per type, known answers). Written from the generator's seeds, never from the tool's output. 'args' are extra look.py arguments: small plain text is a direct read by default (no analysis, only flags), so a fixture that tests the web analyser's text.md passes --no-direct.",
   "clip.mp4": {"type": "video", "exit": 0, "facts": [
     {"id": "duration 12 s", "re": "\"duration\": 1[12]\\.", "needs": []},
     {"id": "width 320", "re": "\"width\": 320", "needs": []},
@@ -163,7 +163,7 @@
     {"id": "error cell", "re": "ZeroDivisionError", "needs": []},
     {"id": "figure extracted", "re": "\"figures\": 1", "needs": []}
   ], "absent": [], "questions": [{"q": "Which cell raised an error?", "a": "cell 2 (ZeroDivisionError)"}, {"q": "Were the cells run in order?", "a": "no: counts 3, 1, 2"}, {"q": "How many figures?", "a": "1"}]},
-  "page.html": {"type": "web", "exit": 0, "facts": [
+  "page.html": {"type": "web", "exit": 0, "args": ["--no-direct"], "facts": [
     {"id": "title", "re": "\"title\": \"Fixture article\"", "needs": []},
     {"id": "article text kept", "re": "main article text", "needs": []},
     {"id": "hidden text flagged", "re": "HIDDEN-TEXT", "needs": []},
