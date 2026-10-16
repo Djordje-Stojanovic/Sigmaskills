@@ -27,6 +27,9 @@ SYS_RE = re.compile(r"\b([A-Z][a-z]{2})\s+(\d{1,2})\s(\d{2}):(\d{2}):(\d{2})\b")
 APACHE_RE = re.compile(r"\[(\d{2})/([A-Z][a-z]{2})/(\d{4}):(\d{2}):(\d{2}):(\d{2})\s*([+-]\d{4})?\]")
 EPOCH_RE = re.compile(r"^\s*(\d{10})(?:\.(\d+))?\s")
 MONTHS = {m: i for i, m in enumerate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], 1)}
+LIB_FRAME_RE = re.compile(r"site-packages|node_modules|[\\/]lib[\\/]python|\bjava\.|\bjavax\.|\bjdk\.|\bsun\.|org\.springframework|org\.apache|<frozen|importlib|asyncio|threading\.py|/usr/lib|runtime\.", re.I)
+TRACE_KEEP = 3          # in-app frames shown per error template
+TRACE_LINES = 60        # continuation lines remembered per error template (the first occurrence only)
 CONT_RE = re.compile(r"^(\s+at\s|\s+\.\.\.\s\d+\smore|Caused by:|\s+File \"|Traceback \(|\s{4,}\S)")
 
 
@@ -109,6 +112,8 @@ def scan_log(path, max_lines, max_seconds):
             ts, end = parse_ts(line, year)
             if ts is None:
                 untimed += 1
+                if cur is not None and cur.get("level") in BAD and cur["count"] == 1 and CONT_RE.match(line) and len(cur.setdefault("trace", [])) < TRACE_LINES:
+                    cur["trace"].append(line.rstrip())
                 if cur is None and first_cont is None and CONT_RE.match(line):
                     first_cont = ln
                 continue
@@ -132,6 +137,22 @@ def scan_log(path, max_lines, max_seconds):
             cur = c
     return {"lines": n, "untimed": untimed, "recs": recs, "drain": drain, "minutes": minutes, "levels": levels, "first": first_ts, "last": last_ts,
             "backwards": backwards, "first_cont": first_cont, "partial": partial, "timed": sum(minutes.values())}
+
+
+def fold_trace(lines, keep=TRACE_KEEP):
+    """A stack trace as the reader needs it: the cause lines and the first `keep` frames of the app's own code, the rest counted.
+    (Sentry groups by in-app frames only; frames of libraries and the runtime differ without meaning anything.)"""
+    if not lines:
+        return ""
+    causes = [l.strip() for l in lines if l.strip().startswith(("Caused by", "Traceback"))][:3]
+    frames = [l for l in lines if re.match(r"\s+(File |at )", l)]   # a Python frame's source line (4 spaces, code) is not a frame
+    app = [l for l in frames if not LIB_FRAME_RE.search(l)]
+    shown = [l.strip() for l in app[:keep]]
+    hidden = len(frames) - len(shown)
+    out = causes[:1] + shown + causes[1:]
+    if hidden > 0:
+        out.append(f"... {hidden} more frame(s), {len(frames) - len(app)} of them library code")
+    return "\n".join("    " + x for x in out)
 
 
 def look_log(look):
@@ -224,7 +245,7 @@ def look_log(look):
     look.write_text("templates.csv", buf.getvalue(), "every message template: count, level, first and last line", value=4)
     errs = [c for c in clusters if c.get("level") in BAD][:40]
     if errs:
-        look.write_text("errors.md", "\n\n".join(f"### {U.compact(c['count'])}x {c.get('level')} (lines {c['first']}-{c['last']})\n{c['example']}" for c in errs), "each error template once with an example line", value=7)
+        look.write_text("errors.md", "\n\n".join(f"### {U.compact(c['count'])}x {c.get('level')} (lines {c['first']}-{c['last']})\n{c['example']}" + ("\n" + fold_trace(c.get("trace")) if c.get("trace") else "") for c in errs), "each error template once with an example line", value=7)
     if rare:
         look.write_text("rare.md", "\n".join(f"line {c['first']}: {c['example']}" for c in clusters if c["count"] <= 2)[:60000], "templates seen once or twice, with their line", value=4)
     tl = io.StringIO()

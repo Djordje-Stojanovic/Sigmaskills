@@ -17,23 +17,24 @@ You cannot play a video, hear audio, open a binary or read a 60 MB table. This s
 2. **Step 2, about 3,000 tokens in all.** `python scripts/look.py <file> --more` prints the next ~2,000 tokens of the same stream. It continues from a cursor saved in the look folder and never repeats.
 3. **Step 3, about 10,000 tokens in all.** `--more` again prints the next ~7,000. After that `--more` prints 5,000 at a time, or `--more N` prints N tokens.
 
-Every print ends with `-- chunks a-b of n | printed ~X | next: --more (~Y tokens of <what>) | remaining ~Z`. The cost shown is the cost you get, within 10 %. `--remaining` says what is left without printing it. `--from K` re-reads from chunk K. There is no ceiling: read on only while the next block is the kind of content you need.
+Every print ends with a `Recap:` line (the three most important facts of everything printed so far, said again at the end because the first and last lines of a long input are the ones you keep best) and `-- chunks a-b of n | printed ~X | next: --more (~Y tokens of <what>) | remaining ~Z`. The cost shown is the cost you get, within 10 %, recap and footer included. The default is concise: ids, timings and the long tail of Read-next files come with `--detail`. `--remaining` says what is left without printing it. `--from K` re-reads from chunk K. There is no ceiling: read on only while the next block is the kind of content you need.
 
 **Drill down instead of reading on** when you know where to look. Each prints its answer and ends with `-- ~N tokens`:
 
 | Flag | For | Prints |
 |---|---|---|
-| `--grep REGEX` | any look | 50 hits with line numbers from the look's text files |
+| `--grep REGEX` | any look | up to 50 hits with line numbers; over 50 you get the count, where they sit and a hint to narrow, not the list |
+| `--lines NAME:A-B` | any look | a window of at most 100 lines of one text file of the look; names the next window |
 | `--sql "SELECT ..."` | csv, tsv, parquet, jsonl, sqlite | up to 50 rows; read-only, `LIMIT 50` forced, table `t` (or the real table name) |
 | `--table NAME` | sqlite | columns, nulls, distinct, min/max, foreign keys, 5 rows |
 | `--page A-B` | pdf, pptx | the text of those pages or slides |
 | `--sheet NAME --range A1:H40` | xlsx | those cells with formulas and cached values |
-| `--func NAME` | source files (binaries: needs Ghidra) | that function with line numbers |
+| `--func NAME` | source files (binaries: needs Ghidra) | that function with line numbers; a big file's look holds the signature skeleton, not the bodies |
 | `--member NAME` | zip, tar, 7z, epub, docx... | one member after the safety screen, at quick tier |
 | `--at M:SS --len S` | video, audio | the words, flags and (video) a zoom sheet for that window |
 | `--speaker S1` | audio, video | that speaker's turns (needs the speaker model) |
 
-How much machine work is done is a separate dial: `--quick` (headers only, under 5 s), the default `standard`, `--deep` (biggest speech model, OCR on more frames, decompilers and capa when installed). `--budget N` changes the size of step 1. `--fresh` ignores a stored look. `--json` prints `look.json`. `--no-tools` is the bare tier (Python only). Exit codes: `0` looked, `1` internal error, `2` refused by a safety rule, `3` unknown type. [Full contract](references/output.md).
+How much machine work is done is a separate dial: `--quick` (headers only, under 5 s), the default `standard`, `--deep` (biggest speech model, OCR on more frames, decompilers and capa when installed). `--budget N` changes the size of step 1. `--query "words"` (video) picks the sheet tiles by what is said near those words, with a third of the tiles kept evenly spread. `--fresh` ignores a stored look. `--json` prints `look.json`. `--no-tools` is the bare tier (Python only). Exit codes: `0` looked, `1` internal error, `2` refused by a safety rule, `3` unknown type. [Full contract](references/output.md).
 
 ## Order of reading
 
@@ -75,7 +76,7 @@ Type is decided by magic bytes, then structure, then text sniffing; the extensio
 
 ## Image budget
 
-Sheets are 3x3 at 2000 px. A request with more than 20 images is rejected when any image is over 2000 px, so keep at most 3 or 4 sheets open and never resend old ones. More coverage means more sheets (`--mode sweep`), never more tiles per sheet. If your host cannot view images, read the text and say so under Limits.
+Sheets keep full detail: 3x3 at 2000 px, never shrunk to look cheap. Each picture is priced for both vision tiers (a 2000 px sheet is about 1.6k tokens on the standard tier, where the model shrinks it to 1568 px, and about 3.5k on the high-resolution tier). On a high-resolution model use `--reader claude-hires`: 4x4 sheets at 2576 px, up to 4.8k tokens each. A request with more than 20 images is rejected when any image is over 2000 px, so keep at most 3 or 4 sheets open and never resend old ones. More coverage means more sheets (`--mode sweep`), never more tiles per sheet. If your host cannot view images, read the text and say so under Limits.
 
 ## Safety
 

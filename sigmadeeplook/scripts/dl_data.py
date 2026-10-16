@@ -235,6 +235,9 @@ def profile_findings(look, header, prof, total, repeats):
     return notes
 
 
+COLUMN_LEGEND = "Columns (name: type, empty %, distinct values, range and median or top values (count)):"
+
+
 def profile_line(p, total):
     s = p.summary(total)
     bits = [f"{s['type']}"]
@@ -248,7 +251,7 @@ def profile_line(p, total):
         bits.append("top: " + ", ".join(f"{v} ({n})" for v, n in s["top_values"][:5]))
     elif "min" in s:
         bits.append(f"{str(s['min'])[:24]} .. {str(s['max'])[:24]}")
-    return f"- {p.name}: " + ", ".join(bits)
+    return f"{p.name}: " + ", ".join(bits)
 
 
 QUICK_BYTES = 4 << 20   # the quick tier profiles the first 4 MB of a big table; the line count and the repeated-header search cover the whole file
@@ -342,12 +345,14 @@ def data_csv(look):
     notes = profile_findings(look, header, prof, total_ok, repeats)
     schema = [p.summary(total_ok) for p in prof]
     look.write_text("schema.json", json.dumps(schema, indent=1, default=str), "per-column profile over every row: type mix, empty %, distinct, range, median, top values", "json")
+    notes = [n for n in notes if "empty" in n]   # every other finding is a flag and is listed once, under Watch out
     if notes:
-        look.line("Findings: " + "; ".join(notes[:10]) + (f"; +{len(notes) - 10} more in Flags" if len(notes) > 10 else "") + ".")
-    for p in prof[:16]:
-        look.line(profile_line(p, total_ok))
-    if len(prof) > 16:
-        look.line(f"- ... {len(prof) - 16} more columns in schema.json")
+        look.line("Empty columns: " + "; ".join(notes[:10]) + ".")
+    if prof:   # one legend, then one compact row per column (a profile beats sample rows; the legend replaces words repeated on every row)
+        crow = [profile_line(p, total_ok) for p in prof[:16]]
+        if len(prof) > 16:
+            crow.append(f"... {len(prof) - 16} more columns in schema.json")
+        look.line(COLUMN_LEGEND + chr(10) + chr(10).join(crow))
     import dl_sample
     dl_sample.build_sample(look, text, delim, header, prof, n, repeats, tail, rows, partial or quick_cut)
     if rejects:
@@ -739,7 +744,7 @@ def data_parquet(look):
                                  null_pct=100.0 * nulls / max(1, md.num_rows), outliers=None))
         if cols:
             rep = parquet_report(look, cols, md.num_rows)
-            look.line("Columns: " + "; ".join(rep[:30]) + (f"; +{len(rep) - 30} more in profile.json" if len(rep) > 30 else "") + ".", 86)
+            look.line("Columns (name type, null %, min..max (median), ~distinct): " + "; ".join(rep[:30]) + (f"; +{len(rep) - 30} more in profile.json" if len(rep) > 30 else "") + ".", 86)
             look.write_text("profile.json", json.dumps(cols, indent=1, default=str), "per-column null %, min, max, quartiles, outlier count", "json", inline=False)
             look.fact("column_profile", True)
         else:

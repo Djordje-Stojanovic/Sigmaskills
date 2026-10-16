@@ -8,11 +8,11 @@ Core is stdlib only; optional tools are used when found and become "Not looked a
 Use `python` on Windows and `python3` elsewhere. Do not run it with -I (that hides installed packages).
 
   look.py gate FILE [--budget N]                       READ <path> | LOOK quick|standard|deep <path>
-  look.py FILE [--tier quick|standard|deep] [--budget N] [--out DIR] [--reader ...] [--extract] [--recurse N]
+  look.py FILE [--tier quick|standard|deep] [--budget N] [--out DIR] [--reader ...] [--detail] [--extract] [--recurse N]
                [--allow-network] [--fresh] [--json] [--no-tools] [--no-direct]
   look.py FILE --more [N] | --from K | --remaining    continue / re-read / what is left
   look.py FILE --at M:SS --len S | --page A-B | --sheet NAME [--range A1:H40] | --sql "SELECT ..." | --table T
-               | --func NAME | --member PATH | --grep REGEX | --speaker S2
+               | --func NAME | --member PATH | --grep REGEX | --lines [NAME:]A-B | --speaker S2
   look.py doctor | selftest [--tier full|bare] | gallery DIR -o gallery.html
 Exit: 0 looked, 1 internal error, 2 refused by a safety rule, 3 unknown type.
 """
@@ -38,7 +38,7 @@ HANDLERS = {  # type -> (module, function)
     "unknown": ("dl_bins", "look_unknown"), "log": ("dl_logs", "look_log"), "subtitle": ("dl_logs", "look_subtitle"),
     "cert": ("dl_extra", "look_cert"), "model": ("dl_extra", "look_model"), "diskimage": ("dl_extra", "look_diskimage"),
 }
-DRILL_FLAGS = ("page", "sheet", "sql", "table", "func", "member", "grep", "speaker")
+DRILL_FLAGS = ("page", "sheet", "sql", "table", "func", "member", "grep", "lines", "speaker")
 
 
 def analyse(path, out, opts, sha=None, depth=0):
@@ -114,6 +114,7 @@ def build_parser():
     ap.add_argument("--budget", type=int, metavar="N", help="tokens printed in step 1 (default 1000)")
     ap.add_argument("--more", nargs="?", const=-1, type=int, metavar="N", help="print the next N tokens of the stored look from the cursor (default ladder: to ~3k in all, then ~10k, then 5k at a time)")
     ap.add_argument("--from", dest="from_k", type=int, metavar="K", help="re-read the stored look from chunk K (the cursor only moves forward)")
+    ap.add_argument("--detail", action="store_true", help="add the ids, timings and every Read-next file that the concise default leaves out")
     ap.add_argument("--remaining", action="store_true", help="say how many tokens and what kind of content are left")
     ap.add_argument("--extract", action="store_true", help="archives and mail: write members and attachments (after the safety screen)")
     ap.add_argument("--recurse", type=int, default=0, metavar="N", help="look at the first N members or attachments too")
@@ -124,6 +125,7 @@ def build_parser():
     ap.add_argument("--no-tools", action="store_true", help="bare tier: Python standard library only")
     ap.add_argument("--at", help="video, audio: window start, seconds or M:SS (video also builds a zoom sheet)")
     ap.add_argument("--len", type=float, default=10.0, dest="length", help="video, audio: window length in seconds")
+    ap.add_argument("--query", metavar="TEXT", help="video: pick the contact-sheet tiles for this question (tiles follow the words spoken near it; a third stay evenly spread)")
     ap.add_argument("--mode", default="overview", choices=("overview", "sweep"), help="video: overview sheet, or sweep pages that cover the whole film")
     ap.add_argument("--page", help="pdf, office: pages A-B (text and cost)")
     ap.add_argument("--sheet", help="spreadsheet: sheet name (with --range A1:H40)")
@@ -133,6 +135,7 @@ def build_parser():
     ap.add_argument("--func", help="binary: one function (decompiling needs Ghidra)")
     ap.add_argument("--member", help="archive: look at one member at the quick tier")
     ap.add_argument("--grep", metavar="REGEX", help="search the look's text artifacts (or the text file itself): 50 hits with line numbers")
+    ap.add_argument("--lines", metavar="[NAME:]A-B", help="a window of at most 100 lines of one text artifact of the look (or of the text file itself)")
     ap.add_argument("--speaker", help="audio, video: the turns of one speaker, e.g. S2")
     return ap
 
@@ -159,7 +162,20 @@ def step_one_cursor(stored):
     """The chunk index step 1 ended at, recomputed from a stored stream (a cached look restarts the cursor)."""
     import dl_write
     stream = stored.get("stream") or []
-    return dl_write.window(stream, 0, dl_write.FIRST_TOKENS)[1] if stream else 0
+    return dl_write.window(stream, 0, dl_write.first_budget())[1] if stream else 0
+
+
+def step_one_text(out, o):
+    """LOOK.md (concise), or with --detail step 1 re-rendered from the stored stream with ids, timings and every Read-next file."""
+    if getattr(o, "detail", False) and not o.json:
+        try:
+            import dl_write
+            stream = json.loads((Path(out) / "look.json").read_text(encoding="utf-8")).get("stream") or []
+            if stream:
+                return dl_write.render_first(None, stream, getattr(o, "budget", None), detail=True)[0]
+        except (OSError, ValueError):
+            pass
+    return (Path(out) / ("look.json" if o.json else "LOOK.md")).read_text(encoding="utf-8")
 
 
 def main(argv):
@@ -203,7 +219,7 @@ def main(argv):
             tmp = None if o.out else Path(tempfile.mkdtemp(prefix="sdl-direct-"))
             try:
                 look = analyse(p, Path(o.out) if o.out else tmp, o, core.sha256_file(p))
-                return say(look.out.joinpath("look.json" if o.json else "LOOK.md").read_text(encoding="utf-8"), look.exit_code)
+                return say(step_one_text(look.out, o), look.exit_code)
             finally:
                 if tmp:
                     shutil.rmtree(tmp, ignore_errors=True)
@@ -226,7 +242,7 @@ def main(argv):
             print("(no stored look existed: that was step 1; run --more to continue)")
             return look.exit_code
         import dl_more
-        return say(*dl_more.run(out, sha, None if o.more in (None, -1) else o.more, o.from_k, o.remaining))
+        return say(*dl_more.run(out, sha, None if o.more in (None, -1) else o.more, o.from_k, o.remaining, o.detail))
     if drill:
         if old is None:
             core.clean_own_dir(out)
@@ -238,10 +254,10 @@ def main(argv):
             return say(*got)
     if old is not None and not o.fresh and old.get("opts_key") == core.opts_key(o) and old.get("mode") == o.mode:
         core.save_cursor(out, step_one_cursor(old), sha)
-        return say(stored.read_text(encoding="utf-8") if o.json else (out / "LOOK.md").read_text(encoding="utf-8"), old.get("exit", 0))
+        return say(step_one_text(out, o), old.get("exit", 0))
     core.clean_own_dir(out)
     look = analyse(p, out, o, sha)
-    return say(look.out.joinpath("look.json" if o.json else "LOOK.md").read_text(encoding="utf-8"), look.exit_code)
+    return say(step_one_text(look.out, o), look.exit_code)
 
 
 if __name__ == "__main__":

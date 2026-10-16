@@ -76,8 +76,8 @@ def contract(out, lj):
     if not md.startswith("# "):
         return "no title line"
     lines = md.splitlines()
-    if not re.search(r"sha [0-9a-f]{12}\b", lines[1]) or "folder:" not in lines[1]:
-        return "identity line lacks sha or folder"
+    if "folder:" not in lines[1] or re.search(r"sha [0-9a-f]{12}\b", lines[1]):   # concise default: the folder is named once, ids come with --detail
+        return "identity line lacks the folder, or carries an id the concise default leaves out"
     plain = re.sub(r"```.*?```", "", md, flags=re.S)
     heads = re.findall(r"^## (.+?)\s*$", plain, re.M)
     base = [re.sub(r" \(continued\)$", "", h) for h in heads if not h.startswith("Content: ")]

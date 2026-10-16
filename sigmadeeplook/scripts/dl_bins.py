@@ -142,12 +142,21 @@ def look_code(look):
     look.fact("injection_flags", n_inj)
     scan_secrets(look, text, look.path.name)
     ol, how = outline_of(text, ext)
+    import dl_skel
+    rows, _how = dl_skel.skeleton(text, ext) if len(lines) > 80 and not minified else ([], "")
     if ol:
-        look.write_text("outline.json", json.dumps(ol, indent=1), f"definitions with line numbers ({how})", "json")
-        look.line(f"{len(ol)} definitions found ({how}): " + ", ".join(d["name"] for d in ol[:8]) + (" ..." if len(ol) > 8 else ""))
+        if not rows:   # the skeleton below carries the same names with their signatures
+            look.write_text("outline.json", json.dumps(ol, indent=1), f"definitions with line numbers ({how})", "json")
+        if not rows:
+            look.line(f"{len(ol)} definitions found ({how}): " + ", ".join(d["name"] for d in ol[:8]) + (" ..." if len(ol) > 8 else ""))
         look.fact("definitions", len(ol))
     look.excerpt("First lines", "\n".join(lines[:15]))
-    look.write_text("head.txt", "\n".join(lines[:200]), "first 200 lines")
+    if rows:   # headers and signatures instead of bodies: as good for finding the place (Agentless), a fraction of the tokens
+        look.write_text("skeleton.md", dl_skel.render(rows, len(lines)), f"signature skeleton: {len(rows)} definitions with line numbers and a doc remark", value=8)
+        look.line(f"Skeleton: {len(rows)} definitions with their signatures in skeleton.md; the body of one is one call away.", 40)
+        look.cmd("--func NAME", "the body of one function or class (--func list names them all)", None)
+    else:
+        look.write_text("head.txt", "\n".join(lines[:200]), "first 200 lines")
     ctags = look.tool("ctags")
     if ctags and ext != ".py":
         r, out, _ = look.run_text([ctags, "--output-format=json", "-f", "-", str(look.path)])

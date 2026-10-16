@@ -605,10 +605,11 @@ def sharp(g):
     return s / len(g)
 
 
-def pick_times(look, lo, hi, n):
-    """Slot centres (i+0.5)*D/n; in each slot the sharpest of a few nearby candidates wins (a blur or a half-faded frame loses)."""
+def pick_times(look, lo, hi, n, centres=None):
+    """Slot centres (i+0.5)*D/n, or the given `centres` (a query-driven spread, see dl_pick); in each slot the sharpest of a few
+    nearby candidates wins (a blur or a half-faded frame loses)."""
     span = hi - lo
-    slots = [(i, lo + (i + 0.5) * span / n) for i in range(n)]
+    slots = [(i, lo + (i + 0.5) * span / n) for i in range(n)] if not centres or len(centres) != n else list(enumerate(centres))
     cands = {}
     ncand = 1 if look.quick else SLOT_CANDIDATES   # the quick tier takes the slot centre without hunting for the sharpest frame
     for i, c in slots:
@@ -661,7 +662,14 @@ def make_video_sheets(look, v, dur, words, res, au):
         jobs.append(("sheet-overview.jpg", 0.0, dur, "overview"))
     levels = audio_levels(look, dur) if au else None
     for name, lo, hi, title in jobs:
-        times = add_flag_tiles(pick_times(look, lo, hi, n), res, lo, hi)
+        centres = None
+        query = getattr(look.opts, "query", None)
+        if query and words:   # relevance with a spread (BOLT): tiles follow the question, a third stay evenly spread
+            import dl_pick
+            centres = dl_pick.pick(dl_pick.relevance_points(words, query, lo, hi), n) or None
+            if centres:
+                title += f" | picked for: {query[:40]}"
+        times = add_flag_tiles(pick_times(look, lo, hi, n, centres), res, lo, hi)
         render_sheet(look, name, title, times, words, res, v, levels, dur, lo, hi)
     look.step("contact sheets", "ffmpeg + Pillow")
 

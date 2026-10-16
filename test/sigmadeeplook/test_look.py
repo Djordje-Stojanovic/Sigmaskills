@@ -189,7 +189,8 @@ class Refusals(unittest.TestCase):
         for name in ("empty.bin", "noise.bin"):
             r, _ = look(name)
             self.assertEqual(r.returncode, 3, name)
-            self.assertIn("sha ", r.stdout)
+            self.assertNotIn("sha ", r.stdout, "concise default: no id on the identity line")
+            self.assertIn("folder:", r.stdout)
 
     def test_url_needs_the_network_flag(self):
         r = run(["https://example.invalid/page.html", "--no-tools"])

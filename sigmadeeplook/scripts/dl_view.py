@@ -337,7 +337,7 @@ def gallery_main(argv):
 <header><h1>{esc(o.title)}</h1><small>{len(rows)} rows</small></header>
 {INTRO.replace('%LINKS%', links)}
 <div class="tok"><table><tr><th>file</th><th>size</th><th>direct read costs</th><th>LOOK.md costs</th><th>LOOK.md + every Read-next file</th><th>tier</th></tr>{trows}</table>
-<div class="px">Tokens are estimated: text = bytes / 4, PDF = pages x {tok(PDF_TOKENS_PER_PAGE)}, pictures = ceil(w/28) x ceil(h/28). Binary and media cannot be read directly at all.</div></div>
+<div class="px">Tokens are estimated: text = bytes / 4, PDF = pages x {tok(PDF_TOKENS_PER_PAGE)}, pictures = ceil(w/28) x ceil(h/28) after the long edge is shrunk to 1568 px (standard tier, at most 1568 tokens) or 2576 px (high-resolution tier, at most 4784). Binary and media cannot be read directly at all.</div></div>
 {''.join(rows)}</div></body></html>"""
     outp.write_text(page, encoding="utf-8")
     if o.tokens_md:

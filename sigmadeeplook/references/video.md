@@ -14,7 +14,7 @@ Claude and Codex take pictures, not video. Only Gemini accepts a video file. So 
 2. One ffmpeg pass: `blackdetect`, `freezedetect`, `silencedetect`, `ebur128` (integrated LUFS, range, peak) become Flags with times. A black or silent stretch is a hint, not a verdict.
 3. Words: embedded subtitle streams first (`subtitles.srt`), else faster-whisper offline from a cached model with `vad_filter=True` and `condition_on_previous_text=False` (`words.json`, `transcript.srt`). A model that is not cached becomes a Not-looked-at row, never a download.
 4. Cuts: ffmpeg scene score above 0.4 (`scenes.csv`); PySceneDetect when installed. Scene starts are extra tile sources.
-5. Sheet: tiles at slot centres `(i+0.5)*D/N`, the sharpest frame near each slot, a burned M:SS and the spoken words under each tile, a loudness strip, flagged stretches as extra tiles. Default 3x3 at 2000 px (`sheet-overview.jpg`). No Pillow: an ffmpeg `fps=` and `tile` sheet.
+5. Sheet: tiles at slot centres `(i+0.5)*D/N`, the sharpest frame near each slot, a burned M:SS and the spoken words under each tile, a loudness strip, flagged stretches as extra tiles. Default 3x3 at 2000 px, full detail (`sheet-overview.jpg`): about 1.6k tokens on the standard vision tier, about 3.5k on the high-resolution tier. `--query "words"` moves the slots toward where those words are spoken, and a third of the tiles stay evenly spread. No Pillow: an ffmpeg `fps=` and `tile` sheet.
 6. `--mode sweep` writes `sheet-sweep-N.jpg`, one page per 3 minutes. `--at T --len S` writes `sheet-window-<T>s.jpg` for that span with finer tiles.
 
 ## Failure modes

@@ -8,6 +8,10 @@ repeating a chunk. `--from K` re-reads, `--remaining` says what is left. Every p
 
     -- chunks 0-12 of 87 | printed ~1.0k | next: --more (~2.0k tokens of key facts, map) | remaining ~18.4k
 
+Each print ends with a recap line (the three most important facts of everything printed so far, restated: models attend most to
+the first and last items of a long input, so the key points sit at both ends) and is concise by default: ids, timings and the long tail
+of Read-next files appear only with `--detail`.
+
 Layout inside a print (empty sections left out): `# name - what it is` and one identity line, then `## Key facts`, `## Watch out`,
 `## Map`, `## Read next`, `## Not looked at`. Chunks are ranked across sections; a print groups the chunks it holds by section.
 """
@@ -21,6 +25,10 @@ import dl_util as U
 FIRST_TOKENS = 1000
 LADDER = (1000, 3000, 10000)   # cumulative tokens printed after step 1, 2, 3
 BEYOND = 5000                  # --more past the ladder
+READ_VISIBLE = 6               # concise default: the best 6 file rows of Read next; the rest appear with --detail
+RECAP_ITEMS = 3
+RECAP_ITEM_CHARS = 78
+RECAP_RESERVE = 62             # tokens kept free in every window for the recap line (the footer has its own FOOTER_TOKENS)
 SECTION_ORDER = ("key", "watch", "map", "read", "nla", "content")
 CONTENT_CHUNK_TOKENS = 220    # text artifacts are cut into chunks of about this size, so a window ends cleanly
 CONTENT_MAX_TOKENS = 150_000  # a text artifact above this is searched or sliced, never put in the stream
@@ -87,18 +95,21 @@ def headline(look):
     return f"{look.subtype or look.type}, {core.human(look.size)}", None
 
 
-def identity(look, elapsed):
+def identity(look, elapsed, detail=False):
     bits = [f"{look.type}/{look.subtype}" if look.subtype and look.subtype != look.type else look.type, core.human(look.size)]
     if look.dims:
         bits.append(look.dims)
-    bits += [look.tier_name + ("" if look.tier() == "full" else f" ({look.tier()})"), f"{elapsed:.1f}s", f"sha {look.sha[:12]}"]
+    bits.append(look.tier_name + ("" if look.tier() == "full" else f" ({look.tier()})"))
+    if detail:   # ids and timings do not help the answer: they come with --detail
+        bits += [f"{elapsed:.1f}s", f"sha {look.sha[:12]}"]
     return " · ".join(bits)
 
 
 def _row_text(a, look):
     t = a.get("tokens_est", 0)
     if a["kind"] == "image":
-        cost = f"{a.get('px', '?')} px, ~{tok(t)} tokens"
+        s, h = a.get("tokens_std"), a.get("tokens_high")
+        cost = f"{a.get('px', '?')} px, ~{tok(s)} tokens standard tier / ~{tok(h)} high-res tier" if s and h and s != h else f"{a.get('px', '?')} px, ~{tok(t)} tokens"
     elif t > core.BIG_ARTIFACT_TOKENS:
         cost = f"~{tok(t)} tokens: slice with {a.get('slice') or '--grep REGEX'}"
     else:
@@ -159,6 +170,7 @@ def build_stream(look):
     elapsed = round(__import__("time").time() - look.t0, 2)
     h, used = headline(look)
     head = f"# {look.path.name} - {h}\n{identity(look, elapsed)}   folder: {look.out}"
+    head_detail = f"# {look.path.name} - {h}\n{identity(look, elapsed, True)}   folder: {look.out}"
     raw = []   # (sec, pri, text, tag, seq)
     seq = 0
     for c in clusters(look.flags):
@@ -176,8 +188,12 @@ def build_stream(look):
         if a.get("kind") != "internal":
             by_path[a["path"]] = a   # the same file registered twice is one row (the later description wins)
     arts = list(by_path.values())
-    for text, sec_seq in read_rows(look, arts):
-        raw.append(("read", 45, text, "file", seq + 5000))
+    rows = read_rows(look, arts)
+    for k, (text, _) in enumerate(rows):
+        raw.append(("read", 45, text, "file", seq + 5000, None, None, "detail" if k >= READ_VISIBLE else None))
+        seq += 1
+    if len(rows) > READ_VISIBLE:
+        raw.append(("read", 45, f"+{len(rows) - READ_VISIBLE} more files in the folder (`--detail` lists them; `--grep REGEX` searches them)", "file", seq + 5000, None, None, "concise"))
         seq += 1
     for c in look.cmds:
         cost = f"~{tok(c['tokens'])} tokens" if c.get("tokens") else "prints its cost first"
@@ -200,13 +216,15 @@ def build_stream(look):
     # an excerpt that the stream also holds as file content is printed once
     raw = [r for r in raw if not (r[0] == "key" and "```text" in r[2] and _excerpt_body(r[2]) and any(_excerpt_body(r[2]) in b for b in body_texts))]
     raw.sort(key=lambda r: (-r[1], r[4]))
-    stream = [{"id": 0, "sec": "head", "pri": 1000, "tag": "identity", "text": head, "tok": U.est_tokens(head) + 12}]
+    stream = [{"id": 0, "sec": "head", "pri": 1000, "tag": "identity", "text": head, "text_detail": head_detail, "tok": U.est_tokens(head) + 12}]
     for r in raw:
         sec, pri, text, tag = r[0], r[1], r[2], r[3]
         c = {"id": len(stream), "sec": sec, "pri": pri, "tag": tag, "text": text, "tok": U.est_tokens(text) + 2}
         if sec == "content":
             c["line"], c["line_end"] = r[5], r[6]
             c["tok"] += 14   # the heading line of the part
+        if len(r) > 7 and r[7]:
+            c["only"] = r[7]   # "detail": printed with --detail only; "concise": printed without it
         stream.append(c)
     return stream
 
@@ -279,6 +297,13 @@ def lost_rows(look):
 # ---------------------------------------------------------------- printing a window of the stream
 FOOTER_TOKENS = 40   # the footer line itself, counted in the printed figure
 HEAD_COST = 14   # the "lines a-b:" line and the fence around a run of content
+OVERHEAD = FOOTER_TOKENS + RECAP_RESERVE   # what every print adds to its chunks: the recap line and the footer
+
+
+def shown(c, detail=False):
+    """Concise default: chunks marked only='detail' are hidden; with --detail the 'concise' stand-ins are hidden instead."""
+    o = c.get("only")
+    return o is None or (o == "detail") == bool(detail)
 
 
 def merges(prev, c):
@@ -287,19 +312,27 @@ def merges(prev, c):
             and c.get("line") in (prev.get("line_end", -9), prev.get("line_end", -9) + 1))
 
 
-def cost(chunks):
+def cost(chunks, detail=False):
     total, prev = 0, None
     for c in chunks:
+        if not shown(c, detail):
+            continue
         total += c["tok"] - (HEAD_COST if merges(prev, c) else 0)
         prev = c
     return total
 
 
-def window(stream, start, max_tokens):
-    """Chunks from `start` while the running cost stays within max_tokens (at least one chunk). -> (chunks, next_index)."""
+def window(stream, start, max_tokens, detail=False):
+    """Chunks from `start` while the running cost stays within max_tokens (at least one chunk). -> (chunks, next_index).
+
+    Hidden chunks (see shown) inside the range cost nothing and are not returned, but the range still covers them, so the chunk numbers
+    of two windows stay contiguous."""
     out, used, i = [], 0, start
     while i < len(stream):
         c = stream[i]
+        if not shown(c, detail):
+            i += 1
+            continue
         add = c["tok"] - (HEAD_COST if merges(out[-1] if out else None, c) else 0)
         if out and used + add > max_tokens:
             break
@@ -309,8 +342,8 @@ def window(stream, start, max_tokens):
     return out, i
 
 
-def remaining_tokens(stream, pos):
-    return cost(stream[pos:])
+def remaining_tokens(stream, pos, detail=False):
+    return cost(stream[pos:], detail)
 
 
 def describe(chunks):
@@ -323,13 +356,46 @@ def describe(chunks):
     return ", ".join(k for k, _ in top) or "nothing"
 
 
-def render_window(chunks, first_index):
+def recap_item(c):
+    """One chunk as a short phrase: a finding without its hint, a fact up to its first sentence."""
+    t = c["text"].replace("**", "")
+    if c.get("tag") == "finding":
+        t = t.split(" - ", 1)[0]
+    else:
+        t = t.split(". ", 1)[0]
+    t = " ".join(t.split())
+    return t if len(t) <= RECAP_ITEM_CHARS else t[:RECAP_ITEM_CHARS - 1].rstrip() + "…"
+
+
+def recap_line(stream, b, detail=False):
+    """The three most important facts of everything printed so far (chunks 0..b-1), restated at the END of the print.
+
+    Models recall the first and last items of a long input best (Lost in the Middle, arXiv 2307.03172; reordering lifts a middle fact
+    from 54 to 75 in LongLLMLingua), so what matters is said twice: first by rank, last by this line. Traps outrank facts."""
+    cand = [c for c in stream[:b] if c["sec"] in ("key", "watch") and shown(c, detail) and "```" not in c["text"] and c.get("tag") != "limits"]
+    cand.sort(key=lambda c: (-c["pri"], c["id"]))
+    items, seen = [], set()
+    for c in cand:
+        t = recap_item(c)
+        k = t[:30].lower()
+        if k in seen or len(t) < 8:
+            continue
+        seen.add(k)
+        items.append(t)
+        if len(items) == RECAP_ITEMS:
+            break
+    if not items:
+        return ""
+    return "Recap: " + " | ".join(f"{i}) {t}" for i, t in enumerate(items, 1)) + "\n"
+
+
+def render_window(chunks, first_index, detail=False):
     L = []
     by = {}
     for c in chunks:
         by.setdefault(c["sec"], []).append(c)
     for c in by.get("head", []):
-        L.append(c["text"])
+        L.append(c.get("text_detail") if detail and c.get("text_detail") else c["text"])
     for sec in SECTION_ORDER:
         cs = by.get(sec)
         if not cs:
@@ -358,19 +424,29 @@ def render_window(chunks, first_index):
     return "\n".join(L).strip("\n") + "\n"
 
 
-def footer(stream, a, b, printed, tier_note=""):
-    rem = remaining_tokens(stream, b)
+def footer(stream, a, b, printed, tier_note="", detail=False):
+    """The recap line and the footer. 'printed' is what this print holds: its chunks plus these two lines."""
+    rem = remaining_tokens(stream, b, detail)
+    recap = recap_line(stream, b, detail)
     if b >= len(stream):
         nxt = "next: nothing more in this look; drill down with --at / --page / --sheet / --sql / --grep / --speaker (see Read next)"
     else:
-        want = next_ladder(printed_total=printed_cumulative(stream, b))
-        nchunks, _ = window(stream, b, want)
-        nxt = f"next: --more (~{tok(cost(nchunks))} tokens of {describe(nchunks)})"
-    return f"-- chunks {a}-{b - 1} of {len(stream)} | printed ~{tok(cost(stream[a:b]) + FOOTER_TOKENS)} | {nxt} | remaining ~{tok(rem)}{tier_note}\n"
+        want = next_ladder(printed_total=printed_cumulative(stream, b, detail))
+        nchunks, _ = window(stream, b, max(1, want - OVERHEAD), detail)
+        nxt = f"next: --more (~{tok(cost(nchunks, detail) + OVERHEAD)} tokens of {describe(nchunks)})"
+    return recap + f"-- chunks {a}-{b - 1} of {len(stream)} | printed ~{tok(cost(stream[a:b], detail) + FOOTER_TOKENS + U.est_tokens(recap))} | {nxt} | remaining ~{tok(rem)}{tier_note}\n"
 
 
-def printed_cumulative(stream, b):
-    return cost(stream[:b])
+def printed_cumulative(stream, b, detail=False):
+    """Tokens given to the agent so far: the chunks up to b plus the recap and footer of each print (one per ladder step reached)."""
+    c = cost(stream[:b], detail)
+    if b <= 0:
+        return 0
+    prints = 1   # whatever was printed so far was at least one print
+    for t in LADDER[1:]:
+        if c + OVERHEAD * prints >= 0.8 * t:
+            prints += 1
+    return c + OVERHEAD * prints
 
 
 def next_ladder(printed_total):
@@ -380,11 +456,16 @@ def next_ladder(printed_total):
     return BEYOND
 
 
-def render_first(look, stream=None, budget=None):
-    """-> (text, next_index): step 1, the first ~1,000 tokens (or --budget N)."""
+def first_budget(budget=None):
+    """Chunk tokens of step 1: the tier budget less the recap and the footer, so the whole print stays within it."""
+    return max(1, (budget or FIRST_TOKENS) - OVERHEAD)
+
+
+def render_first(look, stream=None, budget=None, detail=False):
+    """-> (text, next_index): step 1, the first ~1,000 tokens (or --budget N), recap and footer included."""
     stream = stream if stream is not None else look.stream
-    chunks, nxt = window(stream, 0, budget or FIRST_TOKENS)
-    return render_window(chunks, 0) + footer(stream, 0, nxt, 0), nxt
+    chunks, nxt = window(stream, 0, first_budget(budget), detail)
+    return render_window(chunks, 0, detail) + footer(stream, 0, nxt, 0, detail=detail), nxt
 
 
 def render_direct(look):
