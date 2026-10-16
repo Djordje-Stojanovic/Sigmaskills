@@ -15,6 +15,7 @@ import re
 import sys
 import shutil
 import tempfile
+import time
 import zipfile
 import xml.etree.ElementTree as ET
 from collections import Counter
@@ -168,8 +169,24 @@ def look_pdf(look):
             if v == "scanned":
                 look.flag("SCANNED", f"page {pp['page']}", "no text layer", "text needs OCR")
         look.fact("layers", {str(pp["page"]): pp["layer"] for pp in per_page})
-        look.line("Text layer by page: " + "; ".join(verdicts[:12]) + (" ..." if len(verdicts) > 12 else ""))
+        kinds = Counter(pp["layer"] for pp in per_page)
+        chars = sorted(pp["chars"] for pp in per_page)
+        look.line(f"Text layer, {len(per_page)} of {pages} pages checked: " + ", ".join(f"{n} {k}" for k, n in kinds.most_common())
+                  + f"; characters per page min {chars[0]}, median {chars[len(chars) // 2]}, max {chars[-1]}; {sum(1 for pp in per_page if pp['images'])} pages hold pictures.")
+        odd = [f"p{pp['page']} {pp['layer']}" for pp in per_page if pp["layer"] != "born-digital"]
+        if odd:
+            look.line("Pages that are not plain born-digital text: " + ", ".join(odd[:12]) + (f" (+{len(odd) - 12} more, see layer.json)" if len(odd) > 12 else ""))
         look.write_text("layer.json", json.dumps(per_page, indent=1), "per-page text-layer verdict (born-digital, scanned, garbled)", "json")
+    if doc is not None:
+        try:
+            toc = doc.get_toc(simple=True)
+        except Exception:
+            toc = []
+        if toc:
+            look.fact("outline_entries", len(toc))
+            top = [t for t in toc if t[0] == 1] or toc
+            look.line(f"Outline: {len(toc)} bookmarks; top level: " + "; ".join(f"{t[1][:50]} (p{t[2]})" for t in top[:12]) + (f"; +{len(top) - 12} more" if len(top) > 12 else ""))
+            look.write_text("outline.txt", "\n".join("  " * (t[0] - 1) + f"{t[1]}  (page {t[2]})" for t in toc), "bookmark outline with page numbers")
     body = pdf_text(look, text_pages, pages)
     if body:
         look.write_text("text.md", body, "text per page, `<!-- page N -->` markers")
@@ -904,22 +921,117 @@ def mail_eml(look):
     look.ask_human("Do you trust the sender, and should the attachments be opened (never run) with --recurse?", "May the message text leave this machine?")
 
 
+def _norm_subject(s):
+    s = re.sub(r"(?i)^\s*((re|fwd?|aw|wg)\s*:\s*)+", "", s or "").strip()
+    return re.sub(r"\d{3,}", "#", s)[:70] or "(no subject)"
+
+
+def _addr(s):
+    m = re.search(r"[\w.+-]+@[\w.-]+", s or "")
+    return m.group(0).lower() if m else (s or "(none)")[:40]
+
+
 def mail_mbox(look):
+    """A whole-mailbox profile: dates, senders, subjects, attachments, authentication failures, link mismatches. One pass, no message is opened twice."""
     import mailbox
+    from email import utils
     box = mailbox.mbox(str(look.path), create=False)
-    rows = []
+    rows, flagged = [], []
+    senders, subjects, months, atypes = Counter(), Counter(), Counter(), Counter()
+    dates, att_total, att_bytes, nauth, nlink, nhtml, ncrypto = [], 0, 0, 0, 0, 0, 0
+    msgs_with_att = 0
+    t0 = time.time()
+    done = 0
     for key, msg in box.items():
-        rows.append([key, str(msg["Date"]), str(msg["From"]), str(msg["Subject"]), len(msg.get_payload(decode=False)) if not msg.is_multipart() else "multipart"])
+        done += 1
+        frm, subj = _addr(str(msg["From"])), str(msg["Subject"])
+        when = None
+        try:
+            when = utils.parsedate_to_datetime(str(msg["Date"]))
+        except (TypeError, ValueError, IndexError):
+            pass
+        if when:
+            dates.append(when)
+            months[when.strftime("%Y-%m")] += 1
+        senders[frm] += 1
+        subjects[_norm_subject(subj)] += 1
+        notes, natt, nbytes = [], 0, 0
+        auth = str(msg["Authentication-Results"] or "")
+        if re.search(r"(spf|dkim|dmarc)=(fail|softfail)", auth, re.I):
+            notes.append("AUTH-FAIL " + re.search(r"(spf|dkim|dmarc)=(fail|softfail)", auth, re.I).group(0))
+            nauth += 1
+        parts = list(msg.walk()) if msg.is_multipart() else [msg]
+        for part in parts:
+            ct = part.get_content_type()
+            if ct.startswith("multipart/"):
+                continue
+            fn = part.get_filename()
+            if fn or part.get("Content-Disposition", "").lower().startswith("attachment"):
+                natt += 1
+                atypes[ct] += 1
+                try:
+                    nbytes += len(part.get_payload(decode=True) or b"")
+                except Exception:
+                    pass
+            elif ct == "text/html" and done <= 20000:
+                nhtml += 1
+                try:
+                    raw = (part.get_payload(decode=True) or b"").decode(part.get_content_charset() or "utf-8", "replace")
+                    lk = _Links()
+                    lk.feed(raw)
+                    for href, txt in lk.links:
+                        th = host_of(txt) if re.search(r"[a-z0-9-]+\.[a-z]{2,}", txt, re.I) else ""
+                        if th and host_of(href) and th != host_of(href):
+                            notes.append(f"LINK-MISMATCH shows {th}, goes to {host_of(href)}")
+                            nlink += 1
+                            break
+                except Exception:
+                    pass
+            if ct in ("application/pgp-encrypted", "application/pkcs7-mime"):
+                ncrypto += 1
+                notes.append("CRYPTO " + ct)
+        if natt:
+            msgs_with_att += 1
+            att_total += natt
+            att_bytes += nbytes
+        rows.append([done, key, when.date().isoformat() if when else str(msg["Date"])[:30], frm, subj[:120], natt, nbytes, "; ".join(notes)])
+        if notes:
+            flagged.append(rows[-1])
+        if time.time() - t0 > 60:
+            look.flag("PARTIAL", "mailbox", f"stopped after {done} messages", "time cap; counts are lower bounds")
+            break
     box.close()
+    n = len(rows)
     buf = io.StringIO()
     w = csv.writer(buf)
-    w.writerow(["key", "date", "from", "subject", "size"])
+    w.writerow(["n", "key", "date", "from", "subject", "attachments", "attachment_bytes", "notes"])
     w.writerows(rows)
-    look.write_text("index.csv", buf.getvalue(), f"{len(rows)} messages: date, from, subject")
-    look.fact("messages", len(rows))
-    look.fact("subjects", [r[3] for r in rows])
-    look.line(f"mbox: {len(rows)} messages. Subjects: " + "; ".join(r[3] for r in rows[:8]))
-    look.ask_human("Which message matters? Each can be exported as .eml for a closer look.")
+    look.write_text("index.csv", buf.getvalue(), f"all {n} messages: date, sender, subject, attachment count and bytes, notes (search it, do not read it whole)")
+    if flagged:
+        buf2 = io.StringIO()
+        w2 = csv.writer(buf2)
+        w2.writerow(["n", "key", "date", "from", "subject", "attachments", "attachment_bytes", "notes"])
+        w2.writerows(flagged[:500])
+        look.write_text("flagged.csv", buf2.getvalue(), f"{len(flagged)} messages with a note (failed authentication, link mismatch, encryption)")
+    look.fact("messages", n)
+    look.fact("senders", len(senders))
+    look.fact("with_attachments", msgs_with_att)
+    look.fact("auth_failures", nauth)
+    look.fact("link_mismatches", nlink)
+    look.line(f"mbox: {n} messages from {len(senders)} senders" + (f", dated {min(dates).date()} to {max(dates).date()}" if dates else "") + f", {core.human(look.size)}.")
+    if months:
+        look.line("Messages per month: " + ", ".join(f"{k} {v}" for k, v in sorted(months.items())[:14]) + (" ..." if len(months) > 14 else ""))
+    look.line("Top senders: " + "; ".join(f"{k} ({v})" for k, v in senders.most_common(6)))
+    look.line("Top subjects: " + "; ".join(f"{k} ({v})" for k, v in subjects.most_common(6)))
+    look.line(f"Attachments: {att_total} in {msgs_with_att} messages ({core.human(att_bytes)} decoded)" + (": " + ", ".join(f"{k} {v}" for k, v in atypes.most_common(5)) if atypes else "") + " (not opened).")
+    look.line(f"Authentication failures: {nauth}. Links whose text names another site than they open: {nlink} (of {nhtml} HTML parts checked).")
+    for r in [x for x in flagged if "AUTH-FAIL" in x[7]][:4]:
+        look.flag("AUTH-FAIL", f"message {r[0]}", r[7], "the sender could not be verified; see flagged.csv for the rest")
+    for r in [x for x in flagged if "LINK-MISMATCH" in x[7]][:4]:
+        look.flag("LINK-MISMATCH", f"message {r[0]}", r[7], "possible phishing: the visible address and the real target differ")
+    if nauth > 4 or nlink > 4:
+        look.flag("MORE-IN-FLAGGED", "flagged.csv", f"{len(flagged)} messages with notes", "only the first 4 of each kind are listed here")
+    look.ask_human("Which message matters? Each can be exported as .eml for a closer look.", "Should the attachments of the flagged messages be extracted (never run)?")
 
 
 def unfold(text):

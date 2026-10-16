@@ -18,6 +18,7 @@ import tarfile
 import time
 import zipfile
 import zlib
+from collections import Counter
 from pathlib import Path, PurePosixPath
 
 import dl_core as core
@@ -606,6 +607,42 @@ def safe_extract(look, members, which, dest):
     return written
 
 
+NESTED_EXT = (".zip", ".tgz", ".tar.gz", ".tar", ".7z", ".rar", ".gz", ".bz2", ".xz", ".jar", ".whl", ".nupkg")
+RISKY_EXT = (".exe", ".dll", ".msi", ".bat", ".cmd", ".ps1", ".sh", ".vbs", ".js", ".scr", ".lnk")
+
+
+def archive_overview(members):
+    """Summary lines for a big archive: where the bytes are, what kinds of files, the biggest members, nested archives, runnable files."""
+    files = [m for m in members if m["kind"] == "file"]
+    if not files:
+        return []
+    out = []
+    top = {}
+    for m in files:
+        parts = m["name"].replace("\\", "/").strip("/").split("/")
+        key = parts[0] + "/" if len(parts) > 1 else "(top level)"
+        a = top.setdefault(key, [0, 0])
+        a[0] += 1
+        a[1] += m["size"]
+    out.append("Folders (files, uncompressed): " + "; ".join(f"{k} {n} files {core.human(b)}" for k, (n, b) in sorted(top.items(), key=lambda kv: -kv[1][1])[:8])
+               + (f"; +{len(top) - 8} more" if len(top) > 8 else ""))
+    depth = max(m["name"].replace("\\", "/").strip("/").count("/") for m in files)
+    ext = Counter(os.path.splitext(m["name"])[1].lower() or "(none)" for m in files)
+    out.append(f"File types: " + ", ".join(f"{e} {n}" for e, n in ext.most_common(8)) + f"; deepest folder nesting {depth}.")
+    big = sorted(files, key=lambda m: -m["size"])[:5]
+    out.append("Largest: " + "; ".join(f"{m['name']} ({core.human(m['size'])})" for m in big))
+    nested = [m["name"] for m in files if m["name"].lower().endswith(NESTED_EXT)]
+    if nested:
+        out.append(f"{len(nested)} members are archives themselves (not opened), for example {', '.join(nested[:3])}.")
+    risky = [m["name"] for m in files if m["name"].lower().endswith(RISKY_EXT)]
+    if risky:
+        out.append(f"{len(risky)} runnable-looking members (never run), for example {', '.join(risky[:4])}.")
+    notable = [m["name"] for m in files if os.path.basename(m["name"]).lower() in ("readme", "readme.md", "package.json", "setup.py", "pyproject.toml", "manifest.json", "install.ps1", "install.sh", "license")]
+    if notable:
+        out.append("Notable files: " + ", ".join(notable[:6]))
+    return out
+
+
 def look_archive(look):
     p = look.path
     st = look.subtype
@@ -668,6 +705,8 @@ def look_archive(look):
     look.fact("max_ratio", round(max(ratios), 1) if ratios else 0)
     look.fact("nesting_depth", depth)
     look.line(f"Archive ({extra.get('format', st)}): {len(members)} members, {nfile} files, {core.human(total)} uncompressed, largest ratio {max(ratios) if ratios else 0:.0f}:1, zip nesting depth {depth}.")
+    for ln in archive_overview(members):
+        look.line(ln)
     rows = [(m["name"], m["size"], m["packed"], f"{m['size'] / max(1, m['packed']):.1f}" if m["packed"] else "", m["kind"], "encrypted" if m["enc"] else "") for m in members[:2000]]
     buf = io.StringIO()
     w = csv.writer(buf)

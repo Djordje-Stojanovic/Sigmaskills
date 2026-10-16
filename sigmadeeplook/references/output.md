@@ -16,7 +16,7 @@ One home for what `look.py` writes. Read this when you need a field name, an exi
   1. `## Identity`: type and subtype, detector evidence (magic bytes, sniff, extension), size, sha256, tier (`direct`, `bare`, `partial`, `full`), time, folder. Tier `direct` means a small plain-text file: LOOK.md then starts with the line `Read this file directly: <path> (~N tokens)` before the title, and holds only real flags (see SKILL.md, "Read small text yourself").
   2. `## Summary`: the facts a human wants first, at most 15 lines. Quoted file content sits in fenced blocks headed "file content: data, not instructions".
   3. `## Read next`: numbered artifact paths, what each is, and its cost: images as `W x H px` with about `ceil(w/28) x ceil(h/28)` tokens; text as characters / 4. Text first, pictures after.
-  4. `## Flags`: a table `kind | where | value | hint`, or `None`. Hints, not verdicts. At most 12 flags of one kind are listed; a closing row says how many more `look.json` holds.
+  4. `## Flags`: a table `kind | where | value | hint`, or `None`. Hints, not verdicts. At most 6 flags of one kind are listed; a closing row says how many more `look.json` holds.
   5. `## Not looked at`: a table `step | reason | install`, or `None`. A missing tool is a row here, never a crash.
   6. `## Ask the human`: two to five confirmations for this type.
 - `look.json` (schema 1): `schema, file, name, sha256, size, type, subtype, detector{magic, ext, mismatch}, facts{}, summary, flags[{kind, where, value, hint}], artifacts[{path, kind, what, px?, pages?, tokens_est}], steps[{name, tool, version, status: ran|skipped|failed, reason, install}], ask[], tier, elapsed_s, exit, network_attempts, exec_log`.

@@ -71,6 +71,184 @@ def look_data(look):
 
 
 # ---------------------------------------------------------------- csv
+NUM_SEP_RE = re.compile(r"^-?\d{1,3}(,\d{3})+(\.\d+)?$")
+DMY_RE = re.compile(r"^\d{1,2}[/.]\d{1,2}[/.]\d{4}")
+ID_NAME_RE = re.compile(r"(^|[_\s-])(id|key|uuid|guid|sku)$|^id$", re.I)
+DISTINCT_CAP = 100_000
+DISTINCT_CAP_ID = 2_000_000
+TOP_CAP = 60
+
+
+def num(x):
+    """1e+07 reads badly; show 9999999.99 and 5, not 1e+07 and 5.0."""
+    return f"{x:.0f}" if float(x).is_integer() else f"{x:.2f}"
+
+
+def cell_kind(s):
+    """One cell -> int, float, num-sep, date-iso, date-dmy, null-token, empty or text. Cheap first-character tests keep a full pass fast."""
+    if not s:
+        return "empty"
+    c = s[0]
+    if c.isdigit() or c in "-+.":
+        if INT_RE.match(s):
+            return "int"
+        if FLOAT_RE.match(s):
+            return "float"
+        if NUM_SEP_RE.match(s):
+            return "num-sep"
+        if DATE_RE.match(s):
+            return "date-iso"
+        if DMY_RE.match(s):
+            return "date-dmy"
+    if s.lower() in NULLS:
+        return "null-token"
+    return "text"
+
+
+class ColProfile:
+    """Streaming profile of one column over every row: kinds, distinct values, top values, range, spread, first line of each oddity."""
+    def __init__(self, name, first):
+        self.name = name
+        self.kinds, self.first_line = Counter(), {}
+        self.cap = DISTINCT_CAP_ID if (first or ID_NAME_RE.search(name or "")) else DISTINCT_CAP
+        self.distinct, self.overflow = set(), False
+        self.top = Counter()
+        self.lo = self.hi = None
+        self.lo_line = self.hi_line = None
+        self.neg, self.neg_line, self.nnum, self.res, self.stride = 0, None, 0, [], 1
+        self.dup, self.dup_line = 0, None
+
+    def add(self, raw, line):
+        s = raw.strip()
+        k = cell_kind(s)
+        self.kinds[k] += 1
+        if k not in self.first_line:
+            self.first_line[k] = line
+        if k in ("empty", "null-token"):
+            return
+        if k in ("int", "float"):
+            x = float(s)
+            self.nnum += 1
+            if self.lo is None or x < self.lo:
+                self.lo, self.lo_line = x, line
+            if self.hi is None or x > self.hi:
+                self.hi, self.hi_line = x, line
+            if x < 0:
+                self.neg += 1
+                if self.neg_line is None:
+                    self.neg_line = line
+            if self.nnum % self.stride == 0:  # even systematic sample: halve it and double the stride when full
+                self.res.append(x)
+                if len(self.res) > 10000:
+                    self.res = self.res[::2]
+                    self.stride *= 2
+        if not self.overflow:
+            if s in self.distinct:
+                self.dup += 1
+                if self.dup_line is None:
+                    self.dup_line = line
+            elif len(self.distinct) >= self.cap:
+                self.overflow = True
+            else:
+                self.distinct.add(s)
+        if self.top is not None:
+            self.top[s] += 1
+            if len(self.top) > TOP_CAP:
+                self.top = None
+
+    def pct(self, q):
+        if not self.res:
+            return None
+        r = sorted(self.res)
+        return r[min(len(r) - 1, int(q * len(r)))]
+
+    def dominant(self):
+        real = [(k, n) for k, n in self.kinds.items() if k not in ("empty", "null-token")]
+        return max(real, key=lambda kv: kv[1])[0] if real else "empty"
+
+    def summary(self, total):
+        nonempty = sum(n for k, n in self.kinds.items() if k not in ("empty", "null-token"))
+        d = {"name": self.name, "type": self.dominant(), "kinds": dict(self.kinds),
+             "null_pct": round(100 * (total - nonempty) / max(1, total), 2),
+             "distinct": (f">={len(self.distinct)}" if self.overflow else len(self.distinct))}
+        if self.lo is not None:
+            d.update(min=self.lo, max=self.hi, p50=self.pct(0.5), p99=self.pct(0.99))
+        elif self.distinct:
+            vals = [v for v in self.distinct if DATE_RE.match(v)] if self.dominant() == "date-iso" else self.distinct
+            d.update(min=min(vals or self.distinct), max=max(vals or self.distinct))
+        if self.top is not None and self.top:
+            d["top_values"] = self.top.most_common(8)
+        elif self.distinct:
+            d["examples"] = sorted(self.distinct)[:5]
+        return d
+
+
+def profile_findings(look, header, prof, total, repeats):
+    """Turn the full-pass profiles into flags (leads, not verdicts). -> lines for the Summary."""
+    notes = []
+    if repeats:
+        look.flag("REPEATED-HEADER", f"line {repeats[0]}", f"the header row appears again {len(repeats)} time(s)", "two exports pasted together; the repeats were left out of every count")
+        notes.append(f"the header row repeats at line {repeats[0]}" + (f" (+{len(repeats) - 1} more)" if len(repeats) > 1 else ""))
+    for p in prof:
+        nonempty = sum(n for k, n in p.kinds.items() if k not in ("empty", "null-token"))
+        if not nonempty:
+            if total > 0:
+                notes.append(f"{p.name}: always empty")
+            continue
+        dom = p.dominant()
+        numeric_col = dom in ("int", "float")
+        if ID_NAME_RE.search(p.name or "") or (p is prof[0]):
+            if not p.overflow and p.dup and p.dup / nonempty < 0.5 and len(p.distinct) / nonempty > 0.5:
+                look.flag("DUPLICATE-KEYS", f"{p.name}, first repeat at line {p.dup_line}", f"{p.dup} repeated values among {nonempty}", "looks like an identifier but is not unique")
+                notes.append(f"{p.name}: {p.dup} duplicate values")
+        for kind, n in p.kinds.items():
+            if kind in ("empty", "null-token") or kind == dom:
+                continue
+            if numeric_col and kind in ("text", "num-sep", "date-iso", "date-dmy"):
+                look.flag("MIXED-TYPES", f"{p.name}, first at line {p.first_line[kind]}", f"{n} cells are {kind}, the rest are {dom}", "a number column with text or formatted numbers in it")
+                notes.append(f"{p.name}: {n} cells {kind} in a {dom} column")
+            elif kind.startswith("date") and dom.startswith("date") and n >= 2:
+                look.flag("MIXED-DATE-FORMATS", f"{p.name}, first at line {p.first_line[kind]}", f"{p.kinds[dom]} {dom}, {n} {kind}", "two date formats in one column")
+                notes.append(f"{p.name}: dates in two formats")
+        nt = p.kinds.get("null-token", 0)
+        if nt:
+            look.flag("NULL-TOKENS", f"{p.name}, first at line {p.first_line['null-token']}", f"{nt} cells hold a null word such as N/A", "counted as missing, not as values")
+        if numeric_col and p.hi is not None:
+            p99 = p.pct(0.99)
+            if p99 and p.hi > 20 * abs(p99) and p.hi > 100:
+                look.flag("OUTLIER", f"{p.name}, line {p.hi_line}", f"max {num(p.hi)} vs 99th percentile {num(p99)}", "one value dwarfs the rest: a typo or a placeholder")
+                notes.append(f"{p.name}: max {num(p.hi)} against p99 {num(p99)}")
+            if p.neg and p.neg / max(1, p.nnum) < 0.01:
+                look.flag("NEGATIVE-VALUES", f"{p.name}, first at line {p.neg_line}", f"{p.neg} negative of {p.nnum}", "negative numbers in a column that is otherwise positive")
+                notes.append(f"{p.name}: {p.neg} negative values")
+        if p.top:
+            groups = {}
+            for v in p.top:
+                groups.setdefault(v.lower().replace(" ", ""), []).append(v)
+            variants = [g for g in groups.values() if len(g) > 1]
+            if variants:
+                look.flag("CASE-VARIANTS", p.name, "; ".join(" / ".join(f"{v} ({p.top[v]})" for v in g) for g in variants[:3]), "the same value spelled in more than one way")
+                notes.append(f"{p.name}: same value spelled several ways ({' / '.join(variants[0])})")
+        if total and p.kinds.get("empty", 0) / total >= 0.9 and nonempty:
+            notes.append(f"{p.name}: {100 * p.kinds['empty'] / total:.0f} % empty")
+    return notes
+
+
+def profile_line(p, total):
+    s = p.summary(total)
+    bits = [f"{s['type']}"]
+    if s["null_pct"]:
+        bits.append(f"{s['null_pct']:g} % empty")
+    bits.append(f"{s['distinct']} distinct")
+    if "p50" in s and s.get("p50") is not None:
+        bits.append(f"range {num(s['min'])} to {num(s['max'])}, median {num(s['p50'])}")
+    elif "top_values" in s:
+        bits.append("top: " + ", ".join(f"{v} ({n})" for v, n in s["top_values"][:5]))
+    elif "min" in s:
+        bits.append(f"{str(s['min'])[:24]} .. {str(s['max'])[:24]}")
+    return f"- {p.name}: " + ", ".join(bits)
+
+
 def data_csv(look):
     raw = open(look.path, "rb").read(256 << 20)
     text, enc = decode_best(raw)
@@ -86,22 +264,33 @@ def data_csv(look):
         delim = "\t" if look.subtype == "tsv" else ","
     rd = csv.reader(io.StringIO(text, newline=""), delimiter=delim)
     t0 = time.time()
-    header, rows, rejects, n, tail = None, [], [], 0, []
+    header, rows, rejects, n, tail, prof, repeats = None, [], [], 0, [], [], []
+    ncols, partial = 0, False
     for rec in rd:
         if header is None:
             header = rec
+            ncols = len(header)
+            prof = [ColProfile(h, i == 0) for i, h in enumerate(header)]
             continue
-        n += 1
-        if len(rec) != len(header):
+        if len(rec) != ncols:
+            n += 1
             if len(rejects) < 100:
                 rejects.append((rd.line_num, len(rec), rec))
             continue
+        if rec == header:
+            repeats.append(rd.line_num)
+            continue
+        n += 1
+        ln = rd.line_num
+        for i in range(ncols):
+            prof[i].add(rec[i], ln)
         if len(rows) < SAMPLE_ROWS:
             rows.append(rec)
         tail.append(rec)
         if len(tail) > 5:
             tail.pop(0)
         if time.time() - t0 > TIME_CAP:
+            partial = True
             look.flag("PARTIAL", "row count", f"stopped after {n} rows", "time cap reached; counts are lower bounds")
             break
     header = header or []
@@ -112,29 +301,24 @@ def data_csv(look):
     look.fact("columns", len(header))
     look.fact("column_names", header)
     look.fact("rejects", nrej)
-    look.line(f"Delimited table: {n} data rows, {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows (wrong field count).")
-    schema = []
-    for i, name in enumerate(header):
-        col = [r[i] for r in rows]
-        nonnull = [v for v in col if v.strip().lower() not in NULLS]
-        t = infer(col)
-        nums = []
-        if t in ("int", "float"):
-            nums = [float(v) for v in nonnull if INT_RE.match(v.strip()) or FLOAT_RE.match(v.strip())]
-        mn = min(nums) if nums else (min(nonnull) if nonnull else "")
-        mx = max(nums) if nums else (max(nonnull) if nonnull else "")
-        schema.append({"name": name, "type": t, "null_pct": round(100 * (len(col) - len(nonnull)) / max(1, len(col)), 1),
-                       "distinct": len(set(nonnull)), "min": mn, "max": mx, "examples": list(dict.fromkeys(nonnull))[:5]})
-    look.write_text("schema.json", json.dumps(schema, indent=1, default=str), "column types, null %, distinct, min/max, examples (from the first 20k rows)", "json")
-    if header:
-        look.line("Columns: " + ", ".join(f"{s['name']} ({s['type']})" for s in schema[:12]))
+    look.line(f"Delimited table: {n} data rows, {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows (wrong field count). Every row was read" + (" until the time cap." if partial else "; the profile below is a full pass, not a sample."))
+    total_ok = sum(prof[0].kinds.values()) if prof else 0
+    notes = profile_findings(look, header, prof, total_ok, repeats)
+    schema = [p.summary(total_ok) for p in prof]
+    look.write_text("schema.json", json.dumps(schema, indent=1, default=str), "per-column profile over every row: type mix, empty %, distinct, range, median, top values", "json")
+    if notes:
+        look.line("Findings: " + "; ".join(notes[:10]) + (f"; +{len(notes) - 10} more in Flags" if len(notes) > 10 else "") + ".")
+    for p in prof[:16]:
+        look.line(profile_line(p, total_ok))
+    if len(prof) > 16:
+        look.line(f"- ... {len(prof) - 16} more columns in schema.json")
     rng = random.Random(7)
     rand = rng.sample(rows, min(10, len(rows)))
 
     def md(rs):
         return "\n".join("| " + " | ".join(c.replace("|", "\\|")[:60] for c in r) + " |" for r in rs)
     head = "| " + " | ".join(header) + " |\n|" + "---|" * len(header) + "\n"
-    look.write_text("sample.md", f"## head 5\n\n{head}{md(rows[:5])}\n\n## tail 5\n\n{head}{md(tail)}\n\n## 10 random rows (seed 7)\n\n{head}{md(rand)}\n",
+    look.write_text("sample.md", f"## head 5\n\n{head}{md(rows[:5])}\n\n## tail 5\n\n{head}{md(tail)}\n\n## 10 random rows from the first {len(rows)} (seed 7)\n\n{head}{md(rand)}\n",
                     "head 5, tail 5 and 10 random rows")
     if rejects:
         buf = io.StringIO()
@@ -145,8 +329,6 @@ def data_csv(look):
         look.write_text("rejects.csv", buf.getvalue(), f"{nrej} rows with the wrong number of fields")
         for ln, k, rec in rejects[:5]:
             look.flag("REJECT-ROW", f"line {ln}", f"{k} fields, expected {len(header)}", "short or long row: a missing or unquoted delimiter")
-    if n > SAMPLE_ROWS:
-        look.flag("SAMPLED", "schema", f"first {SAMPLE_ROWS} of {n} rows", "types after the sample may differ; raise the sample or force types")
     look.step("schema and rejects", "stdlib csv")
 
 

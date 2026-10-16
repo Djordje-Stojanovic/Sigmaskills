@@ -139,6 +139,42 @@ class DirectTier(unittest.TestCase):
         self.assertIn("U+200B", r.stdout)  # hidden Unicode is a real flag and survives
 
 
+class BigText(unittest.TestCase):
+    """Above the direct-read line the look must find faults that sit anywhere in the file, not only in a sample."""
+
+    def test_csv_full_pass_finds_planted_faults(self):
+        head = "id,amount,status,day,qty"
+        rows = [head]
+        for i in range(1, 6001):
+            amount = "N/A" if i == 5500 else '"1,299.50"' if i == 5600 else "9999999.99" if i == 5900 else f"{10 + i % 90}.00"
+            rows.append(f"{i if i != 5001 else 5000},{amount},{'shipped' if i % 7 else 'Shipped'},2026-01-{1 + i % 28:02d},{-2 if i == 5950 else 1 + i % 5}")
+            if i == 3000:
+                rows.append(head)
+        data = ("\n".join(rows) + "\n").encode()
+        self.assertGreater(len(data), threshold())
+        r, out, lj = look_bytes("orders.csv", data)
+        kinds = {f["kind"] for f in lj["flags"]}
+        for k in ("REPEATED-HEADER", "DUPLICATE-KEYS", "MIXED-TYPES", "NULL-TOKENS", "OUTLIER", "CASE-VARIANTS", "NEGATIVE-VALUES"):
+            self.assertIn(k, kinds, k)
+        self.assertEqual(lj["facts"]["rows"], 6000)
+
+    def test_mbox_profile_flags_auth_failures_and_link_mismatch(self):
+        msgs = []
+        for i in range(400):
+            auth = "Authentication-Results: mx; spf=fail\n" if i % 100 == 7 else ""
+            body = ('Content-Type: text/html\n\n<a href="https://evil.example.net/x">https://bank.example.org</a>\n' if i == 250
+                    else "Content-Type: text/plain\n\nhello number " + "x" * 120 + "\n")
+            msgs.append(f"From a{i % 3}@example.org Mon Sep  1 00:00:00 2026\nFrom: a{i % 3}@example.org\nSubject: Report {i}\nDate: Mon, 01 Sep 2026 10:00:00 +0000\n{auth}{body}\n")
+        data = "".join(msgs).encode()
+        self.assertGreater(len(data), threshold())
+        r, out, lj = look_bytes("box.mbox", data)
+        kinds = [f["kind"] for f in lj["flags"]]
+        self.assertIn("AUTH-FAIL", kinds)
+        self.assertIn("LINK-MISMATCH", kinds)
+        self.assertEqual(lj["facts"]["messages"], 400)
+        self.assertEqual(lj["facts"]["auth_failures"], 4)
+
+
 class Refusals(unittest.TestCase):
     def test_unsafe_archives_exit_2_and_write_nothing(self):
         for name in ("slip.zip", "ratio.zip", "nested.zip", "links.tar"):
