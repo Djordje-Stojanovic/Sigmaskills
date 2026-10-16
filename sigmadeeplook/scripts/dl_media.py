@@ -115,10 +115,13 @@ def report_checks(look, res, dur):
     look.fact("freeze", [round(a, 2) for a, _ in res["freeze"]])
     look.fact("silence", [[round(a, 2), round(b, 2)] for a, b in res["silence"]])
     if res["black"] or res["freeze"] or res["silence"]:
+        def times(kind):
+            ts = [core.mmss(a) for a, _ in res[kind]]
+            return ", ".join(ts[:8]) + (f" and {len(ts) - 8} more ({len(ts)} in all)" if len(ts) > 8 else "")
         look.line("Machine checks: " + "; ".join(
-            [f"black at {', '.join(core.mmss(a) for a, _ in res['black'])}"] * bool(res["black"]) +
-            [f"frozen at {', '.join(core.mmss(a) for a, _ in res['freeze'])}"] * bool(res["freeze"]) +
-            [f"silence at {', '.join(core.mmss(a) for a, _ in res['silence'])}"] * bool(res["silence"])))
+            [f"black at {times('black')}"] * bool(res["black"]) +
+            [f"frozen at {times('freeze')}"] * bool(res["freeze"]) +
+            [f"silence at {times('silence')}"] * bool(res["silence"])))
     else:
         look.line("Machine checks: no black, frozen or silent stretch found.")
 

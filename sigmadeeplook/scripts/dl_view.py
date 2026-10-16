@@ -84,6 +84,17 @@ def rel(look_out, p):
         return Path(p).resolve().as_uri()
 
 
+def texty(b):
+    """True when the bytes read as text (no NUL, few control characters), so showing them in a <pre> is useful."""
+    if not b or b"\x00" in b[:4000]:
+        return False
+    return sum(1 for c in b[:4000] if c in (9, 10, 13) or c >= 32) / len(b[:4000]) > 0.97
+
+
+def is_bomb(look):
+    return any(f.get("kind") == "DECOMPRESSION-BOMB?" for f in look.flags)
+
+
 def native_html(look, out):
     p = look.path
     uri = p.resolve().as_uri() if p.exists() else ""
@@ -94,6 +105,8 @@ def native_html(look, out):
         return f'<video controls preload="metadata" src="{esc(uri)}"></video><div class="px">original file, played by the browser (needs a codec the browser knows)</div>'
     if t == "audio":
         return f'<audio controls src="{esc(uri)}"></audio><div class="px">original file</div>'
+    if t == "image" and is_bomb(look):
+        return "<p>The header claims a huge picture; it is not shown here, and it was not decoded.</p>"
     if t == "image" and st != "svg":
         return f'<img alt="original" src="{esc(uri)}">'
     if t == "image":
@@ -105,7 +118,7 @@ def native_html(look, out):
     if t == "font":
         face = f"@font-face{{font-family:'dlspec';src:url('{uri}')}}"
         return f"<style>{face}</style><div style=\"font-family:'dlspec',serif;font-size:36px\">Hamburgefonstiv 0123456789</div><div style=\"font-family:'dlspec',serif;font-size:18px\">The quick brown fox jumps over the lazy dog</div>"
-    if t in ("code", "data", "notebook", "email") and p.stat().st_size < 4 << 20:
+    if t in ("code", "data", "notebook", "email") and p.stat().st_size < 4 << 20 and texty(p.read_bytes()[:4000]):
         txt = p.read_bytes()[:20000].decode("utf-8", "replace")
         return f'<pre>{esc(txt)}</pre><div class="px">first 20 KB of the original</div>'
     if t == "office":
@@ -155,7 +168,8 @@ def gallery_main(argv):
         if src.is_file():
             size = src.stat().st_size
             copyable = size < 6 << 20
-            if t in ("image",) and d["subtype"] != "svg" and copyable:
+            bomb = any(f.get("kind") == "DECOMPRESSION-BOMB?" for f in d["flags"])
+            if t in ("image",) and d["subtype"] != "svg" and copyable and not bomb:
                 shutil.copy2(src, a_dir / src.name)
                 native = f'<img alt="original" src="{esc(rel(outp.parent, a_dir / src.name))}">'
             elif t == "video":
@@ -174,7 +188,7 @@ def gallery_main(argv):
             elif t == "pdf" and copyable:
                 shutil.copy2(src, a_dir / src.name)
                 native = f'<iframe src="{esc(rel(outp.parent, a_dir / src.name))}" title="original PDF"></iframe>'
-            elif t in ("code", "data", "notebook", "email", "web") and size < 200000:
+            elif t in ("code", "data", "notebook", "email", "web") and size < 200000 and texty(src.read_bytes()[:4000]):
                 native = f"<pre>{esc(src.read_bytes()[:3000].decode('utf-8', 'replace'))}</pre><div class=\"px\">first 3 KB of the original</div>"
         if not native:
             native = '<div class="px">No browser viewer for the original of this kind; what the agent sees is on the right.</div>'
@@ -186,7 +200,14 @@ def gallery_main(argv):
                 imgs.append(f'<div><img alt="{esc(a["what"])}" src="{esc(rel(outp.parent, dst))}"><div class="px">{esc(a.get("px", ""))} px</div></div>')
         flags = "".join(f'<tr><td class="flag">{esc(f["kind"])}</td><td>{esc(f["where"])}</td><td>{esc(f["value"])}</td></tr>' for f in d["flags"][:8])
         miss = "".join(f"<li>{esc(s['name'] if 'name' in s else s.get('step', ''))}: {esc(s['reason'])}</li>" for s in d["steps"] if s["status"] in ("skipped", "failed"))
-        summ = "".join(f"<div>{inline(s) if chr(10) not in s else esc(s.splitlines()[0])}</div>" for s in d["summary"][:6])
+        def one(s):
+            if chr(10) not in s:
+                return f"<div>{inline(s)}</div>"
+            m = re.match(r"(.*?)\n```text\n(.*?)\n```", s, re.S)
+            if not m:
+                return f"<div>{esc(s.splitlines()[0])}</div>"
+            return f"<div>{esc(m.group(1))}</div><pre>{esc(m.group(2)[:500])}</pre>"
+        summ = "".join(one(s) for s in d["summary"][:6])
         rows.append(f"""<section class="row"><h2>{esc(d['name'])} <small>{esc(t)} / {esc(d['subtype'])} - tier {esc(d['tier'])} - exit {d['exit']} - {d['elapsed_s']} s</small></h2>
 <div class="cols"><div class="pane"><h2>Native</h2>{native}</div>
 <div class="pane"><h2>Agent sees</h2>{summ}{''.join(imgs[:3])}{('<table>' + flags + '</table>') if flags else '<div class="px">Flags: none</div>'}{('<details><summary>Not looked at (' + str(miss.count('<li>')) + ')</summary><ul>' + miss + '</ul></details>') if miss else ''}</div></div></section>""")
