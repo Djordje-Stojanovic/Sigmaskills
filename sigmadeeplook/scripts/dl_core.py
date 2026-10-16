@@ -71,7 +71,7 @@ MODULES = {  # import name -> pip name
     "dnfile": "dnfile", "pymupdf4llm": "pymupdf4llm", "trimesh": "trimesh", "pysubs2": "pysubs2", "icalendar": "icalendar recurring-ical-events",
     "recurring_ical_events": "recurring-ical-events", "magika": "magika", "msoffcrypto": "msoffcrypto-tool", "cryptography": "cryptography",
     "rapidfuzz": "rapidfuzz", "cv2": "opencv-python", "fastavro": "fastavro", "evtx": "python-evtx", "pyannote": "pyannote.audio",
-    "transformers": "transformers", "psd_tools": "psd-tools", "onnx": "onnx",
+    "transformers": "transformers", "psd_tools": "psd-tools", "onnx": "onnx", "h5py": "h5py",
 }
 MODELS = {  # step name -> (what it lost, how to get it); checked by dl_models.have_model()
     "ast": ("music / speech / SFX map of the audio (AST AudioSet tagger)", "download MIT/ast-finetuned-audioset-10-10-0.4593 from Hugging Face once (~345 MB, ungated)"),
@@ -409,6 +409,12 @@ def detect(path):
         t, st, mg = "archive", "rar", "RAR"
     elif is_(b"\x28\xb5\x2f\xfd"):
         t, st, mg = "archive", "zstd", "zstd"
+    elif is_(b"Obj\x01"):
+        t, st, mg = "data", "avro", "Avro object container"
+    elif is_(b"ElfFile\x00"):
+        t, st, mg = "log", "evtx", "ElfFile (Windows event log)"
+    elif is_(b"8BPS"):
+        t, st, mg = "image", "psd", "8BPS (Photoshop)"
     elif is_(b"MSCF"):
         t, st, mg = "archive", "cab", "cabinet"
     elif h[257:262] == b"ustar":

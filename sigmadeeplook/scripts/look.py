@@ -60,6 +60,9 @@ def analyse(path, out, opts, sha=None, depth=0):
     except Exception as e:  # one broken step must never lose the Identity block
         look.exit_code = 1
         look.flag("INTERNAL-ERROR", f"{mod}.{fn}", f"{type(e).__name__}: {e}", traceback.format_exc().strip().splitlines()[-2][:200])
+    if (look.type == "unknown" or d["mismatch"]) and not direct:
+        import dl_adapt
+        dl_adapt.magika_second_opinion(look)
     if direct:
         core.collapse_direct(look)
     look.finish()

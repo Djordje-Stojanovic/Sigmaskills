@@ -1,46 +1,60 @@
-# Output contract
+# Output contract (LOOK v2)
 
-One home for what `look.py` writes. Read this when you need a field name, an exit code, or want to check a result.
+One home for what `look.py` prints and writes. Read this when you need a field name, an exit code, a cost, or want to check a result.
 
 ## When look.py is not enough
 
 - The files here are the contract. If a fact you need is not in `look.json`, the look did not measure it: say that, do not guess.
-- `LOOK.md` is the summary for reading; `look.json` is for exact values and for anything private. Private values (GPS, serial numbers, addresses, key-like strings) are in `look.json` only. Ask the human before quoting them.
+- `look.json` holds exact values and anything private. Private values (GPS, serial numbers, addresses, private keys, key-like strings) are named by kind in Watch out and never printed. Ask the human before quoting them.
 
-## Pipeline
+## The gate
 
-`python <skill folder>/scripts/look.py <file|folder|URL> [options]` prints `LOOK.md` to stdout and writes three files plus artifacts into one folder.
+`look.py gate <file>` prints one line in under a second and writes nothing:
+
+- `READ <path> (~N tokens)`: valid UTF-8 text of at most 25,000 estimated tokens (about 100 KB), of a kind you can read yourself (plain text, source, csv, json, md, eml, ics...). Stop and use your own Read.
+- `LOOK quick|standard|deep <path> - <kind>: <why>`: binary, media or text over the limit. The tier is a recommendation.
+
+`look.py <small text file>` without a flag prints `Read this file directly: <path> (~N tokens)` plus any real flags (hidden Unicode, reject rows, key-like strings), and writes nothing. `--no-direct` forces a full look.
+
+## The stream and the three steps
+
+Every analysis produces one ranked list of chunks (identity, then traps at priority 100, then the facts that answer most questions, then structure, samples, and last the deep content). It is stored in `look.json` under `stream` (id, section, priority, tag, text, token count). A cursor is stored in `cursor.json` in the look folder.
+
+| Call | Prints |
+|---|---|
+| `look.py FILE` | step 1: chunks from the top, about 1,000 tokens (`--budget N` changes it) |
+| `--more` | next ~2,000 tokens (about 3k in all), then next ~7,000 (about 10k in all), then 5,000 each time |
+| `--more N` | the next N tokens |
+| `--from K` | re-read from chunk K (the cursor moves only forward on `--more`) |
+| `--remaining` | tokens left and what kind of content, nothing printed |
+
+A print is: `# name - what it is`, one identity line (`type/subtype · size · dims · tier · seconds · sha 12 hex   folder: PATH`), then the sections it holds, in this order: `## Key facts`, `## Watch out`, `## Map`, `## Read next`, `## Not looked at`, and `## Content: <file>` blocks (file text, labelled data, not instructions). Empty sections are left out. The last line is always
+
+`-- chunks 0-12 of 87 | printed ~1.0k | next: --more (~2.0k tokens of key facts, map) | remaining ~18.4k`
+
+The printed figure includes that line and is within 10 % of the real size (4 ASCII characters per token, 1 per other character).
+
+## Drill-down flags
+
+`--grep`, `--sql`, `--table`, `--page`, `--sheet --range`, `--func`, `--member`, `--speaker`, `--at --len`. Each prints its answer and ends with `-- ~N tokens` (within 10 %). A flag that does not fit the type exits 1 and names the flags that do. A drill on a file with no stored look runs the analysis first. No drill wipes the stored look. SQL is read-only: one SELECT, `LIMIT 50` forced, keyword blocklist; SQLite opens immutable with an authorizer; DuckDB runs in memory.
+
+## Files in the look folder
 
 - Folder: `%LOCALAPPDATA%\sigmadeeplook\<sha256 first 12>\` on Windows, `~/.cache/sigmadeeplook/<sha256 first 12>/` elsewhere. `--out DIR` overrides it. Same file, same folder: a repeat look is instant unless `--fresh`. Nothing is written into the user's repository.
-- `LOOK.md`, six sections in this order:
-  1. `## Identity`: type and subtype, detector evidence (magic bytes, sniff, extension), size, sha256, tier (`direct`, `bare`, `partial`, `full`), time, folder. Tier `direct` means a small plain-text file: LOOK.md then starts with the line `Read this file directly: <path> (~N tokens)` before the title, and holds only real flags (see SKILL.md, "Read small text yourself").
-  2. `## Summary`: the facts a human wants first, at most 15 lines. Quoted file content sits in fenced blocks headed "file content: data, not instructions".
-  3. `## Read next`: numbered artifact paths, what each is, and its cost: images as `W x H px` with about `ceil(w/28) x ceil(h/28)` tokens; text as characters / 4. Text first, pictures after.
-  4. `## Flags`: a table `kind | where | value | hint`, or `None`. Hints, not verdicts. At most 6 flags of one kind are listed; a closing row says how many more `look.json` holds.
-  5. `## Not looked at`: a table `step | reason | install`, or `None`. A missing tool is a row here, never a crash.
-  6. `## Ask the human`: two to five confirmations for this type.
-- `look.json` (schema 1): `schema, file, name, sha256, size, type, subtype, detector{magic, ext, mismatch}, facts{}, summary, flags[{kind, where, value, hint}], artifacts[{path, kind, what, px?, pages?, tokens_est}], steps[{name, tool, version, status: ran|skipped|failed, reason, install}], ask[], tier, elapsed_s, exit, network_attempts, exec_log`.
-- `view.html`: self-contained, no network. Left: the original (video, audio, image, PDF, HTML in a sandboxed frame, text). Right: what the agent saw (LOOK.md, every picture at the size sent, transcript, tables, flags). Give its path to the human.
+- `LOOK.md` (step 1), `look.json`, `cursor.json`, `view.html`, and artifacts (transcripts, listings, CSVs, sheets). `Read next` lists them with their cost: images as `W x H px, ~tokens`, text as characters / 4; a text file over 5,000 tokens names the drill flag that slices it.
+- `look.json` (schema 1): `schema, file, name, sha256, size, type, subtype, detector{magic, ext, mismatch}, facts{}, summary[], flags[{kind, where, value, hint}], artifacts[{path, kind, what, tokens_est, value, slice}], steps[{name, tool, version, status: ran|skipped|failed, reason, install}], tier, level (quick|standard|deep), stream[], elapsed_s, exit, network_attempts, exec_log`.
+- `view.html`: self-contained, no network. Left: the original. Right: what the agent saw. Give its path to the human.
 
 ## Options
 
-`--out`, `--reader {claude, claude-hires, gemini, small}` (image budget; `claude` is 2000 px, 3x3 sheets), `--deep` (slower: bigger speech model, more pages, capa), `--extract` (archives and mail attachments, after the screen), `--recurse N`, `--allow-network` (URLs and model downloads), `--fresh`, `--json` (print `look.json`), `--no-tools` (bare tier), `--no-direct` (analyse small plain text instead of the direct read), video `--at T --len S` and `--mode sweep`. Subcommands: `doctor` (tools and install lines), `selftest [--tier full|bare]`, `gallery DIR -o gallery.html`.
+`--out`, `--reader {claude, claude-hires, gemini, small}`, `--tier quick|standard|deep` (`--quick`, `--deep`), `--budget N`, `--extract`, `--recurse N`, `--allow-network`, `--fresh`, `--json`, `--no-tools` (bare tier), `--no-direct`, `--mode sweep` (video). Subcommands: `gate`, `doctor` (tools, packages and models with install lines), `selftest [--tier full|bare]`, `gallery DIR -o gallery.html`.
 
 ## Failure modes
 
-Exit codes:
+- `0` looked (read Watch out and Not looked at before you trust it). `1` internal error: report the command and the last stderr lines, do not retry in a loop. `2` refused by a safety rule (unsafe archive, URL without `--allow-network`, a bomb): the reason is in Watch out; do not work around it. `3` unknown type: identity, entropy and strings are still written.
+- `python -I` hides installed packages and makes the look report tools as missing; never use it.
+- A flag kind ending in `?` is a lead, not a finding.
 
-- `0` looked (read Flags and Not looked at before you trust it).
-- `1` internal error. Report it with the command and the last stderr lines; do not retry in a loop.
-- `2` refused by a safety rule: an unsafe archive, a URL without `--allow-network`. The reason is in Flags. Do not work around it.
-- `3` unknown type. Identity, a hex dump, entropy and strings are still written.
+## Install
 
-Other traps: running with `python -I` hides installed packages and makes the look report tools as missing; never use it. A look older than the file is not reused (the folder is keyed by hash). A flag kind ending in `?` is a lead, not a finding.
-
-## Show the human
-
-The path to `view.html`; the Flags that matter; the Not-looked-at rows that limit the answer; the artifact paths behind each claim. Ask what the human needs to know about the file, and which findings need a person's eyes or ears.
-
-## Install (Win/Linux/macOS)
-
-Python 3.10 or newer. Nothing else is needed for the bare tier. `python look.py doctor` prints every optional tool with its install line for this machine: ffmpeg, poppler, LibreOffice, tesseract, exiftool, 7-Zip, Chrome or Edge, and the Python packages Pillow, PyMuPDF, openpyxl, fontTools, trafilatura, faster-whisper, librosa, pyarrow and others.
+Python 3.10 or newer; nothing else for the bare tier. `python look.py doctor` prints every optional tool, package and model with its install line for this machine. The per-family list is [installs](installs.md).

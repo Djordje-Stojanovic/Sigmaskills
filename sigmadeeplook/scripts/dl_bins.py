@@ -54,7 +54,7 @@ def look_unknown(look):
     else:
         look.skip("file -b type guess", "`file` not found" if not look.no_tools else "disabled by --no-tools", "file", "install the `file` utility (Git for Windows ships it)")
     if b:
-        look.write_text("hexdump.txt", core.hexdump(b[:512]), "first 512 bytes as hex")
+        look.write_text("hexdump.txt", core.hexdump(b[:512]), "first 512 bytes as hex", "internal")
     st = core.strings_of(b, 8, 2000)
     if st:
         look.write_text("strings.txt", "\n".join(f"{o:08x} {s[:200]}" for o, k, s in st), "printable strings (min 8)")
@@ -405,14 +405,15 @@ def look_binary(look):
     try:
         if st == "pe":
             info = parse_pe(b)
-            ts = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(info["timestamp"])) if info["timestamp"] else "0"
-            look.line(f"Windows PE ({'DLL' if info['dll'] else 'executable'}): machine {info['machine']}, subsystem {info['subsystem']}, compiled {ts} UTC (can be forged).")
+            kind = "DLL" if info["dll"] else "executable"
+            look.headline = f"Windows {kind} ({info['machine']})" + (f", {info['version']['FileDescription']}" if info["version"].get("FileDescription") else "") + (f", {info['export_count']} exports" if info["export_count"] else "")
+            look.dims = f"{info['machine']}"
+            look.line(f"Windows PE ({kind}): machine {info['machine']}, subsystem {info['subsystem']}." + (f" Exports {info['export_count']} functions, for example: " + ", ".join(info["exports"][:12]) + "." if info["export_count"] else " No exports."), 80)
             if info["version"]:
-                look.line("Version info: " + "; ".join(f"{k} {v}" for k, v in info["version"].items()))
-            look.line(f"Digital signature block: {'present (not verified here)' if info['signed'] else 'none (unsigned or catalog-signed)'}." + (f" Exports {info['export_count']} functions, for example: " + ", ".join(info["exports"][:12]) + "." if info["export_count"] else " No exports."))
+                look.line("Version info: " + "; ".join(f"{k} {v}" for k, v in info["version"].items()), 78)
+            import dl_pe
+            dl_pe.extras(look, b, info)
             look.line("Sections: " + ", ".join(f"{s['name']} (entropy {s['entropy']}, {s['perms']})" for s in info["sections"]))
-            if info["imports"]:
-                look.line("Imports (DLL names): " + ", ".join(info["imports"][:12]))
             look.fact("arch", info["machine"])
             look.fact("sections", [s["name"] for s in info["sections"]])
             look.fact("imports", info["imports"])
@@ -420,7 +421,7 @@ def look_binary(look):
                 look.flag("PACKED?", "sections", "entropy above 7.2", "high-entropy section: possibly packed or encrypted; static results may mislead")
             pf = look.mod("pefile")
             if not pf:
-                look.skip("PE import functions and resources", "pefile not importable" if not look.no_tools else "disabled by --no-tools", "pefile")
+                look.skip("resources, Rich header and header checksum (pefile)", "pefile not importable" if not look.no_tools else "disabled by --no-tools", "pefile")
         elif st == "elf":
             info = parse_elf(b)
             look.line(f"ELF: {info['class']}, {info['machine']}, {info['type']}. Sections: " + ", ".join(s["name"] for s in info["sections"][:16]))
@@ -463,21 +464,12 @@ def look_binary(look):
         look.write_text("header.json", json.dumps(info, indent=1, default=str), "parsed header, sections, imports", "json")
     look.write_text("hexdump.txt", core.hexdump(b[:512]), "first 512 bytes as hex")
     look.step("header, sections, entropy, strings", "stdlib")
-    diec = look.tool("diec")
-    if diec:
-        r, out, _ = look.run_text([diec, "--heuristicscan", str(look.path)])
-        if r is not None:
-            look.write_text("die.txt", out, "Detect-It-Easy packer and compiler identification")
-    else:
-        look.skip("packer / compiler identification (diec)", "diec not found" if not look.no_tools else "disabled by --no-tools", "diec")
-    capa = look.tool("capa")
-    if capa and look.deep:
-        r, out, _ = look.run_text([capa, "-j", str(look.path)], timeout=core.TIMEOUT_DEEP)
-        if r is not None and out.strip():
-            look.write_text("capa.json", out, "capa capabilities (JSON)")
-    else:
-        look.skip("capabilities (capa) and decompilation", "needs --deep and capa / Ghidra / REA" if not look.no_tools else "disabled by --no-tools", None,
-                  "pip install flare-capa; Ghidra needs JDK 25: see references/binary.md")
+    import dl_binx
+    dl_binx.run_all(look, st, bool(look.facts.get("dotnet")))
+    if st not in ("pe", "elf", "macho", "macho-fat"):
+        look.skip("decompilation and function-level reading (Ghidra)", "only for PE, ELF and Mach-O files", None, "")
+    elif not look.tool("ghidra"):
+        look.skip("decompilation and function-level reading (Ghidra)", "Ghidra not found" if not look.no_tools else "disabled by --no-tools", "ghidra")
     look.flag("NOT-EXECUTED", "file", "static look only", "the binary was never run; do not run it outside a VM you chose")
     look.ask_human("May the strings or the file be uploaded anywhere? Default: no.", "Which function or behaviour do you need explained?")
 
@@ -673,6 +665,29 @@ def archive_overview(members):
     return out
 
 
+def parse_7z_slt(text):
+    """`7z l -slt` output -> (members, extra). Members use the same keys as list_archive; offsets are unknown (0)."""
+    members, extra, cur, in_files = [], {}, {}, False
+    for ln in text.splitlines():
+        if ln.startswith("----------"):
+            in_files = True
+            continue
+        if not ln.strip():
+            if in_files and cur.get("Path"):
+                attr = cur.get("Attributes", "")
+                kind = "dir" if cur.get("Folder") == "+" or attr.startswith("D") else "symlink" if cur.get("Symbolic Link") or attr.startswith("l") or attr.startswith("_l") else "file"
+                members.append(dict(name=cur["Path"], size=int(cur.get("Size") or 0), packed=int(cur.get("Packed Size") or 0), kind=kind, enc=cur.get("Encrypted") == "+", offset=0))
+            cur = {}
+            continue
+        if "=" in ln:
+            k, v = ln.split("=", 1)
+            (cur if in_files else extra).__setitem__(k.strip(), v.strip())
+    if in_files and cur.get("Path"):
+        members.append(dict(name=cur["Path"], size=int(cur.get("Size") or 0), packed=int(cur.get("Packed Size") or 0), kind="file", enc=cur.get("Encrypted") == "+", offset=0))
+    extra = {"method": extra.get("Method", ""), "solid": extra.get("Solid", ""), "type": extra.get("Type", "")}
+    return members, extra
+
+
 def look_archive(look):
     p = look.path
     st = look.subtype
@@ -694,8 +709,13 @@ def look_archive(look):
         if sz:
             r, out, _ = look.run_text([sz, "l", "-slt", str(p)])
             if r is not None and out:
-                look.write_text("listing-7z.txt", out[:core.MAX_TEXT], "7-Zip technical listing")
-                look.line(f"Archive ({st}) listed with 7-Zip; see listing-7z.txt.")
+                members, extra = parse_7z_slt(out)
+                extra["format"] = st
+                tot = sum(m["size"] for m in members)
+                if tot > MAX_RATIO * 5 * max(1, look.size):
+                    look.exit_code = 2
+                    look.flag("DECOMPRESSION-BOMB?", "archive", f"{core.human(tot)} uncompressed from {core.human(look.size)} ({tot // max(1, look.size)}:1)", "possible compression bomb: do not extract")
+                look.write_text("listing-7z.txt", out[:core.MAX_TEXT], "7-Zip technical listing", value=2, inline=False)
         else:
             look.skip(f"member listing of a {st} archive", "7-Zip not found" if not look.no_tools else "disabled by --no-tools", "7z")
             look.line(f"Archive of kind {st}; only the type and size are known.")
@@ -703,8 +723,8 @@ def look_archive(look):
             b = read_bytes(look, 0x9000)
             label = b[0x8028:0x8048].decode("latin-1", "replace").strip() if len(b) >= 0x8048 else ""
             look.line(f"ISO 9660 volume label: {label!r}")
-        look.ask_human("Can the archive be opened with a tool you trust (7-Zip), and should it be listed first?")
-        return
+        if not members:
+            return
     if single and not members:
         opener = {"gzip": gzip.open, "bzip2": bz2.open, "xz": lzma.open}[st]
         n = 0
@@ -765,6 +785,10 @@ def look_archive(look):
         look.line("Safety screen: passed (no unsafe names, links, ratios or overlaps).")
     look.write_text("screen.json", json.dumps(verdict, indent=1), "extraction screen verdict", "json")
     want_n = look.recurse
+    if (look.extract or want_n) and extra.get("format") not in ("zip", "tar"):
+        look.skip("extraction of members", f"{extra.get('format', st)} archives are listed and screened only; extraction is built for zip and tar", None, f'7z x "{p}" -o<empty folder>  (after the screen above passed)')
+        look.step("list and screen", "7-Zip")
+        return
     if (look.extract or want_n) and not refusals:
         pick = [m["name"] for m in members if m["kind"] == "file" and not m["enc"]]
         pick = pick if look.extract else pick[:want_n]

@@ -435,6 +435,8 @@ def look_office(look):
     macro = [n for n in names if n.lower().endswith("vbaproject.bin")]
     if macro or st.endswith("m") and st in ("docm", "xlsm", "pptm"):
         look.flag("MACRO", macro[0] if macro else "package", "VBA macro project present", "the macros were not opened or run")
+        import dl_adapt
+        dl_adapt.olevba_facts(look, z.read(macro[0]) if macro else b"", macro[0] if macro else "vbaProject.bin")
     if any("/embeddings/" in n or n.startswith("embeddings/") for n in names):
         look.flag("EMBEDDED-OBJECT", "package", "embedded objects", "listed only; not opened")
     if any(n.lower().endswith(".bin") and "activex" in n.lower() for n in names):
@@ -782,6 +784,8 @@ def office_legacy(look):
     look.line(f"Legacy Office file ({st}, OLE compound): streams {', '.join(names[:8])}.")
     if any(n in ("Macros", "_VBA_PROJECT_CUR", "VBA") for n in names):
         look.flag("MACRO", "OLE", "VBA storage present", "the macros were not opened or run")
+        import dl_adapt
+        dl_adapt.olevba_facts(look, open(look.path, "rb").read(32 << 20), look.path.name)
     so = look.tool("soffice")
     done = False
     target = {"doc": "docx", "xls": "xlsx", "ppt": "pptx"}[st]
@@ -1158,8 +1162,53 @@ def mail_ics(look):
         w.writerow([e.get("UID"), e.get("SUMMARY"), e.get("DTSTART"), e.get("DTSTART_TZ"), e.get("DTEND"), e.get("ORGANIZER")])
     look.write_text("events.csv", buf.getvalue(), f"{len(events)} events with time zone")
     look.fact("events", [{"summary": e.get("SUMMARY"), "start": e.get("DTSTART"), "tz": e.get("DTSTART_TZ")} for e in events])
+    look.headline = f"calendar, {len(events)} event(s)"
+    look.dims = f"{len(events)} events"
     look.line(f"Calendar: {len(events)} events. " + "; ".join(f"{e.get('SUMMARY')} at {e.get('DTSTART')} ({e.get('DTSTART_TZ')})" for e in events[:5]))
+    ics_recurrence(look, events)
     look.ask_human("Is the time zone shown the one you expect?")
+
+
+def ics_recurrence(look, events):
+    """Rules in words, the next occurrences, and the traps: forever-repeating events, floating times, rules this look cannot expand."""
+    import datetime as dt
+    import dl_cal
+    now = dt.datetime.now()
+    lines, unsupported = [], 0
+    for e in events:
+        if "RRULE" not in e:
+            if e.get("DTSTART") and not e["DTSTART"].endswith("Z") and e.get("DTSTART_TZ") == "floating" and "T" in e["DTSTART"]:
+                look.flag("FLOATING-TIME", e.get("SUMMARY") or e.get("UID", "?"), e["DTSTART"], "no time zone: it means a different instant in each viewer's zone")
+            continue
+        rule = dl_cal.parse_rrule(e["RRULE"])
+        txt = dl_cal.describe(rule)
+        if "COUNT" not in rule and "UNTIL" not in rule:
+            look.flag("UNBOUNDED-RECURRENCE", e.get("SUMMARY") or "?", txt, "repeats forever: any count of events depends on the horizon you pick")
+        try:
+            start, kind = dl_cal.parse_dt(e["DTSTART"])
+        except (KeyError, ValueError):
+            continue
+        if kind == "floating" and e.get("DTSTART_TZ") == "floating":
+            look.flag("FLOATING-TIME", e.get("SUMMARY") or "?", e["DTSTART"], "no time zone: it means a different instant in each viewer's zone")
+        ex = []
+        for x in (e.get("EXDATE") or "").split(","):
+            try:
+                ex.append(dl_cal.parse_dt(x)[0])
+            except ValueError:
+                pass
+        occ, ok = dl_cal.expand(start, rule, limit=400, exdates=ex)
+        if not ok:
+            unsupported += 1
+            lines.append(f"{e.get('SUMMARY') or '?'}: {txt} (rule too complex to expand here)")
+            continue
+        nxt = [o for o in occ if o >= now][:3] or occ[:3]
+        lines.append(f"{e.get('SUMMARY') or '?'}: {txt}; " + ("next " if any(o >= now for o in occ) else "first ") + ", ".join(f"{o:%Y-%m-%d %H:%M}" for o in nxt) + (f"; {len(ex)} excluded date(s)" if ex else ""))
+    if lines:
+        look.line("Recurring events: " + " | ".join(lines[:6]), 72)
+    if unsupported or any(e.get("DTSTART_TZ") not in (None, "UTC", "floating") for e in events):
+        ic = look.mod("icalendar") and look.mod("recurring_ical_events")
+        if not ic:
+            look.skip("exact recurrence expansion and time-zone transitions (daylight saving)", "python packages icalendar and recurring-ical-events not importable" if not look.no_tools else "disabled by --no-tools", "icalendar")
 
 
 def mail_vcf(look):

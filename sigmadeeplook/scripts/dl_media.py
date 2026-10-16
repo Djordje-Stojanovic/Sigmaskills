@@ -17,6 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import dl_core as core
+import dl_mediax
 
 ASR_CAP_S = 900          # non-deep speech-to-text stops after 15 minutes of audio
 SLOT_CANDIDATES = 5
@@ -97,12 +98,10 @@ def one_pass_checks(look, has_v, has_a, dur):
 
 
 def report_checks(look, res, dur):
-    for a, b in res["black"]:
-        look.flag("BLACK", f"{core.mmss(a)} ({a:.1f}s)", f"{b - a:.1f}s of black", "a designed card or a defect? confirm with the tile at that time")
-    for a, b in res["freeze"]:
-        look.flag("FREEZE", f"{core.mmss(a)} ({a:.1f}s)", f"frozen picture {b - a:.1f}s", "still image or a stuck frame")
-    for a, b in res["silence"]:
-        look.flag("SILENCE", f"{core.mmss(a)} ({a:.1f}s)", f"{b - a:.1f}s below -50 dB", "pause, dropout or missing audio")
+    look.silence_runs = list(res["silence"])
+    dl_mediax.flag_runs(look, "BLACK", res["black"], 1.0, "of black", "a designed card or a defect? confirm with the tile at that time")
+    dl_mediax.flag_runs(look, "FREEZE", res["freeze"], 2.0, "frozen picture", "still image or a stuck frame")
+    dl_mediax.flag_runs(look, "SILENCE", res["silence"], 2.0, "below -50 dB", "pause, dropout or missing audio")
     if res["loud"]:
         l = res["loud"]
         look.fact("lufs", l.get("lufs"))
@@ -183,6 +182,7 @@ def write_transcript(look, segs, lang, dur):
     low = [s for s in segs if s["words"] and sum(w["p"] for w in s["words"]) / len(s["words"]) < 0.5]
     for s in low[:5]:
         look.flag("LOW-CONFIDENCE", f"{core.mmss(s['start'])} ({s['start']:.1f}s)", s["text"][:60], "words with low confidence: check by ear")
+    dl_mediax.silence_hallucinations(look, segs)
     reps = [s["text"] for s in segs]
     if len(reps) >= 4 and max(reps.count(t) for t in set(reps)) >= 4:
         look.flag("REPEATED-LINE", "transcript", "a line repeats 4+ times", "typical Whisper hallucination over silence or music")
@@ -311,8 +311,10 @@ def look_video(look):
     look.fact("video_codec", v.get("codec_name"))
     look.fact("audio_streams", len(au))
     look.fact("subtitle_streams", len(sub))
+    look.headline = f"video {core.mmss(dur)}, {v.get('width')}x{v.get('height')}, {v.get('codec_name')}" + (", no audio" if not au else "")
+    look.dims = f"{core.mmss(dur)}"
     look.line(f"Video: {core.mmss(dur)} ({dur:.1f} s), {v.get('width')}x{v.get('height')} at {fps_of(v):.2f} fps, {v.get('codec_name')}; "
-              f"{len(au)} audio stream(s) ({', '.join(a.get('codec_name', '?') for a in au) or 'none'}), {len(sub)} subtitle stream(s).")
+              f"{len(au)} audio stream(s) ({', '.join(a.get('codec_name', '?') for a in au) or 'none'}), {len(sub)} subtitle stream(s).", 80)
     if not au:
         look.flag("NO-AUDIO", "container", "no audio stream", "silent video")
     if look.subtype == "mp4":
@@ -329,7 +331,8 @@ def look_video(look):
         sub_text = extract_subtitles(look)
     if au:
         words = speech_for(look, dur)
-    scenes_list(look, dur)
+    dl_mediax.scenes(look, dur)
+    dl_mediax.chapters_line(look, ffp)
     if look.mod("PIL"):
         try:
             make_video_sheets(look, v, dur, words, res, au)
@@ -337,6 +340,12 @@ def look_video(look):
             look.fail("contact sheets", "Pillow", e)
     else:
         ffmpeg_sheet(look, v, dur)
+    if au:
+        dl_mediax.loudness_line(look, audio_levels(look, dur), dur)
+    dl_mediax.ocr_video(look, dur, dl_mediax.runs(res["black"], 1.0), lambda t, w: grab_png(look, t, w))
+    dl_mediax.faces_row(look)
+    if au:
+        dl_mediax.audio_adapters(look, look.out / "audio.wav" if (look.out / "audio.wav").exists() else None, words, dur)
     if dur > 180:
         look.line(f"Long video: one overview sheet covers a tile per {dur / look.reader['cols'] / look.reader['rows']:.0f} s. Run `--mode sweep` for {math.ceil(dur / 180)} pages that cover every part, or `--at T --len S` to zoom.")
     look.ask_human("Is the black or silent stretch in Flags intended (a designed card) or a defect?",
@@ -638,7 +647,9 @@ def look_audio(look, ffp=None):
     look.fact("codec", a.get("codec_name"))
     look.fact("sample_rate", int(a.get("sample_rate", 0) or 0))
     look.fact("channels", a.get("channels"))
-    look.line(f"Audio: {core.mmss(dur)} ({dur:.1f} s), {a.get('codec_name')}, {a.get('sample_rate')} Hz, {a.get('channels')} channel(s).")
+    look.headline = f"audio {core.mmss(dur)}, {a.get('codec_name')}, {a.get('sample_rate')} Hz, {a.get('channels')} ch"
+    look.dims = f"{core.mmss(dur)}"
+    look.line(f"Audio: {core.mmss(dur)} ({dur:.1f} s), {a.get('codec_name')}, {a.get('sample_rate')} Hz, {a.get('channels')} channel(s).", 80)
     look.write_text("probe.json", json.dumps(ffp, indent=1), "ffprobe facts", "json")
     res = one_pass_checks(look, False, True, dur)
     report_checks(look, res, dur)
@@ -666,7 +677,10 @@ def look_audio(look, ffp=None):
         music_facts(look, dur)
     else:
         look.skip("tempo and key (music)", "speech found; run again on a music file for beat tracking", None, "")
-    look.skip("stems, notes and sound-event labels", "not run; they need demucs, basic-pitch or CLAP (see references/audio.md)", None, "")
+    dl_mediax.loudness_line(look, audio_levels(look, dur), dur)
+    dl_mediax.chapters_line(look, ffp)
+    dl_mediax.audio_adapters(look, look.out / "audio.wav" if (look.out / "audio.wav").exists() else None, words, dur)
+    look.skip("stems and notes (source separation, pitch tracking)", "not built: demucs and basic-pitch are not part of this version", None, "")
     look.ask_human("What language is it, and how many speakers?", "Is the tempo half or double what was found (music)?",
                    "Judgements of taste, voice quality or mix need a human listening: this look cannot hear.")
 
@@ -775,6 +789,9 @@ def draw_pcm_wave(look, data, sr, dur):
 
 # ================================================================= images
 def look_image(look):
+    if look.subtype == "psd":
+        import dl_adapt
+        dl_adapt.psd_extras(look)
     wh = core.image_size(look.path)
     st = look.subtype
     if st == "svg":

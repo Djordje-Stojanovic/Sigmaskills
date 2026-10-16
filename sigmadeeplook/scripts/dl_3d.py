@@ -148,6 +148,11 @@ def look_3d(look):
     else:
         look.line(f"3D file of kind {st}; header facts only.")
         look.skip("3D contents", f"no reader for {st}", None, "")
+    import dl_adapt
+    if st in ("glb", "gltf"):
+        dl_adapt.run_gltf_validator(look)
+    if st in ("stl", "stl-ascii", "obj", "ply", "glb", "gltf"):
+        dl_adapt.trimesh_facts(look)
     if tris:
         stats = mesh_stats(look, tris)
         look.fact("triangles", len(tris))

@@ -79,8 +79,13 @@ function route(prompt) {
 
 test('evals: near-miss prompts route to the right skill and not its neighbour', () => {
   const cases = JSON.parse(fs.readFileSync(path.join(ROOT, 'test', 'fixtures', 'skill-triggers.json'), 'utf8'));
-  assert.deepEqual([...new Set(cases.map((c) => c.skill))].sort(), SKILLS.slice().sort(), 'every skill needs cases');
-  for (const { prompt, skill, near } of cases) {
+  assert.deepEqual([...new Set(cases.map((c) => c.skill).filter(Boolean))].sort(), SKILLS.slice().sort(), 'every skill needs cases');
+  for (const { prompt, skill, near, avoid } of cases) {
+    if (!skill) {
+      // a prompt no skill should take: the named skill must not score above zero
+      assert.ok(route(prompt).find((r) => r.skill === avoid).score <= 0, `"${prompt}" must not route to ${avoid}`);
+      continue;
+    }
     const [first, second] = route(prompt);
     assert.equal(first.skill, skill, `"${prompt}" routed to ${first.skill}, expected ${skill}`);
     assert.ok(first.score > second.score, `"${prompt}" tied between ${first.skill} and ${second.skill}`);

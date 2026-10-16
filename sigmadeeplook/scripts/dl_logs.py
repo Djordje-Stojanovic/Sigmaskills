@@ -135,6 +135,9 @@ def scan_log(path, max_lines, max_seconds):
 
 
 def look_log(look):
+    if look.subtype == "evtx":
+        import dl_adapt
+        return dl_adapt.look_evtx(look)
     r = scan_log(look.path, LOG_LINES_DEEP if look.deep else LOG_LINES_STANDARD, 120.0 if look.deep else LOG_SECONDS)
     timed = r["timed"]
     look.fact("lines", r["lines"])

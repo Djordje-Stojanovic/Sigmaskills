@@ -514,8 +514,30 @@ def model_onnx(look):
 
 def model_hdf5(look):
     look.headline = f"HDF5 weights file, {core.human(look.size)}"
-    look.line(f"HDF5 container ({core.human(look.size)}), usually Keras weights. Layer names and shapes need h5py.", 95)
-    look.skip("layers, shapes and attributes of the HDF5 file", "python package h5py not importable" if not look.no_tools else "disabled by --no-tools", "h5py")
+    look.line(f"HDF5 container ({core.human(look.size)}), usually Keras weights.", 95)
+    h5 = look.mod("h5py")
+    if not h5:
+        look.skip("layers, shapes and attributes of the HDF5 file", "python package h5py not importable" if not look.no_tools else "disabled by --no-tools", "h5py")
+        return
+    try:
+        rows, params = [], 0
+        with h5.File(str(look.path), "r") as f:
+            def visit(name, obj):
+                nonlocal params
+                if isinstance(obj, h5.Dataset):
+                    n = 1
+                    for d in obj.shape:
+                        n *= d
+                    params += n
+                    if len(rows) < 400:
+                        rows.append(f"{name}: {obj.shape} {obj.dtype}")
+            f.visititems(visit)
+            attrs = {k: str(v)[:80] for k, v in list(f.attrs.items())[:8]}
+        look.line(f"{len(rows)} arrays, {human_params(params)} values. Attributes: {attrs}.", 92)
+        look.write_text("tensors.txt", chr(10).join(rows), "dataset names, shapes and dtypes (first 400)", value=3)
+        look.step("HDF5 tree", "h5py")
+    except Exception as e:
+        look.fail("HDF5 tree", "h5py", e)
 
 
 DANGEROUS_MODULES = {"os", "posix", "nt", "subprocess", "sys", "socket", "shutil", "runpy", "importlib", "webbrowser", "ctypes", "pty", "commands", "asyncio",

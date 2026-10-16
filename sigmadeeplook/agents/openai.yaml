@@ -1,8 +1,9 @@
 interface:
   display_name: SigmaDeepLook
-  short_description: See inside any video, audio, PDF, Office, binary or other file
-  default_prompt: Use $sigmadeeplook to look inside this file, read the evidence it
-    writes, and report what it shows and what it could not look at.
+  short_description: Look inside a file too big to read, binary or media
+  default_prompt: Use $sigmadeeplook when a file is too big to read, binary or media.
+    Run its gate first; read about 1,000 tokens, then continue with --more or drill
+    down only if you need more, and report what it shows and what it could not look at.
 policy:
   products:
   - chatgpt
