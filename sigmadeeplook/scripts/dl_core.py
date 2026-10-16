@@ -643,6 +643,7 @@ class Look:
 
     def item(self, section, text, pri=50, tag=""):
         """A fact for the ranked stream. section: key | map | watch. Higher pri is printed earlier; tag names what it is (sample, transcript...)."""
+        text = text[2:] if text.startswith("- ") else text
         self.items.append((section, pri, text, len(self.items), tag))
         self.summary.append(text)
 
