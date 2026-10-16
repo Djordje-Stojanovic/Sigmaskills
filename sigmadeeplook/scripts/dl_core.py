@@ -76,7 +76,7 @@ MODULES = {  # import name -> pip name
 MODELS = {  # step name -> (what it lost, how to get it); checked by dl_models.have_model()
     "ast": ("music / speech / SFX map of the audio (AST AudioSet tagger)", "download MIT/ast-finetuned-audioset-10-10-0.4593 from Hugging Face once (~345 MB, ungated)"),
     "yunet": ("face count per keyframe (YuNet)", "download face_detection_yunet_2023mar.onnx from github.com/opencv/opencv_zoo (0.23 MB)"),
-    "pyannote": ("speakers and turns (pyannote speaker-diarization-community-1)", "accept the model terms on huggingface.co/pyannote/speaker-diarization-community-1 once, then cache it (~35 MB)"),
+    "pyannote": ("speakers and turns (pyannote speaker-diarization-community-1)", "accept the terms at huggingface.co/pyannote/speaker-diarization-community-1 once, log in (huggingface-cli login or HF_TOKEN), then run any audio look once with --allow-network to cache it (~35 MB)"),
 }
 STDLIB = set(getattr(sys, "stdlib_module_names", ())) | {"json", "re", "os", "sys"}
 

@@ -379,5 +379,42 @@ class Writer(unittest.TestCase):
         self.assertEqual(sum(1 for c in stream if c["sec"] == "content" and "alpha beta" in c["text"]), 1)
 
 
+
+# ------------------------------------------------------------------------------------------------ speakers
+class Speakers(unittest.TestCase):
+    def test_speaker_line_renames_and_counts(self):
+        import types
+        import dl_core as core
+        import dl_mediax as MX
+        lk = core.Look.__new__(core.Look)
+        lines, facts = [], {}
+        lk.line = lambda text, pri=50, *a, **k: lines.append(text)
+        lk.fact = lambda k, v: facts.__setitem__(k, v)
+        turns = [{"speaker": "SPEAKER_07", "start": 0, "end": 30}, {"speaker": "SPEAKER_02", "start": 30, "end": 40}, {"speaker": "SPEAKER_07", "start": 40, "end": 70}]
+        MX.speaker_line(lk, turns)
+        self.assertEqual(facts["speakers"], 2)
+        self.assertEqual([t["speaker"] for t in turns], ["S1", "S2", "S1"])
+        self.assertIn("2 voices", lines[0])
+        self.assertIn("S1 86%", lines[0])
+        self.assertIn("2 changes of speaker", lines[0])
+
+    def test_pyannote_needs_config_not_just_a_readme(self):
+        import dl_models as M
+        hub = Path(tempfile.mkdtemp(prefix="sdl-hf-"))
+        snap = hub / "hub" / M.HF_DIRS["pyannote"] / "snapshots" / "abc"
+        snap.mkdir(parents=True)
+        (snap / "README.md").write_text("gated")
+        old = os.environ.get("HF_HOME")
+        os.environ["HF_HOME"] = str(hub)
+        try:
+            self.assertFalse(M.have_model("pyannote"))
+            (snap / "config.yaml").write_text("pipeline: {}")
+            self.assertTrue(M.have_model("pyannote"))
+        finally:
+            if old is None:
+                os.environ.pop("HF_HOME", None)
+            else:
+                os.environ["HF_HOME"] = old
+
 if __name__ == "__main__":
     unittest.main()

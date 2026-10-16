@@ -211,23 +211,69 @@ def quiet_models():
     logging.disable(logging.WARNING)
 
 
+def diarize(look, wav):
+    """Who speaks when: pyannote community-1 on the 16 kHz wav, given as a waveform so no audio decoder is needed.
+    -> list of {speaker, start, end}. Raises on failure (the caller records it)."""
+    import wave as _w
+    import numpy as np
+    import torch
+    import dl_models
+    quiet_models()
+    from pyannote.audio import Pipeline
+    pipe = Pipeline.from_pretrained(str(dl_models.hf_snapshot("pyannote")))
+    if torch.cuda.is_available():
+        pipe.to(torch.device("cuda"))
+    with _w.open(str(wav), "rb") as w:
+        sr = w.getframerate()
+        raw = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype("float32") / 32768
+    out = pipe({"waveform": torch.from_numpy(raw).unsqueeze(0), "sample_rate": sr})
+    dia = getattr(out, "speaker_diarization", out)
+    return [{"speaker": spk, "start": round(t.start, 2), "end": round(t.end, 2)} for t, _, spk in dia.itertracks(yield_label=True)]
+
+
+def speaker_line(look, turns):
+    """One line: how many voices, how long each talks, how often they take turns. Speakers are renamed S1, S2... by first appearance."""
+    order = []
+    for t in turns:
+        if t["speaker"] not in order:
+            order.append(t["speaker"])
+    names = {s: f"S{i + 1}" for i, s in enumerate(order)}
+    for t in turns:
+        t["speaker"] = names[t["speaker"]]
+    talk = {}
+    for t in turns:
+        talk[t["speaker"]] = talk.get(t["speaker"], 0.0) + t["end"] - t["start"]
+    total = sum(talk.values()) or 1.0
+    changes = sum(1 for a, b in zip(turns, turns[1:]) if a["speaker"] != b["speaker"])
+    look.fact("speakers", len(talk))
+    if len(talk) == 1:
+        look.line(f"Speakers: 1 voice (S1) over {core.mmss(turns[-1]['end'])}; it talks {total:.0f} s in all. Drill down with --speaker S1.", 82)
+    else:
+        look.line(f"Speakers: {len(talk)} voices; " + ", ".join(f"{s} {100 * v / total:.0f}% ({v:.0f} s)" for s, v in sorted(talk.items(), key=lambda kv: -kv[1])[:6]) + f"; {changes} changes of speaker. Drill down with --speaker S1.", 82)
+
+
 def audio_adapters(look, wav, words, dur):
     """Speaker turns (pyannote) and sound-event labels (AST). With the models absent: one row each with the install line."""
     import dl_models
     if look.quick and not look.no_tools:
         look.skip("speaker turns and sound-event labels (models)", "skipped at the quick tier (model start-up takes seconds): run again with --tier standard", None, "")
         return
+    if not dl_models.have_model("pyannote") and look.allow_network and not look.no_tools:
+        dl_models.download("pyannote")
     if not dl_models.have_model("pyannote"):
         look.skip("who speaks when (speaker turns)", "the pyannote speaker model is not cached on this machine" if not look.no_tools else "disabled by --no-tools", "pyannote")
     elif wav is not None and not look.no_tools:
+        key = "speakers"
         try:
-            from pyannote.audio import Pipeline
-            pipe = Pipeline.from_pretrained(str(dl_models.hf_snapshot("pyannote")))
-            dia = pipe(str(wav))
-            turns = [{"speaker": spk, "start": round(t.start, 2), "end": round(t.end, 2)} for t, _, spk in dia.itertracks(yield_label=True)]
-            look.write_text("speakers.json", json.dumps(turns), "speaker turns: who speaks when", "json", value=5, inline=False, slice_cmd="--speaker S")
-            who = sorted({t["speaker"] for t in turns})
-            look.line(f"Speakers: {len(who)} ({', '.join(who[:6])}); {len(turns)} turns. Drill down with --speaker NAME.", 68)
+            turns = core.cache_get(look, key)
+            if turns is None:
+                turns = diarize(look, wav)
+                core.cache_put(look, key, turns)
+            if turns:
+                speaker_line(look, turns)   # renames the speakers S1, S2... in place
+                look.write_text("speakers.json", json.dumps(turns), "speaker turns: who speaks when", "json", value=5, inline=False, slice_cmd="--speaker S1")
+            else:
+                look.line("Speakers: none found by the diarization model.", 60)
             look.step("speaker turns", "pyannote")
         except Exception as e:
             look.fail("who speaks when (speaker turns)", "pyannote", e)

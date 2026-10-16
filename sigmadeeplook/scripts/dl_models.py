@@ -39,5 +39,21 @@ def have_model(name):
     if name == "yunet":
         return yunet_path() is not None
     if name in HF_DIRS:
-        return hf_snapshot(name) is not None
+        snap = hf_snapshot(name)
+        need = {"pyannote": "config.yaml", "ast": "config.json"}.get(name)
+        return snap is not None and (need is None or (snap / need).exists())   # a README alone (a refused download) is not a model
     return False
+
+
+def download(name):
+    """Fetch a gated Hugging Face model once, with the user's own token (HF_TOKEN or `huggingface-cli login`). Only called with --allow-network.
+    -> True when the model is cached afterwards. Never prints the token."""
+    repo = {"pyannote": "pyannote/speaker-diarization-community-1", "ast": "MIT/ast-finetuned-audioset-10-10-0.4593"}.get(name)
+    if not repo:
+        return False
+    try:
+        from huggingface_hub import get_token, snapshot_download
+        snapshot_download(repo, token=get_token())
+    except Exception:
+        return False
+    return have_model(name)

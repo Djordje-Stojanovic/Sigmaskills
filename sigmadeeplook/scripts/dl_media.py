@@ -270,7 +270,7 @@ def gist_lines(segs, dur, sampled):  # sampled: None, or the [(start, length)] w
     out = [q(segs[0])] if len(segs[0]["text"]) >= 60 or len(segs) < 2 else [q({"start": segs[0]["start"], "text": segs[0]["text"] + " " + segs[1]["text"]})]
     rest = [s for s in segs if s["start"] > segs[0]["start"] + 20]
     for grp in _thirds(rest, 2):
-        out.append(q(max(grp, key=lambda s: min(len(s["text"]), 160))))
+        out.append(q(max(grp, key=lambda s: (s["text"][:1].isupper(), min(len(s["text"]), 160)))))
     return out
 
 
@@ -449,20 +449,30 @@ def look_video(look):
         if cut:
             look.flag("TRUNCATED", "container", f"atom {cut} runs past the end of the file", "the file is cut short; playback stops early or breaks (the header is intact, so ffprobe still reports the full length)")
     look.write_text("probe.json", json.dumps(ffp, indent=1), "ffprobe facts (streams, codecs, sizes)", "json")
-    res = one_pass_checks(look, True, bool(au), dur)
-    report_checks(look, res, dur)
-    look.step("black, freeze, silence, loudness (one pass)", "ffmpeg")
+    def checks():
+        r = one_pass_checks(look, True, bool(au), dur)
+        report_checks(look, r, dur)
+        look.step("black, freeze, silence, loudness (one pass)", "ffmpeg")
+        return r
     words = []
     sub_text = None
-    if sub:
-        sub_text = extract_subtitles(look)
+    # the one-pass checks, the scene scan and the speech-to-text do not need each other: they run side by side
+    with ThreadPoolExecutor(2) as ex:
+        f_checks = ex.submit(checks)
+        f_scenes = None
+        if look.quick:
+            look.skip("scene cuts and shot lengths", "skipped at the quick tier: run again with --tier standard", None, "")
+        else:
+            f_scenes = ex.submit(dl_mediax.scenes, look, dur)
+        if sub:
+            sub_text = extract_subtitles(look)
+        if au:
+            words = speech_for(look, dur, ready=f_checks)
+        res = f_checks.result()
+        if f_scenes is not None:
+            f_scenes.result()
     if au:
-        words = speech_for(look, dur)
         dl_mediax.bed_line(look, getattr(look, "speech_found", bool(words)))
-    if look.quick:
-        look.skip("scene cuts and shot lengths", "skipped at the quick tier: run again with --tier standard", None, "")
-    else:
-        dl_mediax.scenes(look, dur)
     dl_mediax.chapters_line(look, ffp)
     if look.mod("PIL"):
         try:
@@ -527,9 +537,12 @@ def extract_subtitles(look):
     return None
 
 
-def speech_for(look, dur):
+def speech_for(look, dur, ready=None):
+    """Speech for a video. `ready`: a future that must finish before the transcript is written (the silence runs it needs come from the one-pass checks)."""
     if look.quick:
         got = transcribe_sample(look, dur)
+        if ready is not None:
+            ready.result()
         if got is not None:
             write_transcript(look, got[0], got[1], dur, sampled=got[2])
             look.speech_found = bool(got[0])
@@ -550,6 +563,8 @@ def speech_for(look, dur):
     if dur > ASR_CAP_S and not look.deep:
         look.flag("PARTIAL", "speech", f"first {ASR_CAP_S // 60} minutes only", "use --deep for the whole file")
     look.speech_found = bool(got[0])
+    if ready is not None:
+        ready.result()
     return write_transcript(look, got[0], got[1], dur)
 
 
