@@ -312,14 +312,8 @@ def data_csv(look):
         look.line(profile_line(p, total_ok))
     if len(prof) > 16:
         look.line(f"- ... {len(prof) - 16} more columns in schema.json")
-    rng = random.Random(7)
-    rand = rng.sample(rows, min(10, len(rows)))
-
-    def md(rs):
-        return "\n".join("| " + " | ".join(c.replace("|", "\\|")[:60] for c in r) + " |" for r in rs)
-    head = "| " + " | ".join(header) + " |\n|" + "---|" * len(header) + "\n"
-    look.write_text("sample.md", f"## head 5\n\n{head}{md(rows[:5])}\n\n## tail 5\n\n{head}{md(tail)}\n\n## 10 random rows from the first {len(rows)} (seed 7)\n\n{head}{md(rand)}\n",
-                    "head 5, tail 5 and 10 random rows")
+    import dl_sample
+    dl_sample.build_sample(look, text, delim, header, prof, n, repeats, tail, rows, partial)
     if rejects:
         buf = io.StringIO()
         w = csv.writer(buf)

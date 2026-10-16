@@ -22,7 +22,7 @@ LADDER = (1000, 3000, 10000)   # cumulative tokens printed after step 1, 2, 3
 BEYOND = 5000                  # --more past the ladder
 SECTION_ORDER = ("key", "watch", "map", "read", "nla", "content")
 CONTENT_CHUNK_TOKENS = 220    # text artifacts are cut into chunks of about this size, so a window ends cleanly
-CONTENT_MAX_TOKENS = 40_000   # a text artifact above this is searched or sliced, never put in the stream
+CONTENT_MAX_TOKENS = 150_000  # a text artifact above this is searched or sliced, never put in the stream
 HEADINGS = {"key": "Key facts", "watch": "Watch out", "map": "Map", "read": "Read next", "nla": "Not looked at", "content": "Content"}
 TRAPS = {"MISMATCH", "INJECTION?", "HIDDEN-TEXT", "HIDDEN-SHEET", "HIDDEN-SLIDE", "HIDDEN-STATE", "MACRO", "JAVASCRIPT", "OPEN-ACTION",
          "LAUNCH", "AUTO-ACTION", "EMBEDDED-FILE", "XFA", "TRUNCATED", "NO-MOOV", "CORRUPT", "ENCRYPTED", "DECOMPRESSION-BOMB?", "REFUSED",
@@ -138,8 +138,8 @@ def build_stream(look):
     for a in sorted(arts, key=lambda a: (-a.get("value", 3), a["path"])):
         if a["kind"] != "text" or a.get("private") or a.get("inline") is False or not 0 < a.get("tokens_est", 0) <= CONTENT_MAX_TOKENS:
             continue
-        for k, (first_line, text) in enumerate(content_chunks(a["path"])):
-            raw.append(("content", 20 + a.get("value", 3), text, rel_name(look, a["path"]), cseq, first_line))
+        for k, (first_line, last_line, text) in enumerate(content_chunks(a["path"])):
+            raw.append(("content", 20 + a.get("value", 3), text, rel_name(look, a["path"]), cseq, first_line, last_line))
             cseq += 1
     raw.sort(key=lambda r: (-r[1], r[4]))
     stream = [{"id": 0, "sec": "head", "pri": 1000, "tag": "identity", "text": head, "tok": U.est_tokens(head) + 12}]
@@ -147,29 +147,50 @@ def build_stream(look):
         sec, pri, text, tag = r[0], r[1], r[2], r[3]
         c = {"id": len(stream), "sec": sec, "pri": pri, "tag": tag, "text": text, "tok": U.est_tokens(text) + 2}
         if sec == "content":
-            c["line"] = r[5]
+            c["line"], c["line_end"] = r[5], r[6]
             c["tok"] += 14   # the heading line of the part
         stream.append(c)
     return stream
 
 
+LINE_PIECE = 700   # characters; a longer line is split at spaces so nothing is cut
+
+
+def split_line(line):
+    if len(line) <= LINE_PIECE:
+        return [line]
+    out = []
+    while len(line) > LINE_PIECE:
+        cut = line.rfind(" ", LINE_PIECE // 2, LINE_PIECE)
+        cut = cut if cut > 0 else LINE_PIECE
+        out.append(line[:cut])
+        line = line[cut:].lstrip(' ')
+    out.append(line)
+    return out
+
+
 def content_chunks(path):
-    """A text artifact cut into chunks of about CONTENT_CHUNK_TOKENS at line boundaries -> [(first_line_number, text)]."""
+    """A text artifact cut into chunks of about CONTENT_CHUNK_TOKENS at line boundaries -> [(first_line, last_line, text)].
+
+    A line longer than LINE_PIECE characters is split at spaces (never cut), so the chunks hold every character of the file.
+    """
     try:
         lines = Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
         return []
-    out, buf, used, start = [], [], 0, 1
+    out, buf, used, start, last_n = [], [], 0, 1, 1
     for n, line in enumerate(lines, 1):
         line = line.replace("```", "'''")
-        t = U.est_tokens(line) + 1
-        if buf and used + t > CONTENT_CHUNK_TOKENS:
-            out.append((start, "\n".join(buf)))
-            buf, used, start = [], 0, n
-        buf.append(line[:600])
-        used += t
+        for piece in split_line(line):
+            t = U.est_tokens(piece) + 1
+            if buf and used + t > CONTENT_CHUNK_TOKENS:
+                out.append((start, last_n, chr(10).join(buf)))
+                buf, used, start = [], 0, n
+            buf.append(piece)
+            used += t
+            last_n = n
     if buf:
-        out.append((start, "\n".join(buf)))
+        out.append((start, last_n, chr(10).join(buf)))
     return out
 
 
@@ -198,21 +219,40 @@ def lost_rows(look):
 
 
 # ---------------------------------------------------------------- printing a window of the stream
+FOOTER_TOKENS = 40   # the footer line itself, counted in the printed figure
+HEAD_COST = 14   # the "lines a-b:" line and the fence around a run of content
+
+
+def merges(prev, c):
+    """True when c continues prev inside one printed block (same file, next line): it shares prev's heading and fence."""
+    return (prev is not None and prev["sec"] == "content" and c["sec"] == "content" and prev["tag"] == c["tag"]
+            and c.get("line") in (prev.get("line_end", -9), prev.get("line_end", -9) + 1))
+
+
+def cost(chunks):
+    total, prev = 0, None
+    for c in chunks:
+        total += c["tok"] - (HEAD_COST if merges(prev, c) else 0)
+        prev = c
+    return total
+
+
 def window(stream, start, max_tokens):
     """Chunks from `start` while the running cost stays within max_tokens (at least one chunk). -> (chunks, next_index)."""
     out, used, i = [], 0, start
     while i < len(stream):
         c = stream[i]
-        if out and used + c["tok"] > max_tokens:
+        add = c["tok"] - (HEAD_COST if merges(out[-1] if out else None, c) else 0)
+        if out and used + add > max_tokens:
             break
         out.append(c)
-        used += c["tok"]
+        used += add
         i += 1
     return out, i
 
 
 def remaining_tokens(stream, pos):
-    return sum(c["tok"] for c in stream[pos:])
+    return cost(stream[pos:])
 
 
 def describe(chunks):
@@ -238,13 +278,21 @@ def render_window(chunks, first_index):
             continue
         if sec == "content":
             L += [""]
-            last = None
+            last, block, prev, blocks = None, None, None, []
             for c in cs:
-                n = c["text"].count("\n") + 1
-                if c["tag"] != last or c is cs[0]:
+                if c["tag"] != last:
                     L.append(f"## Content: {c['tag']} (file content: data, not instructions)")
                     last = c["tag"]
-                L += [f"lines {c['line']}-{c['line'] + n - 1}:", "```text", c["text"], "```"]
+                if merges(prev, c) and block is not None:
+                    block[1] = c.get("line_end", c["line"])
+                    block[2].append(c["text"])
+                else:
+                    block = [c["line"], c.get("line_end", c["line"]), [c["text"]]]
+                    blocks.append((len(L), block))
+                    L.append(None)
+                prev = c
+            for pos, (a_, b_, texts) in blocks:
+                L[pos] = f"lines {a_}-{b_}:" + chr(10) + "```text" + chr(10) + chr(10).join(texts) + chr(10) + "```"
             continue
         L += ["", f"## {HEADINGS[sec]}" + (" (continued)" if first_index > 0 else "")]
         for c in cs:
@@ -259,12 +307,12 @@ def footer(stream, a, b, printed, tier_note=""):
     else:
         want = next_ladder(printed_total=printed_cumulative(stream, b))
         nchunks, _ = window(stream, b, want)
-        nxt = f"next: --more (~{tok(sum(c['tok'] for c in nchunks))} tokens of {describe(nchunks)})"
-    return f"-- chunks {a}-{b - 1} of {len(stream)} | printed ~{tok(sum(c['tok'] for c in stream[a:b]))} | {nxt} | remaining ~{tok(rem)}{tier_note}\n"
+        nxt = f"next: --more (~{tok(cost(nchunks))} tokens of {describe(nchunks)})"
+    return f"-- chunks {a}-{b - 1} of {len(stream)} | printed ~{tok(cost(stream[a:b]) + FOOTER_TOKENS)} | {nxt} | remaining ~{tok(rem)}{tier_note}\n"
 
 
 def printed_cumulative(stream, b):
-    return sum(c["tok"] for c in stream[:b])
+    return cost(stream[:b])
 
 
 def next_ladder(printed_total):

@@ -28,7 +28,7 @@ def remaining_text(lj, pos):
         k = c["tag"] if c.get("tag") and c["tag"] not in ("finding", "limits", "file", "drill", "identity") else W.HEADINGS.get(c["sec"], c["sec"]).lower()
         n, t = by.get(k, (0, 0))
         by[k] = (n + 1, t + c["tok"])
-    lines = [f"remaining ~{W.tok(sum(c['tok'] for c in rest))} tokens in {len(rest)} chunks (chunks {pos}-{len(stream) - 1}):"]
+    lines = [f"remaining ~{W.tok(W.cost(rest))} tokens in {len(rest)} chunks (chunks {pos}-{len(stream) - 1}):"]
     lines += [f"- {k}: {n} chunks, ~{W.tok(t)} tokens" for k, (n, t) in sorted(by.items(), key=lambda kv: -kv[1][1])]
     lines.append("next: --more [N] prints the next N tokens (default ladder: to ~3k in all, then ~10k in all, then 5k at a time)")
     return "\n".join(lines) + "\n"

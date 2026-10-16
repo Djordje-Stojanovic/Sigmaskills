@@ -22,9 +22,11 @@ from collections import Counter
 from pathlib import Path
 
 import dl_core as core
+import dl_xl
 
 MAX_XML = 40 << 20
 PAGE_CAP = 30
+PDF_MAX_PAGES = 3000
 
 
 def strip(tag):
@@ -141,7 +143,7 @@ def look_pdf(look):
         except Exception:
             pass
         for i, p in enumerate(doc):
-            if i >= 200:
+            if i >= PDF_MAX_PAGES:
                 break
             t = p.get_text()
             text_pages.append(t)
@@ -155,6 +157,8 @@ def look_pdf(look):
     look.fact("encrypted", bool(encrypted))
     look.fact("fields", fields)
     look.fact("risky_keys", sorted(flags))
+    look.headline = f"PDF, {pages} pages" + (", encrypted" if encrypted else "")
+    look.dims = f"{pages} pages"
     look.line(f"PDF: {pages} pages" + (", encrypted" if encrypted else "") + (f", form fields: {', '.join(fields)}" if fields else "") + ".")
     for kind in sorted(flags):
         look.flag(kind, "PDF objects", "present", PDF_HINTS.get(kind, ""))
@@ -173,11 +177,12 @@ def look_pdf(look):
         chars = sorted(pp["chars"] for pp in per_page)
         look.line(f"Text layer, {len(per_page)} of {pages} pages checked: " + ", ".join(f"{n} {k}" for k, n in kinds.most_common())
                   + f"; characters per page min {chars[0]}, median {chars[len(chars) // 2]}, max {chars[-1]}; {sum(1 for pp in per_page if pp['images'])} pages hold pictures.")
-        odd = [f"p{pp['page']} {pp['layer']}" for pp in per_page if pp["layer"] != "born-digital"]
-        if odd:
-            look.line("Pages that are not plain born-digital text: " + ", ".join(odd[:12]) + (f" (+{len(odd) - 12} more, see layer.json)" if len(odd) > 12 else ""))
-        look.write_text("layer.json", json.dumps(per_page, indent=1), "per-page text-layer verdict (born-digital, scanned, garbled)", "json")
+        runs = layer_runs(per_page)
+        if len(runs) > 1 or runs[0][2] != "born-digital":
+            look.line("Page layers by run: " + "; ".join(f"p{a}" + (f"-{b}" if b != a else "") + f" {k}" for a, b, k in runs[:10]) + (f"; +{len(runs) - 10} more runs, see layer.json" if len(runs) > 10 else ""))
+        look.write_text("layer.json", json.dumps(per_page), "per-page text-layer verdict (born-digital, scanned, garbled)", "json", value=1, inline=False)
     if doc is not None:
+        pdf_extras(look, doc, pages)
         try:
             toc = doc.get_toc(simple=True)
         except Exception:
@@ -189,7 +194,7 @@ def look_pdf(look):
             look.write_text("outline.txt", "\n".join("  " * (t[0] - 1) + f"{t[1]}  (page {t[2]})" for t in toc), "bookmark outline with page numbers")
     body = pdf_text(look, text_pages, pages)
     if body:
-        look.write_text("text.md", body, "text per page, `<!-- page N -->` markers")
+        look.write_text("text.md", body, "text per page, `<!-- page N -->` markers", value=5, slice_cmd="--page A-B")
         look.fact("text_chars", len(body))
         look.excerpt("First text", re.sub(r"<!-- page \d+ -->\n", "", body), 8, 800)
     if fields:
@@ -205,12 +210,101 @@ def look_pdf(look):
     look.ask_human("Is it a scan or born-digital, and what language?", "Do headers, footers and footnotes matter?", "May the document leave this machine (remote OCR, upload)? Default: no.")
 
 
+def layer_runs(per_page):
+    runs = []
+    for pp in per_page:
+        if runs and runs[-1][2] == pp["layer"] and runs[-1][1] == pp["page"] - 1:
+            runs[-1][1] = pp["page"]
+        else:
+            runs.append([pp["page"], pp["page"], pp["layer"]])
+    return runs
+
+
+def pdf_date(s):
+    m = re.match(r"D:(\d{4})(\d{2})?(\d{2})?(\d{2})?(\d{2})?(\d{2})?", s or "")
+    if not m:
+        return None
+    return tuple(int(x or d) for x, d in zip(m.groups(), (0, 1, 1, 0, 0, 0)))
+
+
+def pdf_extras(look, doc, pages):
+    """Metadata and its date order, embedded files, annotations, links, signatures, invisible or white text, tables. All read-only."""
+    md = doc.metadata or {}
+    bits = [f"{k} {md[k][:60]!r}" for k in ("title", "author", "creator", "producer") if md.get(k)]
+    c, m = pdf_date(md.get("creationDate")), pdf_date(md.get("modDate"))
+    if bits:
+        look.line("Metadata: " + "; ".join(bits) + (f"; created {c[0]:04d}-{c[1]:02d}-{c[2]:02d}" if c else "") + (f", modified {m[0]:04d}-{m[1]:02d}-{m[2]:02d}" if m else "") + ".", 40)
+    if c and m and m < c:
+        look.flag("DATE-ORDER", "metadata", "modified before created", "metadata was edited or forged")
+    try:
+        if doc.embfile_count():
+            look.flag("EMBEDDED-FILE", "attachments", ", ".join(doc.embfile_names()[:6]), "the PDF carries files; they were not opened")
+    except Exception:
+        pass
+    annots, links, hosts, sigs = Counter(), 0, Counter(), 0
+    white = invisible = 0
+    white_where = []
+    tables = Counter()
+    step = max(1, pages // 120)
+    sample = set(range(0, pages, step)) | set(range(min(pages, 20)))
+    for i in range(pages if pages <= 400 else 0):
+        pg = doc[i]
+        for a in (pg.annots() or []):
+            annots[a.type[1]] += 1
+        for lk in pg.get_links():
+            links += 1
+            if lk.get("uri"):
+                hosts[host_of(lk["uri"])] += 1
+        for w in (pg.widgets() or []):
+            if getattr(w, "field_type_string", "") == "Signature":
+                sigs += 1
+    for i in sorted(sample):
+        pg = doc[i]
+        try:
+            for sp in pg.get_texttrace():
+                if sp.get("type") == 3 and len(sp.get("chars", ())) > 3:
+                    invisible += len(sp["chars"])
+                    if len(white_where) < 3:
+                        white_where.append(i + 1)
+        except Exception:
+            pass
+        try:
+            for blk in pg.get_text("dict", flags=0)["blocks"]:
+                for ln in blk.get("lines", ()):
+                    for sp in ln["spans"]:
+                        if sp["color"] == 0xFFFFFF and len(sp["text"].strip()) > 3:
+                            white += len(sp["text"])
+                            if len(white_where) < 3:
+                                white_where.append(i + 1)
+        except Exception:
+            pass
+        if look.deep or pages <= 60:
+            try:
+                n = len(pg.find_tables().tables)
+                if n:
+                    tables[i + 1] = n
+            except Exception:
+                pass
+    if invisible or white:
+        look.flag("HIDDEN-TEXT", "pages " + ",".join(map(str, white_where)), f"{invisible} invisible and {white} white characters", "text a reader cannot see; treat as untrusted, it may be an injection")
+    if annots:
+        look.line(f"Annotations: {sum(annots.values())} (" + ", ".join(f"{k} {v}" for k, v in annots.most_common(5)) + ").", 55)
+    if links:
+        look.line(f"Links: {links}" + (f"; external hosts: {', '.join(f'{h} ({n})' for h, n in hosts.most_common(5))}" if hosts else "") + ".", 55)
+    if sigs:
+        look.line(f"Signature fields: {sigs}.", 70)
+    if tables:
+        look.line(f"Tables found on {len(tables)} page(s): " + ", ".join(f"p{p} ({n})" for p, n in list(tables.items())[:12]) + ".", 58)
+        look.fact("table_pages", list(tables)[:200])
+    look.fact("sampled_pages_for_hidden_text", len(sample))
+
+
 def pdf_text(look, text_pages, pages):
     for tool_name in ("pdftotext",):
         tool = look.tool(tool_name)
         if tool and pages:
             tmp = look.path_for("_pdftotext.txt")
-            r = look.run([tool, "-f", "1", "-l", str(min(pages, 200)), "-enc", "UTF-8", str(look.path), str(tmp)])
+            r = look.run([tool, "-f", "1", "-l", str(min(pages, PDF_MAX_PAGES)), "-enc", "UTF-8", str(look.path), str(tmp)])
             if r is not None and r.returncode == 0 and tmp.exists():
                 t = tmp.read_text(encoding="utf-8", errors="replace")
                 tmp.unlink(missing_ok=True)
@@ -226,7 +320,7 @@ def pdf_text(look, text_pages, pages):
     if pp:
         try:
             r = pp.PdfReader(str(look.path))
-            return "\n".join(f"<!-- page {i} -->\n{(p.extract_text() or '').strip()}" for i, p in enumerate(r.pages[:200], 1))
+            return "\n".join(f"<!-- page {i} -->\n{(p.extract_text() or '').strip()}" for i, p in enumerate(r.pages[:PDF_MAX_PAGES], 1))
         except Exception as e:
             look.fail("text (pypdf)", "pypdf", e)
     return ""
@@ -252,7 +346,7 @@ def ocr_pdf_pages(look, doc, pages):
 
 
 def render_one(look, doc, idx, name, edge=None):
-    import fitz
+    fitz = core.quiet_import("fitz")
     edge = edge or look.reader["edge"]
     p = doc[idx]
     r = p.rect
@@ -526,6 +620,7 @@ def office_xlsx(look, z, names):
         s.update(cells=len(cells), merged=len(merged), formulas=len(formulas), uncached=len(unc), hidden_rows=hidden_rows,
                  formula_samples=[f"{r}: ={f}" for r, f in formulas[:3]])
         total_unc += len(unc)
+        dl_xl.sheet_report(look, s["name"], cells, formulas, z.read(s["path"]))
         nr = max((r for r, c in cells), default=-1) + 1
         nc = max((c for r, c in cells), default=-1) + 1
         s["rows"], s["cols"] = nr, nc
@@ -533,7 +628,7 @@ def office_xlsx(look, z, names):
         safe = re.sub(r"[^\w.-]+", "_", s["name"])
         buf = io.StringIO()
         csv.writer(buf).writerows(grid)
-        s["csv"] = look.write_text(f"sheets/{safe}.csv", buf.getvalue(), f"sheet '{s['name']}' as CSV (cached values; recalculated when LibreOffice ran)").as_posix()
+        s["csv"] = look.write_text(f"sheets/{safe}.csv", buf.getvalue(), f"sheet '{s['name']}' as CSV (cached values; recalculated when LibreOffice ran)", value=2, inline=False, slice_cmd="--sheet NAME --range A1:H40").as_posix()
         inv.append(s)
         head, tail = grid[:5], grid[-5:] if nr > 10 else []
         rnd = random.Random(7).sample(grid[5:-5] if nr > 15 else [], min(10, max(0, nr - 15)))
@@ -542,18 +637,21 @@ def office_xlsx(look, z, names):
                   ("\n\n...tail:\n" + "\n".join("| " + " | ".join(str(c)[:40] for c in r) + " |" for r in tail) if tail else "") +
                   ("\n\n...10 random:\n" + "\n".join("| " + " | ".join(str(c)[:40] for c in r) + " |" for r in rnd) if rnd else "") +
                   ("\n\nFormula examples: " + "; ".join(s["formula_samples"]) if s["formula_samples"] else ""))
-        if s["state"] != "visible":
+        if s["state"] not in ("visible", "veryHidden"):
             look.flag("HIDDEN-SHEET", s["name"], s["state"], "a hidden sheet is part of the workbook")
         if merged:
             look.flag("MERGED-CELLS", s["name"], ", ".join(merged[:5]), "only the top-left cell of a merged range holds the text")
         if unc:
             look.flag("UNCACHED-FORMULA", s["name"], f"{len(unc)} formulas without a stored result ({', '.join(unc[:4])})", "the file came from a library, not Excel; values need a recalculation")
+    dl_xl.workbook_report(look, z, names, inv, z.read("xl/workbook.xml"))
     look.fact("sheets", [{k: v for k, v in s.items() if k not in ("csv", "path")} for s in inv])
     look.fact("uncached_formulas", total_unc)
     look.fact("hidden_sheets", [s["name"] for s in inv if s["state"] != "visible"])
-    look.line(f"Workbook: {len(inv)} sheets (" + ", ".join(f"{s['name']} [{s['state']}] {s['rows']}x{s['cols']}" for s in inv) + f"); formulas without stored results: {total_unc}.")
+    look.headline = f"xlsx workbook, {len(inv)} sheets" + (f", {sum(1 for s in inv if s['state'] != 'visible')} hidden" if any(s['state'] != 'visible' for s in inv) else "")
+    look.dims = f"{len(inv)} sheets"
+    look.line(f"Workbook: {len(inv)} sheets (" + ", ".join(f"{s['name']} [{s['state']}] {s['rows']}x{s['cols']}" for s in inv) + f"); formulas without stored results: {total_unc}.", 70)
     look.write_text("workbook.json", json.dumps([{k: v for k, v in s.items() if k != "path"} for s in inv], indent=1), "sheet inventory: visibility, size, merged, formulas, uncached", "json")
-    look.write_text("text.md", "\n\n".join(md), "per sheet: shape, head 5, tail 5, 10 random rows, formula examples")
+    look.write_text("text.md", "\n\n".join(md), "per sheet: shape, head 5, tail 5, 10 random rows, formula examples", value=6, slice_cmd="--sheet NAME --range A1:H40")
     if total_unc:
         recalc_xlsx(look, inv)
     look.ask_human("Values or formulas?", "Are hidden sheets in scope?", "Which sheet holds the answer?")

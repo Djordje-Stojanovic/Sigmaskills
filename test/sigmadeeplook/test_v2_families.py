@@ -338,5 +338,40 @@ class Epub(unittest.TestCase):
         self.assertIn("DRM", flags(lj))
 
 
+class XlsxAudit(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        try:
+            import openpyxl
+            from openpyxl.workbook.defined_name import DefinedName
+        except ImportError:
+            raise unittest.SkipTest("openpyxl not installed")
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Calc"
+        for r in range(2, 42):
+            ws.cell(r, 1, r)
+            ws.cell(r, 2, r * 3)
+            ws.cell(r, 3, f"=A{r}*B{r}")
+        ws["C20"] = 999
+        ws["C30"] = "=A30+B30"
+        ws["D3"] = "=NOW()"
+        ws["E1"] = "#DIV/0!"
+        wb.create_sheet("Secret").sheet_state = "veryHidden"
+        wb.defined_names["Gone"] = DefinedName("Gone", attr_text="Calc!#REF!")
+        d = Path(tempfile.mkdtemp(prefix="sdl-xl-"))
+        cls.file = d / "w.xlsx"
+        wb.save(cls.file)
+
+    def test_audit_flags(self):
+        r, out, lj = look(self.file, "--no-tools")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        k = flags(lj)
+        for want in ("VERYHIDDEN-SHEET", "ERROR-VALUES", "INCONSISTENT-FORMULA", "HARDCODED-IN-FORMULA-COLUMN", "BROKEN-NAME"):
+            self.assertIn(want, k)
+        self.assertIn("C30", r.stdout)
+        self.assertIn("C20", r.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

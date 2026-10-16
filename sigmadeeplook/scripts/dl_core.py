@@ -124,6 +124,7 @@ def soffice_path():
     return None
 
 
+os.environ.setdefault("PYMUPDF_SUGGEST_LAYOUT_ANALYZER", "0")   # PyMuPDF otherwise prints an advert on first use; nothing may reach a print
 HIDE = {x for x in os.environ.get("SIGMADEEPLOOK_HIDE", "").split(",") if x}  # test hook: pretend these tools/modules are missing
 
 
@@ -149,6 +150,13 @@ def find_tool(name):
     if name == "openssl":
         return shutil.which("openssl") or next((p for p in (r"C:\Program Files\Git\mingw64\bin\openssl.exe", r"C:\Program Files\Git\usr\bin\openssl.exe") if os.path.exists(p)), None)
     return shutil.which(name)
+
+
+def quiet_import(name):
+    """Import a package with its stdout and stderr silenced (PyMuPDF prints a layout notice on import; that must never reach a print)."""
+    import contextlib
+    with open(os.devnull, "w") as dn, contextlib.redirect_stdout(dn), contextlib.redirect_stderr(dn):
+        return importlib.import_module(name)
 
 
 def have_module(name):
@@ -760,11 +768,11 @@ class Look:
 
     def mod(self, name):
         if name in STDLIB:
-            return importlib.import_module(name)
+            return quiet_import(name)
         if self.no_tools or not have_module(name):
             return None
         try:
-            m = importlib.import_module(name)
+            m = quiet_import(name)
             self.tools_used.add(name)
             return m
         except Exception:

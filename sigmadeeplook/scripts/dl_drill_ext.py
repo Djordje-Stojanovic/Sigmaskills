@@ -59,7 +59,7 @@ def do_page(o, path, out, lj):
 def page_pdf(o, path):
     texts, n = None, 0
     if core.have_module("fitz"):
-        import fitz
+        fitz = core.quiet_import("fitz")
         try:
             doc = fitz.open(str(path))
             n = doc.page_count
