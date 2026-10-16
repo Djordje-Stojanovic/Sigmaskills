@@ -19,12 +19,12 @@ CSS = """
 @media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--mut:#9a9a94;--card:#1f1f1d;--line:#34342f;--acc:#5fc4b6;--bad:#ff8a80}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,Segoe UI,sans-serif}
 header{padding:14px 16px;border-bottom:1px solid var(--line)}h1{font-size:18px;margin:0}small{color:var(--mut)}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 16px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:12px 16px}
 @media (max-width:900px){.cols{grid-template-columns:1fr}}
-.pane{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0;overflow:auto}
+.pane{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0;overflow-x:auto;overflow-wrap:anywhere}
 .pane h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 8px}
 img,video{max-width:100%;height:auto;border:1px solid var(--line);border-radius:4px}audio{width:100%}iframe{width:100%;height:520px;border:1px solid var(--line)}
-pre{white-space:pre-wrap;word-break:break-word;font:12.5px/1.45 ui-monospace,Consolas,monospace;margin:6px 0}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;max-width:100%;font:12.5px/1.45 ui-monospace,Consolas,monospace;margin:6px 0}
 table{border-collapse:collapse;font-size:13px;width:100%}td,th{border:1px solid var(--line);padding:3px 6px;text-align:left;vertical-align:top;word-break:break-word}
 code{font:12.5px ui-monospace,Consolas,monospace}.px{color:var(--mut);font-size:12px}.flag{color:var(--bad)}
 """
@@ -145,76 +145,203 @@ def write_view(look):
 
 
 # ---------------------------------------------------------------- gallery
+GALLERY_CSS = """
+.wrap{max-width:1500px;margin:0 auto}
+.intro{margin:14px 16px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:8px}
+.intro h2{margin:0 0 6px;font-size:16px}.intro p{margin:6px 0}.intro .q{font-weight:600}
+.tok{margin:0 16px 14px;overflow-x:auto}.tok table{min-width:640px}
+.row{border-top:2px solid var(--line);padding-bottom:10px}
+.row>h2{padding:12px 16px 0;margin:0;font-size:17px;overflow-wrap:anywhere}
+.meta{padding:4px 16px 0;color:var(--mut);font-size:13px;overflow-wrap:anywhere}.meta b{color:var(--fg)}
+.cost{margin:6px 16px 0;padding:6px 10px;background:var(--card);border:1px dashed var(--line);border-radius:6px;font-size:13px;overflow-wrap:anywhere}
+.pane h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 8px}
+details{margin:6px 0;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--bg)}
+details>summary{cursor:pointer;font-size:13px;overflow-wrap:anywhere}
+.px{overflow-wrap:anywhere}.pane,.pane *{max-width:100%}
+.pane pre{overflow-x:auto;max-height:420px}.pane table{table-layout:fixed}
+.pane td,.pane th{overflow-wrap:anywhere}
+.pane video,.pane iframe,.pane img{max-width:100%}
+.nav{padding:0 16px;font-size:14px}
+"""
+
+TEXT_TYPES = {"data", "code", "email", "web", "notebook"}
+BINARY_DATA = {"sqlite", "parquet", "arrow"}
+PDF_TOKENS_PER_PAGE = 2000  # estimate: a page read by the host's own PDF reader (text plus picture)
+
+
+def tok(n):
+    return f"{int(n):,}"
+
+
+def direct_cost(d):
+    """-> (tokens or None, note). What it would cost to hand the raw file to an agent that reads natively."""
+    t, st, size = d["type"], d["subtype"], d["size"]
+    if (t in TEXT_TYPES and st not in BINARY_DATA) or (t == "image" and st == "svg") or (t == "3d" and st in ("obj", "stl-ascii", "ply", "gltf", "usd")):
+        return core.direct_tokens(size), "raw text, size / 4"
+    if t == "pdf":
+        pages = d.get("facts", {}).get("pages") or 0
+        return pages * PDF_TOKENS_PER_PAGE, f"{pages} pages x ~{tok(PDF_TOKENS_PER_PAGE)} tokens (estimate for the host's own PDF reader)"
+    return None, "cannot be read directly (binary or media)"
+
+
+def deeplook_cost(d, look_md):
+    first = core.direct_tokens(len(look_md.encode("utf-8")))
+    arts = sum(a.get("tokens_est", 0) for a in d["artifacts"] if a.get("kind") != "internal")
+    return first, first + arts
+
+
+def native_for(d, src, assets, base):
+    t, st = d["type"], d["subtype"]
+    uri = src.resolve().as_uri() if src.exists() else ""
+    if not src.is_file():
+        return '<div class="px">The original is no longer at this path.</div>'
+    size = src.stat().st_size
+
+    def local(name=None):
+        dst = assets / (name or src.name)
+        if not dst.exists():
+            shutil.copy2(src, dst)
+        return esc(rel(base, dst))
+    bomb = any(f.get("kind") == "DECOMPRESSION-BOMB?" for f in d["flags"])
+    if t == "video":
+        if src.suffix.lower() in (".mp4", ".m4v", ".webm"):
+            return f'<video controls preload="metadata" src="{esc(uri)}"></video><div class="px">the original file, played by the browser (not copied; opened in place)</div>'
+        prev = assets / "preview.mp4"
+        ff = core.find_tool("ffmpeg")
+        if ff and not prev.exists():
+            subprocess.run([ff, "-y", "-v", "error", "-t", "20", "-i", str(src), "-vf", "scale=-2:360", "-c:v", "libx264", "-crf", "30", "-preset", "veryfast", "-c:a", "aac", "-b:a", "64k", str(prev)], capture_output=True, timeout=300)
+        return f'<video controls preload="metadata" src="{esc(rel(base, prev))}"></video><div class="px">first 20 s, 360p preview of the original</div>' if prev.exists() else "<p>No browser player for this video.</p>"
+    if t == "audio":
+        return f'<audio controls src="{local() if size < 6 << 20 else esc(uri)}"></audio>'
+    if t == "image" and bomb:
+        return "<p>The header claims a huge picture; it is not shown, and it was not decoded.</p>"
+    if t == "image":
+        return f'<img alt="original" src="{local() if size < 12 << 20 else esc(uri)}">'
+    if t == "pdf":
+        return f'<iframe src="{local() if size < 12 << 20 else esc(uri)}" title="original PDF" style="height:560px"></iframe><div class="px">the original PDF in the browser viewer</div>'
+    if t in TEXT_TYPES and st not in BINARY_DATA:
+        n = 40 if size > 200000 else 400
+        with open(src, "rb") as f:
+            raw = f.read(24000)
+        lines = raw.decode("utf-8", "replace").splitlines()[:n]
+        total = sum(1 for _ in open(src, "rb")) if size < (300 << 20) else "many"
+        return f"<pre>{esc(chr(10).join(lines))}</pre><div class=\"px\">what a text editor shows on opening: the first {len(lines)} of {total} lines ({core.human(size)} in all)</div>"
+    if t == "archive" and st == "zip":
+        try:
+            import zipfile
+            z = zipfile.ZipFile(src)
+            names = [i.filename for i in z.infolist()]
+            top = sorted({n.split("/")[0] + ("/" if "/" in n else "") for n in names})
+            return f"<pre>{esc(chr(10).join(top[:40]))}</pre><div class=\"px\">what Explorer shows when the zip is opened: {len(top)} top-level entries ({len(names)} members in all)</div>"
+        except Exception:
+            pass
+    if t == "office":
+        pages = [a for a in d["artifacts"] if a["kind"] == "image"]
+        if pages:
+            dst = assets / Path(pages[0]["path"]).name
+            shutil.copy2(pages[0]["path"], dst)
+            return f'<img alt="page" src="{esc(rel(base, dst))}"><div class="px">LibreOffice render, not Microsoft Office</div>'
+    if t == "font":
+        face = f"@font-face{{font-family:'dlg{abs(hash(src.name)) % 99999}';src:url('{uri}')}}"
+        fam = face.split("'")[1]
+        return f"<style>{face}</style><div style=\"font-family:'{fam}',serif;font-size:32px\">Hamburgefonstiv 0123456789</div>"
+    with open(src, "rb") as f:
+        head = f.read(256)
+    return f"<p>Double-clicking shows no content a person can read. The first 256 bytes, as a hex editor would:</p><pre>{esc(core.hexdump(head))}</pre>"
+
+
+def read_next_inline(d, assets, base, cap=24000):
+    out = []
+    n = 0
+    arts = [a for a in d["artifacts"] if a.get("kind") != "internal"]
+    for a in [x for x in arts if x["kind"] != "image"] + [x for x in arts if x["kind"] == "image"]:
+        n += 1
+        p = Path(a["path"])
+        label = f"{n}. {esc(p.name)} - {esc(a['what'])} - " + (f"{esc(a.get('px', ''))} px, " if a["kind"] == "image" else "") + f"~{tok(a.get('tokens_est', 0))} tokens"
+        if not p.exists():
+            out.append(f"<details><summary>{label}</summary><div class=\"px\">file missing</div></details>")
+        elif a["kind"] == "image":
+            dst = assets / p.name
+            shutil.copy2(p, dst)
+            out.append(f'<details><summary>{label}</summary><img alt="{esc(a["what"])}" src="{esc(rel(base, dst))}"></details>')
+        else:
+            raw = p.read_bytes()
+            txt = raw[:cap].decode("utf-8", "replace")
+            more = f'<div class="px">... shown: first {core.human(min(cap, len(raw)))} of {core.human(len(raw))}</div>' if len(raw) > cap else ""
+            out.append(f"<details><summary>{label}</summary><pre>{esc(txt)}</pre>{more}</details>")
+    return "".join(out) or '<div class="px">Nothing to read beyond LOOK.md.</div>'
+
+
+INTRO = """<div class="intro"><h2>What SigmaDeepLook is for</h2>
+<p>A coding agent can read text, but it cannot play a video, open a database, list a binary or read 50 MB of CSV without burning its whole budget. SigmaDeepLook turns such a file into a short <b>LOOK.md</b> (facts, flags, what to read next) plus a few text files and pictures. Small plain-text files (up to 50,000 bytes) are not touched: LOOK.md just says <i>Read this file directly</i>, because the agent reads them better itself.</p>
+<p class="q">What to check on every row: from the right side alone, would you know what the file is and what is wrong with it?</p>
+<p>Left is what a person gets by opening the file. Right is what the agent gets: the full LOOK.md, and under it every <i>Read next</i> file (click to open). A row passes when the right side answers the question faster and cheaper than the file itself would. The cost line under each title compares the two.</p>
+<p><b>To approve:</b> type <b>yes deeplook</b> in chat. To send it back, name the rows that fail and what you could not tell from the right side.</p>
+%LINKS%</div>"""
+
+
 def gallery_main(argv):
     ap = argparse.ArgumentParser(prog="look.py gallery")
     ap.add_argument("dir", help="folder whose sub-folders hold look.json files")
     ap.add_argument("-o", "--output", default="gallery.html")
     ap.add_argument("--title", default="SigmaDeepLook gallery")
+    ap.add_argument("--manifest", help="JSON list of {id, origin, note, kind}: row order and the notes shown under each title")
+    ap.add_argument("--link", action="append", default=[], metavar="TEXT=URL", help="a link shown in the top box (repeatable)")
+    ap.add_argument("--tokens-md", help="also write the token table as Markdown to this file")
     o = ap.parse_args(argv)
     root = Path(o.dir)
     outp = Path(o.output).resolve()
-    assets = outp.parent / (outp.stem + "_assets")
+    base = outp.parent
+    assets = base / (outp.stem + "_assets")
     shutil.rmtree(assets, ignore_errors=True)
     assets.mkdir(parents=True, exist_ok=True)
-    rows = []
-    for jf in sorted(root.glob("*/look.json")):
-        d = json.loads(jf.read_text(encoding="utf-8"))
-        name = jf.parent.name
+    meta = {}
+    order = None
+    if o.manifest:
+        man = json.loads(Path(o.manifest).read_text(encoding="utf-8"))
+        meta = {m["id"]: m for m in man}
+        order = [m["id"] for m in man]
+    dirs = [root / i for i in order if (root / i / "look.json").exists()] if order else sorted(p.parent for p in root.glob("*/look.json"))
+    rows, table = [], []
+    for dd in dirs:
+        d = json.loads((dd / "look.json").read_text(encoding="utf-8"))
+        name = dd.name
+        info = meta.get(name, {})
         a_dir = assets / name
         a_dir.mkdir(exist_ok=True)
         src = Path(d["file"])
-        native = ""
-        t = d["type"]
-        if src.is_file():
-            size = src.stat().st_size
-            copyable = size < 6 << 20
-            bomb = any(f.get("kind") == "DECOMPRESSION-BOMB?" for f in d["flags"])
-            if t in ("image",) and d["subtype"] != "svg" and copyable and not bomb:
-                shutil.copy2(src, a_dir / src.name)
-                native = f'<img alt="original" src="{esc(rel(outp.parent, a_dir / src.name))}">'
-            elif t == "video":
-                prev = a_dir / "preview.mp4"
-                ff = core.find_tool("ffmpeg")
-                if copyable and src.suffix.lower() == ".mp4":
-                    shutil.copy2(src, prev)
-                elif ff:
-                    subprocess.run([ff, "-y", "-v", "error", "-t", "20", "-i", str(src), "-vf", "scale=-2:360", "-c:v", "libx264", "-crf", "30", "-preset", "veryfast", "-c:a", "aac", "-b:a", "64k", str(prev)],
-                                   capture_output=True, timeout=300)
-                if prev.exists():
-                    native = f'<video controls preload="metadata" src="{esc(rel(outp.parent, prev))}"></video><div class="px">{"original" if copyable else "first 20 s, 360p preview of the original"}</div>'
-            elif t == "audio" and copyable:
-                shutil.copy2(src, a_dir / src.name)
-                native = f'<audio controls src="{esc(rel(outp.parent, a_dir / src.name))}"></audio>'
-            elif t == "pdf" and copyable:
-                shutil.copy2(src, a_dir / src.name)
-                native = f'<iframe src="{esc(rel(outp.parent, a_dir / src.name))}" title="original PDF"></iframe>'
-            elif t in ("code", "data", "notebook", "email", "web") and size < 200000 and texty(src.read_bytes()[:4000]):
-                native = f"<pre>{esc(src.read_bytes()[:3000].decode('utf-8', 'replace'))}</pre><div class=\"px\">first 3 KB of the original</div>"
-        if not native:
-            native = '<div class="px">No browser viewer for the original of this kind; what the agent sees is on the right.</div>'
-        imgs = []
-        for a in d["artifacts"]:
-            if a["kind"] == "image" and Path(a["path"]).exists():
-                dst = a_dir / Path(a["path"]).name
-                shutil.copy2(a["path"], dst)
-                imgs.append(f'<div><img alt="{esc(a["what"])}" src="{esc(rel(outp.parent, dst))}"><div class="px">{esc(a.get("px", ""))} px</div></div>')
-        flags = "".join(f'<tr><td class="flag">{esc(f["kind"])}</td><td>{esc(f["where"])}</td><td>{esc(f["value"])}</td></tr>' for f in d["flags"][:8])
-        miss = "".join(f"<li>{esc(s['name'] if 'name' in s else s.get('step', ''))}: {esc(s['reason'])}</li>" for s in d["steps"] if s["status"] in ("skipped", "failed"))
-        def one(s):
-            if chr(10) not in s:
-                return f"<div>{inline(s)}</div>"
-            m = re.match(r"(.*?)\n```text\n(.*?)\n```", s, re.S)
-            if not m:
-                return f"<div>{esc(s.splitlines()[0])}</div>"
-            return f"<div>{esc(m.group(1))}</div><pre>{esc(m.group(2)[:500])}</pre>"
-        summ = "".join(one(s) for s in d["summary"][:6])
-        rows.append(f"""<section class="row"><h2>{esc(d['name'])} <small>{esc(t)} / {esc(d['subtype'])} - tier {esc(d['tier'])} - exit {d['exit']} - {d['elapsed_s']} s</small></h2>
-<div class="cols"><div class="pane"><h2>Native</h2>{native}</div>
-<div class="pane"><h2>Agent sees</h2>{summ}{''.join(imgs[:3])}{('<table>' + flags + '</table>') if flags else '<div class="px">Flags: none</div>'}{('<details><summary>Not looked at (' + str(miss.count('<li>')) + ')</summary><ul>' + miss + '</ul></details>') if miss else ''}</div></div></section>""")
+        look_md = (dd / "LOOK.md").read_text(encoding="utf-8")
+        shown_md = look_md.replace(str(dd) + os.sep, "").replace(str(dd), "(look folder)")
+        dtok, dnote = direct_cost(d)
+        first, everything = deeplook_cost(d, look_md)
+        size_h = core.human(d["size"])
+        if dtok is None:
+            cost = f"<b>size: {esc(size_h)}</b>. Direct read: {esc(dnote)}. SigmaDeepLook: <b>~{tok(first)} tokens</b> for LOOK.md, ~{tok(everything)} if every Read-next file is opened."
+        else:
+            ratio = f" ({dtok / max(1, first):.0f}x more than LOOK.md)" if dtok > first else ""
+            cost = f"<b>size: {esc(size_h)}</b>. Direct read would cost <b>~{tok(dtok)} tokens</b> ({esc(dnote)}){ratio}. SigmaDeepLook: <b>~{tok(first)} tokens</b> for LOOK.md, ~{tok(everything)} if every Read-next file is opened."
+        table.append((d["name"], size_h, dtok, dnote, first, everything, d["tier"]))
+        origin = f'<b>{esc(info.get("kind", "").upper() or "fixture")}</b> - {esc(info.get("origin", ""))}. {esc(info.get("note", ""))}' if info else ""
+        rows.append(f"""<section class="row" id="{esc(name)}"><h2>{esc(d['name'])} <small>{esc(d['type'])} / {esc(d['subtype'])} - tier {esc(d['tier'])} - exit {d['exit']} - {d['elapsed_s']} s</small></h2>
+<div class="meta">{origin}</div><div class="cost">{cost}</div>
+<div class="cols"><div class="pane"><h3>Native: what a person gets</h3>{native_for(d, src, a_dir, base)}</div>
+<div class="pane"><h3>Agent view: the full LOOK.md (paths shown relative to its folder)</h3>{md_to_html(shown_md)}<h3 style="margin-top:14px">Read next: open any file the agent would open</h3>{read_next_inline(d, a_dir, base)}</div></div></section>""")
+    links = ('<p class="nav">' + " | ".join(f'<a href="{esc(u)}">{esc(t)}</a>' for t, u in (x.split("=", 1) for x in o.link)) + "</p>") if o.link else ""
+    trows = "".join(
+        f"<tr><td>{esc(n)}</td><td>{esc(s)}</td><td>{('~' + tok(dt)) if dt is not None else 'n/a (binary or media)'}</td><td>~{tok(f)}</td><td>~{tok(e)}</td><td>{esc(tier)}</td></tr>"
+        for n, s, dt, dn, f, e, tier in table)
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{esc(o.title)}</title><style>{CSS}.row{{border-bottom:2px solid var(--line);padding-bottom:8px}}.row>h2{{padding:10px 16px 0;margin:0;font-size:16px}}</style></head><body>
-<header><h1>{esc(o.title)}</h1><small>{len(rows)} looks. Left: the original as a human sees it. Right: what the agent gets (facts, flags, the pictures at the size sent). Missing tools show as Not looked at.</small></header>
-{''.join(rows)}</body></html>"""
+<title>{esc(o.title)}</title><style>{CSS}{GALLERY_CSS}</style></head><body><div class="wrap">
+<header><h1>{esc(o.title)}</h1><small>{len(rows)} rows</small></header>
+{INTRO.replace('%LINKS%', links)}
+<div class="tok"><table><tr><th>file</th><th>size</th><th>direct read costs</th><th>LOOK.md costs</th><th>LOOK.md + every Read-next file</th><th>tier</th></tr>{trows}</table>
+<div class="px">Tokens are estimated: text = bytes / 4, PDF = pages x {tok(PDF_TOKENS_PER_PAGE)}, pictures = ceil(w/28) x ceil(h/28). Binary and media cannot be read directly at all.</div></div>
+{''.join(rows)}</div></body></html>"""
     outp.write_text(page, encoding="utf-8")
+    if o.tokens_md:
+        L = ["| file | size | direct read | LOOK.md | LOOK.md + all Read next | tier |", "|---|---|---|---|---|---|"]
+        for n, s, dt, dn, f, e, tier in table:
+            L.append(f"| {n} | {s} | {('~' + tok(dt)) if dt is not None else 'n/a (binary/media)'} | ~{tok(f)} | ~{tok(e)} | {tier} |")
+        Path(o.tokens_md).write_text("\n".join(L) + "\n", encoding="utf-8")
     print(f"gallery: {len(rows)} looks -> {outp}")
     return 0

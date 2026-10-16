@@ -407,13 +407,22 @@ def data_sqlite(look):
             cnt = con.execute(f"select count(*) from {q}").fetchone()[0]
             sample = [list(map(str, r)) for r in con.execute(f"select * from {q} limit 5")]
             info[t] = {"rows": cnt, "columns": cols, "sample": sample}
+        objs = Counter(r[0] for r in con.execute("select type from sqlite_master"))
+        ver = con.execute("pragma user_version").fetchone()[0]
+        pages = con.execute("pragma page_count").fetchone()[0] * con.execute("pragma page_size").fetchone()[0]
         con.close()
     except sqlite3.Error as e:
         look.flag("SQLITE-ERROR", "file", str(e)[:120], "")
         return
     look.fact("tables", tabs)
     look.fact("row_counts", {t: i["rows"] for t, i in info.items()})
-    look.line(f"SQLite database: {len(tabs)} tables, opened read-only. " + "; ".join(f"{t} ({i['rows']} rows)" for t, i in info.items()))
+    look.line(f"SQLite database: {len(tabs)} tables, {objs.get('index', 0)} indexes, {objs.get('view', 0)} views, {objs.get('trigger', 0)} triggers, user_version {ver}, {core.human(pages)} of pages; opened read-only. "
+              + "; ".join(f"{t} ({i['rows']} rows)" for t, i in info.items()))
+    big = sorted(info.items(), key=lambda kv: -kv[1]["rows"])[:6]
+    look.line("Biggest tables and their columns: " + " | ".join(f"{t}: " + ", ".join(f"{c[0]} {c[1] or '?'}" for c in i["columns"][:10]) + (" ..." if len(i["columns"]) > 10 else "") for t, i in big))
+    empty = [t for t, i in info.items() if not i["rows"]]
+    if empty:
+        look.line(f"Empty tables: {', '.join(empty)}.")
     look.write_text("schema.json", json.dumps(info, indent=1, default=str), "tables, columns, row counts, 5 sample rows each", "json")
 
 

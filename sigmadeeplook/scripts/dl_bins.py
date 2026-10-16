@@ -306,6 +306,9 @@ ELF_MACHINES = {3: "x86", 8: "MIPS", 40: "ARM", 62: "x86-64", 183: "AArch64", 24
 MACHO_CPU = {7: "x86", 0x01000007: "x86-64", 12: "ARM", 0x0100000c: "ARM64"}
 
 
+VERSION_KEYS = ("CompanyName", "FileDescription", "FileVersion", "ProductName", "OriginalFilename", "InternalName", "LegalCopyright", "ProductVersion", "Comments")
+
+
 def parse_pe(b):
     off = struct.unpack_from("<I", b, 0x3C)[0]
     if b[off:off + 4] != b"PE\0\0":
@@ -325,12 +328,34 @@ def parse_pe(b):
         secs.append({"name": n.rstrip(b"\0").decode("latin-1"), "va": va, "vsize": vsz, "raw": rsz, "rptr": rptr,
                      "entropy": round(core.entropy(data), 2), "perms": "".join(v for k, v in SEC_FLAGS.items() if ch & k)})
     imports = []
+
+    def r2o(rva):
+        for s in secs:
+            if s["va"] <= rva < s["va"] + max(s["vsize"], s["raw"]):
+                return rva - s["va"] + s["rptr"]
+        return None
+    exports, export_count = [], 0
+    exp_rva, _exp_sz = struct.unpack_from("<II", b, ddir)
+    eo = r2o(exp_rva) if exp_rva else None
+    if eo is not None and eo + 40 <= len(b):
+        nnames, an = struct.unpack_from("<II", b, eo + 24)[0], struct.unpack_from("<I", b, eo + 32)[0]
+        export_count = struct.unpack_from("<I", b, eo + 20)[0]
+        ao = r2o(an)
+        for i in range(min(nnames, 400)):
+            if ao is None or ao + 4 * i + 4 > len(b):
+                break
+            no = r2o(struct.unpack_from("<I", b, ao + 4 * i)[0])
+            if no is not None:
+                exports.append(b[no:b.find(b"\0", no)].decode("latin-1"))
+    sec_off, sec_sz = struct.unpack_from("<II", b, ddir + 32)
+    version = {}
+    for key in VERSION_KEYS[:5]:
+        for m in re.finditer(key.encode("utf-16-le") + b"\0\0(?:\0\0)*((?:[^\0]\0)+)", b):
+            val = m.group(1).decode("utf-16-le", "replace").strip()
+            if val and val not in VERSION_KEYS:
+                version[key] = val[:80]
+                break
     if imp_rva:
-        def r2o(rva):
-            for s in secs:
-                if s["va"] <= rva < s["va"] + max(s["vsize"], s["raw"]):
-                    return rva - s["va"] + s["rptr"]
-            return None
         p = r2o(imp_rva)
         while p is not None and p + 20 <= len(b) and len(imports) < 100:
             d = struct.unpack_from("<5I", b, p)
@@ -342,7 +367,8 @@ def parse_pe(b):
                 imports.append(b[no:end].decode("latin-1"))
             p += 20
     return {"machine": PE_MACHINES.get(machine, hex(machine)), "timestamp": ts, "subsystem": SUBSYS.get(subsystem, str(subsystem)),
-            "pe32plus": magic == 0x20B, "sections": secs, "imports": imports, "dll": bool(chars & 0x2000), "entry_rva": entry}
+            "pe32plus": magic == 0x20B, "sections": secs, "imports": imports, "dll": bool(chars & 0x2000), "entry_rva": entry,
+            "exports": exports, "export_count": export_count, "signed": bool(sec_off and sec_sz), "version": version}
 
 
 def parse_elf(b):
@@ -381,6 +407,9 @@ def look_binary(look):
             info = parse_pe(b)
             ts = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(info["timestamp"])) if info["timestamp"] else "0"
             look.line(f"Windows PE ({'DLL' if info['dll'] else 'executable'}): machine {info['machine']}, subsystem {info['subsystem']}, compiled {ts} UTC (can be forged).")
+            if info["version"]:
+                look.line("Version info: " + "; ".join(f"{k} {v}" for k, v in info["version"].items()))
+            look.line(f"Digital signature block: {'present (not verified here)' if info['signed'] else 'none (unsigned or catalog-signed)'}." + (f" Exports {info['export_count']} functions, for example: " + ", ".join(info["exports"][:12]) + "." if info["export_count"] else " No exports."))
             look.line("Sections: " + ", ".join(f"{s['name']} (entropy {s['entropy']}, {s['perms']})" for s in info["sections"]))
             if info["imports"]:
                 look.line("Imports (DLL names): " + ", ".join(info["imports"][:12]))
@@ -425,7 +454,8 @@ def look_binary(look):
     lines = [f"{o:08x} {k} {s[:300]}" for o, k, s in st_list]
     if lines:
         look.write_text("strings.txt", "\n".join(lines), f"ASCII and UTF-16LE strings (min 8, {len(lines)} shown, capped at {STRINGS_CAP})")
-    urls = sorted({s for _, _, s in st_list if re.search(r"https?://|\\\\[\w.]+\\|HKEY_|\.onion", s)})[:10]
+    noise = re.compile(r"schemas\.microsoft\.com|w3\.org|/pki|/crl|\.crt|\.crl|xmlns")  # manifest and certificate-chain URLs say nothing about behaviour
+    urls = sorted({s.strip() for _, _, s in st_list if re.search(r"https?://|\\\\[\w.]+\\|HKEY_|\.onion", s) and not noise.search(s)})[:10]
     if urls:
         look.line("Notable strings: " + "; ".join(u[:80] for u in urls))
     look.fact("strings", len(st_list))
