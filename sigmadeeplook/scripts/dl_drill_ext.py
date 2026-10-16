@@ -218,8 +218,7 @@ def do_table(o, path, out, lj):
             except sqlite3.Error:
                 nulls = dist = mn = mx = "?"
             lines.append(f"| {cn} | {ctype} | {'y' if pk else ''} | {'y' if notnull else ''} | {nulls} | {dist} | {str(mn)[:24]} | {str(mx)[:24]} |")
-        if fks:
-            lines += ["", "foreign keys: " + "; ".join(f"{r[3]} -> {r[2]}.{r[4]}" for r in fks)]
+        lines += ["", "foreign keys: " + ("; ".join(f"{r[3]} -> {r[2]}.{r[4]}" for r in fks) if fks else "none declared")]
         if idx:
             lines += ["indexes: " + ", ".join(r[1] for r in idx)]
         cur = con.execute(f"SELECT * FROM {q} LIMIT 5")

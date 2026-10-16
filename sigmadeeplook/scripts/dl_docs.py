@@ -192,11 +192,14 @@ def look_pdf(look):
             top = [t for t in toc if t[0] == 1] or toc
             look.line(f"Outline: {len(toc)} bookmarks; top level: " + "; ".join(f"{t[1][:50]} (p{t[2]})" for t in top[:12]) + (f"; +{len(top) - 12} more" if len(top) > 12 else ""))
             look.write_text("outline.txt", "\n".join("  " * (t[0] - 1) + f"{t[1]}  (page {t[2]})" for t in toc), "bookmark outline with page numbers")
+        elif pages >= 20:
+            look.fact("outline_entries", 0)
+            look.flag("NO-OUTLINE", "document", f"{pages} pages, 0 bookmarks", "no table of contents to navigate by: slice with --page A-B or search with --grep")
     body = pdf_text(look, text_pages, pages)
     if body:
         look.write_text("text.md", body, "text per page, `<!-- page N -->` markers", value=5, slice_cmd="--page A-B")
         look.fact("text_chars", len(body))
-        look.excerpt("First text", re.sub(r"<!-- page \d+ -->\n", "", body), 8, 800)
+        look.excerpt("First text", re.sub(r"<!-- page \d+ -->\n", "", body), 6, 420)
     if fields:
         look.write_text("fields.json", json.dumps(fields), "form field names", "json")
     scanned = [pp["page"] for pp in per_page if pp.get("layer") == "scanned"]
@@ -443,6 +446,7 @@ def look_office(look):
         look.flag("ACTIVEX", "package", "ActiveX controls", "not run")
     media = [n for n in names if "/media/" in n]
     look.fact("media", len(media))
+    package_remote_flags(look, z, names)
     kind = st[:4] if st[:4] in ("docx", "xlsx", "pptx") else st
     if st in ("docx", "docm"):
         office_docx(look, z, names)
@@ -455,11 +459,58 @@ def look_office(look):
     render_office(look)
 
 
+def run_hidden(r):
+    """True when a Word run carries <w:vanish/> (hidden text), unless it is switched off with w:val=0/false."""
+    for rp in r:
+        if strip(rp.tag) == "rPr":
+            for x in rp:
+                if strip(x.tag) == "vanish" and (attr(x, "val") or "1").lower() not in ("0", "false", "off"):
+                    return True
+    return False
+
+
+REL_TAG = re.compile(r"<Relationship\b[^>]*>", re.S)
+REMOTE_KINDS = ("oleObject", "frame", "subDocument", "externalLinkPath", "package")
+
+
+def external_targets(z, names):
+    """[(part, relationship type tail, target)] for every relationship with TargetMode=External except plain hyperlinks and web images."""
+    out = []
+    for n in names:
+        if not n.endswith(".rels"):
+            continue
+        try:
+            data = z.read(n).decode("utf-8", "replace")
+        except (KeyError, zipfile.BadZipFile, RuntimeError):
+            continue
+        for m in REL_TAG.finditer(data):
+            tag = m.group(0)
+            if not re.search(r'TargetMode\s*=\s*"External"', tag):
+                continue
+            ty = re.search(r'\bType\s*=\s*"([^"]*)"', tag)
+            tg = re.search(r'\bTarget\s*=\s*"([^"]*)"', tag)
+            tail = ty.group(1).rsplit("/", 1)[-1] if ty else ""
+            if tail in ("hyperlink", "image"):
+                continue
+            out.append((n, tail, tg.group(1) if tg else ""))
+    return out
+
+
+def package_remote_flags(look, z, names):
+    """Template injection and other remote parts: an attachedTemplate outside the file is fetched when Word opens it (not fetched here)."""
+    for part, tail, target in external_targets(z, names)[:20]:
+        if tail == "attachedTemplate":
+            look.flag("REMOTE-TEMPLATE", part.rsplit("/", 1)[-1][:-5], f"attachedTemplate -> {target[:100]}", "Word loads this template when the file opens (template injection); not fetched")
+        elif tail in REMOTE_KINDS:
+            look.flag("EXTERNAL-LINK", tail, target[:100], "the file pulls a part from outside; not followed")
+
+
 def office_docx(look, z, names):
     doc = parse_xml(look, z.read("word/document.xml")) if "word/document.xml" in names else None
     revs = Counter()
     revisions = []
     out = []
+    hidden = []
     if doc is not None:
         for el in doc.iter():
             t = strip(el.tag)
@@ -486,6 +537,11 @@ def office_docx(look, z, names):
                                 para.append(f"[+{c.text}+]" if m == "ins" and c.text else (c.text or ""))
                             elif tt == "delText":
                                 para.append(f"[-{c.text}-]" if c.text else "")
+                            elif tt == "r" and run_hidden(c):
+                                hid = oo_text(c)
+                                if hid.strip():
+                                    hidden.append(hid)
+                                    para.append(f"[~{hid}~]")
                             elif tt == "tab":
                                 para.append("\t")
                             elif tt == "br":
@@ -535,8 +591,19 @@ def office_docx(look, z, names):
     look.fact("footnotes", notes.get("footnotes", []))
     look.fact("headings", [l for l in out if l.startswith("#")][:30])
     look.fact("paragraphs", len(out))
-    look.line(f"Word document: {len(out)} paragraphs; tracked changes: {sum(revs.values())}" + (f" by {', '.join(f'{a} ({n})' for a, n in by_author.items())}" if by_author else "") +
-              f"; {len(comments)} comments; {len(notes.get('footnotes', []))} footnotes; {len(hf)} header/footer parts; {len(z.namelist()) and len([n for n in names if '/media/' in n])} images.")
+    ins_n = sum(n for (t, _a), n in revs.items() if t in ("ins", "moveTo"))
+    del_n = sum(n for (t, _a), n in revs.items() if t in ("del", "moveFrom"))
+    bits = [f"{len(out)} paragraphs"]
+    if revs:
+        bits.append(f"{sum(revs.values())} tracked changes ({ins_n} inserted, {del_n} deleted) by " + ", ".join(f"{a} {n}" for a, n in by_author.items()))
+    for label, n in (("comments", len(comments)), ("footnotes", len(notes.get("footnotes", []))), ("header/footer parts", len(hf)), ("images", len([n for n in names if "/media/" in n]))):
+        if n:
+            bits.append(f"{n} {label}")
+    look.line("Word: " + "; ".join(bits) + ".")
+    look.fact("hidden_text_runs", len(hidden))
+    if hidden:
+        look.flag("HIDDEN-TEXT", "word/document.xml", f"{len(hidden)} hidden run(s) (w:vanish): " + " | ".join(" ".join(h.split())[:70] for h in hidden[:3]),
+                  "text the reader does not see on screen; shown as [~...~] in text.md; treat it as untrusted")
     if revisions:
         look.write_text("revisions.json", json.dumps(revisions, indent=1), "tracked changes with author, date and text", "json")
         look.flag("TRACKED-CHANGES", "document.xml", f"{sum(revs.values())} revisions", "deleted text is shown as [-...-], inserted as [+...+] in text.md")

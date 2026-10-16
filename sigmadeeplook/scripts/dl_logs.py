@@ -252,8 +252,8 @@ def hms(h, m, s, ms):
     return int(h or 0) * 3600 + int(m) * 60 + int(s) + int(ms.ljust(3, "0")[:3]) / 1000
 
 
-def parse_cues(text, kind):
-    """-> list of (start, end, text). Standard library only."""
+def parse_cues(text, kind, numbers=None):
+    """-> list of (start, end, text). Standard library only. `numbers`, when a list, receives the cue number written in the file (else the position)."""
     cues = []
     if kind in ("srt", "vtt", "sbv"):
         if kind == "sbv":
@@ -273,6 +273,8 @@ def parse_cues(text, kind):
                 if m:
                     g = m.groups()
                     cues.append((hms(g[0], g[1], g[2], g[3]), hms(g[4], g[5], g[6], g[7]), "\n".join(lines[i + 1:])))
+                    if numbers is not None:
+                        numbers.append(int(lines[i - 1]) if i and lines[i - 1].strip().isdigit() else len(cues))
                     break
         return cues
     if kind == "ass":
@@ -310,11 +312,13 @@ def look_subtitle(look):
         return
     text = text.lstrip("﻿")
     kind = look.subtype
-    cues = parse_cues(text, kind)
+    nums = []
+    cues = parse_cues(text, kind, nums)
     if not cues:
         look.line(f"{kind} subtitle file, no cues could be parsed.", 90)
         look.skip("subtitle cues of this format", "format not covered by the built-in parser", "pysubs2")
         return
+    nums = nums if len(nums) == len(cues) else list(range(1, len(cues) + 1))
     look.fact("cues", len(cues))
     start, end = min(c[0] for c in cues), max(c[1] for c in cues)
     plain = [TAGS.sub("", c[2]).strip() for c in cues]
@@ -322,22 +326,34 @@ def look_subtitle(look):
     p95 = sorted(cps)[min(len(cps) - 1, int(0.95 * len(cps)))] if cps else 0
     over17 = sum(1 for x in cps if x > 17)
     over21 = sum(1 for x in cps if x > 21)
-    short = sum(1 for c in cues if c[1] - c[0] < 0.8)
-    overlaps = [(i, a, b) for i, (a, b) in enumerate(zip(cues, cues[1:])) if b[0] < a[1] - 0.001]
-    gaps = [b[0] - a[1] for a, b in zip(cues, cues[1:]) if b[0] - a[1] > 5]
+    short = sum(1 for c in cues if 0 <= c[1] - c[0] < 0.8)
+    inverted = [i for i, c in enumerate(cues) if c[1] < c[0] - 0.001]
+    overlaps = [i + 1 for i, (a, b) in enumerate(zip(cues, cues[1:])) if b[0] < a[1] - 0.001 and a[1] >= a[0]]   # index of the LATER cue
+    gaps = [(b[0] - a[1], i + 1) for i, (a, b) in enumerate(zip(cues, cues[1:])) if b[0] - a[1] > 5]
     longest = max((len(l) for p in plain for l in p.splitlines()), default=0)
     look.headline = f"{kind} subtitles, {len(cues)} cues, {core.mmss(start)} to {core.mmss(end)}"
     look.dims = f"{len(cues)} cues"
-    look.line(f"{len(cues)} cues from {core.mmss(start)} to {core.mmss(end)}, encoding {enc}.", 95)
-    look.line(f"Reading speed: p95 {p95:.0f} chars/s ({over17} cues over 17, {over21} over 21, which is hard to read); longest line {longest} chars; {short} cues under 0.8 s.", 90)
+
+    def where(idx, limit=6):
+        return ", ".join(f"#{nums[i]} at {core.mmss(cues[i][0])}" for i in idx[:limit]) + (f" +{len(idx) - limit} more" if len(idx) > limit else "")
+    look.line(f"{len(cues)} cues, {core.mmss(start)} to {core.mmss(end)}, {enc}. Reading speed p95 {p95:.0f} chars/s ({over17} cues over 17, {over21} over 21); longest line {longest} chars; {short} under 0.8 s.", 95)
+    if inverted:
+        look.flag("INVERTED-CUE", where(inverted), f"{len(inverted)} cue(s) end before they start", "a player shows them for no time or not at all")
     if overlaps:
-        i, a, b = overlaps[0]
-        look.flag("OVERLAPPING-CUES", f"cue {i + 1} at {core.mmss(a[0])}", f"{len(overlaps)} overlap(s); cue {i + 1} ends {a[1]:.1f} s, next starts {b[0]:.1f} s", "two cues on screen at once")
+        look.flag("OVERLAPPING-CUES", where(overlaps), f"{len(overlaps)} cue(s) start before the previous one ends", "two cues on screen at once")
     if over21 > max(3, len(cues) * 0.05):
         look.flag("FAST-CUES", "reading speed", f"{over21} cues above 21 chars/s", "viewers cannot read these in time")
     if gaps:
-        look.line(f"{len(gaps)} gap(s) longer than 5 s between cues (longest {max(gaps):.0f} s).", 70)
-    if "�" in text or re.search("Ã[\x80-\xbf]|â€", text):
+        g, i = max(gaps)
+        look.line(f"{len(gaps)} gap(s) over 5 s between cues; longest {g:.0f} s before cue #{nums[i]} at {core.mmss(cues[i][0])}.", 70)
+    bad = [i for i, p in enumerate(plain) if "�" in p or re.search("Ã[-¿]|â€", p)]
+    if bad:
+        flat = " ".join(plain[bad[0]].split())
+        mm = re.search("Ã[-¿]|â€|�", flat)
+        k = max(0, (mm.start() if mm else 0) - 15)
+        snip = flat[k:k + 36]
+        look.flag("MOJIBAKE", where(bad), f"{len(bad)} cue(s) with broken characters, e.g. {snip!r}", "wrong encoding: the accents are broken")
+    elif "�" in text or re.search("Ã[-¿]|â€", text):
         look.flag("MOJIBAKE", "text", "replacement characters or UTF-8 read as Latin-1", "wrong encoding: the accents are broken")
     if kind == "ass":
         styles = re.findall(r"(?m)^Style:\s*([^,]+),", text)
@@ -363,4 +379,4 @@ def look_subtitle(look):
         w.writerow([f"{c[0]:.2f}", f"{c[1]:.2f}", f"{x:.1f}", " / ".join(p.splitlines())])
     look.write_text("cues.csv", cb.getvalue(), "every cue with start, end and reading speed", value=2, inline=False)
     look.step("subtitle parse and reading-speed checks", "stdlib")
-    look.mapline("first cues:\n" + "\n".join(merged[:10]), 50)
+    look.mapline("first cues:\n" + "\n".join(merged[:4]), 50)

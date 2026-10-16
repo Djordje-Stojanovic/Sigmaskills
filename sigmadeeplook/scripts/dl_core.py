@@ -698,7 +698,7 @@ class Look:
         self.recurse = int(getattr(opts, "recurse", 0) or 0)
         self.allow_network = bool(getattr(opts, "allow_network", False))
         self.reader = reader_of(getattr(opts, "reader", "claude"))
-        self.t0 = time.time()
+        self.t0 = self._tmark = time.time()
         self.type = "unknown"
         self.subtype = ""
         self.detector = {}
@@ -747,7 +747,9 @@ class Look:
             self.flags.append(f)
 
     def step(self, name, tool="", status="ran", reason="", install="", version=""):
-        self.steps.append(dict(name=name, tool=tool, version=version, status=status, reason=reason, install=install))
+        now = time.time()
+        self.steps.append(dict(name=name, tool=tool, version=version, status=status, reason=reason, install=install, secs=round(now - self._tmark, 2)))
+        self._tmark = now
 
     def skip(self, name, reason, tool=None, install=None):
         """Record a 'Not looked at' row. `tool` is the missing tool or module name, for the install line."""
