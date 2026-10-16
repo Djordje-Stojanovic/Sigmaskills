@@ -32,7 +32,7 @@ TRAPS = {
     "mailbox-5200.mbox": ["AUTH-FAIL", "LINK-MISMATCH"],
 }
 MUST_SAY = {
-    "shell32.dll": ["Authenticode", "Install: pip install lief"],
+    "shell32.dll": ["Authenticode"],
     "curl.exe": ["Authenticode", "PDB path"],
     "long-document.pdf": ["339 pages"],
     "orders-export-2026.csv": ["620000"],

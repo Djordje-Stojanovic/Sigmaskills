@@ -193,7 +193,8 @@ class PeFacts(unittest.TestCase):
 class RealShell32(unittest.TestCase):
     def test_timestamp_trap_and_catalog_wording_in_step_one(self):
         out = tempfile.mkdtemp(prefix="sdl-sh-")
-        r = subprocess.run([sys.executable, str(LOOK), str(REAL / "shell32.dll"), "--out", out, "--fresh"], capture_output=True, text=True, encoding="utf-8", timeout=300)
+        r = subprocess.run([sys.executable, str(LOOK), str(REAL / "shell32.dll"), "--out", out, "--fresh"], capture_output=True, text=True, encoding="utf-8", timeout=300,
+                           env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", SIGMADEEPLOOK_HIDE="lief"))   # lief may be installed: pretend it is not
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("TIMESTAMP-UNRELIABLE", r.stdout)
         self.assertNotIn("compiled 1979", r.stdout)

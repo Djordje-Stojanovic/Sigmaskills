@@ -107,14 +107,14 @@ def evtx_bytes(dirty=False):
 
 class Evtx(unittest.TestCase):
     def test_header_span_and_dirty(self):
-        r, out, lj = run(make("s.evtx", evtx_bytes(dirty=True)), hide="evtx")
+        r, out, lj = run(make("s.evtx", evtx_bytes(dirty=True)), hide="Evtx")
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(lj["type"], "log")
         self.assertEqual(lj["facts"]["records"], 11)
         self.assertIn("2026-03-01", r.stdout)
         self.assertIn("2026-03-09", r.stdout)
         self.assertIn("DIRTY-LOG", {f["kind"] for f in lj["flags"]})
-        self.assertIn("evtx", skipped(lj))
+        self.assertIn("Evtx", skipped(lj))
 
 
 class Psd(unittest.TestCase):

@@ -12,6 +12,7 @@ Layout inside a print (empty sections left out): `# name - what it is` and one i
 `## Map`, `## Read next`, `## Not looked at`. Chunks are ranked across sections; a print groups the chunks it holds by section.
 """
 import json
+import re
 from pathlib import Path
 
 import dl_core as core
@@ -30,7 +31,7 @@ TRAPS = {"MISMATCH", "INJECTION?", "HIDDEN-TEXT", "HIDDEN-SHEET", "HIDDEN-SLIDE"
          "LINK-MISMATCH", "GPS", "AUTO-RUN?", "ACTIVE-CONTENT", "REMOTE-TEMPLATE", "WAL-PRESENT", "PERSONAL-DATA", "HOOK-OR-MCP",
          "GARBLED-FONT", "SCANNED", "INTERNAL-ERROR", "EXTERNAL-LINK", "VERYHIDDEN-SHEET", "AUTO-EXEC-MACRO", "XLM-MACRO", "DELETED-TEXT-PRESENT",
          "EXPIRED", "MISSING-CYRILLIC", "RESTRICTED-EMBEDDING", "AI-GENERATED", "WORKFLOW-IN-IMAGE", "DOUBLE-EXTENSION", "ENTITY-DECLARATION",
-         "MISSING-LATIN", "DUPLICATE-KEYS", "REPEATED-HEADER", "MIXED-TYPES", "OUTLIER", "SUSPECT", "CLIPPING", "TRUE-PEAK", "LOUD-PEAK"}
+         "MISSING-LATIN", "NO-OUTLINE", "NO-FOREIGN-KEYS", "ORPHAN-ROWS", "NO-STATISTICS", "NULL-HEAVY", "INVERTED-CUE", "MOJIBAKE", "MUSIC-BED?", "QUICK-SAMPLE", "DUPLICATE-KEYS", "REPEATED-HEADER", "MIXED-TYPES", "OUTLIER", "SUSPECT", "CLIPPING", "TRUE-PEAK", "LOUD-PEAK"}
 NOISE = {"NOT-EXECUTED": 5, "VIEW-FAILED": 5, "MORE-IN-FLAGGED": 5, "SAMPLED": 30, "PARTIAL": 70, "DOWNSCALED": 25, "LOW-CONFIDENCE": 35,
          "MINIFIED": 30, "BOM": 25, "NULL-TOKENS": 55, "ENCODING": 55, "SILENCE": 45}
 
@@ -67,8 +68,8 @@ def cluster_text(c):
         t = f"**{c['kind']}** @ {_clip(f['where'], 40)}: {_clip(f['value'], 130)}"
     else:
         t = f"**{c['kind']}** x{c['n']}: {_clip(f['value'], 90)} @ {_clip(f['where'], 36)}; last @ {_clip(l['where'], 36)}"
-    if c["hint"]:
-        t += f" - {_clip(c['hint'], 100)}"
+    if c["hint"] and c["kind"] in TRAPS:   # a hint is spent on the findings that matter; the minor ones carry the fact alone
+        t += f" - {_clip(c['hint'], 90)}"
     return t
 
 
@@ -105,6 +106,51 @@ def _row_text(a, look):
     return f"`{rel_name(look, a['path'])}`: {_clip(a['what'], 90)} ({cost})"
 
 
+def _norm(s):
+    return " ".join(str(s).split())
+
+
+def _excerpt_body(text):
+    """The quoted lines of an excerpt item (between the text fence), whitespace-normalised, or '' when there are none or too few."""
+    try:
+        body = text.split("```text", 1)[1].rsplit("```", 1)[0]
+    except IndexError:
+        return ""
+    body = _norm(body)
+    return body if len(body) >= 40 else ""
+
+
+def read_rows(look, arts):
+    """Rows for 'Read next': one row per file, but numbered siblings (sheet-pages-1.jpg ... -4.jpg) and folders of small text files
+    (sheets/*.csv) become one row each, with the total cost. -> [(text, 0)]"""
+    ordered = sorted(arts, key=lambda a: (a["kind"] == "image", -(a.get("value", 3) / max(200, a.get("tokens_est", 0)))))
+    groups, order = {}, []
+    for a in ordered:
+        p = Path(a["path"])
+        rel = rel_name(look, a["path"])
+        parent = rel.rsplit("/", 1)[0] if "/" in rel else ""
+        key = ("dir", parent, a["kind"]) if parent and a["kind"] == "text" else ("num", parent, re.sub(r"\d+", "#", p.name), a["kind"])
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(a)
+    rows = []
+    for key in order:
+        g = groups[key]
+        if key[0] == "dir" and len(g) >= 4:
+            total = sum(a.get("tokens_est", 0) for a in g)
+            names = ", ".join(Path(a["path"]).name for a in g[:5]) + (f" +{len(g) - 5}" if len(g) > 5 else "")
+            rows.append((f"`{key[1]}/` ({len(g)} files: {names}; ~{tok(total)} tokens in all, each costs ~{tok(total // len(g))}): {_clip(g[0]['what'], 70)}", 0))
+        elif key[0] == "num" and len(g) >= 3:
+            names = sorted(rel_name(look, a["path"]) for a in g)
+            per = max(a.get("tokens_est", 0) for a in g)
+            what = re.sub(r"\d+(-\d+)?", "N", g[0]["what"], count=2)
+            rows.append((f"`{names[0]}` .. `{names[-1]}` ({len(g)} files): {_clip(what, 80)} (~{tok(per)} tokens each)", 0))
+        else:
+            rows += [(_row_text(a, look), 0) for a in g]
+    return rows
+
+
 def build_stream(look):
     """-> list of chunks (dicts: id, sec, pri, tag, text, tok), ranked: priority, then the order the analysis produced them.
 
@@ -125,25 +171,34 @@ def build_stream(look):
                 raw.append((it[0], it[1], rest, it[4] if len(it) > 4 else "", 1000 + it[3]))
             continue
         raw.append((it[0], it[1], it[2], it[4] if len(it) > 4 else "", 1000 + it[3]))
-    arts = [a for a in look.artifacts if a.get("kind") != "internal"]
-    for a in sorted(arts, key=lambda a: (a["kind"] == "image", -(a.get("value", 3) / max(200, a.get("tokens_est", 0))))):
-        raw.append(("read", 45, _row_text(a, look), "file", seq + 5000))
+    by_path = {}
+    for a in look.artifacts:
+        if a.get("kind") != "internal":
+            by_path[a["path"]] = a   # the same file registered twice is one row (the later description wins)
+    arts = list(by_path.values())
+    for text, sec_seq in read_rows(look, arts):
+        raw.append(("read", 45, text, "file", seq + 5000))
         seq += 1
     for c in look.cmds:
         cost = f"~{tok(c['tokens'])} tokens" if c.get("tokens") else "prints its cost first"
         raw.append(("read", 47, f"`{c['cmd']}`: {_clip(c['answers'], 90)} ({cost})", "drill", seq + 5000))
         seq += 1
-    nla_pri = 62
+    nla_pri = 55
     for r in lost_rows(look):
         raw.append(("nla", nla_pri, r, "limits", seq + 9000))
         seq += 1
     cseq = 20000
+    body_texts = []
     for a in sorted(arts, key=lambda a: (-a.get("value", 3), a["path"])):
         if a["kind"] != "text" or a.get("private") or a.get("inline") is False or not 0 < a.get("tokens_est", 0) <= CONTENT_MAX_TOKENS:
             continue
         for k, (first_line, last_line, text) in enumerate(content_chunks(a["path"])):
             raw.append(("content", 20 + a.get("value", 3), text, rel_name(look, a["path"]), cseq, first_line, last_line))
             cseq += 1
+            if k < 2:
+                body_texts.append(_norm(text))
+    # an excerpt that the stream also holds as file content is printed once
+    raw = [r for r in raw if not (r[0] == "key" and "```text" in r[2] and _excerpt_body(r[2]) and any(_excerpt_body(r[2]) in b for b in body_texts))]
     raw.sort(key=lambda r: (-r[1], r[4]))
     stream = [{"id": 0, "sec": "head", "pri": 1000, "tag": "identity", "text": head, "tok": U.est_tokens(head) + 12}]
     for r in raw:

@@ -240,7 +240,8 @@ def profile_line(p, total):
     bits = [f"{s['type']}"]
     if s["null_pct"]:
         bits.append(f"{s['null_pct']:g} % empty")
-    bits.append(f"{s['distinct']} distinct")
+    d = s["distinct"]
+    bits.append(f"{U.compact(d) if isinstance(d, int) and d >= 10000 else d} distinct")
     if "p50" in s and s.get("p50") is not None:
         bits.append(f"range {num(s['min'])} to {num(s['max'])}, median {num(s['p50'])}")
     elif "top_values" in s:
@@ -250,8 +251,31 @@ def profile_line(p, total):
     return f"- {p.name}: " + ", ".join(bits)
 
 
+QUICK_BYTES = 4 << 20   # the quick tier profiles the first 4 MB of a big table; the line count and the repeated-header search cover the whole file
+
+
+def whole_file_scan(raw):
+    """Quick tier: (lines in the file, [line numbers where the header row appears again]) from the bytes alone, no CSV parsing."""
+    nl = raw.count(b"\n")
+    lines = nl + (0 if raw.endswith(b"\n") or not raw else 1)
+    first = raw[:raw.find(b"\n")].rstrip(b"\r") if b"\n" in raw else raw
+    if first.startswith(b"\xef\xbb\xbf"):
+        first = first[3:]   # the byte-order mark sits before the first header only
+    repeats = []
+    if first:
+        for m in re.finditer(b"\n" + re.escape(first) + rb"\r?(?=\n|$)", raw):
+            repeats.append(raw.count(b"\n", 0, m.start()) + 2)
+    return lines, repeats
+
+
 def data_csv(look):
     raw = open(look.path, "rb").read(256 << 20)
+    quick_cut = look.quick and len(raw) > QUICK_BYTES
+    whole_lines = whole_repeats = None
+    if quick_cut:
+        whole_lines, whole_repeats = whole_file_scan(raw)
+        cut = raw.rfind(b"\n", 0, QUICK_BYTES)
+        raw = raw[:cut + 1 if cut > 0 else QUICK_BYTES]
     text, enc = decode_best(raw)
     if enc == "latin-1":
         look.flag("ENCODING", "file", "not valid UTF-8; read as Latin-1", "accents may be wrong if the real encoding is another one")
@@ -296,13 +320,24 @@ def data_csv(look):
             break
     header = header or []
     nrej = len(rejects)
+    profiled = n
+    if quick_cut:   # rows and repeated headers come from the whole file's bytes; the column profile from its first rows
+        repeats = list(whole_repeats)
+        n = max(0, whole_lines - 1 - len(whole_repeats))
+        tail = []
+        look.flag("QUICK-SAMPLE", "column profile", f"first {profiled} of about {n} rows", "quick tier: distinct counts, outliers and duplicate keys cover the first rows only; run --tier standard for the full pass")
     look.fact("encoding", enc)
     look.fact("delimiter", delim)
     look.fact("rows", n)
     look.fact("columns", len(header))
     look.fact("column_names", header)
     look.fact("rejects", nrej)
-    look.line(f"Delimited table: {n} data rows, {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows (wrong field count). Every row was read" + (" until the time cap." if partial else "; the profile below is a full pass, not a sample."))
+    look.headline = f"{look.subtype.upper()}, {n:,} rows x {len(header)} columns"
+    look.dims = f"{U.compact(n)} rows"
+    if quick_cut:
+        look.line(f"Delimited table: {n:,} data rows (counted over the whole file), {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows in the part profiled. Column profile: first {profiled:,} rows only.")
+    else:
+        look.line(f"Delimited table: {n:,} data rows, {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows (wrong field count). Every row was read" + (" until the time cap." if partial else "; the profile below is a full pass, not a sample."))
     total_ok = sum(prof[0].kinds.values()) if prof else 0
     notes = profile_findings(look, header, prof, total_ok, repeats)
     schema = [p.summary(total_ok) for p in prof]
@@ -314,7 +349,7 @@ def data_csv(look):
     if len(prof) > 16:
         look.line(f"- ... {len(prof) - 16} more columns in schema.json")
     import dl_sample
-    dl_sample.build_sample(look, text, delim, header, prof, n, repeats, tail, rows, partial)
+    dl_sample.build_sample(look, text, delim, header, prof, n, repeats, tail, rows, partial or quick_cut)
     if rejects:
         buf = io.StringIO()
         w = csv.writer(buf)

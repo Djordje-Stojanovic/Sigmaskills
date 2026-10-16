@@ -230,5 +230,154 @@ class Parquet(unittest.TestCase):
         self.assertNotIn("NO-STATISTICS", kinds(lj2))
 
 
+# ------------------------------------------------------------------------------------------------ audio: speech over a bed
+def synth_pcm(bed_db=None, seconds=40, seed=3):
+    """16 kHz mono 16-bit: word-like noise bursts with pauses, optionally over a steady tonal pad. -> bytes"""
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    sr = 16000
+    n = seconds * sr
+    x = rng.normal(0, 1e-4, n)                       # room floor near -80 dB
+    t = 0
+    while t < n - sr:
+        L = int(sr * rng.uniform(0.25, 0.6))
+        env = np.hanning(L)
+        tt = np.arange(L) / sr
+        burst = sum(np.sin(2 * np.pi * f * tt + rng.uniform(0, 6)) * rng.uniform(0.3, 1) for f in rng.uniform(150, 3000, 12))
+        x[t:t + L] += 0.04 * env * burst / 4
+        t += L + int(sr * rng.uniform(0.2, 0.45))
+    if bed_db is not None:
+        tt = np.arange(n) / sr
+        amp = 10 ** (bed_db / 20)
+        x += amp * (np.sin(2 * np.pi * 110 * tt) + 0.7 * np.sin(2 * np.pi * 165 * tt) + 0.5 * np.sin(2 * np.pi * 220 * tt))
+    return (np.clip(x, -1, 1) * 32767).astype("<i2").tobytes()
+
+
+@unittest.skipUnless(have("numpy"), "numpy not installed")
+class MusicBed(unittest.TestCase):
+    def test_voice_over_a_tonal_bed_is_told_from_clean_speech(self):
+        import dl_mediax as M
+        clean = M.bed_features(synth_pcm(None))
+        bed = M.bed_features(synth_pcm(-34))
+        self.assertEqual(M.bed_verdict(clean, True), "clean", clean)
+        self.assertEqual(M.bed_verdict(bed, True), "bed", bed)
+        self.assertGreater(bed["floor"], clean["floor"] + 20)
+
+    def test_music_alone_is_not_called_speech_over_music(self):
+        import numpy as np
+        import dl_mediax as M
+        n = 40 * 16000
+        tt = np.arange(n) / 16000
+        x = 0.05 * (np.sin(2 * np.pi * 110 * tt) * (1 + 0.3 * np.sin(2 * np.pi * 0.5 * tt)) + np.sin(2 * np.pi * 220 * tt))
+        f = M.bed_features((x * 32767).astype("<i2").tobytes())
+        self.assertEqual(M.bed_verdict(f, False), "music", f)
+
+    def test_wav_end_to_end_reports_the_bed_fact(self):
+        import shutil
+        import wave
+        if not shutil.which("ffmpeg"):
+            self.skipTest("ffmpeg not installed")
+        raw = synth_pcm(-34, seconds=45)
+        d = Path(tempfile.mkdtemp(prefix="sdl-fix-")) / "vb.wav"
+        with wave.open(str(d), "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(16000)
+            w.writeframes(raw)
+        r, out, lj, _ = look(d, "--tier", "quick")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("sound_bed", lj["facts"])
+
+
+# ------------------------------------------------------------------------------------------------ quick tier
+def csv_big(repeat_at=60000, rows=130000):
+    lines = ["id,name,amount,status"]
+    for i in range(1, rows + 1):
+        if i == repeat_at:
+            lines.append("id,name,amount,status")
+        lines.append(f"{i},customer number {i % 977},{(i * 7) % 1000}.5,{'shipped' if i % 3 else 'pending'}")
+    return "\n".join(lines) + "\n"
+
+
+class QuickTier(unittest.TestCase):
+    def test_big_csv_is_counted_whole_and_profiled_on_a_sample(self):
+        f = make("big.csv", csv_big())
+        import dl_data
+        self.assertGreater(f.stat().st_size, dl_data.QUICK_BYTES)
+        r, out, lj, secs = look(f, "--tier", "quick")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("REPEATED-HEADER", kinds(lj))
+        self.assertIn("QUICK-SAMPLE", kinds(lj))
+        self.assertIn("130,000 data rows", r.stdout)
+        self.assertRegex(r.stdout, r"REPEATED-HEADER\*\* @ line 60001")
+        self.assertLess(secs, 20)
+
+    def test_whole_file_scan_counts_lines_and_repeated_header(self):
+        import dl_data
+        raw = b"\xef\xbb\xbfa,b\n1,2\n3,4\na,b\n5,6\n"
+        lines, rep = dl_data.whole_file_scan(raw)
+        self.assertEqual(lines, 5)
+        self.assertEqual(rep, [4])
+
+    def test_sample_windows_and_gist(self):
+        import dl_media as DM
+        self.assertEqual(DM.sample_windows(60.0), [(0.0, 60.0)])
+        w = DM.sample_windows(600.0)
+        self.assertEqual(len(w), 3)
+        self.assertTrue(all(0 <= a and a + ln <= 600.0 for a, ln in w))
+        segs = [{"start": 0.0, "end": 4.0, "text": "This film asks whether one pod of power decides the whole race.", "words": []},
+                {"start": 100.0, "end": 106.0, "text": "Huawei stacks eight thousand chips in one domain at enormous cost today.", "words": []},
+                {"start": 500.0, "end": 507.0, "text": "In the end power is the limit but density decides the building you need.", "words": []}]
+        g = DM.gist_lines(segs, 520.0, None)
+        self.assertGreaterEqual(len(g), 2)
+        self.assertTrue(g[0].startswith("[0:00] This film asks"))
+        g2 = DM.gist_lines(segs, 520.0, [(90.0, 25.0), (490.0, 25.0)])
+        self.assertEqual(len(g2), 2)
+
+    def test_part_cache_round_trip_and_fresh_bypass(self):
+        import types
+        import dl_core as core
+        old = os.environ.get("LOCALAPPDATA"), os.environ.get("XDG_CACHE_HOME")
+        tmp = tempfile.mkdtemp(prefix="sdl-cache-")
+        os.environ["LOCALAPPDATA"] = tmp
+        os.environ["XDG_CACHE_HOME"] = tmp
+        try:
+            lk = types.SimpleNamespace(sha="ab" * 32, no_tools=False, opts=types.SimpleNamespace(fresh=False))
+            self.assertIsNone(core.cache_get(lk, "asr-base"))
+            core.cache_put(lk, "asr-base", {"segs": [1, 2]})
+            self.assertEqual(core.cache_get(lk, "asr-base"), {"segs": [1, 2]})
+            lk.opts.fresh = True
+            self.assertIsNone(core.cache_get(lk, "asr-base"))
+        finally:
+            for k, v in zip(("LOCALAPPDATA", "XDG_CACHE_HOME"), old):
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+
+# ------------------------------------------------------------------------------------------------ writer
+class Writer(unittest.TestCase):
+    def test_duplicate_rows_siblings_and_excerpts_are_merged(self):
+        import argparse
+        import dl_core as core
+        import dl_write as W
+        out = Path(tempfile.mkdtemp(prefix="sdl-w-"))
+        lk = core.Look(out / "x.bin", out, argparse.Namespace(tier="standard"))
+        lk.type, lk.subtype, lk.sha, lk.size = "data", "csv", "0" * 64, 10
+        body = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma"
+        lk.write_text("text.md", body, "the text", value=6)
+        lk.excerpt("Text start", body, 3, 500)
+        for i in (1, 2, 3, 4):
+            (out / "sheets").mkdir(exist_ok=True)
+            lk.write_text(f"sheets/S{i}.csv", "a,b\n1,2\n", f"sheet {i} as CSV")
+        lk.write_text("sheets/S1.csv", "a,b\n1,2\n", "sheet S1 again")
+        stream = W.build_stream(lk)
+        text = "\n".join(c["text"] for c in stream)
+        self.assertIn("`sheets/` (4 files", text)
+        self.assertEqual(sum(1 for c in stream if c["sec"] == "key" and "Text start" in c["text"]), 0)
+        self.assertEqual(sum(1 for c in stream if c["sec"] == "content" and "alpha beta" in c["text"]), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

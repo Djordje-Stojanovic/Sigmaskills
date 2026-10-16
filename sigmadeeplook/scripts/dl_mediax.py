@@ -157,8 +157,9 @@ def ocr_video(look, dur, black_runs, grab):
     n = int(dur)
     if n < 3:
         return
-    plan = U.sample_plan(n, anomalies=[(min(n - 1, int(b) + 1), "after black") for _, b, _ in black_runs[:4]], head=2, tail=2, strata=10 if look.deep else 6)
-    plan = plan[:36 if look.deep else 12]
+    q = look.quick   # the quick tier reads four frames: the first, one after a black card, two spread through the film
+    plan = U.sample_plan(n, anomalies=[(min(n - 1, int(b) + 1), "after black") for _, b, _ in black_runs[:1 if q else 4]], head=1 if q else 2, tail=0 if q else 2, strata=2 if q else (10 if look.deep else 6))
+    plan = plan[:4 if q else (36 if look.deep else 12)]
     try:
         from PIL import Image
         import numpy as np
@@ -166,8 +167,11 @@ def ocr_video(look, dur, black_runs, grab):
         look.skip("text on screen (OCR of sampled frames)", "Pillow or numpy not importable", "PIL")
         return
     seen, rows = [], []
-    for sec, why in sorted(plan):
-        png = grab(float(sec), 960)
+    from concurrent.futures import ThreadPoolExecutor
+    ordered = sorted(plan)
+    with ThreadPoolExecutor(4) as ex:   # seeking in a big file is the slow part: fetch the frames side by side
+        grabbed = list(ex.map(lambda sw: grab(float(sw[0]), 960), ordered))
+    for (sec, why), png in zip(ordered, grabbed):
         if not png:
             continue
         try:
@@ -198,9 +202,21 @@ def faces_row(look):
     return True
 
 
+def quiet_models():
+    """Model libraries print progress and warnings to stderr; the look prints only its own words."""
+    import logging
+    import os
+    os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
+    os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+    logging.disable(logging.WARNING)
+
+
 def audio_adapters(look, wav, words, dur):
     """Speaker turns (pyannote) and sound-event labels (AST). With the models absent: one row each with the install line."""
     import dl_models
+    if look.quick and not look.no_tools:
+        look.skip("speaker turns and sound-event labels (models)", "skipped at the quick tier (model start-up takes seconds): run again with --tier standard", None, "")
+        return
     if not dl_models.have_model("pyannote"):
         look.skip("who speaks when (speaker turns)", "the pyannote speaker model is not cached on this machine" if not look.no_tools else "disabled by --no-tools", "pyannote")
     elif wav is not None and not look.no_tools:
@@ -219,6 +235,7 @@ def audio_adapters(look, wav, words, dur):
         look.skip("sound-event labels (speech, music, applause, siren...)", "the AST audio-tagging model is not cached on this machine" if not look.no_tools else "disabled by --no-tools", "ast")
     elif wav is not None and not look.no_tools:
         try:
+            quiet_models()
             from transformers import pipeline
             clf = pipeline("audio-classification", model=str(dl_models.hf_snapshot("ast")), top_k=3)
             import wave as _w
@@ -227,13 +244,124 @@ def audio_adapters(look, wav, words, dur):
                 sr, n = w.getframerate(), w.getnframes()
                 raw = np.frombuffer(w.readframes(n), dtype=np.int16).astype("float32") / 32768
             picks = U.sample_plan(max(1, int(n / sr // 10)), head=1, tail=1, strata=4)
-            out = []
-            for i, _ in picks[:6]:
+            out, both, musicy = [], 0, 0
+            for i, _ in sorted(picks[:6]):
                 seg = raw[i * 10 * sr:(i + 1) * 10 * sr]
                 if len(seg) > sr:
-                    top = clf({"raw": seg, "sampling_rate": sr})
-                    out.append(f"[{core.mmss(i * 10)}] " + ", ".join(f"{x['label']} {x['score']:.2f}" for x in top))
-            look.line("Sound events (AST on 10-second samples): " + " ;; ".join(out), 60)
+                    allp = sorted(clf({"raw": seg, "sampling_rate": sr}), key=lambda x: -x["score"])
+                    top = [x for x in allp[:3] if x["score"] >= 0.08]
+                    sc = {x["label"].lower(): x["score"] for x in allp}
+                    sp = sc.get("speech", 0) + sc.get("narration, monologue", 0)
+                    mu = max((v for k, v in sc.items() if "music" in k), default=0)
+                    both += sp >= 0.15 and mu >= 0.15
+                    musicy += mu >= 0.15
+                    out.append(f"[{core.mmss(i * 10)}] " + ", ".join(f"{x['label']} {x['score']:.2f}".replace(" 0.", " .") for x in top))
+            verdict = (f"speech with music together in {both} of {len(out)} samples" if both else f"music in {musicy} of {len(out)} samples, none with speech" if musicy else "no music heard in the samples")
+            look.fact("ast_music_samples", musicy)
+            look.line(f"Sound events (AST, 10 s samples): {verdict}. " + " ; ".join(out), 82)
+            if both and not any(f["kind"] == "MUSIC-BED?" for f in look.flags):
+                look.flag("MUSIC-BED?", "AST samples", f"speech and music together in {both} of {len(out)} samples", "confirmed by the audio tagger")
             look.step("sound-event labels", "ast")
         except Exception as e:
             look.fail("sound-event labels", "ast", e)
+
+
+# ----------------------------------------------------------------------------- speech over a music bed (level and spectrum test)
+BED_SECONDS = 600
+
+
+def pcm_16k(look, seconds=BED_SECONDS):
+    """First `seconds` of the audio as 16 kHz mono 16-bit samples (bytes), through ffmpeg. None when it cannot be decoded."""
+    ff = look.tool("ffmpeg")
+    if not ff:
+        return None
+    r = look.run([ff, "-v", "error", "-i", str(look.path), "-vn", "-ac", "1", "-ar", "16000", "-t", str(seconds), "-f", "s16le", "-"], timeout=300)
+    return r.stdout if r is not None and r.returncode == 0 and len(r.stdout) > 32000 else None
+
+
+def bed_features(raw):
+    """Loudness of 100 ms frames and the spectrum of the quietest ones -> dict(floor, active, gap, flat, low) or None.
+
+    floor = median level of the quietest 20 % of frames (the pauses between words), active = median of the loudest 40 %,
+    flat = spectral flatness of the pauses (1 = noise, near 0 = tones), low = share of their energy below 500 Hz. With numpy
+    the spectrum is measured; without it only the levels are (flat and low are None).
+    """
+    import math
+    from array import array
+    a = array("h")
+    a.frombytes(raw[:len(raw) - len(raw) % 2])
+    n = 1600
+    m = len(a) // n
+    if m < 30:
+        return None
+    try:
+        import numpy as np
+    except ImportError:
+        np = None
+    if np is not None:
+        x = np.frombuffer(a, dtype=np.int16).astype("float32") / 32768
+        fr = x[:m * n].reshape(m, n)
+        db = 20 * np.log10(np.sqrt((fr ** 2).mean(1)) + 1e-6)
+        order = np.argsort(db)
+        lo = order[:max(3, m // 5)]
+        hi = order[-max(3, int(m * 0.4)):]
+        floor, act = float(np.median(db[lo])), float(np.median(db[hi]))
+        win = np.hanning(n)
+        freqs = np.fft.rfftfreq(n, 1 / 16000)[5:]
+        flat, low = [], []
+        for i in lo[:200]:
+            S = np.abs(np.fft.rfft(fr[i] * win)) ** 2 + 1e-12
+            S = S[5:]
+            flat.append(float(np.exp(np.log(S).mean()) / S.mean()))
+            low.append(float(S[freqs < 500].sum() / S.sum()))
+        return dict(floor=floor, active=act, gap=act - floor, flat=sum(flat) / len(flat), low=sum(low) / len(low), peak=float(np.percentile(db, 95)))
+    db = []
+    for k in range(m):
+        seg = a[k * n:(k + 1) * n:4]
+        db.append(20 * math.log10(math.sqrt(sum(v * v for v in seg) / len(seg)) / 32768 + 1e-6))
+    s = sorted(db)
+    floor, act = s[len(s) // 10], s[int(len(s) * 0.8)]
+    return dict(floor=floor, active=act, gap=act - floor, flat=None, low=None, peak=s[int(len(s) * 0.95)])
+
+
+def bed_verdict(f, speech):
+    """-> 'bed' | 'clean' | 'music' | 'unsure' from the features of bed_features(). Thresholds come from measured voice-only, voice-over-music and music-only files."""
+    if f is None:
+        return "unsure"
+    if not speech and f["gap"] < 14:
+        return "music"
+    tonal = f["flat"] is None or f["flat"] < 0.075
+    bassy = f["low"] is None or f["low"] > 0.6
+    if f["floor"] > -46 and tonal and bassy:
+        return "bed"
+    if f["floor"] <= -46 or (f["flat"] is not None and f["flat"] >= 0.09):
+        return "clean"
+    return "unsure"
+
+
+def bed_line(look, speech):
+    """One line (and one flag) saying whether the sound under the voice is silence or a steady bed such as music. A level and spectrum test, not a tagger."""
+    cached = core.cache_get(look, "bed")
+    if cached is not None:
+        f = cached.get("f")
+    else:
+        raw = pcm_16k(look)
+        f = bed_features(raw) if raw else None
+        core.cache_put(look, "bed", {"f": f})
+    if f is None:
+        return
+    v = bed_verdict(f, speech)
+    look.fact("sound_bed", v)
+    look.fact("pause_level_db", round(f["floor"], 1))
+    spec = "" if f["flat"] is None else f"; pauses are tonal (flatness {f['flat']:.2f}) and bass-heavy"
+    if v == "bed":
+        if look.headline and look.type in ("audio", "video"):
+            look.headline += ", speech over a music bed"
+        look.line(f"Under the voice: a steady bed, probably music. The pauses between words sit at {f['floor']:.0f} dB, only {f['gap']:.0f} dB below the speech{spec}.", 84)
+        look.flag("MUSIC-BED?", "whole file", f"speech over a continuous bed (pauses at {f['floor']:.0f} dB)", "level and spectrum test; an audio tagger (AST) would confirm music, not noise or hum")
+    elif v == "music":
+        look.line(f"Sound is continuous with little dynamic range ({f['gap']:.0f} dB between loud and quiet): music or a steady sound, no speech pauses.", 84)
+    elif v == "clean":
+        look.line(f"Under the voice: nothing steady. Pauses drop to {f['floor']:.0f} dB, so it is speech without a music bed.", 70 if speech else 50)
+    else:
+        look.line(f"Under the voice: pauses sit at {f['floor']:.0f} dB, {f['gap']:.0f} dB below the speech; a bed is possible but the spectrum does not settle it.", 60)

@@ -245,7 +245,7 @@ class Regressions(unittest.TestCase):
         c.close()
         r = run([str(d / "a.sqlite"), "--out", str(d / "out"), "--fresh"])
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertIn("people (5 rows)", r.stdout)
+        self.assertIn("people 5", r.stdout)   # rows per table, biggest first
 
 
 if __name__ == "__main__":

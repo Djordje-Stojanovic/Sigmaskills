@@ -88,7 +88,7 @@ class RealVideo(unittest.TestCase):
                         "-filter_complex", "[0:v][1:v][2:v]concat=n=3:v=1:a=0,format=yuv420p[v]", "-map", "[v]", "-map", "3:a", "-c:v", "libx264", "-c:a", "aac", "-shortest", str(cls.file)], check=True)
         cls.out = Path(tempfile.mkdtemp(prefix="sdl-mvo-"))
         cls.r = subprocess.run([sys.executable, str(LOOK), str(cls.file), "--out", str(cls.out), "--fresh"], capture_output=True, text=True, encoding="utf-8", timeout=600,
-                               env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
+                               env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", SIGMADEEPLOOK_HIDE="yunet,pyannote,ast"))   # models may be cached: pretend not
         cls.lj = json.loads((cls.out / "look.json").read_text(encoding="utf-8"))
 
     def test_two_cuts_found(self):

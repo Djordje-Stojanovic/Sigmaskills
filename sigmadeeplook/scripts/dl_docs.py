@@ -335,7 +335,8 @@ def ocr_pdf_pages(look, doc, pages):
         look.skip("OCR of scanned pages", "tesseract not found" if not look.no_tools else "disabled by --no-tools", "tesseract")
         return
     out = []
-    for n in pages[:20]:
+    cap = 1 if look.quick else 20   # the quick tier reads the first scanned page
+    for n in pages[:cap]:
         png = render_one(look, doc, n - 1, f"_ocr{n}.png")
         if png:
             r, txt, _ = look.run_text([tess, str(png), "stdout", "--psm", "3"])
@@ -343,7 +344,9 @@ def ocr_pdf_pages(look, doc, pages):
                 out.append(f"<!-- page {n} (OCR) -->\n{txt.strip()}")
             png.unlink(missing_ok=True)
     if out:
-        look.write_text("ocr.md", "\n".join(out), f"OCR text of scanned pages {pages[:20]} (tesseract)")
+        look.write_text("ocr.md", "\n".join(out), f"OCR text of scanned pages {pages[:cap]} (tesseract)")
+        if len(pages) > cap:
+            look.flag("PARTIAL", "OCR", f"{cap} of {len(pages)} scanned pages read", "run --tier standard for more pages, or --page A-B")
         look.fact("ocr_text", "\n".join(out)[:1500])
         look.step("OCR of scanned pages", "tesseract")
 
@@ -364,7 +367,7 @@ def render_pdf_pages(look, doc, folder):
     if not look.mod("PIL") and not look.mod("fitz"):
         return []
     out = []
-    n = min(doc.page_count, PAGE_CAP if not look.deep else 200)
+    n = min(doc.page_count, 9 if look.quick else PAGE_CAP if not look.deep else 200)
     for i in range(n):
         try:
             p = render_one(look, doc, i, f"{folder}/p{i + 1:03d}.png")
@@ -748,6 +751,9 @@ def soffice_convert(look, args, src, outdir, timeout=180):
 
 
 def recalc_xlsx(look, inv):
+    if look.quick:
+        look.skip("recalculated values of uncached formulas", "skipped at the quick tier (LibreOffice start-up takes seconds): run again with --tier standard", None, "")
+        return
     tmp = look.out / "_lo"
     r = soffice_convert(look, ["--convert-to", "csv:Text - txt - csv (StarCalc):44,34,76,1,,0,false,true,false,false,false,-1"], look.path, tmp)
     if r is None:
@@ -887,6 +893,9 @@ def office_legacy(look):
 
 
 def render_office(look):
+    if look.quick:
+        look.skip("rendered pages or slides (the picture of the document)", "skipped at the quick tier (LibreOffice start-up takes seconds): run again with --tier standard", None, "")
+        return
     so = look.tool("soffice")
     if not so:
         look.skip("rendered pages or slides (the picture of the document)", "LibreOffice not found" if not look.no_tools else "disabled by --no-tools", "soffice")
@@ -909,7 +918,7 @@ def render_office(look):
     doc = fitz.open(str(pdf))
     pngs = render_pdf_pages(look, doc, "pages")
     label = "slides" if st.startswith("ppt") else "pages"
-    page_sheets(look, pngs, f"sheet-{label}", f"{label} (native proxy: LibreOffice render, not Microsoft Office)")
+    page_sheets(look, pngs, f"sheet-{label}", f"{label} (LibreOffice render)")
     look.step("render to PDF and pictures", "LibreOffice")
     doc.close()
     shutil.rmtree(tmp, ignore_errors=True)

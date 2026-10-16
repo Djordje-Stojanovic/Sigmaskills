@@ -153,19 +153,19 @@ def look_evtx(look):
     look.line(f"Windows event log (EVTX {h['version']}): about {records} records in {h['chunks']} chunks" + (f", from {t0:%Y-%m-%d %H:%M} to {t1:%Y-%m-%d %H:%M} UTC" if t0 and t1 else "") + ".", 90)
     if h["dirty"]:
         look.flag("DIRTY-LOG", "header", "the log was not closed cleanly", "the last records may be missing or incomplete")
-    ev = look.mod("evtx")
+    ev = look.mod("Evtx")
     if not ev:
-        look.skip("events: ids, providers, levels and messages", "python package python-evtx not importable" if not look.no_tools else "disabled by --no-tools", "evtx")
+        look.skip("events: ids, providers, levels and messages", "python package python-evtx not importable" if not look.no_tools else "disabled by --no-tools", "Evtx")
         return
     try:
-        from evtx import PyEvtxParser
+        from Evtx.Evtx import Evtx as EvtxFile
         ids, levels, prov = Counter(), Counter(), Counter()
         errors = []
-        p = PyEvtxParser(str(look.path))
-        for i, rec in enumerate(p.records()):
+        log = EvtxFile(str(look.path))
+        for i, rec in enumerate(log.records()):
             if i >= 20000:
                 break
-            x = rec["data"]
+            x = rec.xml()
             m = re.search(r"<EventID[^>]*>(\d+)</EventID>", x)
             ids[m.group(1) if m else "?"] += 1
             lv = re.search(r"<Level>(\d+)</Level>", x)
@@ -179,7 +179,7 @@ def look_evtx(look):
             look.write_text("errors.xml", "\n".join(errors), "first error and critical events (XML)", value=6)
         look.step("event ids and levels", "python-evtx")
     except Exception as e:
-        look.fail("events", "evtx", e)
+        look.fail("events", "Evtx", e)
 
 
 # ================================================================= PSD

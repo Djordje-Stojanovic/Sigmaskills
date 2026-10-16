@@ -43,7 +43,6 @@ Every row below is a 'Not looked at' row when the tool is absent. Nothing needs 
 | extract_msg | python package | Outlook .msg bodies and attachments | pip install extract-msg |
 | lxml | python package | faster XML | pip install lxml |
 | cairosvg | python package | rendering svg | pip install cairosvg |
-| rapidocr | python package | OCR (older package name) | pip install rapidocr-onnxruntime |
 | rapidocr_onnxruntime | python package | OCR of video frames, images, scanned pages | pip install rapidocr-onnxruntime |
 | lief | python package | real Authenticode verification (chain and hash), imphash | pip install lief |
 | oletools | python package | VBA macro source, auto-run routines, suspicious calls | pip install oletools |
@@ -60,7 +59,7 @@ Every row below is a 'Not looked at' row when the tool is absent. Nothing needs 
 | rapidfuzz | python package | fast near-duplicate removal | pip install rapidfuzz |
 | cv2 | python package | faces (YuNet) and image maths | pip install opencv-python |
 | fastavro | python package | Avro record values | pip install fastavro |
-| evtx | python package | Windows event ids, providers and messages | pip install python-evtx |
+| Evtx | python package | Windows event ids, providers and messages | pip install python-evtx |
 | pyannote | python package | speaker turns (also needs the model) | accept the model terms on huggingface.co/pyannote/speaker-diarization-community-1 once, then cache it (~35 MB) |
 | transformers | python package | sound-event labels (also needs the AST model) | pip install transformers |
 | psd_tools | python package | Photoshop layers, hidden layers, text layers | pip install psd-tools |

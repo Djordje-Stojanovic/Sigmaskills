@@ -11,6 +11,7 @@ import os
 import re
 import struct
 import sys
+import threading
 import wave
 from array import array
 from concurrent.futures import ThreadPoolExecutor
@@ -65,9 +66,13 @@ def duration_of(j):
 def one_pass_checks(look, has_v, has_a, dur):
     """black, freeze, silence, loudness in one ffmpeg run. -> dict with lists and the loudness numbers."""
     ff = look.tool("ffmpeg")
-    cmd = [ff, "-hide_banner", "-nostats", "-i", str(look.path)]
-    if has_v:
-        cmd += ["-vf", "blackdetect=d=0.1:pix_th=0.10,freezedetect=n=-60dB:d=2"]
+    key = f"onepass-{int(has_v)}{int(has_a)}{'q' if look.quick else 's'}"
+    hit = core.cache_get(look, key)
+    if hit is not None:
+        return {k: [tuple(x) for x in v] if isinstance(v, list) else v for k, v in hit.items()}
+    cmd = [ff, "-hide_banner", "-nostats"] + (["-skip_frame", "nokey"] if look.quick and has_v else []) + ["-i", str(look.path)]
+    if has_v:   # the quick tier decodes keyframes only: black stretches are found, frozen pictures are not looked for
+        cmd += ["-vf", "blackdetect=d=0.1:pix_th=0.10" + ("" if look.quick else ",freezedetect=n=-60dB:d=2")]
     else:
         cmd += ["-vn"]
     if has_a:
@@ -90,10 +95,11 @@ def one_pass_checks(look, has_v, has_a, dur):
     for i, s in enumerate(ss):
         res["silence"].append((max(0.0, s), se[i] if i < len(se) else dur))
     tail = err[err.rfind("Summary:"):] if "Summary:" in err else ""
-    for key, rx in (("lufs", r"I:\s+(-?[\d.]+) LUFS"), ("lra", r"LRA:\s+(-?[\d.]+) LU"), ("peak", r"Peak:\s+(-?[\d.]+) dBFS")):
+    for k2, rx in (("lufs", r"I:\s+(-?[\d.]+) LUFS"), ("lra", r"LRA:\s+(-?[\d.]+) LU"), ("peak", r"Peak:\s+(-?[\d.]+) dBFS")):
         m = re.search(rx, tail)
         if m:
-            res["loud"][key] = float(m.group(1))
+            res["loud"][k2] = float(m.group(1))
+    core.cache_put(look, key, res)
     return res
 
 
@@ -122,7 +128,7 @@ def report_checks(look, res, dur):
             [f"frozen at {times('freeze')}"] * bool(res["freeze"]) +
             [f"silence at {times('silence')}"] * bool(res["silence"])))
     else:
-        look.line("Machine checks: no black, frozen or silent stretch found.")
+        look.line("Machine checks: no black, frozen or silent stretch found." if not look.quick else "Machine checks: no black (keyframes) or silent stretch found; frozen pictures are not checked at the quick tier.")
 
 
 # ================================================================= speech
@@ -135,28 +141,59 @@ def pick_model(look):
     return None
 
 
-def transcribe(look, wav, dur, name="speech"):
-    """faster-whisper with VAD, no conditioning on previous text (the two settings that stop looping hallucinations). -> (segments, language) or None."""
-    fw = look.mod("faster_whisper")
-    if not fw:
-        look.skip("words with times (speech-to-text)", "faster-whisper not importable" if not look.no_tools else "disabled by --no-tools", "faster_whisper")
+_WM_LOCK = threading.RLock()
+
+
+def prefetch_whisper(look):
+    """Import faster-whisper and load the model in the background while ffprobe and the one-pass checks run (the import alone takes seconds).
+    The thread records nothing: a missing model becomes a 'Not looked at' row only when speech is really needed."""
+    threading.Thread(target=lambda: whisper_model(look, record=False), daemon=True).start()
+
+
+def whisper_model(look, record=True):
+    """-> (model, name, version) loaded once per look, or None (the 'Not looked at' row is recorded here)."""
+    with _WM_LOCK:
+        if getattr(look, "_wm", None) is not None:
+            return look._wm or None
+        fw = look.mod("faster_whisper")
+        if not fw:
+            if record:
+                look.skip("words with times (speech-to-text)", "faster-whisper not importable" if not look.no_tools else "disabled by --no-tools", "faster_whisper")
+                look._wm = False
+            return None
+        name = pick_model(look)
+        if not name:
+            if record:
+                look.skip("words with times (speech-to-text)", "no Whisper model is cached and downloads need --allow-network", "faster_whisper",
+                          "run once with --allow-network, or: python -c \"from faster_whisper import WhisperModel; WhisperModel('base')\"")
+                look._wm = False
+            return None
+        if not look.allow_network:
+            os.environ["HF_HUB_OFFLINE"] = "1"
+        try:
+            look._wm = (fw.WhisperModel(name, device="cpu", compute_type="int8", local_files_only=not look.allow_network), name, getattr(fw, "__version__", ""))
+        except Exception as e:
+            if record:
+                look.fail("words with times (speech-to-text)", "faster_whisper", e)
+                look._wm = False
+            return None
+        return look._wm
+
+
+def run_whisper(look, wav, beam=5, words=True, offset=0.0):
+    """faster-whisper with VAD, no conditioning on previous text (the two settings that stop looping hallucinations).
+    -> (segments, language) with times shifted by `offset`, or None."""
+    wm = whisper_model(look)
+    if wm is None:
         return None
-    model = pick_model(look)
-    if not model:
-        look.skip("words with times (speech-to-text)", "no Whisper model is cached and downloads need --allow-network", "faster_whisper",
-                  "run once with --allow-network, or: python -c \"from faster_whisper import WhisperModel; WhisperModel('base')\"")
-        return None
-    if not look.allow_network:
-        os.environ["HF_HUB_OFFLINE"] = "1"
+    model, name, ver = wm
     try:
-        m = fw.WhisperModel(model, device="cpu", compute_type="int8", local_files_only=not look.allow_network)
-        segs, info = m.transcribe(str(wav), beam_size=5, vad_filter=True, condition_on_previous_text=False, word_timestamps=True)
+        segs, info = model.transcribe(str(wav), beam_size=beam, vad_filter=True, condition_on_previous_text=False, word_timestamps=words)
         out = []
         for s in segs:   # a generator: nothing runs until it is iterated
-            out.append({"start": round(s.start, 2), "end": round(s.end, 2), "text": s.text.strip(),
-                        "words": [{"w": w.word.strip(), "s": round(w.start, 2), "e": round(w.end, 2), "p": round(w.probability, 2)} for w in (s.words or [])]})
-        look.step("speech to text", f"faster-whisper {model}", version=getattr(fw, "__version__", ""))
-        look.fact("asr_model", model)
+            out.append({"start": round(s.start + offset, 2), "end": round(s.end + offset, 2), "text": s.text.strip(),
+                        "words": [{"w": w.word.strip(), "s": round(w.start + offset, 2), "e": round(w.end + offset, 2), "p": round(w.probability, 2)} for w in (s.words or [])] if words else []})
+        look.fact("asr_model", name)
         look.fact("language", info.language)
         return out, info.language
     except Exception as e:
@@ -164,21 +201,105 @@ def transcribe(look, wav, dur, name="speech"):
         return None
 
 
-def write_transcript(look, segs, lang, dur):
+def transcribe(look, wav, dur, name="speech"):
+    """The whole audio (or its first ASR_CAP_S seconds) through Whisper, kept for the next run on the same bytes. -> (segments, language) or None."""
+    wm = whisper_model(look)
+    if wm is None:
+        return None
+    key = f"asr-{wm[1]}-{int(look.deep)}"
+    hit = core.cache_get(look, key)
+    if hit:
+        look.step("speech to text (kept from an earlier run)", f"faster-whisper {wm[1]}", version=wm[2])
+        look.fact("asr_model", wm[1])
+        look.fact("language", hit["lang"])
+        return hit["segs"], hit["lang"]
+    got = run_whisper(look, wav)
+    if got is None:
+        return None
+    look.step("speech to text", f"faster-whisper {wm[1]}", version=wm[2])
+    core.cache_put(look, key, {"segs": got[0], "lang": got[1]})
+    return got
+
+
+SAMPLE_WINDOWS = ((0.08, 25.0), (0.50, 25.0), (0.88, 25.0))   # (position in the file, seconds) of the quick tier's speech samples
+
+
+def sample_windows(dur):
+    """Where the quick tier listens: the whole thing when it is short, else three 25-second windows. -> [(start, length)]"""
+    if dur <= 90:
+        return [(0.0, dur)]
+    return [(max(0.0, min(dur - w, c * dur - w / 2)), w) for c, w in SAMPLE_WINDOWS]
+
+
+def transcribe_sample(look, dur):
+    """Quick tier: Whisper on a few short windows. -> (segments, language, windows) or None. Times are absolute; there are no word times."""
+    if whisper_model(look) is None:
+        return None
+    wins = sample_windows(dur)
+    key = "asr-sample-" + "-".join(f"{int(a)}" for a, _ in wins)
+    hit = core.cache_get(look, key)
+    if hit:
+        return hit["segs"], hit["lang"], wins
+    segs, lang = [], ""
+    for a, w in wins:
+        wav = extract_wav(look, look.path, w, f"_sample{int(a)}.wav", start=a)
+        if not wav:
+            continue
+        got = run_whisper(look, wav, beam=1, words=False, offset=a)
+        wav.unlink(missing_ok=True)
+        if got:
+            segs += got[0]
+            lang = lang or got[1]
+    look.step("speech samples", f"faster-whisper {whisper_model(look)[1]}")
+    core.cache_put(look, key, {"segs": segs, "lang": lang})
+    return segs, lang, wins
+
+
+def gist_lines(segs, dur, sampled):  # sampled: None, or the [(start, length)] windows the segments came from
+    """2-3 short quotes that say what the speech is about: the opening, then the longest sentence of the middle and of the end."""
+    segs = [s for s in segs if len(s["text"].split()) >= 4]
+    if not segs:
+        return []
+
+    def q(s, n=150):
+        t = " ".join(s["text"].split())
+        return f"[{core.mmss(s['start'])}] {t if len(t) <= n else t[:n - 1] + '…'}"
+    if sampled:
+        groups = [[s for s in segs if a - 1 <= s["start"] < a + w] for a, w in sampled]
+        return [q(max(g, key=lambda s: min(len(s["text"]), 160))) for g in groups if g]
+    out = [q(segs[0])] if len(segs[0]["text"]) >= 60 or len(segs) < 2 else [q({"start": segs[0]["start"], "text": segs[0]["text"] + " " + segs[1]["text"]})]
+    rest = [s for s in segs if s["start"] > segs[0]["start"] + 20]
+    for grp in _thirds(rest, 2):
+        out.append(q(max(grp, key=lambda s: min(len(s["text"]), 160))))
+    return out
+
+
+def _thirds(segs, parts):
+    """Cut a list into `parts` consecutive groups (a group may be empty)."""
+    n = len(segs)
+    return [g for g in (segs[i * n // parts:(i + 1) * n // parts] for i in range(parts)) if g]
+
+
+def write_transcript(look, segs, lang, dur, sampled=None):
     words = [w for s in segs for w in s["words"]]
     if not segs:
         look.line("Speech: none found (the voice-activity filter removed everything: music, noise or silence).")
         look.fact("words", 0)
         return []
-    look.write_text("words.json", json.dumps(words), "every word with start and end seconds and confidence", "json")
+    nwords = len(words) or sum(len(s["text"].split()) for s in segs)
+    if words:
+        look.write_text("words.json", json.dumps(words), "every word with start and end seconds and confidence", "json", inline=False)
 
     def ts(t):
         return f"{int(t // 3600):02d}:{int(t % 3600 // 60):02d}:{int(t % 60):02d},{int(t % 1 * 1000):03d}"
     srt = "\n\n".join(f"{i}\n{ts(s['start'])} --> {ts(s['end'])}\n{s['text']}" for i, s in enumerate(segs, 1))
-    look.write_text("transcript.srt", srt, "transcript with times (SRT)")
+    look.write_text("transcript.srt", srt, "transcript with times (SRT)" if not sampled else "speech samples with times (SRT)", inline=False)
+    lines = [f"[{core.mmss(s['start'])}] {' '.join(s['text'].split())}" for s in segs]
+    look.write_text("transcript.md" if not sampled else "speech-sample.md", "\n".join(lines),
+                    "the speech, one line per segment with its start" if not sampled else "speech heard in the sampled windows, one line per segment", value=6)
     text = " ".join(s["text"] for s in segs)
     look.fact("transcript", text[:2000])
-    look.fact("words", len(words))
+    look.fact("words", nwords)
     low = [s for s in segs if s["words"] and sum(w["p"] for w in s["words"]) / len(s["words"]) < 0.5]
     for s in low[:5]:
         look.flag("LOW-CONFIDENCE", f"{core.mmss(s['start'])} ({s['start']:.1f}s)", s["text"][:60], "words with low confidence: check by ear")
@@ -186,16 +307,20 @@ def write_transcript(look, segs, lang, dur):
     reps = [s["text"] for s in segs]
     if len(reps) >= 4 and max(reps.count(t) for t in set(reps)) >= 4:
         look.flag("REPEATED-LINE", "transcript", "a line repeats 4+ times", "typical Whisper hallucination over silence or music")
-    look.line(f"Speech ({lang}): {len(words)} words in {len(segs)} segments.")
-    if segs:
-        look.excerpt("Transcript start", "\n".join(f"[{core.mmss(s['start'])}] {s['text']}" for s in segs[:8]), 8)
+    gist = gist_lines(segs, dur, sampled)
+    if sampled:
+        head = f"Speech ({lang}), heard in {len(sampled)} sample(s) of {int(sampled[0][1])} s at " + ", ".join(core.mmss(a) for a, _ in sampled) + f" ({nwords} words); the rest is not transcribed at the quick tier"
+    else:
+        span = max(1.0, segs[-1]["end"] - segs[0]["start"])
+        head = f"Speech ({lang}): {nwords} words, ~{nwords / span * 60:.0f} per minute"
+    look.line(head + (". Gist: " + " / ".join(gist) if gist else "."), 83)
     return words
 
 
-def extract_wav(look, src, seconds=None, name="audio.wav"):
+def extract_wav(look, src, seconds=None, name="audio.wav", start=None):
     ff = look.tool("ffmpeg")
     out = look.path_for(name)
-    cmd = [ff, "-y", "-v", "error", "-i", str(src), "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le"]
+    cmd = [ff, "-y", "-v", "error"] + (["-ss", f"{start:.2f}"] if start else []) + ["-i", str(src), "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le"]
     if seconds:
         cmd += ["-t", str(seconds)]
     r = look.run(cmd + [str(out)])
@@ -286,6 +411,8 @@ def words_at(words, t, span=1.3, cap=10):
 
 # ================================================================= video
 def look_video(look):
+    if not look.no_tools:
+        prefetch_whisper(look)
     ffp = ffprobe(look)
     if ffp is None:
         return video_bare(look)
@@ -331,7 +458,11 @@ def look_video(look):
         sub_text = extract_subtitles(look)
     if au:
         words = speech_for(look, dur)
-    dl_mediax.scenes(look, dur)
+        dl_mediax.bed_line(look, getattr(look, "speech_found", bool(words)))
+    if look.quick:
+        look.skip("scene cuts and shot lengths", "skipped at the quick tier: run again with --tier standard", None, "")
+    else:
+        dl_mediax.scenes(look, dur)
     dl_mediax.chapters_line(look, ffp)
     if look.mod("PIL"):
         try:
@@ -397,6 +528,12 @@ def extract_subtitles(look):
 
 
 def speech_for(look, dur):
+    if look.quick:
+        got = transcribe_sample(look, dur)
+        if got is not None:
+            write_transcript(look, got[0], got[1], dur, sampled=got[2])
+            look.speech_found = bool(got[0])
+        return []
     sec = None if look.deep else ASR_CAP_S
     wav = extract_wav(look, look.path, sec)
     if not wav:
@@ -412,6 +549,7 @@ def speech_for(look, dur):
         return []
     if dur > ASR_CAP_S and not look.deep:
         look.flag("PARTIAL", "speech", f"first {ASR_CAP_S // 60} minutes only", "use --deep for the whole file")
+    look.speech_found = bool(got[0])
     return write_transcript(look, got[0], got[1], dur)
 
 
@@ -457,9 +595,10 @@ def pick_times(look, lo, hi, n):
     span = hi - lo
     slots = [(i, lo + (i + 0.5) * span / n) for i in range(n)]
     cands = {}
+    ncand = 1 if look.quick else SLOT_CANDIDATES   # the quick tier takes the slot centre without hunting for the sharpest frame
     for i, c in slots:
         w = span / n
-        cands[i] = [min(max(lo, c + k * w * 0.18), max(lo, hi - 0.05)) for k in range(-(SLOT_CANDIDATES // 2), SLOT_CANDIDATES // 2 + 1)]
+        cands[i] = [min(max(lo, c + k * w * 0.18), max(lo, hi - 0.05)) for k in range(-(ncand // 2), ncand // 2 + 1)]
     flat = [(i, t) for i, ts in cands.items() for t in ts]
     with ThreadPoolExecutor(8) as ex:
         probes = list(ex.map(lambda it: gray_probe(look, it[1]), flat))
@@ -513,7 +652,13 @@ def make_video_sheets(look, v, dur, words, res, au):
 
 
 def audio_levels(look, dur, step=0.5):
-    """dB per `step` seconds, from 4 kHz mono samples (stdlib array; first 30 minutes)."""
+    """dB per `step` seconds, from 4 kHz mono samples (stdlib array; first 30 minutes). Computed once per look."""
+    if getattr(look, "_levels", None) is None:
+        look._levels = _audio_levels(look, dur, step) or False
+    return look._levels or None
+
+
+def _audio_levels(look, dur, step=0.5):
     ff = look.tool("ffmpeg")
     r = look.run([ff, "-v", "error", "-i", str(look.path), "-vn", "-ac", "1", "-ar", "4000", "-t", "1800", "-f", "s16le", "-"], timeout=300)
     if r is None or not r.stdout:
@@ -634,6 +779,8 @@ def ffmpeg_sheet(look, v, dur):
 
 # ================================================================= audio
 def look_audio(look, ffp=None):
+    if not look.no_tools and ffp is None:
+        prefetch_whisper(look)
     ffp = ffp if ffp is not None else ffprobe(look)
     if ffp is None:
         return audio_bare(look)
@@ -663,17 +810,27 @@ def look_audio(look, ffp=None):
     r = look.run([ff, "-y", "-v", "error", "-i", str(look.path), "-lavfi", "showspectrumpic=s=2000x800:legend=0", "-frames:v", "1", str(s)])
     if r is not None and r.returncode == 0 and s.exists():
         look.add(s, "image", "spectrogram (frequency up, time right)")
-    wav = extract_wav(look, look.path, None if look.deep else ASR_CAP_S)
     words = []
-    if wav:
-        got = transcribe(look, wav, dur)
-        if got:
-            words = write_transcript(look, got[0], got[1], dur)
-        if wav.stat().st_size < 50 << 20:
-            look.add(wav, "internal", "16 kHz mono audio")
-        else:
-            wav.unlink(missing_ok=True)
-    if not words:
+    found = False
+    if look.quick:
+        got = transcribe_sample(look, dur)
+        if got is not None:
+            write_transcript(look, got[0], got[1], dur, sampled=got[2])
+            found = bool(got[0])
+    else:
+        wav = extract_wav(look, look.path, None if look.deep else ASR_CAP_S)
+        if wav:
+            got = transcribe(look, wav, dur)
+            if got:
+                words = write_transcript(look, got[0], got[1], dur)
+                found = bool(got[0])
+            if wav.stat().st_size < 50 << 20:
+                look.add(wav, "internal", "16 kHz mono audio")
+            else:
+                wav.unlink(missing_ok=True)
+    look.speech_found = found
+    dl_mediax.bed_line(look, found)
+    if not found:
         music_facts(look, dur)
     else:
         look.skip("tempo and key (music)", "speech found; run again on a music file for beat tracking", None, "")
@@ -693,7 +850,7 @@ def music_facts(look, dur):
     try:
         import warnings
         warnings.filterwarnings("ignore")
-        y, sr = lb.load(str(look.path), sr=None, mono=True, duration=600)
+        y, sr = lb.load(str(look.path), sr=22050, mono=True, duration=60 if look.quick else 600)
         tempo, beats = lb.beat.beat_track(y=y, sr=sr, units="time")
         t = float(tempo[0] if hasattr(tempo, "__len__") else tempo)
         look.fact("tempo_bpm", round(t, 1))
@@ -960,7 +1117,7 @@ def ocr_image(look):
             look.line(f"OCR (tesseract): {len(text.split())} words; {len(low)} below 60 % confidence. Numbers and symbols can be misread: confirm any quoted figure.")
             look.step("OCR", "tesseract")
             return
-    rapid = look.mod("rapidocr")
+    rapid = look.mod("rapidocr_onnxruntime") or look.mod("rapidocr")
     if rapid and view.exists():
         try:
             eng = rapid.RapidOCR()

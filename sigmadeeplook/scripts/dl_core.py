@@ -66,11 +66,11 @@ MODULES = {  # import name -> pip name
     "fontTools": "fonttools", "trafilatura": "trafilatura", "duckdb": "duckdb", "pyarrow": "pyarrow",
     "faster_whisper": "faster-whisper", "librosa": "librosa", "scenedetect": "scenedetect[opencv]",
     "defusedxml": "defusedxml", "brotli": "brotli", "docx": "python-docx", "pptx": "python-pptx",
-    "pefile": "pefile", "extract_msg": "extract-msg", "lxml": "lxml", "cairosvg": "cairosvg", "rapidocr": "rapidocr-onnxruntime",
+    "pefile": "pefile", "extract_msg": "extract-msg", "lxml": "lxml", "cairosvg": "cairosvg",
     "rapidocr_onnxruntime": "rapidocr-onnxruntime", "lief": "lief", "oletools": "oletools", "python_calamine": "python-calamine",
     "dnfile": "dnfile", "pymupdf4llm": "pymupdf4llm", "trimesh": "trimesh", "pysubs2": "pysubs2", "icalendar": "icalendar recurring-ical-events",
     "recurring_ical_events": "recurring-ical-events", "magika": "magika", "msoffcrypto": "msoffcrypto-tool", "cryptography": "cryptography",
-    "rapidfuzz": "rapidfuzz", "cv2": "opencv-python", "fastavro": "fastavro", "evtx": "python-evtx", "pyannote": "pyannote.audio",
+    "rapidfuzz": "rapidfuzz", "cv2": "opencv-python", "fastavro": "fastavro", "Evtx": "python-evtx", "pyannote": "pyannote.audio",
     "transformers": "transformers", "psd_tools": "psd-tools", "onnx": "onnx", "h5py": "h5py",
 }
 MODELS = {  # step name -> (what it lost, how to get it); checked by dl_models.have_model()
@@ -1021,6 +1021,33 @@ def cache_root():
 
 def out_dir_for(sha, explicit=None):
     return Path(explicit) if explicit else cache_root() / sha[:12]
+
+
+def part_cache_file(look, key):
+    """Where an expensive piece of one analysis (speech-to-text, scene scores, one-pass checks) is kept for the next run on the same bytes."""
+    safe = re.sub(r"[^A-Za-z0-9_.-]", "_", key)[:80]
+    return cache_root() / "parts" / look.sha[:12] / f"{safe}.json"
+
+
+def cache_get(look, key):
+    """-> the stored value of `key` for this file's sha256, or None (--fresh and --no-tools never read the cache)."""
+    if getattr(look.opts, "fresh", False) or look.no_tools or not look.sha:
+        return None
+    try:
+        return json.loads(part_cache_file(look, key).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def cache_put(look, key, obj):
+    if look.no_tools or not look.sha:
+        return
+    try:
+        p = part_cache_file(look, key)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(obj), encoding="utf-8")
+    except (OSError, TypeError, ValueError):
+        pass
 
 
 def clean_own_dir(d):
