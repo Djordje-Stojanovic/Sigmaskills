@@ -120,6 +120,9 @@ def build_stream(look):
         seq += 1
     for it in look.items:
         if it is used:
+            rest = it[2].split(". ", 1)[1].strip() if ". " in it[2] else ""
+            if rest and "```" not in rest:   # the headline keeps only the first sentence: the rest (columns, row counts) stays a fact
+                raw.append((it[0], it[1], rest, it[4] if len(it) > 4 else "", 1000 + it[3]))
             continue
         raw.append((it[0], it[1], it[2], it[4] if len(it) > 4 else "", 1000 + it[3]))
     arts = [a for a in look.artifacts if a.get("kind") != "internal"]

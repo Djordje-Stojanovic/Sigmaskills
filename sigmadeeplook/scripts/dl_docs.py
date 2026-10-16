@@ -136,7 +136,7 @@ def look_pdf(look):
             except Exception:
                 continue
             for key, kind in PDF_KEYS:
-                if key.decode() in obj:
+                if re.search(re.escape(key.decode()) + r"(?![A-Za-z0-9+])", obj):   # /AA must not match a subset font name /AAAAAA+Font
                     flags.add(kind)
         try:
             fields = [w.field_name for p in doc for w in (p.widgets() or [])]

@@ -220,5 +220,33 @@ class Drill(unittest.TestCase):
         self.assertNotEqual(r.returncode, 0)
 
 
+class Regressions(unittest.TestCase):
+    """Found by the independent QA run (ticket 83 P0.14)."""
+
+    def test_pdf_subset_font_name_is_not_an_auto_action(self):
+        sys.path.insert(0, str(HERE))
+        import make_fixtures as mf
+        objs = {1: b"<< /Type /Catalog /Pages 2 0 R >>", 2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+                3: b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+                4: mf.stream(b"", b"BT /F1 12 Tf 20 100 Td (Hello) Tj ET"), 5: b"<< /Type /Font /Subtype /Type1 /BaseFont /AAAAAA+Helvetica >>"}
+        d = Path(tempfile.mkdtemp(prefix="sdl-aa-"))
+        (d / "subset.pdf").write_bytes(mf.build_pdf(objs))
+        r = run([str(d / "subset.pdf"), "--out", str(d / "out"), "--fresh"])
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("AUTO-ACTION", r.stdout)
+
+    def test_headline_keeps_the_rest_of_the_first_line(self):
+        import sqlite3
+        d = Path(tempfile.mkdtemp(prefix="sdl-hl-"))
+        c = sqlite3.connect(str(d / "a.sqlite"))
+        c.execute("create table people(id int, name text)")
+        c.executemany("insert into people values (?,?)", [(i, "x") for i in range(5)])
+        c.commit()
+        c.close()
+        r = run([str(d / "a.sqlite"), "--out", str(d / "out"), "--fresh"])
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("people (5 rows)", r.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

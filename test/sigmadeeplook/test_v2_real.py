@@ -28,7 +28,7 @@ TRAPS = {
     "orders-export-2026.csv": ["REPEATED-HEADER", "DUPLICATE-KEYS", "MIXED-TYPES", "OUTLIER", "REJECT-ROW"],
     "shell32.dll": ["TIMESTAMP-UNRELIABLE"],
     "curl.exe": [],
-    "long-document.pdf": ["AUTO-ACTION"],
+    "long-document.pdf": [],   # no action keys: "/AA" used to match subset font names like /AAAAAA+Font
     "mailbox-5200.mbox": ["AUTH-FAIL", "LINK-MISMATCH"],
 }
 MUST_SAY = {
