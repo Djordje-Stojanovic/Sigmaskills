@@ -25,12 +25,13 @@ import dl_util as U
 FIRST_TOKENS = 1000
 LADDER = (1000, 3000, 10000)   # cumulative tokens printed after step 1, 2, 3
 BEYOND = 5000                  # --more past the ladder
-READ_VISIBLE = 6               # concise default: the best 6 file rows of Read next; the rest appear with --detail
+READ_VISIBLE = 5               # concise default: the best 5 file rows of Read next; the rest appear with --detail
 RECAP_ITEMS = 3
-RECAP_ITEM_CHARS = 78
+RECAP_ITEM_CHARS = 64
+CONTENT_FIRST = 230            # step 1 holds at most this many tokens of raw file content: a file's facts are worth more than its first lines
 RECAP_RESERVE = 62             # tokens kept free in every window for the recap line (the footer has its own FOOTER_TOKENS)
 SECTION_ORDER = ("key", "watch", "map", "read", "nla", "content")
-CONTENT_CHUNK_TOKENS = 220    # text artifacts are cut into chunks of about this size, so a window ends cleanly
+CONTENT_CHUNK_TOKENS = 110    # text artifacts are cut into chunks of about this size, so a window ends cleanly
 CONTENT_MAX_TOKENS = 150_000  # a text artifact above this is searched or sliced, never put in the stream
 HEADINGS = {"key": "Key facts", "watch": "Watch out", "map": "Map", "read": "Read next", "nla": "Not looked at", "content": "Content"}
 TRAPS = {"MISMATCH", "INJECTION?", "HIDDEN-TEXT", "HIDDEN-SHEET", "HIDDEN-SLIDE", "HIDDEN-STATE", "MACRO", "JAVASCRIPT", "OPEN-ACTION",
@@ -39,7 +40,7 @@ TRAPS = {"MISMATCH", "INJECTION?", "HIDDEN-TEXT", "HIDDEN-SHEET", "HIDDEN-SLIDE"
          "LINK-MISMATCH", "GPS", "AUTO-RUN?", "ACTIVE-CONTENT", "REMOTE-TEMPLATE", "WAL-PRESENT", "PERSONAL-DATA", "HOOK-OR-MCP",
          "GARBLED-FONT", "SCANNED", "INTERNAL-ERROR", "EXTERNAL-LINK", "VERYHIDDEN-SHEET", "AUTO-EXEC-MACRO", "XLM-MACRO", "DELETED-TEXT-PRESENT",
          "EXPIRED", "MISSING-CYRILLIC", "RESTRICTED-EMBEDDING", "AI-GENERATED", "WORKFLOW-IN-IMAGE", "DOUBLE-EXTENSION", "ENTITY-DECLARATION",
-         "MISSING-LATIN", "NO-OUTLINE", "NO-FOREIGN-KEYS", "ORPHAN-ROWS", "NO-STATISTICS", "NULL-HEAVY", "INVERTED-CUE", "MOJIBAKE", "MUSIC-BED?", "QUICK-SAMPLE", "DUPLICATE-KEYS", "REPEATED-HEADER", "MIXED-TYPES", "OUTLIER", "SUSPECT", "CLIPPING", "TRUE-PEAK", "LOUD-PEAK"}
+         "MISSING-LATIN", "ERROR-BURST", "ROOT-CAUSE-EARLIER?", "NOTE-CONTRADICTS-SLIDE", "NO-OUTLINE", "NO-FOREIGN-KEYS", "ORPHAN-ROWS", "NO-STATISTICS", "NULL-HEAVY", "INVERTED-CUE", "MOJIBAKE", "MUSIC-BED?", "QUICK-SAMPLE", "DUPLICATE-KEYS", "REPEATED-HEADER", "MIXED-TYPES", "OUTLIER", "SUSPECT", "CLIPPING", "TRUE-PEAK", "LOUD-PEAK"}
 NOISE = {"NOT-EXECUTED": 5, "VIEW-FAILED": 5, "MORE-IN-FLAGGED": 5, "SAMPLED": 30, "PARTIAL": 70, "DOWNSCALED": 25, "LOW-CONFIDENCE": 35,
          "MINIFIED": 30, "BOM": 25, "NULL-TOKENS": 55, "ENCODING": 55, "SILENCE": 45}
 
@@ -73,11 +74,11 @@ def clusters(flags):
 def cluster_text(c):
     f, l = c["first"], c["last"]
     if c["n"] == 1:
-        t = f"**{c['kind']}** @ {_clip(f['where'], 40)}: {_clip(f['value'], 130)}"
+        t = f"**{c['kind']}** @ {_clip(f['where'], 36)}: {_clip(f['value'], 140)}"
     else:
         t = f"**{c['kind']}** x{c['n']}: {_clip(f['value'], 90)} @ {_clip(f['where'], 36)}; last @ {_clip(l['where'], 36)}"
     if c["hint"] and c["kind"] in TRAPS:   # a hint is spent on the findings that matter; the minor ones carry the fact alone
-        t += f" - {_clip(c['hint'], 90)}"
+        t += f" - {_clip(c['hint'], 64)}"
     return t
 
 
@@ -109,12 +110,12 @@ def _row_text(a, look):
     t = a.get("tokens_est", 0)
     if a["kind"] == "image":
         s, h = a.get("tokens_std"), a.get("tokens_high")
-        cost = f"{a.get('px', '?')} px, ~{tok(s)} tokens standard tier / ~{tok(h)} high-res tier" if s and h and s != h else f"{a.get('px', '?')} px, ~{tok(t)} tokens"
+        cost = f"~{tok(s)} tokens, {tok(h)} high-res" if s and h and s != h else f"~{tok(t)} tokens"
     elif t > core.BIG_ARTIFACT_TOKENS:
         cost = f"~{tok(t)} tokens: slice with {a.get('slice') or '--grep REGEX'}"
     else:
         cost = f"~{tok(t)} tokens"
-    return f"`{rel_name(look, a['path'])}`: {_clip(a['what'], 90)} ({cost})"
+    return f"`{rel_name(look, a['path'])}`: {_clip(a['what'], 72)} ({cost})"
 
 
 def _norm(s):
@@ -150,8 +151,8 @@ def read_rows(look, arts):
         g = groups[key]
         if key[0] == "dir" and len(g) >= 4:
             total = sum(a.get("tokens_est", 0) for a in g)
-            names = ", ".join(Path(a["path"]).name for a in g[:5]) + (f" +{len(g) - 5}" if len(g) > 5 else "")
-            rows.append((f"`{key[1]}/` ({len(g)} files: {names}; ~{tok(total)} tokens in all, each costs ~{tok(total // len(g))}): {_clip(g[0]['what'], 70)}", 0))
+            names = ", ".join(Path(a["path"]).name for a in g[:3]) + (f" +{len(g) - 3}" if len(g) > 3 else "")
+            rows.append((f"`{key[1]}/` ({len(g)} files: {names}; ~{tok(total // len(g))} tokens each): {_clip(g[0]['what'], 50)}", 0))
         elif key[0] == "num" and len(g) >= 3:
             names = sorted(rel_name(look, a["path"]) for a in g)
             per = max(a.get("tokens_est", 0) for a in g)
@@ -199,9 +200,8 @@ def build_stream(look):
         cost = f"~{tok(c['tokens'])} tokens" if c.get("tokens") else "prints its cost first"
         raw.append(("read", 47, f"`{c['cmd']}`: {_clip(c['answers'], 90)} ({cost})", "drill", seq + 5000))
         seq += 1
-    nla_pri = 55
     for r in lost_rows(look):
-        raw.append(("nla", nla_pri, r, "limits", seq + 9000))
+        raw.append(("nla", 55 if "Install:" in r or " failed" in r else 24, r, "limits", seq + 9000))   # a row with no way to fix it is not for step 1
         seq += 1
     cseq = 20000
     body_texts = []
@@ -229,7 +229,7 @@ def build_stream(look):
     return stream
 
 
-LINE_PIECE = 700   # characters; a longer line is split at spaces so nothing is cut
+LINE_PIECE = 340   # characters; a longer line is split at spaces so nothing is cut
 
 
 def split_line(line):
@@ -322,12 +322,13 @@ def cost(chunks, detail=False):
     return total
 
 
-def window(stream, start, max_tokens, detail=False):
+def window(stream, start, max_tokens, detail=False, content_cap=None):
     """Chunks from `start` while the running cost stays within max_tokens (at least one chunk). -> (chunks, next_index).
 
     Hidden chunks (see shown) inside the range cost nothing and are not returned, but the range still covers them, so the chunk numbers
-    of two windows stay contiguous."""
-    out, used, i = [], 0, start
+    of two windows stay contiguous. `content_cap`: the window ends once the raw file content in it would pass this many tokens
+    (step 1 only: the first lines of a file are padding next to its facts)."""
+    out, used, i, body = [], 0, start, 0
     while i < len(stream):
         c = stream[i]
         if not shown(c, detail):
@@ -336,6 +337,10 @@ def window(stream, start, max_tokens, detail=False):
         add = c["tok"] - (HEAD_COST if merges(out[-1] if out else None, c) else 0)
         if out and used + add > max_tokens:
             break
+        if content_cap is not None and c["sec"] == "content":
+            if body and body + add > content_cap:
+                break
+            body += add
         out.append(c)
         used += add
         i += 1
@@ -429,7 +434,7 @@ def footer(stream, a, b, printed, tier_note="", detail=False):
     rem = remaining_tokens(stream, b, detail)
     recap = recap_line(stream, b, detail)
     if b >= len(stream):
-        nxt = "next: nothing more in this look; drill down with --at / --page / --sheet / --sql / --grep / --speaker (see Read next)"
+        nxt = "next: nothing more; drill down with the Read next commands"
     else:
         want = next_ladder(printed_total=printed_cumulative(stream, b, detail))
         nchunks, _ = window(stream, b, max(1, want - OVERHEAD), detail)
@@ -450,8 +455,10 @@ def printed_cumulative(stream, b, detail=False):
 
 
 def next_ladder(printed_total):
+    """Tokens the next step should hold. Step 1 has its own budget (and may stop short of it, at the content cap), so once anything
+    was printed the next rung is 3k in all, never a top-up to 1k."""
     for t in LADDER:
-        if printed_total < t * 0.8:
+        if printed_total < t * 0.8 and (printed_total == 0 or t > LADDER[0]):
             return t - printed_total
     return BEYOND
 
@@ -464,7 +471,7 @@ def first_budget(budget=None):
 def render_first(look, stream=None, budget=None, detail=False):
     """-> (text, next_index): step 1, the first ~1,000 tokens (or --budget N), recap and footer included."""
     stream = stream if stream is not None else look.stream
-    chunks, nxt = window(stream, 0, first_budget(budget), detail)
+    chunks, nxt = window(stream, 0, first_budget(budget), detail, CONTENT_FIRST)
     return render_window(chunks, 0, detail) + footer(stream, 0, nxt, 0, detail=detail), nxt
 
 

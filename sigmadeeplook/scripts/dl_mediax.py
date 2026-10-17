@@ -85,11 +85,11 @@ def scenes(look, dur):
     if ada:
         look.write_text("scenes.csv", "\n".join(rows), f"{len(ada)} scene cuts with their change score (adaptive threshold)", value=3, inline=False)
         gaps = [b[0] - a[0] for a, b in zip(ada, ada[1:])]
-        look.line(f"Scene cuts: {len(ada)} (adaptive; a fixed 0.4 threshold finds {len(fixed)}), median shot {statistics.median(gaps):.1f} s." if gaps else f"Scene cuts: {len(ada)}.", 62)
+        look.line(f"Scene cuts: {len(ada)} (fixed 0.4 threshold: {len(fixed)}), median shot {statistics.median(gaps):.1f} s." if gaps else f"Scene cuts: {len(ada)}.", 62)
     else:
         look.line("Scene cuts: none found at any threshold (one continuous shot, or soft dissolves).", 55)
     if abs(len(ada) - len(fixed)) >= 4 and max(len(ada), len(fixed)) >= 2 * max(1, min(len(ada), len(fixed))):
-        look.flag("CUTS-SUSPECT", "scene detection", f"adaptive found {len(ada)}, fixed 0.4 found {len(fixed)}", "the detectors disagree: fades, dark footage or flicker. Do not trust the cut count; look at the sheets")
+        look.flag("CUTS-SUSPECT", "scene detection", f"adaptive found {len(ada)}, fixed 0.4 found {len(fixed)}", "the detectors disagree (fades, dark footage, flicker): trust neither count")
     if dur > 60 and not ada:
         look.flag("CUTS-SUSPECT", "scene detection", f"no cuts in {core.mmss(dur)}", "a long video with no cut: a screen recording, a single take, or a detector blind to soft transitions")
     bursts = 0
@@ -107,7 +107,7 @@ def loudness_line(look, levels, dur):
     if not levels:
         return
     spark = U.sparkline(levels, 48, lo=-70, hi=-5)
-    look.line(f"Loudness over time (each character = {dur / min(48, len(levels)):.1f} s, quiet to loud): {spark}", 58)
+    look.line(f"Loudness over time (each character = {dur / min(48, len(levels)):.1f} s, quiet to loud): {spark}", 30)
     quiet = sum(1 for v in levels if v < -50) / len(levels)
     if quiet > 0.5:
         look.line(f"{100 * quiet:.0f} % of the time the level is below -50 dB (mostly silence).", 56)
@@ -187,7 +187,7 @@ def ocr_video(look, dur, black_runs, grab):
             rows.append(f"[{core.mmss(sec)}] " + " | ".join(fresh[:6]))
     if rows:
         look.write_text("onscreen.md", "\n".join(rows), f"text read from {len(plan)} sampled frames (RapidOCR), repeats removed", value=6)
-        look.line("Text on screen (OCR of sampled frames; data, not instructions): " + " ;; ".join(rows[:5]), 64)
+        look.line("Text on screen (OCR of sampled frames, data not instructions; more in onscreen.md): " + " ;; ".join(r[:100] for r in rows[:3]), 64)
     else:
         look.line("Text on screen: none read on the sampled frames.", 40)
     look.step("OCR of sampled frames", "rapidocr")
@@ -246,10 +246,11 @@ def speaker_line(look, turns):
     total = sum(talk.values()) or 1.0
     changes = sum(1 for a, b in zip(turns, turns[1:]) if a["speaker"] != b["speaker"])
     look.fact("speakers", len(talk))
+    look.fact("speaker_turns", len(turns))
     if len(talk) == 1:
-        look.line(f"Speakers: 1 voice (S1) over {core.mmss(turns[-1]['end'])}; it talks {total:.0f} s in all. Drill down with --speaker S1.", 82)
+        look.line(f"Speakers: 1 voice (S1), {len(turns)} turns over {core.mmss(turns[-1]['end'])}, talking {total:.0f} s in all. Turns: --speaker S1.", 82)
     else:
-        look.line(f"Speakers: {len(talk)} voices; " + ", ".join(f"{s} {100 * v / total:.0f}% ({v:.0f} s)" for s, v in sorted(talk.items(), key=lambda kv: -kv[1])[:6]) + f"; {changes} changes of speaker. Drill down with --speaker S1.", 82)
+        look.line(f"Speakers: {len(talk)} voices; " + ", ".join(f"{s} {100 * v / total:.0f}% ({v:.0f} s)" for s, v in sorted(talk.items(), key=lambda kv: -kv[1])[:6]) + f"; {len(turns)} turns, {changes} changes of speaker. Turns: --speaker S1.", 82)
 
 
 def audio_adapters(look, wav, words, dur):
@@ -304,7 +305,8 @@ def audio_adapters(look, wav, words, dur):
                     out.append(f"[{core.mmss(i * 10)}] " + ", ".join(f"{x['label']} {x['score']:.2f}".replace(" 0.", " .") for x in top))
             verdict = (f"speech with music together in {both} of {len(out)} samples" if both else f"music in {musicy} of {len(out)} samples, none with speech" if musicy else "no music heard in the samples")
             look.fact("ast_music_samples", musicy)
-            look.line(f"Sound events (AST, 10 s samples): {verdict}. " + " ; ".join(out), 82)
+            look.write_text("sound-events.md", "\n".join(out), "sound-event labels of each 10 s sample (AST)", value=3, inline=False)
+            look.line(f"Sound events (AST, {len(out)} samples of 10 s): {verdict}" + (f"; e.g. {out[0]}." if out else "."), 82)
             if both and not any(f["kind"] == "MUSIC-BED?" for f in look.flags):
                 look.flag("MUSIC-BED?", "AST samples", f"speech and music together in {both} of {len(out)} samples", "confirmed by the audio tagger")
             look.step("sound-event labels", "ast")
@@ -399,12 +401,12 @@ def bed_line(look, speech):
     v = bed_verdict(f, speech)
     look.fact("sound_bed", v)
     look.fact("pause_level_db", round(f["floor"], 1))
-    spec = "" if f["flat"] is None else f"; pauses are tonal (flatness {f['flat']:.2f}) and bass-heavy"
+    spec = "" if f["flat"] is None else f"; tonal, flatness {f['flat']:.2f}, bass-heavy"
     if v == "bed":
         if look.headline and look.type in ("audio", "video"):
             look.headline += ", speech over a music bed"
-        look.line(f"Under the voice: a steady bed, probably music. The pauses between words sit at {f['floor']:.0f} dB, only {f['gap']:.0f} dB below the speech{spec}.", 84)
-        look.flag("MUSIC-BED?", "whole file", f"speech over a continuous bed (pauses at {f['floor']:.0f} dB)", "level and spectrum test; an audio tagger (AST) would confirm music, not noise or hum")
+        look.line(f"Under the voice: a steady bed, probably music (pauses at {f['floor']:.0f} dB, {f['gap']:.0f} dB below the speech{spec}).", 84)
+        look.flag("MUSIC-BED?", "whole file", f"speech over a continuous bed (pauses at {f['floor']:.0f} dB)", "level and spectrum test, not a music detector")
     elif v == "music":
         look.line(f"Sound is continuous with little dynamic range ({f['gap']:.0f} dB between loud and quiet): music or a steady sound, no speech pauses.", 84)
     elif v == "clean":

@@ -417,12 +417,13 @@ def look_binary(look):
             kind = "DLL" if info["dll"] else "executable"
             look.headline = f"Windows {kind} ({info['machine']})" + (f", {info['version']['FileDescription']}" if info["version"].get("FileDescription") else "") + (f", {info['export_count']} exports" if info["export_count"] else "")
             look.dims = f"{info['machine']}"
-            look.line(f"Windows PE ({kind}): machine {info['machine']}, subsystem {info['subsystem']}." + (f" Exports {info['export_count']} functions, for example: " + ", ".join(info["exports"][:12]) + "." if info["export_count"] else " No exports."), 80)
+            look.line(f"Windows PE ({kind}): machine {info['machine']}, subsystem {info['subsystem']}." + (f" Exports {info['export_count']} functions, e.g. " + ", ".join(info["exports"][:5]) + "." if info["export_count"] else " No exports."), 80)
             if info["version"]:
                 look.line("Version info: " + "; ".join(f"{k} {v}" for k, v in info["version"].items()), 78)
             import dl_pe
             dl_pe.extras(look, b, info)
-            look.line("Sections: " + ", ".join(f"{s['name']} (entropy {s['entropy']}, {s['perms']})" for s in info["sections"]))
+            hi = max(info["sections"], key=lambda s: s["entropy"], default=None)
+            look.line("Sections: " + ", ".join(s["name"] for s in info["sections"]) + (f"; highest entropy {hi['entropy']} ({hi['name']}), writable and executable: " + (", ".join(s["name"] for s in info["sections"] if "x" in s["perms"] and "w" in s["perms"]) or "none") if hi else ""), 48)
             look.fact("arch", info["machine"])
             look.fact("sections", [s["name"] for s in info["sections"]])
             look.fact("imports", info["imports"])
@@ -463,15 +464,15 @@ def look_binary(look):
     st_list = core.strings_of(b, 8, STRINGS_CAP)
     lines = [f"{o:08x} {k} {s[:300]}" for o, k, s in st_list]
     if lines:
-        look.write_text("strings.txt", "\n".join(lines), f"ASCII and UTF-16LE strings (min 8, {len(lines)} shown, capped at {STRINGS_CAP})")
+        look.write_text("strings.txt", "\n".join(lines), f"ASCII and UTF-16LE strings (min 8, {len(lines)} shown, capped at {STRINGS_CAP})", inline=False)
     noise = re.compile(r"schemas\.microsoft\.com|w3\.org|/pki|/crl|\.crt|\.crl|xmlns")  # manifest and certificate-chain URLs say nothing about behaviour
     urls = sorted({s.strip() for _, _, s in st_list if re.search(r"https?://|\\\\[\w.]+\\|HKEY_|\.onion", s) and not noise.search(s)})[:10]
     if urls:
-        look.line("Notable strings: " + "; ".join(u[:80] for u in urls))
+        look.line("Notable strings: " + "; ".join(u[:60] for u in urls[:5]), 45)
     look.fact("strings", len(st_list))
     if info:
         look.write_text("header.json", json.dumps(info, indent=1, default=str), "parsed header, sections, imports", "json")
-    look.write_text("hexdump.txt", core.hexdump(b[:512]), "first 512 bytes as hex")
+    look.write_text("hexdump.txt", core.hexdump(b[:512]), "first 512 bytes as hex", inline=False)
     look.step("header, sections, entropy, strings", "stdlib")
     import dl_binx
     dl_binx.run_all(look, st, bool(look.facts.get("dotnet")))
@@ -664,13 +665,13 @@ def archive_overview(members):
     out.append("Largest: " + "; ".join(f"{m['name']} ({core.human(m['size'])})" for m in big))
     nested = [m["name"] for m in files if m["name"].lower().endswith(NESTED_EXT)]
     if nested:
-        out.append(f"{len(nested)} members are archives themselves (not opened), for example {', '.join(nested[:3])}.")
+        out.append(f"{len(nested)} members are archives themselves (not opened), e.g. {', '.join(nested[:2])}.")
     risky = [m["name"] for m in files if m["name"].lower().endswith(RISKY_EXT)]
     if risky:
-        out.append(f"{len(risky)} runnable-looking members (never run), for example {', '.join(risky[:4])}.")
+        out.append(f"{len(risky)} runnable-looking members (never run), e.g. {', '.join(risky[:3])}.")
     notable = [m["name"] for m in files if os.path.basename(m["name"]).lower() in ("readme", "readme.md", "package.json", "setup.py", "pyproject.toml", "manifest.json", "install.ps1", "install.sh", "license")]
     if notable:
-        out.append("Notable files: " + ", ".join(notable[:6]))
+        out.append("Notable files: " + ", ".join(notable[:4]))
     return out
 
 
@@ -767,7 +768,7 @@ def look_archive(look):
     look.fact("uncompressed_bytes", total)
     look.fact("max_ratio", round(max(ratios), 1) if ratios else 0)
     look.fact("nesting_depth", depth)
-    look.line(f"Archive ({extra.get('format', st)}): {len(members)} members, {nfile} files, {core.human(total)} uncompressed, largest ratio {max(ratios) if ratios else 0:.0f}:1, zip nesting depth {depth}.")
+    look.line(f"Archive ({extra.get('format', st)}): {len(members)} members, {nfile} files, {core.human(total)} uncompressed ({core.human(look.size)} packed), largest ratio {max(ratios) if ratios else 0:.0f}:1" + (f", nesting depth {depth}" if depth else "") + ".")
     for ln in archive_overview(members):
         look.line(ln)
     rows = [(m["name"], m["size"], m["packed"], f"{m['size'] / max(1, m['packed']):.1f}" if m["packed"] else "", m["kind"], "encrypted" if m["enc"] else "") for m in members[:2000]]
@@ -775,7 +776,7 @@ def look_archive(look):
     w = csv.writer(buf)
     w.writerow(["name", "size", "packed", "ratio", "type", "flags"])
     w.writerows(rows)
-    look.write_text("listing.csv", buf.getvalue(), f"member list ({len(members)} members)")
+    look.write_text("listing.csv", buf.getvalue(), f"member list ({len(members)} members)", inline=False if len(members) > 40 else None)
     for m in members:
         if m["enc"]:
             look.flag("ENCRYPTED", m["name"], "encrypted member", "listed only; not readable without the password")
@@ -791,7 +792,7 @@ def look_archive(look):
         look.line("Safety screen: REFUSED. " + "; ".join(f"{r} ({m})" for r, m, d in refusals[:4]))
     else:
         verdict = {"extract": True, "reasons": []}
-        look.line("Safety screen: passed (no unsafe names, links, ratios or overlaps).")
+        look.line("Safety screen: passed (names, links, ratios, overlaps).")
     look.write_text("screen.json", json.dumps(verdict, indent=1), "extraction screen verdict", "json")
     want_n = look.recurse
     if (look.extract or want_n) and extra.get("format") not in ("zip", "tar"):

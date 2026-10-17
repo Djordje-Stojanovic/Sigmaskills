@@ -345,9 +345,7 @@ def data_csv(look):
     notes = profile_findings(look, header, prof, total_ok, repeats)
     schema = [p.summary(total_ok) for p in prof]
     look.write_text("schema.json", json.dumps(schema, indent=1, default=str), "per-column profile over every row: type mix, empty %, distinct, range, median, top values", "json")
-    notes = [n for n in notes if "empty" in n]   # every other finding is a flag and is listed once, under Watch out
-    if notes:
-        look.line("Empty columns: " + "; ".join(notes[:10]) + ".")
+    notes = [n for n in notes if "empty" in n]   # every other finding is a flag and is listed once, under Watch out; the empty % sits in each column row
     if prof:   # one legend, then one compact row per column (a profile beats sample rows; the legend replaces words repeated on every row)
         crow = [profile_line(p, total_ok) for p in prof[:16]]
         if len(prof) > 16:
@@ -561,8 +559,8 @@ def data_sqlite(look):
     look.line(f"SQLite: {ntab} tables, {objs.get('index', 0)} indexes, {objs.get('view', 0)} views, {objs.get('trigger', 0)} triggers, user_version {ver}, read-only.", 90)
     ranked = sorted(info.items(), key=lambda kv: -(kv[1]["rows"] or 0))
     top = ranked[:8]
-    look.line("Rows per table, biggest first: " + "; ".join(f"{t} {rows_fmt(i['rows'])}" for t, i in ranked[:24]) + (f"; +{ntab - 24} smaller" if ntab > 24 else "") + ".", 88)
-    look.line("Columns of the biggest: " + " | ".join(f"{t}: " + ", ".join(f"{c[0]} {c[1] or '?'}" + (" PK" if c[2] else "") for c in i["columns"][:9]) + (f" +{len(i['columns']) - 9}" if len(i["columns"]) > 9 else "") for t, i in top[:5]), 80)
+    look.line("Rows per table, biggest first: " + "; ".join(f"{t} {rows_fmt(i['rows'])}" for t, i in ranked[:14]) + (f"; +{ntab - 14} smaller" if ntab > 14 else "") + ".", 88)
+    look.line("Columns of the biggest: " + " | ".join(f"{t}: " + ", ".join(f"{c[0]} {c[1] or '?'}" + (" PK" if c[2] else "") for c in i["columns"][:6]) + (f" +{len(i['columns']) - 6}" if len(i["columns"]) > 6 else "") for t, i in top[:3]), 80)
     blobs = [f"{t}.{c[0]}" for t, i in info.items() for c in i["columns"] if (c[1] or "").upper() == "BLOB"]
     if blobs:
         look.line("BLOB columns (vectors, images, files): " + ", ".join(blobs[:8]) + ".", 70)
@@ -595,7 +593,7 @@ def data_sqlite(look):
                   + (". idx " + ", ".join(f"{n}({','.join(map(str, cs))})" for n, cs in has_idx[:4]) if has_idx else "")
                   + (". fk " + ", ".join(f"{a}->{b}.{c}" for a, b, c in i["fks"]) if i["fks"] else "")
                   + (f". e.g. {' | '.join(', '.join(r[:6]) for r in i['sample'][:2])}" if i["sample"] else ""))
-    look.write_text("tables.md", "\n".join(md), "every table: rows, columns, indexes, foreign keys, 2 example rows", value=5, slice_cmd="--table NAME")
+    look.write_text("tables.md", "\n".join(md), "every table: rows, columns, indexes, foreign keys, 2 example rows", value=5, slice_cmd="--table NAME", inline=False if ntab > 6 else None)
     look.write_text("schema.json", json.dumps(info, indent=1, default=str), "tables, columns, row counts, example rows (json)", "json", inline=False)
     look.cmd("--table NAME", "profile of one table: nulls, distinct, min, max per column, indexes, foreign keys, 5 rows")
 

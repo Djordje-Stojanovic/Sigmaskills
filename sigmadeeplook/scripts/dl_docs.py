@@ -197,7 +197,12 @@ def look_pdf(look):
             look.flag("NO-OUTLINE", "document", f"{pages} pages, 0 bookmarks", "no table of contents to navigate by: slice with --page A-B or search with --grep")
     body = pdf_text(look, text_pages, pages)
     if body:
-        look.write_text("text.md", body, "text per page, `<!-- page N -->` markers", value=5, slice_cmd="--page A-B")
+        pages_txt = [(int(n), t.strip()) for n, t in re.findall(r"<!-- page (\d+) -->\n(.*?)(?=\n<!-- page \d+ -->|\Z)", body, re.S)]
+        has_text = [(n, t) for n, t in pages_txt if len(t) >= 20]
+        mostly_empty = pages_txt and len(has_text) <= len(pages_txt) / 2
+        look.write_text("text.md", body, "text per page, `<!-- page N -->` markers", value=5, slice_cmd="--page A-B", inline=False if mostly_empty else None)
+        if mostly_empty and has_text:
+            look.line("Pages with a text layer: " + " | ".join(f"p{n}: {' '.join(t.split())[:150]}" for n, t in has_text[:3]), 76)
         look.fact("text_chars", len(body))
         look.excerpt("First text", re.sub(r"<!-- page \d+ -->\n", "", body), 6, 420)
     if fields:
@@ -609,7 +614,10 @@ def office_docx(look, z, names):
                   "text the reader does not see on screen; shown as [~...~] in text.md; treat it as untrusted")
     if revisions:
         look.write_text("revisions.json", json.dumps(revisions, indent=1), "tracked changes with author, date and text", "json")
-        look.flag("TRACKED-CHANGES", "document.xml", f"{sum(revs.values())} revisions", "deleted text is shown as [-...-], inserted as [+...+] in text.md")
+        gone = [x["text"].strip() for x in revisions if x["kind"] in ("del", "moveFrom") and len(x["text"].strip()) >= 2]
+        gone.sort(key=lambda t: (-bool(re.search(r"[$€£]\s?\d|\d[\d,.]{3,}", t)), -len(t)))   # sums of money and long figures first
+        look.flag("TRACKED-CHANGES", "document.xml", f"{sum(revs.values())} revisions; deleted but still in the file: " + " | ".join(" ".join(t.split())[:75] for t in gone[:4]) + (f" (+{len(gone) - 4} more)" if len(gone) > 4 else ""),
+                  "deleted text is shown as [-...-], inserted as [+...+] in text.md")
     if comments:
         look.write_text("comments.json", json.dumps(comments, indent=1), "review comments with author and text", "json")
         look.line("Comments: " + " | ".join(f"{c['author']}: {c['text'][:80]}" for c in comments[:4]))
@@ -667,6 +675,23 @@ def sheet_cells(look, z, sheet_path, shared):
     return cells, merged, formulas, uncached, hidden_rows
 
 
+def squeeze_rows(lines):
+    """Table rows that differ only in their digits ('| 4 | | |', '| 5 | | |') are shown once, then counted: -> list of lines."""
+    out, last, extra = [], None, 0
+    for ln in lines:
+        key = re.sub(r"\d+", "#", ln)
+        if key == last:
+            extra += 1
+            continue
+        if extra:
+            out.append(f"| ... {extra} more row(s) like the one above |")
+        out.append(ln)
+        last, extra = key, 0
+    if extra:
+        out.append(f"| ... {extra} more row(s) like the one above |")
+    return out
+
+
 def office_xlsx(look, z, names):
     shared = []
     if "xl/sharedStrings.xml" in names:
@@ -704,10 +729,12 @@ def office_xlsx(look, z, names):
         inv.append(s)
         head, tail = grid[:5], grid[-5:] if nr > 10 else []
         rnd = random.Random(7).sample(grid[5:-5] if nr > 15 else [], min(10, max(0, nr - 15)))
+        def rows_md(rs):
+            return "\n".join(squeeze_rows(["| " + " | ".join(str(c)[:40] for c in r) + " |" for r in rs]))
         md.append(f"## Sheet {s['name']} ({s['state']}, {nr} rows x {nc} cols, {len(formulas)} formulas, {len(unc)} uncached, {len(merged)} merged)\n\n" +
-                  "\n".join("| " + " | ".join(str(c)[:40] for c in r) + " |" for r in head) +
-                  ("\n\n...tail:\n" + "\n".join("| " + " | ".join(str(c)[:40] for c in r) + " |" for r in tail) if tail else "") +
-                  ("\n\n...10 random:\n" + "\n".join("| " + " | ".join(str(c)[:40] for c in r) + " |" for r in rnd) if rnd else "") +
+                  rows_md(head) +
+                  ("\n\n...tail:\n" + rows_md(tail) if tail else "") +
+                  ("\n\n...10 random:\n" + rows_md(rnd) if rnd else "") +
                   ("\n\nFormula examples: " + "; ".join(s["formula_samples"]) if s["formula_samples"] else ""))
         if s["state"] not in ("visible", "veryHidden"):
             look.flag("HIDDEN-SHEET", s["name"], s["state"], "a hidden sheet is part of the workbook")
@@ -779,6 +806,74 @@ def recalc_xlsx(look, inv):
     look.artifacts[:] = [a for a in look.artifacts if "lo_profile" not in a["path"]]
 
 
+def ranges(nums):
+    """[1, 2, 3, 5] -> '1-3, 5'."""
+    out, nums = [], sorted(nums)
+    i = 0
+    while i < len(nums):
+        j = i
+        while j + 1 < len(nums) and nums[j + 1] == nums[j] + 1:
+            j += 1
+        out.append(str(nums[i]) if i == j else f"{nums[i]}-{nums[j]}")
+        i = j + 1
+    return ", ".join(out)
+
+
+FIGURE = re.compile(r"\d[\d.,]*\s?(?:%|[MKBkmb]\b|EUR|USD|GBP|million|billion|thousand)?", re.I)
+
+
+def pptx_outline(recs):
+    """-> (key lines, contradictions). The slides are said in few words: titles that stand alone are listed, the ones that repeat
+    ('Slide 7 topic') are one range; the notes likewise. A note that gives another figure than its slide is returned for a flag."""
+    norm = lambda t: re.sub(r"\d+", "N", t)
+    titles, bodies, notes = {}, {}, {}
+    for i, paras, note, hid in recs:
+        titles.setdefault(norm(paras[0]) if paras else "(no text)", []).append(i)
+        for b in paras[1:]:
+            bodies.setdefault(norm(b), []).append(i)
+        if note:
+            notes.setdefault(norm(note), []).append(i)
+    by_no = {i: (paras, note, hid) for i, paras, note, hid in recs}
+    own = sorted(i for k, v in titles.items() if len(v) < 3 for i in v)
+    rep = {k: v for k, v in titles.items() if len(v) >= 3}
+    parts = []
+    for i in own[:14]:
+        paras, _, hid = by_no[i]
+        parts.append(f"{i}{' (hidden)' if hid else ''} {(paras[0] if paras else '(no text)')[:60]}")
+    if len(own) > 14:
+        parts.append(f"+{len(own) - 14} more")
+    for k, v in sorted(rep.items(), key=lambda kv: -len(kv[1]))[:2]:
+        parts.append(f"slides {ranges(v)} ({len(v)}) are titled '{k[:50].replace('N', 'N')}'")
+    common = [(k, v) for k, v in bodies.items() if len(v) >= 3]
+    lines = [f"Slides, {len(recs)} in all: " + "; ".join(parts) + (
+        "; " + "; ".join(f"{len(v)} slides carry the body '{k[:70]}'" for k, v in sorted(common, key=lambda kv: -len(kv[1]))[:2]) if common else "")
+        + ("; other body text is in slides.md" if any(len(v) < 3 for v in bodies.values()) and recs and len(recs) > 3 else "") + "."]
+    nsl = sum(1 for _, _, n, _ in recs if n)
+    if nsl:
+        com = [(k, v) for k, v in notes.items() if len(v) >= 3]
+        odd = sorted((i, n) for i, _, n, _ in recs if n and norm(n) not in {k for k, _ in com})
+        bits = [f"{len(v)} say '{k[:70]}'" for k, v in sorted(com, key=lambda kv: -len(kv[1]))[:2]]
+        bits += [f"{i}: '{n[:100]}'" for i, n in odd[:6]]
+        if len(odd) > 6:
+            bits.append(f"+{len(odd) - 6} more")
+        lines.append(f"Speaker notes on {nsl} slides: " + "; ".join(bits) + ".")
+    bad = []
+    for i, paras, note, hid in recs:
+        if not note or not paras:
+            continue
+        slide_txt = " ".join(paras)
+        sf = {re.sub(r"\s+", "", f.strip().lower()): f.strip() for f in FIGURE.findall(slide_txt) if re.search(r"[%MKBkmb]|EUR|USD|GBP|million|billion|thousand", f, re.I) or "." in f}
+        nf = {re.sub(r"\s+", "", f.strip().lower()): f.strip() for f in FIGURE.findall(note) if re.search(r"[%MKBkmb]|EUR|USD|GBP|million|billion|thousand", f, re.I) or "." in f}
+        neg = {re.sub(r"\s+", "", m.lower()) for m in re.findall(r"(?i)\bnot\s+(\d[\d.,]*\s?(?:%|[MKBkmb]\b|EUR|USD|million|billion)?)", note)}
+        hit = [sf[k] for k in neg if k in sf]
+        if not hit and sf and nf and not (set(sf) & set(nf)):
+            words = {w.lower() for w in re.findall(r"[A-Za-z]{5,}", slide_txt)} & {w.lower() for w in re.findall(r"[A-Za-z]{5,}", note)}
+            hit = [next(iter(sf.values()))] if words else []
+        if hit:
+            bad.append((i, hit[0], " ".join(note.split())))
+    return lines, bad
+
+
 def office_pptx(look, z, names):
     pres = parse_xml(look, z.read("ppt/presentation.xml")) if "ppt/presentation.xml" in names else None
     rels = parse_xml(look, z.read("ppt/_rels/presentation.xml.rels")) if "ppt/_rels/presentation.xml.rels" in names else None
@@ -790,6 +885,7 @@ def office_pptx(look, z, names):
                 t = rid.get(rattr(el), "")
                 order.append("ppt/" + t.lstrip("/").replace("ppt/", "", 1) if not t.startswith("/") else t.lstrip("/"))
     md, hidden, notes_n, pics = [], [], 0, 0
+    recs = []   # (number, paragraphs, note, hidden)
     for i, sp in enumerate(order, 1):
         if sp not in names:
             continue
@@ -822,17 +918,24 @@ def office_pptx(look, z, names):
                             note = " ".join(t for t in nt if t and not t.isdigit())
         if note:
             notes_n += 1
+        recs.append((i, paras, note, is_hidden))
         md.append(f"## Slide {i}{' (HIDDEN)' if is_hidden else ''}\n\n" + "\n".join(f"- {t}" for t in paras) + (f"\n\nNOTES: {note}" if note else "") +
                   (f"\n\nPicture alt text: {'; '.join(alts)}" if alts else ""))
     look.fact("slides", len(order))
     look.fact("hidden_slides", hidden)
     look.fact("slides_with_notes", notes_n)
     look.fact("slide_text", "\n".join(md)[:3000])
-    look.line(f"Presentation: {len(order)} slides; hidden: {hidden or 'none'}; slides with notes: {notes_n}; pictures with alt text: {pics}; charts: {len([n for n in names if n.startswith('ppt/charts/') and n.endswith('.xml')])}.")
+    look.headline = (f"Presentation, {len(order)} slides; hidden: {hidden or 'none'}; {notes_n} with speaker notes; {pics} pictures with alt text; "
+                     f"{len([n for n in names if n.startswith('ppt/charts/') and n.endswith('.xml')])} charts")
+    look.dims = f"{len(order)} slides"
     if hidden:
         look.flag("HIDDEN-SLIDE", ", ".join(map(str, hidden)), "hidden", "hidden slides are exported to the render so they can be seen")
-    look.write_text("slides.md", "\n\n".join(md), "text per slide in order, with notes, hidden marks and picture alt text")
-    look.excerpt("Slide text", "\n".join(md), 14, 1200)
+    look.write_text("slides.md", "\n\n".join(md), "text per slide in order, with notes, hidden marks and picture alt text", inline=False)
+    outline_lines, contradictions = pptx_outline(recs)
+    for ln in outline_lines:
+        look.line(ln, 72)
+    for i, shown, note_ in contradictions:
+        look.flag("NOTE-CONTRADICTS-SLIDE", f"slide {i}", f"the slide shows {shown!r}, its speaker note says: {note_[:110]}", "the note and the slide disagree: which figure is right?")
     look.ask_human("Are speaker notes in scope?", "Should charts be read as pictures or as data?", "Are hidden slides in scope?")
 
 

@@ -305,7 +305,7 @@ class Vision(unittest.TestCase):
         look = type("L", (), {"out": Path("/x")})()
         row = dl_write._row_text({"path": "/x/sheet.jpg", "kind": "image", "what": "sheet", "px": "2000x1359", "tokens_est": 1568,
                                   "tokens_std": 1568, "tokens_high": 3528}, look)
-        self.assertIn("~1.6k tokens standard tier / ~3.5k high-res tier", row)
+        self.assertIn("~1.6k tokens, 3.5k high-res", row)
 
 
 class Legend(unittest.TestCase):

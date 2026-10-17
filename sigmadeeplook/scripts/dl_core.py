@@ -223,11 +223,12 @@ def sha256_dir(path):
 
 
 def human(n):
+    """Decimal units (1 MB = 1,000,000 B), the figure `ls`, a download page and the people who ask use. (Binary figures would be MiB.)"""
     n = float(n)
     for u in ("B", "KB", "MB", "GB", "TB"):
-        if n < 1024 or u == "TB":
+        if n < 1000 or u == "TB":
             return f"{n:.0f} {u}" if u == "B" else f"{n:.1f} {u}"
-        n /= 1024
+        n /= 1000
 
 
 def mmss(t):

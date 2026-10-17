@@ -73,6 +73,14 @@ def fmt_ts(t):
     return datetime.fromtimestamp(t, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
+def clock(t, day0=None):
+    """Time of day with milliseconds when the line has them (05:30:45.785); the date is added when it differs from the first day of the log."""
+    d = datetime.fromtimestamp(t, tz=timezone.utc)
+    ms = f".{int(t % 1 * 1000):03d}" if abs(t % 1) > 0.0005 else ""
+    day = "" if day0 is None or d.date() == day0 else d.strftime("%Y-%m-%d ")
+    return day + d.strftime("%H:%M:%S") + ms
+
+
 def span_text(sec):
     sec = int(sec)
     if sec >= 86400:
@@ -132,6 +140,11 @@ def scan_log(path, max_lines, max_seconds):
                 levels[lvl] += 1
             if c is not None and lvl and "level" not in c:
                 c["level"] = lvl
+            if c is not None:
+                if "t0" not in c or ts < c["t0"]:
+                    c["t0"] = ts
+                if ts > c.get("t1", ts - 1):
+                    c["t1"] = ts
             if len(recs) < 400000:
                 recs.append((ln, ts, lvl, c))
             cur = c
@@ -175,7 +188,7 @@ def look_log(look):
     mins = r["minutes"]
     look.headline = f"log, {U.compact(r['lines'])} lines over {span_text(span)}, {fmt_ts(first)} to {fmt_ts(last)}"
     lv = ", ".join(f"{k} {U.compact(v)}" for k, v in sorted(r["levels"].items(), key=lambda kv: LEVELS.index(kv[0]) if kv[0] in LEVELS else 9))
-    nb = min(40, max(1, len(range(min(mins), max(mins) + 1))))
+    nb = min(30, max(1, len(range(min(mins), max(mins) + 1))))
     series = [mins.get(m, 0) for m in range(min(mins), max(mins) + 1)]
     spark = U.sparkline(series, nb)
     look.line(f"{U.compact(r['lines'])} lines ({U.compact(timed)} timed records), {fmt_ts(first)} to {fmt_ts(last)} ({span_text(span)}); levels: {lv or 'none found'}", 95)
@@ -184,15 +197,35 @@ def look_log(look):
     # templates
     clusters = sorted(r["drain"].clusters, key=lambda c: -c["count"])
     look.fact("templates", len(clusters))
-    top = clusters[:8]
-    rows = [f"{U.compact(c['count'])}x [{c.get('level', '-')}] {Drain_t(c)[:140]}" for c in top]
-    look.line(f"{len(clusters)} message templates; the {len(top)} most frequent:\n" + "\n".join("  " + x for x in rows), 88, "templates")
+    day0 = datetime.fromtimestamp(first, tz=timezone.utc).date()
+    quiet = [c for c in clusters if c.get("level") not in BAD and c.get("level") != "WARN"]
+    top = quiet[:5]
+    rows = [f"{U.compact(c['count'])}x [{c.get('level', '-')}] {Drain_t(c)[:110]}" for c in top]
+    look.line(f"{len(clusters)} message templates; most frequent:\n" + "\n".join("  " + x for x in rows), 80, "templates")
+    loud = [c for c in clusters if c.get("level") in BAD or c.get("level") == "WARN"]
+    if loud:
+        def trow(c):
+            tpl = Drain_t(c)[:110]
+            ex = "" if "<*>" not in tpl else f"; e.g. {c['example'][:70]}"
+            when = clock(c["t0"], day0) + (f" to {clock(c['t1'], day0)}" if c["t1"] > c["t0"] else "") if "t0" in c else ""
+            return f"{U.compact(c['count'])}x [{c.get('level')}] {tpl} | {when} | lines {c['first']}-{c['last']}{ex}"
+        look.line("Warning and error templates, with count, first and last time:\n" + "\n".join("  " + trow(c) for c in loud[:6]), 93, "errors")
     # first error and what came before
     bad = [(ln, ts, c) for ln, ts, lvl, c in r["recs"] if lvl in BAD]
     if bad:
         ln, ts, c = bad[0]
-        look.line(f"First {c.get('level', 'ERROR')}: line {ln} at {fmt_ts(ts)}: {c['example'][:200]}", 94)
-        near = [(l2, t2, lv2, c2) for l2, t2, lv2, c2 in r["recs"] if ts - 120 <= t2 < ts and l2 < ln]
+        look.fact("first_error", f"line {ln} at {fmt_ts(ts)}: {c['example'][:120].strip()}")
+        look.fact("errors", len(bad))
+        burst = error_burst(r["recs"], bad, span)
+        anchor_ln, anchor_ts, what = (burst["line"], burst["start"], "error burst") if burst else (ln, ts, "first error")
+        if burst:
+            c0 = burst["cluster"]
+            look.flag("ERROR-BURST", clock(burst["start"], day0),
+                      f"{burst['n']}x [{c0.get('level')}] {Drain_t(c0)[:90]}, {clock(burst['start'], day0)} to {clock(burst['end'], day0)} ({burst['end'] - burst['start']:.0f} s), "
+                      f"lines {burst['line']}-{burst['last_line']}; its usual rate is {burst['usual']:.1f} per minute",
+                      "an incident: the start time is the anchor, read what came just before it")
+            look.fact("error_burst_start", fmt_ts(burst["start"]))
+        near = [(l2, t2, lv2, c2) for l2, t2, lv2, c2 in r["recs"] if anchor_ts - 120 <= t2 < anchor_ts and l2 < anchor_ln]
         odd = [(l2, t2, lv2, c2) for l2, t2, lv2, c2 in near if c2 is not None and (c2["count"] <= 2 or lv2 in ("WARN",))]
         seen = set()
         pre = []
@@ -201,10 +234,10 @@ def look_log(look):
                 seen.add(id(c2))
                 pre.append((l2, t2, lv2, c2))
         if pre:
-            look.flag("ROOT-CAUSE-EARLIER?", f"before line {ln}", f"{len(pre)} rare or WARN line(s) in the 120 s before the first error, first at line {pre[0][0]}: {pre[0][3]['example'][:120]}",
+            l2, t2, lv2, c2 = pre[-1]   # the one closest to the anchor
+            look.flag("ROOT-CAUSE-EARLIER?", f"{clock(t2, day0)}, line {l2}",
+                      f"[{lv2 or '-'}] {c2['example'][:110]} - {anchor_ts - t2:.0f} s before the {what} at {clock(anchor_ts, day0)}" + (f" (+{len(pre) - 1} more rare or WARN line(s))" if len(pre) > 1 else ""),
                       "the loudest error is usually a symptom; read what came first")
-        total_bad = sum(1 for _ in bad)
-        look.fact("errors", total_bad)
     # bursts and gaps
     nz = [x for x in series if x]
     med = U.median(nz) if nz else 0
@@ -234,20 +267,22 @@ def look_log(look):
         look.flag("NO-TIMEZONE", "timestamps", "no zone on the timestamps", "compare with other systems only after finding the zone")
     # rare templates
     rare = [c for c in r["drain"].clusters if c["count"] <= 2][:5]
-    if rare:
-        look.line("Rare lines (templates seen once or twice):\n" + "\n".join(f"  line {c['first']}: {c['example'][:160]}" for c in rare), 60, "rare")
+    rare_quiet = [c for c in rare if c.get("level") not in BAD and c.get("level") != "WARN"]   # warnings and errors are already in the template list
+    if rare_quiet:
+        look.line("Rare lines (templates seen once or twice):\n" + "\n".join(f"  line {c['first']} at {clock(c['t0'], day0)}: {c['example'][:110]}" for c in rare_quiet), 40, "rare")
     # artifacts
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow(["count", "level", "first_line", "last_line", "template"])
     for c in clusters[:5000]:
         w.writerow([c["count"], c.get("level", ""), c["first"], c["last"], Drain_t(c)])
-    look.write_text("templates.csv", buf.getvalue(), "every message template: count, level, first and last line", value=4)
+    look.write_text("templates.csv", buf.getvalue(), "every message template: count, level, first and last line", value=4, inline=False)
     errs = [c for c in clusters if c.get("level") in BAD][:40]
     if errs:
-        look.write_text("errors.md", "\n\n".join(f"### {U.compact(c['count'])}x {c.get('level')} (lines {c['first']}-{c['last']})\n{c['example']}" + ("\n" + fold_trace(c.get("trace")) if c.get("trace") else "") for c in errs), "each error template once with an example line", value=7)
+        look.write_text("errors.md", "\n\n".join(f"### {U.compact(c['count'])}x {c.get('level')} (lines {c['first']}-{c['last']}, {clock(c['t0'], day0)} to {clock(c['t1'], day0)})\n{c['example']}" + ("\n" + fold_trace(c.get("trace")) if c.get("trace") else "") for c in errs),
+                        "each error template once with its times, an example line and a folded stack trace", value=7, inline=True if any(c.get("trace") for c in errs) else False)
     if rare:
-        look.write_text("rare.md", "\n".join(f"line {c['first']}: {c['example']}" for c in clusters if c["count"] <= 2)[:60000], "templates seen once or twice, with their line", value=4)
+        look.write_text("rare.md", "\n".join(f"line {c['first']} at {clock(c['t0'], day0)}: {c['example']}" for c in clusters if c["count"] <= 2)[:60000], "templates seen once or twice, with their line and time", value=4, inline=False)
     tl = io.StringIO()
     tw = csv.writer(tl)
     tw.writerow(["minute_utc", "records"])
@@ -255,8 +290,36 @@ def look_log(look):
         if mins.get(m):
             tw.writerow([fmt_ts(m * 60), mins[m]])
     look.write_text("timeline.csv", tl.getvalue(), "records per minute", value=2, inline=False)
-    look.cmd('--grep "REGEX"', "search the log's templates and errors; to read raw lines around a time, grep the file for its timestamp", None)
+    look.cmd('--grep "REGEX"', "search templates and errors (raw lines around a time: grep the file for its timestamp)", None)
     look.step("log scan, Drain templates, bursts and gaps", "stdlib")
+
+
+def error_burst(recs, bad, log_span, window=60.0):
+    """The sharpest burst of one error template: the 60 s window holding far more of its lines than its usual rate predicts.
+    -> dict(cluster, n, start, end, line, last_line, usual) or None. (A volume spike per minute is the BURST flag; this finds a burst of a rare error in a flat log.)"""
+    by = {}
+    for ln, ts, c in bad:
+        if c is not None:
+            by.setdefault(id(c), (c, []))[1].append((ts, ln))
+    best = None
+    for c, pts in by.values():
+        if len(pts) < 8:
+            continue
+        pts.sort()
+        usual = len(pts) * window / max(log_span, window)   # the rate if the template were spread over the whole log
+        j = 0
+        top = (0, 0, 0)
+        for i in range(len(pts)):
+            while pts[i][0] - pts[j][0] > window:
+                j += 1
+            if i - j + 1 > top[0]:
+                top = (i - j + 1, j, i)
+        n, a, b = top
+        if n >= 8 and n >= 5 * usual and n >= 0.3 * len(pts):
+            score = n / max(usual, 0.05)
+            if best is None or score > best[0]:
+                best = (score, dict(cluster=c, n=n, start=pts[a][0], end=pts[b][0], line=min(x[1] for x in pts[a:b + 1]), last_line=max(x[1] for x in pts[a:b + 1]), usual=usual))
+    return best[1] if best else None
 
 
 def Drain_t(c):

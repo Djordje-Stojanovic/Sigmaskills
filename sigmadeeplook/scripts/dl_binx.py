@@ -42,7 +42,8 @@ def run_diec(look):
     look.write_text("die.txt", out, "Detect It Easy output", value=2, inline=False)
     p = parse_diec(out)
     packers = [e for e in p["entries"] if e[0].lower() in ("packer", "protector", "cryptor")]
-    look.line("Detect It Easy: " + "; ".join(f"{c.lower()} {n}" + (f" {v}" if v else "") for c, n, v in p["entries"][:6]) + ".", 68)
+    keep = [(c, n, v) for c, n, v in p["entries"] if c.lower() in ("linker", "compiler", "tool", "packer", "protector", "installer", "library")][:4]
+    look.line("Detect It Easy: " + "; ".join(f"{c.lower()} {n}" + (f" {v}" if v else "") for c, n, v in keep) + ".", 68)
     if packers:
         look.flag("PACKED?", "Detect It Easy", ", ".join(f"{n} {v}".strip() for _, n, v in packers), "a packer or protector is identified: static strings and imports describe the stub, not the program")
     look.step("packer and compiler identification", "diec")
@@ -155,7 +156,7 @@ def lief_facts(look):
                 look.flag("AUTH-FAIL", "signature", str(flags).split(".")[-1], "the embedded signature does not verify: modified after signing or an untrusted chain")
         try:
             ih = lief.PE.get_imphash(b)
-            look.line(f"Import hash (imphash) {ih}: the same value on two files suggests the same toolchain or family.", 50)
+            look.line(f"Import hash (imphash) {ih} (equal on two files: same toolchain).", 50)
         except Exception:
             pass
         look.step("verification and imports", "lief", version=getattr(lief, "__version__", ""))

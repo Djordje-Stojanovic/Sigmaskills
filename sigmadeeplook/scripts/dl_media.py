@@ -120,13 +120,13 @@ def report_checks(look, res, dur):
     look.fact("freeze", [round(a, 2) for a, _ in res["freeze"]])
     look.fact("silence", [[round(a, 2), round(b, 2)] for a, b in res["silence"]])
     if res["black"] or res["freeze"] or res["silence"]:
-        def times(kind):
+        def times(kind):   # the flags hold the long ones with their times: here the count and the first
             ts = [core.mmss(a) for a, _ in res[kind]]
-            return ", ".join(ts[:8]) + (f" and {len(ts) - 8} more ({len(ts)} in all)" if len(ts) > 8 else "")
+            return f"{len(ts)} (first {ts[0]})" if len(ts) > 3 else ", ".join(ts)
         look.line("Machine checks: " + "; ".join(
-            [f"black at {times('black')}"] * bool(res["black"]) +
-            [f"frozen at {times('freeze')}"] * bool(res["freeze"]) +
-            [f"silence at {times('silence')}"] * bool(res["silence"])))
+            [f"black x{times('black')}" if len(res["black"]) > 3 else f"black at {times('black')}"] * bool(res["black"]) +
+            [f"frozen x{times('freeze')}" if len(res["freeze"]) > 3 else f"frozen at {times('freeze')}"] * bool(res["freeze"]) +
+            [f"silence x{times('silence')}" if len(res["silence"]) > 3 else f"silence at {times('silence')}"] * bool(res["silence"])))
     else:
         look.line("Machine checks: no black, frozen or silent stretch found." if not look.quick else "Machine checks: no black (keyframes) or silent stretch found; frozen pictures are not checked at the quick tier.")
 
@@ -255,8 +255,51 @@ def transcribe_sample(look, dur):
     return segs, lang, wins
 
 
+NUMW = (r"(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|twenty|thirty|forty|fifty|sixty|"
+        r"hundred|thousand|million|billion|trillion|half|double|triple)")
+UNIT = (r"(?:mega|giga|tera|peta|exa|kilo)?(?:watts?|flops?|bytes?)|percent|%|[- ]?fold|times|\bx\b|dollars?|\$|euros?|€|years?|tons?|miles?|km\b|"
+        r"meters?|hours?|minutes?|cents?|per (?:second|minute|day|year|month)|\d[\d,.]* [a-z]{4,}s\b|\b" + NUMW + r" [a-z]{4,}s\b")
+RATIO = r"-?fold|\btimes\b|spread|\bgap\b|ratio|\d\s?x\b"
+
+
+def claim_score(t):
+    """How much a sentence states a checkable number: digits and number words, units, and a bonus for a ratio or a gap."""
+    nums = len(re.findall(r"\d[\d,.]*", t)) + len(re.findall(r"\b" + NUMW + r"\b", t, re.I))
+    if not nums:
+        return 0
+    return nums + 2 * min(2, len(re.findall(UNIT, t, re.I))) + 4 * bool(re.search(RATIO, t, re.I))
+
+
+TURN = re.compile(r"^(?:now|next|finally|first|second|third|last|part \w+|chapter \w+)[, :]+((?:\w[\w'-]*\s?){1,4})[,.:;]", re.I)
+
+
+def section_turns(segs, limit=4):
+    """Where the speaker turns to a new part ('Now, the money, ...'): -> ['[12:44] the money', ...] (at most `limit`, in time order)."""
+    out = []
+    for s in segs:
+        m = TURN.match(" ".join(s["text"].split()))
+        if m and m.group(1).strip().lower() not in ("here", "we", "i", "it", "you", "let"):
+            out.append(f"[{core.mmss(s['start'])}] {m.group(1).strip()}")
+    return out[:limit] if len(out) <= limit else out[:2] + out[-(limit - 2):]
+
+
+def clip_around(t, n=115):
+    """At most n characters of t that keep the first number and its unit in view."""
+    if len(t) <= n:
+        return t
+    m = re.search(UNIT, t, re.I) or re.search(r"\d", t)
+    a = 0
+    if m and m.end() > n:
+        a = t.find(" ", m.end() - n + 10) + 1 or 0
+    cut = t[a:a + n]
+    if len(t) > a + n and " " in cut[n // 2:]:
+        cut = cut[:cut.rindex(" ")]
+    return ("…" if a else "") + cut.rstrip(" ,;") + "…"
+
+
 def gist_lines(segs, dur, sampled):  # sampled: None, or the [(start, length)] windows the segments came from
-    """2-3 short quotes that say what the speech is about: the opening, then the longest sentence of the middle and of the end."""
+    """What the speech is about, as quotes: the opening, then the 3 sentences that state the most checkable numbers (the premise in the
+    first minute, a ratio or a gap, the closing numbers). A count, a ratio or a budget says more about a film than a mid-film sentence."""
     segs = [s for s in segs if len(s["text"].split()) >= 4]
     if not segs:
         return []
@@ -267,7 +310,26 @@ def gist_lines(segs, dur, sampled):  # sampled: None, or the [(start, length)] w
     if sampled:
         groups = [[s for s in segs if a - 1 <= s["start"] < a + w] for a, w in sampled]
         return [q(max(g, key=lambda s: min(len(s["text"]), 160))) for g in groups if g]
-    out = [q(segs[0])] if len(segs[0]["text"]) >= 60 or len(segs) < 2 else [q({"start": segs[0]["start"], "text": segs[0]["text"] + " " + segs[1]["text"]})]
+    first = segs[0] if len(segs[0]["text"]) >= 60 or len(segs) < 2 else {"start": segs[0]["start"], "text": segs[0]["text"] + " " + segs[1]["text"]}
+    out = [q(first, 110)]
+    early = max(60.0, dur * 0.08)
+    cand = []
+    for s in segs[1:]:
+        t = " ".join(s["text"].split())
+        sc = claim_score(t)
+        if sc >= 5 and s["start"] > first["start"] + 5:
+            cand.append((sc + (6 if s["start"] <= early else 0), s["start"], t))
+    picked = []
+    ratio = [c for c in cand if re.search(RATIO, c[2], re.I) and c[1] > early]   # the headline gap or ratio, wherever it is said
+    if ratio:
+        picked.append(max(ratio, key=lambda c: (c[0], -c[1])))
+    for sc, st, t in sorted(cand, key=lambda c: (-c[0], c[1])):
+        if len(picked) == 3:
+            break
+        if all(abs(st - p[1]) >= 20 for p in picked):
+            picked.append((sc, st, t))
+    if picked:
+        return out + [f"[{core.mmss(st)}] {clip_around(t)}" for _, st, t in sorted(picked, key=lambda c: c[1])]
     rest = [s for s in segs if s["start"] > segs[0]["start"] + 20]
     for grp in _thirds(rest, 2):
         out.append(q(max(grp, key=lambda s: (s["text"][:1].isupper(), min(len(s["text"]), 160)))))
@@ -313,7 +375,8 @@ def write_transcript(look, segs, lang, dur, sampled=None):
     else:
         span = max(1.0, segs[-1]["end"] - segs[0]["start"])
         head = f"Speech ({lang}): {nwords} words, ~{nwords / span * 60:.0f} per minute"
-    look.line(head + (". Gist: " + " / ".join(gist) if gist else "."), 83)
+    turns = [] if sampled else section_turns(segs)
+    look.line(head + (". Gist: " + " / ".join(gist) + ("." if turns else "") if gist else ".") + (" Turns to a new part: " + "; ".join(turns) + "." if turns else ""), 83)
     return words
 
 
@@ -438,10 +501,10 @@ def look_video(look):
     look.fact("video_codec", v.get("codec_name"))
     look.fact("audio_streams", len(au))
     look.fact("subtitle_streams", len(sub))
-    look.headline = f"video {core.mmss(dur)}, {v.get('width')}x{v.get('height')}, {v.get('codec_name')}" + (", no audio" if not au else "")
+    look.headline = f"video {core.mmss(dur)} ({dur:.1f} s), {v.get('width')}x{v.get('height')} at {fps_of(v):g} fps, {v.get('codec_name')}" + (", no audio" if not au else "")
     look.dims = f"{core.mmss(dur)}"
     look.line(f"Video: {core.mmss(dur)} ({dur:.1f} s), {v.get('width')}x{v.get('height')} at {fps_of(v):.2f} fps, {v.get('codec_name')}; "
-              f"{len(au)} audio stream(s) ({', '.join(a.get('codec_name', '?') for a in au) or 'none'}), {len(sub)} subtitle stream(s).", 80)
+              f"{len(au)} audio stream(s) ({', '.join(a.get('codec_name', '?') for a in au) or 'none'}), {len(sub)} subtitle stream(s).", 35)
     if not au:
         look.flag("NO-AUDIO", "container", "no audio stream", "silent video")
     if look.subtype == "mp4":
@@ -488,7 +551,7 @@ def look_video(look):
     if au:
         dl_mediax.audio_adapters(look, look.out / "audio.wav" if (look.out / "audio.wav").exists() else None, words, dur)
     if dur > 180:
-        look.line(f"Long video: one overview sheet covers a tile per {dur / look.reader['cols'] / look.reader['rows']:.0f} s. Run `--mode sweep` for {math.ceil(dur / 180)} pages that cover every part, or `--at T --len S` to zoom.")
+        look.line(f"Long video: the sheet has a tile per {dur / look.reader['cols'] / look.reader['rows']:.0f} s; `--mode sweep` ({math.ceil(dur / 180)} pages) covers every part, `--at T --len S` zooms.")
     look.ask_human("Is the black or silent stretch in Flags intended (a designed card) or a defect?",
                    "Which sound, voice or motion judgements need a human listening or watching (this look cannot hear or judge taste)?",
                    "Which moments or claims should be checked on a zoom window?")
@@ -817,9 +880,9 @@ def look_audio(look, ffp=None):
     look.fact("codec", a.get("codec_name"))
     look.fact("sample_rate", int(a.get("sample_rate", 0) or 0))
     look.fact("channels", a.get("channels"))
-    look.headline = f"audio {core.mmss(dur)}, {a.get('codec_name')}, {a.get('sample_rate')} Hz, {a.get('channels')} ch"
+    look.headline = f"audio {core.mmss(dur)} ({dur:.1f} s), {a.get('codec_name')}, {a.get('sample_rate')} Hz, {a.get('channels')} ch"
     look.dims = f"{core.mmss(dur)}"
-    look.line(f"Audio: {core.mmss(dur)} ({dur:.1f} s), {a.get('codec_name')}, {a.get('sample_rate')} Hz, {a.get('channels')} channel(s).", 80)
+    look.line(f"Audio: {core.mmss(dur)} ({dur:.1f} s), {a.get('codec_name')}, {a.get('sample_rate')} Hz, {a.get('channels')} channel(s).", 35)
     look.write_text("probe.json", json.dumps(ffp, indent=1), "ffprobe facts", "json")
     res = one_pass_checks(look, False, True, dur)
     report_checks(look, res, dur)

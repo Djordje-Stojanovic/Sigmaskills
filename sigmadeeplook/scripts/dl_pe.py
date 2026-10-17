@@ -168,9 +168,10 @@ def extras(look, b, info):
     if flag:
         look.flag(flag[0], "PE header", text, flag[1])
     pdb = next((e["pdb"] for e in dbg if e.get("pdb")), None)
-    look.line(f"Build: {text}." + (f" Debug directory: {', '.join(e['name'] for e in dbg)}." if dbg else ""), 60)
+    if not flag:   # a flagged timestamp is already said in full by the flag
+        look.line(f"Build: {text}.", 60)
     if pdb:
-        look.line(f"PDB path baked into the file: {pdb[:160]} (reveals the builder's folders and sometimes a user name).", 66)
+        look.line(f"PDB path baked in (shows the builder's folders): {pdb[:100]}", 66)
         look.fact("pdb_path", pdb)
     clr = dirs[14] if len(dirs) > 14 else (0, 0)
     if clr[0]:
@@ -184,8 +185,8 @@ def extras(look, b, info):
             look.skip("signer name of the embedded signature", "python package cryptography not importable", "cryptography")
         elif who:
             leaf = next((c for c in who if not c["self"]), who[0])
-            look.line(f"Embedded Authenticode signature: signer {leaf['subject']!r} (issuer {leaf['issuer']!r}, certificate valid {leaf['not_before']} to {leaf['not_after']}); {len(who)} certificate(s) in the block. "
-                      "Chain and file hash are NOT verified here: 'signed' is a claim until Get-AuthenticodeSignature or signtool says Valid.", 66)
+            look.line(f"Embedded signature: signer {leaf['subject']!r}, issuer {leaf['issuer']!r}, valid {leaf['not_before']} to {leaf['not_after']}, {len(who)} certificates. "
+                      "Chain NOT verified here (a claim until Get-AuthenticodeSignature says Valid).", 66)
             look.fact("signer", leaf["subject"])
         else:
             look.line("Embedded signature block present but unreadable as PKCS#7.", 60)
@@ -202,10 +203,10 @@ def extras(look, b, info):
         nf = sum(len(v) for v in imps.values())
         look.fact("import_function_count", nf)
         top = sorted(imps.items(), key=lambda kv: -len(kv[1]))[:5]
-        look.line(f"Imports: {nf} functions from {len(imps)} DLLs (most: " + ", ".join(f"{d} {len(v)}" for d, v in top) + ").", 56)
+        look.line(f"Imports: {nf} functions from {len(imps)} DLLs (most: " + ", ".join(f"{d} {len(v)}" for d, v in top[:3]) + ").", 56)
         groups = api_groups(imps)
         if groups:
-            look.line("What the imports allow (by name, not proof of behaviour): " + "; ".join(f"{g}: {', '.join(v[:4])}" for g, v in list(groups.items())[:5]) + ".", 64)
+            look.line("What the imports allow (by name, not proof): " + "; ".join(f"{g}: {', '.join(v[:3])}" for g, v in list(groups.items())[:5]), 64)
             look.fact("api_groups", {g: v[:8] for g, v in groups.items()})
         low = {n for v in imps.values() for n in v}
         if nf < 12 and {"LoadLibraryA", "LoadLibraryW", "GetProcAddress"} & low:
