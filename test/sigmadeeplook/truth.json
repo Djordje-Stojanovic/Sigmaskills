@@ -1,0 +1,211 @@
+{
+  "_readme": "Seeded truth for the fixtures. 'facts' are regular expressions run over LOOK.md, look.json and the text artifacts. 'needs' lists the tools or packages a fact depends on: empty means the standard library reaches it (bare tier). A fact whose tool is missing must appear as a Not-looked-at row with an install line. 'questions' are for the agent-level check (3 per type, known answers). Written from the generator's seeds, never from the tool's output. 'args' are extra look.py arguments: small plain text is a direct read by default (no analysis, only flags), so a fixture that tests the web analyser's text.md passes --no-direct.",
+  "clip.mp4": {"type": "video", "exit": 0, "facts": [
+    {"id": "duration 12 s", "re": "\"duration\": 1[12]\\.", "needs": []},
+    {"id": "width 320", "re": "\"width\": 320", "needs": []},
+    {"id": "height 180", "re": "\"height\": 180", "needs": []},
+    {"id": "one audio stream", "re": "\"audio_streams\": 1", "needs": []},
+    {"id": "one subtitle stream", "re": "\"subtitle_streams\": 1", "needs": []},
+    {"id": "black at 4.0 s", "re": "\"black\": \\[4(\\.0+)?[,\\]]", "needs": ["ffmpeg"]},
+    {"id": "silence from 6.0 s", "re": "\"silence\": \\[\\[6(\\.0\\d*)?,", "needs": ["ffmpeg"]},
+    {"id": "subtitle text", "re": "hello deeplook", "needs": ["ffmpeg"]}
+  ], "present": [{"path": "sheet-overview.jpg", "needs": ["ffmpeg", "PIL"]}],
+  "questions": [{"q": "What is written on screen between 0:07 and 0:10?", "a": "K7Q2"}, {"q": "At what time does a black screen start?", "a": "0:04"}, {"q": "What do the subtitles say?", "a": "hello deeplook"}]},
+  "trunc.mp4": {"type": "video", "exit": 0, "facts": [
+    {"id": "truncation noticed", "re": "TRUNCATED|NO-MOOV|FFPROBE-ERROR|NO-STREAMS", "needs": []}
+  ]},
+  "speech.wav": {"type": "audio", "exit": 0, "facts": [
+    {"id": "duration 7.x s", "re": "\"duration\": 7\\.", "needs": []},
+    {"id": "16 kHz", "re": "\"sample_rate\": 16000", "needs": []},
+    {"id": "silence starts about 3 s", "re": "\"silence\": \\[\\[(2\\.[7-9]|3\\.[0-3])", "needs": []},
+    {"id": "loudness near -18 LUFS", "re": "\"lufs\": -(17\\.[3-9]|18\\.\\d|19\\.[0-3])", "needs": ["ffmpeg"]},
+    {"id": "transcript", "re": "quick brown fox", "needs": ["faster_whisper"]}
+  ], "questions": [{"q": "What is said in the first three seconds?", "a": "The quick brown fox jumps over the lazy dog"}, {"q": "Where is the silent stretch?", "a": "from 0:03 for about 2 s"}, {"q": "How many channels?", "a": "1"}]},
+  "tone.flac": {"type": "audio", "exit": 0, "facts": [
+    {"id": "duration 20 s", "re": "\"duration\": 20", "needs": []},
+    {"id": "tempo about 120 bpm", "re": "\"tempo_bpm\": 1(1\\d|2\\d|30)", "needs": ["librosa", "ffmpeg"]}
+  ]},
+  "photo.jpg": {"type": "image", "exit": 0, "facts": [
+    {"id": "stored width 400", "re": "\"width\": 400", "needs": []},
+    {"id": "EXIF orientation 6", "re": "\"exif_orientation\": 6", "needs": ["PIL"]},
+    {"id": "GPS flagged, values kept out of LOOK.md", "re": "GPS \\| EXIF", "needs": ["PIL"]}
+  ], "forbid": [{"re": "48\\.0|16\\.0|22\\.0", "in": "LOOK.md"}],
+  "questions": [{"q": "Which corner holds the red marker once the picture is upright?", "a": "top-right corner after rotating 90 degrees clockwise (EXIF orientation 6)"}, {"q": "Which camera model is in the metadata?", "a": "FixtureOne"}, {"q": "Is location data present?", "a": "yes (GPS), kept out of LOOK.md"}]},
+  "chart.png": {"type": "image", "exit": 0, "facts": [
+    {"id": "width 900", "re": "\"width\": 900", "needs": []},
+    {"id": "OCR finds TOTAL 42", "re": "TOTAL 42", "needs": ["tesseract"]}
+  ], "questions": [{"q": "What total is printed on the chart?", "a": "42"}, {"q": "How many bars are drawn?", "a": "4"}, {"q": "Which bar is tallest?", "a": "the fourth"}]},
+  "anim.gif": {"type": "image", "exit": 0, "facts": [
+    {"id": "width 120", "re": "\"width\": 120", "needs": []},
+    {"id": "5 frames", "re": "\"frames\": 5", "needs": ["PIL"]}
+  ]},
+  "logo.svg": {"type": "image", "exit": 0, "facts": [
+    {"id": "viewBox", "re": "0 0 200 100", "needs": []},
+    {"id": "text in the SVG", "re": "DeepLook", "needs": []}
+  ]},
+  "bomb.png": {"type": "image", "exit": 0, "facts": [
+    {"id": "bomb flagged, not decoded", "re": "DECOMPRESSION-BOMB", "needs": []}
+  ]},
+  "mixed.pdf": {"type": "pdf", "exit": 0, "facts": [
+    {"id": "3 pages", "re": "\"pages\": 3", "needs": []},
+    {"id": "JavaScript flag", "re": "JAVASCRIPT", "needs": []},
+    {"id": "open action flag", "re": "OPEN-ACTION", "needs": []},
+    {"id": "form field name", "re": "\"fields\": \\[\"name\"\\]", "needs": []},
+    {"id": "text reading order", "re": "Left column[\\s\\S]*Right column", "needs": []},
+    {"id": "page 1 born digital", "re": "\"1\": \"born-digital\"", "needs": ["fitz"]},
+    {"id": "page 2 scanned", "re": "\"2\": \"scanned\"", "needs": ["fitz"]},
+    {"id": "OCR of the scanned page", "re": "SCANNED PAGE 77", "needs": ["tesseract", "fitz"]}
+  ], "present": [{"path": "sheet-pages-1.jpg", "needs": ["fitz", "PIL"]}],
+  "questions": [{"q": "How many pages have no text layer?", "a": "1 (page 2)"}, {"q": "Which form field exists?", "a": "name"}, {"q": "Does the PDF carry script?", "a": "yes, an OpenAction JavaScript; it was not run"}]},
+  "review.docx": {"type": "office", "exit": 0, "facts": [
+    {"id": "revision author Alice", "re": "\"revision_authors\": \\{\"Alice\": 2\\}", "needs": []},
+    {"id": "comment text", "re": "Check the budget number", "needs": []},
+    {"id": "footnote text", "re": "Footnote about sources", "needs": []},
+    {"id": "heading", "re": "Quarterly review", "needs": []},
+    {"id": "inserted text marked", "re": "\\[\\+three new\\+\\]", "needs": []},
+    {"id": "deleted text marked", "re": "\\[-two old-\\]", "needs": []}
+  ], "questions": [{"q": "Who made the tracked changes?", "a": "Alice"}, {"q": "What does the comment say, and who wrote it?", "a": "Check the budget number (Bob)"}, {"q": "What text was deleted?", "a": "two old"}]},
+  "book.xlsx": {"type": "office", "exit": 0, "facts": [
+    {"id": "1 uncached formula", "re": "\"uncached_formulas\": 1", "needs": []},
+    {"id": "hidden sheet", "re": "\"hidden_sheets\": \\[\"Hidden\"\\]", "needs": []},
+    {"id": "merged range", "re": "A5:B5", "needs": []},
+    {"id": "recalculated SUM is 5", "re": "\"recalculated\": \"[^\"]*/ 5,", "needs": ["soffice"]}
+  ], "questions": [{"q": "What does =SUM(A1:A2) evaluate to?", "a": "5"}, {"q": "Which sheet is hidden?", "a": "Hidden"}, {"q": "What is merged?", "a": "A5:B5"}]},
+  "deck.pptx": {"type": "office", "exit": 0, "facts": [
+    {"id": "3 slides", "re": "\"slides\": 3", "needs": []},
+    {"id": "hidden slide 3", "re": "\"hidden_slides\": \\[3\\]", "needs": []},
+    {"id": "speaker note", "re": "Speaker note: mention the budget", "needs": []},
+    {"id": "text inside a group", "re": "Grouped milestone alpha", "needs": []}
+  ], "present": [{"path": "sheet-slides-1.jpg", "needs": ["soffice", "fitz", "PIL"]}],
+  "questions": [{"q": "Which slide is hidden?", "a": "3"}, {"q": "What does the speaker note say?", "a": "mention the budget"}, {"q": "Which slide has the grouped text?", "a": "2"}]},
+  "legacy.doc": {"type": "office", "exit": 0, "facts": [
+    {"id": "legacy Word detected", "re": "WordDocument", "needs": []},
+    {"id": "text recovered", "re": "Quarterly review", "needs": []}
+  ]},
+  "macro.docm": {"type": "office", "exit": 0, "facts": [
+    {"id": "macro flag, not opened", "re": "MACRO", "needs": []}
+  ]},
+  "tool.py": {"type": "code", "exit": 0, "facts": [
+    {"id": "hidden zero-width space", "re": "U\\+200B", "needs": []},
+    {"id": "language", "re": "\"language\": \"Python\"", "needs": []}
+  ]},
+  "repo": {"type": "code", "exit": 0, "facts": [
+    {"id": "hook flagged", "re": "HOOK-OR-MCP", "needs": []},
+    {"id": "hidden bidi in CLAUDE.md", "re": "INJECTION\\?[^\\n]*CLAUDE\\.md", "needs": []},
+    {"id": "entry point or manifest", "re": "setup\\.py", "needs": []}
+  ], "absent": ["CANARY"], "questions": [{"q": "Does the repo configure agent hooks?", "a": "yes, .claude/settings.json (SessionStart command)"}, {"q": "Is there hidden text in the instruction file?", "a": "yes, a bidi control character and an instruction-like phrase in CLAUDE.md"}, {"q": "Did setup.py run?", "a": "no, it is never run"}]},
+  "plain.txt": {"type": "code", "exit": 0, "facts": [
+    {"id": "text file", "re": "\"language\": \"Text\"", "needs": []}
+  ]},
+  "hello.exe": {"type": "binary", "exit": 0, "facts": [
+    {"id": "x86-64", "re": "\"arch\": \"x86-64", "needs": []},
+    {"id": "section .text", "re": "\"\\.text\"", "needs": []},
+    {"id": "section .data", "re": "\"\\.data\"", "needs": []},
+    {"id": "known string", "re": "HELLO-DEEPLOOK-STRING", "needs": []},
+    {"id": "imports kernel32", "re": "kernel32\\.dll", "needs": []}
+  ], "questions": [{"q": "Which CPU is it built for?", "a": "x86-64"}, {"q": "Name one section.", "a": ".text or .data"}, {"q": "Which DLL does it import?", "a": "kernel32.dll"}]},
+  "hello.elf": {"type": "binary", "exit": 0, "facts": [
+    {"id": "x86-64 ELF", "re": "\"arch\": \"x86-64\"", "needs": []},
+    {"id": "section .text", "re": "\"\\.text\"", "needs": []},
+    {"id": "known string", "re": "HELLO-ELF-STRING", "needs": []}
+  ]},
+  "fake.pdf": {"type": "binary", "exit": 0, "facts": [
+    {"id": "extension mismatch", "re": "extension \\.pdf, bytes MZ", "needs": []}
+  ]},
+  "Tiny.ttf": {"type": "font", "exit": 0, "facts": [
+    {"id": "20 glyphs", "re": "\"glyphs\": 20", "needs": []},
+    {"id": "family name", "re": "DeepLook Tiny", "needs": []},
+    {"id": "missing Latin coverage listed", "re": "\"missing_latin\": \"[a-z0-9]+", "needs": ["fontTools"]}
+  ], "questions": [{"q": "How many glyphs?", "a": "20"}, {"q": "What is the family name?", "a": "DeepLook Tiny"}, {"q": "Does it have lowercase letters?", "a": "no"}]},
+  "Tiny.woff2": {"type": "font", "exit": 0, "facts": [
+    {"id": "woff2 identified", "re": "woff2", "needs": []},
+    {"id": "family name via brotli", "re": "DeepLook Tiny", "needs": ["brotli", "fontTools"]}
+  ]},
+  "slip.zip": {"type": "archive", "exit": 2, "facts": [
+    {"id": "path traversal refused", "re": "REFUSED[^\\n]*path traversal", "needs": []}
+  ], "absent": ["extract"]},
+  "ratio.zip": {"type": "archive", "exit": 2, "facts": [
+    {"id": "ratio refused", "re": "REFUSED[^\\n]*ratio[^\\n]*limit 200", "needs": []}
+  ], "absent": ["extract"]},
+  "nested.zip": {"type": "archive", "exit": 2, "facts": [
+    {"id": "nesting refused", "re": "REFUSED[^\\n]*nesting", "needs": []}
+  ], "absent": ["extract"]},
+  "links.tar": {"type": "archive", "exit": 2, "facts": [
+    {"id": "symlink refused", "re": "REFUSED[^\\n]*link-or-device", "needs": []}
+  ], "absent": ["extract"],
+  "questions": [{"q": "Is it safe to extract?", "a": "no: it holds a symlink that points outside the folder"}, {"q": "Which rule fired?", "a": "link-or-device"}, {"q": "Was anything written?", "a": "no"}]},
+  "ok.tar.gz": {"type": "archive", "exit": 0, "facts": [
+    {"id": "3 members", "re": "\"members\": 3", "needs": []},
+    {"id": "screen passed", "re": "Safety screen: passed", "needs": []}
+  ], "absent": ["extract"]},
+  "image.tar": {"type": "archive", "exit": 0, "facts": [
+    {"id": "docker layer", "re": "\"docker_layers\": 1", "needs": []},
+    {"id": "whiteout listed", "re": "\\.wh\\.removed\\.txt", "needs": []}
+  ]},
+  "bad.csv": {"type": "data", "exit": 0, "facts": [
+    {"id": "1 reject row", "re": "\"rejects\": 1", "needs": []},
+    {"id": "latin-1 encoding", "re": "\"encoding\": \"(latin-1|cp1252)\"", "needs": []},
+    {"id": "4 data rows", "re": "\"rows\": 4", "needs": []},
+    {"id": "column names", "re": "\"column_names\": \\[\"id\", \"name\", \"note\"\\]", "needs": []}
+  ], "questions": [{"q": "How many rows are malformed?", "a": "1 (line 4: only 2 fields)"}, {"q": "What encoding?", "a": "Latin-1"}, {"q": "How many columns?", "a": "3"}]},
+  "events.jsonl": {"type": "data", "exit": 0, "facts": [
+    {"id": "5 records", "re": "\"rows\": 5", "needs": []}
+  ]},
+  "t.parquet": {"type": "data", "exit": 0, "facts": [
+    {"id": "3 rows", "re": "\"rows\": 3", "needs": ["pyarrow"]}
+  ]},
+  "app.sqlite": {"type": "data", "exit": 0, "facts": [
+    {"id": "tables", "re": "\"tables\": \\[\"orders\", \"users\"\\]", "needs": []},
+    {"id": "orders has 3 rows", "re": "\"orders\": 3", "needs": []}
+  ]},
+  "nb.ipynb": {"type": "notebook", "exit": 0, "facts": [
+    {"id": "hidden state flagged", "re": "HIDDEN-STATE", "needs": []},
+    {"id": "error cell", "re": "ZeroDivisionError", "needs": []},
+    {"id": "figure extracted", "re": "\"figures\": 1", "needs": []}
+  ], "absent": [], "questions": [{"q": "Which cell raised an error?", "a": "cell 2 (ZeroDivisionError)"}, {"q": "Were the cells run in order?", "a": "no: counts 3, 1, 2"}, {"q": "How many figures?", "a": "1"}]},
+  "page.html": {"type": "web", "exit": 0, "args": ["--no-direct"], "facts": [
+    {"id": "title", "re": "\"title\": \"Fixture article\"", "needs": []},
+    {"id": "article text kept", "re": "main article text", "needs": []},
+    {"id": "hidden text flagged", "re": "HIDDEN-TEXT", "needs": []},
+    {"id": "injection phrase flagged", "re": "INJECTION\\?", "needs": []}
+  ], "forbid": [{"re": "NAVIGATION-BOILERPLATE|FOOTER-BOILERPLATE", "in": "text.md"}],
+  "present": [{"path": "screenshot.png", "needs": ["chrome"]}],
+  "questions": [{"q": "What is the page title?", "a": "Fixture article"}, {"q": "Is there hidden text?", "a": "yes, display:none text with an instruction to an AI"}, {"q": "Is the navigation part of the main text?", "a": "no"}]},
+  "cube.glb": {"type": "3d", "exit": 0, "facts": [
+    {"id": "12 triangles", "re": "\"triangles\": 12", "needs": []},
+    {"id": "watertight", "re": "\"watertight\": true", "needs": []},
+    {"id": "bbox size 2", "re": "\"size\": \\[2\\.0, 2\\.0, 2\\.0\\]", "needs": []}
+  ], "present": [{"path": "sheet-views.jpg", "needs": ["PIL"]}, {"path": "views/front.png", "needs": ["PIL"]}, {"path": "views/iso.png", "needs": ["PIL"]}],
+  "questions": [{"q": "How many triangles?", "a": "12"}, {"q": "Is the mesh watertight?", "a": "yes"}, {"q": "What size is the bounding box?", "a": "2 x 2 x 2"}]},
+  "part.stl": {"type": "3d", "exit": 0, "facts": [
+    {"id": "11 triangles", "re": "\"triangles\": 11", "needs": []},
+    {"id": "not watertight", "re": "\"watertight\": false", "needs": []},
+    {"id": "flag", "re": "NOT-WATERTIGHT", "needs": []}
+  ]},
+  "mesh.obj": {"type": "3d", "exit": 0, "facts": [
+    {"id": "5 vertices", "re": "\"vertices\": 5", "needs": []},
+    {"id": "5 faces", "re": "\"faces\": 5", "needs": []}
+  ]},
+  "mail.eml": {"type": "email", "exit": 0, "facts": [
+    {"id": "link text differs from target", "re": "LINK-MISMATCH[^\\n]*mybank\\.com[^\\n]*evil\\.example", "needs": []},
+    {"id": "attachment listed", "re": "invoice\\.pdf", "needs": []},
+    {"id": "auth failure", "re": "AUTH-FAIL", "needs": []}
+  ], "absent": ["attachments"], "questions": [{"q": "Where does the link really go?", "a": "evil.example.invalid"}, {"q": "What attachment is there?", "a": "invoice.pdf (not opened)"}, {"q": "Did SPF pass?", "a": "no, spf=fail"}]},
+  "box.mbox": {"type": "email", "exit": 0, "facts": [
+    {"id": "3 messages", "re": "\"messages\": 3", "needs": []}
+  ]},
+  "cal.ics": {"type": "email", "exit": 0, "facts": [
+    {"id": "event with time zone", "re": "Europe/Vienna", "needs": []},
+    {"id": "event title", "re": "Team sync", "needs": []},
+    {"id": "start", "re": "20260105T090000", "needs": []}
+  ]},
+  "msg.msg": {"type": "email", "exit": 0, "facts": [
+    {"id": "tells the user to export to .eml", "re": "export (it |the message )?to \\.eml", "needs": []}
+  ]},
+  "empty.bin": {"type": "unknown", "exit": 3, "facts": [
+    {"id": "empty noticed", "re": "EMPTY", "needs": []}
+  ]},
+  "noise.bin": {"type": "unknown", "exit": 3, "facts": [
+    {"id": "high entropy noticed", "re": "HIGH-ENTROPY", "needs": []}
+  ]}
+}

@@ -1,0 +1,12 @@
+# tiny pyramid
+mtllib pyramid.mtl
+v 0 0 0
+v 2 0 0
+v 2 0 2
+v 0 0 2
+v 1 2 1
+f 1 2 3 4
+f 1 2 5
+f 2 3 5
+f 3 4 5
+f 4 1 5

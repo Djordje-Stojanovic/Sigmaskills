@@ -1,0 +1,16 @@
+The clip is 12 s long, goes black at 0:04 for one second, is silent from 0:06, and carries one embedded subtitle that reads "hello deeplook". The code on screen at 0:08 is K7Q2. Sound and motion quality were not judged.
+
+## Evidence
+
+- Duration 12 s, 320x180, one audio and one subtitle stream: `look.json` facts (duration, width, height, subtitle_streams).
+- Black from 0:04 for 1.0 s: `look.json` flags, BLACK at 0:04; the tile at 0:04 in `sheet-overview.jpg` is black.
+- Silence from 0:06 for about 2.5 s: `look.json` flags, SILENCE at 0:06; `transcript.srt` has no speech between 0:06 and 0:08.
+- Subtitle text "hello deeplook": `subtitles.srt` line 1, 0:00.
+- Code K7Q2 on screen: `sheet-overview.jpg` tile 0:08, confirmed in the tile at 0:09.
+
+## Limits
+
+- Not looked at: speech-to-text on this machine was skipped (no cached model); install line `pip install faster-whisper`. The audio has no speech in the checked spans.
+- This look cannot hear: whether the tone is pleasant, or whether the silence is intended, needs a person.
+
+View: C:\Users\me\AppData\Local\sigmadeeplook\4f3a9c1d2b7e\view.html

@@ -254,7 +254,24 @@ function sigmaresearch({ result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'storgestudio-arena-create': storgestudioArenaCreate, easytalk, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch };
+function sigmadeeplook({ result }) {
+  const problems = requireInOrder(result, ['Evidence', 'Limits'], 'reply');
+  const evidence = result.match(/^## Evidence\s*\n([\s\S]*?)(?=^## |(?![\s\S]))/m)?.[1]?.trim() || '';
+  const limits = result.match(/^## Limits\s*\n([\s\S]*?)(?=^## |(?![\s\S]))/m)?.[1]?.trim() || '';
+  if (!evidence) problems.push('reply: Evidence must list the claims with their sources');
+  if (!limits) problems.push('reply: Limits must be explicit, or None');
+  const lines = evidence.split('\n').filter((line) => /^\s*(?:[-*]|\d+\.)\s/.test(line));
+  if (evidence && !lines.length) problems.push('reply: Evidence needs one bullet per claim');
+  for (const line of lines) {
+    if (!/`[^`\s]+\.(?:md|json|csv|tsv|txt|srt|jpg|jpeg|png|html|py)\b[^`]*`/.test(line)) problems.push(`reply: evidence line names no artifact path: ${line.trim().slice(0, 60)}`);
+    if (!/\b(?:\d{1,2}:\d{2}|page \d+|p\.? ?\d+|cell [A-Z]+\d+|cell \d+|sheet \S+|row \d+|offset \S+|tile \d+|line \d+|facts?|flags?|field)\b/i.test(line)) problems.push(`reply: evidence line names no time, page, cell or offset: ${line.trim().slice(0, 60)}`);
+  }
+  if (!/view\.html/.test(result)) problems.push('reply: end with the path to view.html');
+  if (/-?\d{1,3}\.\d{4,}\s*,\s*-?\d{1,3}\.\d{4,}/.test(result)) problems.push('reply: private coordinates must stay out of the reply');
+  return problems;
+}
+
+export const CONTRACTS = { 'storgestudio-arena-create': storgestudioArenaCreate, easytalk, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

@@ -40,6 +40,11 @@
       "needsReferences": true
     },
     {
+      "id": "sigmadeeplook",
+      "title": "SigmaDeepLook",
+      "needsReferences": true
+    },
+    {
       "id": "easytalk",
       "title": "EasyTalk",
       "needsReferences": false

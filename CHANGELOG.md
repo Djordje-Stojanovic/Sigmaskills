@@ -4,6 +4,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmadeeplook` (SigmaDeepLook): the helper for what an agent cannot read with its own tools: video, audio and speech, scanned PDFs and images, Office files with hidden parts, SQLite, Parquet, binaries, archives, fonts and 3D. One standard-library Python entry (`scripts/look.py`) gates every file first: plain text, CSV, JSON and code go back to the agent (`READ`); the rest gets a look in about 1,000 tokens, `--more` for the next part of the same stream, and `--ask "<question>"` for one exact, checkable answer from the stored look. Runs on a bare Python install (most document types and media facts); every missing tool (ffmpeg, Whisper, tesseract) becomes a Not-looked-at row with its install line. Never runs the input, no network unless `--allow-network`, refuses unsafe archives, keeps private values out of the summary. Measured (ticket 83, 2026-10-17): on 5 media files and 38 questions, Haiku with deeplook matched plain Haiku (38/38) at 43 % lower cost and 29 % fewer turns.
+- `.gitignore` ignores `__pycache__/`.
+
 ## [0.7.0] — 2026-10-15
 
 ### Fixed

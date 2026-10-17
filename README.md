@@ -21,6 +21,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
      easytalk   →  plain chat and interactive status or question boards
      arena      →  blind pairs that rank any options by Elo
   Σ  research   →  read public sources, record evidence and access gaps
+  Σ  deeplook   →  helper for what agents cannot read: video, speech, scans, binaries
 ```
 
 ---
@@ -62,6 +63,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **EasyTalk** | `easytalk` | Plain chat with status and question boards | Interactive HTML board and copied replies |
 | **Arena Create** | `storgestudio-arena-create` | Blind-pairs arena that ranks any options by Elo per metric | Local arena page, Elo board with ranges and costs |
 | **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub, Hugging Face, video sites and non-English pages; counts sources read in full | Answer with source links, dates, read scope and access gaps |
+| **SigmaDeepLook** | `sigmadeeplook` | Helper for files an agent cannot read: video, speech, scanned PDF or image, binary, odd container. Plain text and data are read directly | Evidence with file paths, limits, and a side-by-side `view.html` |
 
 ### Which one do I need?
 
@@ -111,6 +113,10 @@ Ranks many options by your taste. After a short grilling round it builds an **ar
 
 Reads public sources with bundled stdlib Python readers for Reddit, Hacker News, GitHub, Stack Overflow and YouTube comments, plus X through Claude in Chrome on the owner's existing session. One interface (`read.py`), a 24-hour cache, per-host rate limits and source scoring. Reports contradictions, blocked and partial reads. It never logs in, solves CAPTCHAs or evades bot checks.
 
+### SigmaDeepLook
+
+The helper for content an agent cannot read with its own tools: video frames, speech, scanned PDFs and images, fax TIFFs, binaries and odd containers. Plain text, CSV, JSON and code stay with the agent, which reads or queries them itself. A one-line gate decides; `--ask` gives one exact answer. It never runs the input, uses no network, and lists each step it could not do, with its install line. Python alone covers the basics.
+
 ---
 
 ## Install
@@ -149,6 +155,7 @@ $sigmarefactor
 $easytalk
 $storgestudio-arena-create Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
+$sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
 ```
 
 </td>
@@ -167,6 +174,7 @@ $sigmaresearch Research recent discussions about local language models
 /skill:easytalk
 /skill:storgestudio-arena-create Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
+/skill:sigmadeeplook What happens at 2:10 in ~/clips/demo.mp4?
 ```
 
 </td>
@@ -186,6 +194,7 @@ $sigmaresearch Research recent discussions about local language models
 | `easytalk` | “easy talk” · status or question batch · `EASYTALK REPLY` | Conversation mode until “easy talk off” |
 | `storgestudio-arena-create` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |
+| `sigmadeeplook` | a file or folder path · a question about it | Evidence with paths and a Limits list; never runs the file |
 
 ### Requirements
 
@@ -202,6 +211,7 @@ $sigmaresearch Research recent discussions about local language models
 | EasyTalk | A writable output folder and a browser or HTML preview; chat fallback when unavailable |
 | Arena Create | Python 3 (standard library only) and a browser; the server listens on 127.0.0.1 |
 | SigmaResearch | Python 3 for the bundled readers · `yt-dlp` for YouTube comments · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
+| SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 
 Skills use the shell native to the machine that runs the agent (PowerShell on Windows, POSIX shell elsewhere). They do not assume WSL.
 

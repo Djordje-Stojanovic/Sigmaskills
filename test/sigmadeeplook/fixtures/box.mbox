@@ -1,0 +1,23 @@
+From a1@example.invalid Thu Jan  1 10:01:00 2026
+From: a1@example.invalid
+Subject: First
+Date: Thu, 01 Jan 2026 10:01:00 +0000
+
+hello
+
+>From the top, escaped line
+
+From a2@example.invalid Thu Jan  1 10:02:00 2026
+From: a2@example.invalid
+Subject: Second
+Date: Thu, 01 Jan 2026 10:02:00 +0000
+
+second body
+
+From a3@example.invalid Thu Jan  1 10:03:00 2026
+From: a3@example.invalid
+Subject: Third
+Date: Thu, 01 Jan 2026 10:03:00 +0000
+
+third body
+

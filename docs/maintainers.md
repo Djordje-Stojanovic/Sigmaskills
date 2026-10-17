@@ -24,6 +24,7 @@ Sigmaskills/
 ├── sigmaship/                SKILL.md · agents/ · references/
 ├── sigmawrite/               SKILL.md · agents/
 ├── sigmaresearch/             SKILL.md · agents/ · references/ · scripts/ (readers, source-log counter)
+├── sigmadeeplook/             SKILL.md · agents/ · references/ · scripts/ (look.py and its type modules)
 ├── sigmarefactor/            SKILL.md · agents/ · references/
 ├── easytalk/                 SKILL.md · agents/ · template.html
 └── storgestudio-arena-create/ SKILL.md · agents/ · references/ · kit/
