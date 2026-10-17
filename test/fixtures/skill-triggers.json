@@ -140,9 +140,9 @@
     "near": "sigmadeeplook"
   },
   {
-    "prompt": "What is inside this 2 GB CSV export",
-    "skill": "sigmadeeplook",
-    "near": "sigmaresearch"
+    "prompt": "Total the amount column of this 2 GB CSV export",
+    "skill": null,
+    "avoid": "sigmadeeplook"
   },
   {
     "prompt": "Transcribe this MP3 recording",

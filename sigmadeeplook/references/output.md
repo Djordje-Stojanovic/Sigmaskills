@@ -11,8 +11,11 @@ One home for what `look.py` prints and writes. Read this when you need a field n
 
 `look.py gate <file>` prints one line in under a second and writes nothing:
 
-- `READ <path> (~N tokens)`: valid UTF-8 text of at most 25,000 estimated tokens (about 100 KB), of a kind you can read yourself (plain text, source, csv, json, md, eml, ics...). Stop and use your own Read.
-- `LOOK quick|standard|deep <path> - <kind>: <why>`: binary, media or text over the limit. The tier is a recommendation.
+- `READ <path> (~N tokens)`: plain text (csv, tsv, json, jsonl, yaml, toml, xml, ini, code, logs, subtitles) that is valid UTF-8 and has no NUL byte. You read it or query it yourself at any size. The first 64 KB decide: the gate costs the same on a 60 MB file.
+- `READ <path> (~N tokens, over one read: query it with python or grep)`: the same, too big for one read. Query it; do not summarise it with the look.
+- `READ <path> (~N tokens)` for email (eml, mbox, ics, vcf), web (html) and notebooks (ipynb) only when small and text: over one read they are `LOOK`, because their attachments, pages and outputs are parts a plain read misses.
+- `LOOK quick|standard|deep <path> - <kind>: <why>`: media, scans, binaries, containers, Office, PDF, sqlite, parquet, and text that is not UTF-8 (the look decodes it and flags the encoding). The tier is a recommendation.
+- `--budget N` (the caller's own reading budget): plain text over N tokens becomes `LOOK`.
 
 Every file gets a full look, small text included (fix round 4): a structural profile with exact counts in step 1, fuller lists in `--more`, and the file itself whole at the end of the stored stream. A small text file adds one note that reading it whole is also fine. Every print carries a `Counts:` line (rows, records, paragraphs, sheets, slides, cues, members, frames: whatever the format has). `--no-direct` leaves the note out.
 
@@ -56,6 +59,18 @@ The printed figure includes that line and is within 10 % of the real size (4 ASC
 - `0` looked (read Watch out and Not looked at before you trust it). `1` internal error: report the command and the last stderr lines, do not retry in a loop. `2` refused by a safety rule (unsafe archive, URL without `--allow-network`, a bomb): the reason is in Watch out; do not work around it. `3` unknown type: identity, entropy and strings are still written.
 - `python -I` hides installed packages and makes the look report tools as missing; never use it.
 - A flag kind ending in `?` is a lead, not a finding.
+
+## Measured (ticket 83 P0.14b, 17-10)
+
+- Media: 5 files, 38 keyed questions, 2 headless Haiku 5.5 runs, n = 1 each. Plain agent 38/38, 28 turns, $0.061. Plain agent with deeplook 38/38, 20 turns, $0.035: -43 % cost, -29 % turns, +45 % time.
+- Documents and tables: 30 files, 240 questions (held-out set 3, one blind run). Wrong answers: step 1 alone 66.7 %; all three steps 37.1 %; with `--ask` added 32.5 %; a plain agent with tools 0 % at about the same tokens. This is why plain text and data go to the agent.
+
+## Bare machine (Python 3.10+, standard library only, no tools)
+
+Checked 17-10 in a venv with no packages and nothing but Python on PATH: every fixture ran with exit 0, except a nested archive, which the safety screen refuses by design. Each missing tool is a Not-looked-at row with its install line.
+
+- Works with the standard library: csv and tsv (any encoding, profile and counts), jsonl and JSON records, sqlite tables (read-only), xlsx sheets with hidden sheets and formulas, docx tracked changes and comments, pptx slides, hidden slides and notes, pdf page index and page text (page numbers from the page tree; a page with no text layer keeps its number), pdf form fields and risky keys, eml and mbox messages and attachment names, ics events (no daylight-saving expansion), ipynb cells and errors, html main text by heuristic, parquet footer and schema (no values), zip, tar and gzip listings, PE and ELF headers, STL and GLB counts, WAV and FLAC headers, MP4 container facts (duration, codecs, subtitle track), image pixel size from the header.
+- Needs a tool or package (listed as Not looked at): ffmpeg (frames, contact sheets, loudness, words), faster-whisper (speech), tesseract (OCR of images and scanned pages), pillow (pixels, EXIF), pymupdf (page pictures, exact fields), LibreOffice (office renders, legacy .doc text), pyarrow (parquet values), icalendar (recurrences), extract-msg (Outlook .msg; or export to .eml), trafilatura (web main text), pefile and lief (binary detail), Detect It Easy, capa and FLOSS (packer, capabilities, obfuscated strings), fonttools (font names and glyphs), trimesh (mesh quality), cairosvg (svg render).
 
 ## Install
 

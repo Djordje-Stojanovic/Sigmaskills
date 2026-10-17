@@ -70,14 +70,15 @@ class Gate(unittest.TestCase):
             out = self.gate(FX / name)
             self.assertRegex(out, r"^LOOK (quick|standard|deep) ", name)
 
-    def test_big_text_is_looked_at_and_budget_moves_the_line(self):
+    def test_big_text_is_read_by_the_agent_and_budget_moves_the_line(self):
+        # 17-10 owner: plain text, CSV, JSON and code are read or queried by the agent itself, at any size
         d = Path(tempfile.mkdtemp(prefix="sdl-g-"))
         f = d / "big.csv"
         f.write_bytes(big_csv(9000))
-        self.assertRegex(self.gate(f), r"^LOOK ", "over 25k tokens")
+        self.assertRegex(self.gate(f), r"^READ .+over one read: query it", "over 25k tokens is still text the agent queries")
         small = d / "small.csv"
         small.write_bytes(big_csv(300))
-        self.assertRegex(self.gate(small), r"^READ ")
+        self.assertRegex(self.gate(small), r"^READ .+ \(~\d+ tokens\)$")
         self.assertRegex(self.gate(small, "--budget", "100"), r"^LOOK ", "a small budget turns READ into LOOK")
 
     def test_gate_is_one_short_line(self):

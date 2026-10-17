@@ -21,7 +21,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
      easytalk   →  plain chat and interactive status or question boards
      arena      →  blind pairs that rank any options by Elo
   Σ  research   →  read public sources, record evidence and access gaps
-  Σ  deeplook   →  see inside any file: video, audio, PDF, Office, binary, more
+  Σ  deeplook   →  helper for what agents cannot read: video, speech, scans, binaries
 ```
 
 ---
@@ -63,7 +63,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **EasyTalk** | `easytalk` | Plain chat with status and question boards | Interactive HTML board and copied replies |
 | **Arena Create** | `storgestudio-arena-create` | Blind-pairs arena that ranks any options by Elo per metric | Local arena page, Elo board with ranges and costs |
 | **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub, Hugging Face, video sites and non-English pages; counts sources read in full | Answer with source links, dates, read scope and access gaps |
-| **SigmaDeepLook** | `sigmadeeplook` | See inside any file: video, audio, image, PDF, Office, binary, font, archive, data, notebook, HTML, 3D, mail | Evidence with file paths, limits, and a side-by-side `view.html` |
+| **SigmaDeepLook** | `sigmadeeplook` | Helper for files an agent cannot read: video, speech, scanned PDF or image, binary, odd container. Plain text and data are read directly | Evidence with file paths, limits, and a side-by-side `view.html` |
 
 ### Which one do I need?
 
@@ -115,7 +115,7 @@ Reads public sources with bundled stdlib Python readers for Reddit, Hacker News,
 
 ### SigmaDeepLook
 
-Turns a file an agent cannot open into machine facts, readable text and a few pictures sized for the model: a video becomes a transcript, flags and a contact sheet; a PDF becomes per-page verdicts, text and renders. A standard-library Python script reads 14 file types, never runs the input, uses no network, and lists every step it could not do. Missing tools become install lines, not crashes.
+The helper for content an agent cannot read with its own tools: video frames, speech, scanned PDFs and images, fax TIFFs, binaries and odd containers. Plain text, CSV, JSON and code stay with the agent, which reads or queries them itself. A one-line gate decides; `--ask` gives one exact answer. It never runs the input, uses no network, and lists each step it could not do, with its install line. Python alone covers the basics.
 
 ---
 

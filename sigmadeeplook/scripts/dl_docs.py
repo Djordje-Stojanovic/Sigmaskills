@@ -77,39 +77,94 @@ PDF_HINTS = {"JAVASCRIPT": "the PDF carries script; it was not run", "OPEN-ACTIO
              "XFA": "XFA form: page text may be a placeholder", "AUTO-ACTION": "additional actions on events", "RICH-MEDIA": "embedded media or Flash"}
 
 
-def pdf_raw(path):
-    """Stdlib view of a PDF: page count, risky keys, form field names, and rough text from uncompressed or Flate streams."""
+PDF_OBJ_RE = re.compile(rb"(?<!\d)(\d+)\s+0\s+obj\b(.*?)\bendobj\b", re.S)
+PDF_REF_RE = re.compile(rb"(\d+)\s+0\s+R")
+
+
+def pdf_show_text(s):
+    """Rough text of one content stream: the Tj and TJ strings in order (no font maps, so no CID or ToUnicode text)."""
+    if b"BT" not in s or not (b"Tj" in s or b"TJ" in s):
+        return ""
+    t = []
+    for a, arr in re.findall(rb"\(((?:\\.|[^\\)])*)\)\s*Tj|\[(.*?)\]\s*TJ", s, re.S):
+        if a:
+            t.append(a.decode("latin-1"))
+        else:
+            t.append("".join(x.decode("latin-1") for x in re.findall(rb"\(((?:\\.|[^\\)])*)\)", arr)))
+    return " ".join(t)
+
+
+def pdf_objects(b):
+    """object number -> (dictionary bytes, decoded stream bytes or None). Flate only; object streams are not expanded."""
     import zlib
-    b = open(path, "rb").read(80 << 20)
-    pages = len(re.findall(rb"/Type\s*/Page(?![s\w])", b))
-    flags = {}
-    streams = []
-    for m in re.finditer(rb"stream\r?\n(.*?)\r?\nendstream", b, re.S):
-        raw = m.group(1)
-        head = b[max(0, m.start() - 300):m.start()]
+    objs = {}
+    for m in PDF_OBJ_RE.finditer(b):
+        body = m.group(2)
+        k = re.search(rb"\bstream\r?\n", body)
+        if not k:
+            objs[int(m.group(1))] = (body, None)
+            continue
+        head = body[:k.start()]
+        end = body.rfind(b"endstream")
+        raw = body[k.end():end if end > 0 else len(body)]
+        raw = raw[:-2] if raw.endswith(b"\r\n") else raw[:-1] if raw.endswith(b"\n") else raw  # one line break only: it may be data
         if b"FlateDecode" in head:
             try:
                 raw = zlib.decompress(raw)
             except zlib.error:
-                continue
-        streams.append(raw)
-    blob = b + b"\n".join(s for s in streams if b"obj" in s[:20] or b"/Type" in s[:200])
+                raw = None
+        objs[int(m.group(1))] = (head, raw)
+    return objs
+
+
+def pdf_page_texts(objs):
+    """Text of each page in page-tree order, from the page's own /Contents. None when the tree cannot be walked."""
+    root = next((n for n, (d, _) in objs.items() if re.search(rb"/Type\s*/Catalog\b", d)), None)
+    m = re.search(rb"/Pages\s+(\d+)\s+0\s+R", objs[root][0]) if root is not None else None
+    if not m:
+        return None
+    order = []
+
+    def walk(num, depth):
+        if depth > 40 or num not in objs:
+            return False
+        d = objs[num][0]
+        if b"/Kids" in d:
+            km = re.search(rb"/Kids\s*\[(.*?)\]", d, re.S)
+            return bool(km) and all(walk(int(r.group(1)), depth + 1) for r in PDF_REF_RE.finditer(km.group(1)))
+        if re.search(rb"/Type\s*/Page\b", d):
+            order.append(num)
+            return True
+        return False
+
+    if not walk(int(m.group(1)), 0):
+        return None
+    texts = []
+    for num in order:
+        cm = re.search(rb"/Contents\s*(\[.*?\]|\d+\s+0\s+R)", objs[num][0], re.S)
+        parts = [pdf_show_text(objs[int(r.group(1))][1] or b"") for r in PDF_REF_RE.finditer(cm.group(1))] if cm else []
+        texts.append(" ".join(x for x in parts if x))
+    return texts
+
+
+def pdf_raw(path):
+    """Stdlib view of a PDF: page count, risky keys, form field names, and rough text per page (None when the page tree is unreadable)."""
+    with open(path, "rb") as fh:
+        b = fh.read(80 << 20)
+    pages = len(re.findall(rb"/Type\s*/Page(?![s\w])", b))
+    objs = pdf_objects(b)
+    flags = {}
+    streams = [raw for _, raw in objs.values() if raw]
+    blob = b + b"\n".join(s for s in streams if b"/Type" in s[:200])
     for key, kind in PDF_KEYS:
         if re.search(re.escape(key) + rb"(?![A-Za-z])", blob):
             flags[kind] = True
     fields = [m.group(1).decode("latin-1") for m in re.finditer(rb"/T\s*\(([^)]*)\)", blob)]
-    texts = []
-    for s in streams:
-        if b"BT" in s and (b"Tj" in s or b"TJ" in s):
-            parts = re.findall(rb"\(((?:\\.|[^\\)])*)\)\s*Tj|\[(.*?)\]\s*TJ", s, re.S)
-            t = []
-            for a, arr in parts:
-                if a:
-                    t.append(a.decode("latin-1"))
-                else:
-                    t.append("".join(x.decode("latin-1") for x in re.findall(rb"\(((?:\\.|[^\\)])*)\)", arr)))
-            texts.append(" ".join(t))
-    return {"pages": pages, "flags": sorted(flags), "fields": fields, "texts": texts, "encrypted": b"/Encrypt" in b}
+    try:
+        page_texts = pdf_page_texts(objs)
+    except Exception:
+        page_texts = None
+    return {"pages": pages, "flags": sorted(flags), "fields": fields, "page_texts": page_texts, "encrypted": b"/Encrypt" in b}
 
 
 def look_pdf(look):
@@ -152,8 +207,10 @@ def look_pdf(look):
     else:
         if not fitz:
             look.skip("per-page text layer, page pictures, exact fields", "PyMuPDF (fitz) not importable" if not look.no_tools else "disabled by --no-tools", "fitz")
-        if raw["texts"] and len(raw["texts"]) >= 1:
-            text_pages = raw["texts"]
+        if raw["page_texts"] is not None:
+            text_pages = raw["page_texts"]
+        else:
+            look.skip("text per page (the stdlib reader could not walk the page tree, so no page numbers are given)", "page tree not readable without PyMuPDF", "fitz")
     look.fact("pages", pages)
     look.fact("encrypted", bool(encrypted))
     look.fact("fields", fields)

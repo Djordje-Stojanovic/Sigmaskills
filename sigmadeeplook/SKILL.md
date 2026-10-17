@@ -1,17 +1,19 @@
 ---
 name: sigmadeeplook
-description: Look inside, analyse or inspect what you cannot read: video (watch), audio (transcribe), image, PDF, Excel with hidden sheets, Office, binary imports, sqlite database, archive, font, 3D, model, log; also text too big to read. Do not use for small text file, code you can read, repo review or web research.
+description: Use to look inside, analyse, watch or transcribe video, audio, scans, hidden-sheet Excel, sqlite database, binary imports; --ask gives one exact answer. Do not use for plain text, CSV, JSON or code.
 ---
 
 # SigmaDeepLook
 
 ## Before you look
 
-Run `python scripts/look.py gate <file>` (about 30 tokens out, instant). `READ <path> (~N tokens)` means stop and open the file with your own tools: a look adds nothing. `LOOK quick|standard|deep (...)` means carry on below. Never look at a file you were only asked to edit, move or copy. Use `python` on Windows, `python3` elsewhere; never add `-I`, it hides installed packages.
+This skill is the helper for what your own tools cannot read. It is opt-in. Plain text, CSV, JSON, YAML, code and logs are yours: read them, or query them with Python or grep, at any size. Do not hand them to the look.
+
+Run `python scripts/look.py gate <file>` (about 30 tokens out, instant) when a file is media, a scan, a binary, a container, or you are not sure you can read it. `READ <path> (~N tokens)` means plain text: use your own tools. `READ ... over one read` means the same for a file too big to open whole: query it, do not summarise it. `LOOK quick|standard|deep (...)` means carry on below. Never look at a file you were only asked to edit, move or copy. Use `python` on Windows, `python3` elsewhere; never add `-I`, it hides installed packages.
 
 ## Three steps, each only if the last was not enough
 
-You cannot play a video, hear audio, open a binary or read a 60 MB table. This skill turns any file into a ranked stream of facts: identity and traps first, then structure, then samples, then deep content. You pay only for what you read.
+You cannot play a video, hear audio, see a scan or open a binary. This skill turns any such file into a ranked stream of facts: identity and traps first, then structure, then samples, then deep content. You pay only for what you read.
 
 1. **Step 1, about 1,000 tokens.** `python scripts/look.py <file>` prints what the file is, **Watch out** (the traps: hidden sheets, a lying extension, a macro, a cut file, an unreliable date), the top facts, **Read next** (the files in the look folder, with their token cost) and **Not looked at** (what a missing tool cost you, with its install line). Many questions end here.
 2. **Step 2, about 3,000 tokens in all.** `python scripts/look.py <file> --more` prints the next ~2,000 tokens of the same stream. It continues from a cursor saved in the look folder and never repeats.
@@ -58,7 +60,7 @@ Open the reference for the type before you answer: when `look.py` is not enough,
 | exe, dll, ELF, Mach-O, wasm, class, dex, unknown bytes | [binary](references/binary.md) |
 | ttf, otf, woff, woff2 | [font](references/font.md) |
 | zip, tar, gz, 7z, rar, iso, Docker image, git bundle | [archive](references/archive.md) |
-| csv, tsv, json, jsonl, parquet, sqlite, avro, xml, yaml, toml | [data](references/data.md) |
+| parquet, sqlite, avro (plain csv, tsv, json, jsonl, xml, yaml, toml are read by you, see Before you look) | [data](references/data.md) |
 | ipynb | [notebook](references/notebook.md) |
 | html file or one URL | [web](references/web.md) |
 | glb, gltf, stl, obj, ply, usd, fbx, blend | [3d](references/3d.md) |

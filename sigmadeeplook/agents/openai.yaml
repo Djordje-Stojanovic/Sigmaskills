@@ -1,7 +1,7 @@
 interface:
   display_name: SigmaDeepLook
-  short_description: Look inside a file too big to read, binary or media
-  default_prompt: Use $sigmadeeplook when a file is too big to read, binary or media.
+  short_description: Look inside video, speech, scans, binaries and odd containers
+  default_prompt: Use $sigmadeeplook when a file is media, a scan, a binary or a container you cannot read; plain text and data are yours.
     Run its gate first; read about 1,000 tokens, then continue with --more or drill
     down only if you need more, and report what it shows and what it could not look at.
 policy:
