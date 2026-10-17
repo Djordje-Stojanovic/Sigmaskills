@@ -794,13 +794,13 @@ def walk_stats(v):
             st["objects"] += 1
             st["keys"] += len(x)
             if len(x) >= 3 and sum(isinstance(y, dict) for y in x.values()) >= 0.8 * len(x):   # a map of records: name -> fields
-                arrays.append((path or "(top level)", [dict({"@key": k}, **y) if isinstance(y, dict) else {"@key": k, "value": y} for k, y in x.items()]))
+                arrays.append((path or "(top level)", [dict({"@key": k}, **y) if isinstance(y, dict) else {"@key": k, "value": y} for k, y in x.items()], "map"))
             for k, y in reversed(list(x.items())):
                 stack.append((y, f"{path}.{k}" if path else str(k), d + 1))
         elif isinstance(x, list):
             st["arrays"] += 1
             st["array items"] += len(x)
-            if len(x) >= 2 and sum(isinstance(y, dict) for y in x) >= 0.8 * len(x):
+            if x and sum(isinstance(y, dict) for y in x) >= 0.8 * len(x):   # one-element arrays too: they join their siblings' set
                 arrays.append((path or "(top level)", x))
             for i in range(len(x) - 1, -1, -1):
                 stack.append((x[i], f"{path}[{i}]", d + 1))
@@ -812,8 +812,41 @@ def walk_stats(v):
     return st, arrays, leaves
 
 
+def record_sets(arrays):
+    """Every array of records at the same path shape merged into one set, whatever branch it sits in: `orders[3].items` and
+    `orders[7].items` are both `orders[].items[]`. -> [(shape, [(concrete path of the record, record)], parents)] largest first."""
+    groups = {}
+    for path, arr, *kind in arrays:
+        is_map = bool(kind)
+        shape = re.sub(r"\[\d+\]", "[]", path) + (".*" if is_map else "" if path == "(top level)" else "[]")
+        g = groups.setdefault(shape, ([], []))
+        g[1].append(len(arr))
+        top = path == "(top level)"
+        for i, rec in enumerate(arr):
+            if is_map:
+                g[0].append(((rec["@key"] if top else f"{path}.{rec['@key']}"), rec))
+            else:
+                g[0].append(((f"[{i}]" if top else f"{path}[{i}]"), rec))
+    out = [(shape, recs, sizes) for shape, (recs, sizes) in groups.items() if len(recs) >= 2]
+    out.sort(key=lambda t: (-len(t[1]), t[0].count("[]"), t[0]))
+    return out
+
+
+def record_row(path, rec):
+    """One record as `path: key=value; ...` with its scalar fields only (nested record lists are listed in their own set)."""
+    if not isinstance(rec, dict):
+        return f"{path}: {short(rec, 80)}"
+    bits = []
+    for k, x in flatten(rec).items():
+        if isinstance(x, Multi) or "[]" in k and not k.endswith(LEN):
+            continue
+        bits.append(f"{k}={short(x, 60)}")
+    return f"{path}: " + "; ".join(bits)
+
+
 def doc_profile(look, v, what, pri=92):
-    """Exact structure counts, every array of records profiled field by field, and every scalar leaf `path = value` (for --more)."""
+    """Exact structure counts, every set of records (all branches, every depth) profiled field by field with the path of each
+    extreme, and every scalar leaf `path = value` (for --more)."""
     st, arrays, leaves = walk_stats(v)
     top = type(v).__name__
     pairs = [("top level", f"{'object' if top == 'dict' else 'array' if top == 'list' else top}" + (f" of {len(v)} {'keys' if isinstance(v, dict) else 'items'}" if isinstance(v, (dict, list)) else "")),
@@ -828,24 +861,33 @@ def doc_profile(look, v, what, pri=92):
         for k, x in nest[:20]:
             if isinstance(x, dict) and x:
                 look.line(f"Keys of {k} ({len(x)}): " + "; ".join(f"{kk} = {short(xx, 40)}" if not isinstance(xx, (dict, list)) else f"{kk}: {'object' if isinstance(xx, dict) else 'array'} of {len(xx)}" for kk, xx in list(x.items())[:40]), pri - 20)
-    arrays.sort(key=lambda t: -len(t[1]))
-    seen, listed = set(), []
-    for path, arr in arrays[:4]:
-        base = re.sub(r"\[\d+\]", "[]", path)
-        if base in seen:
-            continue
-        seen.add(base)
-        p, extra = profile(list(enumerate(arr)), False, "index")
-        emit(look, p, extra, f"Records at {path} ({len(arr)} items, index from 0)", pri - 6 if path == arrays[0][0] else pri - 30, 28)
-        if len(arr) <= 3000:
-            listed.append("" if path == "(top level)" else path)
-            rows = []
-            for i, rec in enumerate(arr):
-                fl = flat_of(rec) if isinstance(rec, (dict, list)) else {"value": rec}
-                rows.append(f"[{i}] " + "; ".join(f"{k}={short(x if not isinstance(x, Multi) else ', '.join(map(str, x)), 60)}" for k, x in fl.items() if not k.endswith(LEN)))
-            for k in range(0, len(rows), 20):
-                look.line(f"Records at {path} {k}-{min(len(rows), k + 20) - 1}:\n" + "\n".join(rows[k:k + 20]), 18, "records")
-    rest = [(p, x) for p, x in leaves if not any(p.startswith(lp + "[") for lp in listed)]
+    sets = record_sets(arrays)
+    if sets:
+        look.fact("record_sets", {shape: len(recs) for shape, recs, _ in sets[:40]})
+        look.line("Record sets (every array of objects at every depth, all branches merged; `[]` = every element): "
+                  + "; ".join(f"{shape} {len(recs):,} records" + (f" in {len(sizes):,} arrays ({min(sizes)}..{max(sizes)} each)" if len(sizes) > 1 else "") for shape, recs, sizes in sets[:30]), pri + 1, "counts")
+    covered = []
+    shapes = {s for s, _, _ in sets}
+    for k, (shape, recs, sizes) in enumerate(sets[:30]):
+        base = "" if shape == "(top level)" else shape[:-2] if shape.endswith("[]") else shape[:-2] if shape.endswith(".*") else shape
+        own = []   # a nested list of records that is a set of its own is profiled there; here it is only counted
+        for path, rec in recs:
+            if isinstance(rec, dict) and any(isinstance(x, list) and (f"{base}[].{kk}[]" if base else f"[].{kk}[]") in shapes for kk, x in rec.items()):
+                rec = {(kk + "[]" + LEN if isinstance(x, list) and (f"{base}[].{kk}[]" if base else f"[].{kk}[]") in shapes else kk): (len(x) if isinstance(x, list) and (f"{base}[].{kk}[]" if base else f"[].{kk}[]") in shapes else x)
+                       for kk, x in rec.items()}
+            own.append((path, rec))
+        p, extra = profile(own, False, "record")
+        emit(look, p, extra, f"Records of {shape} ({len(recs):,}; positions are record paths)", (pri - 6 - 2 * k) if k < 4 else pri - 34, 28, 24)
+        if len(recs) <= 3000:
+            covered.append(shape)
+            rows = [record_row(path, rec) for path, rec in recs]
+            for j in range(0, len(rows), 20):
+                look.line(f"Records of {shape} {j + 1}-{min(len(rows), j + 20)} of {len(rows)}:\n" + "\n".join(rows[j:j + 20]), 18, "records")
+
+    def inside(path):
+        n = re.sub(r"\[\d+\]", "[]", path)
+        return any(n.startswith(c + ".") or n == c or (c == "(top level)" and n.startswith("[]")) or (c.endswith(".*") and n.startswith(c[:-1])) for c in covered)
+    rest = [(p, x) for p, x in leaves if not inside(p)]
     rows = [f"{p} = {short(x, 80)}" for p, x in rest]
     for k in range(0, min(len(rows), 20000), 40):
         look.line(f"Values {k + 1}-{min(len(rows), k + 40)} of {len(rows)} (path = value, outside the record lists):\n" + "\n".join(rows[k:k + 40]), 17, "values")

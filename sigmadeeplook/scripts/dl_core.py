@@ -35,9 +35,11 @@ BIG_ARTIFACT_TOKENS = 5_000  # a text artifact above this is searched or sliced,
 # What the agent READS is a separate ladder (dl_write.py): step 1 prints ~1,000 tokens, then `--more` continues from a cursor.
 TIERS = ("quick", "standard", "deep")
 DIRECT_KINDS = {  # type -> subtypes that are plain text (None = every file of that type)
-    "data": {"csv", "tsv", "json", "jsonl", "xml", "yaml", "toml"},
+    "data": {"csv", "tsv", "json", "jsonl", "xml", "yaml", "toml", "ini"},
     "code": None, "email": {"eml", "mbox", "ics", "vcf"}, "web": {"html"}, "notebook": {"ipynb"}, "log": None, "subtitle": None,
 }
+
+HANDLERS = {}   # type -> (module, function); look.py fills it (an unwrapped member is looked at by its own type)
 
 # ---------------------------------------------------------------- install hints (one home)
 TOOLS = {  # command name -> (winget, apt, brew)
@@ -259,19 +261,30 @@ def decode_text(b):
         return b[3:].decode("utf-8", "replace"), "utf-8-sig"
     if b.startswith((b"\xff\xfe", b"\xfe\xff")):
         try:
-            return b.decode("utf-16"), "utf-16"
+            return b[:len(b) - len(b) % 2].decode("utf-16"), "utf-16"
         except UnicodeDecodeError:
             return None, None
     if b"\0" in b:
+        import dl_delim   # UTF-16 without a byte-order mark: NUL on every second byte
+        text, enc = dl_delim.sniff_encoding(b)
+        if enc.startswith("utf-16") and dl_delim.is_text_bytes(b):
+            return text, enc
         return None, None
     try:
         return b.decode("utf-8"), "utf-8"
-    except UnicodeDecodeError:
-        pass
+    except UnicodeDecodeError as e:
+        if e.start >= len(b) - 3:   # a multi-byte character cut by a capped read
+            try:
+                return b[:e.start].decode("utf-8"), "utf-8"
+            except UnicodeDecodeError:
+                pass
     ctrl = sum(1 for c in b if c < 9 or 13 < c < 32)
     if b and ctrl / len(b) > 0.02:
         return None, None
-    return b.decode("latin-1"), "latin-1"
+    try:
+        return b.decode("cp1252"), "cp1252"
+    except UnicodeDecodeError:
+        return b.decode("latin-1"), "latin-1"
 
 
 def direct_tokens(nbytes):
@@ -316,7 +329,7 @@ def collapse_direct(look):
 
 
 SOURCE_CONTENT_MAX = 600_000   # bytes: a text file up to this size is also in the stream, whole, after every fact (--more reaches it)
-SOURCE_KINDS = {"data": {"csv", "tsv", "json", "jsonl", "xml", "yaml", "toml"}, "code": None, "log": {"log"}, "subtitle": None,
+SOURCE_KINDS = {"data": {"csv", "tsv", "json", "jsonl", "xml", "yaml", "toml", "ini"}, "code": None, "log": {"log"}, "subtitle": None,
                 "email": {"eml", "ics", "vcf", "mbox"}, "web": {"html"}, "image": {"svg"}}
 
 
@@ -332,7 +345,26 @@ def add_source_content(look):
         return
     if text is None:
         return
+    if any(f["kind"] in ("SECRET?", "PRIVATE-KEY") for f in look.flags):   # the facts did not print the values: the whole file must not either
+        look.write_text("file.redacted.txt", redact(text), "the file itself, whole, with secret-like values replaced (after every fact)", value=-6)
+        return
     look.add(look.path, "text", "the file itself, whole (after every fact)", value=-6)
+
+
+def redact(text):
+    """Values of secret-like keys (`password = x`, `api_key: x`) and key-shaped strings replaced by their kind and length."""
+    import dl_bins
+    import dl_conf
+    out = []
+    for ln in text.splitlines():
+        m = re.match(r"^(\s*[\"']?([\w.\-]+)[\"']?\s*[=:]\s*)(.+?)\s*$", ln)
+        if m and dl_conf.SECRET_RE.search(m.group(2)):
+            ln = f"{m.group(1)}(secret-like value, {len(m.group(3))} chars; not printed)"
+        else:
+            for name, rx in dl_bins.SECRET_PATTERNS:
+                ln = rx.sub(lambda x, n=name: f"({n}, {len(x.group(0))} chars; not printed)", ln)
+        out.append(ln)
+    return "\n".join(out)
 
 
 # ---------------------------------------------------------------- detection
@@ -443,6 +475,10 @@ def detect(path):
         t, st, mg = "archive", "rar", "RAR"
     elif is_(b"\x28\xb5\x2f\xfd"):
         t, st, mg = "archive", "zstd", "zstd"
+    elif is_(b"\xd4\xc3\xb2\xa1", b"\xa1\xb2\xc3\xd4", b"\x4d\x3c\xb2\xa1", b"\xa1\xb2\x3c\x4d"):
+        t, st, mg = "data", "pcap", "pcap capture"
+    elif is_(b"\x0a\x0d\x0d\x0a") and h[8:12] in (b"\x4d\x3c\x2b\x1a", b"\x1a\x2b\x3c\x4d"):
+        t, st, mg = "data", "pcapng", "pcapng capture"
     elif is_(b"Obj\x01"):
         t, st, mg = "data", "avro", "Avro object container"
     elif is_(b"ElfFile\x00"):
@@ -640,7 +676,7 @@ def text_sniff(p, h, ext, size):
     if ext == ".toml" or (j == "[" and ext not in (".json", ".jsonl", ".ndjson", ".geojson") and re.match(r"\[\[?[\w.\- \"']+\]\]?[ \t]*(#.*)?\r?\n", s)
                           and re.search(r"(?m)^[\w.\-\"']+\s*=", s[:4000])):
         # a [section] header and key = value lines: TOML (or INI); never JSON, so no false wrong-format finding
-        return ("data", "toml", "TOML text ([table] and key = value lines)") if ext in (".toml", "") or not re.search(r"(?m)^\s*[;]", s[:4000]) and ext not in (".ini", ".cfg", ".conf") else ("code", "text", "INI text ([section] and key = value lines)")
+        return ("data", "toml", "TOML text ([table] and key = value lines)") if ext in (".toml", "") or not re.search(r"(?m)^\s*[;]", s[:4000]) and ext not in CONFIG_EXT else ("data", "ini", "INI text ([section] and key = value lines)")
     if j in "{[":
         if '"nbformat"' in s[:4000]:
             return "notebook", "ipynb", "JSON with nbformat"
@@ -680,16 +716,41 @@ def text_sniff(p, h, ext, size):
         return "data", "toml", "extension .toml (text)"
     if ext in (".csv", ".tsv"):
         return "data", ext[1:], f"extension {ext} (text)"
-    sample = "\n".join(s.splitlines()[:50])
-    try:
-        import csv
-        dia = csv.Sniffer().sniff(sample, delimiters=",;\t|")
-        rows = [r for r in csv.reader(sample.splitlines(), dia)]
-        if len(rows) >= 3 and len({len(r) for r in rows[:10]}) <= 2 and len(rows[0]) >= 2:
-            return "data", "tsv" if dia.delimiter == "\t" else "csv", f"csv.Sniffer delimiter {dia.delimiter!r}"
-    except Exception:
-        pass
+    cfg = config_sniff(s, ext)
+    if cfg:
+        return "data", "ini", cfg
+    if ext not in (".md", ".rst", ".adoc", ".py", ".js", ".ts", ".sh", ".ps1", ".html", ".htm"):
+        import dl_delim   # the same field count on almost every line, with a header: a delimited table, whatever the extension says
+        lines = [x for x in s.splitlines()[:200] if x.strip()]
+        if len(lines) >= 3:
+            d, mode, share = dl_delim.sniff_dialect("\n".join(lines) + "\n")
+            if mode >= 2 and share >= 0.9 and (d != ":" or mode >= 3) and (d != "," or share >= 0.97 or ext in (".dat", ".txt", "")):
+                return "data", "tsv" if d == "\t" else "csv", f"delimited text ({ {chr(9): 'tab'}.get(d, repr(d))}, {mode} fields on {share:.0%} of lines)"
     return "code", "text", f"text ({enc})"
+
+
+INI_SECTION_RE = re.compile(r"^\s*\[[^\]\n]{1,120}\]\s*([;#].*)?$")
+INI_KV_RE = re.compile(r"^\s*[^=:\s\[;#][^=:\n]{0,120}?\s*[=:]\s*.*$|^\s*[A-Za-z_][\w.\-]{0,120}\s+\S.*$")
+CONFIG_EXT = {".ini", ".cfg", ".conf", ".cnf", ".properties", ".env", ".desktop", ".inf", ".reg", ".editorconfig", ".gitconfig", ".service", ".npmrc", ".pylintrc", ".flake8"}
+
+
+def config_sniff(s, ext):
+    """INI-style and other simple key/value config text: [section] headers and key = value (or key: value) lines, comments with ; or #.
+    -> a magic description, or None. A config extension is trusted when most non-comment lines are keys or sections."""
+    lines = [x for x in s[:60000].splitlines() if x.strip() and not x.lstrip().startswith((";", "#", "!", "//"))][:400]
+    if len(lines) < 2:
+        return None
+    sec = sum(1 for x in lines if INI_SECTION_RE.match(x))
+    kv = sum(1 for x in lines if not INI_SECTION_RE.match(x) and re.match(r"^\s*[^=:\s\[;#][^=\n]{0,120}?\s*=", x))
+    share = (sec + kv) / len(lines)
+    if ext in CONFIG_EXT and share < 0.6:   # `key value` lines (sshd_config, my.cnf style)
+        kv = max(kv, sum(1 for x in lines if re.match(r"^\s*[A-Za-z_][\w.\-]{0,80}(\s+|\s*=\s*)\S", x)))
+        share = (sec + kv) / len(lines)
+    if ext in CONFIG_EXT and share >= 0.6:
+        return f"key/value config ({sec} sections, extension {ext})"
+    if sec >= 1 and kv >= 2 and share >= 0.85 and ext not in (".md", ".txt", ".toml"):
+        return f"INI text ({sec} [section] headers and key = value lines)"
+    return None
 
 
 EXT_OK = {
@@ -1060,7 +1121,7 @@ def cache_root():
 
 
 def out_dir_for(sha, explicit=None):
-    return Path(explicit) if explicit else cache_root() / sha[:12]
+    return Path(explicit).resolve() if explicit else cache_root() / sha[:12]   # absolute: child tools (LibreOffice profile URL) run in other folders
 
 
 def part_cache_file(look, key):

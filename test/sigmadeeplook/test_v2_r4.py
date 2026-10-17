@@ -92,7 +92,7 @@ class Json(Base):
         p, t = F.small_json(self.d)
         _, lj, text, _ = look_at(p)
         self.assertEqual(lj["facts"]["counts"]["array items"], t["servers"])
-        self.has(text, f"sum {P.fmt(t['sum_port'])}", f"sum {t['sum_weight']}", "Records at servers")
+        self.has(text, f"sum {P.fmt(t['sum_port'])}", f"sum {t['sum_weight']}", "Records of servers[] (7;")
         self.assertFalse([f for f in lj["flags"] if "JSON" in f["kind"]])
 
 
@@ -106,7 +106,7 @@ class Yaml(Base):
     def test_with_pyyaml_the_map_of_services_is_a_record_set(self):
         p, t = F.yaml_file(self.d)
         _, lj, text, _ = look_at(p, tools=True)
-        self.has(text, f"Records at services ({t['services']} items", f"sum {t['sum_replicas']}")
+        self.has(text, f"Records of services.* ({t['services']};", f"sum {t['sum_replicas']}")
 
 
 class Toml(Base):
@@ -114,7 +114,7 @@ class Toml(Base):
         p, t = F.toml_file(self.d)
         _, lj, text, _ = look_at(p)
         self.assertEqual(lj["subtype"], "toml")
-        self.has(text, f"Keys of dependencies ({t['deps']})", "dependencies.tokio = 1.37", "in 1 of 3 indexes")
+        self.has(text, f"Keys of dependencies ({t['deps']})", "dependencies.tokio = 1.37", "in 1 of 3 records")
         self.assertFalse([f for f in lj["flags"] if "JSON" in f["kind"]])
 
 

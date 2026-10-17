@@ -27,7 +27,7 @@ An agent cannot hear. `look.py` turns audio into numbers, text and two pictures.
 
 ## Show the human
 
-The transcript with times; low-confidence or repeated lines; the silence stretches; the loudness table; the language and probability; the tempo with its octave caveat; the waveform and spectrogram. Ask: the language, the number of speakers, a glossary, which stretch to listen to (give three: the quietest, the loudest, a random one), and whether sound judgement is needed.
+The transcript with times; low-confidence or repeated lines; proper names heard below 0.6 confidence marked `Name(?)` in every text you read, listed with time, confidence and the similar-sounding spellings elsewhere in the transcript (`NAME-SPELLING` when one name is written two ways): quote such a name with its `(?)` until the audio or a written source confirms it; the silence stretches; the loudness table; the language and probability; the tempo with its octave caveat; the waveform and spectrogram. Ask: the language, the number of speakers, a glossary, which stretch to listen to (give three: the quietest, the loudest, a random one), and whether sound judgement is needed.
 
 ## Install (Win/Linux/macOS)
 

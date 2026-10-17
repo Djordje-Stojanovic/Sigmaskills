@@ -90,6 +90,10 @@ def look_avro(look):
     look.line(f"Avro container: {records} records in {blocks} blocks, codec {codec}; record {schema.get('name', '?')} with {len(fields)} fields.", 90)
     if fields:
         look.line("Fields: " + ", ".join(f"{n} ({t})" for n, t in fields[:20]) + (f" (+{len(fields) - 20})" if len(fields) > 20 else ""), 80)
+    import dl_colmeta as CM
+    kv = {k: (v.decode("utf-8", "replace") if isinstance(v, (bytes, bytearray)) else str(v)) for k, v in meta.items() if k not in ("avro.schema",)}
+    look.fact("file_metadata", kv)
+    look.line(CM.kv_line(kv, "Header key/value metadata (avro.schema left out: see schema.json)"), 94, "props")
     look.write_text("schema.json", json.dumps(schema, indent=1), "the Avro schema", "json", value=4)
     fa = look.mod("fastavro")
     if not fa:

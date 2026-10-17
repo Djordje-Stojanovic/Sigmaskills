@@ -829,15 +829,15 @@ def inner_tables(look, texts):
         k += 1
         try:
             if low.endswith((".csv", ".tsv")):
-                delim = "\t" if low.endswith(".tsv") else ","
-                try:
-                    delim = csv.Sniffer().sniff(t[:50000], delimiters=",;\t|").delimiter
-                except csv.Error:
-                    pass
+                import dl_delim as D
+                delim = D.sniff_dialect(t, "\t" if low.endswith(".tsv") else ",")[0]
                 rows = list(csv.reader(io.StringIO(t, newline=""), delimiter=delim))
                 if not rows:
                     continue
                 head, body = rows[0], rows[1:]
+                norm = D.normalizer(D.decimal_comma_columns(t, delim, len(head)))
+                if norm:
+                    body = [norm(r) if len(r) == len(head) else r for r in body]
                 good = [(i + 2, r) for i, r in enumerate(body) if len(r) == len(head)]
                 p = P.Profiler(True, "line")
                 cols = p.columns([h.lstrip("﻿").strip() or f"column {i + 1}" for i, h in enumerate(head)])
@@ -929,8 +929,13 @@ def look_archive(look):
         opener = {"gzip": gzip.open, "bzip2": bz2.open, "xz": lzma.open}[st]
         n = 0
         keep = bytearray()
+        inner = re.sub(r"\.(gz|bz2|xz|tgz)$", "", p.name, flags=re.I) or "member"
+        if inner == p.name or "." not in inner:
+            inner = (inner if inner != p.name else p.stem) or "member"
+        unpacked = look.path_for(f"unpacked/{inner}")
+        too_big = False
         try:
-            with opener(p, "rb") as f:
+            with opener(p, "rb") as f, open(unpacked, "wb") as w:
                 while True:
                     chunk = f.read(1 << 20)
                     if not chunk:
@@ -938,22 +943,28 @@ def look_archive(look):
                     n += len(chunk)
                     if len(keep) <= INNER_TABLE_MAX:
                         keep += chunk
-                    if n > 256 << 20:
+                    if n > UNWRAP_MAX or n > MAX_RATIO * 5 * max(1, look.size):
+                        too_big = True
                         break
+                    w.write(chunk)
         except (OSError, EOFError, lzma.LZMAError) as e:
             look.flag("CORRUPT", "stream", str(e)[:100], "")
         ratio = n / max(1, look.size)
-        look.line(f"Single {st} stream: {core.human(look.size)} packed, at least {core.human(n)} unpacked (ratio {ratio:.0f}:1).")
-        look.fact("unpacked_bytes_at_least", n)
-        if n > 256 << 20 or ratio > MAX_RATIO * 5:
+        look.line(f"Single {st} stream: {core.human(look.size)} packed, {'at least ' if too_big else ''}{core.human(n)} unpacked (ratio {ratio:.0f}:1).", 89)
+        look.fact("unpacked_bytes_at_least" if too_big else "unpacked_bytes", n)
+        if too_big:
+            unpacked.unlink(missing_ok=True)
             look.exit_code = 2
-            look.flag("REFUSED", "stream", f"ratio {ratio:.0f}:1", "possible compression bomb; not unpacked")
+            look.flag("REFUSED", "stream", f"ratio {ratio:.0f}:1, {core.human(n)}+", "possible compression bomb or over the unpack cap; not unpacked")
             return
         import dl_prof as P
         P.counts(look, [("packed bytes", look.size), ("unpacked bytes", n)])
+        d = core.detect(unpacked)
+        if d["type"] not in ("archive", "unknown") and core.HANDLERS.get(d["type"]):   # look at the one member as the file it is
+            unwrap(look, unpacked, d, st)
+            return
         if n <= INNER_TABLE_MAX:   # the one member, read in memory: profile it like the file it is
             text, _enc = core.decode_text(bytes(keep))
-            inner = re.sub(r"\.(gz|bz2|xz|tgz)$", "", p.name, flags=re.I) or "member"
             if text is not None:
                 look.line(f"Unpacked member {inner}: {text.count(chr(10)):,} lines, {len(text):,} characters (read in memory, nothing written).", 88)
                 if inner.lower().endswith((".csv", ".tsv", ".json", ".jsonl", ".ndjson")):
@@ -975,6 +986,15 @@ def look_archive(look):
     look.fact("nesting_depth", depth)
     look.headline = f"{st} archive, {len(members):,} members, {nfile:,} files, {core.human(total)} unpacked"
     look.line(f"Archive ({extra.get('format', st)}): {len(members)} members, {nfile} files, {core.human(total)} uncompressed ({core.human(look.size)} packed), largest ratio {max(ratios) if ratios else 0:.0f}:1" + (f", nesting depth {depth}" if depth else "") + ".")
+    if extra.get("format") == "zip":   # container-level key/value text: the archive comment and member comments
+        try:
+            with zipfile.ZipFile(p) as zz:
+                zc = zz.comment.decode("utf-8", "replace").strip()
+                mc = [(i.filename, i.comment.decode("utf-8", "replace").strip()) for i in zz.infolist() if i.comment]
+            if zc or mc:
+                look.line("Zip comments: " + (f"archive comment {zc[:300]!r}" if zc else "no archive comment") + (f"; {len(mc)} member comments: " + "; ".join(f"{n}: {c[:80]}" for n, c in mc[:10]) if mc else ""), 88, "props")
+        except (zipfile.BadZipFile, OSError):
+            pass
     for ln in archive_overview(members):
         look.line(ln)
     try:
@@ -1024,11 +1044,35 @@ def look_archive(look):
         look.line("--extract was given but the screen refused: nothing was written.")
     elif not look.extract and st != "epub":
         look.skip("member contents", "listed only; pass --extract (or --recurse N) after the screen passes", None, "python look.py FILE --extract")
-    if st == "epub" and not refusals:
-        import dl_extra
-        dl_extra.epub_extras(look)
+    if st == "epub" and not refusals:   # a book: its structure leads; the package listing above moves to --more
+        look.items = [(it[0], min(it[1], 35), *it[2:]) for it in look.items]
+        import dl_books
+        dl_books.look_epub(look)
     look.step("list and screen", "stdlib")
     look.ask_human("Do you trust where this archive came from?", "Should the members be extracted and looked at (--extract / --recurse N)?")
+
+
+UNWRAP_MAX = 2 << 30   # bytes: a single compressed stream is unpacked to the look folder up to this size (the ratio screen still applies)
+
+
+def unwrap(look, inner, d, outer_kind):
+    """A single compressed stream (x.csv.gz, x.log.xz, x.pcap.gz, x.json.bz2): run the inner file's own look on the unpacked copy,
+    so the member gets every count its type gets uncompressed. The outer identity (archive/gzip) stays."""
+    keep = (look.path, look.size, look.type, look.subtype)
+    look.fact("unpacked_from", str(look.path))
+    look.fact("unpacked", str(inner))
+    look.fact("inner_type", f"{d['type']}/{d['subtype']}")
+    look.path, look.size, look.type, look.subtype = Path(inner), Path(inner).stat().st_size, d["type"], d["subtype"]
+    look.line(f"One {outer_kind} member, {inner.name} ({d['type']}/{d['subtype']}, {core.human(look.size)} unpacked into the look folder): every fact below is about it.", 98, "identity")
+    try:
+        mod, fn = core.HANDLERS[d["type"]]
+        getattr(__import__(mod), fn)(look)
+        core.add_source_content(look)
+    finally:
+        inner_head = look.headline
+        look.path, look.size, look.type, look.subtype = keep
+        if inner_head:
+            look.headline = f"{outer_kind} of {inner.name}: {inner_head}"
 
 
 def docker_layers(look, names):

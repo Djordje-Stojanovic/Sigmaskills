@@ -22,6 +22,7 @@ from collections import Counter
 from pathlib import Path
 
 import dl_core as core
+import dl_prof as P
 import dl_xl
 
 MAX_XML = 40 << 20
@@ -205,6 +206,11 @@ def look_pdf(look):
             look.line("Pages with a text layer: " + " | ".join(f"p{n}: {' '.join(t.split())[:150]}" for n, t in has_text[:3]), 76)
         look.fact("text_chars", len(body))
         look.excerpt("First text", re.sub(r"<!-- page \d+ -->\n", "", body), 6, 420)
+        try:
+            import dl_pdffacts
+            dl_pdffacts.page_facts(look, pages_txt, doc, pages)
+        except Exception as e:
+            look.fail("page index, stated figures and tables", "stdlib", e)
     if fields:
         look.write_text("fields.json", json.dumps(fields), "form field names", "json")
     scanned = [pp["page"] for pp in per_page if pp.get("layer") == "scanned"]
@@ -618,7 +624,29 @@ def office_docx(look, z, names):
     for label, n in (("comments", len(comments)), ("footnotes", len(notes.get("footnotes", []))), ("header/footer parts", len(hf)), ("images", len([n for n in names if "/media/" in n]))):
         if n:
             bits.append(f"{n} {label}")
-    look.line("Word: " + "; ".join(bits) + ".")
+    look.line("Word: " + "; ".join(bits) + ".", 90)
+    look.headline = (f"Word document: {sum(1 for l in out if re.match(r'#{1,6} ', l))} headings, {len(out)} non-empty paragraphs"
+                     + (f", {sum(revs.values())} tracked changes" if revs else "") + (f", {len(comments)} comments" if comments else ""))
+    heads = [(len(l) - len(l.lstrip("#")), l.lstrip("#").strip()) for l in out if re.match(r"#{1,6} ", l)]
+    if heads:   # the outline with the words under each heading: section counts and sizes are the most-asked structure facts
+        under, cur = [], None
+        for l in out:
+            if re.match(r"#{1,6} ", l):
+                under.append(0)
+            elif under:
+                under[-1] += len(re.sub(r"\[-.*?-\]", "", l).split())
+        import dl_books
+        top = min(l for l, _ in heads)
+        tops = [t for l, t in heads if l == top]
+        body_tops = [t for t in tops if not dl_books.FRONT_RE.match(t) and not dl_books.BACK_RE.match(t)]
+        look.line(f"Outline ({len(heads)} headings; {len(tops)} at the top level" + (f", {len(body_tops)} without front/back matter" if len(body_tops) != len(tops) else "")
+                  + "; level, heading, words under it):\n" + "\n".join(f"  {'  ' * (l - top)}{l}. {P.short(t, 70)} ({w} words)" for (l, t), w in zip(heads[:80], under[:80]))
+                  + (f"\n  ... {len(heads) - 80} more" if len(heads) > 80 else ""), 93, "outline")
+    if revs:
+        dates = sorted(x["date"] for x in revisions if x.get("date"))
+        look.line(f"Tracked changes: {sum(revs.values())} ({ins_n} insertions, {del_n} deletions" + (f", {sum(revs.values()) - ins_n - del_n} format or move changes" if sum(revs.values()) - ins_n - del_n else "")
+                  + "); by author: " + ", ".join(f"{a} {n}" for a, n in by_author.most_common()) + (f"; dated {dates[0][:10]}..{dates[-1][:10]}" if dates else "") + "; "
+                  + " | ".join(f"{x['kind']} by {x['author']}: {P.short(x['text'], 50)}" for x in revisions[:8]), 94, "changes")
     look.fact("hidden_text_runs", len(hidden))
     if hidden:
         look.flag("HIDDEN-TEXT", "word/document.xml", f"{len(hidden)} hidden run(s) (w:vanish): " + " | ".join(" ".join(h.split())[:70] for h in hidden[:3]),
@@ -631,7 +659,8 @@ def office_docx(look, z, names):
                   "deleted text is shown as [-...-], inserted as [+...+] in text.md")
     if comments:
         look.write_text("comments.json", json.dumps(comments, indent=1), "review comments with author and text", "json")
-        look.line("Comments: " + " | ".join(f"{c['author']}: {c['text'][:80]}" for c in comments[:4]))
+        look.line(f"Comments ({len(comments)}; by " + ", ".join(f"{a} {n}" for a, n in Counter(c["author"] for c in comments).most_common()) + "): "
+                  + " | ".join(f"{c['author']} {(c['date'] or '')[:10]}: {c['text'][:80]}" for c in comments[:12]), 94, "comments")
     extra = ""
     if notes.get("footnotes"):
         extra += "\n\n## Footnotes\n\n" + "\n".join(f"- {t}" for t in notes["footnotes"])
@@ -791,7 +820,7 @@ def lo_profile(look):
         '<item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop></item>\n'
         '<item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="DisableMacrosExecution" oor:op="fuse"><value>true</value></prop></item>\n'
         '</oor:items>\n', encoding="utf-8")
-    return "-env:UserInstallation=file:///" + str(look.out / "lo_profile").replace("\\", "/").lstrip("/")
+    return "-env:UserInstallation=file:///" + str((look.out / "lo_profile").resolve()).replace("\\", "/").lstrip("/")
 
 
 def soffice_convert(look, args, src, outdir, timeout=180):
@@ -973,6 +1002,12 @@ def office_pptx(look, z, names):
 
 
 def office_odf(look, z, names):
+    if look.subtype in ("odt", "ods"):   # text and spreadsheets: structure, comments, changes, sheets (fix round 5)
+        import dl_books
+        try:
+            return (dl_books.look_odt if look.subtype == "odt" else dl_books.look_ods)(look, z, names)
+        except Exception as e:
+            look.fail(f"OpenDocument {look.subtype} reader", "stdlib", e)
     x = parse_xml(look, z.read("content.xml")) if "content.xml" in names else None
     paras = []
     if x is not None:
@@ -1131,7 +1166,7 @@ def look_notebook(look):
 
 # ================================================================= email and calendars
 def look_email(look):
-    {"eml": mail_eml, "mbox": mail_mbox, "ics": mail_ics, "vcf": mail_vcf, "msg": mail_msg}[look.subtype](look)
+    {"eml": mail_eml, "mbox": mail_mbox, "ics": lambda lk: __import__("dl_geo").look_ics(lk), "vcf": mail_vcf, "msg": mail_msg}[look.subtype](look)
 
 
 class _Links(html.parser.HTMLParser):

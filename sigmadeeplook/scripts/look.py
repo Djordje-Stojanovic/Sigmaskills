@@ -38,7 +38,7 @@ HANDLERS = {  # type -> (module, function)
     "unknown": ("dl_bins", "look_unknown"), "log": ("dl_logs", "look_log"), "subtitle": ("dl_logs", "look_subtitle"),
     "cert": ("dl_extra", "look_cert"), "model": ("dl_extra", "look_model"), "diskimage": ("dl_extra", "look_diskimage"),
 }
-DRILL_FLAGS = ("page", "sheet", "sql", "table", "func", "member", "grep", "lines", "speaker")
+DRILL_FLAGS = ("ask", "page", "sheet", "sql", "table", "func", "member", "grep", "lines", "speaker")
 
 
 def analyse(path, out, opts, sha=None, depth=0):
@@ -65,7 +65,7 @@ def analyse(path, out, opts, sha=None, depth=0):
         dl_adapt.magika_second_opinion(look)
     if direct:   # small plain text: still a full look with exact counts (stored, so --more works); reading it whole is also fine
         look.fact("direct_read", True)
-        look.line(f"Small text file: the whole file is ~{core.direct_tokens(look.size):,} tokens, so reading it whole is also fine; every count in this look is exact.", 97, "note")
+        look.line(f"Small text file: the whole file is ~{core.direct_tokens(look.size):,} tokens, so reading it whole is also fine; every count in this look is exact.", 80, "note")
     core.add_source_content(look)
     look.finish()
     return look
@@ -82,6 +82,7 @@ def recurse_into(look, path, label):
 
 
 core.recurse_into = recurse_into
+core.HANDLERS = HANDLERS
 
 
 def doctor():
@@ -139,6 +140,8 @@ def build_parser():
     ap.add_argument("--grep", metavar="REGEX", help="search the look's text artifacts (or the text file itself): 50 hits with line numbers")
     ap.add_argument("--lines", metavar="[NAME:]A-B", help="a window of at most 100 lines of one text artifact of the look (or of the text file itself)")
     ap.add_argument("--speaker", help="audio, video: the turns of one speaker, e.g. S2")
+    ap.add_argument("--ask", metavar="QUESTION", help="one exact answer over the stored look: count, sum, mean, max, min, distinct, per-group or lookup on the file's tables, "
+                    "with the filters and rows used; text files get the stated counts and best-matching lines")
     return ap
 
 

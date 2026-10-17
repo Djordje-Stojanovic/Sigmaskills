@@ -23,6 +23,7 @@ Every print ends with a `Recap:` line (the three most important facts of everyth
 
 | Flag | For | Prints |
 |---|---|---|
+| `--ask "QUESTION"` | any look | one exact answer: count, sum, mean, max, min, distinct, per group or the matching rows, computed over the file's tables (CSV in any encoding or dialect, JSON at every depth, sheets without total rows, SQLite, PDF tables, packets, events, INI keys) with the filters and rows used; when no table fits, the look's own counts and the best-matching lines with page or line. It never guesses: check the `Read as` line |
 | `--grep REGEX` | any look | up to 50 hits with line numbers; over 50 you get the count, where they sit and a hint to narrow, not the list |
 | `--lines NAME:A-B` | any look | a window of at most 100 lines of one text file of the look; names the next window |
 | `--sql "SELECT ..."` | csv, tsv, parquet, jsonl, sqlite | up to 50 rows; read-only, `LIMIT 50` forced, table `t` (or the real table name) |

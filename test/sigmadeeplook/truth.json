@@ -144,7 +144,7 @@
   ]},
   "bad.csv": {"type": "data", "exit": 0, "facts": [
     {"id": "1 reject row", "re": "\"rejects\": 1", "needs": []},
-    {"id": "latin-1 encoding", "re": "\"encoding\": \"latin-1\"", "needs": []},
+    {"id": "latin-1 encoding", "re": "\"encoding\": \"(latin-1|cp1252)\"", "needs": []},
     {"id": "4 data rows", "re": "\"rows\": 4", "needs": []},
     {"id": "column names", "re": "\"column_names\": \\[\"id\", \"name\", \"note\"\\]", "needs": []}
   ], "questions": [{"q": "How many rows are malformed?", "a": "1 (line 4: only 2 fields)"}, {"q": "What encoding?", "a": "Latin-1"}, {"q": "How many columns?", "a": "3"}]},

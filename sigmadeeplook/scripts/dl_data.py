@@ -66,7 +66,9 @@ def decode_best(b):
 def look_data(look):
     st = look.subtype
     fn = {"csv": data_csv, "tsv": data_csv, "json": data_json, "jsonl": data_jsonl, "sqlite": data_sqlite, "parquet": data_parquet,
-          "arrow": data_arrow, "avro": lambda lk: __import__("dl_adapt").look_avro(lk), "xml": data_xml, "yaml": data_text_struct, "toml": data_toml}.get(st, data_text_struct)
+          "arrow": data_arrow, "avro": lambda lk: __import__("dl_adapt").look_avro(lk), "xml": data_xml, "yaml": data_text_struct, "toml": data_toml,
+          "ini": lambda lk: __import__("dl_conf").look_ini(lk), "pcap": lambda lk: __import__("dl_pcap").look_pcap(lk),
+          "pcapng": lambda lk: __import__("dl_pcap").look_pcap(lk)}.get(st, data_text_struct)
     fn(look)
     look.ask_human("What question should this data answer?", "Which columns or tables matter, and are any of them personal data?")
 
@@ -280,17 +282,20 @@ def data_csv(look):
         whole_lines, whole_repeats = whole_file_scan(raw)
         cut = raw.rfind(b"\n", 0, QUICK_BYTES)
         raw = raw[:cut + 1 if cut > 0 else QUICK_BYTES]
-    text, enc = decode_best(raw)
-    if enc == "latin-1":
-        look.flag("ENCODING", "file", "not valid UTF-8; read as Latin-1", "accents may be wrong if the real encoding is another one")
+    import dl_delim as D
+    text, enc = D.sniff_encoding(raw)
+    if enc in ("latin-1", "cp1252"):
+        look.flag("ENCODING", "file", f"not valid UTF-8; read as {'Windows-1252' if enc == 'cp1252' else 'Latin-1'}", "accents may be wrong if the real encoding is another one")
     if raw.startswith(b"\xef\xbb\xbf"):
         look.flag("BOM", "file", "UTF-8 byte-order mark", "some tools keep it in the first column name")
-    sample = text[:100000]
-    try:
-        dia = csv.Sniffer().sniff(sample, delimiters=",;\t|")
-        delim = dia.delimiter
-    except csv.Error:
-        delim = "\t" if look.subtype == "tsv" else ","
+    delim, mode_n, share = D.sniff_dialect(text, "\t" if look.subtype == "tsv" else ",")
+    if look.subtype in ("csv", "tsv"):
+        look.subtype = "tsv" if delim == "\t" else "csv"
+    first_rec = next(csv.reader(io.StringIO(text[:200000], newline=""), delimiter=delim), [])
+    dec_cols = D.decimal_comma_columns(text, delim, len(first_rec))
+    norm = D.normalizer(dec_cols)
+    look.fact("decimal_comma_columns", [first_rec[i] for i in sorted(dec_cols) if i < len(first_rec)])
+    look.line(D.describe(enc, delim, mode_n, share, dec_cols, first_rec), 93, "dialect")
     rd = csv.reader(io.StringIO(text, newline=""), delimiter=delim)
     t0 = time.time()
     header, rows, rejects, n, tail, prof, repeats = None, [], [], 0, [], [], []
@@ -312,6 +317,8 @@ def data_csv(look):
         if rec == header:
             repeats.append(rd.line_num)
             continue
+        if norm:
+            rec = norm(rec)
         n += 1
         ln = rd.line_num
         for i in range(ncols):
@@ -345,14 +352,14 @@ def data_csv(look):
     if quick_cut:
         look.line(f"Delimited table: {n:,} data rows (counted over the whole file), {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows in the part profiled. Column profile: first {profiled:,} rows only.")
     else:
-        look.line(f"Delimited table: {n:,} data rows, {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows (wrong field count). Every row was read" + (" until the time cap." if partial else "; the profile below is a full pass, not a sample."))
+        look.line(f"Delimited table: {n:,} data rows, {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows (wrong field count). Every row was read" + (" until the time cap." if partial else "; the profile below is a full pass, not a sample."), 38)
     total_ok = sum(prof[0].kinds.values()) if prof else 0
     notes = profile_findings(look, header, prof, total_ok, repeats)
     schema = [p.summary(total_ok) for p in prof]
     look.write_text("schema.json", json.dumps(schema, indent=1, default=str), "per-column profile over every row: type mix, empty %, distinct, range, median, top values", "json")
     notes = [n for n in notes if "empty" in n]   # every other finding is a flag and is listed once, under Watch out; the empty % sits in each column row
     if prof:   # one legend, then one compact row per column, exact counts over every row (positions are file line numbers)
-        extra = csv_second_pass(look, text, delim, header, gp) if gp.n else []
+        extra = csv_second_pass(look, text, delim, header, gp, norm=norm) if gp.n else []
         crow = gp.field_lines()
         look.line(COLUMN_LEGEND + chr(10) + chr(10).join(crow[:40]) + (f"{chr(10)}... {len(crow) - 40} more columns below" if len(crow) > 40 else ""), 86, "profile")
         if len(crow) > 40:
@@ -366,6 +373,8 @@ def data_csv(look):
             look.line(ln_, 32, "aggregates")
         for ln_ in gp.enum_lines():
             look.line(ln_, 30, "values")
+    if (enc not in ("utf-8", "utf-8-sig") or norm or delim not in (",", "\t") or look.facts.get("unpacked_from")) and not quick_cut and len(text) <= 200 << 20:
+        write_table_copy(look, text, delim, ncols, norm)
     import dl_sample
     dl_sample.build_sample(look, text, delim, header, prof, n, repeats, tail, rows, partial or quick_cut)
     if rejects:
@@ -380,6 +389,18 @@ def data_csv(look):
     look.step("schema and rejects", "stdlib csv")
 
 
+def write_table_copy(look, text, delim, ncols, norm):
+    """The table as plain UTF-8 comma CSV with dot decimals (internal: --sql and --ask read it; never printed)."""
+    p = look.path_for("table.utf8.csv")
+    with open(p, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        rd = csv.reader(io.StringIO(text, newline=""), delimiter=delim)
+        for k, rec in enumerate(rd):
+            w.writerow(norm(rec) if norm and k and len(rec) == ncols else rec)
+    look.add(p, "internal", "the table as UTF-8 comma CSV with dot decimals")
+    look.fact("table_copy", str(p))
+
+
 def complete_rows(text, delim, ncols):
     """Rows with no empty cell (and the right field count)."""
     rd = csv.reader(io.StringIO(text, newline=""), delimiter=delim)
@@ -387,7 +408,7 @@ def complete_rows(text, delim, ncols):
     return sum(1 for r in rd if len(r) == ncols and all(c.strip() for c in r))
 
 
-def csv_second_pass(look, text, delim, header, gp, cap_s=40.0):
+def csv_second_pass(look, text, delim, header, gp, cap_s=40.0, norm=None):
     """Group-by counts and sums and the top / bottom rows by each number (one more pass over the rows, time-capped)."""
     import dl_prof as P
     sp = P.SecondPass(gp)
@@ -398,7 +419,7 @@ def csv_second_pass(look, text, delim, header, gp, cap_s=40.0):
     for k, rec in enumerate(rd):
         if len(rec) != len(header) or rec == header:
             continue
-        sp.add_row(names, rec, rd.line_num)
+        sp.add_row(names, norm(rec) if norm else rec, rd.line_num)
         if k % 5000 == 0 and time.time() - t0 > cap_s:
             look.flag("PARTIAL", "group-by and top rows", f"stopped at line {rd.line_num}", "time cap: the group sums cover the rows up to that line only")
             break
@@ -423,7 +444,7 @@ def data_json(look):
     raw = open(look.path, "rb").read(64 << 20)
     if look.size > 64 << 20:
         look.flag("PARTIAL", "file", "first 64 MB only", "")
-    text, enc = decode_best(raw)
+    text, enc = __import__("dl_delim").sniff_encoding(raw)
     try:
         v = json.loads(text)
     except ValueError as e:
@@ -445,13 +466,19 @@ def data_json(look):
         import dl_prof as P
         P.text_profile(look, text, 70, "Text")
         return
+    import dl_geo
+    if dl_geo.is_geojson(v):   # GeoJSON: features, geometry types, bounding box, lengths and areas lead
+        try:
+            dl_geo.geojson_facts(look, v)
+        except Exception as e:
+            look.fail("GeoJSON totals", "stdlib", e)
     sk = skeleton(v)
     look.fact("json_top", type(v).__name__)
     look.write_text("skeleton.json", json.dumps(sk, indent=1), "keys and types tree, array lengths", "json")
     look.line(f"JSON {type(v).__name__}" + (f" with {len(v)} items" if hasattr(v, "__len__") else "") + f", encoding {enc}.")
     look.excerpt("Skeleton", json.dumps(sk, indent=1), 25, 1800, 40)
     import dl_prof as P
-    P.doc_profile(look, v, "JSON")
+    P.doc_profile(look, v, "JSON", 55 if dl_geo.is_geojson(v) else 92)
 
 
 def data_jsonl(look):
@@ -792,6 +819,16 @@ def parquet_report(look, cols, nrows):
 
 
 def data_parquet(look):
+    import dl_colmeta as CM
+    try:
+        ft = CM.parquet_footer(look.path)
+    except Exception as e:   # a damaged footer: pyarrow below says more
+        ft = None
+        look.fail("Parquet footer (stdlib Thrift reader)", "stdlib", e)
+    if ft:
+        look.fact("file_metadata", ft["kv"])
+        look.fact("created_by", ft["created_by"])
+        look.line(CM.kv_line(ft["kv"], f"File key/value metadata (footer; created_by {ft['created_by'] or 'not set'}, format version {ft['version']})"), 94, "props")
     pa = look.mod("pyarrow")
     d = look.mod("duckdb")
     if pa:
@@ -876,10 +913,16 @@ def data_parquet(look):
         look.fact("columns", [r[0] for r in desc])
         look.line(f"Parquet: {n} rows. Columns: " + ", ".join(f"{r[0]} ({r[1]})" for r in desc))
         return
-    b = open(look.path, "rb").read()
-    flen = struct.unpack("<I", b[-8:-4])[0] if b[-4:] == b"PAR1" else 0
-    look.line(f"Parquet file, footer {flen} bytes. Schema and rows need pyarrow or duckdb.")
-    look.skip("parquet schema and rows", "pyarrow and duckdb not importable" if not look.no_tools else "disabled by --no-tools", "pyarrow")
+    if ft:   # the footer alone: rows, schema, row groups, codecs
+        import dl_prof as P
+        look.fact("rows", ft["rows"])
+        look.fact("columns", [s[0] for s in ft["schema"]])
+        look.headline = f"Parquet, {rows_fmt(ft['rows'] or 0)} rows x {len(ft['schema'])} columns"
+        look.dims = f"{rows_fmt(ft['rows'] or 0)} rows"
+        P.counts(look, [("rows", ft["rows"]), ("columns (leaf and group)", len(ft["schema"])), ("row groups", len(ft["row_groups"]))], 96)
+        look.line("Schema (name type repetition): " + "; ".join(" ".join(x for x in s if x) for s in ft["schema"][:80]) + f". Codecs: {', '.join(ft['codecs']) or '?'}; rows per row group: "
+                  + ", ".join(f"{r:,}" for r, _ in ft["row_groups"][:20]), 92)
+    look.skip("parquet column values (profile, sums, rows)", "pyarrow and duckdb not importable" if not look.no_tools else "disabled by --no-tools", "pyarrow")
 
 
 def data_arrow(look):
@@ -891,6 +934,13 @@ def data_arrow(look):
         r = pa.ipc.open_file(src)
         look.fact("columns", [f.name for f in r.schema])
         look.line(f"Arrow IPC: {r.num_record_batches} batches. Columns: " + ", ".join(f"{f.name} ({f.type})" for f in r.schema))
+        import dl_colmeta as CM
+        kv = {k.decode("utf-8", "replace"): v.decode("utf-8", "replace") for k, v in (r.schema.metadata or {}).items()}
+        look.fact("file_metadata", kv)
+        look.line(CM.kv_line(kv, "Schema key/value metadata"), 94, "props")
+        fm = [(f.name, {k.decode("utf-8", "replace"): v.decode("utf-8", "replace") for k, v in f.metadata.items()}) for f in r.schema if f.metadata]
+        if fm:
+            look.line("Field metadata: " + " | ".join(CM.kv_line(m, n) for n, m in fm[:20]), 80, "props")
 
 
 # ---------------------------------------------------------------- xml, yaml, toml
@@ -933,9 +983,17 @@ def data_xml(look):
     root_tag = local(root.tag)
     look.fact("root", root_tag)
     look.fact("element_counts", dict(counts.most_common(40)))
-    look.line(f"XML: root <{root_tag}>, {sum(counts.values()):,} elements of {len(counts)} kinds, depth {depth}. Elements: " + ", ".join(f"{k} ({v:,})" for k, v in counts.most_common(30)), 90)
+    base = 0
+    if root_tag in ("gpx", "kml"):   # a track or map file: its totals lead; the generic XML profile follows in --more
+        import dl_geo
+        try:
+            (dl_geo.look_gpx if root_tag == "gpx" else dl_geo.look_kml)(look, root)
+            base = -50
+        except Exception as e:
+            look.fail(f"{root_tag} totals", "stdlib", e)
+    look.line(f"XML: root <{root_tag}>, {sum(counts.values()):,} elements of {len(counts)} kinds, depth {depth}. Elements: " + ", ".join(f"{k} ({v:,})" for k, v in counts.most_common(30)), 90 + base)
     P.counts(look, [("elements", sum(counts.values())), ("element kinds", len(counts)), ("attributes", sum(attrs.values())), ("elements with text", texts),
-                    ("max depth", depth), ("root children", len(list(root)))], 94, "XML counts")
+                    ("max depth", depth), ("root children", len(list(root)))], 94 + base, "XML counts")
     if attrs:
         look.line("Attributes (element@name, count): " + ", ".join(f"{k} ({v:,})" for k, v in attrs.most_common(40)), 60)
     # records: the most repeated element that has attributes or children, each as {@attr, child: text}
@@ -970,7 +1028,7 @@ def data_xml(look):
     t, els = best
     recs = [(i, rec_of(e)) for i, e in enumerate(els)]
     p, extra = P.profile(recs, True, "element")
-    P.emit(look, p, extra, f"<{t}> records ({len(els):,} elements, numbered from 0 in document order)", 86, 30)
+    P.emit(look, p, extra, f"<{t}> records ({len(els):,} elements, numbered from 0 in document order)", 86 + base, 30)
     if len(recs) <= 3000:
         rows = [f"[{i}] " + "; ".join(f"{k}={P.short(x if not isinstance(x, P.Multi) else ', '.join(map(str, x)), 60)}" for k, x in P.flat_of(r).items() if not k.endswith(P.LEN)) for i, r in recs]
         for k in range(0, len(rows), 20):
@@ -987,6 +1045,9 @@ def data_toml(look):
     try:
         v = tomllib.loads(text)
     except Exception as e:
+        if re.search(r"(?m)^\s*\[[^\]\n]+\]\s*$", text) or look.path.suffix.lower() != ".toml":   # INI-style text that is not valid TOML
+            look.subtype = "ini"
+            return __import__("dl_conf").look_ini(look)
         look.flag("INVALID-TOML", "file", str(e)[:120], "")
         P.text_profile(look, text, 70, "Text")
         return

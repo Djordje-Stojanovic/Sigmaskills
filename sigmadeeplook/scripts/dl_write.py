@@ -34,7 +34,7 @@ SECTION_ORDER = ("key", "watch", "map", "read", "nla", "content")
 CONTENT_CHUNK_TOKENS = 110    # text artifacts are cut into chunks of about this size, so a window ends cleanly
 CONTENT_MAX_TOKENS = 150_000  # a text artifact above this is searched or sliced, never put in the stream
 HEADINGS = {"key": "Key facts", "watch": "Watch out", "map": "Map", "read": "Read next", "nla": "Not looked at", "content": "Content"}
-TRAPS = {"MISMATCH", "INJECTION?", "HIDDEN-TEXT", "HIDDEN-SHEET", "HIDDEN-SLIDE", "HIDDEN-STATE", "MACRO", "JAVASCRIPT", "OPEN-ACTION",
+TRAPS = {"MISMATCH", "NAME-SPELLING", "INJECTION?", "HIDDEN-TEXT", "HIDDEN-SHEET", "HIDDEN-SLIDE", "HIDDEN-STATE", "MACRO", "JAVASCRIPT", "OPEN-ACTION",
          "LAUNCH", "AUTO-ACTION", "EMBEDDED-FILE", "XFA", "TRUNCATED", "NO-MOOV", "CORRUPT", "ENCRYPTED", "DECOMPRESSION-BOMB?", "REFUSED",
          "PACKED?", "SECRET?", "PRIVATE-KEY", "PICKLE-EXEC", "HALLUCINATION?", "CUTS-SUSPECT", "DEFECT?", "TRACKED-CHANGES", "AUTH-FAIL",
          "LINK-MISMATCH", "GPS", "AUTO-RUN?", "ACTIVE-CONTENT", "REMOTE-TEMPLATE", "WAL-PRESENT", "PERSONAL-DATA", "HOOK-OR-MCP",

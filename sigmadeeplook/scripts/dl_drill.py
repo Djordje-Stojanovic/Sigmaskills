@@ -161,12 +161,17 @@ def do_sql(o, path, out, lj):
         except sqlite3.Error as e:
             return refuse(f"--sql error: {e}")
         return done(f"{len(rows)} row(s), LIMIT {MAX_ROWS} enforced\n" + table_rows(cols, rows))
+    tc = (lj.get("facts") or {}).get("table_copy")
+    if tc and Path(tc).exists():   # a non-UTF-8, semicolon, decimal-comma or compressed table: its normalised copy
+        path, st = Path(tc), "csv"
+    elif (lj.get("facts") or {}).get("delimiter") and st in ("csv", "tsv"):
+        st = "tsv" if lj["facts"]["delimiter"] == "\t" else "csv"
     if st in ("csv", "tsv", "parquet", "jsonl", "json", "arrow") or lj.get("type") == "data":
         if not core.have_module("duckdb"):
             return refuse("--sql on this file needs duckdb. Install: pip install duckdb")
         import duckdb
         con = duckdb.connect(":memory:")
-        p = str(path).replace("'", "''")
+        p =str(path).replace("'", "''")
         src = {"csv": f"read_csv('{p}', sample_size=-1, all_varchar=false, ignore_errors=true)",
                "tsv": f"read_csv('{p}', delim='\\t', sample_size=-1, ignore_errors=true)",
                "parquet": f"read_parquet('{p}')",
@@ -194,10 +199,13 @@ def run(o, path, out, lj):
     """-> (text, exit) for the first drill flag given, or None when the call has no drill flag."""
     import dl_drill_ext  # family drills (pdf pages, sheets, tables, speakers, archives...) live next to their families
     HANDLERS.update(dl_drill_ext.HANDLERS)
-    order = ("grep", "lines", "sql", "table", "page", "sheet", "func", "member", "speaker", "at")
+    order = ("ask", "grep", "lines", "sql", "table", "page", "sheet", "func", "member", "speaker", "at")
     for k in order:
         v = getattr(o, k, None) if k != "at" else (o.at if getattr(o, "at", None) is not None else None)
         if v is not None and v is not False:
+            if k == "ask":
+                import dl_ask
+                return dl_ask.run(o, path, out, lj)
             if k == "grep":
                 return do_grep(o, path, out, lj)
             if k == "lines":

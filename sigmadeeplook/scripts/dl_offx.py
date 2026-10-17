@@ -28,7 +28,7 @@ def _xml(z, name):
         return None
 
 
-def props(look, z, names, pri=88):
+def props(look, z, names, pri=96):
     """Core (docProps/core.xml), app (docProps/app.xml) and custom properties -> one fact; returns the app dict."""
     core = {}
     root = _xml(z, "docProps/core.xml") if "docProps/core.xml" in names else None
@@ -159,9 +159,11 @@ def sheet_aggregates(look, name, cells, formulas, header_hint=True):
         d.update(sum=tot, min=lo[0], max=hi[0])
         look.line(f"Sheet {name}: {len(cells):,} non-empty cells ({len(nums):,} numbers, {texts:,} text, {len(formulas):,} formulas); used range A1:{cell_name(nr - 1, nc - 1) if nr and nc else 'A1'}; "
                   f"numbers sum {P.fmt(tot)}, min {P.fmt(lo[0])} at {cell_name(lo[1], lo[2])}, max {P.fmt(hi[0])} at {cell_name(hi[1], hi[2])}, mean {P.fmt(tot / len(nums))}"
-                  + (f"; functions: " + ", ".join(f"{k} x{v}" for k, v in fn.most_common(10)) if fn else "") + ".", 84, "profile")
+                  + (f"; functions: " + ", ".join(f"{k} x{v}" for k, v in fn.most_common(10)) if fn else "") + ".", 91, "profile")
     else:
-        look.line(f"Sheet {name}: {len(cells):,} non-empty cells ({texts:,} text, {len(formulas):,} formulas), no numbers.", 80, "profile")
+        look.line(f"Sheet {name}: {len(cells):,} non-empty cells ({texts:,} text, {len(formulas):,} formulas), no numbers.", 89, "profile")
+    if formulas:
+        formula_patterns(look, name, cells, formulas)
     # a table with a header row: profile by column
     if header_hint and nr >= 3 and nc >= 1:
         hdr_row = min((r for r, c in cells), default=0)
@@ -169,22 +171,35 @@ def sheet_aggregates(look, name, cells, formulas, header_hint=True):
         if sum(1 for h in hdr if str(h).strip() and P.as_number(h, True) is None) >= max(1, 0.6 * sum(1 for h in hdr if str(h).strip())):
             prof = P.Profiler(True, "row")
             cols = prof.columns([str(h).strip() or f"col {cell_name(0, c).rstrip('0123456789')}" for c, h in enumerate(hdr)])
+            totals = summary_rows(cells, formulas, hdr_row, nr, nc)
             for r in range(hdr_row + 1, nr):
                 vals = [cells.get((r, c), "") for c in range(nc)]
-                if any(str(v).strip() for v in vals):
+                if r not in totals and any(str(v).strip() for v in vals):
                     prof.add_row(cols, vals, r + 1)
+            if totals:
+                look.fact("summary_rows", {name: sorted(r + 1 for r in totals)})
+                look.line(f"Total rows on {name} (left out of the column profile below, so sums and maxima cover data rows only): " + "; ".join(
+                    f"row {r + 1}: " + ", ".join(f"{str(hdr[c]).strip() or cell_name(0, c).rstrip('0123456789')} = {P.short(cells.get((r, c)), 24)}"
+                                                 for c in range(nc) if str(cells.get((r, c), "")).strip()) for r in sorted(totals)[:8]), 90, "profile")
             if prof.n:
                 sp = P.SecondPass(prof)
                 nm = [f.name for f in cols]
                 for r in range(hdr_row + 1, nr):
                     vals = [cells.get((r, c), "") for c in range(nc)]
-                    if any(str(v).strip() for v in vals):
+                    if r not in totals and any(str(v).strip() for v in vals):
                         sp.add_row(nm, vals, r + 1)
-                look.line(f"Sheet {name} as a table (header row {hdr_row + 1}, {prof.n:,} data rows; positions are sheet row numbers):\n" + "\n".join("  " + x for x in prof.field_lines()[:40]), 70, "profile")
+                try:
+                    import dl_ask
+                    dl_ask.store_table(look, f"sheet {name}", [f.name for f in cols], [[r + 1, [cells.get((r, c), "") for c in range(nc)]] for r in range(hdr_row + 1, nr)
+                                                                                      if r not in totals and any(str(cells.get((r, c), "")).strip() for c in range(nc))],
+                                       f"sheet {name} (total rows left out)", "row")
+                except OSError as e:
+                    look.fail("table for --ask", "stdlib", e)
+                look.line(f"Sheet {name} as a table (header row {hdr_row + 1}, {prof.n:,} data rows; positions are sheet row numbers):\n" + "\n".join("  " + x for x in prof.field_lines()[:40]), 86, "profile")
                 for x in prof.stats_lines() + sp.lines():
-                    look.line(f"{name}: {x}", 33, "aggregates")
+                    look.line(f"{name}: {x}", 58, "aggregates")
                 for x in prof.enum_lines():
-                    look.line(f"{name}: {x}", 27, "values")
+                    look.line(f"{name}: {x}", 40, "values")
     if formulas:
         rows = []
         for ref, f in formulas:
@@ -197,8 +212,56 @@ def sheet_aggregates(look, name, cells, formulas, header_hint=True):
                 v = cells.get((int(m.group(2)) - 1, cn - 1))
             rows.append(f"{ref} = {P.short(f, 70)} -> {P.short(v, 30) if v not in (None, '') else '(no cached value)'}")
         for k in range(0, min(len(rows), 2000), 60):
-            look.line(f"{name} formulas {k + 1}-{min(len(rows), k + 60)} of {len(rows)} (cell = formula -> cached value):\n" + "\n".join(rows[k:k + 60]), 25, "formulas")
+            look.line(f"{name} formulas {k + 1}-{min(len(rows), k + 60)} of {len(rows)} (cell = formula -> cached value):\n" + "\n".join(rows[k:k + 60]), 52 if k == 0 else 25, "formulas")
     return d
+
+
+TOTAL_LABEL_RE = re.compile(r"(?i)^\s*(grand\s+total|sub-?total|totals?|sum|summe|gesamt(summe)?|insgesamt|total général|totale|ukupno|итого|合计|总计)\b[\s:]*")
+AGG_RE = re.compile(r"(?i)\b(SUM|SUBTOTAL|AGGREGATE|AVERAGE|COUNTA?|MIN|MAX)\(\s*\$?([A-Z]+)\$?(\d+)\s*:\s*\$?([A-Z]+)\$?(\d+)")
+
+
+def summary_rows(cells, formulas, hdr_row, nr, nc):
+    """Rows (0-based) below the header that total the rows above: a row whose first text cell is a total label, or a row with an
+    aggregate formula over a range of its own column that ends above it. -> set of row indexes."""
+    from dl_xl import col_num
+    out = set()
+    for ref, f in formulas:
+        m = re.match(r"([A-Z]+)(\d+)", ref)
+        a = AGG_RE.search(f or "")
+        if m and a and a.group(2) == a.group(4) == m.group(1) and int(a.group(5)) < int(m.group(2)):
+            out.add(int(m.group(2)) - 1)
+    for r in range(hdr_row + 1, nr):
+        first = next((cells.get((r, c)) for c in range(nc) if str(cells.get((r, c), "")).strip()), "")
+        if isinstance(first, str) and TOTAL_LABEL_RE.match(first) and P.as_number(first, True) is None:
+            out.add(r)
+    return {r for r in out if hdr_row < r < nr}
+
+
+def formula_patterns(look, name, cells, formulas):
+    """Formulas grouped by shape (copies of one formula down a column are one pattern), each with its cells, an example and the
+    cached values of the one-off formulas (totals): the per-sheet formula facts in one step-1 line."""
+    from dl_xl import col_num, norm
+    pats = {}
+    for ref, f in formulas:
+        m = re.match(r"([A-Z]+)(\d+)", ref)
+        if not m or f in (None, "(shared)"):
+            continue
+        r, c = int(m.group(2)), col_num(m.group(1))
+        body = f[1:] if f.startswith("=") else f
+        pats.setdefault(norm(body, r, c), []).append((ref, body, r - 1, c - 1))
+    if not pats:
+        return
+    parts = []
+    for p, lst in sorted(pats.items(), key=lambda kv: (-len(kv[1]), kv[1][0][2], kv[1][0][3]))[:14]:
+        rng = lst[0][0] if len(lst) == 1 else f"{lst[0][0]}..{lst[-1][0]} ({len(lst)} cells)"
+        s = f"{rng}: ={P.short(lst[0][1], 60)}"
+        if len(lst) <= 3:
+            vals = [cells.get((r, c)) for _, _, r, c in lst]
+            if any(v not in (None, "") for v in vals):
+                s += " -> " + ", ".join(P.short(v, 20) if v not in (None, "") else "(no cached value)" for v in vals)
+        parts.append(s)
+    look.line(f"Formulas on {name} ({len(formulas)} cells, {len(pats)} distinct shapes; cells: example formula -> cached value of one-off formulas): " + "; ".join(parts)
+              + (f"; +{len(pats) - 14} more shapes" if len(pats) > 14 else ""), 88, "formulas")
 
 
 def pptx_counts(look, z, names):

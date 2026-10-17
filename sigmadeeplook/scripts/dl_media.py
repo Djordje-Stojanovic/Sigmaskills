@@ -18,6 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import dl_core as core
+import dl_prof as P
 import dl_mediax
 
 ASR_CAP_S = 900          # non-deep speech-to-text stops after 15 minutes of audio
@@ -356,7 +357,11 @@ def write_transcript(look, segs, lang, dur, sampled=None):
         return f"{int(t // 3600):02d}:{int(t % 3600 // 60):02d}:{int(t % 60):02d},{int(t % 1 * 1000):03d}"
     srt = "\n\n".join(f"{i}\n{ts(s['start'])} --> {ts(s['end'])}\n{s['text']}" for i, s in enumerate(segs, 1))
     look.write_text("transcript.srt", srt, "transcript with times (SRT)" if not sampled else "speech samples with times (SRT)", inline=False)
+    import dl_asr
     import dl_mmeta
+    marked = dl_asr.report(look, segs, core.mmss) if words else {}
+    if marked:   # every text people read shows the uncertain names as Name(?); words.json and the SRT keep the raw output
+        segs = [dict(s, text=marked[i]) if i in marked else s for i, s in enumerate(segs)]
     lines = [f"[{dl_mmeta.hms(s['start'])} - {dl_mmeta.hms(s['end'])}] {' '.join(s['text'].split())}" for s in segs]
     look.write_text("transcript.md" if not sampled else "speech-sample.md", "\n".join(lines),
                     "the speech, one line per segment with its start" if not sampled else "speech heard in the sampled windows, one line per segment", value=6)
@@ -1199,35 +1204,98 @@ def frame_sheet(look, im, frames):
     im.seek(0)
 
 
-def ocr_image(look):
-    view = look.out / "view.png"
-    tess = look.tool("tesseract")
-    if tess and view.exists():
-        r, out, _ = look.run_text([tess, str(view), "stdout", "--psm", "3", "tsv"])
-        if r is not None and out.strip():
-            look.write_text("ocr.tsv", out, "OCR words with confidence (tesseract, tsv)")
-            words = [ln.split("\t") for ln in out.splitlines()[1:] if ln.count("\t") >= 11]
-            text = " ".join(w[11] for w in words if len(w) > 11 and w[11].strip())
-            low = [w for w in words if len(w) > 11 and w[11].strip() and float(w[10]) < 60]
-            look.write_text("ocr.txt", text, "OCR text")
-            look.fact("ocr_text", text[:1500])
-            look.line(f"OCR (tesseract): {len(text.split())} words; {len(low)} below 60 % confidence. Numbers and symbols can be misread: confirm any quoted figure.")
-            look.step("OCR", "tesseract")
-            return
+def ocr_lines_rapid(look, view):
+    """-> [(text, confidence 0..1)] in reading order, or None when rapidocr is missing or fails."""
     rapid = look.mod("rapidocr_onnxruntime") or look.mod("rapidocr")
-    if rapid and view.exists():
+    if not rapid:
+        return None
+    try:
+        res = rapid.RapidOCR()(str(view))
+    except Exception as e:
+        look.fail("OCR", "rapidocr", e)
+        return None
+    boxes = (res[0] or []) if isinstance(res, tuple) else []
+    rows = []
+    for b in boxes:
         try:
-            eng = rapid.RapidOCR()
-            res = eng(str(view))
-            txt = " ".join(x[1] for x in (res[0] or [])) if isinstance(res, tuple) else ""
-            look.write_text("ocr.txt", txt, "OCR text (rapidocr)")
-            look.fact("ocr_text", txt[:1500])
-            look.step("OCR", "rapidocr")
-            return
-        except Exception as e:
-            look.fail("OCR", "rapidocr", e)
-            return
-    look.skip("text in the picture (OCR)", "tesseract and rapidocr not found" if not look.no_tools else "disabled by --no-tools", "tesseract")
+            pts, txt, conf = b[0], b[1], float(b[2])
+            y = sum(p[1] for p in pts) / len(pts)
+            x = min(p[0] for p in pts)
+            h = max(p[1] for p in pts) - min(p[1] for p in pts)
+            rows.append((y, x, h, txt, conf))
+        except (TypeError, ValueError, IndexError):
+            continue
+    rows.sort()
+    lines, cur, cur_y, cur_h = [], [], None, 0
+    for y, x, h, txt, conf in rows:   # boxes whose centres sit within half a box height share a line
+        if cur and abs(y - cur_y) > max(4, 0.5 * max(h, cur_h)):
+            lines.append(sorted(cur))
+            cur = []
+        if not cur:
+            cur_y, cur_h = y, h
+        cur.append((x, txt, conf))
+    if cur:
+        lines.append(sorted(cur))
+    look.step("OCR", "rapidocr")
+    return [(" ".join(t for _, t, _ in ln), min(c for _, _, c in ln), [(t, c) for _, t, c in ln]) for ln in lines]
+
+
+def ocr_lines_tess(look, view):
+    tess = look.tool("tesseract")
+    if not tess:
+        return None
+    r, out, _ = look.run_text([tess, str(view), "stdout", "--psm", "3", "tsv"])
+    if r is None or not out.strip():
+        return None
+    look.write_text("ocr.tsv", out, "OCR words with confidence (tesseract, tsv)", inline=False)
+    groups = {}
+    for ln in out.splitlines()[1:]:
+        w = ln.split("\t")
+        if len(w) > 11 and w[11].strip():
+            try:
+                conf = float(w[10]) / 100
+            except ValueError:
+                conf = 0.0
+            groups.setdefault((int(w[2]), int(w[3]), int(w[4])), []).append((w[11], conf))
+    look.step("OCR", "tesseract")
+    return [(" ".join(t for t, _ in ws), min(c for _, c in ws), ws) for _, ws in sorted(groups.items())]
+
+
+OCR_LOW = 0.6
+
+
+def ocr_image(look):
+    """Text in the picture, line by line in reading order, with every word read below 60 % confidence marked `word(?)`.
+    The text itself is a step-1 fact (it is what people ask about a picture with text), with the numbers it holds listed apart."""
+    view = look.out / "view.png"
+    if not view.exists():
+        return
+    lines = ocr_lines_rapid(look, view)
+    engine = "rapidocr"
+    if not lines:
+        got = ocr_lines_tess(look, view)
+        if got is not None:
+            lines, engine = got, "tesseract"
+    if lines is None:
+        look.skip("text in the picture (OCR)", "tesseract and rapidocr not found" if not look.no_tools else "disabled by --no-tools", "tesseract")
+        return
+    marked = [" ".join(t + ("(?)" if c < OCR_LOW else "") for t, c in ws) for _, _, ws in lines]
+    plain = "\n".join(t for t, _, _ in lines)
+    words = plain.split()
+    low = sum(1 for _, _, ws in lines for _, c in ws if c < OCR_LOW)
+    look.write_text("ocr.txt", plain, f"OCR text ({engine}), one line per text line in reading order")
+    look.fact("ocr_text", plain[:4000])
+    look.fact("ocr_lines", len(lines))
+    if not words:
+        look.line(f"OCR ({engine}): no text found in the picture.", 80, "ocr")
+        return
+    look.line(f"Text in the picture (OCR, {engine}; {len(lines)} lines, {len(words)} words, {low} read below {OCR_LOW:.0%} confidence and marked (?); "
+              f"numbers and look-alike letters can be misread, so confirm any quoted figure):\n" + "\n".join(marked[:60]) + (f"\n... {len(marked) - 60} more lines in ocr.txt" if len(marked) > 60 else ""),
+              95, "ocr")
+    nums = re.findall(r"(?<![\w.])[-+]?(?:\d{1,3}(?:[,.' ]\d{3})+|\d+)(?:[.,]\d+)?%?(?![\w])", plain)
+    if nums:
+        look.line("Numbers read in the picture (in reading order): " + ", ".join(nums[:80]), 94, "ocr")
+    look.headline = f"Image with text: {len(lines)} OCR lines, {len(words)} words" + (f"; first line {P.short(lines[0][0], 60)!r}" if lines else "")
 
 
 def image_svg(look):
