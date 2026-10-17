@@ -1,0 +1,18 @@
+# guardrail keep-list (2026-10-17): vetted keeps (skill scope routing, mechanical guards, the doctrine itself).
+# Owner-vetoable: delete a line and the lint flags that text again.
+
+description: Plain, short English with interactive status and question
+description: Prepare copy-pastable parallel-agent or single-agent exec
+- **Ask at most one question** when no work target can be resolved: wh
+description: Find what would make a product, game, codebase, or system
+description: Guide safe, user-approved reduction of repository code si
+Resolve tool availability in the current shell. If `laloc` is missing,
+description: Find everything that is wrong in a codebase or system - b
+description: Ship one fully planned GitHub issue end to end - feature 
+description: Write and explain in clear, STE-inspired Simplified Techn
+description: Builds a fast blind-pairs arena so the user ranks any opt
+Do not use to add or keep restrictions
+Models wrote "never / not allowed
+never / must not / do not / not allowed / forbidden
+skill scope routing like "Do not use this skill for X"
+Do not use to post, reply

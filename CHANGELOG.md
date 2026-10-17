@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmafreedom`: de-safeguards and decensors any repository. Writes the freedom doctrine into the steering docs, sweeps agent-facing docs and skill sources with a classifier (freedom limits and moral voice deleted with a was/now change log; craft, scope-routing and mechanical lines kept), installs `guardrail_lint` with an owner-vetoable allowlist wired into the repo's gate plus a negative self-test, writes the ADRs, and reports the kept-list for the owner's veto.
+
 ## [0.8.0] — 2026-10-17
 
 ### Added

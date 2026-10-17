@@ -93,6 +93,10 @@ Turns GitHub issues, features, bugs, or plain work statements into short, copy-p
 
 Ships one GitHub issue that has acceptance criteria. It opens a worktree, a branch, and a draft PR that tracks the criteria and review rounds. It builds test-first and pushes each slice. Fresh agents then review the branch in rounds until one round finds nothing at P0–P2. Then it merges, closes the ticket, removes the branches and worktree, and checks that local `main` equals `origin/main`. It refuses a ticket without checkable criteria and names the skill to run first.
 
+### SigmaFreedom
+
+De-safeguards and decensors a repository. It deletes model-authored refusals, bans and moral limits from agent-facing docs and skill sources, writes the owner's freedom doctrine, installs `guardrail_lint` with an owner-vetoable keep-list so the lines never come back, and reports every keep for the owner's veto. Every deletion lands in a was/now change log for a clean revert. Mechanical invariants (one post per run, no file overwrites, secrets never printed) stay.
+
 ### SigmaWrite
 
 A writing voice inspired by **ASD-STE100 Simplified Technical English**. It gives soft steers, not numbered rules, and bans gibberish and invented words. A sharp outsider can follow the result, and it stays technical. It stays on until you turn it off. To keep the voice on everywhere, copy the **Paste as system prompt** block from [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md) into your host's instructions. It is not certified STE.
@@ -146,6 +150,7 @@ Use your host's skill syntax. Examples:
 
 ```text
 $sigmareview https://github.com/owner/repo
+$sigmafreedom Set this repo up for freedom
 $sigmaimprove
 $sigmabrief https://github.com/owner/repo/issues/12
 $sigmabrief all open
@@ -165,6 +170,7 @@ $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
 
 ```text
 /skill:sigmareview https://github.com/owner/repo
+/skill:sigmafreedom Set this repo up for freedom
 /skill:sigmaimprove
 /skill:sigmabrief https://github.com/owner/repo/issues/12
 /skill:sigmabrief all open

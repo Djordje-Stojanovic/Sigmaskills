@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaFreedom
+  short_description: De-safeguards and decensors a repository
+  default_prompt: Use $sigmafreedom to delete model-authored refusals and bans
+    from a repository, write the freedom doctrine, and install guardrail_lint.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: true

@@ -9,6 +9,7 @@ import { CHECKOUT_ACTION_PIN, SETUP_NODE_ACTION_PIN } from '../scripts/release.j
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const KNOWN_SKILLS = [
+  { id: 'sigmafreedom', title: 'SigmaFreedom', needsReferences: true },
   { id: 'easytalk', title: 'EasyTalk', needsReferences: false },
   { id: 'storgestudio-arena-create', title: 'Arena Create', needsReferences: true },
   {
