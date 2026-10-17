@@ -14,7 +14,7 @@ One home for what `look.py` prints and writes. Read this when you need a field n
 - `READ <path> (~N tokens)`: valid UTF-8 text of at most 25,000 estimated tokens (about 100 KB), of a kind you can read yourself (plain text, source, csv, json, md, eml, ics...). Stop and use your own Read.
 - `LOOK quick|standard|deep <path> - <kind>: <why>`: binary, media or text over the limit. The tier is a recommendation.
 
-`look.py <small text file>` without a flag prints `Read this file directly: <path> (~N tokens)` plus any real flags (hidden Unicode, reject rows, key-like strings), and writes nothing. `--no-direct` forces a full look.
+Every file gets a full look, small text included (fix round 4): a structural profile with exact counts in step 1, fuller lists in `--more`, and the file itself whole at the end of the stored stream. A small text file adds one note that reading it whole is also fine. Every print carries a `Counts:` line (rows, records, paragraphs, sheets, slides, cues, members, frames: whatever the format has). `--no-direct` leaves the note out.
 
 ## The stream and the three steps
 

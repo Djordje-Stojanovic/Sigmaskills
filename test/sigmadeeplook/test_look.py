@@ -91,29 +91,32 @@ def csv_of_size(n):
 
 
 class DirectTier(unittest.TestCase):
+    """Fix round 4: a small text file is never 'read directly' with no summary. It gets a full look with exact counts, stored so
+    --more works, plus one note that reading it whole is also fine."""
     def test_threshold_boundary(self):
         n = threshold()
         under, out_u, lj_u = look_bytes("under.csv", csv_of_size(n))
         over, out_o, lj_o = look_bytes("over.csv", csv_of_size(n + 1))
         self.assertEqual(under.returncode, 0, under.stderr)
         self.assertEqual(lj_u["size"], n)
-        self.assertEqual(lj_u["tier"], "direct")
+        self.assertTrue(lj_u["facts"].get("direct_read"))
         self.assertEqual(lj_o["size"], n + 1)
-        self.assertNotEqual(lj_o["tier"], "direct")
+        self.assertFalse(lj_o["facts"].get("direct_read"))
         md_u = (out_u / "LOOK.md").read_text(encoding="utf-8")
         md_o = (out_o / "LOOK.md").read_text(encoding="utf-8")
-        self.assertTrue(md_u.startswith("Read this file directly: "), md_u[:80])
-        self.assertRegex(md_u.splitlines()[0], r"\(~\d+ tokens\)$")
-        self.assertFalse(md_o.startswith("Read this file directly"))
-        self.assertTrue(any(a["kind"] != "internal" for a in lj_o["artifacts"]), "over the line keeps the usual artifacts")
+        self.assertIn("Small text file: the whole file is ~", md_u)
+        self.assertNotIn("Small text file", md_o)
+        for md in (md_u, md_o):
+            self.assertIn("Counts:", md)
+            self.assertNotIn("Read this file directly", md)
 
-    def test_direct_writes_no_artifacts_and_keeps_real_flags(self):
+    def test_small_file_gets_a_full_look_and_keeps_real_flags(self):
         r, out, lj = look_bytes("rows.csv", b"id,name,note\n1,a,x\n2,b\n3,c,z\n")
-        self.assertEqual(lj["tier"], "direct")
-        self.assertEqual(lj["artifacts"], [])
-        self.assertEqual(sorted(p.name for p in out.iterdir()), ["LOOK.md", "cursor.json", "look.json", "view.html"])
+        self.assertNotEqual(lj["tier"], "direct")
+        self.assertTrue(lj["stream"], "the look is stored as a stream")
         self.assertIn("REJECT-ROW", (out / "LOOK.md").read_text(encoding="utf-8"))
         self.assertEqual(lj["facts"]["rejects"], 1)
+        self.assertEqual(lj["facts"]["counts"]["data rows"], 3)
 
     def test_invalid_utf8_small_file_is_not_direct_and_is_flagged(self):
         r, out, lj = look_bytes("latin.csv", b"id,name\n1,Caf\xe9\n2,Zo\xeb\n3,x\n")
@@ -131,12 +134,14 @@ class DirectTier(unittest.TestCase):
         r, out, lj = look_bytes("small.csv", b"a,b\n1,2\n3,4\n", "--no-direct")
         self.assertNotEqual(lj["tier"], "direct")
 
-    def test_small_text_kinds_are_direct(self):
+    def test_small_text_kinds_get_a_summary_not_a_bare_read_line(self):
         for name in ("plain.txt", "tool.py", "events.jsonl", "box.mbox", "cal.ics", "nb.ipynb"):
             r, out = look(name)
             lj = json.loads((out / "look.json").read_text(encoding="utf-8"))
-            self.assertEqual(lj["tier"], "direct", name)
-            self.assertTrue((out / "LOOK.md").read_text(encoding="utf-8").startswith("Read this file directly: "), name)
+            md = (out / "LOOK.md").read_text(encoding="utf-8")
+            self.assertFalse(md.startswith("Read this file directly"), name)
+            self.assertTrue(md.startswith("# "), name)
+            self.assertGreater(len(lj["stream"]), 2, name)
         r, out = look("tool.py")
         self.assertIn("U+200B", r.stdout)  # hidden Unicode is a real flag and survives
 

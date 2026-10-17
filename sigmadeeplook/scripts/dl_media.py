@@ -356,7 +356,8 @@ def write_transcript(look, segs, lang, dur, sampled=None):
         return f"{int(t // 3600):02d}:{int(t % 3600 // 60):02d}:{int(t % 60):02d},{int(t % 1 * 1000):03d}"
     srt = "\n\n".join(f"{i}\n{ts(s['start'])} --> {ts(s['end'])}\n{s['text']}" for i, s in enumerate(segs, 1))
     look.write_text("transcript.srt", srt, "transcript with times (SRT)" if not sampled else "speech samples with times (SRT)", inline=False)
-    lines = [f"[{core.mmss(s['start'])}] {' '.join(s['text'].split())}" for s in segs]
+    import dl_mmeta
+    lines = [f"[{dl_mmeta.hms(s['start'])} - {dl_mmeta.hms(s['end'])}] {' '.join(s['text'].split())}" for s in segs]
     look.write_text("transcript.md" if not sampled else "speech-sample.md", "\n".join(lines),
                     "the speech, one line per segment with its start" if not sampled else "speech heard in the sampled windows, one line per segment", value=6)
     text = " ".join(s["text"] for s in segs)
@@ -512,6 +513,11 @@ def look_video(look):
         if cut:
             look.flag("TRUNCATED", "container", f"atom {cut} runs past the end of the file", "the file is cut short; playback stops early or breaks (the header is intact, so ffprobe still reports the full length)")
     look.write_text("probe.json", json.dumps(ffp, indent=1), "ffprobe facts (streams, codecs, sizes)", "json")
+    try:
+        import dl_mmeta
+        dl_mmeta.media_meta(look)
+    except Exception as e:
+        look.fail("container and stream metadata", "ffprobe", e)
     def checks():
         r = one_pass_checks(look, True, bool(au), dur)
         report_checks(look, r, dur)
@@ -884,6 +890,11 @@ def look_audio(look, ffp=None):
     look.dims = f"{core.mmss(dur)}"
     look.line(f"Audio: {core.mmss(dur)} ({dur:.1f} s), {a.get('codec_name')}, {a.get('sample_rate')} Hz, {a.get('channels')} channel(s).", 35)
     look.write_text("probe.json", json.dumps(ffp, indent=1), "ffprobe facts", "json")
+    try:
+        import dl_mmeta
+        dl_mmeta.media_meta(look)
+    except Exception as e:
+        look.fail("container and stream metadata", "ffprobe", e)
     res = one_pass_checks(look, False, True, dur)
     report_checks(look, res, dur)
     look.step("loudness and silence", "ffmpeg")
@@ -1225,13 +1236,16 @@ def image_svg(look):
     texts = re.findall(r">([^<>]{2,})<", text)
     vb = m.group(1) if m else ""
     look.fact("viewBox", vb)
-    look.line(f"SVG vector picture, viewBox {vb or 'none'}; {len(re.findall('<path', text))} paths, {len(re.findall('<text', text))} text elements.")
     visible = [t.strip() for t in texts if t.strip() and not t.strip().startswith(("/*", "<!--"))]
     if visible:
         look.fact("svg_text", visible[:20])
-        look.line("Text in the SVG: " + " | ".join(visible[:8]))
     if re.search(r"<script|onload=|javascript:", text, re.I):
         look.flag("ACTIVE-CONTENT", "svg", "script or event handler", "an SVG can run code in a browser; it was not rendered")
     core.scan_injection(look, text, look.path.name)
-    look.write_text("svg.txt", text[:200000], "the SVG source as text")
+    try:
+        import dl_svg
+        dl_svg.look_svg(look, text)
+    except Exception as e:
+        look.fail("SVG element, path, colour and coordinate counts", "stdlib", e)
+    look.write_text("svg.txt", text[:200000], "the SVG source as text", inline=False)
     look.skip("rendered picture of the SVG", "no SVG renderer (cairosvg, inkscape, resvg) found; scripts in an SVG are never run", "cairosvg")

@@ -455,6 +455,12 @@ def look_office(look):
     media = [n for n in names if "/media/" in n]
     look.fact("media", len(media))
     package_remote_flags(look, z, names)
+    import dl_offx
+    if st in ("docx", "docm", "xlsx", "xlsm", "pptx", "pptm"):
+        try:
+            dl_offx.props(look, z, names)
+        except Exception as e:
+            look.fail("document properties", "stdlib", e)
     kind = st[:4] if st[:4] in ("docx", "xlsx", "pptx") else st
     if st in ("docx", "docm"):
         office_docx(look, z, names)
@@ -570,6 +576,11 @@ def office_docx(look, z, names):
                 elif t in ("tbl", "tr", "tc", "body", "sdt", "sdtContent"):
                     walk(ch, mode)
         walk(doc, None)
+    try:
+        import dl_offx
+        dl_offx.docx_counts(look, z, names, doc)
+    except Exception as e:
+        look.fail("Word counts", "stdlib", e)
     comments = []
     if "word/comments.xml" in names:
         c = parse_xml(look, z.read("word/comments.xml"))
@@ -601,7 +612,7 @@ def office_docx(look, z, names):
     look.fact("paragraphs", len(out))
     ins_n = sum(n for (t, _a), n in revs.items() if t in ("ins", "moveTo"))
     del_n = sum(n for (t, _a), n in revs.items() if t in ("del", "moveFrom"))
-    bits = [f"{len(out)} paragraphs"]
+    bits = [f"{len(out)} non-empty paragraphs with table cells (every count in Word counts)"]
     if revs:
         bits.append(f"{sum(revs.values())} tracked changes ({ins_n} inserted, {del_n} deleted) by " + ", ".join(f"{a} {n}" for a, n in by_author.items()))
     for label, n in (("comments", len(comments)), ("footnotes", len(notes.get("footnotes", []))), ("header/footer parts", len(hf)), ("images", len([n for n in names if "/media/" in n]))):
@@ -718,6 +729,12 @@ def office_xlsx(look, z, names):
                  formula_samples=[f"{r}: ={f}" for r, f in formulas[:3]])
         total_unc += len(unc)
         dl_xl.sheet_report(look, s["name"], cells, formulas, z.read(s["path"]))
+        s["kind"] = "chartsheet" if "/chartsheets/" in s["path"] else "dialogsheet" if "/dialogsheets/" in s["path"] else "macrosheet" if "/macrosheets/" in s["path"] else "worksheet"
+        try:
+            import dl_offx
+            s["agg"] = dl_offx.sheet_aggregates(look, s["name"], cells, formulas)
+        except Exception as e:
+            look.fail(f"sheet aggregates ({s['name']})", "stdlib", e)
         nr = max((r for r, c in cells), default=-1) + 1
         nc = max((c for r, c in cells), default=-1) + 1
         s["rows"], s["cols"] = nr, nc
@@ -725,7 +742,7 @@ def office_xlsx(look, z, names):
         safe = re.sub(r"[^\w.-]+", "_", s["name"])
         buf = io.StringIO()
         csv.writer(buf).writerows(grid)
-        s["csv"] = look.write_text(f"sheets/{safe}.csv", buf.getvalue(), f"sheet '{s['name']}' as CSV (cached values; recalculated when LibreOffice ran)", value=2, inline=False, slice_cmd="--sheet NAME --range A1:H40").as_posix()
+        s["csv"] = look.write_text(f"sheets/{safe}.csv", buf.getvalue(), f"sheet '{s['name']}' as CSV (cached values; recalculated when LibreOffice ran)", value=2, slice_cmd="--sheet NAME --range A1:H40").as_posix()
         inv.append(s)
         head, tail = grid[:5], grid[-5:] if nr > 10 else []
         rnd = random.Random(7).sample(grid[5:-5] if nr > 15 else [], min(10, max(0, nr - 15)))
@@ -748,6 +765,15 @@ def office_xlsx(look, z, names):
     look.fact("hidden_sheets", [s["name"] for s in inv if s["state"] != "visible"])
     look.headline = f"xlsx workbook, {len(inv)} sheets" + (f", {sum(1 for s in inv if s['state'] != 'visible')} hidden" if any(s['state'] != 'visible' for s in inv) else "")
     look.dims = f"{len(inv)} sheets"
+    import dl_prof as P
+    states = Counter(s["state"] for s in sheets)
+    kinds = Counter(s.get("kind", "worksheet") for s in inv)
+    aggs = [s["agg"] for s in inv if s.get("agg")]
+    P.counts(look, [("sheets in workbook.xml", len(sheets)), ("visible", states.get("visible", 0)), ("hidden", states.get("hidden", 0) or None), ("veryHidden", states.get("veryHidden", 0) or None),
+                    ("worksheets", kinds.get("worksheet", 0)), ("chartsheets", kinds.get("chartsheet") or None), ("sheets listed but missing", len(sheets) - len(inv) or None),
+                    ("non-empty cells", sum(a["cells"] for a in aggs)), ("number cells", sum(a["numbers"] for a in aggs)), ("text cells", sum(a["text"] for a in aggs)),
+                    ("formulas", sum(a["formulas"] for a in aggs)), ("formulas without a cached value", total_unc or None)], 96, "Workbook counts")
+    look.line("Sheets in workbook order (state, used rows x columns, formulas): " + "; ".join(f"{i}. {s['name']} [{s['state']}] {s.get('rows', 0)}x{s.get('cols', 0)}, {s.get('formulas', 0)} formulas" for i, s in enumerate(inv, 1)), 92)
     look.line(f"Workbook: {len(inv)} sheets (" + ", ".join(f"{s['name']} [{s['state']}] {s['rows']}x{s['cols']}" for s in inv) + f"); formulas without stored results: {total_unc}.", 70)
     look.write_text("workbook.json", json.dumps([{k: v for k, v in s.items() if k != "path"} for s in inv], indent=1), "sheet inventory: visibility, size, merged, formulas, uncached", "json")
     look.write_text("text.md", "\n\n".join(md), "per sheet: shape, head 5, tail 5, 10 random rows, formula examples", value=6, slice_cmd="--sheet NAME --range A1:H40")
@@ -875,6 +901,11 @@ def pptx_outline(recs):
 
 
 def office_pptx(look, z, names):
+    try:
+        import dl_offx
+        dl_offx.pptx_counts(look, z, names)
+    except Exception as e:
+        look.fail("slide counts", "stdlib", e)
     pres = parse_xml(look, z.read("ppt/presentation.xml")) if "ppt/presentation.xml" in names else None
     rels = parse_xml(look, z.read("ppt/_rels/presentation.xml.rels")) if "ppt/_rels/presentation.xml.rels" in names else None
     rid = {attr(r, "Id"): attr(r, "Target") for r in rels} if rels is not None else {}
@@ -884,6 +915,8 @@ def office_pptx(look, z, names):
             if strip(el.tag) == "sldId":
                 t = rid.get(rattr(el), "")
                 order.append("ppt/" + t.lstrip("/").replace("ppt/", "", 1) if not t.startswith("/") else t.lstrip("/"))
+    if not [s for s in order if s in names]:   # no slide list (or a broken one): the slide parts, in number order
+        order = sorted((n for n in names if re.fullmatch(r"ppt/slides/slide\d+\.xml", n)), key=lambda n: int(re.search(r"(\d+)\.xml$", n).group(1)))
     md, hidden, notes_n, pics = [], [], 0, 0
     recs = []   # (number, paragraphs, note, hidden)
     for i, sp in enumerate(order, 1):
@@ -930,7 +963,7 @@ def office_pptx(look, z, names):
     look.dims = f"{len(order)} slides"
     if hidden:
         look.flag("HIDDEN-SLIDE", ", ".join(map(str, hidden)), "hidden", "hidden slides are exported to the render so they can be seen")
-    look.write_text("slides.md", "\n\n".join(md), "text per slide in order, with notes, hidden marks and picture alt text", inline=False)
+    look.write_text("slides.md", "\n\n".join(md), "text per slide in order, with notes, hidden marks and picture alt text", value=5)
     outline_lines, contradictions = pptx_outline(recs)
     for ln in outline_lines:
         look.line(ln, 72)

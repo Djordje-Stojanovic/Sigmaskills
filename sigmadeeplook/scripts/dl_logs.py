@@ -168,6 +168,76 @@ def fold_trace(lines, keep=TRACE_KEEP):
     return "\n".join("    " + x for x in out)
 
 
+ACCESS_RE = re.compile(r'^(\S+) \S+ \S+ \[[^\]]+\] "([A-Z]+) (\S+)(?: [^"]*)?" (\d{3}) (\d+|-)')
+STATUS_RE = re.compile(r'\b(?:status|code|http_status)[=: ]+(\d{3})\b', re.I)
+
+
+def log_extras(look, r, max_lines):
+    """A second streaming pass for exact counts: every level with its first and last line, blank and continuation lines,
+    per-hour volume, access-log fields (method, status, path, client, bytes) and `key=number` values on every line."""
+    import dl_prof as P
+    lv_first, lv_last, lv_n = {}, {}, Counter()
+    blank = cont = 0
+    methods, statuses, paths, clients = Counter(), Counter(), Counter(), Counter()
+    bytes_sum = access = 0
+    hours = Counter()
+    year = datetime.now(timezone.utc).year
+
+    def lines():
+        nonlocal blank, cont, bytes_sum, access
+        with open(look.path, "rb") as f:
+            for ln, raw in enumerate(f, 1):
+                if ln > max_lines:
+                    break
+                line = raw.decode("utf-8", "replace").rstrip("\r\n")
+                if not line.strip():
+                    blank += 1
+                    continue
+                if CONT_RE.match(line):
+                    cont += 1
+                lm = LEVEL_RE.search(line[:200])
+                lv = None
+                if lm:
+                    lv = LEVEL_MAP.get(lm.group(1))
+                    lv_n[lv] += 1
+                    lv_first.setdefault(lv, ln)
+                    lv_last[lv] = ln
+                m = ACCESS_RE.match(line)
+                if m:
+                    access += 1
+                    clients[m.group(1)] += 1
+                    methods[m.group(2)] += 1
+                    paths[m.group(3).split("?")[0]] += 1
+                    statuses[m.group(4)] += 1
+                    if m.group(5) != "-":
+                        bytes_sum += int(m.group(5))
+                else:
+                    sm = STATUS_RE.search(line)
+                    if sm:
+                        statuses[sm.group(1)] += 1
+                ts, _ = parse_ts(line, year)
+                if ts is not None:
+                    hours[int(ts // 3600)] += 1
+                yield ln, line, lv or "no level"
+    P.kv_numbers(look, lines(), 72)
+    order = sorted(lv_n, key=lambda k: LEVELS.index(k) if k in LEVELS else 9)
+    P.counts(look, [("lines", r["lines"]), ("blank lines", blank), ("timed records", r["timed"]), ("non-blank lines without a timestamp", r["untimed"]),
+                    ("continuation / stack lines", cont or None), ("message templates", len(r["drain"].clusters) if r["timed"] else None)]
+             + [(f"{k} lines", lv_n[k]) for k in order], 96, "Log counts")
+    if lv_n:
+        look.line("Levels (lines, first line, last line): " + "; ".join(f"{k} {lv_n[k]:,} (lines {lv_first[k]}-{lv_last[k]})" for k in order)
+                  + ". A level counts once per line, wherever the word stands.", 91)
+    if access:
+        look.line(f"Access-log lines: {access:,}; methods " + ", ".join(f"{k} {v:,}" for k, v in methods.most_common()) + "; status " + ", ".join(f"{k} {v:,}" for k, v in sorted(statuses.items()))
+                  + f"; {len(clients):,} clients, {len(paths):,} distinct paths; {bytes_sum:,} bytes sent.", 90)
+        look.line("Top paths: " + ", ".join(f"{k} {v:,}" for k, v in paths.most_common(15)) + ". Top clients: " + ", ".join(f"{k} {v:,}" for k, v in clients.most_common(10)), 70)
+    elif statuses:
+        look.line("Status codes on the lines: " + ", ".join(f"{k} {v:,}" for k, v in sorted(statuses.items())), 75)
+    if hours:
+        rows = [f"{fmt_ts(h * 3600)[:13]}:00 {hours[h]:,}" for h in range(min(hours), max(hours) + 1)]
+        look.line(f"Records per hour (UTC as written, {len(rows)} hours): " + "; ".join(rows[:400]), 26, "timeline")
+
+
 def look_log(look):
     if look.subtype == "evtx":
         import dl_adapt
@@ -176,6 +246,10 @@ def look_log(look):
     timed = r["timed"]
     look.fact("lines", r["lines"])
     look.fact("timed_records", timed)
+    try:
+        log_extras(look, r, LOG_LINES_DEEP if look.deep else LOG_LINES_STANDARD)
+    except Exception as e:  # the main scan stands on its own
+        look.fail("log counts (levels, access fields, key=number values)", "stdlib", e)
     if not timed:
         look.line(f"Text log without recognisable timestamps: {r['lines']} lines.", 90)
         look.skip("timeline, bursts and gaps", "no timestamp format found (ISO, syslog, Apache or epoch)")
@@ -186,13 +260,13 @@ def look_log(look):
     look.fact("first", fmt_ts(first))
     look.fact("last", fmt_ts(last))
     mins = r["minutes"]
-    look.headline = f"log, {U.compact(r['lines'])} lines over {span_text(span)}, {fmt_ts(first)} to {fmt_ts(last)}"
-    lv = ", ".join(f"{k} {U.compact(v)}" for k, v in sorted(r["levels"].items(), key=lambda kv: LEVELS.index(kv[0]) if kv[0] in LEVELS else 9))
+    look.headline = f"log, {r['lines']:,} lines over {span_text(span)}, {fmt_ts(first)} to {fmt_ts(last)}"
+    lv = ", ".join(f"{k} {v:,}" for k, v in sorted(r["levels"].items(), key=lambda kv: LEVELS.index(kv[0]) if kv[0] in LEVELS else 9))
     nb = min(30, max(1, len(range(min(mins), max(mins) + 1))))
     series = [mins.get(m, 0) for m in range(min(mins), max(mins) + 1)]
     spark = U.sparkline(series, nb)
-    look.line(f"{U.compact(r['lines'])} lines ({U.compact(timed)} timed records), {fmt_ts(first)} to {fmt_ts(last)} ({span_text(span)}); levels: {lv or 'none found'}", 95)
-    look.line(f"Volume per time bucket: {spark} (peak {U.compact(max(series))} records/min, median {U.compact(U.median([x for x in series if x]))})", 92)
+    look.line(f"{r['lines']:,} lines ({timed:,} timed records), {fmt_ts(first)} to {fmt_ts(last)} ({span_text(span)}); levels: {lv or 'none found'}", 95)
+    look.line(f"Volume per time bucket: {spark} (peak {max(series):,} records/min, median {U.compact(U.median([x for x in series if x]))})", 92)
     look.dims = f"{U.compact(r['lines'])} lines"
     # templates
     clusters = sorted(r["drain"].clusters, key=lambda c: -c["count"])
@@ -200,7 +274,7 @@ def look_log(look):
     day0 = datetime.fromtimestamp(first, tz=timezone.utc).date()
     quiet = [c for c in clusters if c.get("level") not in BAD and c.get("level") != "WARN"]
     top = quiet[:5]
-    rows = [f"{U.compact(c['count'])}x [{c.get('level', '-')}] {Drain_t(c)[:110]}" for c in top]
+    rows = [f"{c['count']:,}x [{c.get('level', '-')}] {Drain_t(c)[:110]}" for c in top]
     look.line(f"{len(clusters)} message templates; most frequent:\n" + "\n".join("  " + x for x in rows), 80, "templates")
     loud = [c for c in clusters if c.get("level") in BAD or c.get("level") == "WARN"]
     if loud:
@@ -208,7 +282,7 @@ def look_log(look):
             tpl = Drain_t(c)[:110]
             ex = "" if "<*>" not in tpl else f"; e.g. {c['example'][:70]}"
             when = clock(c["t0"], day0) + (f" to {clock(c['t1'], day0)}" if c["t1"] > c["t0"] else "") if "t0" in c else ""
-            return f"{U.compact(c['count'])}x [{c.get('level')}] {tpl} | {when} | lines {c['first']}-{c['last']}{ex}"
+            return f"{c['count']:,}x [{c.get('level')}] {tpl} | {when} | lines {c['first']}-{c['last']}{ex}"
         look.line("Warning and error templates, with count, first and last time:\n" + "\n".join("  " + trow(c) for c in loud[:6]), 93, "errors")
     # first error and what came before
     bad = [(ln, ts, c) for ln, ts, lvl, c in r["recs"] if lvl in BAD]
@@ -276,13 +350,13 @@ def look_log(look):
     w.writerow(["count", "level", "first_line", "last_line", "template"])
     for c in clusters[:5000]:
         w.writerow([c["count"], c.get("level", ""), c["first"], c["last"], Drain_t(c)])
-    look.write_text("templates.csv", buf.getvalue(), "every message template: count, level, first and last line", value=4, inline=False)
+    look.write_text("templates.csv", buf.getvalue(), "every message template: count, level, first and last line", value=4)
     errs = [c for c in clusters if c.get("level") in BAD][:40]
     if errs:
-        look.write_text("errors.md", "\n\n".join(f"### {U.compact(c['count'])}x {c.get('level')} (lines {c['first']}-{c['last']}, {clock(c['t0'], day0)} to {clock(c['t1'], day0)})\n{c['example']}" + ("\n" + fold_trace(c.get("trace")) if c.get("trace") else "") for c in errs),
+        look.write_text("errors.md", "\n\n".join(f"### {c['count']:,}x {c.get('level')} (lines {c['first']}-{c['last']}, {clock(c['t0'], day0)} to {clock(c['t1'], day0)})\n{c['example']}" + ("\n" + fold_trace(c.get("trace")) if c.get("trace") else "") for c in errs),
                         "each error template once with its times, an example line and a folded stack trace", value=7, inline=True if any(c.get("trace") for c in errs) else False)
     if rare:
-        look.write_text("rare.md", "\n".join(f"line {c['first']} at {clock(c['t0'], day0)}: {c['example']}" for c in clusters if c["count"] <= 2)[:60000], "templates seen once or twice, with their line and time", value=4, inline=False)
+        look.write_text("rare.md", "\n".join(f"line {c['first']} at {clock(c['t0'], day0)}: {c['example']}" for c in clusters if c["count"] <= 2)[:60000], "templates seen once or twice, with their line and time", value=4)
     tl = io.StringIO()
     tw = csv.writer(tl)
     tw.writerow(["minute_utc", "records"])
@@ -388,6 +462,13 @@ def parse_cues(text, kind, numbers=None):
     return cues
 
 
+def stamp(t):
+    """Seconds -> H:MM:SS.mmm, the exact time a cue is written with."""
+    t = max(0.0, float(t))
+    ms = int(round(t * 1000))
+    return f"{ms // 3600000}:{ms // 60000 % 60:02d}:{ms // 1000 % 60:02d}.{ms % 1000:03d}"
+
+
 def look_subtitle(look):
     raw = look.path.read_bytes()[:20_000_000]
     text, enc = core.decode_text(raw)
@@ -447,15 +528,24 @@ def look_subtitle(look):
         p1 = " ".join(p.split())
         if p1:
             merged.append(f"[{core.mmss(c[0])}] {p1}")
-    sents, buf = [], ""
-    for line in merged:
-        buf = (buf + " " + line).strip() if not buf else buf + " " + line.split("] ", 1)[1]
-        if re.search(r"[.!?…]$", line):
-            sents.append(buf)
-            buf = ""
-    if buf:
-        sents.append(buf)
-    look.write_text("text.md", "\n".join(sents), "the subtitle text, one line per sentence, with the start time", value=6)
+    import dl_prof as P
+    durs = [c[1] - c[0] for c in cues]
+    words = sum(len(p.split()) for p in plain)
+    covered = sum(max(0.0, d) for d in durs)
+    srt_lines = sum(len([x for x in p.splitlines() if x.strip()]) for p in plain)
+    P.counts(look, [("cues", len(cues)), ("first cue start", stamp(start)), ("last cue end", stamp(end)), ("text lines", srt_lines), ("words", words),
+                    ("characters (no spaces)", sum(len(re.sub(r"\s+", "", p)) for p in plain)), ("time with a cue on screen", f"{covered:.3f} s"),
+                    ("mean cue", f"{covered / max(1, len(cues)):.3f} s"), ("median cue", f"{U.median(durs):.3f} s"), ("empty cues", sum(1 for p in plain if not p.strip()) or None),
+                    ("two-line cues", sum(1 for p in plain if len([x for x in p.splitlines() if x.strip()]) >= 2) or None)], 96, "Subtitle counts")
+    order = sorted(range(len(cues)), key=lambda i: (-durs[i], i))
+
+    def crow(i):
+        return f"#{nums[i]} {stamp(cues[i][0])}-{stamp(cues[i][1])} ({durs[i]:.3f} s): {P.short(' / '.join(x for x in plain[i].splitlines() if x.strip()), 70)}"
+    look.line("Longest cues: " + "; ".join(crow(i) for i in order[:5]), 80)
+    look.line("Shortest cues: " + "; ".join(crow(i) for i in order[::-1][:5]), 78)
+    look.line("Cues ranked by duration, longest first (top 40): " + "; ".join(crow(i) for i in order[:40]), 30, "ranking")
+    rows = [f"#{nums[i]} [{stamp(c[0])} --> {stamp(c[1])}] {' / '.join(x.strip() for x in p.splitlines() if x.strip())}" for i, (c, p) in enumerate(zip(cues, plain))]
+    look.write_text("text.md", "\n".join(rows), "every cue with its number and exact start and end time (H:MM:SS.mmm)", value=6)
     cb = io.StringIO()
     w = csv.writer(cb)
     w.writerow(["start", "end", "chars_per_s", "text"])

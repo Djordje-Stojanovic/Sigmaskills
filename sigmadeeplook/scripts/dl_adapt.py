@@ -142,44 +142,141 @@ def evtx_span(f, h):
     return stamp(0, False), stamp(max(0, h["chunks"] - 1), True)
 
 
+def raw_records(path, max_chunks=100000):
+    """Every record header of an EVTX file, read straight from the chunks (stdlib): -> [(record id, datetime or None, size)].
+    Works when python-evtx is missing or fails on a record."""
+    out = []
+    with open(path, "rb") as f:
+        f.seek(4096)
+        for _ in range(max_chunks):
+            blk = f.read(65536)
+            if len(blk) < 512 or blk[:8] != b"ElfChnk\x00":
+                break
+            pos = 512
+            while pos + 24 <= len(blk):
+                sig, size = struct.unpack_from("<II", blk, pos)
+                if sig != 0x2A2A or size < 24 or pos + size > len(blk):
+                    break
+                rid, ts = struct.unpack_from("<QQ", blk, pos + 8)
+                out.append((rid, filetime(ts), size))
+                pos += size
+    return out
+
+
+LEVEL_NAMES = {"0": "LogAlways", "1": "Critical", "2": "Error", "3": "Warning", "4": "Information", "5": "Verbose"}
+EV_FIELDS = {"id": re.compile(r"<EventID[^>]*>(\d+)</EventID>"), "level": re.compile(r"<Level>(\d+)</Level>"),
+             "provider": re.compile(r'<Provider Name="([^"]+)"'), "channel": re.compile(r"<Channel>([^<]*)</Channel>"),
+             "computer": re.compile(r"<Computer>([^<]*)</Computer>"), "time": re.compile(r'<TimeCreated SystemTime="([^"]+)"'),
+             "user": re.compile(r'<Security UserID="([^"]+)"')}
+
+
+def evtx_counts_only(look, records, h, days):
+    import dl_prof as P
+    P.counts(look, [("records", records), ("chunks", h["chunks"]), ("days", len(days) or None)], 94, "Event log counts")
+
+
 def look_evtx(look):
+    """EVTX: the header, then every record (exact count, record ids, first and last time, per day) from the raw chunks; then, with
+    python-evtx, each event's id, level, provider, channel and data. A record python-evtx cannot render is counted, never fatal."""
+    import time as _t
+    import dl_prof as P
     with open(look.path, "rb") as f:
         h = evtx_header(f.read(4096))
-        t0, t1 = evtx_span(f, h)
-    records = max(0, h["next_record"] - 1)
-    look.headline = f"Windows event log, about {records} records" + (f", {t0:%Y-%m-%d} to {t1:%Y-%m-%d}" if t0 and t1 else "")
-    look.dims = f"{records} records"
+    raw, seen = [], set()
+    for r in raw_records(look.path):   # a chunk can hold a stale copy of a record: one per record id
+        if r[0] not in seen:
+            seen.add(r[0])
+            raw.append(r)
+    times = [t for _, t, _ in raw if t]
+    ids = [r for r, _, _ in raw]
+    t0, t1 = (min(times), max(times)) if times else (None, None)
+    est = max(0, h["next_record"] - 1)
+    exact = bool(raw) and (est <= 0 or len(raw) >= 0.9 * est)
+    records = len(raw) if exact else max(est, len(raw))
+    if not exact:   # the record walk broke off (damaged or unusual chunks): the header's count and the chunk headers' times
+        with open(look.path, "rb") as f:
+            s0, s1 = evtx_span(f, h)
+        t0, t1 = s0 or t0, s1 or t1
+        look.flag("PARTIAL", "record walk", f"{len(raw):,} records walked, the header says about {est:,}", "counts below are from the header: an estimate")
+    look.headline = f"Windows event log, {'' if exact else 'about '}{records:,} records" + (f", {t0:%Y-%m-%d %H:%M} to {t1:%Y-%m-%d %H:%M} UTC" if t0 and t1 else "")
+    look.dims = f"{records:,} records"
     look.fact("records", records)
-    look.line(f"Windows event log (EVTX {h['version']}): about {records} records in {h['chunks']} chunks" + (f", from {t0:%Y-%m-%d %H:%M} to {t1:%Y-%m-%d %H:%M} UTC" if t0 and t1 else "") + ".", 90)
+    look.line(f"Windows event log (EVTX {h['version']}): {records:,} records in {h['chunks']} chunks ({'counted record by record' if exact else 'about: from the header'})"
+              + (f", from {t0:%Y-%m-%d %H:%M:%S} to {t1:%Y-%m-%d %H:%M:%S} UTC" if t0 and t1 else "")
+              + (f"; record ids {min(ids):,} to {max(ids):,}" if ids else "") + ".", 92)
     if h["dirty"]:
         look.flag("DIRTY-LOG", "header", "the log was not closed cleanly", "the last records may be missing or incomplete")
-    ev = look.mod("Evtx")
-    if not ev:
+    days = Counter(t.strftime("%Y-%m-%d") for t in times)
+    if days:
+        look.line("Records per day (UTC): " + "; ".join(f"{d} {n:,}" for d, n in sorted(days.items())), 70, "timeline")
+    if ids and max(ids) - min(ids) + 1 != len(set(ids)):
+        look.line(f"Record ids are not contiguous: {max(ids) - min(ids) + 1 - len(set(ids)):,} ids missing between {min(ids):,} and {max(ids):,} (a filtered export or cleared records).", 60)
+    if not look.mod("Evtx"):
         look.skip("events: ids, providers, levels and messages", "python package python-evtx not importable" if not look.no_tools else "disabled by --no-tools", "Evtx")
-        return
+        return evtx_counts_only(look, records, h, days)
+    c = {k: Counter() for k in EV_FIELDS if k != "time"}
+    pair_n, first, last = Counter(), {}, {}
+    lvl_first, lvl_last = {}, {}
+    rows, data_vals = [], Counter()
+    failed = done = 0
+    partial = False
+    start = _t.time()
     try:
         from Evtx.Evtx import Evtx as EvtxFile
-        ids, levels, prov = Counter(), Counter(), Counter()
-        errors = []
-        log = EvtxFile(str(look.path))
-        for i, rec in enumerate(log.records()):
-            if i >= 20000:
-                break
-            x = rec.xml()
-            m = re.search(r"<EventID[^>]*>(\d+)</EventID>", x)
-            ids[m.group(1) if m else "?"] += 1
-            lv = re.search(r"<Level>(\d+)</Level>", x)
-            levels[lv.group(1) if lv else "?"] += 1
-            pv = re.search(r'<Provider Name="([^"]+)"', x)
-            prov[pv.group(1) if pv else "?"] += 1
-            if lv and lv.group(1) in ("1", "2") and len(errors) < 5:
-                errors.append(x[:300])
-        look.line("Top event ids: " + ", ".join(f"{k} x{v}" for k, v in ids.most_common(8)) + "; providers: " + ", ".join(f"{k} x{v}" for k, v in prov.most_common(4)) + f"; level counts {dict(levels)} (1 critical, 2 error, 3 warning, 4 info).", 80)
-        if errors:
-            look.write_text("errors.xml", "\n".join(errors), "first error and critical events (XML)", value=6)
-        look.step("event ids and levels", "python-evtx")
+        with EvtxFile(str(look.path)) as log:
+            for rec in log.records():
+                if _t.time() - start > (300 if look.deep else 90):
+                    partial = True
+                    break
+                try:
+                    x = rec.xml()
+                except Exception:   # python-evtx cannot render some templates (TypeError and others): count it, go on
+                    failed += 1
+                    continue
+                done += 1
+                got = {}
+                for k, rx in EV_FIELDS.items():
+                    m = rx.search(x)
+                    got[k] = m.group(1) if m else "?"
+                    if k != "time":
+                        c[k][got[k]] += 1
+                key = (got["provider"], got["id"])
+                pair_n[key] += 1
+                tm = got["time"][:19].replace("T", " ")
+                first.setdefault(key, tm)
+                last[key] = tm
+                lvl_first.setdefault(got["level"], tm)
+                lvl_last[got["level"]] = tm
+                for nm, val in re.findall(r'<Data Name="([^"]+)">([^<]{1,80})</Data>', x)[:8]:
+                    data_vals[f"{nm}={val}"] += 1
+                if len(rows) < 3000:
+                    msg = " | ".join(re.findall(r"<Data[^>]*>([^<]{1,200})</Data>", x)[:4])
+                    rows.append(f"{tm} {LEVEL_NAMES.get(got['level'], got['level'])} {got['provider']} {got['id']}: {P.short(msg, 140)}")
     except Exception as e:
-        look.fail("events", "Evtx", e)
+        look.fail("events (python-evtx)", "Evtx", e)
+    if failed:
+        look.flag("PARTIAL", "events", f"{failed:,} of {records:,} records could not be rendered by python-evtx", "their headers (count, ids, times) are still counted above")
+    if partial:
+        look.flag("PARTIAL", "events", f"time cap: {done:,} of {records:,} events read", "run --tier deep for more")
+    if not done:
+        return evtx_counts_only(look, records, h, days)
+    lv = c["level"]
+    P.counts(look, [("records", records), ("events read", done), ("events not renderable", failed or None), ("chunks", h["chunks"]), ("days", len(days) or None),
+                    ("distinct event ids", len(c["id"])), ("providers", len(c["provider"])), ("channels", len(c["channel"])), ("computers", len(c["computer"]))]
+             + [(f"{LEVEL_NAMES.get(k, k)} events", lv[k]) for k in sorted(lv)], 95, "Event log counts")
+    look.line("Levels (count, first and last time): " + "; ".join(f"{LEVEL_NAMES.get(k, k)} ({k}) {n:,} ({lvl_first[k]} .. {lvl_last[k]})" for k, n in sorted(lv.items())), 91)
+    look.line("Event ids: " + ", ".join(f"{k} x{v:,}" for k, v in c["id"].most_common(20)) + (f"; +{len(c['id']) - 20} more ids" if len(c["id"]) > 20 else ""), 89)
+    look.line("Providers: " + ", ".join(f"{k} x{v:,}" for k, v in c["provider"].most_common(12)) + (f"; +{len(c['provider']) - 12} more" if len(c["provider"]) > 12 else "")
+              + "; channels: " + ", ".join(f"{k} x{v:,}" for k, v in c["channel"].most_common(5)) + "; computers: " + ", ".join(f"{k} x{v:,}" for k, v in c["computer"].most_common(5)), 84)
+    prow = [f"{p} {i} x{n:,} ({first[(p, i)]} .. {last[(p, i)]})" for (p, i), n in pair_n.most_common()]
+    for k in range(0, min(len(prow), 600), 60):
+        look.line("Provider + event id (count, first .. last time): " + "; ".join(prow[k:k + 60]), 34 - min(8, k // 60), "aggregates")
+    if c["user"]:
+        look.line("Security user ids: " + ", ".join(f"{k} x{v:,}" for k, v in c["user"].most_common(10)), 38)
+    if data_vals:
+        look.line("Most frequent event data values: " + ", ".join(f"{k} x{v:,}" for k, v in data_vals.most_common(30)), 32, "values")
+    look.write_text("events.txt", "\n".join(rows), "rendered events in file order: time, level, provider, id, first data values (up to 3,000)", value=1)
+    look.step("event ids, levels, providers", "python-evtx")
 
 
 # ================================================================= PSD

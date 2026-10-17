@@ -90,7 +90,8 @@ def rel_name(look, p):
 def headline(look):
     if look.headline:
         return look.headline, None
-    first = next((it for it in sorted(look.items, key=lambda i: (-i[1], i[3])) if it[0] == "key" and "```" not in it[2]), None)
+    first = next((it for it in sorted(look.items, key=lambda i: (-i[1], i[3])) if it[0] == "key" and "```" not in it[2]
+                  and (it[4] if len(it) > 4 else "") not in ("note", "counts", "profile", "aggregates", "values", "records", "outline", "tree", "props", "manifest", "formulas", "timeline")), None)
     if first:
         return _clip(first[2].split(". ")[0].rstrip("."), 150), first
     return f"{look.subtype or look.type}, {core.human(look.size)}", None
@@ -217,7 +218,13 @@ def build_stream(look):
     raw = [r for r in raw if not (r[0] == "key" and "```text" in r[2] and _excerpt_body(r[2]) and any(_excerpt_body(r[2]) in b for b in body_texts))]
     raw.sort(key=lambda r: (-r[1], r[4]))
     stream = [{"id": 0, "sec": "head", "pri": 1000, "tag": "identity", "text": head, "text_detail": head_detail, "tok": U.est_tokens(head) + 12}]
-    for r in raw:
+    split = []
+    for r in raw:   # a long fact (a field list, a table of counts) becomes pieces, so a step fills its budget instead of stopping short
+        if r[0] in ("key", "map", "watch") and "```" not in r[2] and U.est_tokens(r[2]) > PIECE_TOKENS:
+            split += [(r[0], r[1], t, r[3]) + tuple(r[4:]) for t in pieces(r[2])]
+        else:
+            split.append(r)
+    for r in split:
         sec, pri, text, tag = r[0], r[1], r[2], r[3]
         c = {"id": len(stream), "sec": sec, "pri": pri, "tag": tag, "text": text, "tok": U.est_tokens(text) + 2}
         if sec == "content":
@@ -227,6 +234,34 @@ def build_stream(look):
             c["only"] = r[7]   # "detail": printed with --detail only; "concise": printed without it
         stream.append(c)
     return stream
+
+
+PIECE_TOKENS = 320   # a fact longer than this is printed in pieces (each piece says what it continues)
+
+
+def pieces(text, limit=PIECE_TOKENS):
+    """A long fact -> pieces of about `limit` tokens, cut at line ends, else at '; ' between items. Pieces after the first start with
+    the fact's first words and '(continued)', so each one can be read alone."""
+    units = []
+    for ln in text.split("\n"):
+        if U.est_tokens(ln) <= limit:
+            units.append((ln, "\n"))
+            continue
+        parts = ln.split("; ")
+        for k, p in enumerate(parts):
+            units.append((p, "; " if k < len(parts) - 1 else "\n"))
+    title = _clip(text.split("\n", 1)[0].split(":", 1)[0], 60)
+    out, buf, used = [], "", 0
+    for u, sep in units:
+        t = U.est_tokens(u) + 1
+        if buf and used + t > limit:
+            out.append(buf.rstrip("; \n"))
+            buf, used = f"{title} (continued): ", U.est_tokens(title) + 4
+        buf += u + sep
+        used += t
+    if buf.strip():
+        out.append(buf.rstrip("; \n"))
+    return out
 
 
 LINE_PIECE = 340   # characters; a longer line is split at spaces so nothing is cut

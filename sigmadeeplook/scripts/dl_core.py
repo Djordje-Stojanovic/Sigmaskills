@@ -315,6 +315,26 @@ def collapse_direct(look):
     look.summary = []
 
 
+SOURCE_CONTENT_MAX = 600_000   # bytes: a text file up to this size is also in the stream, whole, after every fact (--more reaches it)
+SOURCE_KINDS = {"data": {"csv", "tsv", "json", "jsonl", "xml", "yaml", "toml"}, "code": None, "log": {"log"}, "subtitle": None,
+                "email": {"eml", "ics", "vcf", "mbox"}, "web": {"html"}, "image": {"svg"}}
+
+
+def add_source_content(look):
+    """Register the file itself as the last part of the stream (after every fact and enumeration), so `--more` never ends while real
+    content remains. Only for text files up to SOURCE_CONTENT_MAX bytes that no artifact already holds whole."""
+    kinds = SOURCE_KINDS.get(look.type, "none")
+    if kinds == "none" or (kinds is not None and look.subtype not in kinds) or look.path.is_dir() or not 0 < look.size <= SOURCE_CONTENT_MAX:
+        return
+    try:
+        text, _enc = decode_text(look.path.read_bytes())
+    except OSError:
+        return
+    if text is None:
+        return
+    look.add(look.path, "text", "the file itself, whole (after every fact)", value=-6)
+
+
 # ---------------------------------------------------------------- detection
 EXT_VIDEO = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".wmv", ".flv", ".mpg", ".mpeg", ".ogv", ".ts"}
 EXT_AUDIO = {".mp3", ".wav", ".flac", ".ogg", ".opus", ".m4a", ".aac", ".wma", ".aiff", ".aif"}
@@ -617,6 +637,10 @@ def text_sniff(p, h, ext, size):
         return "subtitle", sub, f"subtitle text ({sub})"
     if s.startswith("-----BEGIN ") or re.match(r"(ssh-(rsa|ed25519|dss)|ecdsa-sha2-\S+|sk-ssh-\S+) AAAA", s):
         return "cert", "pem" if s.startswith("-----BEGIN ") else "sshpub", "PEM block" if s.startswith("-----BEGIN ") else "OpenSSH public key"
+    if ext == ".toml" or (j == "[" and ext not in (".json", ".jsonl", ".ndjson", ".geojson") and re.match(r"\[\[?[\w.\- \"']+\]\]?[ \t]*(#.*)?\r?\n", s)
+                          and re.search(r"(?m)^[\w.\-\"']+\s*=", s[:4000])):
+        # a [section] header and key = value lines: TOML (or INI); never JSON, so no false wrong-format finding
+        return ("data", "toml", "TOML text ([table] and key = value lines)") if ext in (".toml", "") or not re.search(r"(?m)^\s*[;]", s[:4000]) and ext not in (".ini", ".cfg", ".conf") else ("code", "text", "INI text ([section] and key = value lines)")
     if j in "{[":
         if '"nbformat"' in s[:4000]:
             return "notebook", "ipynb", "JSON with nbformat"

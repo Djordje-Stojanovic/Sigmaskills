@@ -16,7 +16,7 @@ import dl_core as core
 import dl_util as U
 
 SAMPLE_ROWS = 20000
-TIME_CAP = 30.0
+TIME_CAP = 180.0   # a full pass: every count exact (accuracy over speed); the quick tier profiles the first 4 MB
 INT_RE = re.compile(r"^-?\d{1,18}$")
 FLOAT_RE = re.compile(r"^-?\d*\.\d+([eE][-+]?\d+)?$|^-?\d+[eE][-+]?\d+$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?")
@@ -235,7 +235,8 @@ def profile_findings(look, header, prof, total, repeats):
     return notes
 
 
-COLUMN_LEGEND = "Columns (name: type, empty %, distinct values, range and median or top values (count)):"
+COLUMN_LEGEND = ("Columns (name: type, null and empty counts, distinct values, min and max with the file line where each first occurs "
+                 "(xN = N rows hold it), sum, mean, top values (count)); every count is exact over every row:")
 
 
 def profile_line(p, total):
@@ -294,11 +295,14 @@ def data_csv(look):
     t0 = time.time()
     header, rows, rejects, n, tail, prof, repeats = None, [], [], 0, [], [], []
     ncols, partial = 0, False
+    import dl_prof as P
+    gp, gcols = P.Profiler(True, "line"), None
     for rec in rd:
         if header is None:
             header = rec
             ncols = len(header)
             prof = [ColProfile(h, i == 0) for i, h in enumerate(header)]
+            gcols = gp.columns([h.lstrip("﻿").strip() or f"column {i + 1}" for i, h in enumerate(header)])
             continue
         if len(rec) != ncols:
             n += 1
@@ -312,6 +316,7 @@ def data_csv(look):
         ln = rd.line_num
         for i in range(ncols):
             prof[i].add(rec[i], ln)
+        gp.add_row(gcols, rec, ln)
         if len(rows) < SAMPLE_ROWS:
             rows.append(rec)
         tail.append(rec)
@@ -346,11 +351,21 @@ def data_csv(look):
     schema = [p.summary(total_ok) for p in prof]
     look.write_text("schema.json", json.dumps(schema, indent=1, default=str), "per-column profile over every row: type mix, empty %, distinct, range, median, top values", "json")
     notes = [n for n in notes if "empty" in n]   # every other finding is a flag and is listed once, under Watch out; the empty % sits in each column row
-    if prof:   # one legend, then one compact row per column (a profile beats sample rows; the legend replaces words repeated on every row)
-        crow = [profile_line(p, total_ok) for p in prof[:16]]
-        if len(prof) > 16:
-            crow.append(f"... {len(prof) - 16} more columns in schema.json")
-        look.line(COLUMN_LEGEND + chr(10) + chr(10).join(crow))
+    if prof:   # one legend, then one compact row per column, exact counts over every row (positions are file line numbers)
+        extra = csv_second_pass(look, text, delim, header, gp) if gp.n else []
+        crow = gp.field_lines()
+        look.line(COLUMN_LEGEND + chr(10) + chr(10).join(crow[:40]) + (f"{chr(10)}... {len(crow) - 40} more columns below" if len(crow) > 40 else ""), 86, "profile")
+        if len(crow) > 40:
+            look.line("More columns:" + chr(10) + chr(10).join(crow[40:]), 36, "profile")
+        miss = sum(f.nulls + f.empties for f in gp.fields.values())
+        P.counts(look, [("data rows", n), ("columns", len(header)), ("rows profiled", gp.n if gp.n != n else None), ("reject rows", nrej), ("repeated header rows", len(repeats) or None),
+                        ("empty or null cells", miss), ("complete rows (no empty cell)", complete_rows(text, delim, ncols) if not quick_cut and n <= 2_000_000 else None)])
+        for ln_ in gp.stats_lines():
+            look.line(ln_, 34, "aggregates")
+        for ln_ in extra:
+            look.line(ln_, 32, "aggregates")
+        for ln_ in gp.enum_lines():
+            look.line(ln_, 30, "values")
     import dl_sample
     dl_sample.build_sample(look, text, delim, header, prof, n, repeats, tail, rows, partial or quick_cut)
     if rejects:
@@ -363,6 +378,31 @@ def data_csv(look):
         for ln, k, rec in rejects[:5]:
             look.flag("REJECT-ROW", f"line {ln}", f"{k} fields, expected {len(header)}", "short or long row: a missing or unquoted delimiter")
     look.step("schema and rejects", "stdlib csv")
+
+
+def complete_rows(text, delim, ncols):
+    """Rows with no empty cell (and the right field count)."""
+    rd = csv.reader(io.StringIO(text, newline=""), delimiter=delim)
+    next(rd, None)
+    return sum(1 for r in rd if len(r) == ncols and all(c.strip() for c in r))
+
+
+def csv_second_pass(look, text, delim, header, gp, cap_s=40.0):
+    """Group-by counts and sums and the top / bottom rows by each number (one more pass over the rows, time-capped)."""
+    import dl_prof as P
+    sp = P.SecondPass(gp)
+    names = [h.lstrip("﻿").strip() or f"column {i + 1}" for i, h in enumerate(header)]
+    rd = csv.reader(io.StringIO(text, newline=""), delimiter=delim)
+    next(rd, None)
+    t0 = time.time()
+    for k, rec in enumerate(rd):
+        if len(rec) != len(header) or rec == header:
+            continue
+        sp.add_row(names, rec, rd.line_num)
+        if k % 5000 == 0 and time.time() - t0 > cap_s:
+            look.flag("PARTIAL", "group-by and top rows", f"stopped at line {rd.line_num}", "time cap: the group sums cover the rows up to that line only")
+            break
+    return sp.lines()
 
 
 # ---------------------------------------------------------------- json
@@ -387,21 +427,37 @@ def data_json(look):
     try:
         v = json.loads(text)
     except ValueError as e:
+        lines = [x for x in text.splitlines() if x.strip()]
+        ok = 0
+        for x in lines[:50]:
+            try:
+                json.loads(x)
+                ok += 1
+            except ValueError:
+                pass
+        if len(lines) >= 2 and ok >= 0.8 * min(50, len(lines)):   # one JSON value per line: JSON Lines with a .json name
+            look.subtype = "jsonl"
+            look.flag("JSON-LINES", "file", "one JSON value per line, not one document", "parsed as JSON Lines")
+            return data_jsonl(look)
         look.flag("INVALID-JSON", "file", str(e)[:120], "")
         look.line("Invalid JSON; first lines below.")
         look.excerpt("First lines", text, 10)
+        import dl_prof as P
+        P.text_profile(look, text, 70, "Text")
         return
     sk = skeleton(v)
     look.fact("json_top", type(v).__name__)
     look.write_text("skeleton.json", json.dumps(sk, indent=1), "keys and types tree, array lengths", "json")
     look.line(f"JSON {type(v).__name__}" + (f" with {len(v)} items" if hasattr(v, "__len__") else "") + f", encoding {enc}.")
-    look.excerpt("Skeleton", json.dumps(sk, indent=1), 25, 1800)
-    look.write_text("sample.md", "```json\n" + json.dumps(v if look.size < 20000 else (v[:5] if isinstance(v, list) else {k: v[k] for k in list(v)[:8]} if isinstance(v, dict) else v), indent=1, default=str)[:20000] + "\n```\n",
-                    "a small slice of the values")
+    look.excerpt("Skeleton", json.dumps(sk, indent=1), 25, 1800, 40)
+    import dl_prof as P
+    P.doc_profile(look, v, "JSON")
 
 
 def data_jsonl(look):
+    import dl_prof as P
     n, bad, keys, first = 0, 0, Counter(), []
+    recs = []
     with open(look.path, "rb") as f:
         for ln, line in enumerate(f, 1):
             if not line.strip():
@@ -413,6 +469,8 @@ def data_jsonl(look):
                     keys.update(o.keys())
                 if len(first) < 5:
                     first.append(o)
+                if len(recs) < 2_000_000:
+                    recs.append((ln, o))
             except ValueError:
                 bad += 1
                 if bad <= 3:
@@ -420,7 +478,19 @@ def data_jsonl(look):
     look.fact("rows", n)
     look.fact("bad_lines", bad)
     look.fact("keys", dict(keys))
-    look.line(f"JSON Lines: {n} records, {bad} invalid lines; keys: " + ", ".join(f"{k} ({c})" for k, c in keys.most_common(12)))
+    look.headline = f"JSON Lines, {n:,} records"
+    look.line(f"JSON Lines: {n:,} records, {bad} invalid lines; keys (records holding each): " + ", ".join(f"{k} ({c:,})" for k, c in keys.most_common(30)), 88)
+    p, extra = P.profile(recs, False, "line")
+    full = sum(1 for _, o in recs if isinstance(o, dict) and len(o.keys() & keys.keys()) == len(keys)) if keys else None
+    P.counts(look, [("records", n), ("invalid lines", bad), ("distinct keys", len(keys)), ("records with every key", full)])
+    P.emit(look, p, extra, "Records (positions are file line numbers)", 86, 30, 30)
+    if n <= 3000:
+        rows = []
+        for ln, o in recs:
+            fl = P.flat_of(o) if isinstance(o, (dict, list)) else {"value": o}
+            rows.append(f"line {ln}: " + "; ".join(f"{k}={P.short(x if not isinstance(x, P.Multi) else ', '.join(map(str, x)), 60)}" for k, x in fl.items() if not k.endswith(P.LEN)))
+        for k in range(0, len(rows), 20):
+            look.line("Records:\n" + "\n".join(rows[k:k + 20]), 18, "records")
     look.write_text("sample.md", "```json\n" + "\n".join(json.dumps(o) for o in first)[:6000] + "\n```\n", "first 5 records")
 
 
@@ -593,6 +663,35 @@ def data_sqlite(look):
                   + (". idx " + ", ".join(f"{n}({','.join(map(str, cs))})" for n, cs in has_idx[:4]) if has_idx else "")
                   + (". fk " + ", ".join(f"{a}->{b}.{c}" for a, b, c in i["fks"]) if i["fks"] else "")
                   + (f". e.g. {' | '.join(', '.join(r[:6]) for r in i['sample'][:2])}" if i["sample"] else ""))
+    # every row of every table through the field profiler (biggest first; one shared time budget), so counts, sums, distinct values
+    # and group-bys are exact and `--more` has the full enumerations
+    import dl_prof as P
+    P.counts(look, [("tables", ntab), ("rows in all tables", sum(i["rows"] or 0 for i in info.values())), ("columns in all tables", sum(len(i["columns"]) for i in info.values())),
+                    ("indexes", objs.get("index", 0)), ("views", objs.get("view", 0)), ("triggers", objs.get("trigger", 0)), ("empty tables", len(empty) or None)])
+    t_all = time.time()
+    budget = TABLE_PROFILE_S * (3 if look.deep else 1.5)
+    if not look.quick:
+        try:
+            con = sqlite3.connect(uri, uri=True)
+            con.execute("PRAGMA query_only=1")
+            for t, i in ranked:
+                left = budget - (time.time() - t_all)
+                if not i["rows"]:
+                    continue
+                if left <= 1:
+                    look.skip(f"profile of table {t}", "time budget for table profiles used up", None, f"--table {t}")
+                    continue
+                q, names = qident(t), [c[0] for c in i["columns"]]
+
+                def rows(q=q):
+                    return enumerate(con.execute(f"select * from {q}"), 1)
+                try:
+                    table_profile(look, f"Table {t}", names, rows, "row", i["rows"], 82 if t == ranked[0][0] else 60, 26, cap_s=max(1.0, left / 2))
+                except sqlite3.Error as e:
+                    look.fail(f"profile of table {t}", "sqlite3", e)
+            con.close()
+        except sqlite3.Error as e:
+            look.fail("table profiles", "sqlite3", e)
     look.write_text("tables.md", "\n".join(md), "every table: rows, columns, indexes, foreign keys, 2 example rows", value=5, slice_cmd="--table NAME", inline=False if ntab > 6 else None)
     look.write_text("schema.json", json.dumps(info, indent=1, default=str), "tables, columns, row counts, example rows (json)", "json", inline=False)
     look.cmd("--table NAME", "profile of one table: nulls, distinct, min, max per column, indexes, foreign keys, 5 rows")
@@ -749,6 +848,21 @@ def data_parquet(look):
             look.line("Columns: " + ", ".join(f"{fld.name} {fld.type}" for fld in f.schema_arrow) + ".", 86)
             if look.quick:
                 look.skip("column profile (null %, range, outliers)", "skipped at the quick tier: run again with --tier standard", None, "")
+        import dl_prof as P
+        P.counts(look, [("rows", md.num_rows), ("columns", md.num_columns), ("row groups", md.num_row_groups)])
+        if not look.quick:
+            names = [fld.name for fld in f.schema_arrow]
+
+            def rows():
+                k = 0
+                for b in pq.ParquetFile(str(look.path)).iter_batches(batch_size=65536):
+                    for r in zip(*[c.to_pylist() for c in b.columns]):
+                        k += 1
+                        yield k, r
+            try:
+                table_profile(look, "Rows", names, rows, "row", md.num_rows, 84, 28, cap_s=TABLE_PROFILE_S * (3 if look.deep else 1))
+            except Exception as e:
+                look.fail("exact row profile", "pyarrow", e)
         t = f.read_row_group(0).slice(0, 5).to_pylist() if md.num_row_groups else []
         look.write_text("schema.json", json.dumps({"schema": [[fld.name, str(fld.type)] for fld in f.schema_arrow], "rows": md.num_rows, "head": t}, indent=1, default=str), "schema and 5 rows", "json", inline=False)
         look.cmd('--sql "SELECT ..."', "any question on the rows: counts, filters, group-bys (the table is `t`)")
@@ -792,35 +906,179 @@ def data_xml(look):
         from defusedxml import ElementTree as ET
     else:
         import xml.etree.ElementTree as ET
+    import dl_prof as P
     try:
-        counts, root_tag, depth = Counter(), None, 0
-        for ev, el in ET.iterparse(io.BytesIO(raw), events=("start",)):
-            if root_tag is None:
-                root_tag = el.tag
-            counts[el.tag] += 1
+        root = ET.fromstring(raw)
     except Exception as e:
         look.flag("INVALID-XML", "file", f"{type(e).__name__}: {e}"[:120], "")
+        P.text_profile(look, raw.decode("utf-8", "replace"), 70, "Text")
         return
+
+    def local(t):
+        return t.rsplit("}", 1)[-1] if isinstance(t, str) else str(t)
+    counts, attrs, depth, texts = Counter(), Counter(), 0, 0
+    parent_of = Counter()
+    stack = [(root, 0, "")]
+    while stack:
+        el, d, par = stack.pop()
+        depth = max(depth, d)
+        t = local(el.tag)
+        counts[t] += 1
+        parent_of[(par, t)] += 1
+        attrs.update(f"{t}@{local(a)}" for a in el.attrib)
+        if (el.text or "").strip():
+            texts += 1
+        for c in el:
+            stack.append((c, d + 1, t))
+    root_tag = local(root.tag)
     look.fact("root", root_tag)
-    look.fact("element_counts", dict(counts.most_common(20)))
-    look.line(f"XML: root <{root_tag}>, {sum(counts.values())} elements. Most common: " + ", ".join(f"{k} ({v})" for k, v in counts.most_common(8)))
+    look.fact("element_counts", dict(counts.most_common(40)))
+    look.line(f"XML: root <{root_tag}>, {sum(counts.values()):,} elements of {len(counts)} kinds, depth {depth}. Elements: " + ", ".join(f"{k} ({v:,})" for k, v in counts.most_common(30)), 90)
+    P.counts(look, [("elements", sum(counts.values())), ("element kinds", len(counts)), ("attributes", sum(attrs.values())), ("elements with text", texts),
+                    ("max depth", depth), ("root children", len(list(root)))], 94, "XML counts")
+    if attrs:
+        look.line("Attributes (element@name, count): " + ", ".join(f"{k} ({v:,})" for k, v in attrs.most_common(40)), 60)
+    # records: the most repeated element that has attributes or children, each as {@attr, child: text}
+    best = None
+    for (par, t), n in sorted(parent_of.items(), key=lambda kv: -kv[1]):
+        if n < 2:
+            break
+        els = [e for e in root.iter() if local(e.tag) == t]
+        if els and (els[0].attrib or len(els[0])):
+            best = (t, els)
+            break
+    if not best:
+        return
+
+    def rec_of(e):
+        r = {"@" + local(a): v for a, v in e.attrib.items()}
+        for c in e:
+            k = local(c.tag)
+            if len(c) and not (c.text or "").strip():
+                r[k] = rec_of(c)
+                continue
+            val = (c.text or "").strip()
+            if k in r:
+                r[k] = (r[k] if isinstance(r[k], list) else [r[k]]) + [val]
+            else:
+                r[k] = val
+            for a, v in c.attrib.items():
+                r[f"{k}@{local(a)}"] = v
+        if (e.text or "").strip() and not len(e):
+            r["#text"] = e.text.strip()
+        return r
+    t, els = best
+    recs = [(i, rec_of(e)) for i, e in enumerate(els)]
+    p, extra = P.profile(recs, True, "element")
+    P.emit(look, p, extra, f"<{t}> records ({len(els):,} elements, numbered from 0 in document order)", 86, 30)
+    if len(recs) <= 3000:
+        rows = [f"[{i}] " + "; ".join(f"{k}={P.short(x if not isinstance(x, P.Multi) else ', '.join(map(str, x)), 60)}" for k, x in P.flat_of(r).items() if not k.endswith(P.LEN)) for i, r in recs]
+        for k in range(0, len(rows), 20):
+            look.line(f"<{t}> records:\n" + "\n".join(rows[k:k + 20]), 18, "records")
 
 
 def data_toml(look):
+    import dl_prof as P
+    text = open(look.path, "rb").read().decode("utf-8", "replace")
     try:
         import tomllib
-        v = tomllib.loads(open(look.path, "rb").read().decode("utf-8", "replace"))
+    except ImportError:
+        return data_text_struct(look)
+    try:
+        v = tomllib.loads(text)
     except Exception as e:
         look.flag("INVALID-TOML", "file", str(e)[:120], "")
+        P.text_profile(look, text, 70, "Text")
         return
     look.write_text("skeleton.json", json.dumps(skeleton(v), indent=1), "keys and types tree", "json")
-    look.line("TOML with top-level keys: " + ", ".join(v))
+    tables = re.findall(r"(?m)^\s*\[([^\[\]]+)\]\s*(?:#.*)?$", text)
+    arrays = re.findall(r"(?m)^\s*\[\[([^\[\]]+)\]\]\s*(?:#.*)?$", text)
+    look.line(f"TOML: {len(v)} top-level keys ({', '.join(v)}); {len(tables)} [tables], {len(arrays)} [[array-of-tables]] entries"
+              + (f" ({', '.join(f'{k} x{c}' for k, c in Counter(arrays).most_common(8))})" if arrays else "") + f"; {len(text.splitlines())} lines.", 90)
     look.fact("keys", list(v))
+    P.doc_profile(look, v, "TOML")
 
 
 def data_text_struct(look):
-    text = open(look.path, "rb").read(2 << 20).decode("utf-8", "replace")
+    """YAML (and any key: value text): parsed with PyYAML when present (every document), else a line-based outline."""
+    import dl_prof as P
+    text = open(look.path, "rb").read(32 << 20).decode("utf-8", "replace")
+    yaml = look.mod("yaml")
+    docs = None
+    if yaml is not None:
+        try:
+            docs = list(yaml.safe_load_all(text))
+        except Exception as e:
+            look.flag("INVALID-YAML", "file", f"{type(e).__name__}: {e}"[:140], "")
     keys = re.findall(r"(?m)^([A-Za-z_][\w-]*):", text)
-    look.line(f"{look.subtype.upper()} text file, {len(text.splitlines())} lines; top-level keys: " + ", ".join(dict.fromkeys(keys)) if keys else f"{look.subtype} text file.")
-    look.excerpt("First lines", text, 12)
+    nl = len(text.splitlines())
+    look.line((f"{look.subtype.upper()} text file, {nl:,} lines" + (f", {len(docs)} document(s)" if docs is not None else "") + "; top-level keys: " + ", ".join(dict.fromkeys(keys)))
+              if keys else f"{look.subtype} text file, {nl:,} lines.", 90)
     look.fact("keys", list(dict.fromkeys(keys)))
+    if docs:
+        v = docs[0] if len(docs) == 1 else docs
+        P.doc_profile(look, v, "YAML" if look.subtype == "yaml" else "Document")
+        return
+    if yaml is None:
+        look.skip("YAML parse (types, nested keys, lists)", "python package yaml not importable" if not look.no_tools else "disabled by --no-tools", "yaml")
+    look.excerpt("First lines", text, 12)
+    P.text_profile(look, text, 70, "Text")
+    ind = Counter(len(x) - len(x.lstrip(" ")) for x in text.splitlines() if x.strip() and not x.lstrip().startswith("#"))
+    items = sum(1 for x in text.splitlines() if x.lstrip().startswith("- "))
+    P.counts(look, [("list items (- )", items), ("indent levels", len(ind)), ("comment lines", sum(1 for x in text.splitlines() if x.lstrip().startswith("#")))], 80, "Structure counts")
+
+
+# ---------------------------------------------------------------- exact table profile (sqlite tables, parquet): fix round 4
+TABLE_PROFILE_S = 60.0
+TABLE_LISTING_ROWS = 400
+
+
+def plain(v):
+    """A database or Arrow value as the profiler counts it: numbers stay numbers, Decimal becomes float, times and bytes become text."""
+    if v is None or isinstance(v, (bool, int, float, str)):
+        return v
+    try:
+        import decimal
+        if isinstance(v, decimal.Decimal):
+            return float(v)
+    except ImportError:
+        pass
+    if isinstance(v, (bytes, bytearray, memoryview)):
+        return f"<{len(bytes(v))} bytes>"
+    return str(v)
+
+
+def table_profile(look, what, names, rows, label="row", total=None, key_pri=84, more_pri=28, cap_s=TABLE_PROFILE_S, listing=True):
+    """Every row of one table through the field profiler and the group-by pass. rows: a callable giving (index, values) each time it
+    is called (walked twice). Exact over every row unless the time cap stops it, which is flagged with the row it stopped at."""
+    import dl_prof as P
+    p = P.Profiler(False, label)
+    cols = p.columns(list(names))
+    t0, stopped, first = time.time(), None, []
+    for k, (idx, vals) in enumerate(rows()):
+        vals = [plain(v) for v in vals]
+        p.add_row(cols, vals, idx)
+        if listing and len(first) < TABLE_LISTING_ROWS:
+            first.append((idx, vals))
+        if k % 2000 == 0 and time.time() - t0 > cap_s:
+            stopped = idx
+            break
+    if not p.n:
+        return None
+    sp = P.SecondPass(p)
+    for k, (idx, vals) in enumerate(rows()):
+        sp.add_row(list(names), [plain(v) for v in vals], idx)
+        if stopped is not None and idx >= stopped:
+            break
+        if k % 2000 == 0 and time.time() - t0 > 2 * cap_s:
+            break
+    if stopped is not None:
+        look.flag("PARTIAL", what, f"profile stopped at {label} {stopped:,} of {total:,}" if total else f"profile stopped at {label} {stopped:,}",
+                  "time cap: the counts below cover the rows up to there only")
+    P.emit(look, p, sp.lines(), f"{what} ({label}s numbered from 1" + (", every row read" if stopped is None else ", PARTIAL") + ")", key_pri, more_pri, 24,
+           prefix=f"{what}: " if what.startswith("Table ") else "")
+    if listing and first and (total or p.n) <= TABLE_LISTING_ROWS:
+        rws = [f"{label} {i}: " + "; ".join(f"{n}={P.short(v, 60)}" for n, v in zip(names, vals)) for i, vals in first]
+        for k in range(0, len(rws), 20):
+            look.line(f"{what}, {label}s:\n" + "\n".join(rws[k:k + 20]), 16, "records")
+    return p

@@ -91,13 +91,15 @@ class Gate(unittest.TestCase):
 
 
 class DirectWritesNothing(unittest.TestCase):
-    def test_small_text_prints_one_line_and_writes_no_cache(self):
+    def test_small_text_gets_a_stored_look_so_more_works(self):
         cache = tempfile.mkdtemp(prefix="sdl-cache-")
         env = {"LOCALAPPDATA": cache, "XDG_CACHE_HOME": cache, "HOME": cache}
         r = run([str(FX / "plain.txt"), "--no-tools"], env=env)
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertRegex(r.stdout.splitlines()[0], r"^Read this file directly: .+ \(~\d+ tokens\)$")
-        self.assertEqual(list(Path(cache).rglob("*")), [], "nothing is written for a direct read")
+        self.assertTrue(r.stdout.startswith("# plain.txt"), r.stdout[:120])
+        self.assertIn("Small text file: the whole file is ~", r.stdout)
+        m = run([str(FX / "plain.txt"), "--no-tools", "--more"], env=env)
+        self.assertEqual(m.returncode, 0, m.stderr)
 
     def test_force_analyses_small_text(self):
         r = run([str(FX / "plain.txt"), "--no-tools", "--force", "--out", tempfile.mkdtemp(prefix="sdl-f-")])

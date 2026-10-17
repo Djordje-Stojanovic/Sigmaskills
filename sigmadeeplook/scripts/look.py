@@ -63,8 +63,10 @@ def analyse(path, out, opts, sha=None, depth=0):
     if (look.type == "unknown" or d["mismatch"]) and not direct:
         import dl_adapt
         dl_adapt.magika_second_opinion(look)
-    if direct:
-        core.collapse_direct(look)
+    if direct:   # small plain text: still a full look with exact counts (stored, so --more works); reading it whole is also fine
+        look.fact("direct_read", True)
+        look.line(f"Small text file: the whole file is ~{core.direct_tokens(look.size):,} tokens, so reading it whole is also fine; every count in this look is exact.", 97, "note")
+    core.add_source_content(look)
     look.finish()
     return look
 
@@ -121,7 +123,7 @@ def build_parser():
     ap.add_argument("--allow-network", action="store_true", help="allow URLs and model downloads (off by default)")
     ap.add_argument("--fresh", action="store_true", help="ignore a stored look of the same file")
     ap.add_argument("--json", action="store_true", help="print look.json instead of LOOK.md")
-    ap.add_argument("--no-direct", "--force", action="store_true", dest="no_direct", help="analyse small plain text too (by default it is a direct read: no analysis)")
+    ap.add_argument("--no-direct", "--force", action="store_true", dest="no_direct", help="leave out the 'small text file, read it whole' note (every file gets a full look either way)")
     ap.add_argument("--no-tools", action="store_true", help="bare tier: Python standard library only")
     ap.add_argument("--at", help="video, audio: window start, seconds or M:SS (video also builds a zoom sheet)")
     ap.add_argument("--len", type=float, default=10.0, dest="length", help="video, audio: window length in seconds")
@@ -212,17 +214,6 @@ def main(argv):
         return 1
     asked_more = o.more is not None or o.remaining or o.from_k is not None
     drill = any(getattr(o, k) for k in DRILL_FLAGS) or o.at is not None
-    # small plain text: the agent reads it itself; one line (plus real flags), nothing written unless --out is given
-    if not (o.no_direct or o.fresh or asked_more or drill):
-        d = core.detect(p)
-        if core.direct_eligible(p, d["type"], d["subtype"], 0 if p.is_dir() else p.stat().st_size):
-            tmp = None if o.out else Path(tempfile.mkdtemp(prefix="sdl-direct-"))
-            try:
-                look = analyse(p, Path(o.out) if o.out else tmp, o, core.sha256_file(p))
-                return say(step_one_text(look.out, o), look.exit_code)
-            finally:
-                if tmp:
-                    shutil.rmtree(tmp, ignore_errors=True)
     sha = core.sha256_dir(p) if p.is_dir() else core.sha256_file(p)
     out = core.out_dir_for(sha, o.out)
     stored = out / "look.json"

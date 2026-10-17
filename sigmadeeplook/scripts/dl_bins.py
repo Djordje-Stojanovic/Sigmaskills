@@ -116,6 +116,43 @@ def scan_secrets(look, text, where):
     return n
 
 
+COMMENT_RE = re.compile(r"^\s*(#|//|--|;|/\*|\*|<!--|')")
+IMPORT_RE = re.compile(r"^\s*(import\s|from\s+\S+\s+import\s|#include\s|using\s+[\w.]+;|require\(|.*\brequire\s*\(|use\s+[\w:]+;)")
+
+
+def code_counts(look, text, lines, lang, ol):
+    """Exact counts of one source file: lines (blank, comment, code), definitions, classes, imports, tests, TODOs, env vars, constants."""
+    import dl_prof as P
+    blank = sum(1 for x in lines if not x.strip())
+    comment = sum(1 for x in lines if x.strip() and COMMENT_RE.match(x))
+    imports = [x.strip() for x in lines if IMPORT_RE.match(x)]
+    todo = [i for i, x in enumerate(lines, 1) if re.search(r"\b(TODO|FIXME|XXX|HACK)\b", x)]
+    t = P.Tree()
+    t.add(look.path.name, len(text.encode("utf-8", "replace")), text)
+    funcs = [d for d in ol if d["kind"] == "def"]
+    classes = [d for d in ol if d["kind"] == "class"]
+    longest = max(range(len(lines)), key=lambda i: len(lines[i])) + 1 if lines else 0
+    P.counts(look, [("lines", len(lines)), ("blank lines", blank), ("comment lines", comment), ("code lines", len(lines) - blank - comment),
+                    ("definitions", len(ol) or t.defs or None), ("functions", len(funcs) or None), ("classes", len(classes) or t.classes or None),
+                    ("imports", len(imports) or None), ("test functions", t.tests or None), ("TODO/FIXME", len(todo) or None),
+                    ("environment variables", len(t.env) or None), ("constants", len(t.consts) or None), ("SQL tables created", len(t.sql_tables) or None),
+                    ("longest line", f"{len(lines[longest - 1]):,} chars (line {longest})" if lines else None)], 93, f"{lang} counts")
+    if t.env:
+        look.line(f"Environment variables ({len(t.env)}): " + ", ".join(sorted(t.env)), 60)
+    if t.consts:
+        items = list(t.consts.items())
+        look.line(f"Constants ({len(items)}): " + "; ".join(f"{k} = {v[1]}" for k, v in items[:40]), 45, "constants")
+    if t.sql_tables:
+        look.line(f"SQL tables created ({len(t.sql_tables)}): " + ", ".join(sorted(t.sql_tables)), 70)
+    if imports:
+        look.line(f"Imports ({len(imports)}): " + "; ".join(P.short(x, 60) for x in imports[:60]), 35)
+    if todo:
+        look.line(f"TODO/FIXME lines: " + ", ".join(map(str, todo[:40])), 35)
+    if ol:
+        for k in range(0, min(len(ol), 2000), 80):
+            look.line(f"Definitions {k + 1}-{min(len(ol), k + 80)} of {len(ol)} (kind name @line):\n" + "\n".join(f"{d['kind']} {d['name']} @{d['line']}" for d in ol[k:k + 80]), 24, "outline")
+
+
 def look_code(look):
     if look.path.is_dir():
         return look_repo(look)
@@ -150,13 +187,19 @@ def look_code(look):
         if not rows:
             look.line(f"{len(ol)} definitions found ({how}): " + ", ".join(d["name"] for d in ol[:8]) + (" ..." if len(ol) > 8 else ""))
         look.fact("definitions", len(ol))
-    look.excerpt("First lines", "\n".join(lines[:15]))
+    import dl_prof as P
+    prose = lang in ("Markdown", "Text") or ext in (".md", ".txt", ".rst", ".adoc", "")
+    if prose:
+        P.text_profile(look, text, 90, "Text")
+    else:
+        code_counts(look, text, lines, lang, ol)
+    look.excerpt("First lines", "\n".join(lines[:15]), pri=20 if prose else 30)
     if rows:   # headers and signatures instead of bodies: as good for finding the place (Agentless), a fraction of the tokens
         look.write_text("skeleton.md", dl_skel.render(rows, len(lines)), f"signature skeleton: {len(rows)} definitions with line numbers and a doc remark", value=8)
         look.line(f"Skeleton: {len(rows)} definitions with their signatures in skeleton.md; the body of one is one call away.", 40)
         look.cmd("--func NAME", "the body of one function or class (--func list names them all)", None)
     else:
-        look.write_text("head.txt", "\n".join(lines[:200]), "first 200 lines")
+        look.write_text("head.txt", "\n".join(lines[:200]), "first 200 lines", inline=False if len(lines) <= 200 and look.size <= core.SOURCE_CONTENT_MAX else None)   # the whole file ends the stream
     ctags = look.tool("ctags")
     if ctags and ext != ".py":
         r, out, _ = look.run_text([ctags, "--output-format=json", "-f", "-", str(look.path)])
@@ -221,7 +264,27 @@ def look_repo(look):
     look.fact("files", len(files))
     look.fact("languages", {k: v[0] for k, v in sorted(by_lang.items(), key=lambda kv: -kv[1][1])[:12]})
     look.fact("total_bytes", sum(s for _, s in files))
+    langs = sorted(by_lang.items(), key=lambda kv: -kv[1][1])
+    look.headline = f"Code repository, {len(files):,} files, {sum(s for _, s in files):,} bytes; " + ", ".join(f"{k} {v[0]:,}" for k, v in langs[:4])
     look.line(f"Code repository: {len(files)} files, {core.human(sum(s for _, s in files))} ({skipped} paths ignored by .gitignore; .git, node_modules and caches skipped).")
+    import dl_prof as P
+    tree, used, t0, texts = P.Tree(), 0, time.time(), {}
+    for rel, sz in files:
+        text = None
+        if (P.is_text_name(rel) or P.is_manifest(rel)) and sz <= INNER_TEXT_MAX and used + sz <= 256 << 20 and time.time() - t0 < 90:
+            try:
+                text, _enc = core.decode_text((root / rel).read_bytes())
+                used += sz
+            except OSError:
+                text = None
+            if text is not None and (P.is_manifest(rel) and rel.count("/") <= 2 or rel.lower().endswith((".csv", ".tsv", ".jsonl"))):
+                texts[rel] = text
+        tree.add(rel, sz, text)
+    tree.emit(look, "Repository", 92, [("ignored paths", skipped or None)])
+    for n in sorted((n for n in texts if P.is_manifest(n)), key=lambda n: (n.count("/"), n))[:30]:
+        for ln in P.manifest_lines(n, texts[n]):
+            look.line(ln, 80 if n.count("/") == 0 else 60, "manifest")
+    inner_tables(look, {n: t for n, t in texts.items() if not P.is_manifest(n)})
     top = sorted(by_lang.items(), key=lambda kv: -kv[1][1])[:8]
     look.line("Languages by size: " + ", ".join(f"{k} {v[0]} files" for k, v in top))
     largest = sorted(files, key=lambda x: -x[1])[:25]
@@ -464,7 +527,7 @@ def look_binary(look):
     st_list = core.strings_of(b, 8, STRINGS_CAP)
     lines = [f"{o:08x} {k} {s[:300]}" for o, k, s in st_list]
     if lines:
-        look.write_text("strings.txt", "\n".join(lines), f"ASCII and UTF-16LE strings (min 8, {len(lines)} shown, capped at {STRINGS_CAP})", inline=False)
+        look.write_text("strings.txt", "\n".join(lines), f"ASCII and UTF-16LE strings (min 8, {len(lines)} shown, capped at {STRINGS_CAP})", value=-5)
     noise = re.compile(r"schemas\.microsoft\.com|w3\.org|/pki|/crl|\.crt|\.crl|xmlns")  # manifest and certificate-chain URLs say nothing about behaviour
     urls = sorted({s.strip() for _, _, s in st_list if re.search(r"https?://|\\\\[\w.]+\\|HKEY_|\.onion", s) and not noise.search(s)})[:10]
     if urls:
@@ -539,13 +602,15 @@ def list_archive(look):
             for i in z.infolist():
                 mode = (i.external_attr >> 16) & 0xFFFF
                 kind = "dir" if i.is_dir() else "symlink" if (mode & 0o170000) == 0o120000 else "file"
-                members.append(dict(name=i.filename, size=i.file_size, packed=i.compress_size, kind=kind, enc=bool(i.flag_bits & 1), offset=i.header_offset))
+                members.append(dict(name=i.filename, size=i.file_size, packed=i.compress_size, kind=kind, enc=bool(i.flag_bits & 1), offset=i.header_offset,
+                                    mtime="%04d-%02d-%02d %02d:%02d:%02d" % i.date_time))
         extra["format"] = "zip"
     elif tarfile.is_tarfile(p):
         with tarfile.open(p, "r:*") as t:
             for m in t:
                 kind = "dir" if m.isdir() else "symlink" if m.issym() else "hardlink" if m.islnk() else "device" if (m.isdev() or m.isfifo()) else "file"
-                members.append(dict(name=m.name, size=m.size, packed=0, kind=kind, enc=False, offset=m.offset_data, target=m.linkname))
+                members.append(dict(name=m.name, size=m.size, packed=0, kind=kind, enc=False, offset=m.offset_data, target=m.linkname,
+                                    mtime=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(m.mtime)) if m.mtime else None))
                 if len(members) > MAX_MEMBERS + 1:
                     break
         extra["format"] = "tar"
@@ -675,6 +740,131 @@ def archive_overview(members):
     return out
 
 
+INNER_TEXT_MAX = 4 << 20      # bytes of one member read in memory (never written to disk)
+INNER_TOTAL_MAX = 96 << 20    # bytes read over all members
+INNER_TABLE_MAX = 32 << 20    # a CSV/TSV/JSON member up to this size gets its own profile
+
+
+def member_reader(look, fmt):
+    """-> (open function name -> bytes, closer). Reads members in memory with a size cap; zip and tar only."""
+    if fmt == "zip":
+        z = zipfile.ZipFile(look.path)
+
+        def read(name, cap):
+            info = z.getinfo(name)
+            if info.flag_bits & 1:
+                return None
+            with z.open(info) as f:
+                return f.read(cap + 1)
+        return read, z.close
+    if fmt == "tar":
+        t = tarfile.open(look.path, "r:*")
+
+        def read(name, cap):
+            m = t.getmember(name)
+            if not m.isfile():
+                return None
+            return t.extractfile(m).read(cap + 1)
+        return read, t.close
+    return None, (lambda: None)
+
+
+def archive_contents(look, members, fmt):
+    """What is inside, read in memory: tree stats (lines, languages, tests, env vars, constants), every manifest / README / licence /
+    changelog, and a field profile of each table (CSV, TSV, JSON, JSONL) member. Nothing is extracted to disk."""
+    import dl_prof as P
+    read, close = member_reader(look, fmt)
+    tree = P.Tree()
+    files = [m for m in members if m["kind"] == "file"]
+    used, t0 = 0, time.time()
+    texts = {}
+    try:
+        for m in files:
+            name, size = m["name"], m["size"]
+            text = None
+            want = read and not m["enc"] and (P.is_text_name(name) or P.is_manifest(name)) and size <= max(INNER_TEXT_MAX, INNER_TABLE_MAX if name.lower().endswith((".csv", ".tsv", ".json", ".jsonl", ".ndjson")) else 0)
+            if want and used + size <= INNER_TOTAL_MAX and time.time() - t0 < 60:
+                try:
+                    b = read(name, max(INNER_TEXT_MAX, INNER_TABLE_MAX))
+                except Exception:
+                    b = None
+                if b is not None:
+                    used += len(b)
+                    text, _enc = core.decode_text(b)
+                    if text is not None and (P.is_manifest(name) or name.lower().endswith((".csv", ".tsv", ".json", ".jsonl", ".ndjson", ".yaml", ".yml", ".toml", ".xml", ".properties", ".ini", ".cfg"))):
+                        texts[name] = text
+            tree.add(name, size, text)
+    finally:
+        close()
+    tree.emit(look, "Contents", 90, [("members", len(members)), ("folders", sum(1 for m in members if m["kind"] == "dir") or None),
+                                     ("encrypted members", sum(1 for m in members if m["enc"]) or None), ("bytes read to look inside", used)])
+    # member dates
+    dates = sorted(m["mtime"] for m in files if m.get("mtime"))
+    if dates:
+        look.line(f"Member dates: earliest {dates[0]}, latest {dates[-1]} ({len(set(d[:10] for d in dates))} distinct days).", 70)
+    manis = sorted((n for n in texts if P.is_manifest(n)), key=lambda n: (n.count("/"), n))
+    for n in manis[:40]:
+        base = n.rsplit("/", 1)[-1].lower()
+        pri = 86 if base in ("manifest.mf", "metadata", "pkg-info", "package.json", "pyproject.toml", "pom.properties", "pom.xml", "cargo.toml", "setup.py", "setup.cfg") else 74
+        for ln in P.manifest_lines(n, texts[n]):
+            look.line(ln, pri, "manifest")
+    if len(manis) > 40:
+        look.line(f"{len(manis) - 40} more manifests or READMEs not shown: " + ", ".join(manis[40:80]), 30)
+    inner_tables(look, texts)
+    other = [n for n in texts if not P.is_manifest(n) and n.lower().endswith((".yaml", ".yml", ".toml", ".properties", ".ini", ".cfg", ".xml"))][:12]
+    for n in other:
+        t = texts[n]
+        kv = [ln.strip() for ln in t.splitlines() if ln.strip() and not ln.lstrip().startswith(("#", ";", "<!--"))][:40]
+        look.line(f"Config member {n} ({len(t.splitlines())} lines): " + " | ".join(P.short(x, 80) for x in kv), 40, "config")
+
+
+def inner_tables(look, texts):
+    """Each CSV/TSV/JSON/JSONL member: rows, columns and an exact field profile (sums, counts, extremes)."""
+    import dl_prof as P
+    k = 0
+    for n, t in texts.items():
+        low = n.lower()
+        if not low.endswith((".csv", ".tsv", ".json", ".jsonl", ".ndjson")) or k >= 8 or P.is_manifest(n):
+            continue
+        k += 1
+        try:
+            if low.endswith((".csv", ".tsv")):
+                delim = "\t" if low.endswith(".tsv") else ","
+                try:
+                    delim = csv.Sniffer().sniff(t[:50000], delimiters=",;\t|").delimiter
+                except csv.Error:
+                    pass
+                rows = list(csv.reader(io.StringIO(t, newline=""), delimiter=delim))
+                if not rows:
+                    continue
+                head, body = rows[0], rows[1:]
+                good = [(i + 2, r) for i, r in enumerate(body) if len(r) == len(head)]
+                p = P.Profiler(True, "line")
+                cols = p.columns([h.lstrip("﻿").strip() or f"column {i + 1}" for i, h in enumerate(head)])
+                for ln, r in good:
+                    p.add_row(cols, r, ln)
+                sp = P.SecondPass(p)
+                names = [f.name for f in cols]
+                for ln, r in good:
+                    sp.add_row(names, r, ln)
+                look.line(f"Member table {n}: {len(body):,} data rows, {len(head)} columns, {len(body) - len(good)} rows with the wrong field count. Columns (exact over every row, positions are member line numbers):\n"
+                          + "\n".join("  " + x for x in p.field_lines()), 72, "profile")
+                for x in p.stats_lines() + sp.lines():
+                    look.line(f"{n}: {x}", 34, "aggregates")
+                for x in p.enum_lines():
+                    look.line(f"{n}: {x}", 28, "values")
+            else:
+                import json as _j
+                if low.endswith((".jsonl", ".ndjson")):
+                    recs = [(i, _j.loads(x)) for i, x in enumerate(t.splitlines(), 1) if x.strip()]
+                    p, extra = P.profile(recs, False, "line")
+                    P.emit(look, p, extra, f"Member {n} (JSON Lines)", 70, 28)
+                else:
+                    P.doc_profile(look, _j.loads(t), f"Member {n}", 70)
+        except Exception as e:
+            look.line(f"Member {n}: could not be profiled ({type(e).__name__}: {P.short(e, 80)})", 40)
+
+
 def parse_7z_slt(text):
     """`7z l -slt` output -> (members, extra). Members use the same keys as list_archive; offsets are unknown (0)."""
     members, extra, cur, in_files = [], {}, {}, False
@@ -738,6 +928,7 @@ def look_archive(look):
     if single and not members:
         opener = {"gzip": gzip.open, "bzip2": bz2.open, "xz": lzma.open}[st]
         n = 0
+        keep = bytearray()
         try:
             with opener(p, "rb") as f:
                 while True:
@@ -745,6 +936,8 @@ def look_archive(look):
                     if not chunk:
                         break
                     n += len(chunk)
+                    if len(keep) <= INNER_TABLE_MAX:
+                        keep += chunk
                     if n > 256 << 20:
                         break
         except (OSError, EOFError, lzma.LZMAError) as e:
@@ -755,6 +948,18 @@ def look_archive(look):
         if n > 256 << 20 or ratio > MAX_RATIO * 5:
             look.exit_code = 2
             look.flag("REFUSED", "stream", f"ratio {ratio:.0f}:1", "possible compression bomb; not unpacked")
+            return
+        import dl_prof as P
+        P.counts(look, [("packed bytes", look.size), ("unpacked bytes", n)])
+        if n <= INNER_TABLE_MAX:   # the one member, read in memory: profile it like the file it is
+            text, _enc = core.decode_text(bytes(keep))
+            inner = re.sub(r"\.(gz|bz2|xz|tgz)$", "", p.name, flags=re.I) or "member"
+            if text is not None:
+                look.line(f"Unpacked member {inner}: {text.count(chr(10)):,} lines, {len(text):,} characters (read in memory, nothing written).", 88)
+                if inner.lower().endswith((".csv", ".tsv", ".json", ".jsonl", ".ndjson")):
+                    inner_tables(look, {inner: text})
+                else:
+                    P.text_profile(look, text, 70, "Member text")
         return
     depth = 0
     if extra.get("format") == "zip":
@@ -768,10 +973,15 @@ def look_archive(look):
     look.fact("uncompressed_bytes", total)
     look.fact("max_ratio", round(max(ratios), 1) if ratios else 0)
     look.fact("nesting_depth", depth)
+    look.headline = f"{st} archive, {len(members):,} members, {nfile:,} files, {core.human(total)} unpacked"
     look.line(f"Archive ({extra.get('format', st)}): {len(members)} members, {nfile} files, {core.human(total)} uncompressed ({core.human(look.size)} packed), largest ratio {max(ratios) if ratios else 0:.0f}:1" + (f", nesting depth {depth}" if depth else "") + ".")
     for ln in archive_overview(members):
         look.line(ln)
-    rows = [(m["name"], m["size"], m["packed"], f"{m['size'] / max(1, m['packed']):.1f}" if m["packed"] else "", m["kind"], "encrypted" if m["enc"] else "") for m in members[:2000]]
+    try:
+        archive_contents(look, members, extra.get("format"))
+    except Exception as e:  # the listing stands even when a member cannot be read
+        look.fail("member contents (manifests, tables, tree stats)", "stdlib", e)
+    rows =[(m["name"], m["size"], m["packed"], f"{m['size'] / max(1, m['packed']):.1f}" if m["packed"] else "", m["kind"], "encrypted" if m["enc"] else "") for m in members[:2000]]
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow(["name", "size", "packed", "ratio", "type", "flags"])

@@ -315,7 +315,7 @@ class Legend(unittest.TestCase):
         f.write_bytes(big_csv(3000))
         out = Path(tempfile.mkdtemp(prefix="sdl-r2go-"))
         r = run([str(f), "--out", str(out), "--no-tools", "--fresh"])
-        self.assertIn("Columns (name: type, empty %, distinct values", r.stdout)
+        self.assertIn("Columns (name: type, null and empty counts, distinct values", r.stdout)
         self.assertRegex(r.stdout, r"(?m)^id: int, ")
         self.assertNotRegex(r.stdout, r"(?m)^- id: ")
 

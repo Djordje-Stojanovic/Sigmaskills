@@ -35,7 +35,7 @@ MUST_SAY = {
     "shell32.dll": ["Authenticode"],
     "curl.exe": ["Authenticode", "PDB path"],
     "long-document.pdf": ["339 pages"],
-    "orders-export-2026.csv": ["620000"],
+    "orders-export-2026.csv": ["620,000"],
     "mailbox-5200.mbox": ["5200 messages"],
 }
 
@@ -102,15 +102,16 @@ for _name in TRAPS:
 
 class RealDirectFiles(unittest.TestCase):
     @unittest.skipUnless((REAL / "DESIGN.md").exists(), "copy not on this machine")
-    def test_small_text_is_read_directly_and_nothing_is_written(self):
+    def test_small_text_gate_says_read_and_the_look_still_summarises(self):
         for name in ("DESIGN.md", "package-check.json", "timing_par.csv"):
             if not (REAL / name).exists():
                 continue
             g = run(["gate", str(REAL / name)])
             self.assertTrue(g.stdout.startswith("READ "), g.stdout)
-            r = run([str(REAL / name)])
-            self.assertTrue(r.stdout.startswith("Read this file directly"), r.stdout[:200])
-            self.assertLessEqual(dl_util.est_tokens(r.stdout), 120)
+            r = run([str(REAL / name), "--out", tempfile.mkdtemp(prefix="sdl-rd-"), "--fresh"])
+            self.assertTrue(r.stdout.startswith("# "), r.stdout[:200])
+            self.assertIn("Small text file", r.stdout)
+            self.assertIn("counts", r.stdout.lower())
 
 
 if __name__ == "__main__":
