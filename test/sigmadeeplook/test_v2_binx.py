@@ -179,6 +179,7 @@ class PeFacts(unittest.TestCase):
         self.assertIn("network", g)
         self.assertNotIn("GetTickCount", sum(g.values(), []))
 
+    @unittest.skipUnless(sys.platform == "win32", "needs a Windows PE (the running python.exe)")
     def test_python_exe_has_imports_and_no_crash(self):
         exe = Path(sys.executable)
         look = mk_look("p.exe", exe.read_bytes()[:8 << 20])
