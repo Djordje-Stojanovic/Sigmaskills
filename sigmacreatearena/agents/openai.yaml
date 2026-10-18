@@ -1,7 +1,7 @@
 interface:
-  display_name: Arena Create
+  display_name: SigmaCreateArena
   short_description: Blind-pairs arena that ranks any options by Elo per metric
-  default_prompt: Use $storgestudio-arena-create to build a blind-pairs arena that
+  default_prompt: Use $sigmacreatearena to build a blind-pairs arena that
     ranks these options by Elo per metric.
 policy:
   products:

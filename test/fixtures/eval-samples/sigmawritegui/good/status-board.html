@@ -58,7 +58,7 @@ kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-radius:
 <h2 id="x">General answers</h2><textarea id="any" style="min-height:80px" placeholder="Anything else: ideas, worries, orders, questions…"></textarea></div>
 <div class="bar"><span id="cnt" class="sub"></span><label class="sub"><input type="checkbox" id="hide"> hide read</label><span id="keys" class="sub"><kbd>j</kbd>/<kbd>k</kbd> move · <kbd>x</kbd> read · <kbd>1</kbd>–<kbd>9</kbd> pick · <kbd>e</kbd> write · <kbd>Esc</kbd> back · <kbd>g</kbd> general · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> copy</span><button class="go" id="copy">Copy my answers</button><textarea id="out" readonly></textarea></div>
 <script>
-const STAT=["done","doing","not now"],$=s=>document.querySelector(s),KEY="easytalk:"+PAGE.title;
+const STAT=["done","doing","not now"],$=s=>document.querySelector(s),KEY="sigmawritegui:"+PAGE.title;
 const G=[["Your action",DO],["Answers to your questions",ANS],["FYI",FYI]];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const seg=(n,o,rec)=>`<div class="seg">${o.map((x,i)=>`<label${i===rec?' class="rec"':""}><input type="radio" name="${n}" value="${esc(x)}${i===rec?" ★":""}"><span class="n">${i+1}</span>${esc(x)}${i===rec?" ★":""}</label>`).join("")}</div>`;

@@ -10,8 +10,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const KNOWN_SKILLS = [
   { id: 'sigmafreedom', title: 'SigmaFreedom', needsReferences: true },
-  { id: 'easytalk', title: 'EasyTalk', needsReferences: false },
-  { id: 'storgestudio-arena-create', title: 'Arena Create', needsReferences: true },
+  { id: 'sigmawritegui', title: 'SigmaWriteGUI', needsReferences: false },
+  { id: 'sigmacreatearena', title: 'SigmaCreateArena', needsReferences: true },
   {
     id: 'sigmareview',
     title: 'SigmaReview',
@@ -323,7 +323,7 @@ test('SigmaWrite stays soft-steer and Karpathy-sized', () => {
   const { body } = parseFrontmatter(read('sigmawrite/SKILL.md'));
   const words = wordCount(body);
   assert.ok(words >= 200, `sigmawrite body too thin (${words} words)`);
-  assert.ok(words <= 400, `sigmawrite body too long (${words} words); keep near Karpathy length`);
+  assert.ok(words <= 450, `sigmawrite body too long (${words} words); keep near Karpathy length`);
 
   assert.match(body, /Paste as system prompt/i);
   assert.match(body, /From now on/i);

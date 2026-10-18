@@ -1,6 +1,6 @@
 # Arena kit
 
-A blind-pairs ranking page for anything: models, settings, captions, thumbnails, voices, outfits. The full guide (rules, why, lessons) is [`../references/arena-guide.md`](../references/arena-guide.md); the skill is `storgestudio-arena-create`.
+A blind-pairs ranking page for anything: models, settings, captions, thumbnails, voices, outfits. The full guide (rules, why, lessons) is [`../references/arena-guide.md`](../references/arena-guide.md); the skill is `sigmacreatearena`.
 
 ```powershell
 # 1. copy the template into the project (never edit the template for one project)

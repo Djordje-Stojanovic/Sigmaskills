@@ -8,20 +8,20 @@ import vm from 'node:vm';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
-test('easytalk: installs its self-contained board in another project', () => {
-  const project = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-easytalk-'));
+test('sigmawritegui: installs its self-contained board in another project', () => {
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-sigmawritegui-'));
   try {
-    execFileSync(process.execPath, [path.join(ROOT, 'bin/sigmaskills.js'), 'install', 'easytalk', '--project', project, '--copy', '--yes']);
+    execFileSync(process.execPath, [path.join(ROOT, 'bin/sigmaskills.js'), 'install', 'sigmawritegui', '--project', project, '--copy', '--yes']);
     for (const file of ['SKILL.md', 'template.html', 'agents/openai.yaml']) {
-      assert.equal(fs.readFileSync(path.join(project, '.agents/skills/easytalk', file), 'utf8'), fs.readFileSync(path.join(ROOT, 'easytalk', file), 'utf8'));
+      assert.equal(fs.readFileSync(path.join(project, '.agents/skills/sigmawritegui', file), 'utf8'), fs.readFileSync(path.join(ROOT, 'sigmawritegui', file), 'utf8'));
     }
   } finally {
     fs.rmSync(project, { recursive: true, force: true });
   }
 });
 
-test('easytalk: board scripts compile and example data covers all card types without lab dependencies', () => {
-  const html = fs.readFileSync(path.join(ROOT, 'easytalk/template.html'), 'utf8');
+test('sigmawritegui: board scripts compile and example data covers all card types without lab dependencies', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'sigmawritegui/template.html'), 'utf8');
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
   assert.equal(scripts.length, 2);
   scripts.forEach((script) => new vm.Script(script));
@@ -37,8 +37,8 @@ test('easytalk: board scripts compile and example data covers all card types wit
   assert.doesNotMatch(html, /storge|Postiz|YouTube|Design_Experiments|\.claude\/skills|https?:\/\/|src=["']/i);
 });
 
-test('easytalk: prompts render and copy without an optional suffix', () => {
-  const html = fs.readFileSync(path.join(ROOT, 'easytalk/template.html'), 'utf8');
+test('sigmawritegui: prompts render and copy without an optional suffix', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'sigmawritegui/template.html'), 'utf8');
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
   const cards = [];
   const nodes = new Map();

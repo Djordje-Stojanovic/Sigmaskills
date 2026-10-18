@@ -1,9 +1,9 @@
 ---
-name: easytalk
-description: Plain, short English with interactive status and question boards. Use when the user says "easy talk", asks for an EasyTalk board, or pastes an EASYTALK REPLY. Keep the mode on until "easy talk off". Do not use for building a product dashboard or for prose editing alone (SigmaWrite).
+name: sigmawritegui
+description: SigmaWrite plus a GUI: plain, short English in interactive status and question boards the user reads and types into. Use when the user says "easy talk", asks for a SigmaWriteGUI board, or pastes an EASYTALK REPLY. Keep the mode on until "easy talk off". Do not use for building a product dashboard or for prose editing alone (SigmaWrite).
 ---
 
-# EasyTalk
+# SigmaWriteGUI
 
 Use short, clear chat and one interactive board for status reports or batches of questions. The board lets the user read, choose, comment, and copy answers back to the agent.
 

@@ -18,8 +18,8 @@ What each check requires:
 | SigmaShip | `PR-BODY.md` and `CLEANUP.md` (the runner asks for them) | `Closes #N`, spec and map line, Acceptance with every box ticked, Rulings, Follow-ups, Review rounds table with at least one round; cleanup output shows `main in sync` and `tree clean` |
 | SigmaWrite | `docs/NOTES.md` in the fixture, rewritten | Code names `step`, `saveBest`, `src/scores.js` survive; the planted jargon is gone; no sentence over 30 words |
 | SigmaRefactor | `REFACTOR-SCAN.md` (the runner asks for it) | Counting method named (`laloc` or fallback); ranked files with line counts; choices with risk and verification |
-| EasyTalk | `status-board.html` and final chat reply | Installed template preserved outside its DATA block; valid JavaScript with PAGE, DO, ANS, FYI; reply links the saved board |
-| Arena Create | `arena/arena.json` and final chat reply | Valid config with title, question, metrics, groups, at least four players and items that name known players and groups; no `picks.jsonl`; reply links the local arena (port 3410-3499) |
+| SigmaWriteGUI | `status-board.html` and final chat reply | Installed template preserved outside its DATA block; valid JavaScript with PAGE, DO, ANS, FYI; reply links the saved board |
+| SigmaCreateArena | `arena/arena.json` and final chat reply | Valid config with title, question, metrics, groups, at least four players and items that name known players and groups; no `picks.jsonl`; reply links the local arena (port 3410-3499) |
 | SigmaResearch | Final chat reply | Sources table with platform, URL, publication/access dates, route, scope and evidence (or None with a gap); a Contradictions section; explicit Access gaps section |
 | SigmaDeepLook | Final chat reply | Sections Evidence and Limits in order; every evidence bullet names an artifact path and a time, page, cell or offset; Limits explicit (or None); the reply ends with the path to `view.html`; no private coordinates |
 

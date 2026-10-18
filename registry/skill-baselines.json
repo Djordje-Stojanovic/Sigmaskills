@@ -534,7 +534,7 @@
         }
       }
     ],
-    "easytalk": [
+    "sigmawritegui": [
       {
         "release": "0.6.0",
         "revision": "7e945683bf985978a80f8bddc752d9358063281729d306f537d2f542b7223fcf",
@@ -606,7 +606,7 @@
         }
       }
     ],
-    "storgestudio-arena-create": [
+    "sigmacreatearena": [
       {
         "release": "0.7.0",
         "revision": "3c28851e883e32f8921c94bcc4df1364f5cfa42f7b10e535849eb6ff8d9a7b96",

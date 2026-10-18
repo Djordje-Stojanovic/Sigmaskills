@@ -189,7 +189,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.match(interactiveOut, /Project Installation \(default\)/);
     assert.match(interactiveOut, /Resolved destinations:/);
     assert.doesNotMatch(interactiveOut, /\x1b\[/);
-    assert.ok(fs.existsSync(path.join(interactiveProject, '.agents', 'skills', 'sigmareview', 'SKILL.md')));
+    assert.ok(fs.existsSync(path.join(interactiveProject, '.agents', 'skills', MANIFEST.skills[0].id, 'SKILL.md')));
     assertOnlyUniversalProjectWrites(interactiveProject);
 
     // Spawn install --dry-run --json on isolated project

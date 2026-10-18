@@ -2,7 +2,7 @@
 
 An **arena** shows the user two options side by side, names hidden, sides random, and asks "which is better?" on one or more metrics. From the user's picks it builds an Elo board (the LMArena method) per metric and overall. It works for anything that can be shown or played: AI models and settings (images, video clips, voices, music), captions, titles, hooks, thumbnails, outfits, logos, intros, script lines.
 
-Built from two real arenas: a video-model arena (400 picks) and an image-model arena (200 picks). The kit is [`../kit/`](../kit/README.md): copy `template/` into the project, fill `arena.json`, run `python server.py`. Skill: **`storgestudio-arena-create`** (it grills the user first).
+Built from two real arenas: a video-model arena (400 picks) and an image-model arena (200 picks). The kit is [`../kit/`](../kit/README.md): copy `template/` into the project, fill `arena.json`, run `python server.py`. Skill: **`sigmacreatearena`** (it grills the user first).
 
 Use the arena for / keep elsewhere:
 

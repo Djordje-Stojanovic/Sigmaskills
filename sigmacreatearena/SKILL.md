@@ -1,9 +1,9 @@
 ---
-name: storgestudio-arena-create
+name: sigmacreatearena
 description: Builds a fast blind-pairs arena so the user ranks any options by Elo per metric: models, settings, voices, captions, thumbnails, outfits. Grills first, then ships a local page and a board. Use to rank, compare or pick the best of many options by taste. Do not use for 2-3 options (just ask), for measurable checks (script them), or to judge one draft against a reference.
 ---
 
-# Arena Create
+# SigmaCreateArena
 
 An arena shows the user two options side by side, names hidden, sides random. They pick per metric. A Bradley-Terry fit turns the picks into an Elo board per metric. This skill grills the user, builds the arena from a bundled kit, hands over the link, and reads the board back.
 

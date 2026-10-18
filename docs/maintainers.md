@@ -26,8 +26,8 @@ Sigmaskills/
 ├── sigmaresearch/             SKILL.md · agents/ · references/ · scripts/ (readers, source-log counter)
 ├── sigmadeeplook/             SKILL.md · agents/ · references/ · scripts/ (look.py and its type modules)
 ├── sigmarefactor/            SKILL.md · agents/ · references/
-├── easytalk/                 SKILL.md · agents/ · template.html
-└── storgestudio-arena-create/ SKILL.md · agents/ · references/ · kit/
+├── sigmawritegui/                 SKILL.md · agents/ · template.html
+└── sigmacreatearena/ SKILL.md · agents/ · references/ · kit/
 ```
 
 Each top-level folder with a `SKILL.md` is one installable skill. The folder name, the frontmatter `name`, and the `--skill` id are the same.
