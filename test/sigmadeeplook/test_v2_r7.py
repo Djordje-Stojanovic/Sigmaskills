@@ -96,6 +96,7 @@ class R7(unittest.TestCase):
         self.assertIn("Java 11", stream)
         self.assertIn("protected long get()", stream)
 
+    @unittest.skipUnless(have("numpy"), "numpy")
     def test_headerless_fixed_records_get_a_layout(self):
         p = self.tmp / "rec.bin"
         with open(p, "wb") as f:
