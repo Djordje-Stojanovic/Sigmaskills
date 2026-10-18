@@ -417,6 +417,14 @@ test('skill names and descriptions follow the Agent Skills limits', () => {
   }
 });
 
+test('every SKILL.md header is strict YAML: a plain description never holds ": "', () => {
+  for (const skill of KNOWN_SKILLS) {
+    const raw = read(path.join(skill.id, 'SKILL.md')).match(/^description:[ 	]*(.*)$/m)[1].trim();
+    const quoted = /^'.*'$/.test(raw) || /^".*"$/.test(raw);
+    assert.ok(quoted || !raw.includes(': '), `${skill.id}: quote the description; a plain YAML value cannot contain ": "`);
+  }
+});
+
 function githubSlug(heading) {
   return heading
     .trim()

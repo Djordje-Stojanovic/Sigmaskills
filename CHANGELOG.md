@@ -4,6 +4,12 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.9.1] — 2026-10-18
+
+### Fixed
+
+- `sigmacreatearena`, `sigmaresearch` and `sigmawritegui` had a plain YAML description containing `: `, which strict YAML parsers reject. The descriptions are now quoted, the installer reads quoted values as plain text, and a test keeps every header strict YAML.
+
 ## [0.9.0] — 2026-10-18
 
 ### Changed
@@ -269,7 +275,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.6.1...v0.7.0

@@ -81,6 +81,14 @@ export function validateManifest(manifest) {
  * @param {string} md
  * @returns {{ name: string, description: string, rawFrontmatter: string, body: string }}
  */
+// A plain YAML scalar cannot hold ': ', so such descriptions are single- or double-quoted; return the plain text.
+function unquoteYamlScalar(value) {
+  if (!value) return value;
+  if (value.length > 1 && value.startsWith("'") && value.endsWith("'")) return value.slice(1, -1).replace(/''/g, "'");
+  if (value.length > 1 && value.startsWith('"') && value.endsWith('"')) return JSON.parse(value);
+  return value;
+}
+
 export function parseSkillFrontmatter(md) {
   const match = md.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!match) {
@@ -88,8 +96,8 @@ export function parseSkillFrontmatter(md) {
   }
   const rawFrontmatter = match[1];
   const body = match[2];
-  const name = rawFrontmatter.match(/^name:\s*(.+)\s*$/m)?.[1]?.trim();
-  const description = rawFrontmatter.match(/^description:\s*(.+)\s*$/m)?.[1]?.trim();
+  const name = unquoteYamlScalar(rawFrontmatter.match(/^name:\s*(.+)\s*$/m)?.[1]?.trim());
+  const description = unquoteYamlScalar(rawFrontmatter.match(/^description:\s*(.+)\s*$/m)?.[1]?.trim());
 
   if (!name) {
     throw new Error('frontmatter must include name');
