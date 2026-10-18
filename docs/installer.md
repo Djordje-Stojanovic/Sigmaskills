@@ -395,8 +395,7 @@ Point other hosts at the same folders, or copy again:
 
 | Host family | Typical skills path |
 |-------------|---------------------|
-| Universal (Codex-style hosts, Pi) | `~/.agents/skills/<id>/` |
+| Universal (Codex global since registry sync #105, Pi) | `~/.agents/skills/<id>/` |
 | Cursor | `~/.cursor/skills/<id>/` or project `.agents/skills/` |
 | Claude Code | `~/.claude/skills/<id>/` |
 | OpenCode | `~/.config/opencode/skills/<id>/` |
-| Codex | `~/.codex/skills/<id>/` |
