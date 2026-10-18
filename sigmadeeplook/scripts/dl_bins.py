@@ -14,6 +14,7 @@ import os
 import re
 import shutil
 import struct
+import subprocess
 import tarfile
 import time
 import zipfile
@@ -55,9 +56,16 @@ def look_unknown(look):
         look.skip("file -b type guess", "`file` not found" if not look.no_tools else "disabled by --no-tools", "file", "install the `file` utility (Git for Windows ships it)")
     if b:
         look.write_text("hexdump.txt", core.hexdump(b[:512]), "first 512 bytes as hex", "internal")
-    st = core.strings_of(b, 8, 2000)
+    if b and look.size == len(b) or (b and look.size <= (64 << 20)):
+        import dl_misc
+        for t in dl_misc.record_layout(read_bytes(look, 64 << 20), look.size):
+            look.headline = "Headerless binary file that looks like a table of fixed-size records (a guess from the bytes)"
+            look.line(t, 93)
+    if b:
+        look.line("First 32 bytes: " + b[:32].hex(" ") + " | " + "".join(chr(c) if 32 <= c < 127 else "." for c in b[:32]), 52)
+    st = [x for x in core.strings_of(b, 6, 4000) if wordy(x[2])]
     if st:
-        look.write_text("strings.txt", "\n".join(f"{o:08x} {s[:200]}" for o, k, s in st), "printable strings (min 8)")
+        look.write_text("strings.txt", "\n".join(f"{o:08x} {s[:200]}" for o, k, s in st), "printable strings that read as words, paths or names (min 6)")
     look.ask_human("What is this file meant to be, and where did it come from?")
 
 
@@ -438,7 +446,12 @@ def parse_pe(b):
                 end = b.find(b"\0", no)
                 imports.append(b[no:end].decode("latin-1"))
             p += 20
-    return {"machine": PE_MACHINES.get(machine, hex(machine)), "timestamp": ts, "subsystem": SUBSYS.get(subsystem, str(subsystem)),
+    base = struct.unpack_from("<Q", b, opt + 24)[0] if magic == 0x20B else struct.unpack_from("<I", b, opt + 28)[0]
+    osv = struct.unpack_from("<HH", b, opt + 40)
+    soi, _hs, csum, _sub, dllc = struct.unpack_from("<IIIHH", b, opt + 56)
+    dllflags = [n for bit, n in ((0x40, "ASLR"), (0x20, "high-entropy ASLR"), (0x100, "DEP/NX"), (0x4000, "control-flow guard"), (0x400, "no SEH"), (0x1000, "AppContainer")) if dllc & bit]
+    return {"image_base": base, "image_size": soi, "checksum": csum, "linker": f"{b[opt + 2]}.{b[opt + 3]}", "os_version": f"{osv[0]}.{osv[1]}", "mitigations": dllflags, "characteristics": chars,
+            "machine": PE_MACHINES.get(machine, hex(machine)), "timestamp": ts, "subsystem": SUBSYS.get(subsystem, str(subsystem)),
             "pe32plus": magic == 0x20B, "sections": secs, "imports": imports, "dll": bool(chars & 0x2000), "entry_rva": entry,
             "exports": exports, "export_count": export_count, "signed": bool(sec_off and sec_sz), "version": version}
 
@@ -481,6 +494,10 @@ def look_binary(look):
             look.headline = f"Windows {kind} ({info['machine']})" + (f", {info['version']['FileDescription']}" if info["version"].get("FileDescription") else "") + (f", {info['export_count']} exports" if info["export_count"] else "")
             look.dims = f"{info['machine']}"
             look.line(f"Windows PE ({kind}): machine {info['machine']}, subsystem {info['subsystem']}." + (f" Exports {info['export_count']} functions, e.g. " + ", ".join(info["exports"][:5]) + "." if info["export_count"] else " No exports."), 80)
+            look.line(f"PE header: entry point RVA 0x{info['entry_rva']:x}, image base 0x{info['image_base']:x}, image size {info['image_size']:,} B, {len(info['sections'])} sections, "
+                      f"linker {info['linker']}, minimum OS {info['os_version']}, mitigations: {', '.join(info['mitigations']) or 'none'}, header checksum {'set' if info['checksum'] else 'zero'}; "
+                      f"{len(info['imports'])} imported DLLs.", 76)
+            look.line("Section table (name, virtual size, raw size, rights): " + "; ".join(f"{x['name']} {x['vsize']:,} / {x['raw']:,} {x['perms']}" for x in info["sections"][:16]) + ".", 47)
             if info["version"]:
                 look.line("Version info: " + "; ".join(f"{k} {v}" for k, v in info["version"].items()), 78)
             import dl_pe
@@ -514,9 +531,19 @@ def look_binary(look):
                 look.line(f"Mach-O: cpu {MACHO_CPU.get(cpu, hex(cpu))}.")
                 look.fact("arch", MACHO_CPU.get(cpu, hex(cpu)))
         elif st == "wasm":
-            look.line(f"WebAssembly module, version {struct.unpack('<I', b[4:8])[0]}.")
+            import dl_cls
+            w = dl_cls.parse_wasm(b)
+            look.headline = f"WebAssembly module: {len(w['imports'])} imports, {len(w['exports'])} exports, {w['imported_funcs'] + w['functions']} functions"
+            for k, t in enumerate(dl_cls.wasm_lines(w)):
+                look.line(t, 97 - k)
+            look.fact("exports", [n for n, _ in w["exports"]])
         elif st == "java-class":
-            look.line(f"Java class file, major version {struct.unpack('>H', b[6:8])[0]}.")
+            import dl_cls
+            c = dl_cls.parse_class(b)
+            look.headline = f"Java class {c['name']}: {len(c['methods'])} methods, {len(c['fields'])} fields, Java {c['release']}"
+            for k, t in enumerate(dl_cls.class_lines(c)):
+                look.line(t, 97 - k)
+            look.fact("methods", [m["name"] for m in c["methods"]])
         elif st == "dex":
             look.line("Android Dalvik executable (dex).")
         else:
@@ -524,7 +551,7 @@ def look_binary(look):
     except (struct.error, ValueError, IndexError) as e:
         look.flag("PARSE-ERROR", "header", str(e)[:100], "the header is truncated or malformed; strings and entropy still ran")
     look.fact("entropy", round(core.entropy(b[:4 << 20]), 3))
-    st_list = core.strings_of(b, 8, STRINGS_CAP)
+    st_list = [x for x in core.strings_of(b, 8, STRINGS_CAP) if wordy(x[2])]   # machine-code bytes that happen to be printable are not strings
     lines = [f"{o:08x} {k} {s[:300]}" for o, k, s in st_list]
     if lines:
         look.write_text("strings.txt", "\n".join(lines), f"ASCII and UTF-16LE strings (min 8, {len(lines)} shown, capped at {STRINGS_CAP})", value=-5)
@@ -545,6 +572,19 @@ def look_binary(look):
         look.skip("decompilation and function-level reading (Ghidra)", "Ghidra not found" if not look.no_tools else "disabled by --no-tools", "ghidra")
     look.flag("NOT-EXECUTED", "file", "static look only", "the binary was never run; do not run it outside a VM you chose")
     look.ask_human("May the strings or the file be uploaded anywhere? Default: no.", "Which function or behaviour do you need explained?")
+
+
+_WORD = re.compile(r"[a-z]{4,}|[A-Za-z]{3,}[_./\:-][A-Za-z]{2,}|[A-Z][A-Z0-9]*_[A-Z0-9_]{3,}|https?://|\d{1,4}[.:/-]\d{1,4}[.:/-]\d{1,4}")
+
+
+def wordy(s):
+    """True when a printable run reads like text (a word, a path, a constant name, a version or date) rather than code bytes."""
+    s = s.strip()
+    if len(s) < 6:
+        return False
+    if not _WORD.search(s):
+        return False
+    return sum(c.isalnum() or c in " _./\\:-,'\"()%=@#<>[]{}$&*+?!;" for c in s) / len(s) >= 0.85
 
 
 # ================================================================= archives
@@ -639,7 +679,7 @@ def screen_members(look, members, depth):
         seen.add(key)
         if m["packed"] and m["size"] / max(1, m["packed"]) > MAX_RATIO:
             refusals.append(("ratio", m["name"], f"ratio {m['size'] // max(1, m['packed'])}:1 (limit {MAX_RATIO}:1)"))
-        if m["packed"]:
+        if m["packed"] and m.get("offset") is not None:   # a 7-Zip listing gives no offsets: nothing to compare
             ranges.append((m["offset"], m["offset"] + m["packed"], m["name"]))
     ranges.sort()
     for a, b in zip(ranges, ranges[1:]):
@@ -730,7 +770,7 @@ def archive_overview(members):
     out.append("Largest: " + "; ".join(f"{m['name']} ({core.human(m['size'])})" for m in big))
     nested = [m["name"] for m in files if m["name"].lower().endswith(NESTED_EXT)]
     if nested:
-        out.append(f"{len(nested)} members are archives themselves (not opened), e.g. {', '.join(nested[:2])}.")
+        out.append(f"{len(nested)} members are archives themselves, e.g. {', '.join(nested[:2])}.")
     risky = [m["name"] for m in files if m["name"].lower().endswith(RISKY_EXT)]
     if risky:
         out.append(f"{len(risky)} runnable-looking members (never run), e.g. {', '.join(risky[:3])}.")
@@ -766,7 +806,68 @@ def member_reader(look, fmt):
                 return None
             return t.extractfile(m).read(cap + 1)
         return read, t.close
+    sz = look.tool("7z")
+    if sz:
+        def read(name, cap):   # streamed to memory: `7z e -so` writes nothing to disk
+            r = subprocess.run([sz, "e", "-so", "-y", str(look.path), name], capture_output=True, timeout=40)
+            return r.stdout[:cap + 1] if r.returncode == 0 else None
+        return read, (lambda: None)
     return None, (lambda: None)
+
+
+NEST_OPEN = (".zip", ".jar", ".war", ".whl", ".nupkg", ".tar", ".tgz", ".tar.gz", ".tar.xz", ".tar.bz2", ".txz", ".tbz2")
+SMALL_NOTE = 600              # a text member this short is quoted whole
+SMALL_ANY = 65536             # a member this small is read whatever its name: a file with no extension is often text
+INNER_NEST_MAX = 48 << 20     # a nested archive up to this size is opened in memory
+
+
+def _is_textname(name):
+    import dl_prof as P
+    return P.is_text_name(name) or P.is_manifest(name)
+
+
+def nested_items(b, outer, depth, budget):
+    """Members of an archive held in memory -> (name, size, text or None); one more level for archives inside it (depth 2 at most).
+    Reads only text-like members of up to 4 MB; budget[0] counts the bytes read so far over the whole look."""
+    out = []
+    try:
+        if zipfile.is_zipfile(io.BytesIO(b)):
+            z = zipfile.ZipFile(io.BytesIO(b))
+            infos = [i for i in z.infolist() if not i.is_dir()][:5000]
+
+            def get(i):
+                return None if i.flag_bits & 1 else z.open(i).read(INNER_TEXT_MAX + 1)
+            ent = [(i.filename, i.file_size, i) for i in infos]
+        else:
+            t = tarfile.open(fileobj=io.BytesIO(b), mode="r:*")
+            ms = [m for m in t.getmembers() if m.isfile()][:5000]
+
+            def get(m):
+                return t.extractfile(m).read(INNER_TEXT_MAX + 1)
+            ent = [(m.name, m.size, m) for m in ms]
+    except Exception:
+        return out
+    for name, size, h in ent:
+        text = None
+        if depth < 2 and name.lower().endswith(NEST_OPEN) and size <= INNER_NEST_MAX and budget[0] + size <= INNER_TOTAL_MAX:
+            try:
+                nb = get(h) if size <= INNER_TEXT_MAX else None
+            except Exception:
+                nb = None
+            if nb is not None:
+                budget[0] += len(nb)
+                for n2, s2, t2 in nested_items(nb, name, depth + 1, budget):
+                    out.append((f"{name}!/{n2}", s2, t2))
+        elif size <= INNER_TEXT_MAX and (_is_textname(name) or 0 < size <= SMALL_ANY) and budget[0] + size <= INNER_TOTAL_MAX:
+            try:
+                bb = get(h)
+            except Exception:
+                bb = None
+            if bb is not None:
+                budget[0] += len(bb)
+                text, _enc = core.decode_text(bb)
+        out.append((name, size, text))
+    return out
 
 
 def archive_contents(look, members, fmt):
@@ -778,11 +879,28 @@ def archive_contents(look, members, fmt):
     files = [m for m in members if m["kind"] == "file"]
     used, t0 = 0, time.time()
     texts = {}
+    opened, small = [], {}
     try:
         for m in files:
             name, size = m["name"], m["size"]
             text = None
-            want = read and not m["enc"] and (P.is_text_name(name) or P.is_manifest(name)) and size <= max(INNER_TEXT_MAX, INNER_TABLE_MAX if name.lower().endswith((".csv", ".tsv", ".json", ".jsonl", ".ndjson")) else 0)
+            if read and not m["enc"] and name.lower().endswith(NEST_OPEN) and size <= INNER_NEST_MAX and used + size <= INNER_TOTAL_MAX and time.time() - t0 < 60:
+                try:
+                    nb = read(name, INNER_NEST_MAX)
+                except Exception:
+                    nb = None
+                if nb is not None and len(nb) <= INNER_NEST_MAX:
+                    used += len(nb)
+                    n_in = 0
+                    for iname, isize, itext in nested_items(nb, name, 1, [used]):
+                        tree.add(f"{name}!/{iname}", isize, itext)
+                        n_in += 1
+                        if itext is not None and len(itext) <= SMALL_NOTE and not P.is_manifest(iname):
+                            small[f"{name}!/{iname}"] = itext
+                        if itext is not None and (P.is_manifest(iname) or iname.lower().endswith((".csv", ".tsv", ".json", ".jsonl", ".ndjson", ".yaml", ".yml", ".toml", ".xml", ".properties", ".ini", ".cfg", ".txt", ".md"))):
+                            texts[f"{name}!/{iname}"] = itext
+                    opened.append(f"{name} ({n_in} inner files)")
+            want = read and not m["enc"] and (P.is_text_name(name) or P.is_manifest(name) or 0 < size <= SMALL_ANY) and size <= max(INNER_TEXT_MAX, INNER_TABLE_MAX if name.lower().endswith((".csv", ".tsv", ".json", ".jsonl", ".ndjson")) else 0)
             if want and used + size <= INNER_TOTAL_MAX and time.time() - t0 < 60:
                 try:
                     b = read(name, max(INNER_TEXT_MAX, INNER_TABLE_MAX))
@@ -791,11 +909,18 @@ def archive_contents(look, members, fmt):
                 if b is not None:
                     used += len(b)
                     text, _enc = core.decode_text(b)
+                    if text is not None and len(text) <= SMALL_NOTE and not P.is_manifest(name):
+                        small[name] = text
                     if text is not None and (P.is_manifest(name) or name.lower().endswith((".csv", ".tsv", ".json", ".jsonl", ".ndjson", ".yaml", ".yml", ".toml", ".xml", ".properties", ".ini", ".cfg"))):
                         texts[name] = text
             tree.add(name, size, text)
     finally:
         close()
+    for n, t in list(small.items())[:20]:
+        if t.strip():
+            look.line(f"Small text member {n}: " + " | ".join(x.strip() for x in t.strip().splitlines()[:8])[:SMALL_NOTE], 64, "small")
+    if opened:
+        look.line("Archives inside this archive, opened in memory (nested names are written outer!/inner): " + "; ".join(opened[:10]) + ".", 91)
     tree.emit(look, "Contents", 90, [("members", len(members)), ("folders", sum(1 for m in members if m["kind"] == "dir") or None),
                                      ("encrypted members", sum(1 for m in members if m["enc"]) or None), ("bytes read to look inside", used)])
     # member dates
@@ -816,6 +941,57 @@ def archive_contents(look, members, fmt):
         t = texts[n]
         kv = [ln.strip() for ln in t.splitlines() if ln.strip() and not ln.lstrip().startswith(("#", ";", "<!--"))][:40]
         look.line(f"Config member {n} ({len(t.splitlines())} lines): " + " | ".join(P.short(x, 80) for x in kv), 40, "config")
+
+
+MEMBER_LOOK_EXT = {".xlsx", ".xlsm", ".xls", ".ods", ".docx", ".doc", ".odt", ".pptx", ".odp", ".pdf", ".sqlite", ".sqlite3", ".db", ".parquet", ".avro", ".orc", ".npz", ".npy", ".dta",
+                   ".mid", ".ttf", ".otf", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".eml", ".ics", ".vcf", ".torrent", ".plist", ".pyc", ".class", ".wasm", ".exe", ".dll", ".deb", ".stl",
+                   ".glb", ".log", ".mp3", ".wav", ".flac", ".ogg", ".opus", ".m4a", ".mp4", ".mkv", ".mov", ".avi", ".webm", ".epub", ".duckdb", ".pcap", ".evtx", ".ipynb"}
+MEMBER_LOOK_N = 8             # members of a document or media type that get a look of their own, in place
+MEMBER_LOOK_BYTES = 40 << 20
+MEMBER_LOOK_TOKENS = 420      # facts carried up from one member's look
+
+
+def member_looks(look, members, fmt):
+    """After the safety screen passed: the members that are documents, tables, media or binaries get their own look (written under the look folder,
+    never run), and their top facts are carried up here, because a list of names says nothing about what the file inside holds."""
+    if getattr(look, "depth", 0) >= 1 or look.quick or not hasattr(core, "recurse_into"):
+        return
+    read, close = member_reader(look, fmt)
+    if not read:
+        return
+    import dl_write
+    files = [m for m in members if m["kind"] == "file" and not m["enc"] and 0 < m["size"] <= MEMBER_LOOK_BYTES and os.path.splitext(m["name"])[1].lower() in MEMBER_LOOK_EXT]
+    t0, done = time.time(), 0
+    try:
+        for m in files[:MEMBER_LOOK_N]:
+            if time.time() - t0 > 150:
+                look.line(f"Member looks stopped after {done} members (time cap); the rest are named in the list.", 30)
+                break
+            try:
+                b = read(m["name"], MEMBER_LOOK_BYTES)
+            except Exception:
+                b = None
+            if b is None or len(b) > MEMBER_LOOK_BYTES:
+                continue
+            d = look.out / "members" / f"{done + 1:02d}"
+            d.mkdir(parents=True, exist_ok=True)
+            fp = d / re.sub(r"[^\w.\-]+", "_", os.path.basename(m["name"].replace("\\", "/")))
+            fp.write_bytes(b)
+            tier = "quick" if os.path.splitext(fp.name)[1].lower() in (".mp3", ".wav", ".flac", ".ogg", ".opus", ".m4a", ".mp4", ".mkv", ".mov", ".avi", ".webm") and len(b) > (8 << 20) else "standard"
+            c = core.recurse_into(look, fp, m["name"], tier)
+            done += 1
+            chunks = [x for x in (c.stream or []) if x["sec"] in ("watch", "key")]
+            chunks.sort(key=lambda x: -x["pri"])
+            used, picked = 0, []
+            for x in chunks:
+                if used + x["tok"] > MEMBER_LOOK_TOKENS and picked:
+                    break
+                picked.append(x["text"])
+                used += x["tok"]
+            if picked:
+                look.line(f"Member {m['name']} ({c.type}/{c.subtype}), looked at in place: " + " | ".join(" ".join(t.split()) for t in picked), 66, "member")
+    finally:
+        close()
 
 
 def inner_tables(look, texts):
@@ -876,14 +1052,14 @@ def parse_7z_slt(text):
             if in_files and cur.get("Path"):
                 attr = cur.get("Attributes", "")
                 kind = "dir" if cur.get("Folder") == "+" or attr.startswith("D") else "symlink" if cur.get("Symbolic Link") or attr.startswith("l") or attr.startswith("_l") else "file"
-                members.append(dict(name=cur["Path"], size=int(cur.get("Size") or 0), packed=int(cur.get("Packed Size") or 0), kind=kind, enc=cur.get("Encrypted") == "+", offset=0))
+                members.append(dict(name=cur["Path"], size=int(cur.get("Size") or 0), packed=int(cur.get("Packed Size") or 0), kind=kind, enc=cur.get("Encrypted") == "+", offset=None))
             cur = {}
             continue
         if "=" in ln:
             k, v = ln.split("=", 1)
             (cur if in_files else extra).__setitem__(k.strip(), v.strip())
     if in_files and cur.get("Path"):
-        members.append(dict(name=cur["Path"], size=int(cur.get("Size") or 0), packed=int(cur.get("Packed Size") or 0), kind="file", enc=cur.get("Encrypted") == "+", offset=0))
+        members.append(dict(name=cur["Path"], size=int(cur.get("Size") or 0), packed=int(cur.get("Packed Size") or 0), kind="file", enc=cur.get("Encrypted") == "+", offset=None))
     extra = {"method": extra.get("Method", ""), "solid": extra.get("Solid", ""), "type": extra.get("Type", "")}
     return members, extra
 
@@ -1001,6 +1177,11 @@ def look_archive(look):
         archive_contents(look, members, extra.get("format"))
     except Exception as e:  # the listing stands even when a member cannot be read
         look.fail("member contents (manifests, tables, tree stats)", "stdlib", e)
+    if not refusals and extra.get("format") in ("zip", "tar", "7z", "iso", "rar"):
+        try:
+            member_looks(look, members, extra.get("format"))
+        except Exception as e:
+            look.fail("member looks (documents and media inside the archive)", "stdlib", e)
     rows =[(m["name"], m["size"], m["packed"], f"{m['size'] / max(1, m['packed']):.1f}" if m["packed"] else "", m["kind"], "encrypted" if m["enc"] else "") for m in members[:2000]]
     buf = io.StringIO()
     w = csv.writer(buf)
@@ -1227,9 +1408,15 @@ def look_font(look):
         facts["family"] = names.get(1, "")
         facts["subfamily"] = names.get(2, "")
         facts["full_name"] = names.get(4, "")
+    if font is not None:
+        try:
+            font_details(look, font, facts)
+        except Exception as e:
+            look.fail("font metrics", "fontTools", e)
     for k, v in facts.items():
         look.fact(k, v)
     if facts.get("family") or facts.get("glyphs"):
+        look.headline = f"Font {facts.get('full_name') or facts.get('family')!r} ({st}): {facts.get('glyphs', '?')} glyphs, {'variable' if facts.get('variable') else 'static'}; {len(facts.get('tables', []))} tables"
         look.line(f"Font {facts.get('full_name') or facts.get('family')!r} ({st}): {facts.get('glyphs', '?')} glyphs, {'variable' if facts.get('variable') else 'static'}; "
                   f"{len(facts.get('tables', []))} tables.")
     else:
@@ -1252,6 +1439,53 @@ def look_font(look):
             look.skip("specimen picture", "Pillow not importable" if not look.no_tools else "disabled by --no-tools", "PIL")
     look.skip("sanitizer check (OTS) and quality checks (Font Bakery)", "not installed; run `pip install fontbakery` if you need a validity gate" if not look.no_tools else "disabled by --no-tools", None, "see references/font.md")
     look.ask_human("Which scripts or languages must this font cover?", "Is the licence in the file the one you expect?")
+
+
+def font_details(look, font, facts):
+    """Name records, design metrics, style bits and layout features: the facts a type designer or a web developer asks first."""
+    h = font["head"]
+    labels = {0: "copyright", 1: "family", 2: "subfamily", 3: "unique id", 4: "full name", 5: "version string", 6: "PostScript name", 7: "trademark", 8: "manufacturer",
+              9: "designer", 11: "vendor URL", 12: "designer URL", 13: "licence", 14: "licence URL", 16: "typographic family", 17: "typographic subfamily"}
+    got = {}
+    for rec in font["name"].names:
+        if rec.nameID in labels and rec.nameID not in got:
+            try:
+                got[rec.nameID] = rec.toUnicode()
+            except Exception:
+                pass
+    look.line("Name records: " + "; ".join(f"{labels[i]} = {got[i][:90]}" for i in sorted(got)) + ".", 74)
+    bits = []
+    bits.append(f"{h.unitsPerEm} units per em, font revision {float(h.fontRevision):.3f}")
+    bits.append(f"glyph box x {h.xMin}..{h.xMax}, y {h.yMin}..{h.yMax}")
+    bits.append("macStyle: " + ", ".join(n for bit, n in ((1, "bold"), (2, "italic"), (4, "underline")) if h.macStyle & bit) if h.macStyle else "macStyle: regular")
+    if "OS/2" in font:
+        o = font["OS/2"]
+        sel = [n for bit, n in ((1, "italic"), (32, "bold"), (64, "regular"), (512, "oblique")) if o.fsSelection & bit]
+        bits.append(f"OS/2 weight class {o.usWeightClass}, width class {o.usWidthClass}, fsSelection {'+'.join(sel) or 'none'}, typo ascender {o.sTypoAscender}, typo descender {o.sTypoDescender}, "
+                    f"line gap {o.sTypoLineGap}, win ascent {o.usWinAscent}, win descent {o.usWinDescent}"
+                    + (f", x-height {o.sxHeight}, cap height {o.sCapHeight}" if getattr(o, "version", 0) >= 2 and getattr(o, "sxHeight", 0) else ""))
+    if "hhea" in font:
+        hh = font["hhea"]
+        bits.append(f"hhea ascent {hh.ascent}, descent {hh.descent}, line gap {hh.lineGap}")
+    if "post" in font:
+        bits.append(f"italic angle {font['post'].italicAngle}, fixed pitch {'yes' if font['post'].isFixedPitch else 'no'}")
+    try:
+        import datetime
+        epoch = datetime.datetime(1904, 1, 1)
+        bits.append(f"head created {(epoch + datetime.timedelta(seconds=h.created)).date()}, modified {(epoch + datetime.timedelta(seconds=h.modified)).date()}")
+    except Exception:
+        pass
+    look.line("Design metrics: " + "; ".join(bits) + ".", 73)
+    feats = {}
+    for tab in ("GSUB", "GPOS"):
+        if tab in font and getattr(font[tab].table, "FeatureList", None):
+            feats[tab] = sorted({r.FeatureTag for r in font[tab].table.FeatureList.FeatureRecord})
+    scripts = sorted({r.ScriptTag for tab in ("GSUB", "GPOS") if tab in font and getattr(font[tab].table, "ScriptList", None) for r in font[tab].table.ScriptList.ScriptRecord})
+    if feats or scripts:
+        look.line("Layout features: " + "; ".join(f"{t} {', '.join(v)}" for t, v in feats.items()) + (f"; scripts {', '.join(scripts)}" if scripts else "") + ".", 66)
+    look.line(f"cmap subtables: {len(font['cmap'].tables)}; kern table {'present' if 'kern' in font else 'absent'}; hinting {'TrueType instructions (fpgm/prep)' if 'fpgm' in font or 'prep' in font else 'none or unhinted'}; "
+              f"glyph outlines {'CFF (OpenType)' if 'CFF ' in font or 'CFF2' in font else 'TrueType quadratic'}.", 60)
+    facts["units_per_em"] = h.unitsPerEm
 
 
 def specimen(look, font, facts):

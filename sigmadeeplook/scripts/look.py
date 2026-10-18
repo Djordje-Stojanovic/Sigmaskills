@@ -71,10 +71,10 @@ def analyse(path, out, opts, sha=None, depth=0):
     return look
 
 
-def recurse_into(look, path, label):
-    """Look at an extracted member or attachment one level down, at the quick tier. -> the child Look."""
+def recurse_into(look, path, label, tier="quick"):
+    """Look at an extracted member or attachment one level down, at the quick tier unless `tier` says otherwise. -> the child Look."""
     n = len(look.children) + 1
-    child_opts = argparse.Namespace(**{**vars(look.opts), "recurse": 0, "out": None, "tier": "quick", "deep": False, "quick": True, "budget": None})
+    child_opts = argparse.Namespace(**{**vars(look.opts), "recurse": 0, "out": None, "tier": tier, "deep": False, "quick": tier == "quick", "budget": None})
     c = analyse(path, look.out / "children" / f"{n:02d}", child_opts, depth=getattr(look, "depth", 0) + 1)
     look.children.append({"label": label, "dir": str(c.out), "type": c.type, "sha256": c.sha})
     look.line(f"member {label}: {c.type}/{c.subtype}, details in `{c.out / 'LOOK.md'}`", 40)

@@ -68,7 +68,7 @@ def look_data(look):
     fn = {"csv": data_csv, "tsv": data_csv, "json": data_json, "jsonl": data_jsonl, "sqlite": data_sqlite, "parquet": data_parquet,
           "arrow": data_arrow, "avro": lambda lk: __import__("dl_adapt").look_avro(lk), "xml": data_xml, "yaml": data_text_struct, "toml": data_toml,
           "ini": lambda lk: __import__("dl_conf").look_ini(lk), "pcap": lambda lk: __import__("dl_pcap").look_pcap(lk),
-          "pcapng": lambda lk: __import__("dl_pcap").look_pcap(lk)}.get(st, data_text_struct)
+          "pcapng": lambda lk: __import__("dl_pcap").look_pcap(lk)}.get(st) or getattr(__import__("dl_tab2"), "look_" + st, None) or getattr(__import__("dl_misc"), "look_" + st, data_text_struct)
     fn(look)
     look.ask_human("What question should this data answer?", "Which columns or tables matter, and are any of them personal data?")
 

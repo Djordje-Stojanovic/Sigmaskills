@@ -549,6 +549,30 @@ def detect(path):
         t, st, mg = "3d", "glb", "glTF binary"
     elif is_(b"PAR1"):
         t, st, mg = "data", "parquet", "PAR1"
+    elif is_(b"MThd") and h[4:8] == b"\0\0\0\x06":
+        t, st, mg = "data", "midi", "MThd (Standard MIDI file)"
+    elif is_(b"bplist00"):
+        t, st, mg = "data", "plist", "bplist00 (binary property list)"
+    elif is_(b"!<arch>\n"):
+        t, st, mg = "data", "ar", "ar archive (also .deb, .a)"
+    elif ext == ".pyc" and h[2:4] == b"\r\n":
+        t, st, mg = "data", "pyc", "Python bytecode"
+    elif ext == ".torrent" or h[:1] == b"d" and re.match(rb"d[0-9]+:(announce|info|comment|created)", h[:40]):
+        t, st, mg = "data", "torrent", "bencoded BitTorrent metainfo"
+    elif h[:4] == b"\0\0\x01\0" and ext in (".ico", ".cur"):
+        t, st, mg = "image", "ico", "ICO"
+    elif is_(b"ORC") and ext in (".orc", ""):
+        t, st, mg = "data", "orc", "ORC"
+    elif h[8:12] == b"DUCK":
+        t, st, mg = "data", "duckdb", "DuckDB database (header 'DUCK')"
+    elif is_(b"<stata_dta>") or (ext == ".dta" and h[:1] in (b"p", b"s", b"q", b"r")):
+        t, st, mg = "data", "stata", "Stata dta"
+    elif is_(b"\x93NUMPY"):
+        t, st, mg = "data", "npy", "NumPy array (.npy)"
+    elif is_(b"HEADER RECORD*******LIBRARY"):
+        t, st, mg = "data", "sasxpt", "SAS transport (XPORT)"
+    elif h[12:16] == b"\xc2\xea\x81\x60" and h[:4] == b"\0\0\0\0":
+        t, st, mg = "data", "sas7bdat", "SAS data set (sas7bdat)"
     elif is_(b"SQLite format 3\0"):
         t, st, mg = "data", "sqlite", "SQLite"
     elif is_(b"ARROW1"):
@@ -624,6 +648,8 @@ def zip_kind(p):
         for k, v in sub.items():
             if k in mt:
                 return "office", v, "PK + mimetype (ODF)"
+    if lower and all(n.endswith(".npy") for n in lower):
+        return "data", "npz", "PK + only .npy members (NumPy archive)"
     if any(n.endswith("data.pkl") for n in lower):
         return "model", "torch-zip", "PK + data.pkl (PyTorch checkpoint)"
     if "androidmanifest.xml" in lower:

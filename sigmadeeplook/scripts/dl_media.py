@@ -1085,9 +1085,25 @@ def look_image(look):
             look.fact("frames", frames)
             exif = im.getexif()
             look.line(f"Image {fmt}: {size[0]}x{size[1]} px, mode {mode}, {frames} frame(s).")
+            if fmt == "ICO" and im.info.get("sizes"):
+                look.line("Icon image sizes inside the file: " + ", ".join(f"{a}x{b}" for a, b in sorted(im.info["sizes"])) + ".", 88)
             info = exif_facts(look, exif)
             norm = ImageOps.exif_transpose(im.convert("RGBA" if "A" in mode else "RGB")) if exif.get(274, 1) != 1 or True else im
             if frames > 1:
+                durs = []
+                for fi in range(min(frames, 400)):
+                    try:
+                        im.seek(fi)
+                        durs.append(int(im.info.get("duration", 0)))
+                    except Exception:
+                        break
+                im.seek(0)
+                if durs:
+                    loop = im.info.get("loop")
+                    look.line(f"Animation: {frames} frames, per-frame durations (ms): " + ", ".join(str(d) for d in durs[:60]) + (f", +{len(durs) - 60} more" if len(durs) > 60 else "")
+                              + f"; one pass lasts {sum(durs) / 1000:.2f} s (longest frame {max(durs)} ms, shortest {min(durs)} ms); "
+                              + ("loops forever" if loop == 0 else f"loop count {loop}" if loop is not None else "no loop block (plays once)") + ".", 88)
+                    look.fact("animation_ms", sum(durs))
                 frame_sheet(look, im, frames)
             save_view(look, norm)
     except Image.DecompressionBombError as e:
