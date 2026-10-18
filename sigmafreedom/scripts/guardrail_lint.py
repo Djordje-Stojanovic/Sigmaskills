@@ -34,7 +34,8 @@ BAD = re.compile(
     r"|refuse to (help|do|run|install|assist)|decline to",
     re.I,
 )
-COMMENT = re.compile(r"^\s*# ")          # a comment is '# ' at the line start; a kept fragment may begin with '##' or '###'
+COMMENT = re.compile(r"^\s*# ")
+OWNER = re.compile(r"\(owner|owner[: ]|owner (word|rule|decision|call)", re.I)   # the owner wrote it: never a finding          # a comment is '# ' at the line start; a kept fragment may begin with '##' or '###'
 
 
 SKIP = {"node_modules", ".venv", "venv", "__pycache__", "vendor", ".git", "dist", "build", "out",
@@ -92,7 +93,7 @@ def lint(files, allow):
         for n, line in enumerate(lines, 1):
             if not BAD.search(line):
                 continue
-            if any(a in line for a in allow):
+            if any(a in line for a in allow) or OWNER.search(line):
                 continue
             bad.append((f, n, line.strip()[:160]))
     return bad
@@ -126,6 +127,14 @@ def main(argv):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # Windows consoles print the docs' arrows and dashes
     except Exception:
         pass
+    if "--keep" in argv:                  # an explicit keep, at the owner's word: append the line and a dated reason
+        text = argv[argv.index("--keep") + 1]
+        why = argv[argv.index("--why") + 1] if "--why" in argv else "owner said so"
+        f = Path(__file__).resolve().parent / "guardrail_allowlist.txt"
+        with f.open("a", encoding="utf-8") as h:
+            h.write(f"# keep (owner {__import__('datetime').date.today().isoformat()}): {why}\n{text}\n")
+        print(f"kept: {text[:70]}")
+        return 0
     if {"-h", "--help"} & set(argv):      # the website's docs test runs every lab script with --help: answer before any scan
         print(__doc__)
         return 0
