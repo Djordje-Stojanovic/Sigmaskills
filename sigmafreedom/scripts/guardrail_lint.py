@@ -11,6 +11,12 @@ share); craft guidance and mechanical guards ("never post twice") are outside it
 
 Allowlist: guardrail_allowlist.txt next to this script, one substring per line (# comments). A flagged line that contains an
 allowlisted substring is a keep the owner can veto: delete the line and the lint flags it again.
+
+Use it
+  When to use  Before a commit, and after any doc that steers an agent changes.
+  You see      "no new prohibition" with a file count, or the offending file:line lines.
+  If not       Delete the line, or add its substring to guardrail_allowlist.txt (a keep the owner can veto).
+  Level        easy, under a second
 """
 import re
 import sys
@@ -120,6 +126,9 @@ def main(argv):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # Windows consoles print the docs' arrows and dashes
     except Exception:
         pass
+    if {"-h", "--help"} & set(argv):      # the website's docs test runs every lab script with --help: answer before any scan
+        print(__doc__)
+        return 0
     if "--selftest" in argv:
         return selftest()
     root = Path(__file__).resolve().parents[1]

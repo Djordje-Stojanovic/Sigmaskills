@@ -11,7 +11,6 @@ class is not a forbidden item; it is a normal dependency. An agent tha
 description: Find what would make a product, game, codebase, or system
 - Signal handlers in the install transaction that could never run, the
 | 5 | Archive mirror | `https://web.archive.org/web/<URL>` for a publi
-description: Plain, short English with interactive status and question
 description: Ship one fully planned GitHub issue end to end - feature 
 # guardrail keep-list (2026-10-17): vetted keeps (skill scope routing, mechanical guards, the doctrine itself).
 never / must not / do not / not allowed / forbidden
@@ -45,7 +44,6 @@ risk of (ban|suspension) / evasion / refuse to`. Then classify, becaus
 4. **Old model-written restrictions carry no weight.** A "never / not 
 **Dynamic testing (authority B, local instance only):** follow [measur
 description: Prepare copy-pastable parallel-agent or single-agent exec
-description: Builds a fast blind-pairs arena so the user ranks any opt
 Do not use to post, reply
 description: 'Builds a fast blind-pairs arena so the user ranks any options by Elo per metric: models, settings, voices, captions, thumbnails, outfits. Grills f
 allowed / we will not" line carries no weight; `scripts/guardrail_lint.py` holds the short list of rules that stay.
