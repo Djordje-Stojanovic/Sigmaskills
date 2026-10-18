@@ -8,7 +8,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Fixed
 
-- `sigmadeeplook` readers from the held-out rounds: binaries, archives, tables and spreadsheets read more fields correctly (typed binary fields, VBA source, `.reg`, `.deb` members, list columns, MIDI events, docx Title) (#111, #112).
+- `sigmadeeplook` readers from the held-out rounds: binaries, archives, tables and spreadsheets read more fields correctly (typed binary fields, VBA source, `.reg`, `.deb` members, list columns, MIDI events, docx Title) (#111, #112). The headerless-records test now skips when numpy is missing, which turns the main branch CI green again.
 
 ## [0.9.1] — 2026-10-18
 
