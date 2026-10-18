@@ -384,6 +384,8 @@ def model_safetensors(look):
         look.flag("TRUNCATED", "file", f"the header needs {core.human(expected)}, the file has {core.human(look.size)}", "the download was cut short")
     prefixes = Counter(k.split(".")[0] for k in names)
     look.line("Top tensor groups: " + ", ".join(f"{k} ({v})" for k, v in prefixes.most_common(6)), 60)
+    rows = [f"{k} {hdr[k].get('dtype', '?')} {'x'.join(str(d) for d in hdr[k].get('shape', [])) or 'scalar'} ({U_prod(hdr[k].get('shape', []))})" for k in names[:60]]
+    look.line("Tensors (name dtype shape (elements)): " + "; ".join(rows) + (f"; +{len(names) - 60} more in model.json" if len(names) > 60 else "") + ".", 75)
     look.write_text("model.json", json.dumps({"metadata": meta, "tensors": {k: hdr[k] for k in names[:2000]}}, indent=1), "tensor names, dtypes and shapes (first 2000)", "json", value=2, inline=False)
     look.step("safetensors header", "stdlib")
 

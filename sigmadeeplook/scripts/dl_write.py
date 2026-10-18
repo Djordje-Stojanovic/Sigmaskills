@@ -32,6 +32,8 @@ CONTENT_FIRST = 230            # step 1 holds at most this many tokens of raw fi
 RECAP_RESERVE = 62             # tokens kept free in every window for the recap line (the footer has its own FOOTER_TOKENS)
 SECTION_ORDER = ("key", "watch", "map", "read", "nla", "content")
 CONTENT_CHUNK_TOKENS = 110    # text artifacts are cut into chunks of about this size, so a window ends cleanly
+FILL_MAX_TOKENS = 1600       # a side file up to this size fills the room a step has left
+FILL_SKIP = {"hexdump.txt", "strings.txt", "die.txt", "exif.json", "head.txt"}   # exif.json can hold GPS, serials and names: those stay out of a print
 CONTENT_MAX_TOKENS = 150_000  # a text artifact above this is searched or sliced, never put in the stream
 HEADINGS = {"key": "Key facts", "watch": "Watch out", "map": "Map", "read": "Read next", "nla": "Not looked at", "content": "Content"}
 TRAPS = {"MISMATCH", "NAME-SPELLING", "INJECTION?", "HIDDEN-TEXT", "HIDDEN-SHEET", "HIDDEN-SLIDE", "HIDDEN-STATE", "MACRO", "JAVASCRIPT", "OPEN-ACTION",
@@ -214,6 +216,16 @@ def build_stream(look):
             cseq += 1
             if k < 2:
                 body_texts.append(_norm(text))
+    # small side files that the analysis kept out of the stream (font.json, model.json, exif.json, schema.json, header.json ...) still
+    # hold facts the step-1 text only points to: put them last in the stream, so a step with room left reads them instead of a pointer
+    for a in sorted(arts, key=lambda a: (-a.get("value", 3), a["path"])):
+        if not (a.get("inline") is False or a["kind"] == "json") or a["kind"] not in ("text", "json") or a.get("private") or Path(a["path"]).name in FILL_SKIP:
+            continue
+        if not 0 < a.get("tokens_est", 0) <= FILL_MAX_TOKENS:
+            continue
+        for k, (first_line, last_line, text) in enumerate(content_chunks(a["path"], compact_json=str(a["path"]).endswith(".json"))):
+            raw.append(("content", 8, text, rel_name(look, a["path"]), cseq, first_line, last_line))
+            cseq += 1
     # an excerpt that the stream also holds as file content is printed once
     raw = [r for r in raw if not (r[0] == "key" and "```text" in r[2] and _excerpt_body(r[2]) and any(_excerpt_body(r[2]) in b for b in body_texts))]
     raw.sort(key=lambda r: (-r[1], r[4]))
@@ -280,15 +292,21 @@ def split_line(line):
     return out
 
 
-def content_chunks(path):
+def content_chunks(path, compact_json=False):
     """A text artifact cut into chunks of about CONTENT_CHUNK_TOKENS at line boundaries -> [(first_line, last_line, text)].
 
     A line longer than LINE_PIECE characters is split at spaces (never cut), so the chunks hold every character of the file.
     """
     try:
-        lines = Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
+        text = Path(path).read_text(encoding="utf-8", errors="replace")
     except OSError:
         return []
+    if compact_json:   # indented JSON spends most of its tokens on white space
+        try:
+            text = json.dumps(json.loads(text), separators=(", ", ": "), ensure_ascii=False, default=str)
+        except ValueError:
+            pass
+    lines = text.splitlines()
     out, buf, used, start, last_n = [], [], 0, 1, 1
     for n, line in enumerate(lines, 1):
         line = line.replace("```", "'''")

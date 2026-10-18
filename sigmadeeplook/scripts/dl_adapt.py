@@ -108,6 +108,15 @@ def look_avro(look):
                     break
         look.write_text("sample.json", json.dumps(rows, indent=1, default=str)[:20000], "the first 5 records", "json", value=6)
         look.step("sample records", "fastavro")
+        if not look.quick and records:
+            import dl_data as D
+            names = [n for n, _t in fields]
+
+            def rowsgen():
+                with open(look.path, "rb") as f2:
+                    for k, rec in enumerate(fa.reader(f2), 1):
+                        yield k, [json.dumps(rec.get(n), default=str, sort_keys=True) if isinstance(rec.get(n), (list, dict)) else rec.get(n) for n in names]
+            D.table_profile(look, "Records", names, rowsgen, "record", records, 84, 28)
     except Exception as e:
         look.fail("record values", "fastavro", e)
 

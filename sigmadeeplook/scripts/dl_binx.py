@@ -43,7 +43,8 @@ def run_diec(look):
     p = parse_diec(out)
     packers = [e for e in p["entries"] if e[0].lower() in ("packer", "protector", "cryptor")]
     keep = [(c, n, v) for c, n, v in p["entries"] if c.lower() in ("linker", "compiler", "tool", "packer", "protector", "installer", "library")][:4]
-    look.line("Detect It Easy: " + "; ".join(f"{c.lower()} {n}" + (f" {v}" if v else "") for c, n, v in keep) + ".", 68)
+    if keep:
+        look.line("Detect It Easy: " + "; ".join(f"{c.lower()} {n}" + (f" {v}" if v else "") for c, n, v in keep) + ".", 68)
     if packers:
         look.flag("PACKED?", "Detect It Easy", ", ".join(f"{n} {v}".strip() for _, n, v in packers), "a packer or protector is identified: static strings and imports describe the stub, not the program")
     look.step("packer and compiler identification", "diec")

@@ -807,6 +807,7 @@ def office_xlsx(look, z, names):
             sheets.append({"name": attr(el, "name"), "state": attr(el, "state") or "visible", "path": path})
     inv, md = [], []
     total_unc = 0
+    xl_store, xl_unc = {}, {}
     for s in sheets:
         if s["path"] not in names:
             continue
@@ -814,6 +815,9 @@ def office_xlsx(look, z, names):
         s.update(cells=len(cells), merged=len(merged), formulas=len(formulas), uncached=len(unc), hidden_rows=hidden_rows,
                  formula_samples=[f"{r}: ={f}" for r, f in formulas[:3]])
         total_unc += len(unc)
+        xl_store[s["name"]] = (cells, formulas)
+        if unc:
+            xl_unc[s["name"]] = unc
         dl_xl.sheet_report(look, s["name"], cells, formulas, z.read(s["path"]))
         s["kind"] = "chartsheet" if "/chartsheets/" in s["path"] else "dialogsheet" if "/dialogsheets/" in s["path"] else "macrosheet" if "/macrosheets/" in s["path"] else "worksheet"
         try:
@@ -846,6 +850,13 @@ def office_xlsx(look, z, names):
         if unc:
             look.flag("UNCACHED-FORMULA", s["name"], f"{len(unc)} formulas without a stored result ({', '.join(unc[:4])})", "the file came from a library, not Excel; values need a recalculation")
     dl_xl.workbook_report(look, z, names, inv, z.read("xl/workbook.xml"))
+    try:
+        import dl_xlcalc
+        dn = {re.search(r'name="([^"]+)"', a).group(1): re.sub(r"<[^>]+>", "", v).strip() for a, v in re.findall(r"<definedName\s([^>]*)>(.*?)</definedName>", z.read("xl/workbook.xml").decode("utf-8", "replace"), re.S)
+              if re.search(r'name="([^"]+)"', a) and "_xlnm" not in a}
+        dl_xlcalc.report(look, xl_store, dn, xl_unc)
+    except Exception as e:
+        look.fail("formula evaluation", "stdlib", e)
     look.fact("sheets", [{k: v for k, v in s.items() if k not in ("csv", "path")} for s in inv])
     look.fact("uncached_formulas", total_unc)
     look.fact("hidden_sheets", [s["name"] for s in inv if s["state"] != "visible"])

@@ -120,7 +120,14 @@ def look_3d(look):
             look.flag("PARSE-ERROR", "glTF", f"{type(e).__name__}: {e}"[:100], "")
     elif st in ("stl", "stl-ascii"):
         tris = parse_stl(b, st == "stl-ascii")
-        look.line(f"STL ({'ASCII' if st == 'stl-ascii' else 'binary'}): {len(tris)} triangles. STL has no units and no colour.")
+        hdr = ""
+        if st != "stl-ascii":
+            hdr = b[:80].split(b"\0")[0].decode("latin-1").strip()
+            hdr = f" Header text: {hdr!r}." if hdr else " Empty 80-byte header."
+        else:
+            first = b[:200].decode("latin-1").splitlines()[0].strip()
+            hdr = f" First line: {first!r}."
+        look.line(f"STL ({'ASCII' if st == 'stl-ascii' else 'binary'}): {len(tris)} triangles.{hdr} STL has no units and no colour.")
     elif st == "obj":
         tris, c = parse_obj(b.decode("utf-8", "replace"))
         look.fact("vertices", c["v"])
@@ -158,6 +165,8 @@ def look_3d(look):
         look.fact("triangles", len(tris))
         look.fact("bbox", stats["bbox"])
         look.line(f"{len(tris)} triangles; bounding box {stats['bbox']['min']} to {stats['bbox']['max']} (size {stats['bbox']['size']}).")
+        look.line(f"Mesh measures: surface area {stats['surface_area']:,.3f}, signed volume {stats['signed_volume']:,.3f} (a true volume only when watertight), "
+                  + (f"centroid {stats['centroid']}, " if stats.get("centroid") else "") + f"{stats['unique_vertices']} unique vertices, {stats['degenerate_triangles']} zero-area triangles (units are those of the file).", 61)
         if stats.get("watertight") is not None:
             look.fact("watertight", stats["watertight"])
             look.line("Watertight (every edge shared by exactly two triangles): " + ("yes" if stats["watertight"] else f"NO ({stats['open_edges']} open edges)"))
@@ -257,6 +266,27 @@ def mesh_stats(look, tris):
     mn = [round(min(xs), 4), round(min(ys), 4), round(min(zs), 4)]
     mx = [round(max(xs), 4), round(max(ys), 4), round(max(zs), 4)]
     out = {"triangles": len(tris), "bbox": {"min": mn, "max": mx, "size": [round(a - b, 4) for a, b in zip(mx, mn)]}}
+    area = vol = 0.0
+    cx = cy = cz = 0.0
+    degenerate = 0
+    for a, b, c in tris:
+        ux, uy, uz = b[0] - a[0], b[1] - a[1], b[2] - a[2]
+        vx, vy, vz = c[0] - a[0], c[1] - a[1], c[2] - a[2]
+        nx, ny, nz = uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx
+        ar = 0.5 * math.sqrt(nx * nx + ny * ny + nz * nz)
+        if ar < 1e-12:
+            degenerate += 1
+        area += ar
+        d = (a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0])) / 6.0
+        vol += d
+        cx += d * (a[0] + b[0] + c[0]) / 4.0
+        cy += d * (a[1] + b[1] + c[1]) / 4.0
+        cz += d * (a[2] + b[2] + c[2]) / 4.0
+    out["surface_area"] = round(area, 4)
+    out["signed_volume"] = round(vol, 4)
+    out["centroid"] = [round(cx / vol, 4), round(cy / vol, 4), round(cz / vol, 4)] if abs(vol) > 1e-12 else None
+    out["degenerate_triangles"] = degenerate
+    out["unique_vertices"] = len({(round(v[0] * 1e5), round(v[1] * 1e5), round(v[2] * 1e5)) for t in tris for v in t}) if len(tris) <= MAX_TRIS_PARSE else None
     if len(tris) <= MAX_TRIS_PARSE:
         q = lambda v: (round(v[0] * 1e5), round(v[1] * 1e5), round(v[2] * 1e5))
         edges = {}
