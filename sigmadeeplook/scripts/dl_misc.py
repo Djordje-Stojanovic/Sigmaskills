@@ -207,6 +207,37 @@ def _note(n):
     return ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"][n % 12] + str(n // 12 - 1)
 
 
+def midi_seconds(tick, div, tempos):
+    """Tick -> seconds through the tempo map (None for SMPTE time division)."""
+    if div & 0x8000:
+        return None
+    secs, last_t, last_us = 0.0, 0, 500000
+    for t, us in sorted(tempos):
+        if t >= tick:
+            break
+        secs += (t - last_t) / div * last_us / 1e6
+        last_t, last_us = t, us
+    return secs + (tick - last_t) / div * last_us / 1e6
+
+
+def midi_event_lines(m, cap=40):
+    """Every set_tempo and key_signature meta event with its tick and time, plus the count. -> lines."""
+    out, div = [], m["division"]
+
+    def when(t):
+        s = midi_seconds(t, div, m["tempos"])
+        return f"tick {t} ({s:.2f} s)" if s is not None else f"tick {t}"
+    if m["tempos"]:
+        ev = [f"{when(t)}: {60_000_000 / us:.2f} BPM" for t, us in m["tempos"][:cap]]
+        out.append(f"All {len(m['tempos'])} set_tempo events: " + "; ".join(ev) + (f"; +{len(m['tempos']) - cap} more" if len(m["tempos"]) > cap else "") + ".")
+    if m["keys"]:
+        def kname(k, mi):
+            return f"{abs(k)} {'sharps' if k > 0 else 'flats' if k < 0 else 'sharps or flats (C major / A minor)'} {'minor' if mi else 'major'}"
+        ev = [f"{when(t)}: {kname(k, mi)}" for t, k, mi in m["keys"][:cap]]
+        out.append(f"All {len(m['keys'])} key_signature events: " + "; ".join(ev) + (f"; +{len(m['keys']) - cap} more" if len(m["keys"]) > cap else "") + ".")
+    return out
+
+
 def look_midi(look):
     m = parse_midi(look.path.read_bytes())
     div = m["division"]
@@ -225,6 +256,8 @@ def look_midi(look):
               + (f" = {secs:.2f} s at the file's tempo map" if secs is not None else "") + f", first tempo {tempo} us per beat = {60_000_000 / tempo:.1f} BPM"
               + (f" ({len(m['tempos'])} tempo changes)" if len(m["tempos"]) > 1 else "") + (", time signature " + ", ".join(f"{a}/{b} at tick {t}" for t, a, b in m["sigs"][:4]) if m["sigs"] else ", no time signature (4/4 assumed)")
               + (", key signature " + ", ".join(f"{abs(k)} {'sharps' if k > 0 else 'flats'} {'minor' if mi else 'major'}" for _t, k, mi in m["keys"][:2]) if m["keys"] else "") + ".", 96)
+    for line in midi_event_lines(m):
+        look.line(line, 95)
     for k, t in enumerate(m["tracks"][:32]):
         prog = ", ".join(f"channel {c + 1}: {GM[p] if p < len(GM) else 'program ' + str(p)}" for c, p in t["programs"][:4])
         look.line(f"Track {k}: name {t['name']!r}, {t['events']} channel events, {t['notes']} notes"
@@ -288,6 +321,48 @@ def parse_ar(b):
     return out
 
 
+def open_tar(data):
+    """A tar member in any compression: plain, gzip, bzip2, xz (tarfile), zstd (stdlib 3.14, zstandard, or the zstd tool). -> TarFile or raises."""
+    try:
+        return tarfile.open(fileobj=io.BytesIO(data), mode="r:*")
+    except tarfile.TarError:
+        if data[:4] != b"\x28\xb5\x2f\xfd":
+            raise
+    raw = None
+    try:
+        from compression import zstd   # Python 3.14+
+        raw = zstd.decompress(data)
+    except Exception:
+        try:
+            import zstandard
+            raw = zstandard.ZstdDecompressor().decompressobj().decompress(data)
+        except Exception:
+            import shutil
+            import subprocess
+            exe = shutil.which("zstd")
+            if exe:
+                raw = subprocess.run([exe, "-d", "-c"], input=data, capture_output=True, timeout=60).stdout
+    if not raw:
+        raise ValueError("zstd member and no zstd decoder found")
+    return tarfile.open(fileobj=io.BytesIO(raw), mode="r:")
+
+
+def control_fields(text):
+    """Debian control text -> {field: value}; continuation lines are joined with a newline."""
+    out, cur = {}, None
+    for l in text.splitlines():
+        if l[:1] in (" ", "\t") and cur:
+            out[cur] += "\n" + l.strip()
+        elif ":" in l and not l.startswith("#"):
+            cur, v = l.split(":", 1)
+            cur = cur.strip()
+            out[cur] = v.strip()
+    return out
+
+
+CONTROL_KEYS = ["Package", "Version", "Architecture", "Maintainer", "Depends", "Installed-Size", "Section"]
+
+
 def look_ar(look):
     b = look.path.read_bytes()
     mem = parse_ar(b)
@@ -297,22 +372,189 @@ def look_ar(look):
     for n, s, m, data in mem:
         if n.startswith("control.tar") or n.startswith("data.tar"):
             try:
-                t = tarfile.open(fileobj=io.BytesIO(data), mode="r:*")
+                t = open_tar(data)
                 ms = t.getmembers()
                 if n.startswith("control.tar"):
                     for x in ms:
                         if x.isfile() and x.name.lstrip("./") == "control":
-                            look.line("Package control file: " + " | ".join(l.strip() for l in t.extractfile(x).read().decode("utf-8", "replace").splitlines() if l.strip())[:900], 94)
+                            f = control_fields(t.extractfile(x).read().decode("utf-8", "replace"))
+                            desc = f.get("Description", "").split("\n")[0]
+                            look.fact("deb_control", {k: f[k] for k in CONTROL_KEYS if k in f})
+                            if f.get("Package"):
+                                look.headline = f"Debian package {f['Package']} {f.get('Version', '')}".strip()
+                            look.line("Package control fields: " + "; ".join(f"{k}: {f[k][:300]}" for k in CONTROL_KEYS if k in f) + f"; Description (first line): {desc[:200]}.", 97)
+                            other = [k for k in f if k not in CONTROL_KEYS and k != "Description"]
+                            if other:
+                                look.line("Other control fields: " + ", ".join(other[:20]) + ".", 60)
                     look.line(f"{n} holds: " + ", ".join(x.name for x in ms[:20]) + ".", 70)
                 else:
                     files = [x for x in ms if x.isfile()]
                     look.line(f"{n}: {len(files)} files, {sum(x.size for x in files):,} bytes installed: " + "; ".join(f"{x.name} {x.size:,}" for x in files[:40]) + (f"; +{len(files) - 40} more" if len(files) > 40 else "") + ".", 88)
+                    if len(files) > 40:
+                        look.write_text("data_files.txt", "\n".join(f"{x.size}\t{x.name}" for x in files), f"every file in {n}")
             except Exception as e:
-                look.line(f"{n}: not readable here ({type(e).__name__}).", 40)
+                look.line(f"{n}: not readable here ({type(e).__name__}: {str(e)[:80]}).", 40)
     look.step("ar members, control file and file list", "stdlib")
 
 
 # ------------------------------------------------------------------------------------------------ headerless fixed-size records
+TS_LO, TS_HI = 946684800, 2208988800   # epoch seconds for 2000-01-01 .. 2040-01-01: a column wholly inside is read as a timestamp
+
+
+def _iso(sec):
+    return datetime.datetime.fromtimestamp(sec, datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _text_runs(m, np):
+    """Runs of byte columns that hold fixed-width text: printable ASCII (letters, digits, space, punctuation) with NUL padding, seen in at least
+    two columns, at least 80 % word characters. -> [(start, end)]."""
+    s = m.shape[1]
+    pr = [(m[:, c] >= 32) & (m[:, c] < 127) for c in range(s)]
+    loose = [bool((pr[c] | (m[:, c] == 0)).mean() >= 0.97) for c in range(s)]
+    core_ = [loose[c] and bool(pr[c].mean() >= 0.3) for c in range(s)]
+    runs, c = [], 0
+    while c < s:
+        if not core_[c]:
+            c += 1
+            continue
+        e = c
+        while e < s and loose[e]:
+            e += 1
+        cols = [x for x in range(c, e) if core_[x]]
+        if len(cols) >= 2:
+            chars = np.concatenate([m[:, x][pr[x]] for x in cols])
+            word = ((chars >= 48) & (chars <= 57)) | ((chars >= 65) & (chars <= 90)) | ((chars >= 97) & (chars <= 122)) | (chars == 32) | (chars == 46) | (chars == 95) | (chars == 45)
+            if word.mean() >= 0.8:
+                runs.append((c, e))
+        c = e
+    return runs
+
+
+def _describe_int(col, width, prefix):
+    vals = np_unique_small(col)
+    d = col.astype("int64") if width < 8 else col
+    inc = ""
+    if len(d) > 1:
+        dd = d[1:] - d[:-1]
+        inc = " strictly increasing (a counter or id)" if (dd > 0).all() else " non-decreasing" if (dd >= 0).all() else ""
+    return (f"{prefix}{width * 8} {int(col.min())}..{int(col.max())}, {len(vals[0]) if vals[1] else 'many'} distinct{inc}"
+            + (f", values {vals[0][:8]}" if vals[1] and len(vals[0]) <= 8 else ""))
+
+
+def np_unique_small(col):
+    u = sorted(set(col[:200000].tolist()))
+    return u, len(col) <= 200000 or len(u) > 8
+
+
+def type_fields(m, s, np):
+    """Type every byte of a record matrix (records x s bytes) from the bytes alone -> ([(offset, width, description)], byte order).
+    Per offset: fixed-width text, then 8-byte timestamp / float64 / integer, 4-byte timestamp / float32 / integer, 2-byte, 1-byte;
+    all-zero columns are padding. The byte order is whichever makes the high bytes of the 4-byte columns the quieter ones."""
+    recs = m.shape[0]
+    runs = _text_runs(m, np)
+    le_quiet = be_quiet = 0
+    for o in range(0, s - 3, 4):
+        lo, hi = len(np.unique(m[:, o])), len(np.unique(m[:, o + 3]))
+        le_quiet += hi < lo
+        be_quiet += lo < hi
+    big = be_quiet > le_quiet
+    e = ">" if big else "<"
+    loose = [bool((((m[:, c] >= 32) & (m[:, c] < 127)) | (m[:, c] == 0)).mean() >= 0.97) for c in range(s)]
+    fields, o = [], 0
+    while o < s:
+        run = next((b for a, b in runs if a <= o < b), None)
+        # a timestamp or float whose bytes are not all printable (a text column would read as a number by accident) is tried first
+        if o + 8 <= s and not all(loose[o:o + 8]):
+            blk = np.ascontiguousarray(m[:, o:o + 8])
+            u8 = blk.view(e + "u8").ravel()
+            f8 = blk.view(e + "f8").ravel()
+            if (u8 == 0).all():
+                fields.append((o, 8, "zero padding"))
+                o += 8
+                continue
+            if ((u8 > 946684800000) & (u8 < 2208988800000)).all() and len(np.unique(u8)) > 1:
+                fields.append((o, 8, f"timestamp (uint64 epoch milliseconds) {_iso(int(u8.min()) // 1000)} .. {_iso(int(u8.max()) // 1000)}"))
+                o += 8
+                continue
+            if np.isfinite(f8).all() and (((np.abs(f8) > 1e-9) & (np.abs(f8) < 1e12)) | (f8 == 0)).all() and u8.max() > 2 ** 40 and len(np.unique(u8)) > 1 and ((u8 & 0xFFFFFFFF if e == '<' else u8 >> 32).max() > 2 ** 24 or ((u8 & 0xFFFFFFFF if e == '<' else u8 >> 32) == 0).all()):
+                if ((f8 > TS_LO) & (f8 < TS_HI)).all():
+                    fields.append((o, 8, f"timestamp (float64 epoch seconds) {_iso(float(f8.min()))} .. {_iso(float(f8.max()))}"))
+                else:
+                    fields.append((o, 8, f"float64 {f8.min():.6g}..{f8.max():.6g}, mean {f8.mean():.6g}"))
+                o += 8
+                continue
+        if o + 4 <= s and not all(loose[o:o + 4]):
+            raw = np.ascontiguousarray(m[:, o:o + 4])
+            col = raw.view(e + "u4").ravel()
+            f32 = raw.view(e + "f4").ravel()
+            sane = bool((np.isfinite(f32) & (((np.abs(f32) >= 1e-3) & (np.abs(f32) < 1e7)) | (f32 == 0))).all())   # measurement-sized floats win over a 2000-2011 epoch reading
+            if sane and col.max() > 2 ** 24 and len(np.unique(col)) > 1:
+                fields.append((o, 4, f"float32 {f32.min():.4g}..{f32.max():.4g}, mean {f32.mean():.4g}"))
+                o += 4
+                continue
+            if ((col >= TS_LO) & (col < TS_HI)).all() and len(np.unique(col)) > 1:
+                fields.append((o, 4, f"timestamp (uint32 epoch seconds) {_iso(int(col.min()))} .. {_iso(int(col.max()))}"))
+                o += 4
+                continue
+            if (np.isfinite(f32) & (((np.abs(f32) > 1e-6) & (np.abs(f32) < 1e9)) | (f32 == 0))).all() and col.max() > 2 ** 24 and len(np.unique(col)) > 1:
+                fields.append((o, 4, f"float32 {f32.min():.4g}..{f32.max():.4g}, mean {f32.mean():.4g}"))
+                o += 4
+                continue
+        if run is not None:
+            blk = m[:, o:run]
+            strs = [bytes(r).rstrip(b"\0").decode("latin-1") for r in blk[:2000]]
+            ln = [len(x) for x in strs]
+            ex = list(dict.fromkeys(x for x in strs if x))[:4]
+            fields.append((o, run - o, f"fixed text, {run - o} bytes (NUL-trimmed length {min(ln)}..{max(ln)}), e.g. {ex}"))
+            o = run
+            continue
+        nxt = min([a for a, _b in runs if a > o] + [s])   # an integer never reaches into the next text run
+        if o % 4 == 0 and o + 4 <= nxt:
+            raw = np.ascontiguousarray(m[:, o:o + 4])
+            col = raw.view(e + "u4").ravel()
+            if (col == 0).all():
+                fields.append((o, 4, "zero padding"))
+            else:
+                i4 = raw.view(e + "i4").ravel()
+                neg = bool((i4 < 0).any() and (np.abs(i4.astype("int64")) < 2 ** 24).all())   # small values with a negative sign: signed
+                fields.append((o, 4, _describe_int(i4 if neg else col, 4, "int" if neg else "uint")))
+            o += 4
+        elif o % 2 == 0 and o + 2 <= nxt:
+            col = np.ascontiguousarray(m[:, o:o + 2]).view(e + "u2").ravel()
+            nd = len(np.unique(col))
+            if (col == 0).all():
+                fields.append((o, 2, "zero padding"))
+            else:
+                vc = np.bincount(col.astype("int64"))[: 1 << 16] if col.max() < 1 << 16 else None
+                top = ", ".join(f"{k}:{int(vc[k])}" for k in np.argsort(-vc)[:6] if vc[k]) if (nd <= 12 and vc is not None) else ""
+                fields.append((o, 2, f"uint16 {int(col.min())}..{int(col.max())}, {nd} distinct" + (f" (value:count {top})" if top else "")))
+            o += 2
+        else:
+            col = m[:, o]
+            fields.append((o, 1, f"byte {int(col.min())}..{int(col.max())}, {len(np.unique(col))} distinct"))
+            o += 1
+    return fields, ("big" if big else "little")
+
+
+def refine_size(arr, n, s, np):
+    """A record size that is a multiple of the true one (two records per window) repeats its own layout: the smallest divisor d of s whose
+    byte columns c and c + d look alike (same low-entropy flag, similar min and max) is the real record size."""
+    recs = min(n // s, 20000)
+    m = arr[:recs * s].reshape(recs, s)
+    fp = []
+    for c in range(s):
+        cnt = np.bincount(m[:, c], minlength=256)
+        p = cnt[cnt > 0] / recs
+        fp.append((-(p * np.log2(p)).sum() < 1.2, int(m[:, c].min()), int(m[:, c].max())))
+    for d in range(4, s // 2 + 1):
+        if s % d:
+            continue
+        ok = sum(1 for c in range(s - d) if fp[c][0] == fp[c + d][0] and abs(fp[c][1] - fp[c + d][1]) <= 16 and abs(fp[c][2] - fp[c + d][2]) <= 48)
+        if ok >= 0.9 * (s - d):
+            return d
+    return s
+
+
 def record_layout(b, total):
     """Guess the record size of a headerless binary table and type its fields -> (lines) or [] when nothing structured is found."""
     try:
@@ -343,40 +585,9 @@ def record_layout(b, total):
             best = (score, s)
     if not best:
         return []
-    s = best[1]
+    s = refine_size(arr, n, best[1], np)
     recs = n // s
     m = arr[:recs * s].reshape(recs, s)
-    fields, o = [], 0
-    while o < s:
-        if o % 4 == 0 and o + 4 <= s:
-            col = np.ascontiguousarray(m[:, o:o + 4]).view("<u4").ravel()
-            f32 = col.view("<f4")
-            if (col == 0).all():
-                fields.append((o, 4, "zero padding"))
-                o += 4
-                continue
-            fin = np.isfinite(f32) & (((np.abs(f32) > 1e-6) & (np.abs(f32) < 1e9)) | (f32 == 0))
-            if fin.all() and col.max() > 2 ** 24:
-                fields.append((o, 4, f"float32 {f32.min():.4g}..{f32.max():.4g}, mean {f32.mean():.4g}"))
-            else:
-                d = np.diff(col.astype("int64"))
-                inc = " strictly increasing (a counter or id)" if len(d) and (d > 0).all() else " non-decreasing" if len(d) and (d >= 0).all() else ""
-                nd = len(np.unique(col))
-                fields.append((o, 4, f"uint32 {int(col.min())}..{int(col.max())}, {nd} distinct{inc}" + (f", values {sorted(np.unique(col).tolist())[:8]}" if nd <= 8 else "")))
-            o += 4
-        elif o % 2 == 0 and o + 2 <= s:
-            col = np.ascontiguousarray(m[:, o:o + 2]).view("<u2").ravel()
-            nd = len(np.unique(col))
-            if (col == 0).all():
-                fields.append((o, 2, "zero padding"))
-            else:
-                vc = np.bincount(col.astype("int64"))[: 1 << 16] if col.max() < 1 << 16 else None
-                top = ", ".join(f"{k}:{int(vc[k])}" for k in np.argsort(-vc)[:6] if vc[k]) if (nd <= 12 and vc is not None) else ""
-                fields.append((o, 2, f"uint16 {int(col.min())}..{int(col.max())}, {nd} distinct" + (f" (value:count {top})" if top else "")))
-            o += 2
-        else:
-            col = m[:, o]
-            fields.append((o, 1, f"byte {int(col.min())}..{int(col.max())}, {len(np.unique(col))} distinct"))
-            o += 1
-    return [f"Looks like a headerless table of fixed-size binary records: {total // s:,} records of {s} bytes ({total} = {total // s} x {s}); a guess from the bytes, confirm it against the format's documentation; field layout (little-endian guess): "
+    fields, order = type_fields(m, s, np)
+    return [f"Looks like a headerless table of fixed-size binary records: {total // s:,} records of {s} bytes ({total} = {total // s} x {s}); a guess from the bytes, confirm it against the format's documentation; field layout (typed from the bytes, {order}-endian guess): "
             + "; ".join(f"bytes {a}-{a + n - 1} {desc}" for a, n, desc in fields) + "."]

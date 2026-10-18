@@ -67,7 +67,7 @@ def look_data(look):
     st = look.subtype
     fn = {"csv": data_csv, "tsv": data_csv, "json": data_json, "jsonl": data_jsonl, "sqlite": data_sqlite, "parquet": data_parquet,
           "arrow": data_arrow, "avro": lambda lk: __import__("dl_adapt").look_avro(lk), "xml": data_xml, "yaml": data_text_struct, "toml": data_toml,
-          "ini": lambda lk: __import__("dl_conf").look_ini(lk), "pcap": lambda lk: __import__("dl_pcap").look_pcap(lk),
+          "ini": lambda lk: __import__("dl_conf").look_ini(lk), "reg": lambda lk: __import__("dl_reg").look_reg(lk), "pcap": lambda lk: __import__("dl_pcap").look_pcap(lk),
           "pcapng": lambda lk: __import__("dl_pcap").look_pcap(lk)}.get(st) or getattr(__import__("dl_tab2"), "look_" + st, None) or getattr(__import__("dl_misc"), "look_" + st, data_text_struct)
     fn(look)
     look.ask_human("What question should this data answer?", "Which columns or tables matter, and are any of them personal data?")
@@ -302,12 +302,15 @@ def data_csv(look):
     ncols, partial = 0, False
     import dl_prof as P
     gp, gcols = P.Profiler(True, "line"), None
+    import dl_listcol
+    lcols = None
     for rec in rd:
         if header is None:
             header = rec
             ncols = len(header)
             prof = [ColProfile(h, i == 0) for i, h in enumerate(header)]
             gcols = gp.columns([h.lstrip("﻿").strip() or f"column {i + 1}" for i, h in enumerate(header)])
+            lcols = dl_listcol.ListCols(header)
             continue
         if len(rec) != ncols:
             n += 1
@@ -324,6 +327,7 @@ def data_csv(look):
         for i in range(ncols):
             prof[i].add(rec[i], ln)
         gp.add_row(gcols, rec, ln)
+        lcols.add_row(rec)
         if len(rows) < SAMPLE_ROWS:
             rows.append(rec)
         tail.append(rec)
@@ -367,6 +371,7 @@ def data_csv(look):
         miss = sum(f.nulls + f.empties for f in gp.fields.values())
         P.counts(look, [("data rows", n), ("columns", len(header)), ("rows profiled", gp.n if gp.n != n else None), ("reject rows", nrej), ("repeated header rows", len(repeats) or None),
                         ("empty or null cells", miss), ("complete rows (no empty cell)", complete_rows(text, delim, ncols) if not quick_cut and n <= 2_000_000 else None)])
+        lcols.emit(look)
         for ln_ in gp.stats_lines():
             look.line(ln_, 34, "aggregates")
         for ln_ in extra:
@@ -1115,8 +1120,11 @@ def table_profile(look, what, names, rows, label="row", total=None, key_pri=84, 
     import dl_prof as P
     p = P.Profiler(False, label)
     cols = p.columns(list(names))
+    import dl_listcol
+    lc = dl_listcol.ListCols(names)
     t0, stopped, first = time.time(), None, []
     for k, (idx, vals) in enumerate(rows()):
+        lc.add_row(vals)
         vals = [plain(v) for v in vals]
         p.add_row(cols, vals, idx)
         if listing and len(first) < TABLE_LISTING_ROWS:
@@ -1126,6 +1134,7 @@ def table_profile(look, what, names, rows, label="row", total=None, key_pri=84, 
             break
     if not p.n:
         return None
+    lc.emit(look)
     sp = P.SecondPass(p)
     for k, (idx, vals) in enumerate(rows()):
         sp.add_row(list(names), [plain(v) for v in vals], idx)

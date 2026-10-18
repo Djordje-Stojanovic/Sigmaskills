@@ -336,8 +336,10 @@ def summarize_olevba(results):
 
 def olevba_facts(look, data, name):
     m = look.mod("oletools")
-    if not m:
-        look.skip("macro source: auto-run routines, suspicious calls and addresses", "python package oletools not importable" if not look.no_tools else "disabled by --no-tools", "oletools")
+    if not m:   # the standard-library reader: decompresses the VBA modules itself
+        import dl_vba
+        if not dl_vba.vba_facts(look, data, name):
+            look.skip("macro source: full oletools analysis", "python package oletools not importable" if not look.no_tools else "disabled by --no-tools", "oletools")
         return
     try:
         from oletools.olevba import VBA_Parser
@@ -357,6 +359,8 @@ def olevba_facts(look, data, name):
         look.step("macro analysis", "oletools")
     except Exception as e:
         look.fail("macro analysis", "oletools", e)
+        import dl_vba
+        dl_vba.vba_facts(look, data, name)
 
 
 # ================================================================= glTF validator

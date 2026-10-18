@@ -45,7 +45,7 @@ Every row below is a 'Not looked at' row when the tool is absent. Nothing needs 
 | cairosvg | python package | rendering svg | pip install cairosvg |
 | rapidocr_onnxruntime | python package | OCR of video frames, images, scanned pages | pip install rapidocr-onnxruntime |
 | lief | python package | real Authenticode verification (chain and hash), imphash | pip install lief |
-| oletools | python package | VBA macro source, auto-run routines, suspicious calls | pip install oletools |
+| oletools | python package | fuller VBA analysis (the stdlib reader already decompresses the modules, lists auto-run routines, suspicious calls and strings) | pip install oletools |
 | python_calamine | python package | very large xlsx files | pip install python-calamine |
 | dnfile | python package | .NET assembly names, references, types | pip install dnfile |
 | pymupdf4llm | python package | (reserved) PDF to markdown with tables | pip install pymupdf4llm |
