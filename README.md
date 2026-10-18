@@ -6,7 +6,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 
 | | |
 |---|---|
-| **Release** | [**v0.8.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.8.0) |
+| **Release** | [**v0.9.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.9.0) |
 | **Changelog** | [CHANGELOG.md](CHANGELOG.md) |
 | **License** | [MIT](LICENSE) |
 | **Spec** | [agentskills.io](https://agentskills.io/) |
@@ -18,7 +18,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
   Σ  brief      →  paste-ready agent briefs, chat only
   Σ  ship       →  one planned ticket to a merged, cleaned-up PR
   Σ  write      →  clear STE-inspired technical English
-     easytalk   →  plain chat and interactive status or question boards
+     sigmawritegui   →  plain chat and interactive status or question boards
      arena      →  blind pairs that rank any options by Elo
   Σ  research   →  read public sources, record evidence and access gaps
   Σ  deeplook   →  helper for what agents cannot read: video, speech, scans, binaries
@@ -60,8 +60,8 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaShip** | `sigmaship` | Ship one planned ticket: build, review rounds, merge, clean up | One merged PR, closed ticket, main in sync |
 | **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
 | **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
-| **EasyTalk** | `easytalk` | Plain chat with status and question boards | Interactive HTML board and copied replies |
-| **Arena Create** | `storgestudio-arena-create` | Blind-pairs arena that ranks any options by Elo per metric | Local arena page, Elo board with ranges and costs |
+| **SigmaWriteGUI** | `sigmawritegui` | Plain chat with status and question boards | Interactive HTML board and copied replies |
+| **SigmaCreateArena** | `sigmacreatearena` | Blind-pairs arena that ranks any options by Elo per metric | Local arena page, Elo board with ranges and costs |
 | **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub, Hugging Face, video sites and non-English pages; counts sources read in full | Answer with source links, dates, read scope and access gaps |
 | **SigmaDeepLook** | `sigmadeeplook` | Helper for files an agent cannot read: video, speech, scanned PDF or image, binary, odd container. Plain text and data are read directly | Evidence with file paths, limits, and a side-by-side `view.html` |
 
@@ -105,11 +105,11 @@ A writing voice inspired by **ASD-STE100 Simplified Technical English**. It give
 
 Counts lines (with `laloc` if you have it, or by itself), reads the five largest maintained files, and explains safe refactoring choices. It waits for your approval before it edits. It keeps behavior, tests, interfaces, and your own changes intact. At the end it reports lines removed apart from lines moved into new modules.
 
-### EasyTalk
+### SigmaWriteGUI
 
 Keeps replies short and puts status reports or question batches on one interactive board. Read ticks, recommended options, task statuses, and free text feed a **Copy my answers** reply that names every unread card. Open it with an HTML preview tool or as a local browser file. Say “easy talk off” to stop.
 
-### Arena Create
+### SigmaCreateArena
 
 Ranks many options by your taste. After a short grilling round it builds an **arena**: two options side by side, names hidden, sides random. You pick per metric. A Bradley-Terry fit turns the picks into an Elo board with 95 % ranges, so overlapping bars read as a tie. The kit is a standard-library Python server and one HTML page: local only, no install.
 
@@ -157,8 +157,8 @@ $sigmabrief all open
 $sigmaship https://github.com/owner/repo/issues/42
 $sigmawrite
 $sigmarefactor
-$easytalk
-$storgestudio-arena-create Rank these 8 thumbnail ideas blind
+$sigmawritegui
+$sigmacreatearena Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
 $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
 ```
@@ -177,8 +177,8 @@ $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
 /skill:sigmaship https://github.com/owner/repo/issues/42
 /skill:sigmawrite
 /skill:sigmarefactor
-/skill:easytalk
-/skill:storgestudio-arena-create Rank these 8 thumbnail ideas blind
+/skill:sigmawritegui
+/skill:sigmacreatearena Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
 /skill:sigmadeeplook What happens at 2:10 in ~/clips/demo.mp4?
 ```
@@ -197,8 +197,8 @@ $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
 | `sigmaship` | issue URL · `#N` | Refuses tickets without checkable acceptance criteria |
 | `sigmawrite` | (no input) | Session writing voice until you turn it off |
 | `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
-| `easytalk` | “easy talk” · status or question batch · `EASYTALK REPLY` | Conversation mode until “easy talk off” |
-| `storgestudio-arena-create` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
+| `sigmawritegui` | “easy talk” · status or question batch · `EASYTALK REPLY` | Conversation mode until “easy talk off” |
+| `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |
 | `sigmadeeplook` | a file or folder path · a question about it | Evidence with paths and a Limits list; never runs the file |
 
@@ -214,8 +214,8 @@ $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
 | SigmaBrief | `gh` read access when briefing from issues or PRs · **no** push to the product repo |
 | SigmaWrite | Nothing beyond chat |
 | SigmaRefactor | Read access to the target repository · `laloc` is optional; without it the skill counts lines itself |
-| EasyTalk | A writable output folder and a browser or HTML preview; chat fallback when unavailable |
-| Arena Create | Python 3 (standard library only) and a browser; the server listens on 127.0.0.1 |
+| SigmaWriteGUI | A writable output folder and a browser or HTML preview; chat fallback when unavailable |
+| SigmaCreateArena | Python 3 (standard library only) and a browser; the server listens on 127.0.0.1 |
 | SigmaResearch | Python 3 for the bundled readers · `yt-dlp` for YouTube comments · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 

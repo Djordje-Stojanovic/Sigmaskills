@@ -178,11 +178,11 @@ function sigmarefactor({ files }) {
   return problems;
 }
 
-function easytalk({ files, result }) {
+function sigmawritegui({ files, result }) {
   const board = files['status-board.html'];
   if (!board) return ['missing status-board.html'];
   const problems = [];
-  const template = fs.readFileSync(new URL('../easytalk/template.html', import.meta.url), 'utf8');
+  const template = fs.readFileSync(new URL('../sigmawritegui/template.html', import.meta.url), 'utf8');
   const dataBlock = /\/\* ===== DATA:[\s\S]*?\/\* ===== END DATA ===== \*\//;
   const normalize = (text) => text.replaceAll('\r\n', '\n').replace(dataBlock, 'DATA');
   if (!dataBlock.test(board)) problems.push('status-board.html: missing DATA block');
@@ -200,7 +200,7 @@ function easytalk({ files, result }) {
   return problems;
 }
 
-function storgestudioArenaCreate({ files, result }) {
+function sigmacreatearena({ files, result }) {
   const problems = [];
   const raw = files['arena/arena.json'];
   if (!raw) return ['missing arena/arena.json'];
@@ -271,7 +271,12 @@ function sigmadeeplook({ result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'storgestudio-arena-create': storgestudioArenaCreate, easytalk, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook };
+// sigmafreedom changes the target repo's docs; its eval only requires a non-empty final report.
+function sigmafreedom({ result }) {
+  return result && result.trim() ? [] : ['empty final reply'];
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

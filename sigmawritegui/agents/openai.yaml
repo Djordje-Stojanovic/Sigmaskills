@@ -1,7 +1,7 @@
 interface:
-  display_name: EasyTalk
+  display_name: SigmaWriteGUI
   short_description: Plain chat and interactive status or question boards
-  default_prompt: Use $easytalk for plain, short replies and an interactive board
+  default_prompt: Use $sigmawritegui for plain, short replies and an interactive board
     for status reports or batches of questions.
 policy:
   products:

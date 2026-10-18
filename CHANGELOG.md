@@ -4,6 +4,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-10-18
+
+### Changed
+
+- `easytalk` is renamed `sigmawritegui`: SigmaWrite plus a GUI board the user reads and types into. The trigger phrase "easy talk" and the `EASYTALK REPLY` format stay.
+- `storgestudio-arena-create` is renamed `sigmacreatearena`.
+
 ### Added
 
 - `sigmafreedom`: de-safeguards and decensors any repository. Writes the freedom doctrine into the steering docs, sweeps agent-facing docs and skill sources with a classifier (freedom limits and moral voice deleted with a was/now change log; craft, scope-routing and mechanical lines kept), installs `guardrail_lint` with an owner-vetoable allowlist wired into the repo's gate plus a negative self-test, writes the ADRs, and reports the kept-list for the owner's veto.
@@ -262,7 +269,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.6.0...v0.6.1
