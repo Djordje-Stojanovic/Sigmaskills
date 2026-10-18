@@ -699,6 +699,8 @@ def text_sniff(p, h, ext, size):
         return "subtitle", sub, f"subtitle text ({sub})"
     if s.startswith("-----BEGIN ") or re.match(r"(ssh-(rsa|ed25519|dss)|ecdsa-sha2-\S+|sk-ssh-\S+) AAAA", s):
         return "cert", "pem" if s.startswith("-----BEGIN ") else "sshpub", "PEM block" if s.startswith("-----BEGIN ") else "OpenSSH public key"
+    if re.match(r"(?i)(windows registry editor version \d+\.\d+|regedit4)\s*$", s[:80].splitlines()[0] if s[:80].splitlines() else ""):
+        return "data", "reg", "Windows Registry Editor export"
     if ext == ".toml" or (j == "[" and ext not in (".json", ".jsonl", ".ndjson", ".geojson") and re.match(r"\[\[?[\w.\- \"']+\]\]?[ \t]*(#.*)?\r?\n", s)
                           and re.search(r"(?m)^[\w.\-\"']+\s*=", s[:4000])):
         # a [section] header and key = value lines: TOML (or INI); never JSON, so no false wrong-format finding

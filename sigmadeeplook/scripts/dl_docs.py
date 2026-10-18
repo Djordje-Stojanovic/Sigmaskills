@@ -588,6 +588,15 @@ def office_docx(look, z, names):
     revisions = []
     out = []
     hidden = []
+    titles = []   # (style name, text) of paragraphs styled Title or Subtitle
+    snames = {}   # style id -> style name (a template can call the Title style by another id)
+    if "word/styles.xml" in names:
+        sx = parse_xml(look, z.read("word/styles.xml"))
+        for el in (sx.iter() if sx is not None else ()):
+            if strip(el.tag) == "style" and attr(el, "styleId"):
+                for c in el:
+                    if strip(c.tag) == "name":
+                        snames[attr(el, "styleId")] = attr(c, "val") or ""
     if doc is not None:
         for el in doc.iter():
             t = strip(el.tag)
@@ -634,7 +643,10 @@ def office_docx(look, z, names):
                                     style = attr(s, "val") or ""
                     txt = "".join(para).strip()
                     if txt:
-                        m = re.match(r"(?i)heading\s*(\d)", style)
+                        sname = snames.get(style, style)
+                        if sname.replace(" ", "").lower() in ("title", "subtitle") or style.lower() in ("title", "subtitle"):
+                            titles.append((sname or style, txt))
+                        m = re.match(r"(?i)heading\s*(\d)", style) or re.match(r"(?i)heading\s*(\d)", sname)
                         out.append(("#" * int(m.group(1)) + " " if m else "") + txt)
                 elif t in ("tbl", "tr", "tc", "body", "sdt", "sdtContent"):
                     walk(ch, mode)
@@ -682,6 +694,9 @@ def office_docx(look, z, names):
         if n:
             bits.append(f"{n} {label}")
     look.line("Word: " + "; ".join(bits) + ".", 90)
+    if titles:
+        look.fact("title_paragraphs", [{"style": a, "text": t} for a, t in titles[:10]])
+        look.line("Document title paragraphs: " + "; ".join(f"{a}: {P.short(t, 160)}" for a, t in titles[:6]) + ".", 96, "title")
     look.headline = (f"Word document: {sum(1 for l in out if re.match(r'#{1,6} ', l))} headings, {len(out)} non-empty paragraphs"
                      + (f", {sum(revs.values())} tracked changes" if revs else "") + (f", {len(comments)} comments" if comments else ""))
     heads = [(len(l) - len(l.lstrip("#")), l.lstrip("#").strip()) for l in out if re.match(r"#{1,6} ", l)]
