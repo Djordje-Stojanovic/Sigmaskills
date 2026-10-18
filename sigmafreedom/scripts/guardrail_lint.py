@@ -28,24 +28,42 @@ BAD = re.compile(
     r"|refuse to (help|do|run|install|assist)|decline to",
     re.I,
 )
-COMMENT = re.compile(r"^\s*#")
+COMMENT = re.compile(r"^\s*# ")          # a comment is '# ' at the line start; a kept fragment may begin with '##' or '###'
+
+
+SKIP = {"node_modules", ".venv", "venv", "__pycache__", "vendor", ".git", "dist", "build", "out",
+        "site-packages", ".next", "coverage", ".scratch", ".pi", ".history", "changelog", "archive",
+        "archives", "animations", "library", "thumbs", "fixtures", "evidence", "tests", "test"}
+EXTRA = ("lazy_toolkits/lahelp.txt",)          # instruction files outside docs/ go here
 
 
 def targets(root, given):
-    """The agent-facing docs of one repo, or the paths the caller named."""
+    """The agent-facing docs of any repo, or the paths the caller named. Discovery, not a lab's layout: the root
+    steering docs (CLAUDE/AGENTS/README/CONTRIBUTING and friends), everything under docs/ and .github/, every skill
+    card (SKILL.md) with its references, plus EXTRA. Scratch notes, plans, changelogs, archives and test fixtures are
+    not instructions and stay out. A photo website, a local LLM config, a hacking toolkit, a game and a book all count."""
     if given:
         out = []
         for g in given:
             p = Path(g)
             out += [q for q in (p.rglob("*") if p.is_dir() else [p]) if q.is_file() and q.suffix in (".md", ".txt")]
         return sorted(set(out))
-    names = ["CLAUDE.md", "AGENTS.md", "GUIDE.md", "ENGINEERING.md", "GLOSSARY.md",
-             "docs/trinity.md", "docs/guides/*.md", "channels/*/CLAUDE.md", "channels/*/Channel-style-guide.md",
-             ".claude/skills/*/SKILL.md", "*/SKILL.md", "lazy_toolkits/lahelp.txt"]
-    out = []
-    for n in names:
-        out += [p for p in root.glob(n) if p.is_file()]
-    return sorted(set(out))
+    skill_dirs = {p.parent for p in root.rglob("SKILL.md") if p.is_file()}
+    out = set()
+    for p in root.rglob("*"):
+        if not p.is_file() or p.suffix.lower() not in (".md", ".txt", ".rst"):
+            continue
+        if p.name.lower() in ("guardrail_allowlist.txt", "secret-allow", ".secret-allow"):
+            continue   # the keep-list quotes flagged lines; scanning it can never converge
+        rel = p.relative_to(root)
+        if any(part in SKIP for part in rel.parts[:-1]):
+            continue
+        top = rel.parts[0].lower()
+        if (len(rel.parts) == 1 or top in ("docs", "doc", "documentation", ".github")
+                or p.name.lower() == "skill.md" or any(d in p.parents for d in skill_dirs)):
+            out.add(p)
+    out |= {root / e for e in EXTRA if (root / e).is_file()}
+    return sorted(out)
 
 
 def allows(path):

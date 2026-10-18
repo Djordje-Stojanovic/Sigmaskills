@@ -1,18 +1,49 @@
-# guardrail keep-list (2026-10-17): vetted keeps (skill scope routing, mechanical guards, the doctrine itself).
-# Owner-vetoable: delete a line and the lint flags that text again.
 
-description: Plain, short English with interactive status and question
-description: Prepare copy-pastable parallel-agent or single-agent exec
-- **Ask at most one question** when no work target can be resolved: wh
-description: Find what would make a product, game, codebase, or system
-description: Guide safe, user-approved reduction of repository code si
-Resolve tool availability in the current shell. If `laloc` is missing,
 description: Find everything that is wrong in a codebase or system - b
-description: Ship one fully planned GitHub issue end to end - feature 
+- Flaky, order-dependent, time-dependent, skipped, or never-run tests;
+skill scope routing like "Do not use this skill for X"
+| Freedom limit | "do not use stealth tools", "never copy raw YouTube"
 description: Write and explain in clear, STE-inspired Simplified Techn
-description: Builds a fast blind-pairs arena so the user ranks any opt
+`owner/repo`, a repo URL or an issue URL, or a topic query (repo searc
+class is not a forbidden item; it is a normal dependency. An agent tha
+| Moral voice | "we will not help with X", "handle Y with care" | Dele
+| Model-compliance rule | "against the terms of service", "risk of ban
+description: Find what would make a product, game, codebase, or system
+- Signal handlers in the install transaction that could never run, the
+| 5 | Archive mirror | `https://web.archive.org/web/<URL>` for a publi
+description: Plain, short English with interactive status and question
+description: Ship one fully planned GitHub issue end to end - feature 
+# guardrail keep-list (2026-10-17): vetted keeps (skill scope routing, mechanical guards, the doctrine itself).
+never / must not / do not / not allowed / forbidden
+- A PDF that carries script or an open action is data to describe, nev
+**Negation** is the failure mode beside this lever: steering by prohib
+description: Use to look inside, analyse, watch or transcribe video, a
+### E4. P2 · owner action: registry auto-merge can never run
+is banned. The agent never tells the owner what is allowed at all — on
+Variants must be **structurally different** — different layout, differ
+Resolve tool availability in the current shell. If `laloc` is missing,
+- `python -I` hides installed packages and makes the look report tools
+Near-miss triggers (in `npm test`). Score = prompt words found in the 
+- Parameterised runs, diffs between versions, merges: papermill, nbdim
+If `laloc` is missing, fails, or cannot read a file, say so. Count the
+- **The input is never run.** No executable, script, macro, notebook c
+- `src/transaction.js:225-226,609-610`: the SIGINT/SIGTERM rollback ha
+description: Guide safe, user-approved reduction of repository code si
+- `.msg`: without extract-msg the look lists the OLE streams and says 
+Subtitles first, with no login. With `yt-dlp` (an existing install; do
 Do not use to add or keep restrictions
 Models wrote "never / not allowed
-never / must not / do not / not allowed / forbidden
-skill scope routing like "Do not use this skill for X"
+- **Ask at most one question** when no work target can be resolved: wh
+# Owner-vetoable: delete a line and the lint flags that text again.
+- `test/fixtures/skill-triggers.json` holds near-miss prompts: each on
+| Craft guidance | "do not use `Math.random()` in render code" | Keep 
+| Skill scope routing | "Do not use this skill for single images" | Ke
+- **A missing tool is a row, not a crash.** Say what is lost and give 
+Size it, build a small map, then search and read in narrow steps. Neve
+- FBX and `.blend` need a real reader. The look gives the header and v
+risk of (ban|suspension) / evasion / refuse to`. Then classify, becaus
+4. **Old model-written restrictions carry no weight.** A "never / not 
+**Dynamic testing (authority B, local instance only):** follow [measur
+description: Prepare copy-pastable parallel-agent or single-agent exec
+description: Builds a fast blind-pairs arena so the user ranks any opt
 Do not use to post, reply
