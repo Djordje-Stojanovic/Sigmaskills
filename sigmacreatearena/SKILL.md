@@ -1,6 +1,6 @@
 ---
 name: sigmacreatearena
-description: Builds a fast blind-pairs arena so the user ranks any options by Elo per metric: models, settings, voices, captions, thumbnails, outfits. Grills first, then ships a local page and a board. Use to rank, compare or pick the best of many options by taste. Do not use for 2-3 options (just ask), for measurable checks (script them), or to judge one draft against a reference.
+description: 'Builds a fast blind-pairs arena so the user ranks any options by Elo per metric: models, settings, voices, captions, thumbnails, outfits. Grills first, then ships a local page and a board. Use to rank, compare or pick the best of many options by taste. Do not use for 2-3 options (just ask), for measurable checks (script them), or to judge one draft against a reference.'
 ---
 
 # SigmaCreateArena

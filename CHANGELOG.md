@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmacreatearena`, `sigmaresearch` and `sigmawritegui` had a plain YAML description containing `: `, which strict YAML parsers reject. The descriptions are now quoted, the installer reads quoted values as plain text, and a test keeps every header strict YAML.
+
 ## [0.9.0] — 2026-10-18
 
 ### Changed
