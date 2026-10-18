@@ -47,3 +47,6 @@ risk of (ban|suspension) / evasion / refuse to`. Then classify, becaus
 description: Prepare copy-pastable parallel-agent or single-agent exec
 description: Builds a fast blind-pairs arena so the user ranks any opt
 Do not use to post, reply
+description: 'Builds a fast blind-pairs arena so the user ranks any options by Elo per metric: models, settings, voices, captions, thumbnails, outfits. Grills f
+allowed / we will not" line carries no weight; `scripts/guardrail_lint.py` holds the short list of rules that stay.
+description: 'SigmaWrite plus a GUI: plain, short English in interactive status and question boards the user reads and types into. Use when the user says "easy
