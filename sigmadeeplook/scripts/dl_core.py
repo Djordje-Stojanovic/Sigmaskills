@@ -304,6 +304,22 @@ def decode_text(b):
     return dl_delim.decode_legacy(b)
 
 
+def lenient_text(b):
+    """-> (text, encoding) for bytes a content model calls text although NULs or control bytes sit in them: those bytes become spaces."""
+    import dl_delim
+    clean = bytes(32 if (c < 9 or 13 < c < 32) else c for c in b)
+    text, enc = dl_delim.decode_legacy(clean) if not _is_utf8(clean) else (clean.decode("utf-8", "replace"), "utf-8")
+    return text, enc + "+lenient"
+
+
+def _is_utf8(b):
+    try:
+        b.decode("utf-8")
+        return True
+    except UnicodeDecodeError:
+        return False
+
+
 def direct_tokens(nbytes):
     return max(1, math.ceil(nbytes / BYTES_PER_TOKEN))
 
@@ -628,6 +644,8 @@ def detect(path):
         t, st, mg = "cert", "der", "ASN.1 DER certificate"
     elif ext in (".vhd", ".img", ".dmg", ".raw") and size > 1 << 20 and not st and b"\0" in h[:512]:
         t, st, mg = "diskimage", ext[1:], f"extension {ext} (binary image)"
+    elif h[:1] and h[0] in (2, 3, 4, 5, 0x30, 0x31, 0x32, 0x43, 0x63, 0x83, 0x8B, 0x8E, 0xCB, 0xF5, 0xFB) and __import__("dl_dbf").looks_dbf(h, size):
+        t, st, mg = "data", "dbf", "dBASE / FoxPro table header (field descriptors end in 0x0D)"
     elif size >= 84 and not h.lstrip().startswith(b"solid") and struct.unpack_from("<I", h, 80)[0] * 50 + 84 == size:
         t, st, mg = "3d", "stl", "binary STL (size matches the triangle count)"
     if t is None:

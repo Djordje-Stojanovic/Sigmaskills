@@ -18,11 +18,17 @@ def load(out):
         return None
 
 
+def drill_note(lj):
+    """'. Drill down with --sql / --grep (see Read next).' for the flags this look offers; '. It was complete in the first print.' when it offers none."""
+    flags = W.drill_flags(lj["stream"])
+    return (". Drill down with " + " / ".join("--" + f for f in flags) + " (see Read next).") if flags else ". It was complete in the first print."
+
+
 def remaining_text(lj, pos, detail=False):
     stream = lj["stream"]
     rest = [c for c in stream[pos:] if W.shown(c, detail)]
     if not rest:
-        return "Nothing remains in this look. Drill down with --at / --page / --sheet / --sql / --grep / --speaker (see Read next).\n"
+        return "Nothing remains in this look" + drill_note(lj) + "\n"
     by = {}
     for c in rest:
         k = c["tag"] if c.get("tag") and c["tag"] not in ("finding", "limits", "file", "drill", "identity") else W.HEADINGS.get(c["sec"], c["sec"]).lower()
@@ -51,7 +57,7 @@ def run(out, sha, n=None, from_k=None, remaining=False, detail=False):
     else:
         want = W.next_ladder(W.printed_cumulative(stream, pos, detail))
     if start >= len(stream):
-        return "-- end of the stream: nothing more in this look. Drill down with --at / --page / --sheet / --sql / --grep / --speaker (see Read next).\n", 0
+        return "-- end of the stream: nothing more in this look" + drill_note(lj) + "\n", 0
     chunks, nxt = W.window(stream, start, max(1, want - W.OVERHEAD), detail)   # the recap and the footer are part of the requested size
     text = W.render_window(chunks, start, detail) + W.footer(stream, start, nxt, 0, detail=detail)
     core.save_cursor(out, max(pos, nxt), lj.get("sha256", sha))

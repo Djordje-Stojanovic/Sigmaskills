@@ -68,7 +68,7 @@ def look_data(look):
     fn = {"csv": data_csv, "tsv": data_csv, "json": data_json, "jsonl": data_jsonl, "sqlite": data_sqlite, "parquet": data_parquet,
           "arrow": data_arrow, "avro": lambda lk: __import__("dl_adapt").look_avro(lk), "xml": data_xml, "yaml": data_text_struct, "toml": data_toml,
           "ini": lambda lk: __import__("dl_conf").look_ini(lk), "reg": lambda lk: __import__("dl_reg").look_reg(lk), "pcap": lambda lk: __import__("dl_pcap").look_pcap(lk),
-          "pcapng": lambda lk: __import__("dl_pcap").look_pcap(lk)}.get(st) or getattr(__import__("dl_tab2"), "look_" + st, None) or getattr(__import__("dl_misc"), "look_" + st, data_text_struct)
+          "pcapng": lambda lk: __import__("dl_pcap").look_pcap(lk), "dbf": lambda lk: __import__("dl_dbf").look_dbf(lk)}.get(st) or getattr(__import__("dl_tab2"), "look_" + st, None) or getattr(__import__("dl_misc"), "look_" + st, data_text_struct)
     fn(look)
     look.ask_human("What question should this data answer?", "Which columns or tables matter, and are any of them personal data?")
 
@@ -1175,6 +1175,8 @@ def data_xml(look):
     look.line(f"XML: root <{root_tag}>, {'at least ' if cut else ''}{sum(counts.values()):,} elements of {len(counts)} kinds, depth {depth}. Elements: " + ", ".join(f"{k} ({v:,})" for k, v in counts.most_common(30)), 90 + base)
     P.counts(look, [("elements", sum(counts.values())), ("element kinds", len(counts)), ("attributes", sum(attrs.values())), ("elements with text", texts),
                     ("max depth", depth), ("root children", len(list(root)))], 94 + base, "XML counts")
+    import dl_xmlvals
+    dl_xmlvals.emit(look, root, "XML", 88 + base)   # the values, by element path, over the whole document: a late element's text is in the first print too
     if attrs:
         look.line("Attributes (element@name, count): " + ", ".join(f"{k} ({v:,})" for k, v in attrs.most_common(40)), 60)
     # records: the most repeated element that has attributes or children, each as {@attr, child: text}

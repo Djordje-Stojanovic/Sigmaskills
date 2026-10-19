@@ -54,6 +54,9 @@ def analyse(path, out, opts, sha=None, depth=0):
     if d["mismatch"]:
         look.flag("MISMATCH", "extension", d["mismatch"], "the extension lies or the file was renamed; trust the bytes")
     direct = not getattr(opts, "no_direct", False) and depth == 0 and core.direct_eligible(p, look.type, look.subtype, look.size)
+    if look.type == "unknown" and d["subtype"] == "binary" and not direct:   # no signature found: ask the content model before giving up
+        import dl_adapt
+        dl_adapt.reclassify(look)
     mod, fn = HANDLERS.get(look.type, HANDLERS["unknown"])
     try:
         getattr(__import__(mod), fn)(look)

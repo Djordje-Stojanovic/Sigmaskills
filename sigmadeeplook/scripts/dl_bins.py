@@ -60,6 +60,7 @@ def look_unknown(look):
         import dl_misc
         for t in dl_misc.record_layout(read_bytes(look, 64 << 20), look.size):
             look.headline = "Headerless binary file that looks like a table of fixed-size records (a guess from the bytes)"
+            look.exit_code = 0   # a reader found a layout (labelled a guess): the run is not an unknown-type failure
             look.line(t, 93)
     if b:
         look.line("First 32 bytes: " + b[:32].hex(" ") + " | " + "".join(chr(c) if 32 <= c < 127 else "." for c in b[:32]), 52)
@@ -167,6 +168,9 @@ def look_code(look):
     b = read_bytes(look, 8 << 20)
     text, enc = core.decode_text(b)
     ext = look.path.suffix.lower()
+    if text is None and look.facts.get("text_by_content_model"):   # the content model calls it text although NULs or control bytes sit in it
+        text, enc = core.lenient_text(b)
+        look.flag("LENIENT-TEXT", "file", "NUL or control bytes read as spaces", "a content model said text; the byte-level detector said binary")
     if text is None:
         look.type = "unknown"
         return look_unknown(look)
@@ -879,7 +883,7 @@ def archive_contents(look, members, fmt):
     files = [m for m in members if m["kind"] == "file"]
     used, t0 = 0, time.time()
     texts = {}
-    opened, small = [], {}
+    opened, small, xml_done = [], {}, 0
     try:
         for m in files:
             name, size = m["name"], m["size"]
@@ -909,6 +913,9 @@ def archive_contents(look, members, fmt):
                 if b is not None:
                     used += len(b)
                     text, _enc = core.decode_text(b)
+                    if name.lower().endswith((".xml", ".vml", ".xaml")) and xml_done < 10:   # parsed whatever its line layout: one-line XML is not a 60-character head
+                        import dl_xmlvals
+                        xml_done += 1 if dl_xmlvals.member_lines(look, name, b) else 0
                     if text is not None and len(text) <= SMALL_NOTE and not P.is_manifest(name):
                         small[name] = text
                     if text is not None and (P.is_manifest(name) or name.lower().endswith((".csv", ".tsv", ".json", ".jsonl", ".ndjson", ".yaml", ".yml", ".toml", ".xml", ".properties", ".ini", ".cfg"))):

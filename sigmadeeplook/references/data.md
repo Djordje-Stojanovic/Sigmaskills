@@ -1,6 +1,6 @@
 # Data files
 
-CSV, TSV, JSON, JSONL, Parquet, Arrow, SQLite, XML, YAML, TOML. Give the agent the schema and a sample, never the table. Answers come from a query that you show, not from reading rows.
+CSV, TSV, JSON, JSONL, Parquet, Arrow, SQLite, XML, YAML, TOML, dBASE/FoxPro `.dbf` (header decoded, rows profiled like a CSV, deleted records left out; memo text is not read). Give the agent the schema and a sample, never the table. Answers come from a query that you show, not from reading rows.
 
 ## When look.py is not enough
 

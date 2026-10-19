@@ -4,6 +4,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmadeeplook`: dBASE / FoxPro `.dbf` tables are detected by structure and decoded (record count, fields and types, language driver, deleted records, truncation), then profiled like a CSV. Container counts for audio files from the bytes alone (Ogg pages, packets, streams, codec and duration; WAV chunks; FLAC blocks; MP3 frames). Element values by path over the whole XML document in the first print, and the same for XML members of zip-based formats, including single-line ones (Visio-style pages).
+
+### Changed
+
+- `sigmadeeplook`: when the header detector finds no signature but a content model (Magika) or `file -b` names a type, the reader for that type runs instead of an unknown-type exit 3. A headerless fixed-record guess no longer exits 3. A complete small look says so once and lists only the drill-down flags it offers.
+
 ### Fixed
 
 - `sigmadeeplook`: wrong answers stated as certain. A CSV past the 256 MB read limit no longer prints "Every row was read; a full pass": it says how many bytes were read, counts the lines of the whole file in bounded memory, and marks every figure `PARTIAL`. JSON past 64 MB and XML past 20 MB are parsed as far as the limit (complete elements kept) and flagged `PARTIAL`, not called invalid. A harmless `<!ENTITY>` declaration no longer refuses an XML file; only a self-referring or exploding entity does. The formula evaluator is a real parser with Excel's rules (`2^3^2` is 64, `-2^2` is 4, `&` joins text, text compares without regard to case, huge powers are not evaluated) and no longer calls a value "evaluated, not guessed" when it is not sure: it names the formulas it did not compute. Text that is not UTF-8 is read with the code page whose letters look real (Windows-1250 for Serbian Latin, Windows-1251 and KOI8-R for Cyrillic, Greek, Turkish, Windows-1252), and one stray byte no longer turns a UTF-8 file into Windows-1252. The cache key of a file over 8 MB is a bounded sample plus size and modified time, so `--more` and `--ask` no longer re-read a 20 GB file.
