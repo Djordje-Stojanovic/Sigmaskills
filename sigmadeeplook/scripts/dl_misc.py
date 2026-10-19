@@ -12,6 +12,7 @@ import tarfile
 import time
 
 import dl_core as core
+import dl_util as U
 
 
 # ------------------------------------------------------------------------------------------------ bencode / torrent
@@ -44,12 +45,26 @@ def bdecode(b, i=0, depth=0):
     raise ValueError(f"bad bencode byte at {i}")
 
 
+WHOLE_CAP = U.byte_cap("WHOLE", 256 << 20)   # these readers parse one whole structure in memory: a file past this size is named, not loaded
+
+
+def _whole(look, what):
+    """The file's bytes for a reader that needs the whole structure, or None (and a Not-looked-at row) when the file is past WHOLE_CAP."""
+    if look.size > WHOLE_CAP:
+        look.skip(what, f"{core.human(look.size)} is over the {core.human(WHOLE_CAP)} this reader holds in memory", None,
+                  "raise SIGMADEEPLOOK_WHOLE_CAP, or query the file with its own tools")
+        return None
+    return look.path.read_bytes()
+
+
 def _s(v):
     return v.decode("utf-8", "replace") if isinstance(v, bytes) else str(v)
 
 
 def look_torrent(look):
-    b = look.path.read_bytes()
+    b = _whole(look, "torrent metainfo")
+    if b is None:
+        return
     d, _ = bdecode(b)
     info = d.get(b"info", {})
     files = info.get(b"files")
@@ -113,7 +128,9 @@ def _short(v, n=60):
 
 
 def look_plist(look):
-    raw = look.path.read_bytes()
+    raw = _whole(look, "property list")
+    if raw is None:
+        return
     v = plistlib.loads(raw)
     st = _plist_walk(v)
     fmt = "binary" if raw[:8] == b"bplist00" else "XML"
@@ -239,7 +256,10 @@ def midi_event_lines(m, cap=40):
 
 
 def look_midi(look):
-    m = parse_midi(look.path.read_bytes())
+    raw = _whole(look, "MIDI tracks")
+    if raw is None:
+        return
+    m = parse_midi(raw)
     div = m["division"]
     tempo = m["tempos"][0][1] if m["tempos"] else 500000
     secs = None
@@ -278,7 +298,9 @@ def pyc_version(magic):
 
 
 def look_pyc(look):
-    b = look.path.read_bytes()
+    b = _whole(look, "Python bytecode")
+    if b is None:
+        return
     magic = struct.unpack("<H", b[:2])[0]
     flags = struct.unpack("<I", b[4:8])[0]
     ver = pyc_version(magic)
@@ -309,14 +331,15 @@ def look_pyc(look):
 
 
 # ------------------------------------------------------------------------------------------------ ar / deb
-def parse_ar(b):
+def parse_ar(b, data_cap=None):
+    """-> [(name, size, mtime, data)]. b may be a memory map: a member bigger than data_cap gets data None and is never copied."""
     i, out = 8, []
     while i + 60 <= len(b):
         h = b[i:i + 60]
         name = h[:16].decode("latin-1").strip().rstrip("/")
         size = int(h[48:58].decode().strip() or 0)
         mtime = int(h[16:28].decode().strip() or 0)
-        out.append((name, size, mtime, b[i + 60:i + 60 + size]))
+        out.append((name, size, mtime, None if data_cap is not None and size > data_cap else b[i + 60:i + 60 + size]))
         i += 60 + size + (size % 2)
     return out
 
@@ -363,14 +386,26 @@ def control_fields(text):
 CONTROL_KEYS = ["Package", "Version", "Architecture", "Maintainer", "Depends", "Installed-Size", "Section"]
 
 
+AR_MEMBER_CAP = U.byte_cap("AR_MEMBER", 256 << 20)   # one ar member (data.tar.xz of a .deb) is opened in memory up to this size
+
+
 def look_ar(look):
-    b = look.path.read_bytes()
-    mem = parse_ar(b)
+    import mmap
+    with open(look.path, "rb") as fh:   # mapped, not read: a multi-GB .deb costs only the members that are opened
+        with mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ) as b:
+            mem = parse_ar(b, AR_MEMBER_CAP)
+    _look_ar_members(look, mem)
+
+
+def _look_ar_members(look, mem):
     is_deb = bool(mem) and mem[0][0] == "debian-binary"
     look.headline = f"{'Debian package' if is_deb else 'ar archive'}: {len(mem)} members"
     look.line(f"{'Debian package (ar container)' if is_deb else 'ar archive'} with {len(mem)} members: " + "; ".join(f"{n} {s:,} B" for n, s, _m, _d in mem) + ".", 96)
     for n, s, m, data in mem:
-        if n.startswith("control.tar") or n.startswith("data.tar"):
+        if data is None and (n.startswith("control.tar") or n.startswith("data.tar")):
+            look.line(f"{n}: {s:,} bytes, over the {core.human(AR_MEMBER_CAP)} opened in memory, so its file list is not read (PARTIAL).", 60)
+            look.flag("PARTIAL", n, f"{core.human(s)} member not opened", "raise SIGMADEEPLOOK_AR_MEMBER_CAP to list it")
+        elif n.startswith("control.tar") or n.startswith("data.tar"):
             try:
                 t = open_tar(data)
                 ms = t.getmembers()
@@ -398,7 +433,7 @@ def look_ar(look):
 
 
 # ------------------------------------------------------------------------------------------------ headerless fixed-size records
-TS_LO, TS_HI = 946684800, 2208988800   # epoch seconds for 2000-01-01 .. 2040-01-01: a column wholly inside is read as a timestamp
+TS_LO, TS_HI = 631152000, 4102444800   # epoch seconds for 1990-01-01 .. 2100-01-01: a column wholly inside is read as a timestamp
 
 
 def _iso(sec):
@@ -472,7 +507,7 @@ def type_fields(m, s, np):
                 fields.append((o, 8, "zero padding"))
                 o += 8
                 continue
-            if ((u8 > 946684800000) & (u8 < 2208988800000)).all() and len(np.unique(u8)) > 1:
+            if ((u8 > TS_LO * 1000) & (u8 < TS_HI * 1000)).all() and len(np.unique(u8)) > 1:
                 fields.append((o, 8, f"timestamp (uint64 epoch milliseconds) {_iso(int(u8.min()) // 1000)} .. {_iso(int(u8.max()) // 1000)}"))
                 o += 8
                 continue
@@ -555,8 +590,49 @@ def refine_size(arr, n, s, np):
     return s
 
 
+HEADER_SIZES = tuple(range(1, 65)) + (128, 256, 512, 1024, 2048, 4096)   # tried only when no layout fits the bytes from offset 0
+MIN_RECORDS = 40
+HEADERLESS_OK = 0.4   # a layout from offset 0 with at least this share of low-entropy columns is taken as headerless
+
+
+def _layout_score(arr, n, s, h, np):
+    """Share of byte columns with low entropy over the records that start at offset h, or None when fewer than MIN_RECORDS fit."""
+    recs = min((n - h) // s, 20000)
+    if recs < MIN_RECORDS:
+        return None
+    m = arr[h:h + recs * s].reshape(recs, s)
+    low = 0
+    for c in range(s):
+        cnt = np.bincount(m[:, c], minlength=256)
+        p = cnt[cnt > 0] / recs
+        if -(p * np.log2(p)).sum() < 1.2:
+            low += 1
+    return low / s
+
+
+def _trim_header(arr, n, s, h, np):
+    """The records may start one or more whole records later than the best offset: while the first record disagrees with the records after it in
+    the columns that never change (its bytes are not among the values those columns take), it belongs to the header and the offset moves up."""
+    for _ in range(8):
+        if h + s * (MIN_RECORDS + 1) > n:
+            break
+        rest = arr[h + s:h + s + s * min(300, (n - h) // s - 1)].reshape(-1, s)
+        stable = [c for c in range(s) if len(np.unique(rest[:, c])) <= 2]
+        if len(stable) < 2:
+            break
+        first = arr[h:h + s]
+        bad = sum(1 for c in stable if first[c] not in rest[:, c])
+        if bad >= 1 and bad >= 0.3 * len(stable):
+            h += s
+        else:
+            break
+    return h
+
+
 def record_layout(b, total):
-    """Guess the record size of a headerless binary table and type its fields -> (lines) or [] when nothing structured is found."""
+    """Guess the record size of a headerless binary table and type its fields -> (lines) or [] when nothing structured is found.
+    Record sizes that divide the file are tried at offset 0 first, then after a header of 1..64 bytes (or 128..4096); a header layout has to beat
+    the headerless ones clearly. The runner-up layouts are named, so a wrong first guess can be told from the bytes."""
     try:
         import numpy as np
     except ImportError:
@@ -565,29 +641,43 @@ def record_layout(b, total):
     if n < 512 or total < 512:
         return []
     arr = np.frombuffer(b, dtype=np.uint8)
-    best = None
-    for s in range(2, 257):
-        if total % s:
-            continue
-        recs = min(n // s, 20000)
-        if recs < 40:
-            break
-        m = arr[:recs * s].reshape(recs, s)
-        low = 0
-        for c in range(s):
-            cnt = np.bincount(m[:, c], minlength=256)
-            p = cnt[cnt > 0] / recs
-            if -(p * np.log2(p)).sum() < 1.2:
-                low += 1
-        score = low / s
-        # a multiple of the true size scores the same; the smallest size with a clearly structured layout wins
-        if score >= 0.25 and (best is None or score > best[0] + 0.12):
-            best = (score, s)
+    cands = []   # (score, size, header)
+    best = None   # (score, size, header)
+    seen = set()   # (size, offset within a record): a header that is whole records longer is the same alignment, found by _trim_header
+    for h in (0,) + HEADER_SIZES:
+        if h and best and best[0] >= HEADERLESS_OK:
+            break   # a clearly structured layout from offset 0 stands; a header is only looked for when none fits
+        for s in range(2, 257):
+            if (total - h) % s or (s, h % s) in seen:
+                continue
+            seen.add((s, h % s))
+            if (n - h) // s < MIN_RECORDS:
+                break
+            score = _layout_score(arr, n, s, h, np)
+            if score is None:
+                break
+            if score >= (0.25 if h == 0 else 0.4):
+                cands.append((score, s, h))
+                # a multiple of the true size scores the same; the smallest size with a clearly structured layout wins
+                if best is None or score > best[0] + 0.12 or (h and best[2] == 0 and score >= 0.4 > best[0]):
+                    best = (score, s, h)
     if not best:
         return []
-    s = refine_size(arr, n, best[1], np)
-    recs = n // s
-    m = arr[:recs * s].reshape(recs, s)
+    h = _trim_header(arr, n, best[1], best[2], np)
+    best = best[:2]
+    s = refine_size(arr[h:], n - h, best[1], np)
+    recs = (n - h) // s
+    m = arr[h:h + recs * s].reshape(recs, s)
     fields, order = type_fields(m, s, np)
-    return [f"Looks like a headerless table of fixed-size binary records: {total // s:,} records of {s} bytes ({total} = {total // s} x {s}); a guess from the bytes, confirm it against the format's documentation; field layout (typed from the bytes, {order}-endian guess): "
-            + "; ".join(f"bytes {a}-{a + n - 1} {desc}" for a, n, desc in fields) + "."]
+    first = (f"Looks like a table of fixed-size binary records after a {h}-byte header: {(total - h) // s:,} records of {s} bytes ({total} = {h} + {(total - h) // s} x {s})"
+             if h else f"Looks like a headerless table of fixed-size binary records: {total // s:,} records of {s} bytes ({total} = {total // s} x {s})")
+    out = [first + f"; a guess from the bytes, confirm it against the format's documentation; field layout (typed from the bytes, {order}-endian guess): "
+           + "; ".join(f"bytes {h + a}-{h + a + k - 1} {desc}" for a, k, desc in fields) + "."]
+    alt = []
+    for sc, s2, h2 in sorted(cands, key=lambda c: (-c[0], c[1], c[2])):
+        if (h2 - h) % s == 0 and (s2 % s == 0 or s % s2 == 0) or len(alt) >= 2:   # the same layout seen as a multiple, a divisor or a shifted copy
+            continue
+        alt.append(f"{s2} bytes" + (f" after a {h2}-byte header" if h2 else "") + f" (structure score {sc:.2f})")
+    if alt:
+        out.append(f"Other record layouts that also divide the file and look structured (weaker): {'; '.join(alt)}; chosen: {s} bytes (score {best[0]:.2f}).")
+    return out

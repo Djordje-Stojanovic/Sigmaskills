@@ -184,11 +184,17 @@ class BigText(unittest.TestCase):
 
 class Refusals(unittest.TestCase):
     def test_unsafe_archives_exit_2_and_write_nothing(self):
-        for name in ("slip.zip", "ratio.zip", "nested.zip", "links.tar"):
+        for name in ("slip.zip", "nested.zip", "links.tar"):
             r, out = look(name, "--extract")
             self.assertEqual(r.returncode, 2, name)
             self.assertIn("REFUSED", r.stdout, name)
             self.assertFalse((out / "extract").exists(), name)
+
+    def test_a_ratio_bomb_member_is_left_out_not_the_archive(self):
+        r, out = look("ratio.zip", "--extract")
+        self.assertEqual(r.returncode, 0)
+        self.assertIn("REFUSED", r.stdout)
+        self.assertFalse((out / "extract" / "zeros.bin").exists())
 
     def test_unknown_and_empty_exit_3(self):
         for name in ("empty.bin", "noise.bin"):

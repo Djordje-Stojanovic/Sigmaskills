@@ -23,6 +23,7 @@ from collections import Counter
 from pathlib import Path, PurePosixPath
 
 import dl_core as core
+import dl_util as U
 
 STRINGS_CAP = 20000
 READ_CAP = 64 << 20
@@ -597,6 +598,7 @@ MAX_MEMBERS = 10000
 MAX_TOTAL = 2 << 30
 MAX_RATIO = 200
 MAX_DEPTH = 2
+TAR_LIST_SECONDS = U.byte_cap("TARLIST", 90)   # listing a compressed tar reads the whole stream: stop after this long and say PARTIAL
 
 
 def bad_name(name):
@@ -650,6 +652,7 @@ def list_archive(look):
                                     mtime="%04d-%02d-%02d %02d:%02d:%02d" % i.date_time))
         extra["format"] = "zip"
     elif tarfile.is_tarfile(p):
+        t0 = time.time()
         with tarfile.open(p, "r:*") as t:
             for m in t:
                 kind = "dir" if m.isdir() else "symlink" if m.issym() else "hardlink" if m.islnk() else "device" if (m.isdev() or m.isfifo()) else "file"
@@ -657,12 +660,41 @@ def list_archive(look):
                                     mtime=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(m.mtime)) if m.mtime else None))
                 if len(members) > MAX_MEMBERS + 1:
                     break
+                if time.time() - t0 >= TAR_LIST_SECONDS:   # a multi-GB .tar.xz is one stream: no print without a cap
+                    extra["partial"] = True
+                    break
         extra["format"] = "tar"
     return members, extra
 
 
+# What a finding means. WIDE: the archive looks hostile, so no member is looked at or extracted (exit 2). EXTRACT_ONLY: the archive is too big to
+# write out safely, but members are still read in memory under their own byte caps. Every other rule excludes only the member it names.
+WIDE_RULES = {"unsafe-name", "unsafe-link", "overlap", "nesting"}
+EXTRACT_ONLY_RULES = {"too-many-members", "too-large"}
+
+
+def link_target_in_tree(m):
+    """A link whose target is a relative path that stays inside the archive is harmless: it is listed and never followed.
+    None when the listing does not show the target (a zip stores it as file content)."""
+    tgt = m.get("target")
+    if not tgt:
+        return None
+    t = tgt.replace("\\", "/")
+    if t.startswith("/") or re.match(r"^[A-Za-z]:", t):
+        return False
+    base = [] if m["kind"] == "hardlink" else [x for x in m["name"].replace("\\", "/").split("/")[:-1] if x not in ("", ".")]
+    depth = len(base)
+    for part in t.split("/"):
+        if part in ("", "."):
+            continue
+        depth += -1 if part == ".." else 1
+        if depth < 0:
+            return False
+    return True
+
+
 def screen_members(look, members, depth):
-    """-> list of (rule, member, detail) refusals. The safety screen from the plan, run on the listing only."""
+    """-> list of (rule, member, detail) findings. The safety screen from the plan, run on the listing only. split_screen() says what each finding blocks."""
     refusals = []
     if len(members) > MAX_MEMBERS:
         refusals.append(("too-many-members", "archive", f"{len(members)} members (limit {MAX_MEMBERS})"))
@@ -674,9 +706,16 @@ def screen_members(look, members, depth):
     for m in members[: MAX_MEMBERS + 1]:
         r = bad_name(m["name"])
         if r:
-            refusals.append(("unsafe-name", m["name"], r))
-        if m["kind"] in ("symlink", "hardlink", "device"):
-            refusals.append(("link-or-device", m["name"], f"{m['kind']}" + (f" -> {m.get('target')}" if m.get("target") else "")))
+            hostile = r.startswith(("absolute", "path traversal"))
+            refusals.append(("unsafe-name" if hostile else "reserved-name", m["name"], r))
+        if m["kind"] in ("symlink", "hardlink"):
+            inside = link_target_in_tree(m)
+            if inside is False:
+                refusals.append(("unsafe-link", m["name"], f"{m['kind']} -> {m.get('target')} (leaves the archive)"))
+            elif inside is None:
+                refusals.append(("link", m["name"], f"{m['kind']} (target not shown in the listing)"))
+        elif m["kind"] == "device":
+            refusals.append(("device", m["name"], "device or fifo"))
         key = m["name"].replace("\\", "/").rstrip("/").lower()
         if key in seen and m["kind"] != "dir":
             refusals.append(("duplicate-name", m["name"], "same name twice"))
@@ -693,6 +732,15 @@ def screen_members(look, members, depth):
     if depth > MAX_DEPTH:
         refusals.append(("nesting", "archive", f"zip inside zip {depth} levels deep (limit {MAX_DEPTH})"))
     return refusals
+
+
+def split_screen(refusals):
+    """-> (wide, extract_only, excluded_names). wide: the archive is refused whole. extract_only: --extract is refused, member looks still run.
+    excluded_names: members left out of member looks and extraction (a duplicated name is left out under every copy)."""
+    wide = [r for r in refusals if r[0] in WIDE_RULES]
+    xonly = [r for r in refusals if r[0] in EXTRACT_ONLY_RULES]
+    excluded = {r[1] for r in refusals if r[0] not in WIDE_RULES and r[0] not in EXTRACT_ONLY_RULES}
+    return wide, xonly, excluded
 
 
 def safe_extract(look, members, which, dest):
@@ -1159,6 +1207,9 @@ def look_archive(look):
     if extra.get("format") == "zip":
         depth = zip_depth(read_bytes(look, 64 << 20)) if look.size < 64 << 20 else 0
     refusals = screen_members(look, members, depth)
+    wide, xonly, excluded = split_screen(refusals)
+    if extra.get("partial"):
+        look.flag("PARTIAL", "listing", f"stopped after {len(members):,} members ({TAR_LIST_SECONDS} s time cap on the compressed stream)", "member counts, sizes and the screen cover the part listed only")
     nfile = sum(1 for m in members if m["kind"] == "file")
     total = sum(m["size"] for m in members)
     ratios = [m["size"] / max(1, m["packed"]) for m in members if m["packed"]]
@@ -1167,8 +1218,9 @@ def look_archive(look):
     look.fact("uncompressed_bytes", total)
     look.fact("max_ratio", round(max(ratios), 1) if ratios else 0)
     look.fact("nesting_depth", depth)
-    look.headline = f"{st} archive, {len(members):,} members, {nfile:,} files, {core.human(total)} unpacked"
-    look.line(f"Archive ({extra.get('format', st)}): {len(members)} members, {nfile} files, {core.human(total)} uncompressed ({core.human(look.size)} packed), largest ratio {max(ratios) if ratios else 0:.0f}:1" + (f", nesting depth {depth}" if depth else "") + ".")
+    cut = " (PARTIAL: listing stopped at the time cap)" if extra.get("partial") else ""
+    look.headline = f"{st} archive, {len(members):,}{'+' if cut else ''} members, {nfile:,} files, {core.human(total)} unpacked{cut}"
+    look.line(f"Archive ({extra.get('format', st)}): {len(members)}{'+' if cut else ''} members, {nfile} files, {core.human(total)} uncompressed ({core.human(look.size)} packed), largest ratio {max(ratios) if ratios else 0:.0f}:1" + (f", nesting depth {depth}" if depth else "") + (". PARTIAL: the compressed stream was listed until the time cap; the real archive has more." if cut else "."))
     if extra.get("format") == "zip":   # container-level key/value text: the archive comment and member comments
         try:
             with zipfile.ZipFile(p) as zz:
@@ -1184,9 +1236,9 @@ def look_archive(look):
         archive_contents(look, members, extra.get("format"))
     except Exception as e:  # the listing stands even when a member cannot be read
         look.fail("member contents (manifests, tables, tree stats)", "stdlib", e)
-    if not refusals and extra.get("format") in ("zip", "tar", "7z", "iso", "rar"):
+    if not wide and extra.get("format") in ("zip", "tar", "7z", "iso", "rar"):
         try:
-            member_looks(look, members, extra.get("format"))
+            member_looks(look, [m for m in members if m["name"] not in excluded], extra.get("format"))
         except Exception as e:
             look.fail("member looks (documents and media inside the archive)", "stdlib", e)
     rows =[(m["name"], m["size"], m["packed"], f"{m['size'] / max(1, m['packed']):.1f}" if m["packed"] else "", m["kind"], "encrypted" if m["enc"] else "") for m in members[:2000]]
@@ -1202,14 +1254,22 @@ def look_archive(look):
     names = [m["name"] for m in members]
     if extra.get("format") == "tar" and "manifest.json" in names:
         docker_layers(look, names)
-    if refusals:
+    blocked = wide or xonly
+    verdict = {"extract": not blocked, "reasons": [dict(rule=r, member=m, detail=d) for r, m, d in refusals], "excluded_members": sorted(excluded)}
+    if wide:
         look.exit_code = 2
-        verdict = {"extract": False, "reasons": [dict(rule=r, member=m, detail=d) for r, m, d in refusals]}
-        for r, m, d in refusals[:12]:
-            look.flag("REFUSED", m, f"{r}: {d}", "the safety screen refuses extraction")
-        look.line("Safety screen: REFUSED. " + "; ".join(f"{r} ({m})" for r, m, d in refusals[:4]))
+        for r, m, d in wide[:12]:
+            look.flag("REFUSED", m, f"{r}: {d}", "the safety screen refuses the archive")
+        look.line("Safety screen: REFUSED. " + "; ".join(f"{r} ({m})" for r, m, d in wide[:4]))
+    elif xonly or excluded:
+        for r, m, d in xonly[:3]:
+            look.flag("EXTRACT-LIMIT", m, f"{r}: {d}", "--extract is not offered; members are still read in memory under their own caps")
+        left = [x for x in refusals if x[0] not in WIDE_RULES and x[0] not in EXTRACT_ONLY_RULES]
+        for r, m, d in [x for x in left if x[0] == "ratio"][:6]:
+            look.flag("REFUSED", m, f"{r}: {d}", "this member is not read or extracted (possible compression bomb); the rest of the archive is")
+        look.line("Safety screen: passed for reading" + ("" if not xonly else "; extraction refused (" + "; ".join(f"{r}: {d}" for r, m, d in xonly[:2]) + ")")
+                  + (f"; {len(excluded)} member(s) left out of member looks and extraction: " + "; ".join(f"{m} ({r})" for r, m, d in left[:4]) + (" ..." if len(left) > 4 else "") if excluded else "") + ".")
     else:
-        verdict = {"extract": True, "reasons": []}
         look.line("Safety screen: passed (names, links, ratios, overlaps).")
     look.write_text("screen.json", json.dumps(verdict, indent=1), "extraction screen verdict", "json")
     want_n = look.recurse
@@ -1217,8 +1277,8 @@ def look_archive(look):
         look.skip("extraction of members", f"{extra.get('format', st)} archives are listed and screened only; extraction is built for zip and tar", None, f'7z x "{p}" -o<empty folder>  (after the screen above passed)')
         look.step("list and screen", "7-Zip")
         return
-    if (look.extract or want_n) and not refusals:
-        pick = [m["name"] for m in members if m["kind"] == "file" and not m["enc"]]
+    if (look.extract or want_n) and not blocked:
+        pick = [m["name"] for m in members if m["kind"] == "file" and not m["enc"] and m["name"] not in excluded]
         pick = pick if look.extract else pick[:want_n]
         try:
             done = safe_extract(look, members, pick, look.out / "extract")
@@ -1228,11 +1288,12 @@ def look_archive(look):
                 core.recurse_into(look, d, str(d.relative_to(look.out / "extract")))
         except (ValueError, OSError, KeyError, tarfile.TarError, zipfile.BadZipFile) as e:
             look.flag("EXTRACT-STOPPED", "extract", str(e)[:150], "")
-    elif look.extract and refusals:
+    elif (look.extract or want_n) and blocked:
+        look.exit_code = 2
         look.line("--extract was given but the screen refused: nothing was written.")
     elif not look.extract and st != "epub":
         look.skip("member contents", "listed only; pass --extract (or --recurse N) after the screen passes", None, "python look.py FILE --extract")
-    if st == "epub" and not refusals:   # a book: its structure leads; the package listing above moves to --more
+    if st == "epub" and not wide:   # a book: its structure leads; the package listing above moves to --more
         look.items = [(it[0], min(it[1], 35), *it[2:]) for it in look.items]
         import dl_books
         dl_books.look_epub(look)
@@ -1274,7 +1335,11 @@ def docker_layers(look, names):
                         lt = tarfile.open(fileobj=t.extractfile(layer), mode="r:*")
                     except (KeyError, tarfile.TarError):
                         continue
-                    ms = lt.getmembers()
+                    ms, t1 = [], time.time()
+                    for mm in lt:   # member by member: a huge layer stops at the time cap instead of listing for minutes
+                        ms.append(mm)
+                        if time.time() - t1 >= TAR_LIST_SECONDS:
+                            break
                     wo = [m.name for m in ms if os.path.basename(m.name).startswith(".wh.")]
                     whiteouts += wo
                     rows.append([layer, sum(m.size for m in ms), len(ms), len(wo)])

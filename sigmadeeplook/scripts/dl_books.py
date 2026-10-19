@@ -17,16 +17,16 @@ import zipfile
 from collections import Counter
 
 import dl_core as core
+import dl_lex as LEX
 import dl_prof as P
 
 FRONT_TYPES = {"cover", "titlepage", "title-page", "frontmatter", "toc", "copyright-page", "dedication", "epigraph", "foreword", "preface", "halftitlepage",
                "halftitle", "seriespage", "imprint", "contributors", "other-credits", "landmarks", "loi", "lot", "errata", "frontispiece"}
 BACK_TYPES = {"backmatter", "appendix", "glossary", "index", "colophon", "afterword", "acknowledgments", "acknowledgements", "notes", "endnotes", "rearnotes",
               "bibliography", "biblioentry", "conclusion", "credits", "copyright", "about-the-author", "aboutauthor", "afterword"}
-FRONT_RE = re.compile(r"^\s*(cover|title( page)?|half[- ]title|copyright|(table of )?contents|toc|dedication|epigraph|foreword|preface|praise|also by|other books|"
-                      r"about this (e)?book|front ?matter|imprint|list of (figures|tables|illustrations))\b", re.I)
-BACK_RE = re.compile(r"^\s*(acknowledge?ments?|about the authors?|about the publisher|appendix|appendices|glossary|index|notes|endnotes|bibliography|references|"
-                     r"colophon|afterword|credits|back ?matter|further reading|reading group guide|discussion questions|copyright)\b", re.I)
+FRONT_RE = LEX.front_re()   # headings of front matter, back matter and closing sections in English, German and Serbian (dl_lex.py)
+BACK_RE = LEX.back_re()
+TAIL_RE = LEX.tail_re()
 CHAPTER_HEAD_RE = re.compile(r"^\s*(chapter|chapitre|kapitel|cap[ií]tulo|capitolo|hoofdstuk|rozdział|глава|part|book)\s+([\divxlcdm]+|[a-z-]+)\b", re.I)
 
 
@@ -151,7 +151,7 @@ def look_epub(look):
         txt = strip_tags(re.sub(r"<head>.*?</head>", " ", html, flags=re.S))
         label = (strip_tags(h.group(1)) if h else "") or (strip_tags(t.group(1)) if t else "") or p
         kind = classify(label, et.group(1) if et else "", it.get("linear"), landmarks.get(p))
-        docs.append({"path": p, "label": label[:80], "kind": kind, "words": len(txt.split()), "text": txt, "heads": heads, "images": len(re.findall(r"<img\b|<image\b", html))})
+        docs.append({"path": p, "label": label[:80], "kind": kind, "etype": (et.group(1) if et else ""), "words": len(txt.split()), "text": txt, "heads": heads, "images": len(re.findall(r"<img\b|<image\b", html))})
     body = [d for d in docs if d["kind"] == "body"]
     front = [d for d in docs if d["kind"] == "front"]
     back = [d for d in docs if d["kind"] == "back"]
@@ -161,6 +161,12 @@ def look_epub(look):
     title = (meta.get("title") or [""])[0]
     author = next((v[0] for k, v in meta.items() if k.startswith("creator")), "")
     look.fact("chapters", len(body))
+    closing = [d for d in docs if d["kind"] in ("body", "back") and (TAIL_RE.match(d["label"]) or d["etype"].split(":")[-1].lower() in ("conclusion", "epilogue", "afterword"))]
+    if closing:   # whether a conclusion, epilogue or summary is a chapter is a choice: print the count both ways
+        base = len([d for d in body if d not in closing])
+        look.fact("chapters_without_closing_sections", base)
+        look.fact("chapters_with_closing_sections", base + len(closing))
+        look.line(f"Chapter count both ways: {base} without the closing sections ({', '.join(d['label'] for d in closing[:4])}), {base + len(closing)} when they count as chapters.", 96, "structure")
     look.fact("spine_documents", len(docs))
     look.fact("words", words)
     look.fact("metadata", {k: v for k, v in meta.items()})

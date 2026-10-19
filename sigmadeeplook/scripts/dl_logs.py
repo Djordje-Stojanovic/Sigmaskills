@@ -6,6 +6,7 @@ need pysubs2 (MicroDVD, SAMI, TTML) become a Not-looked-at row until it is insta
 """
 import csv
 import io
+import os
 import re
 import statistics
 from collections import Counter
@@ -33,8 +34,45 @@ TRACE_LINES = 60        # continuation lines remembered per error template (the 
 CONT_RE = re.compile(r"^(\s+at\s|\s+\.\.\.\s\d+\smore|Caused by:|\s+File \"|Traceback \(|\s{4,}\S)")
 
 
+class SysYear:
+    """The year of a syslog line that has none ("Oct 19 10:00:01"). The last line is taken to be the latest such date before the file's modified
+    time; every month that goes back (Dec -> Jan) in the file moves the years one step, so a log across a New Year or an old archive gets
+    the right dates, spans and ordering. A first pass over the month names finds the number of year turns."""
+    def __init__(self, path, max_lines=3_000_000):
+        self.path, self.max_lines, self.year, self.prev = path, max_lines, None, None
+
+    def _start(self):
+        turns, prev, last = 0, None, None
+        try:
+            with open(self.path, "rb") as f:
+                for ln, raw in enumerate(f, 1):
+                    if ln > self.max_lines:
+                        break
+                    m = SYS_RE.search(raw[:40].decode("latin-1"))
+                    if not m or m.group(1) not in MONTHS:
+                        continue
+                    mo = MONTHS[m.group(1)]
+                    if prev is not None and mo < prev - 6:
+                        turns += 1
+                    prev, last = mo, (mo, int(m.group(2)))
+            mt = datetime.fromtimestamp(os.stat(self.path).st_mtime, tz=timezone.utc)
+            end = mt.year - (1 if last and (last[0], last[1]) > (mt.month, mt.day) else 0)
+        except OSError:
+            turns, end = 0, datetime.now(timezone.utc).year
+        self.year = end - turns
+
+    def at(self, month):
+        if self.year is None:
+            self._start()
+        if self.prev is not None and month < self.prev - 6:
+            self.year += 1
+        self.prev = month
+        return self.year
+
+
 def parse_ts(line, year_hint):
-    """-> (epoch seconds UTC, match end) or (None, 0). Naive times are taken as UTC (the look compares lines with each other only)."""
+    """-> (epoch seconds UTC, match end) or (None, 0). Naive times are taken as UTC (the look compares lines with each other only).
+    year_hint: a year, or a SysYear for lines that carry no year."""
     m = ISO_RE.search(line[:60])
     if m:
         y, mo, d, h, mi, s = (int(m.group(i)) for i in range(1, 7))
@@ -59,7 +97,8 @@ def parse_ts(line, year_hint):
     m = SYS_RE.search(line[:40])
     if m and m.group(1) in MONTHS:
         try:
-            dt = datetime(year_hint, MONTHS[m.group(1)], int(m.group(2)), int(m.group(3)), int(m.group(4)), int(m.group(5)), tzinfo=timezone.utc)
+            yr = year_hint.at(MONTHS[m.group(1)]) if isinstance(year_hint, SysYear) else year_hint
+            dt = datetime(yr, MONTHS[m.group(1)], int(m.group(2)), int(m.group(3)), int(m.group(4)), int(m.group(5)), tzinfo=timezone.utc)
         except ValueError:
             return None, 0
         return dt.timestamp(), m.end()
@@ -96,7 +135,7 @@ def scan_log(path, max_lines, max_seconds):
     """Stream the file. -> dict with records (as small tuples), drain, per-minute counts, timestamps, flags."""
     import time
     t0 = time.time()
-    year = datetime.now(timezone.utc).year
+    year = SysYear(path, max_lines)
     drain = U.Drain()
     minutes = Counter()
     levels = Counter()
@@ -181,7 +220,7 @@ def log_extras(look, r, max_lines):
     methods, statuses, paths, clients = Counter(), Counter(), Counter(), Counter()
     bytes_sum = access = 0
     hours = Counter()
-    year = datetime.now(timezone.utc).year
+    year = SysYear(look.path, max_lines)
 
     def lines():
         nonlocal blank, cont, bytes_sum, access

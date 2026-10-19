@@ -256,39 +256,41 @@ def transcribe_sample(look, dur):
     return segs, lang, wins
 
 
-NUMW = (r"(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|twenty|thirty|forty|fifty|sixty|"
-        r"hundred|thousand|million|billion|trillion|half|double|triple)")
-UNIT = (r"(?:mega|giga|tera|peta|exa|kilo)?(?:watts?|flops?|bytes?)|percent|%|[- ]?fold|times|\bx\b|dollars?|\$|euros?|€|years?|tons?|miles?|km\b|"
-        r"meters?|hours?|minutes?|cents?|per (?:second|minute|day|year|month)|\d[\d,.]* [a-z]{4,}s\b|\b" + NUMW + r" [a-z]{4,}s\b")
-RATIO = r"-?fold|\btimes\b|spread|\bgap\b|ratio|\d\s?x\b"
+import dl_lex as LEX
+
+NUMW = LEX.cached("numw", ("en",))   # the English lists, kept under their old names; every function below takes the speech language
+UNIT = LEX.cached("units", ("en",))
+RATIO = LEX.cached("ratio", ("en",))
+TURN = LEX.cached("turn", ("en",))
 
 
-def claim_score(t):
-    """How much a sentence states a checkable number: digits and number words, units, and a bonus for a ratio or a gap."""
-    nums = len(re.findall(r"\d[\d,.]*", t)) + len(re.findall(r"\b" + NUMW + r"\b", t, re.I))
+def claim_score(t, lang=None):
+    """How much a sentence states a checkable number: digits and number words, units, and a bonus for a ratio or a gap. The word lists follow
+    the speech language (English, German, Serbian/Croatian: dl_lex.py); English always counts."""
+    codes = LEX.langs(lang)
+    nums = len(re.findall(r"\d[\d,.]*", t)) + len(re.findall(r"\b" + LEX.cached("numw", codes) + r"\b", t, re.I))
     if not nums:
         return 0
-    return nums + 2 * min(2, len(re.findall(UNIT, t, re.I))) + 4 * bool(re.search(RATIO, t, re.I))
+    return nums + 2 * min(2, len(re.findall(LEX.cached("units", codes), t, re.I))) + 4 * bool(re.search(LEX.cached("ratio", codes), t, re.I))
 
 
-TURN = re.compile(r"^(?:now|next|finally|first|second|third|last|part \w+|chapter \w+)[, :]+((?:\w[\w'-]*\s?){1,4})[,.:;]", re.I)
-
-
-def section_turns(segs, limit=4):
+def section_turns(segs, limit=4, lang=None):
     """Where the speaker turns to a new part ('Now, the money, ...'): -> ['[12:44] the money', ...] (at most `limit`, in time order)."""
+    codes = LEX.langs(lang)
+    rx, skip = LEX.cached("turn", codes), LEX.cached("notturn", codes)
     out = []
     for s in segs:
-        m = TURN.match(" ".join(s["text"].split()))
-        if m and m.group(1).strip().lower() not in ("here", "we", "i", "it", "you", "let"):
+        m = rx.match(" ".join(s["text"].split()))
+        if m and m.group(1).strip().lower() not in skip:
             out.append(f"[{core.mmss(s['start'])}] {m.group(1).strip()}")
     return out[:limit] if len(out) <= limit else out[:2] + out[-(limit - 2):]
 
 
-def clip_around(t, n=115):
+def clip_around(t, n=115, lang=None):
     """At most n characters of t that keep the first number and its unit in view."""
     if len(t) <= n:
         return t
-    m = re.search(UNIT, t, re.I) or re.search(r"\d", t)
+    m = re.search(LEX.cached("units", LEX.langs(lang)), t, re.I) or re.search(r"\d", t)
     a = 0
     if m and m.end() > n:
         a = t.find(" ", m.end() - n + 10) + 1 or 0
@@ -298,7 +300,7 @@ def clip_around(t, n=115):
     return ("…" if a else "") + cut.rstrip(" ,;") + "…"
 
 
-def gist_lines(segs, dur, sampled):  # sampled: None, or the [(start, length)] windows the segments came from
+def gist_lines(segs, dur, sampled, lang=None):  # sampled: None, or the [(start, length)] windows the segments came from
     """What the speech is about, as quotes: the opening, then the 3 sentences that state the most checkable numbers (the premise in the
     first minute, a ratio or a gap, the closing numbers). A count, a ratio or a budget says more about a film than a mid-film sentence."""
     segs = [s for s in segs if len(s["text"].split()) >= 4]
@@ -317,11 +319,11 @@ def gist_lines(segs, dur, sampled):  # sampled: None, or the [(start, length)] w
     cand = []
     for s in segs[1:]:
         t = " ".join(s["text"].split())
-        sc = claim_score(t)
+        sc = claim_score(t, lang)
         if sc >= 5 and s["start"] > first["start"] + 5:
             cand.append((sc + (6 if s["start"] <= early else 0), s["start"], t))
     picked = []
-    ratio = [c for c in cand if re.search(RATIO, c[2], re.I) and c[1] > early]   # the headline gap or ratio, wherever it is said
+    ratio = [c for c in cand if re.search(LEX.cached("ratio", LEX.langs(lang)), c[2], re.I) and c[1] > early]   # the headline gap or ratio, wherever it is said
     if ratio:
         picked.append(max(ratio, key=lambda c: (c[0], -c[1])))
     for sc, st, t in sorted(cand, key=lambda c: (-c[0], c[1])):
@@ -330,7 +332,7 @@ def gist_lines(segs, dur, sampled):  # sampled: None, or the [(start, length)] w
         if all(abs(st - p[1]) >= 20 for p in picked):
             picked.append((sc, st, t))
     if picked:
-        return out + [f"[{core.mmss(st)}] {clip_around(t)}" for _, st, t in sorted(picked, key=lambda c: c[1])]
+        return out + [f"[{core.mmss(st)}] {clip_around(t, lang=lang)}" for _, st, t in sorted(picked, key=lambda c: c[1])]
     rest = [s for s in segs if s["start"] > segs[0]["start"] + 20]
     for grp in _thirds(rest, 2):
         out.append(q(max(grp, key=lambda s: (s["text"][:1].isupper(), min(len(s["text"]), 160)))))
@@ -375,13 +377,13 @@ def write_transcript(look, segs, lang, dur, sampled=None):
     reps = [s["text"] for s in segs]
     if len(reps) >= 4 and max(reps.count(t) for t in set(reps)) >= 4:
         look.flag("REPEATED-LINE", "transcript", "a line repeats 4+ times", "typical Whisper hallucination over silence or music")
-    gist = gist_lines(segs, dur, sampled)
+    gist = gist_lines(segs, dur, sampled, lang)
     if sampled:
         head = f"Speech ({lang}), heard in {len(sampled)} sample(s) of {int(sampled[0][1])} s at " + ", ".join(core.mmss(a) for a, _ in sampled) + f" ({nwords} words); the rest is not transcribed at the quick tier"
     else:
         span = max(1.0, segs[-1]["end"] - segs[0]["start"])
         head = f"Speech ({lang}): {nwords} words, ~{nwords / span * 60:.0f} per minute"
-    turns = [] if sampled else section_turns(segs)
+    turns = [] if sampled else section_turns(segs, lang=lang)
     look.line(head + (". Gist: " + " / ".join(gist) + ("." if turns else "") if gist else ".") + (" Turns to a new part: " + "; ".join(turns) + "." if turns else ""), 83)
     return words
 
