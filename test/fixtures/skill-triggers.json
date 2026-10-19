@@ -173,5 +173,20 @@
     "prompt": "Set this repo up for freedom: de-guardrail and decensor it",
     "skill": "sigmafreedom",
     "near": "sigmawrite"
+  },
+  {
+    "prompt": "Write a paste-ready loop prompt so an agent works through my open tickets overnight",
+    "skill": "sigmaloop",
+    "near": "sigmabrief"
+  },
+  {
+    "prompt": "Make a Claude Code loop prompt for an unattended run until morning",
+    "skill": "sigmaloop",
+    "near": "sigmaship"
+  },
+  {
+    "prompt": "Write a Codex goal prompt that works the tracker after one question round",
+    "skill": "sigmaloop",
+    "near": "sigmabrief"
   }
 ]

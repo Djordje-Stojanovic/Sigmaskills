@@ -64,6 +64,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaCreateArena** | `sigmacreatearena` | Blind-pairs arena that ranks any options by Elo per metric | Local arena page, Elo board with ranges and costs |
 | **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub, Hugging Face, video sites and non-English pages; counts sources read in full | Answer with source links, dates, read scope and access gaps |
 | **SigmaDeepLook** | `sigmadeeplook` | Helper for files an agent cannot read: video, speech, scanned PDF or image, binary, odd container. Plain text and data are read directly | Evidence with file paths, limits, and a side-by-side `view.html` |
+| **SigmaLoop** | `sigmaloop` | Turn a repo's open work into an unattended-run prompt for Claude Code, Codex, pi or T3 Code | One loop prompt in chat and one loop file |
 
 ### Which one do I need?
 
@@ -121,6 +122,10 @@ Reads public sources with bundled stdlib Python readers for Reddit, Hacker News,
 
 The helper for content an agent cannot read with its own tools: video frames, speech, scanned PDFs and images, fax TIFFs, binaries and odd containers. Plain text, CSV, JSON and code stay with the agent, which reads or queries them itself. A one-line gate decides; `--ask` gives one exact answer. It never runs the input, uses no network, and lists each step it could not do, with its install line. Python alone covers the basics.
 
+### SigmaLoop
+
+Reads a repo's open work (a ticket, the issue tracker, a TRACKER file), asks one numbered round of questions with a recommended answer each, then writes a paste-ready prompt for your host (Claude Code `/loop`, Codex `/goal`, pi plan mode, T3 Code or a plain instruction) and a loop file the prompt tells the agent to re-read at every wake. It carries the task order, crew, wake rules, landing rules and stop line. It never starts the loop.
+
 ---
 
 ## Install
@@ -161,6 +166,7 @@ $sigmawritegui
 $sigmacreatearena Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
 $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
+$sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 ```
 
 </td>
@@ -181,6 +187,7 @@ $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
 /skill:sigmacreatearena Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
 /skill:sigmadeeplook What happens at 2:10 in ~/clips/demo.mp4?
+/skill:sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 ```
 
 </td>
@@ -201,6 +208,7 @@ $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
 | `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |
 | `sigmadeeplook` | a file or folder path · a question about it | Evidence with paths and a Limits list; never runs the file |
+| `sigmaloop` | host · end time · a ticket or tracker | One question round; writes the prompt and a loop file; never starts the loop |
 
 ### Requirements
 
@@ -217,6 +225,7 @@ $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
 | SigmaWriteGUI | A writable output folder and a browser or HTML preview; chat fallback when unavailable |
 | SigmaCreateArena | Python 3 (standard library only) and a browser; the server listens on 127.0.0.1 |
 | SigmaResearch | Python 3 for the bundled readers · `yt-dlp` for YouTube comments · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
+| SigmaLoop | Read access to the repo and its tracker · `gh` is optional · the host you name (Claude Code, Codex, pi or T3 Code) to run the loop |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 
 Skills use the shell native to the machine that runs the agent (PowerShell on Windows, POSIX shell elsewhere). They do not assume WSL.

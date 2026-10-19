@@ -58,6 +58,11 @@
       "id": "sigmafreedom",
       "title": "SigmaFreedom",
       "needsReferences": true
+    },
+    {
+      "id": "sigmaloop",
+      "title": "SigmaLoop",
+      "needsReferences": true
     }
   ],
   "retired": [
