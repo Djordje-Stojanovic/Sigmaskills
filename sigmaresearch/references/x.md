@@ -1,9 +1,9 @@
 # X in Chrome
 
-X is read only through the owner's already signed-in Chrome. The script never contacts X; it normalizes what you copy out of the page. Follow [access boundaries](../SKILL.md#access-boundaries).
+X is read only through the owner's already signed-in Chrome. The script never contacts X; it normalizes what you copy out of the page. Follow [Access and persistence](../SKILL.md#access-and-persistence).
 
 1. Discover **Claude in Chrome** tools (`mcp__claude-in-chrome__*`). If absent, report that X is unavailable here. Do not assume another browser has the session.
-2. Use the existing session only. If a login wall appears, stop: the owner must restore the session. The agent never signs in or handles credentials.
+2. Use the existing session. If a login wall appears, the session has expired: log that route as a gap, take the other routes (the thread's archive copy, a search-engine view of the posts, other platforms), and tell the owner that signing in again unlocks it.
 3. Open your own tab. Combine the topic with `min_faves:200 since:YYYY-MM-DD`, URL-encode the whole query, and navigate to `https://x.com/search?q=ENCODED&f=top` (`f=live` for newest). Wait about five seconds.
 4. Run this in the page with the browser JavaScript tool, and save the returned JSON to a file:
 
@@ -20,4 +20,4 @@ JSON.stringify([...document.querySelectorAll('article')].map(a => ({
 5. Normalize, hash authors and score: `python scripts/read.py x --from-json FILE` (or `-` for stdin). Open relevant status permalinks for threads and replies, scroll, and repeat. Replies the page did not render are unread; label the thread partial. If the selectors return nothing, inspect the rendered page: an empty result is not a read. Like counts come from X's rounded labels (`1.2K` becomes 1200).
 6. Close the tab you created. Leave the owner's other tabs alone.
 
-Stop on a bot check, access denial, 403 or 429. Do not replay requests, extract tokens, call private endpoints or try mirrors. If nothing works, finish with an X access gap and the other platforms.
+On a bot check, an access denial, a 403 or a 429, wait and retry slower, read the page's own network calls for the JSON it loads, and try the mirrors and archives of [deep routes](deep-routes.md). If every route fails, finish with an X access gap, the route list and the other platforms.
