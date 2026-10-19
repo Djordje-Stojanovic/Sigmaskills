@@ -1,23 +1,23 @@
 # Access ladder
 
-Walk this ladder for every URL you need to read in full. When a rung is blocked, take the next and log which rung worked. Do not report a platform as dead before the last rung. Follow the [access boundaries](../SKILL.md#access-boundaries). The tests below were run on 2026-10-15 from one home connection; that is historical evidence, not a live check.
+Walk this ladder for every URL you need to read in full. When a rung is blocked, take the next and log which rung worked. A platform is dead only when every route that fits it is on your route list: the wider catalogue is in [deep routes](deep-routes.md), and the persistence rules are in [Access and persistence](../SKILL.md#access-and-persistence). The tests below were run on 2026-10-15 from one home connection; that is historical evidence, not a live check.
 
 | Rung | Route | Example | Blocked means |
 |---|---|---|---|
 | 1 | Public JSON endpoint | Reddit: add `.json?limit=500` to the thread URL (post and every comment); also on `old.reddit.com` | 403 or 429: next rung |
-| 2 | RSS or Atom feed | Reddit: add `.rss?limit=100` to the thread URL (post and about 95 comments); most blogs, news sites and subreddits publish a feed | 429: wait, retry once; then next rung |
+| 2 | RSS or Atom feed | Reddit: add `.rss?limit=100` to the thread URL (post and about 95 comments); most blogs, news sites and subreddits publish a feed | 429: wait, retry slower (45 s, 2 min, 5 min) while you work other rungs; then next rung |
 | 3 | Old, lite or mobile HTML | `curl -s -L -A "$UA" URL`, then strip the tags; article pages of most news sites | an empty shell page: next rung |
 | 4 | Official API or free tier that needs no login | Hacker News Firebase API, GitHub through an existing `gh`, a site's public JSON list | a key or login is needed: next rung |
-| 5 | Archive mirror | `https://web.archive.org/web/<URL>` for a public page that is down or removed | no copy: next rung. Never use a mirror to get past a paywall |
+| 5 | Archive mirror | `https://web.archive.org/web/<URL>` (and `archive.ph/newest/<URL>`, Common Crawl, a project mirror) for a page that is down, removed, changed or blocked | no copy: next rung |
 | 6 | The host's own browser tool | its read-page or page-text call; it renders pages that plain requests cannot | the tool refuses the site: next rung |
-| 7 | The owner's browser session | Claude in Chrome, read only: [X in Chrome](x.md) | extension missing or session gone: log the gap |
+| 7 | The owner's browser session | Claude in Chrome on his existing logins, read only, any site: [X in Chrome](x.md); read the page's network calls for the JSON behind it | extension missing or session gone: log the gap |
 | 8 | Video sites | subtitles, then audio and speech-to-text: [video sites](#video-sites) | the site refuses the audio: log the gap |
 
 `UA` is an ordinary browser user agent, for example `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36`. It is plain request metadata, never a disguise. On Windows PowerShell call `curl.exe`, because `curl` is an alias.
 
 ## Rate limits
 
-Send requests one at a time per site, about 10 seconds apart. On 429 wait 45 to 60 seconds and retry that URL once. If several agents share one IP address, they share the limit: that is the usual cause of a 429. A second 429, a 403, a login wall or a bot check ends that rung for that URL. Never solve a CAPTCHA, log in or use a cookie or token.
+Send requests one at a time per site, about 10 seconds apart. On 429 wait 45 to 60 seconds and retry that URL; if it comes again, wait 2 minutes, then 5, and work other rungs meanwhile (honor `Retry-After`). If several agents share one IP address, they share the limit: that is the usual cause of a 429. A 403, a login wall, a CAPTCHA or a bot check closes that rung for that URL: take the next rung to the same facts. Solving the check is not a rung. Log every rung on the route list.
 
 ## What the 2026-10-15 test showed
 
