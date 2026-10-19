@@ -576,3 +576,16 @@ test('SigmaBrief examples follow its own dispatch format', () => {
   assert.ok(lines.length >= 3, 'expected dispatch examples in the contract');
   assert.doesNotMatch(contract, /Open WebUI|Symfonium|CrowdSec|C:\AI\RepoName/i, 'examples must be generic');
 });
+
+test('SigmaTaste runs the three wait-what checks as a fix list that never blocks', () => {
+  const skill = read('sigmataste/SKILL.md');
+  const checks = read('sigmataste/references/wait-what.md');
+  assert.match(skill, /references\/wait-what\.md/, 'SKILL.md must point to the wait-what checks');
+  assert.match(skill, /Wait-what fixes/);
+  assert.match(read('sigmataste/references/plan.md'), /^## Wait-what fixes/m, 'the plan template needs the Wait-what fixes section');
+  for (const part of [/glossary in sync/i, /glossary current/i, /DESIGN\.md/]) assert.match(checks, part);
+  for (const action of ['update', 'merge', 'retire', 'delete']) assert.match(checks, new RegExp(`\\b${action}\\b`, 'i'));
+  assert.match(checks, /never block/i);
+  assert.match(checks, /nothing is (moved|changed|deleted)/i, 'the checks must not edit the glossary themselves');
+  assert.doesNotMatch(checks, /\b\d+ (times|uses|words|occurrences)\b/i, 'no hardcoded rules: the judge uses taste, not counts');
+});

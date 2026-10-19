@@ -6,6 +6,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
+- `sigmataste`: three wait-what checks beside the lenses, in `references/wait-what.md`. Glossary in sync (words the project uses that its glossary lacks, one word with two meanings), glossary current (entries nothing uses, or whose meaning drifted, each with update, merge, retire or delete and a reason), and the target against the repo's `DESIGN.md` when it is a UI. They never block, use judgment instead of fixed rules, move or delete nothing, and end in a "Wait-what fixes" section of the plan for the calling agent to apply.
+
 - `sigmadeeplook`: dBASE / FoxPro `.dbf` tables are detected by structure and decoded (record count, fields and types, language driver, deleted records, truncation), then profiled like a CSV. Container counts for audio files from the bytes alone (Ogg pages, packets, streams, codec and duration; WAV chunks; FLAC blocks; MP3 frames). Element values by path over the whole XML document in the first print, and the same for XML members of zip-based formats, including single-line ones (Visio-style pages).
 
 ### Changed

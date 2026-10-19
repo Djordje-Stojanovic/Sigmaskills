@@ -40,6 +40,12 @@ A tiny arcade cabinet in the terminal. The board gets a frame, the snake gets a 
 
 - "Game over" alone, then exit → say the score and the next action (feeds change #3).
 
+## Wait-what fixes
+
+glossary in sync · README.md "best" · the README says "best" for the high score, the game says "hi" → use one word in both · two words for one thing
+glossary current · no glossary → nothing to check
+DESIGN.md · none found → skipped
+
 ## Keep
 
 The 10 x 10 board and the plain W, A, S, D controls.

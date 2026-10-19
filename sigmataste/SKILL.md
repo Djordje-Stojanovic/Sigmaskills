@@ -40,6 +40,10 @@ For each chosen lens, read its file in [references/lenses/](references/lenses/) 
 
 The 14 lenses: [first glance](references/lenses/first-glance.md) · [only this one](references/lenses/only-this-one.md) · [spent defaults](references/lenses/spent-defaults.md) · [type](references/lenses/type.md) · [colour](references/lenses/colour.md) · [one bold place](references/lenses/one-bold-place.md) · [rhythm](references/lenses/rhythm.md) · [motion](references/lenses/motion.md) · [feel](references/lenses/feel.md) · [interface words](references/lenses/interface-words.md) · [prose](references/lenses/prose.md) · [the pitch](references/lenses/the-pitch.md) · [everyone](references/lenses/everyone.md) · [charts](references/lenses/charts.md). Sources, adoption and licences: [sources.md](references/sources.md).
 
+## 3b. Wait-what checks
+
+Also run the three checks in [references/wait-what.md](references/wait-what.md): glossary in sync, glossary current, and the target against the repo's `DESIGN.md`. They are not lenses, they never block, and they use your judgment, not fixed rules. Skip a check whose source is missing. Their result is one fix list, the plan's "Wait-what fixes" section. Nothing is moved or deleted.
+
 ## 4. Rank by visible difference
 
 Merge findings from all lenses into changes. Several findings often share one fix (one new type scale fixes five type findings). Rank the changes by how much a stranger would notice, then by effort. Put the big moves first: a new point of view, one bold place, a real type scale, colour with roles. Polish goes last or into "Later". Cut anything that only a checklist would want.
@@ -48,7 +52,7 @@ Before you write, do the generic test on your own plan: would you write the same
 
 ## 5. Write the plan, then stop
 
-Write `sigmataste-plan-DD-MM-YYYY.md` (today's date) from the template in [plan.md](references/plan.md): the direction in one paragraph, the ranked changes with a verify step each, the per-lens findings, what to keep, what was not judged, and the next step. Then stop. Do not start the work.
+Write `sigmataste-plan-DD-MM-YYYY.md` (today's date) from the template in [plan.md](references/plan.md): the direction in one paragraph, the ranked changes with a verify step each, the per-lens findings, the wait-what fixes, what to keep, what was not judged, and the next step. Then stop. Do not start the work.
 
 ## Final response
 
