@@ -15,6 +15,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 - `sigmaship`: audited against today's ship flow. It never checks out, resets or commits in a shared main checkout, names known reds instead of fixing them, merges with `--match-head-commit`, removes the worktree before the branches, syncs main with `fetch` + `merge --ff-only`, proves deploys live, ticks the tracker with the PR number, syncs docs, and uses an own-diff check as the review round when sub-agents are not allowed. The checkout + pull steps and the always-stop red baseline are gone (#116).
 
+### Fixed
+
+- `sigmafreedom`: `scripts/guardrail_lint.py` held raw backspace bytes where the owner regex has `\b` word boundaries (a heredoc ate the backslashes), so owner-attributed lines were not exempt. The bytes are `\b` again, and a test keeps every shipped Python file free of control bytes.
+
 ## [0.9.2] — 2026-10-18
 
 ### Fixed
