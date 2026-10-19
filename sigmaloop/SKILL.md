@@ -1,13 +1,13 @@
 ---
 name: sigmaloop
-description: Write a paste-ready unattended-run prompt (Claude Code /loop, Codex /goal, pi plan mode, T3 Code) and a loop file from open work after one question round. Do not use to start or work the run.
+description: Write a paste-ready unattended-run prompt (Claude Code /loop, Codex /goal, Antigravity /goal, pi with lapi, T3 Code) and a loop file from open work after one question round. Do not use to start or work the run.
 ---
 
 # SigmaLoop
 
 Turn a repo's open work into one loop prompt for the host the user names, plus a loop file the prompt tells the agent to re-read. SigmaLoop is a prompt factory: read, ask once, write two things, stop. It never starts the loop and never works the items.
 
-Read [questions.md](references/questions.md) before step 2, [loop-file.md](references/loop-file.md) before step 3, and [hosts.md](references/hosts.md) before step 4. [example.md](references/example.md) is a filled loop file.
+Read [questions.md](references/questions.md) before step 2, [loop-file.md](references/loop-file.md) before step 3, and [hosts.md](references/hosts.md) before step 4 (it names one host file to read). [example.md](references/example.md) is a filled loop file.
 
 ## Operating contract
 
@@ -42,7 +42,7 @@ Fill the template in [loop-file.md](references/loop-file.md) with the answers an
 
 ## 4. Write the host prompt
 
-Use the skeleton for the named host in [hosts.md](references/hosts.md). The prompt is short and carries five things: the ranked task order (pointer plus the first items), the crew and model mix, the wake rules, the landing rules, and the stop line. It tells the agent to re-read the loop file. Match the host's limits, its wake mechanism, and its permission setup. Tell the user what the host will not do (for example, no restart after a closed session).
+Use the skeleton in the host file that [hosts.md](references/hosts.md) names. The prompt is short and carries five things: the ranked task order (pointer plus the first items), the crew and model mix, the wake rules, the landing rules, and the stop line. It tells the agent to re-read the loop file. Use the mechanism the host file names for the way the run starts (a live session or headless), and only tools that host has: a prompt that needs `ScheduleWakeup` outside Claude Code stalls. If no host file fits, use the plain instruction. Match the host's limits and permission setup. Tell the user what the host will not do (for example, no restart after a closed session) and any fact the host file marks as not run.
 
 ## 5. Stop
 

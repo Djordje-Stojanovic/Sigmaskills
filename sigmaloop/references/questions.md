@@ -6,7 +6,7 @@ Ask only what the repo cannot answer. If it answers one fully (a stop line in th
 
 ## The ten
 
-1. **Host.** Claude Code `/loop`, Codex `/goal`, pi plan mode, T3 Code, or other (plain instruction). Recommended: the host the user is already in; else Claude Code `/loop` when the work waits on CI, renders, or deploys, and Codex `/goal` when it is back-to-back work with a checkable end state.
+1. **Host, and live or headless.** Claude Code `/loop` or `/goal`, Codex `/goal`, Antigravity `agy` `/goal`, pi with lapi, T3 Code, or other (plain instruction); and whether a person leaves a session open or a script starts it. Recommended: the host the user is already in, live; else Claude Code `/loop` when the work waits on CI, renders, or deploys, and `/goal` (Codex or `agy`) when it is back-to-back work with a checkable end state. Headless: Claude Code or `agy` `-p "/goal …"`, or a Codex `Stop` hook.
 2. **End time and zone.** Date, clock time, time zone; also the longest the loop may run. Recommended: the deadline in the ticket or plan, else the next morning at a time the user named earlier, else 8 hours from now. State the zone you use. Claude Code expires a recurring loop after 7 days, so flag any run longer than that.
 3. **Scope and order.** The ranked list from step 1 (id, one line, size). Recommended: top down by value, then by unblocking power; blocked and user-live items last or off. Show the first 10 and the count of the rest.
 4. **Crew and model mix.** Maximum agents at once, and the mix by job. Recommended: follow the repo's rule if `AGENTS.md` or memory names one; else solo plus one reviewer. If the host has no sub-agents (pi, some T3 providers), say "solo, one item at a time".

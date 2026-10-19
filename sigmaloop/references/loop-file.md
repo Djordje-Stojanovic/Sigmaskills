@@ -12,7 +12,7 @@ Save to the place the user chose (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md
 Host: <host>. Stop line: <date, time, zone>. Re-read this file at every <wake | item>: edits apply on the next one.
 
 ## Stance
-Be optimistic and aggressive: plan to finish every open item by the stop line, not just log it. Never idle: if no agent slot is free, do the next small item yourself. A free slot or an idle wake is a bug. <Host wake rule, one line, from hosts.md.>
+Be optimistic and aggressive: plan to finish every open item by the stop line, not just log it. Never idle: if no agent slot is free, do the next small item yourself. A free slot or an idle wake is a bug. <Host wake rule, one line, from the host file.>
 The user pre-authorises for this whole loop: <list from question 7>. Do not stop to ask; when no rule decides, take the safer option and log it as `Ruling: <what> - <why> - <cost if wrong>`.
 
 ## Goal
@@ -27,7 +27,7 @@ Max <N> sub-agents at once: <mix by model and effort>. <Which job goes to which 
 3. For each finished agent, one quick check (its key test or output). Fix wrong ticks, add dated evidence, merge or deploy what it left.
 4. Fill every free slot from Priority. Skip items that share files with a running agent.
 5. Update the handoff: time, running agents and items, done since the last wake, queue.
-6. <Host wake call and delay rule, from hosts.md.>
+6. <Host wake call and delay rule, from the host file.>
 
 ## Priority
 <The ranked list, or the section of the tracker that holds it, with who owns what. Items that need the user live: wait; write their facts, never decide them. No-touch list: files, items, agents, systems.>
@@ -58,7 +58,7 @@ Search <repos and machines in scope> for the next improvement that moves us forw
 <Off-limits from question 6, one line each.>
 
 ## Finish (at the stop line)
-Start nothing new. Let running agents finish the current step and write their state into their item. Close helper servers. Delete merged worktrees and branches. Write the final handoff: done since the start (with evidence), open (reason, next step), steps only the user can do. Report in short plain English. <Host stop call, from hosts.md.>
+Start nothing new. Let running agents finish the current step and write their state into their item. Close helper servers. Delete merged worktrees and branches. Write the final handoff: done since the start (with evidence), open (reason, next step), steps only the user can do. Report in short plain English. <Host stop call, from the host file.>
 ```
 
 ## Rules for the file
