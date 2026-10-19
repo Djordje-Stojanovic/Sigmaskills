@@ -4,10 +4,16 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-10-19
+
 ### Added
 
 - `sigmaloop` (SigmaLoop): reads a repo's open work, asks one dense round of questions (host, end time, order, crew and model mix, off-limits, pre-authorised actions, landing, stop line), then writes a paste-ready loop prompt for Claude Code `/loop`, Codex `/goal`, pi plan mode, T3 Code or a plain instruction, plus a loop file the prompt tells the agent to re-read at every wake. It never starts the loop.
 - `sigmataste` (SigmaTaste): looks at a page, app, deck, doc, image or film, asks one round of at most 10 questions (which of 14 taste lenses, what the owner expects, scope, brand, constraints), then writes `sigmataste-plan-DD-MM-YYYY.md` with the changes that make a big visible difference, ranked, each with a verify step, and stops. The lenses are fitted from the taste, design and writing skills in claude-skills-collection, credited in `references/sources.md`.
+
+### Changed
+
+- `sigmaship`: audited against today's ship flow. It never checks out, resets or commits in a shared main checkout, names known reds instead of fixing them, merges with `--match-head-commit`, removes the worktree before the branches, syncs main with `fetch` + `merge --ff-only`, proves deploys live, ticks the tracker with the PR number, syncs docs, and uses an own-diff check as the review round when sub-agents are not allowed. The checkout + pull steps and the always-stop red baseline are gone (#116).
 
 ## [0.9.2] — 2026-10-18
 
@@ -286,7 +292,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.2...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.2...v0.10.0
 [0.9.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.8.0...v0.9.0
