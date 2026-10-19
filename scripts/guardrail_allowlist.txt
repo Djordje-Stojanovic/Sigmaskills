@@ -48,3 +48,5 @@ Do not use to post, reply
 description: 'Builds a fast blind-pairs arena so the user ranks any options by Elo per metric: models, settings, voices, captions, thumbnails, outfits. Grills f
 allowed / we will not" line carries no weight; `scripts/guardrail_lint.py` holds the short list of rules that stay.
 description: 'SigmaWrite plus a GUI: plain, short English in interactive status and question boards the user reads and types into. Use when the user says "easy
+description: Write a paste-ready unattended-run prompt (Claude Code /lo
+description: Taste pass on a page, app, deck, doc, image or film. Asks

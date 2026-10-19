@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaTaste
+  short_description: A ranked taste plan of big visible changes for one target
+  default_prompt: Use $sigmataste to look at this target through the taste lenses,
+    ask one round of questions, and write the taste plan. Do not build the changes.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

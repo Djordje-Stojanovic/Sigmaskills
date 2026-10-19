@@ -63,6 +63,11 @@
       "id": "sigmaloop",
       "title": "SigmaLoop",
       "needsReferences": true
+    },
+    {
+      "id": "sigmataste",
+      "title": "SigmaTaste",
+      "needsReferences": true
     }
   ],
   "retired": [

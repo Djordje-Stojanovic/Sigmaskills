@@ -299,7 +299,30 @@ function sigmaloop({ files, result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmataste writes one plan file at the root, ranked with a verify step per change, and changes nothing else.
+const TASTE_PLAN = /^sigmataste-plan-\d{2}-\d{2}-\d{4}\.md$/;
+const TASTE_SECTIONS = ['Direction', 'Ranked changes', 'Findings by lens', 'Keep', 'Not judged', 'Next step'];
+
+function sigmataste({ files, result }) {
+  const problems = [];
+  for (const [name, text] of Object.entries(files)) {
+    if (TASTE_PLAN.test(name)) continue;
+    const original = path.join(FIXTURE, ...name.split('/'));
+    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed the target repository: ${name}`);
+  }
+  const plans = Object.keys(files).filter((name) => TASTE_PLAN.test(name));
+  if (plans.length !== 1) return [...problems, `expected one sigmataste-plan-DD-MM-YYYY.md at the root, found ${plans.length}`];
+  const [name] = plans;
+  const plan = files[name];
+  problems.push(...requireInOrder(plan, TASTE_SECTIONS, name));
+  problems.push(...requireText(plan, [/^\|\s*#\s*\|\s*Change\s*\|.*\|\s*Verify\s*\|/m, /^\|\s*1\s*\|/m], name));
+  const next = plan.split(/^## Next step/m)[1] ?? '';
+  if (!/\/(?:sigmaloop|sigmaship|implement-spec)\b/.test(next)) problems.push(`${name}: "Next step" names none of /sigmaloop, /sigmaship, /implement-spec`);
+  if (!result.includes(name)) problems.push('reply does not name the plan file');
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];
