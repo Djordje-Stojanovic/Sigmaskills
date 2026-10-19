@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaloop`: one portable card, one host file per host. `references/hosts.md` is now a table (loop mechanism, clock wake, headless run, skill folder) and the plain instruction; `host-claude-code.md`, `host-codex.md`, `host-antigravity.md`, `host-pi.md` and `host-t3-code.md` hold each host's facts, each marked run, doc or source, and the prompt skeleton. New: Antigravity `agy` (`/goal`, `/schedule`, Stop hook), the lapi plan-file loop for pi (a `lapi-workflow` box fence, or nothing loops), T3 Code's `schedule_task` tool (the old card said it had no scheduler), headless runs (`claude -p "/goal"`, `agy -p "/goal"`, a Codex `Stop` hook; `codex exec` does not expand `/goal`, and `claude -p "/loop"` runs once), and the Git Bash path rewrite of a leading `/word` on Windows.
+
 ## [0.11.0] — 2026-10-19
 
 ### Added
