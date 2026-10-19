@@ -31,6 +31,10 @@ Big moves first. Polish last or in "Later".
 
 One line "Nothing big here" when the lens found nothing worth a change.
 
+## Wait-what fixes
+
+One line per item, from [wait-what.md](wait-what.md): `<check> · <anchor> · <what is wrong> → <what to do> · <why>`. Checks: glossary in sync, glossary current (update, merge, retire or delete, with a reason), DESIGN.md clashes. The builder applies what is true. A check with nothing to say gets one line.
+
 ## Keep
 
 What already works or is the brand's identity, so the builder does not "fix" it.
