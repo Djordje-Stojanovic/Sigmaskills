@@ -124,16 +124,16 @@
   "slip.zip": {"type": "archive", "exit": 2, "facts": [
     {"id": "path traversal refused", "re": "REFUSED[^\\n]*path traversal", "needs": []}
   ], "absent": ["extract"]},
-  "ratio.zip": {"type": "archive", "exit": 2, "facts": [
+  "ratio.zip": {"type": "archive", "exit": 0, "facts": [
     {"id": "ratio refused", "re": "REFUSED[^\\n]*ratio[^\\n]*limit 200", "needs": []}
   ], "absent": ["extract"]},
   "nested.zip": {"type": "archive", "exit": 2, "facts": [
     {"id": "nesting refused", "re": "REFUSED[^\\n]*nesting", "needs": []}
   ], "absent": ["extract"]},
   "links.tar": {"type": "archive", "exit": 2, "facts": [
-    {"id": "symlink refused", "re": "REFUSED[^\\n]*link-or-device", "needs": []}
+    {"id": "symlink refused", "re": "REFUSED[^\\n]*unsafe-link", "needs": []}
   ], "absent": ["extract"],
-  "questions": [{"q": "Is it safe to extract?", "a": "no: it holds a symlink that points outside the folder"}, {"q": "Which rule fired?", "a": "link-or-device"}, {"q": "Was anything written?", "a": "no"}]},
+  "questions": [{"q": "Is it safe to extract?", "a": "no: it holds a symlink that points outside the folder"}, {"q": "Which rule fired?", "a": "unsafe-link"}, {"q": "Was anything written?", "a": "no"}]},
   "ok.tar.gz": {"type": "archive", "exit": 0, "facts": [
     {"id": "3 members", "re": "\"members\": 3", "needs": []},
     {"id": "screen passed", "re": "Safety screen: passed", "needs": []}

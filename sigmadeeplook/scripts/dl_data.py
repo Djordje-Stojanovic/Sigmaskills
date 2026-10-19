@@ -1220,6 +1220,9 @@ def data_xml(look):
 
 def data_toml(look):
     import dl_prof as P
+    if look.size > (64 << 20):
+        look.skip("TOML structure", f"{core.human(look.size)} is over the 64.0 MB a TOML document is parsed whole at", None, "read it as text with --grep / --lines")
+        return
     text = open(look.path, "rb").read().decode("utf-8", "replace")
     try:
         import tomllib

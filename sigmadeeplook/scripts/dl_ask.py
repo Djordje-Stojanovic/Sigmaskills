@@ -12,37 +12,36 @@ No model reads the question. It is cut into words, and three plain rules turn it
 3. the filters: question words or phrases equal to a value of a text column (Wien, North, server), comparisons ("over 100",
    "at least 5", "below 2"), and a year ("in 2025") on a date column.
 
+The question may be English, German or Serbian/Croatian (dl_asklang.py: the words of each language are one table, the question is folded
+to plain lowercase letters first). A table is held in memory up to a row and cell budget; past it the answer says PARTIAL with the
+rows read and the rows in the file, and never presents a part as the whole.
+
 The table that matches the most words wins. The answer prints with the computation, the filters and the rows used, so it can be
 checked; it never guesses, and it says so when no table matches. Text questions (PDF, Word, transcripts, OCR) get the stated
 counts of the look and the best-matching lines with their page, line or time.
 """
+import codecs
 import csv
 import io
 import json
 import math
+import os
 import re
 import sqlite3
 from pathlib import Path
 
+import dl_asklang as AL
 import dl_core as core
 import dl_prof as P
+import dl_util as U
 
-STOP = set("""a an the of in on at to for from by with and or is are was were be been being what which who whom whose how many much does do did
-has have had this that these those there it its as per each than then all any me give tell show list find please file document data
-table row rows record records entry entries value values field fields column columns sheet i we you they he she my our your their
-would could should can will shall about into over under above below more less most least than between during after before when where
-number count total sum average mean highest lowest largest smallest biggest maximum minimum max min distinct unique different
-combined overall altogether made make makes get got say says said top peak greatest fewest cheapest longest shortest earliest latest first last whole every""".split())
-OPS = [("count", r"\bhow many\b|\bnumber of\b|\bcount\b|\bhow often\b"),
-       ("mean", r"\b(average|mean|avg)\b"),
-       ("sum", r"\b(total|sum|combined|altogether|overall|how much)\b"),
-       ("max", r"\b(highest|largest|biggest|greatest|maximum|max|most expensive|longest|top|peak|most|latest)\b"),
-       ("min", r"\b(lowest|smallest|least|minimum|min|cheapest|shortest|fewest|earliest)\b"),
-       ("distinct", r"\b(distinct|unique|different)\b")]
-CMP_RE = re.compile(r"(?i)\b(over|above|more than|greater than|exceeding|at least|under|below|less than|fewer than|at most|not more than)\s+([-+]?\d[\d,]*(?:\.\d+)?)|(>=|<=|>|<|=)\s*([-+]?\d[\d,]*(?:\.\d+)?)")
+STOP = set(AL.LANGS["en"]["stop"].split())
 YEAR_RE = re.compile(r"\b(19\d\d|20\d\d)\b")
 DATE_VAL_RE = re.compile(r"^\s*\d{4}-\d\d(-\d\d)?")
-MAX_ROWS = 2_000_000
+MAX_ROWS = U.byte_cap("ASK_ROWS", 2_000_000)      # rows held per table
+MAX_CELLS = U.byte_cap("ASK_CELLS", 40_000_000)   # cells held over all tables of one question (about 2-4 GB of Python strings at the cap)
+JSON_DOC_CAP = U.byte_cap("ASK_JSON", 256 << 20)  # a JSON document is parsed whole: past this size it is named, not loaded
+SNIFF_BYTES = 8 << 20
 
 
 def stem(w):
@@ -56,7 +55,7 @@ def stem(w):
 
 def words(s):
     """Column names and questions to comparable word stems: 'unitPrice_EUR' -> unit, price, eur."""
-    s = re.sub(r"([a-z])([A-Z])", r"\1 \2", str(s))
+    s = AL.fold(re.sub(r"([a-z])([A-Z])", r"\1 \2", str(s)))   # accents and Cyrillic folded: "Preis" = "preis", "Cena" = "цена"
     return [stem(w) for w in re.findall(r"[^\W_]+", s, re.U)]
 
 
@@ -69,8 +68,9 @@ def num(v):
 
 
 class Table:
-    def __init__(self, name, cols, rows, pos, where, unit="row"):
+    def __init__(self, name, cols, rows, pos, where, unit="row", total=None):
         self.name, self.cols, self.rows, self.pos, self.where, self.unit = name, [str(c) for c in cols], rows, pos, where, unit
+        self.total = total   # the rows the source holds when only part was read (None: every row is here)
         self.colw = [set(words(c)) for c in self.cols]
         self.ownw = [set(words(c.rsplit(".", 1)[-1])) for c in self.cols]   # the column's own name, without its ancestors' prefix
         self.namew = set(words(re.sub(r"\[\]", "", name).rsplit(".", 1)[-1]))   # a record set is named by its last path step
@@ -87,23 +87,54 @@ class Table:
 
 
 # ---------------------------------------------------------------- readers: every table the look can re-read exactly
-def read_delimited(p, delim=None):
+class Budget:
+    """Cells still allowed in memory for this question: a table read stops at the row cap or when the budget is spent."""
+    def __init__(self, cells=None):
+        self.cells = MAX_CELLS if cells is None else cells
+
+    def spent(self, n):
+        self.cells -= n
+        return self.cells <= 0
+
+
+def open_text(p):
+    """-> (head text, encoding, text stream over the whole file or None). The encoding and dialect come from the first 8 MB; a bigger file is
+    streamed in that encoding (bad bytes replaced), never read whole."""
     import dl_delim
-    raw = Path(p).read_bytes()
-    text, enc = dl_delim.sniff_encoding(raw)
+    size = os.path.getsize(p)
+    with open(p, "rb") as fh:
+        head = fh.read(SNIFF_BYTES)
+    text, enc = dl_delim.sniff_encoding(head)
+    if len(head) >= size:
+        return text, enc, None
+    try:
+        codecs.lookup(enc)
+    except LookupError:
+        enc = "latin-1"
+    return text, enc, io.TextIOWrapper(open(p, "rb"), encoding=enc, errors="replace", newline="")
+
+
+def read_delimited(p, delim=None, budget=None):
+    """-> (columns, rows, line numbers, encoding, total rows when the read stopped early else None)."""
+    import dl_delim
+    budget = budget or Budget()
+    text, enc, stream = open_text(p)
     d, ncols, _ = dl_delim.sniff_dialect(text, delim)
     norm = dl_delim.normalizer(dl_delim.decimal_comma_columns(text, d, ncols))
-    rd = csv.reader(io.StringIO(text, newline=""), delimiter=d)
+    rd = csv.reader(stream if stream is not None else io.StringIO(text, newline=""), delimiter=d)
     header = next(rd, None) or []
-    rows, pos = [], []
+    rows, pos, total = [], [], None
     for rec in rd:
         if not any(c.strip() for c in rec):
             continue
         rows.append(norm(rec) if norm and len(rec) == ncols else rec)
         pos.append(rd.line_num)
-        if len(rows) >= MAX_ROWS:
+        if len(rows) >= MAX_ROWS or budget.spent(max(1, len(rec))):
+            total = len(rows) + sum(1 for r in rd if any(c.strip() for c in r))   # the rest is counted, not kept
             break
-    return [h.lstrip("﻿").strip() or f"column {i + 1}" for i, h in enumerate(header)], rows, pos, enc
+    if stream is not None:
+        stream.close()
+    return [h.lstrip("\ufeff").strip() or f"column {i + 1}" for i, h in enumerate(header)], rows, pos, enc, total
 
 
 def flat(obj, prefix=""):
@@ -156,7 +187,10 @@ def json_sets(doc):
     return out
 
 
-def load_tables(path, out, lj):
+def load_tables(path, out, lj, notes=None):
+    """Every table the look can re-read exactly. Anything that could not be read whole or at all is added to `notes` (printed with the answer)."""
+    notes = notes if notes is not None else []
+    budget = Budget()
     facts = lj.get("facts") or {}
     st, tp = lj.get("subtype"), lj.get("type")
     src = Path(facts.get("unpacked") or path)
@@ -164,47 +198,51 @@ def load_tables(path, out, lj):
     tables = []
     try:
         if facts.get("table_copy") and Path(facts["table_copy"]).exists():
-            cols, rows, pos, _ = read_delimited(facts["table_copy"], ",")
-            tables.append(Table("the table", cols, rows, pos, "the table (normalised UTF-8 copy: decimal comma converted)", "line"))
+            cols, rows, pos, _, tot = read_delimited(facts["table_copy"], ",", budget)
+            tables.append(Table("the table", cols, rows, pos, "the table (normalised UTF-8 copy: decimal comma converted)", "line", tot))
         elif inner in ("csv", "tsv", "psv", "delimited", "semicolon", "pipe") or (tp == "data" and inner in ("txt",)):
-            cols, rows, pos, enc = read_delimited(src, facts.get("delimiter"))
-            tables.append(Table("the table", cols, rows, pos, f"the file ({enc})", "line"))
+            cols, rows, pos, enc, tot = read_delimited(src, facts.get("delimiter"), budget)
+            tables.append(Table("the table", cols, rows, pos, f"the file ({enc})", "line", tot))
         elif inner in ("jsonl", "ndjson"):
-            recs, pos = [], []
-            text, _ = __import__("dl_delim").sniff_encoding(src.read_bytes())
-            for n, ln in enumerate(text.splitlines(), 1):
-                try:
-                    v = json.loads(ln)
-                except ValueError:
-                    continue
-                if isinstance(v, dict):
-                    recs.append(flat(v))
-                    pos.append(n)
-            cols = []
-            for r in recs:
-                cols += [k for k in r if k not in cols]
-            tables.append(Table("JSON Lines records", cols, [[r.get(c, "") for c in cols] for r in recs], pos, "the file", "line"))
+            tables.append(read_jsonl(src, budget))
         elif inner in ("json", "geojson"):
-            text, _ = __import__("dl_delim").sniff_encoding(src.read_bytes())
-            tables += json_sets(json.loads(text))
+            if src.stat().st_size > JSON_DOC_CAP:
+                notes.append(f"The JSON document is {core.human(src.stat().st_size)}, over the {core.human(JSON_DOC_CAP)} that is parsed whole for --ask: no table was built from it (--grep and --lines still read it).")
+            else:
+                text, _ = __import__("dl_delim").sniff_encoding(src.read_bytes())
+                tables += json_sets(json.loads(text))
         elif inner == "sqlite":
             con = sqlite3.connect(f"file:{src}?mode=ro", uri=True)
             for (name,) in con.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").fetchall()[:50]:
-                cur = con.execute(f'SELECT rowid, * FROM "{name}" LIMIT {MAX_ROWS}')
+                cur = con.execute(f'SELECT rowid, * FROM "{name}"')
                 cols = [d[0] for d in cur.description][1:]
-                rows = cur.fetchall()
-                tables.append(Table(f"SQLite table {name}", cols, [list(r[1:]) for r in rows], [r[0] for r in rows], "the database", "rowid"))
+                rows, total = [], None
+                while True:
+                    chunk = cur.fetchmany(min(10000, MAX_ROWS))
+                    if not chunk:
+                        break
+                    rows += chunk
+                    if len(rows) >= MAX_ROWS or budget.spent(len(chunk) * max(1, len(cols))):
+                        total = con.execute(f'SELECT COUNT(*) FROM "{name}"').fetchone()[0]
+                        break
+                tables.append(Table(f"SQLite table {name}", cols, [list(r[1:]) for r in rows], [r[0] for r in rows], "the database", "rowid", total if total and total > len(rows) else None))
             con.close()
         elif inner == "ini":
             tables.append(ini_table(src))
         elif inner == "parquet" and core.have_module("pyarrow"):
             import pyarrow.parquet as pq
-            t = pq.read_table(str(src))
-            d = t.to_pydict()
-            cols = list(d)
-            tables.append(Table("the Parquet table", cols, [list(r) for r in zip(*[d[c] for c in cols])], list(range(1, t.num_rows + 1)), "the file", "row"))
-    except (OSError, ValueError, sqlite3.Error, csv.Error) as e:
-        tables.append(("error", str(e)[:200]))
+            pf = pq.ParquetFile(str(src))
+            cols = list(pf.schema_arrow.names)
+            rows, total = [], None
+            for batch in pf.iter_batches(batch_size=max(1, min(50000, MAX_ROWS))):
+                dct = batch.to_pydict()
+                rows += [list(r) for r in zip(*[dct[c] for c in cols])]
+                if len(rows) >= MAX_ROWS or budget.spent(batch.num_rows * max(1, len(cols))):
+                    total = pf.metadata.num_rows
+                    break
+            tables.append(Table("the Parquet table", cols, rows, list(range(1, len(rows) + 1)), "the file", "row", total if total and total > len(rows) else None))
+    except (OSError, ValueError, sqlite3.Error, csv.Error, MemoryError) as e:
+        notes.append(f"A table of this file could not be read for --ask ({type(e).__name__}: {str(e)[:150]}).")
     arts = lj.get("artifacts", [])
     curated = any(Path(a.get("path", "")).name.startswith("asktable-") for a in arts)
     for a in arts:   # tables the look wrote: sheets (header found, total rows out), packets, events
@@ -216,11 +254,37 @@ def load_tables(path, out, lj):
                 t = json.loads(p.read_text(encoding="utf-8"))
                 tables.append(Table(t["name"], t["cols"], [r[1] for r in t["rows"]], [r[0] for r in t["rows"]], t.get("where", "the file"), t.get("unit", "row")))
             elif p.suffix == ".csv" and p.name != "table.utf8.csv":
-                cols, rows, pos, _ = read_delimited(p, ",")
-                tables.append(Table(p.stem, cols, rows, [k - 1 for k in pos], f"{p.name} (written by the look)", f"{p.stem[:-1] if p.stem.endswith('s') else p.stem} row"))
+                cols, rows, pos, _, tot = read_delimited(p, ",", budget)
+                tables.append(Table(p.stem, cols, rows, [k - 1 for k in pos], f"{p.name} (written by the look)", f"{p.stem[:-1] if p.stem.endswith('s') else p.stem} row", tot))
         except (OSError, ValueError, KeyError, csv.Error):
             continue
     return [t for t in tables if isinstance(t, Table) and t.rows]
+
+
+def read_jsonl(src, budget):
+    recs, pos, total = [], [], None
+    text, _enc, stream = open_text(src)
+    lines = stream if stream is not None else io.StringIO(text, newline="")
+    for n, ln in enumerate(lines, 1):
+        try:
+            v = json.loads(ln)
+        except ValueError:
+            continue
+        if isinstance(v, dict):
+            f = flat(v)
+            recs.append(f)
+            pos.append(n)
+            if len(recs) >= MAX_ROWS or budget.spent(max(1, len(f))):
+                total = len(recs) + sum(1 for x in lines if x.strip())   # the rest of the lines is counted, not kept
+                break
+    if stream is not None:
+        stream.close()
+    cols = {}
+    for r in recs:
+        for k in r:
+            cols.setdefault(k, None)
+    cols = list(cols)
+    return Table("JSON Lines records", cols, [[r.get(c, "") for c in cols] for r in recs], pos, "the file", "line", total)
 
 
 def ini_table(p):
@@ -252,21 +316,25 @@ def store_table(look, name, cols, rows, where="the file", unit="row"):
 
 # ---------------------------------------------------------------- the question
 def parse(q):
-    ql = q.lower()
-    ops = [name for name, rx in OPS if re.search(rx, ql)]
-    if "count" in ops and "sum" in ops and not re.search(r"\b(total|sum)\s+(of\s+)?(the\s+)?\w*\s*(amount|value|price|cost|revenue|sales|pay|hours|quantity|qty)", ql):
-        ops.remove("sum")
-    grp = re.findall(r"\b(?:per|by|for each|each)\s+([\w-]+)", ql)
-    which = re.match(r"\s*(?:which|what|who)\s+([\w-]+)", ql)
-    cmps = []
-    for m in CMP_RE.finditer(q):
+    fq = AL.fold(q)
+    lang = AL.detect(fq)
+    L = AL.compiled(lang)
+    cmps, blank = [], fq
+    for m in L["cmp"].finditer(fq):
         word, val = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
-        word = word.lower()
-        op = ">" if word in ("over", "above", "more than", "greater than", "exceeding", ">") else ">=" if word in ("at least", ">=") else \
-             "<" if word in ("under", "below", "less than", "fewer than", "<") else "<=" if word in ("at most", "not more than", "<=") else "="
+        op = L["cmpwords"].get(word) or {"=": "="}.get(word) or word
         cmps.append((op, float(val.replace(",", "")), m.start()))
-    return {"ops": ops, "group": [stem(g) for g in grp], "which": stem(which.group(1)) if which else None, "cmps": cmps,
-            "years": YEAR_RE.findall(q), "words": [w for w in words(q) if w not in STOP and not w.isdigit()]}
+        blank = blank[:m.start()] + " " * (m.end() - m.start()) + blank[m.end():]   # "at most 5" is a comparison, not a request for the maximum
+    ops = [name for name, rx in L["ops"] if rx.search(blank)]
+    grp = L["group"].findall(blank)
+    which = L["which"].match(blank)
+    order = "first" if L["first"].search(blank) else "last" if L["last"].search(blank) else None
+    ordn = re.search(r"\b(?:first|last|erste\w*|letzte\w*|prv\w+|poslednj\w+)\s+(\d+)\b", blank)
+    onext = re.search(r"\b(?:first|last|erste\w*|letzte\w*|prv\w+|poslednj\w+)\s+([a-z]+)", blank)
+    stop = STOP | L["stop"]
+    return {"ops": ops, "group": [stem(g) for g in grp], "which": stem(which.group(1)) if which else None, "cmps": cmps, "lang": lang, "fq": fq,
+            "order": order, "order_n": int(ordn.group(1)) if ordn else 1, "order_next": stem(onext.group(1)) if onext else None,
+            "years": YEAR_RE.findall(q), "words": [w for w in words(q) if w not in stop and not w.isdigit()]}
 
 
 def match_values(t, q):
@@ -346,7 +414,7 @@ def answer(t, pq, q, vals):
         filt.append(f"{t.cols[i]} = " + " or ".join(repr(v) for v in sorted(vs)))
     measure = pick_measure(t, pq, exclude={group})
     for op, val, at in pq["cmps"]:
-        before = re.findall(r"[^\W_]+", q[:at])
+        before = re.findall(r"[^\W_]+", pq["fq"][:at])
         ci = None
         for w in reversed(before[-4:]):
             ci = col_for(t, stem(w), True)
@@ -363,7 +431,9 @@ def answer(t, pq, q, vals):
         if dc:
             keep = [k for k in keep if str(t.rows[k][dc[0]]).strip().startswith(y)]
             filt.append(f"{t.cols[dc[0]]} in {y}")
-    ops = pq["ops"]
+    ops = list(pq["ops"])
+    if "count" in ops and "sum" in ops and measure is None:   # "how many orders in total": no column named, so the total is a count
+        ops.remove("sum")
     head = f"Table: {t.name} ({len(t.rows):,} {t.unit}s, read from {t.where})"
     lines.append(head)
     lines.append("Filters: " + ("; ".join(filt) if filt else "none") + f" -> {len(keep):,} {t.unit}s")
@@ -388,7 +458,7 @@ def answer(t, pq, q, vals):
         return len(ks), len(ks)
 
     main_op = next((o for o in ("mean", "sum", "max", "min", "distinct", "count") if o in ops), None)
-    hm = re.search(r"(?i)\bhow (?:many|much)\s+(?:of\s+(?:the\s+)?)?([^\W\d_]+)", q)
+    hm = AL.compiled(pq["lang"])["howmany"].search(pq["fq"])
     if main_op == "count" and hm and stem(hm.group(1)) not in t.namew and col_for(t, stem(hm.group(1)), True) is not None:   # "how many units": the Units column, summed
         measure, main_op = col_for(t, stem(hm.group(1)), True), "sum"
     if main_op == "count" and measure is not None and "sum" in ops:
@@ -460,6 +530,13 @@ def answer(t, pq, q, vals):
         lines.insert(0, f"Answer: {len(keep):,} {t.unit}s match" + (" (no filter matched the question, so this is every row)" if not filt else ""))
         lines.append(f"{t.unit.capitalize()}s: {pos_list(keep)}")
         return lines
+    if pq["order"] and keep and main_op is None and not (pq["order_next"] and col_for(t, pq["order_next"]) is not None):   # "the first order", "the last 3 rows": by position in the file, said so
+        n = max(1, min(pq["order_n"], 10))
+        pick = keep[:n] if pq["order"] == "first" else keep[-n:]
+        lines.insert(0, f"Answer: the {pq['order']} {n if n > 1 else ''}{' ' if n > 1 else ''}{t.unit}(s) in file order ({len(keep):,} after the filters), shown in full")
+        for k in pick:
+            lines.append(f"  {t.unit} {t.pos[k]}: " + "; ".join(f"{c} = {P.short(x, 60)}" for c, x in zip(t.cols, t.rows[k]) if str(x).strip() != ""))
+        return lines
     # a lookup: the matching rows in full
     if not filt:
         return None
@@ -520,18 +597,24 @@ def run(o, path, out, lj):
         return dl_drill.refuse("--ask needs a question.")
     pq = parse(q)
     lines = [f"--ask {q!r}", f"Read as: operation {', '.join(pq['ops']) or 'lookup'}; words {', '.join(pq['words']) or '(none)'}"
-             + (f"; group by {', '.join(pq['group'])}" if pq["group"] else "") + (f"; comparisons {', '.join(f'{a} {P.fmt(b)}' for a, b, _ in pq['cmps'])}" if pq["cmps"] else "")]
-    tables = load_tables(path, out, lj)
+             + (f"; group by {', '.join(pq['group'])}" if pq["group"] else "") + (f"; comparisons {', '.join(f'{a} {P.fmt(b)}' for a, b, _ in pq['cmps'])}" if pq["cmps"] else "") + f"; language {pq['lang']}"]
+    notes = []
+    tables = load_tables(path, out, lj, notes)
     ranked = sorted(((score(t, pq, q), t) for t in tables), key=lambda x: (-x[0][0], -len(x[1].rows)))
     got = None
     if ranked and ranked[0][0][0] > 0:
         (_, vals), t = ranked[0]
         got = answer(t, pq, q, vals)
+        if got and t.total:   # only part of the table is in memory: no figure may read as a total
+            note = f"PARTIAL: {len(t.rows):,} of {t.total:,} {t.unit}s were read (row and memory budget); this answer covers those {t.unit}s only"
+            got = [x.replace("Answer:", f"Answer ({note}):", 1) if x.startswith("Answer:") else x for x in got]
+            got.insert(1, note + ".")
         if got:
             lines += got
             others = [f"{x.name} (score {s[0]})" for s, x in ranked[1:4] if s[0] > 0]
             if others:
                 lines.append("Other tables that match some words: " + "; ".join(others))
+    lines += notes
     counts = (lj.get("facts") or {}).get("counts") or {}
     cw = set(pq["words"])
     stated = [(k, v) for k, v in counts.items() if set(words(k)) and set(words(k)) <= cw | {"non", "empty"} and set(words(k)) & cw]

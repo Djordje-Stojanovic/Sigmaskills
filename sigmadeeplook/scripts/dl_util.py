@@ -22,12 +22,26 @@ def byte_cap(name, default):
 
 
 # ---------------------------------------------------------------- tokens
+def _is_wide_script(c):
+    o = ord(c)
+    return 0x2E80 <= o <= 0x9FFF or 0xAC00 <= o <= 0xD7AF or 0xF900 <= o <= 0xFAFF or 0xFF00 <= o <= 0xFFEF
+
+
 def est_tokens(text):
-    """Rough token count: 4 ASCII characters per token, one token per non-ASCII character (sparklines, box characters)."""
+    """Rough token count: 4 ASCII characters per token; 2.5 characters per token for non-ASCII letters of alphabetic scripts (German, Serbian,
+    Cyrillic, Greek: one token per character over-counted them 2-3x and cut what a print carries); one token per character for CJK
+    and for symbols (sparklines, box characters)."""
     if not text:
         return 0
-    na = sum(1 for c in text if ord(c) > 127)
-    return max(1, math.ceil((len(text) - na) / 4) + na)
+    if text.isascii():
+        return max(1, math.ceil(len(text) / 4))
+    na = alpha = 0
+    for c in text:
+        if ord(c) > 127:
+            na += 1
+            if c.isalpha() and not _is_wide_script(c):
+                alpha += 1
+    return max(1, math.ceil((len(text) - na) / 4 + alpha / 2.5 + (na - alpha)))
 
 
 # ---------------------------------------------------------------- compact numbers

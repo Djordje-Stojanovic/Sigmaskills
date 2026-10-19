@@ -11,10 +11,10 @@ This module answers those from the text layer, every page:
 """
 import re
 
+import dl_lex as LEX
 import dl_prof as P
 
-STATED_RE = re.compile(r"(?i)\b(grand total|sub-?total|total|sum|balance|amount due|amount|net|gross|revenue|income|profit|loss|cost|costs|expenses?|price|"
-                       r"average|mean|median|count|number of|rate|margin|share|percent(age)?|growth|tax|vat|fee|budget|salary|ebitda)\b")
+STATED_RE = LEX.stated_re()   # English, German and Serbian words for a stated total, sum, balance, amount, rate ... (dl_lex.py)
 NUM_RE = re.compile(r"(?<![\w.])[-+(]?[$€£¥]?\s?\d{1,3}(?:[,.' ]\d{3})*(?:[.,]\d+)?\s?%?\)?(?![\w])|(?<![\w.])[-+]?\d+(?:[.,]\d+)?\s?%?(?![\w])")
 CELL_SPLIT = re.compile(r"\s{2,}|\t")
 

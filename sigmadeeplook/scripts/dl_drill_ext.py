@@ -249,6 +249,8 @@ def do_func(o, path, out, lj):
         return D.refuse(f"--func on a {st} binary needs a decompiler (Ghidra). Not installed here. Install: {install_for('ghidra')}\nWithout it, use --grep on strings.txt or the function list in the look.")
     if ty != "code" or not path.is_file():
         return D.refuse(f"--func works on source files (and on binaries once Ghidra is installed); this is {ty}/{st}.")
+    if path.stat().st_size > (32 << 20):
+        return D.refuse(f"--func: {core.human(path.stat().st_size)} is over the 32.0 MB a source file is parsed whole at; use --grep to find the function and --lines to read it.")
     src = path.read_text(encoding="utf-8", errors="replace")
     lines = src.splitlines()
     if path.suffix.lower() in (".py", ".pyw"):
@@ -310,9 +312,11 @@ def do_member(o, path, out, lj):
     if hit is None:
         near = [n for n in names if o.member.lower() in n.lower()][:12]
         return D.refuse(f"--member: no file {o.member!r} in the archive ({len(names)} files)." + ("\nSimilar:\n" + "\n".join(near) if near else ""))
-    refusals = dl_bins.screen_members(look, members, 0)
-    if refusals:
-        return D.refuse("--member refused: the safety screen failed (" + "; ".join(f"{r} {m}" for r, m, d in refusals[:4]) + "). Nothing was written.")
+    wide, _xonly, excluded = dl_bins.split_screen(dl_bins.screen_members(look, members, 0))
+    if wide:
+        return D.refuse("--member refused: the safety screen failed (" + "; ".join(f"{r} {m}" for r, m, d in wide[:4]) + "). Nothing was written.")
+    if hit in excluded:
+        return D.refuse(f"--member refused: {hit} failed the safety screen (ratio, duplicate name or a name Windows cannot hold). Nothing was written.")
     dest = sub / "files"
     try:
         done = dl_bins.safe_extract(look, members, [hit], dest)

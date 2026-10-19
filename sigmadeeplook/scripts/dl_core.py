@@ -590,7 +590,7 @@ def detect(path):
         t, st, mg = "data", "ar", "ar archive (also .deb, .a)"
     elif ext == ".pyc" and h[2:4] == b"\r\n":
         t, st, mg = "data", "pyc", "Python bytecode"
-    elif ext == ".torrent" or h[:1] == b"d" and re.match(rb"d[0-9]+:(announce|info|comment|created)", h[:40]):
+    elif h[:1] == b"d" and re.match(rb"d[0-9]+:", h[:12]) and (ext == ".torrent" or re.match(rb"d[0-9]+:(announce|info|comment|created)", h[:40])):
         t, st, mg = "data", "torrent", "bencoded BitTorrent metainfo"
     elif h[:4] == b"\0\0\x01\0" and ext in (".ico", ".cur"):
         t, st, mg = "image", "ico", "ICO"
@@ -598,7 +598,7 @@ def detect(path):
         t, st, mg = "data", "orc", "ORC"
     elif h[8:12] == b"DUCK":
         t, st, mg = "data", "duckdb", "DuckDB database (header 'DUCK')"
-    elif is_(b"<stata_dta>") or (ext == ".dta" and h[:1] in (b"p", b"s", b"q", b"r")):
+    elif is_(b"<stata_dta>") or (ext == ".dta" and h[:1] in (b"p", b"s", b"q", b"r") and len(h) >= 4 and h[1] in (1, 2) and h[2] == 1 and h[3] == 0):
         t, st, mg = "data", "stata", "Stata dta"
     elif is_(b"\x93NUMPY"):
         t, st, mg = "data", "npy", "NumPy array (.npy)"
@@ -646,13 +646,30 @@ def detect(path):
         t, st, mg = "diskimage", ext[1:], f"extension {ext} (binary image)"
     elif h[:1] and h[0] in (2, 3, 4, 5, 0x30, 0x31, 0x32, 0x43, 0x63, 0x83, 0x8B, 0x8E, 0xCB, 0xF5, 0xFB) and __import__("dl_dbf").looks_dbf(h, size):
         t, st, mg = "data", "dbf", "dBASE / FoxPro table header (field descriptors end in 0x0D)"
-    elif size >= 84 and not h.lstrip().startswith(b"solid") and struct.unpack_from("<I", h, 80)[0] * 50 + 84 == size:
+    elif size >= 134 and not h.lstrip().startswith(b"solid") and struct.unpack_from("<I", h, 80)[0] * 50 + 84 == size and _stl_triangles_ok(p, size):
         t, st, mg = "3d", "stl", "binary STL (size matches the triangle count)"
     if t is None:
         t, st, mg = text_sniff(p, h, ext, size)
     d = dict(type=t, subtype=st, magic=mg, ext=ext, mismatch=None)
     d["mismatch"] = ext_mismatch(d, ext)
     return d
+
+
+def _stl_triangles_ok(p, size):
+    """A size that equals 84 + 50 x count is not enough for a binary STL (a random file or a zero-filled one can match): the first triangles must
+    hold finite coordinates of a sane size, and not all be zero."""
+    n = struct.unpack("<I", _peek(p, 80, 4))[0]
+    k = min(n, 20)
+    raw = _peek(p, 84, 50 * k)
+    if n < 1 or len(raw) < 50 * k:
+        return False
+    nonzero = False
+    for i in range(k):
+        f = struct.unpack_from("<12f", raw, i * 50)
+        if any(not math.isfinite(x) or abs(x) > 1e12 for x in f):
+            return False
+        nonzero = nonzero or any(x != 0 for x in f[3:])
+    return nonzero
 
 
 def _peek(p, off, n):
