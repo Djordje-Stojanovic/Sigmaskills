@@ -482,12 +482,21 @@ def render_window(chunks, first_index, detail=False):
     return "\n".join(L).strip("\n") + "\n"
 
 
+DRILL_RE = re.compile(r"--(ask|page|sheet|sql|table|func|member|grep|lines|speaker|at)\b")
+
+
+def drill_flags(stream):
+    """The drill-down flags this look actually offers (its Read next commands), so a small file never advertises ones that do not apply."""
+    return sorted({m.group(1) for c in stream if c.get("tag") == "drill" for m in DRILL_RE.finditer(c["text"])})
+
+
 def footer(stream, a, b, printed, tier_note="", detail=False):
     """The recap line and the footer. 'printed' is what this print holds: its chunks plus these two lines."""
     rem = remaining_tokens(stream, b, detail)
     recap = recap_line(stream, b, detail)
     if b >= len(stream):
-        nxt = "next: nothing more; drill down with the Read next commands"
+        flags = drill_flags(stream)
+        nxt = ("next: nothing more; drill down with " + ", ".join("--" + f for f in flags) + " (see Read next)") if flags else "next: nothing more, this look is complete"
     else:
         want = next_ladder(printed_total=printed_cumulative(stream, b, detail))
         nchunks, _ = window(stream, b, max(1, want - OVERHEAD), detail)

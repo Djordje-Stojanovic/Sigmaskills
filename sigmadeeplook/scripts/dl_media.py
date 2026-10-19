@@ -876,6 +876,8 @@ def ffmpeg_sheet(look, v, dur):
 
 # ================================================================= audio
 def look_audio(look, ffp=None):
+    import dl_ctr
+    dl_ctr.container_counts(look)   # pages, chunks, blocks or frames of the container, counted from the bytes (no ffprobe needed)
     if not look.no_tools and ffp is None:
         prefetch_whisper(look)
     ffp = ffp if ffp is not None else ffprobe(look)

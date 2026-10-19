@@ -425,3 +425,49 @@ def magika_second_opinion(look):
         look.step("second opinion on type", "magika")
     except Exception as e:
         look.fail("second opinion on type", "magika", e)
+
+
+# ================================================================= header detector and content model disagree
+MODEL_READERS = {"csv": ("data", "csv"), "tsv": ("data", "tsv"), "json": ("data", "json"), "jsonl": ("data", "jsonl"), "xml": ("data", "xml"), "yaml": ("data", "yaml"),
+                 "toml": ("data", "toml"), "ini": ("data", "ini"), "html": ("web", "html"), "sqlite": ("data", "sqlite"), "parquet": ("data", "parquet"),
+                 "pdf": ("pdf", "pdf"), "zip": ("archive", "zip"), "gzip": ("archive", "gzip"), "tar": ("archive", "tar"), "png": ("image", "png"), "jpeg": ("image", "jpeg"),
+                 "gif": ("image", "gif"), "pcap": ("data", "pcap"), "ics": ("email", "ics"), "vcf": ("email", "vcf"), "svg": ("image", "svg"), "ttf": ("font", "ttf")}
+
+
+def reclassify(look):
+    """The header detector found no signature (unknown/binary), but a content model (Magika) or `file -b` names a type. Try the reader for that type
+    instead of stopping at an unknown-type exit: a name with a reader switches look.type/subtype; text-like content is read as lenient text.
+    -> True when the type was switched."""
+    label, score, is_text, source = None, 0.0, False, ""
+    mk = look.mod("magika")
+    if mk:
+        try:
+            res = mk.Magika().identify_path(look.path)
+            out = res.output if hasattr(res, "output") else res
+            label = getattr(out, "label", None) or getattr(out, "ct_label", None)
+            score, is_text, source = float(getattr(res, "score", 0) or 0), bool(getattr(out, "is_text", False)), "Magika"
+        except Exception as e:
+            look.fail("second opinion on type", "magika", e)
+    if not label:
+        fb = look.tool("file")
+        if fb:
+            r, out_, _ = look.run_text([fb, "-b", str(look.path)])
+            said = (out_ or "").strip() if r is not None and r.returncode == 0 else ""
+            low = said.lower()
+            if said and "text" in low and "data" not in low.split(",")[0]:
+                label, score, is_text, source = "txt", 0.5, True, "`file -b`"
+    if not label or label in ("unknown", "undefined", "randombytes", "empty"):
+        return False
+    if label in MODEL_READERS and score >= 0.5:
+        t, st = MODEL_READERS[label]
+    elif is_text and score >= 0.3:
+        t, st = "code", "text"
+        look.fact("text_by_content_model", True)
+    else:
+        return False
+    look.line(f"The header detector found no known signature, but {source} calls this {label} (score {score:.2f}), so it is read as {t}/{st} instead of stopping as unknown.", 70)
+    look.fact("reclassified_from", f"unknown/binary -> {t}/{st} ({source} {label})")
+    look.type, look.subtype = t, st
+    look.detector["magic"] = f"{source}: {label}"
+    look.step("second opinion on type", source)
+    return True
