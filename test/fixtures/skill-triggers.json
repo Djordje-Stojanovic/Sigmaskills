@@ -188,5 +188,20 @@
     "prompt": "Write a Codex goal prompt that works the tracker after one question round",
     "skill": "sigmaloop",
     "near": "sigmabrief"
+  },
+  {
+    "prompt": "Give my landing page a taste pass and write a ranked plan of big visible changes",
+    "skill": "sigmataste",
+    "near": "sigmaimprove"
+  },
+  {
+    "prompt": "Taste pass on this slide deck through the lenses, then a ranked plan",
+    "skill": "sigmataste",
+    "near": "sigmawrite"
+  },
+  {
+    "prompt": "Look at the film and the thumbnail image and plan the visible taste changes",
+    "skill": "sigmataste",
+    "near": "sigmareview"
   }
 ]

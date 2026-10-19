@@ -1,0 +1,9 @@
+Plan: sigmataste-plan-19-10-2026.md
+
+Direction: make the board read like a tiny arcade cabinet, with the score as the one bold place.
+
+1. A framed board with a distinct head, body and food glyph.
+2. A status line above the board: score, best and the controls, with the score in the one accent colour.
+3. A real game-over screen with the score, the best and how to play again.
+
+Next step: /sigmaship to ship the plan as one ticket.

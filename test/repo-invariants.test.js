@@ -11,6 +11,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const KNOWN_SKILLS = [
   { id: 'sigmafreedom', title: 'SigmaFreedom', needsReferences: true },
   { id: 'sigmaloop', title: 'SigmaLoop', needsReferences: true },
+  { id: 'sigmataste', title: 'SigmaTaste', needsReferences: true },
   { id: 'sigmawritegui', title: 'SigmaWriteGUI', needsReferences: false },
   { id: 'sigmacreatearena', title: 'SigmaCreateArena', needsReferences: true },
   {

@@ -7,6 +7,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Added
 
 - `sigmaloop` (SigmaLoop): reads a repo's open work, asks one dense round of questions (host, end time, order, crew and model mix, off-limits, pre-authorised actions, landing, stop line), then writes a paste-ready loop prompt for Claude Code `/loop`, Codex `/goal`, pi plan mode, T3 Code or a plain instruction, plus a loop file the prompt tells the agent to re-read at every wake. It never starts the loop.
+- `sigmataste` (SigmaTaste): looks at a page, app, deck, doc, image or film, asks one round of at most 10 questions (which of 14 taste lenses, what the owner expects, scope, brand, constraints), then writes `sigmataste-plan-DD-MM-YYYY.md` with the changes that make a big visible difference, ranked, each with a verify step, and stops. The lenses are fitted from the taste, design and writing skills in claude-skills-collection, credited in `references/sources.md`.
 
 ## [0.9.2] — 2026-10-18
 
