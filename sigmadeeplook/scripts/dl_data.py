@@ -274,18 +274,51 @@ def whole_file_scan(raw):
     return lines, repeats
 
 
+CSV_READ_CAP = U.byte_cap("CSV", 256 << 20)   # the standard tier holds this many bytes of a table in memory; a bigger file is read as far as the cap, flagged PARTIAL, with the whole file's line count
+
+
+def whole_file_stream(path, chunk=16 << 20):
+    """(lines in the file, [line numbers where the header row appears again]) over the WHOLE file in bounded memory (chunks), from bytes alone."""
+    done, first, pat, repeats, carry, eof, body = 0, None, None, [], b"", False, b""   # done = newlines before the current chunk
+    with open(path, "rb") as f:
+        while not eof:
+            blk = f.read(chunk)
+            eof = len(blk) < chunk
+            buf = carry + blk
+            cut = len(buf) if eof else buf.rfind(b"\n") + 1   # only whole lines are searched; the unfinished last line moves to the next chunk
+            body, carry = buf[:cut], buf[cut:]
+            if first is None and body:
+                first = (body[:body.find(b"\n")] if b"\n" in body else body).rstrip(b"\r")
+                if first.startswith(b"\xef\xbb\xbf"):
+                    first = first[3:]   # the byte-order mark sits before the first header only
+                pat = re.compile(b"^" + re.escape(first) + rb"\r?$", re.M) if first else None
+            if pat is not None:
+                for m in pat.finditer(body):
+                    ln = done + body.count(b"\n", 0, m.start()) + 1
+                    if ln > 1:
+                        repeats.append(ln)
+            done += body.count(b"\n")
+    return done + (1 if body and not body.endswith(b"\n") else 0), repeats
+
+
 def data_csv(look):
-    raw = open(look.path, "rb").read(256 << 20)
+    with open(look.path, "rb") as fh:
+        raw = fh.read(CSV_READ_CAP)
+    read_cut = look.size > len(raw)   # the file is longer than what is held in memory
     quick_cut = look.quick and len(raw) > QUICK_BYTES
     whole_lines = whole_repeats = None
-    if quick_cut:
-        whole_lines, whole_repeats = whole_file_scan(raw)
-        cut = raw.rfind(b"\n", 0, QUICK_BYTES)
-        raw = raw[:cut + 1 if cut > 0 else QUICK_BYTES]
+    if quick_cut or read_cut:
+        whole_lines, whole_repeats = whole_file_stream(look.path)
+        limit = QUICK_BYTES if quick_cut else len(raw)
+        cut = raw.rfind(b"\n", 0, limit)
+        raw = raw[:cut + 1] if cut > 0 else raw[:limit]
+    prefix_cut = quick_cut or read_cut
     import dl_delim as D
     text, enc = D.sniff_encoding(raw)
-    if enc in ("latin-1", "cp1252"):
-        look.flag("ENCODING", "file", f"not valid UTF-8; read as {'Windows-1252' if enc == 'cp1252' else 'Latin-1'}", "accents may be wrong if the real encoding is another one")
+    if enc not in ("utf-8", "utf-8-sig") and not enc.startswith(("utf-16", "utf-32")):
+        look.flag("ENCODING", "file", f"not valid UTF-8; read as {D.LEGACY_LABELS.get(enc, enc)} (picked by how real the letters look)", "accents may be wrong if the real encoding is another one")
+    elif enc == "utf-8" and chr(0xfffd) in text:
+        look.flag("ENCODING", "file", f"UTF-8 with {text.count(chr(0xfffd))} undecodable byte(s), shown as U+FFFD", "the rest of the file is read as UTF-8")
     if raw.startswith(b"\xef\xbb\xbf"):
         look.flag("BOM", "file", "UTF-8 byte-order mark", "some tools keep it in the first column name")
     delim, mode_n, share = D.sniff_dialect(text, "\t" if look.subtype == "tsv" else ",")
@@ -340,37 +373,44 @@ def data_csv(look):
     header = header or []
     nrej = len(rejects)
     profiled = n
-    if quick_cut:   # rows and repeated headers come from the whole file's bytes; the column profile from its first rows
+    if prefix_cut:   # rows and repeated headers come from the whole file's bytes; the column profile from its first rows
         repeats = list(whole_repeats)
         n = max(0, whole_lines - 1 - len(whole_repeats))
         tail = []
-        look.flag("QUICK-SAMPLE", "column profile", f"first {profiled} of about {n} rows", "quick tier: distinct counts, outliers and duplicate keys cover the first rows only; run --tier standard for the full pass")
+        if quick_cut:
+            look.flag("QUICK-SAMPLE", "column profile", f"first {profiled} of about {n} rows", "quick tier: distinct counts, outliers and duplicate keys cover the first rows only; run --tier standard for the full pass")
+        else:
+            look.flag("PARTIAL", "file", f"read the first {len(raw):,} of {look.size:,} bytes ({100 * len(raw) / look.size:.0f} %): {profiled:,} of about {n:,} rows profiled",
+                      "every sum, mean, min, max, distinct count, top value and outlier below covers those first rows only; the row count is the line count of the whole file")
     look.fact("encoding", enc)
     look.fact("delimiter", delim)
     look.fact("rows", n)
     look.fact("columns", len(header))
     look.fact("column_names", header)
     look.fact("rejects", nrej)
-    look.headline = f"{look.subtype.upper()}, {n:,} rows x {len(header)} columns"
+    look.headline = f"{look.subtype.upper()}, {'about ' if read_cut else ''}{n:,} rows x {len(header)} columns" + (f" (PARTIAL: first {profiled:,} rows profiled)" if read_cut else "")
     look.dims = f"{U.compact(n)} rows"
-    if quick_cut:
-        look.line(f"Delimited table: {n:,} data rows (counted over the whole file), {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows in the part profiled. Column profile: first {profiled:,} rows only.")
+    if prefix_cut:
+        look.line(f"Delimited table: about {n:,} data rows (line count over the whole file), {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows in the part profiled. "
+                  + (f"Column profile: first {profiled:,} rows only." if quick_cut else f"PARTIAL: only the first {len(raw):,} of {look.size:,} bytes ({profiled:,} rows) were profiled; every figure below is for those rows, not for the whole file."))
     else:
-        look.line(f"Delimited table: {n:,} data rows, {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows (wrong field count). Every row was read" + (" until the time cap." if partial else "; the profile below is a full pass, not a sample."), 38)
+        look.line(f"Delimited table: {n:,} data rows, {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows (wrong field count). "
+                  + (f"PARTIAL: rows were read until the time cap ({n:,} rows); every figure below is a lower bound for the part read." if partial else "Every row was read; the profile below is a full pass, not a sample."), 38)
     total_ok = sum(prof[0].kinds.values()) if prof else 0
     notes = profile_findings(look, header, prof, total_ok, repeats)
     schema = [p.summary(total_ok) for p in prof]
-    look.write_text("schema.json", json.dumps(schema, indent=1, default=str), "per-column profile over every row: type mix, empty %, distinct, range, median, top values", "json")
+    look.write_text("schema.json", json.dumps(schema, indent=1, default=str), ("per-column profile over the first rows only (PARTIAL read)" if read_cut else "per-column profile over every row") + ": type mix, empty %, distinct, range, median, top values", "json")
     notes = [n for n in notes if "empty" in n]   # every other finding is a flag and is listed once, under Watch out; the empty % sits in each column row
     if prof:   # one legend, then one compact row per column, exact counts over every row (positions are file line numbers)
         extra = csv_second_pass(look, text, delim, header, gp, norm=norm) if gp.n else []
         crow = gp.field_lines()
-        look.line(COLUMN_LEGEND + chr(10) + chr(10).join(crow[:40]) + (f"{chr(10)}... {len(crow) - 40} more columns below" if len(crow) > 40 else ""), 86, "profile")
+        legend = COLUMN_LEGEND if not (prefix_cut or partial) else COLUMN_LEGEND.replace("every count is exact over every row", f"every count is exact over the {profiled:,} rows profiled only (PARTIAL read)")
+        look.line(legend + chr(10) + chr(10).join(crow[:40]) + (f"{chr(10)}... {len(crow) - 40} more columns below" if len(crow) > 40 else ""), 86, "profile")
         if len(crow) > 40:
             look.line("More columns:" + chr(10) + chr(10).join(crow[40:]), 36, "profile")
         miss = sum(f.nulls + f.empties for f in gp.fields.values())
         P.counts(look, [("data rows", n), ("columns", len(header)), ("rows profiled", gp.n if gp.n != n else None), ("reject rows", nrej), ("repeated header rows", len(repeats) or None),
-                        ("empty or null cells", miss), ("complete rows (no empty cell)", complete_rows(text, delim, ncols) if not quick_cut and n <= 2_000_000 else None)])
+                        ("empty or null cells", miss), ("complete rows (no empty cell)", complete_rows(text, delim, ncols) if not prefix_cut and n <= 2_000_000 else None)])
         lcols.emit(look)
         for ln_ in gp.stats_lines():
             look.line(ln_, 34, "aggregates")
@@ -378,10 +418,10 @@ def data_csv(look):
             look.line(ln_, 32, "aggregates")
         for ln_ in gp.enum_lines():
             look.line(ln_, 30, "values")
-    if (enc not in ("utf-8", "utf-8-sig") or norm or delim not in (",", "\t") or look.facts.get("unpacked_from")) and not quick_cut and len(text) <= 200 << 20:
+    if (enc not in ("utf-8", "utf-8-sig") or norm or delim not in (",", "\t") or look.facts.get("unpacked_from")) and not prefix_cut and len(text) <= 200 << 20:
         write_table_copy(look, text, delim, ncols, norm)
     import dl_sample
-    dl_sample.build_sample(look, text, delim, header, prof, n, repeats, tail, rows, partial or quick_cut)
+    dl_sample.build_sample(look, text, delim, header, prof, n, repeats, tail, rows, partial or prefix_cut)
     if rejects:
         buf = io.StringIO()
         w = csv.writer(buf)
@@ -445,28 +485,105 @@ def skeleton(v, depth=0, maxdepth=5):
     return type(v).__name__
 
 
+JSON_READ_CAP = U.byte_cap("JSON", 64 << 20)   # a document is parsed whole up to this size; a bigger one is read as far as the cap and flagged PARTIAL
+_CUT = object()
+
+
+def salvage_json(text, max_depth=64):
+    """The complete elements of a JSON document that was cut off at an arbitrary byte (or is broken part-way): arrays and objects keep every
+    element that parsed, the last unfinished one is kept as far as it goes. Returns None when not even the first value starts."""
+    dec = json.JSONDecoder()
+    n = len(text)
+
+    def skip(i):
+        while i < n and text[i] in " \t\r\n":
+            i += 1
+        return i
+
+    def value(i, depth):
+        i = skip(i)
+        if i >= n:
+            return _CUT, n
+        if text[i] in "[{" and depth < max_depth:
+            return container(i, depth)
+        try:
+            return dec.raw_decode(text, i)
+        except ValueError:
+            return _CUT, n
+
+    def container(i, depth):
+        is_list = text[i] == "["
+        out = [] if is_list else {}
+        i += 1
+        while True:
+            i = skip(i)
+            if i >= n:
+                return out, n
+            c = text[i]
+            if c == ",":
+                i += 1
+                continue
+            if c in "]}":
+                return out, i + 1
+            if is_list:
+                v, i = value(i, depth + 1)
+                if v is _CUT:
+                    return out, n
+                out.append(v)
+            else:
+                try:
+                    k, i = dec.raw_decode(text, i)
+                except ValueError:
+                    return out, n
+                i = skip(i)
+                if i >= n or text[i] != ":" or not isinstance(k, str):
+                    return out, n
+                v, i = value(i + 1, depth + 1)
+                if v is _CUT:
+                    return out, n
+                out[k] = v
+    v, _ = value(0, 0)
+    return None if v is _CUT else v
+
+
+def looks_jsonl(text):
+    """True when the text is one JSON value per line (two lines or more, 80 % of the first 50 parse)."""
+    lines = [x for x in text.splitlines() if x.strip()]
+    ok = 0
+    for x in lines[:50]:
+        try:
+            json.loads(x)
+            ok += 1
+        except ValueError:
+            pass
+    return len(lines) >= 2 and ok >= 0.8 * min(50, len(lines))
+
+
 def data_json(look):
-    raw = open(look.path, "rb").read(64 << 20)
-    if look.size > 64 << 20:
-        look.flag("PARTIAL", "file", "first 64 MB only", "")
+    with open(look.path, "rb") as fh:
+        raw = fh.read(JSON_READ_CAP)
+    cut = look.size > len(raw)
     text, enc = __import__("dl_delim").sniff_encoding(raw)
     try:
-        v = json.loads(text)
+        if cut:
+            v = None if looks_jsonl(text) else salvage_json(text)
+            if v is None:
+                raise ValueError("the first value does not start inside the part read")
+            look.flag("PARTIAL", "file", f"read the first {len(raw):,} of {look.size:,} bytes ({100 * len(raw) / look.size:.0f} %)",
+                      "keys, types, array lengths and every count below cover the complete elements inside that part only; lengths are lower bounds")
+        else:
+            v = json.loads(text)
     except ValueError as e:
-        lines = [x for x in text.splitlines() if x.strip()]
-        ok = 0
-        for x in lines[:50]:
-            try:
-                json.loads(x)
-                ok += 1
-            except ValueError:
-                pass
-        if len(lines) >= 2 and ok >= 0.8 * min(50, len(lines)):   # one JSON value per line: JSON Lines with a .json name
+        if looks_jsonl(text):   # one JSON value per line: JSON Lines with a .json name
             look.subtype = "jsonl"
             look.flag("JSON-LINES", "file", "one JSON value per line, not one document", "parsed as JSON Lines")
             return data_jsonl(look)
-        look.flag("INVALID-JSON", "file", str(e)[:120], "")
-        look.line("Invalid JSON; first lines below.")
+        if cut:   # the part read could not be parsed, but the file itself was not shown to be invalid
+            look.flag("PARTIAL", "file", f"read the first {len(raw):,} of {look.size:,} bytes ({100 * len(raw) / look.size:.0f} %) and could not parse them: {str(e)[:100]}", "the document is larger than the read limit, so no verdict on its validity")
+            look.line("JSON larger than the read limit; the part read did not parse. First lines below.")
+        else:
+            look.flag("INVALID-JSON", "file", str(e)[:120], "")
+            look.line("Invalid JSON; first lines below.")
         look.excerpt("First lines", text, 10)
         import dl_prof as P
         P.text_profile(look, text, 70, "Text")
@@ -480,7 +597,7 @@ def data_json(look):
     sk = skeleton(v)
     look.fact("json_top", type(v).__name__)
     look.write_text("skeleton.json", json.dumps(sk, indent=1), "keys and types tree, array lengths", "json")
-    look.line(f"JSON {type(v).__name__}" + (f" with {len(v)} items" if hasattr(v, "__len__") else "") + f", encoding {enc}.")
+    look.line(f"JSON {type(v).__name__}" + (f" with {'at least ' if cut else ''}{len(v)} items" if hasattr(v, "__len__") else "") + f", encoding {enc}" + (" (PARTIAL: the part read)." if cut else "."))
     look.excerpt("Skeleton", json.dumps(sk, indent=1), 25, 1800, 40)
     import dl_prof as P
     P.doc_profile(look, v, "JSON", 55 if dl_geo.is_geojson(v) else 92)
@@ -949,25 +1066,84 @@ def data_arrow(look):
 
 
 # ---------------------------------------------------------------- xml, yaml, toml
+XML_READ_CAP = U.byte_cap("XML", 20 << 20)   # elements are read as far as this many bytes; a bigger file is flagged PARTIAL
+ENTITY_DECL = re.compile(rb"""<!ENTITY\s+(?:%\s+)?([^\s"']+)\s+(?:SYSTEM|PUBLIC|"([^"]*)"|'([^']*)')""", re.I)
+ENTITY_REF = re.compile(r"[&%]([A-Za-z_][\w.:-]*);")
+
+
+def xml_entity_danger(raw):
+    """None, or the reason an XML must not be expanded: an entity that refers to itself, expands past 1 million characters, or would put more
+    than 50 million characters into the document. A harmless declaration (a copyright sign, a company name) is no reason to refuse the file."""
+    values = {}
+    for m in ENTITY_DECL.finditer(raw[:1_000_000]):
+        v = m.group(2) if m.group(2) is not None else m.group(3)
+        if v is not None:
+            values[m.group(1).decode("latin-1")] = v.decode("utf-8", "replace")
+    if not values:
+        return None
+    memo, inf = {}, float("inf")
+
+    def size(name, stack):
+        if name in memo:
+            return memo[name]
+        if name in stack:
+            return inf
+        if name not in values:
+            return 1   # a built-in or external reference: one unit
+        v = values[name]
+        memo[name] = len(ENTITY_REF.sub("", v)) + sum(size(r, stack | {name}) for r in ENTITY_REF.findall(v))
+        return memo[name]
+    total = 0
+    for name in values:
+        sz = size(name, frozenset())
+        if sz == inf:
+            return f"entity {name!r} refers to itself"
+        if sz > 1_000_000:
+            return f"entity {name!r} expands to {sz:,} characters"
+        total += sz * raw.count(b"&" + name.encode("latin-1") + b";")
+    if total > 50_000_000:
+        return f"the entities would add {total:,} characters to the document"
+    return None
+
+
 def data_xml(look):
-    raw = open(look.path, "rb").read(20 << 20)
-    if b"<!ENTITY" in raw[:200000]:
-        look.flag("ENTITY-DECLARATION", "file", "DTD entity declared", "not parsed: entity expansion can blow up memory; read it as text")
+    with open(look.path, "rb") as fh:
+        raw = fh.read(XML_READ_CAP)
+    cut = look.size > len(raw)
+    danger = xml_entity_danger(raw)
+    if danger:
+        look.flag("ENTITY-DECLARATION", "file", f"DTD entity expansion: {danger}", "not parsed: that expansion can blow up memory (a billion-laughs file); read it as text")
         look.exit_code = 2
         look.excerpt("First lines", raw[:1500].decode("utf-8", "replace"), 12)
         return
-    dx = look.mod("defusedxml")
-    if dx:
-        from defusedxml import ElementTree as ET
-    else:
-        import xml.etree.ElementTree as ET
     import dl_prof as P
+    import xml.etree.ElementTree as ET
+    it = None
+    if look.mod("defusedxml"):
+        from defusedxml import ElementTree as DET
+        try:   # the entity check above already ran, so the declaration itself is allowed; external references stay unresolved
+            it = DET.iterparse(io.BytesIO(raw), events=("start",), forbid_dtd=False, forbid_entities=False, forbid_external=False)
+        except Exception:
+            it = None
+    if it is None:
+        it = ET.iterparse(io.BytesIO(raw), events=("start",))
+    root, err = None, None
     try:
-        root = ET.fromstring(raw)
-    except Exception as e:
-        look.flag("INVALID-XML", "file", f"{type(e).__name__}: {e}"[:120], "")
+        for _ev, el in it:
+            if root is None:
+                root = el
+    except Exception as e:   # iterparse keeps the tree built so far: for a part-read file that is the answer
+        err = e
+    if err is not None and (root is None or not cut):
+        if cut and root is None:
+            look.flag("PARTIAL", "file", f"read the first {len(raw):,} of {look.size:,} bytes and could not parse them: {type(err).__name__}: {err}"[:200], "the file is larger than the read limit, so no verdict on its validity")
+        else:
+            look.flag("INVALID-XML", "file", f"{type(err).__name__}: {err}"[:120], "")
         P.text_profile(look, raw.decode("utf-8", "replace"), 70, "Text")
         return
+    if cut:
+        look.flag("PARTIAL", "file", f"read the first {len(raw):,} of {look.size:,} bytes ({100 * len(raw) / look.size:.0f} %)",
+                  "element counts, attributes and records cover that part only; every count is a lower bound")
 
     def local(t):
         return t.rsplit("}", 1)[-1] if isinstance(t, str) else str(t)
@@ -996,7 +1172,7 @@ def data_xml(look):
             base = -50
         except Exception as e:
             look.fail(f"{root_tag} totals", "stdlib", e)
-    look.line(f"XML: root <{root_tag}>, {sum(counts.values()):,} elements of {len(counts)} kinds, depth {depth}. Elements: " + ", ".join(f"{k} ({v:,})" for k, v in counts.most_common(30)), 90 + base)
+    look.line(f"XML: root <{root_tag}>, {'at least ' if cut else ''}{sum(counts.values()):,} elements of {len(counts)} kinds, depth {depth}. Elements: " + ", ".join(f"{k} ({v:,})" for k, v in counts.most_common(30)), 90 + base)
     P.counts(look, [("elements", sum(counts.values())), ("element kinds", len(counts)), ("attributes", sum(attrs.values())), ("elements with text", texts),
                     ("max depth", depth), ("root children", len(list(root)))], 94 + base, "XML counts")
     if attrs:

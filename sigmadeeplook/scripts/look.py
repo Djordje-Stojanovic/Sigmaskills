@@ -47,7 +47,7 @@ def analyse(path, out, opts, sha=None, depth=0):
     look = core.Look(p, out, opts)
     look.depth = depth
     look.size = 0 if p.is_dir() else p.stat().st_size
-    look.sha = sha or (core.sha256_dir(p) if p.is_dir() else core.sha256_file(p))
+    look.sha = sha or (core.sha256_dir(p) if p.is_dir() else core.file_key(p))
     d = core.detect(p)
     look.type, look.subtype = d["type"], d["subtype"]
     look.detector = {"magic": d["magic"], "ext": d["ext"], "mismatch": d["mismatch"]}
@@ -217,7 +217,7 @@ def main(argv):
         return 1
     asked_more = o.more is not None or o.remaining or o.from_k is not None
     drill = any(getattr(o, k) for k in DRILL_FLAGS) or o.at is not None
-    sha = core.sha256_dir(p) if p.is_dir() else core.sha256_file(p)
+    sha = core.sha256_dir(p) if p.is_dir() else core.file_key(p)
     out = core.out_dir_for(sha, o.out)
     stored = out / "look.json"
     old = None

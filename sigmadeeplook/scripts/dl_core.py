@@ -210,15 +210,34 @@ def sha256_file(path, limit=None):
     return h.hexdigest()
 
 
+FULL_HASH_BYTES = 8 << 20   # a file up to this size is hashed whole; a bigger one by its size, modified time and three 1 MB samples
+SAMPLE_BYTES = 1 << 20
+
+
+def file_key(path):
+    """The cache identity of a file (stored as "sha256"). Small files: the real SHA-256. Big files: SHA-256 of size + mtime + first, middle and last MB,
+    so every call (--more, --ask, a drill) costs milliseconds instead of re-reading 20 GB. An edit in place changes the mtime or a sample."""
+    st = os.stat(path)
+    if st.st_size <= FULL_HASH_BYTES:
+        return sha256_file(path)
+    h = hashlib.sha256(f"{st.st_size}:{st.st_mtime_ns}".encode())
+    with open(path, "rb") as f:
+        for off in (0, max(0, st.st_size // 2 - SAMPLE_BYTES // 2), max(0, st.st_size - SAMPLE_BYTES)):
+            f.seek(off)
+            h.update(f.read(SAMPLE_BYTES))
+    return h.hexdigest()
+
+
 def sha256_dir(path):
-    """A stable key for a directory: hash of sorted relative names and sizes (no file contents)."""
+    """A stable key for a directory: hash of sorted relative names, sizes and modified times (no file contents)."""
     h = hashlib.sha256()
     for root, dirs, files in os.walk(path):
         dirs[:] = sorted(d for d in dirs if d not in (".git", "node_modules", "__pycache__"))
         for n in sorted(files):
             p = os.path.join(root, n)
             try:
-                h.update(f"{os.path.relpath(p, path)}\0{os.path.getsize(p)}\n".encode("utf-8", "replace"))
+                st = os.stat(p)
+                h.update(f"{os.path.relpath(p, path)}\0{st.st_size}\0{st.st_mtime_ns}\n".encode("utf-8", "replace"))
             except OSError:
                 pass
     return h.hexdigest()
@@ -281,10 +300,8 @@ def decode_text(b):
     ctrl = sum(1 for c in b if c < 9 or 13 < c < 32)
     if b and ctrl / len(b) > 0.02:
         return None, None
-    try:
-        return b.decode("cp1252"), "cp1252"
-    except UnicodeDecodeError:
-        return b.decode("latin-1"), "latin-1"
+    import dl_delim
+    return dl_delim.decode_legacy(b)
 
 
 def direct_tokens(nbytes):
