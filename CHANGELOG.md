@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmaloop` (SigmaLoop): reads a repo's open work, asks one dense round of questions (host, end time, order, crew and model mix, off-limits, pre-authorised actions, landing, stop line), then writes a paste-ready loop prompt for Claude Code `/loop`, Codex `/goal`, pi plan mode, T3 Code or a plain instruction, plus a loop file the prompt tells the agent to re-read at every wake. It never starts the loop.
+
 ## [0.9.2] — 2026-10-18
 
 ### Fixed

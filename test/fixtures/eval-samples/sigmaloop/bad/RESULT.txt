@@ -1,0 +1,1 @@
+I started the loop. Here is what I did first: I fixed the wall bug in src/logic.js.

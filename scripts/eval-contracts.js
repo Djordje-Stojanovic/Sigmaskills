@@ -276,7 +276,30 @@ function sigmafreedom({ result }) {
   return result && result.trim() ? [] : ['empty final reply'];
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmaloop writes one loop file and one prompt; it starts nothing and leaves the target repository as it found it.
+const LOOP_FILE = '.scratch/loops/overnight.md';
+const LOOP_SECTIONS = ['Stance', 'Goal', 'Crew', 'Each wake', 'Priority', 'Landing', 'Finish'];
+
+function sigmaloop({ files, result }) {
+  const problems = [];
+  for (const [name, text] of Object.entries(files)) {
+    if (name.startsWith('.scratch/loops/')) continue;
+    const original = path.join(FIXTURE, ...name.split('/'));
+    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed the target repository: ${name}`);
+  }
+  const loop = files[LOOP_FILE];
+  if (!loop) return [...problems, `missing ${LOOP_FILE} (the loop file)`];
+  for (const name of LOOP_SECTIONS) {
+    if (!new RegExp(`^## ${name}\\b`, 'm').test(loop)) problems.push(`${LOOP_FILE}: missing section "## ${name}"`);
+  }
+  if (!/Stop line:[^\n]*\d{1,2}:\d{2}/.test(loop)) problems.push(`${LOOP_FILE}: the stop line needs a clock time`);
+  const prompt = [...result.matchAll(/^```text\r?\n([\s\S]*?)^```/gm)].map((m) => m[1]).find((b) => /^\/loop\b/m.test(b));
+  if (!prompt) return [...problems, 'reply has no fenced ```text prompt that starts with /loop'];
+  problems.push(...requireText(prompt, [/overnight\.md/, /ScheduleWakeup/, /\d{1,2}:\d{2}/, /re-read/i, /stop: true/], 'prompt'));
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

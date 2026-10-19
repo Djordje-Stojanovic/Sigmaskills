@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaLoop
+  short_description: One loop prompt and loop file for an unattended run
+  default_prompt: Use $sigmaloop to read this repo's open work, ask one round of
+    questions, and write a loop prompt for my host. Do not start the loop.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

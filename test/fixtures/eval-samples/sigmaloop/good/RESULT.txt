@@ -1,0 +1,15 @@
+Loop file: .scratch/loops/overnight.md
+
+```text
+/loop Snake Lite issues 1 and 2 until 07:00 Europe/Vienna. You are the orchestrator. Re-read .scratch/loops/overnight.md at every wake: edits apply on the next wake.
+ORDER: "Priority" in the loop file, top down: #1 wall collision, then #2 pause.
+CREW: solo, one item at a time.
+LANDING: tests green, issue file ticked with evidence, PR body written, no merge.
+AUTHORISED: commit on a feature branch. Take the safer option when no rule decides; log it.
+WAKE: always end every turn with ScheduleWakeup (60-120 s after an item ends, else 900-1200 s). A turn without it ends the loop.
+STOP: at 07:00 do the Finish block, then call ScheduleWakeup with stop: true.
+```
+
+Notes:
+- Ruling: crew is solo, because the repo names no sub-agent rule.
+- Before you paste it: leave the session open and set an unattended permission mode.
