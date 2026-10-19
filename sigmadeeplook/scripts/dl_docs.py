@@ -781,6 +781,9 @@ def sheet_cells(look, z, sheet_path, shared):
                 if v is None:
                     uncached.append(ref)
             val = shared[int(v)] if ty == "s" and v is not None and int(v) < len(shared) else inl if ty == "inlineStr" else (v if v is not None else "")
+            if ty in ("s", "inlineStr", "str", "e") and val != "":
+                import dl_xlcalc
+                val = dl_xlcalc.Text(val)   # stored as text: the formula evaluator must not read "12" as a number
             if val != "" or f is not None:
                 m = re.match(r"([A-Z]+)(\d+)", ref)
                 cells[(int(m.group(2)) - 1, col_index(ref))] = val

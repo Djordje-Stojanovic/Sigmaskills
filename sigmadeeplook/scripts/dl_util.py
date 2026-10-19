@@ -5,11 +5,20 @@ Stdlib only. rapidfuzz, Pillow and numpy are used when present and replaced by s
 """
 import difflib
 import math
+import os
 import random
 import re
 from collections import Counter
 
 BARS = "▁▂▃▄▅▆▇█"
+
+
+def byte_cap(name, default):
+    """A read cap in bytes. SIGMADEEPLOOK_<NAME>_CAP lowers or raises it (the tests use it to reach the over-the-cap path with a small file)."""
+    try:
+        return int(os.environ.get("SIGMADEEPLOOK_%s_CAP" % name, default))
+    except ValueError:
+        return default
 
 
 # ---------------------------------------------------------------- tokens

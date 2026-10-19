@@ -45,7 +45,7 @@ The printed figure includes that line and is within 10 % of the real size (4 ASC
 
 ## Files in the look folder
 
-- Folder: `%LOCALAPPDATA%\sigmadeeplook\<sha256 first 12>\` on Windows, `~/.cache/sigmadeeplook/<sha256 first 12>/` elsewhere. `--out DIR` overrides it. Same file, same folder: a repeat look is instant unless `--fresh`. Nothing is written into the user's repository.
+- Folder: `%LOCALAPPDATA%\sigmadeeplook\<sha256 first 12>\` on Windows, `~/.cache/sigmadeeplook/<sha256 first 12>/` elsewhere. `--out DIR` overrides it. Same file, same folder: a repeat look is instant unless `--fresh`. The key is the file's SHA-256 up to 8 MB; for a bigger file it is the SHA-256 of its size, modified time and three 1 MB samples (a call never re-reads a 20 GB file); a folder's key covers names, sizes and modified times. Nothing is written into the user's repository.
 - `LOOK.md` (step 1), `look.json`, `cursor.json`, `view.html`, and artifacts (transcripts, listings, CSVs, sheets). `Read next` lists them with their cost: images as `W x H px, ~tokens`, text as characters / 4; a text file over 5,000 tokens names the drill flag that slices it.
 - `look.json` (schema 1): `schema, file, name, sha256, size, type, subtype, detector{magic, ext, mismatch}, facts{}, summary[], flags[{kind, where, value, hint}], artifacts[{path, kind, what, tokens_est, value, slice}], steps[{name, tool, version, status: ran|skipped|failed, reason, install}], tier, level (quick|standard|deep), stream[], elapsed_s, exit, network_attempts, exec_log`.
 - `view.html`: self-contained, no network. Left: the original. Right: what the agent saw. Give its path to the human.

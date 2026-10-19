@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook`: wrong answers stated as certain. A CSV past the 256 MB read limit no longer prints "Every row was read; a full pass": it says how many bytes were read, counts the lines of the whole file in bounded memory, and marks every figure `PARTIAL`. JSON past 64 MB and XML past 20 MB are parsed as far as the limit (complete elements kept) and flagged `PARTIAL`, not called invalid. A harmless `<!ENTITY>` declaration no longer refuses an XML file; only a self-referring or exploding entity does. The formula evaluator is a real parser with Excel's rules (`2^3^2` is 64, `-2^2` is 4, `&` joins text, text compares without regard to case, huge powers are not evaluated) and no longer calls a value "evaluated, not guessed" when it is not sure: it names the formulas it did not compute. Text that is not UTF-8 is read with the code page whose letters look real (Windows-1250 for Serbian Latin, Windows-1251 and KOI8-R for Cyrillic, Greek, Turkish, Windows-1252), and one stray byte no longer turns a UTF-8 file into Windows-1252. The cache key of a file over 8 MB is a bounded sample plus size and modified time, so `--more` and `--ask` no longer re-read a 20 GB file.
+
 ## [0.10.0] — 2026-10-19
 
 ### Added
