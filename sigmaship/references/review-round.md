@@ -1,6 +1,6 @@
 # Review rounds
 
-A review round gives the finished branch to an agent that has never seen the work. A fresh context catches what the builder's context hides. Write the handoff from the template below. SigmaBrief can help as a skeleton when it is installed, but its brief rules do not apply here: the reviewer fixes findings on the branch without waiting for approval, and reports in the `CLEAN | FIXED | BLOCKED` form below. That form wins. The handoff must stand alone.
+A review round gives the finished branch to an agent that has never seen the work. A fresh context catches what the builder's hides. Write the handoff from the template below. SigmaBrief can be a skeleton, but its brief rules do not apply here: the reviewer fixes findings on the branch without waiting for approval, and reports in the `CLEAN | FIXED | BLOCKED` form below. That form wins. The handoff must stand alone.
 
 ## Handoff template
 
@@ -29,7 +29,8 @@ Checks: <commands and results>
 ## Round rules
 
 - **Clean** means the round found zero P0–P2 findings. A round that found and fixed P0–P2 findings is not clean: run another round, because every fix can hide a new problem.
-- After each round, record it in the PR ledger's *Review rounds* table: round, status, counts, and commits.
-- Before the next round, check CI on the new head. A red CI is the builder's to fix before the next handoff.
-- Three rounds that still find P0–P2 problems mean the ticket or the design is wrong. Stop and ask the user.
-- `BLOCKED` from a reviewer: read the reason, fix what you can, and ask the user about the rest.
+- Record each round in the ledger's *Review rounds* table: round, status, counts, commits.
+- Before the next round, check CI on the new head. A red CI is the builder's to fix first.
+- Three rounds that still find P0–P2 problems mean the ticket or design is wrong. Stop and ask the user.
+- `BLOCKED`: read the reason, fix what you can, ask the user about the rest.
+- When you run the round yourself (no sub-agents), do steps 2–4 of the template on your own diff, fix, and record it the same way.
