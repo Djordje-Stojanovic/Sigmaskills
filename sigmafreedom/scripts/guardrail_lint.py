@@ -35,7 +35,7 @@ BAD = re.compile(
     re.I,
 )
 COMMENT = re.compile(r"^\s*# ")
-OWNER = re.compile(r"\(owner|owner[: ]|owner (word|rule|decision|call)", re.I)   # the owner wrote it: never a finding          # a comment is '# ' at the line start; a kept fragment may begin with '##' or '###'
+OWNER = re.compile(r"\(owner\b|\bowner[: ]|\bowner (word|rule|decision|call)\b", re.I)   # the owner wrote it: never a finding          # a comment is '# ' at the line start; a kept fragment may begin with '##' or '###'
 
 
 SKIP = {"node_modules", ".venv", "venv", "__pycache__", "vendor", ".git", "dist", "build", "out",

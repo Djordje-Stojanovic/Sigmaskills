@@ -255,6 +255,26 @@ test('CHANGELOG mentions every shipped skill id', () => {
   }
 });
 
+test('shipped text files hold no raw control bytes (a heredoc can turn \\b into a backspace)', () => {
+  const textExt = new Set(['.py', '.js', '.mjs', '.md', '.txt', '.yaml', '.yml', '.json', '.html', '.css', '.sh', '.ps1']);
+  const roots = [...listSkillDirs(), 'scripts', 'src', 'bin'];
+  const bad = [];
+  const walk = (rel) => {
+    for (const entry of fs.readdirSync(path.join(ROOT, rel), { withFileTypes: true })) {
+      const child = path.join(rel, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name !== 'node_modules' && entry.name !== '__pycache__') walk(child);
+      } else if (textExt.has(path.extname(entry.name).toLowerCase())) {
+        const bytes = fs.readFileSync(path.join(ROOT, child));
+        const at = bytes.findIndex((b) => b < 0x20 && b !== 0x09 && b !== 0x0a && b !== 0x0d);
+        if (at >= 0) bad.push(`${child}: byte 0x${bytes[at].toString(16).padStart(2, '0')} at offset ${at}`);
+      }
+    }
+  };
+  for (const root of roots) if (exists(root)) walk(root);
+  assert.deepEqual(bad, []);
+});
+
 test('CI covers Node.js 22 and 24 on Windows, macOS, and Linux, and no older Node.js', () => {
   const ci = read('.github/workflows/ci.yml');
   assert.match(ci, /os:\s*\[ubuntu-latest,\s*windows-latest,\s*macos-latest\]/);
