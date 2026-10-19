@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-10-19
+
 ### Added
 
 - `sigmataste`: three wait-what checks beside the lenses, in `references/wait-what.md`. Glossary in sync (words the project uses that its glossary lacks, one word with two meanings), glossary current (entries nothing uses, or whose meaning drifted, each with update, merge, retire or delete and a reason), and the target against the repo's `DESIGN.md` when it is a UI. They never block, use judgment instead of fixed rules, move or delete nothing, and end in a "Wait-what fixes" section of the plan for the calling agent to apply.
@@ -312,7 +314,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.2...v0.10.0
 [0.9.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.0...v0.9.1
