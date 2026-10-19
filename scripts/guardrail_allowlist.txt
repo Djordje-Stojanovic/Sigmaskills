@@ -50,3 +50,5 @@ allowed / we will not" line carries no weight; `scripts/guardrail_lint.py` holds
 description: 'SigmaWrite plus a GUI: plain, short English in interactive status and question boards the user reads and types into. Use when the user says "easy
 description: Write a paste-ready unattended-run prompt (Claude Code /lo
 description: Taste pass on a page, app, deck, doc, image or film. Asks
+# 2026-10-19: sigmaship's own safety behaviour in its changelog (a property of the ship flow, not a rule on the owner)
+never checks out, resets or commits in a shared main checkout
