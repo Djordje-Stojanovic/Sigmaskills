@@ -15,6 +15,13 @@ export const AGENT_ALIASES = Object.freeze({
 });
 
 /**
+ * Host folders that must hold a real copy: `agy` (Antigravity CLI 1.4.2) does not list a skill
+ * folder that is a Windows junction (live run 2026-10-20: the junction showed no skills, the same
+ * folder as a copy showed them). With no --link or --copy the CLI writes a copy there.
+ */
+export const COPY_ONLY_ROOTS = Object.freeze(new Set(['.gemini/config/skills']));
+
+/**
  * Turn friendly Agent Host names into destination roots.
  *
  * A name matches a host id, its display name, a registry alias, or a short alias such as

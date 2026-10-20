@@ -27,7 +27,33 @@ export function loadHostRegistry(packageRoot = findPackageRoot()) {
   if (!snapshot || !Array.isArray(snapshot.hosts)) {
     throw new Error('registry hosts must be an array');
   }
-  return snapshot;
+  return applyHostOverrides(snapshot);
+}
+
+/**
+ * Global skill folders the upstream registry gets wrong, proven by a live run. The snapshot is
+ * rebuilt from `vercel-labs/skills`, so the fix lives here and survives `registry:sync`.
+ * `agy` (Antigravity CLI 1.4.2) loads global skills from `~/.gemini/config/skills` only: a probe
+ * skill in `~/.gemini/antigravity-cli/skills` and one in `~/.gemini/skills` were not listed,
+ * the one in `~/.gemini/config/skills` was (P13.35, 2026-10-20).
+ */
+export const HOST_GLOBAL_OVERRIDES = Object.freeze({
+  'antigravity-cli': '.gemini/config/skills',
+});
+
+function applyHostOverrides(snapshot) {
+  const hosts = snapshot.hosts.map((host) => {
+    const folder = HOST_GLOBAL_OVERRIDES[host.id];
+    if (!folder) return host;
+    return {
+      ...host,
+      destinations: {
+        ...host.destinations,
+        global: { kind: 'join', base: 'home', segments: [folder], raw: `join(home, '${folder}')` },
+      },
+    };
+  });
+  return { ...snapshot, hosts };
 }
 
 /**

@@ -18,7 +18,7 @@ import { listGlobalDestinationGroups, listProjectDestinationGroups, loadHostRegi
 import { loadPackCatalog, resolveSelection } from './packs.js';
 import { createSourceFetcher } from './pack-source.js';
 import { packStatus, uninstallPackSkills, updatePackSkills } from './pack-install.js';
-import { resolveAgentRoots, suggestAgents } from './agents.js';
+import { COPY_ONLY_ROOTS, resolveAgentRoots, suggestAgents } from './agents.js';
 import { runInstall } from './install-run.js';
 import { describeRoots } from './agents.js';
 import { formatPackList, formatSummary } from './report.js';
@@ -632,7 +632,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         agentRoots.roots.forEach((root) => hostRoots.add(root));
       }
       hostRoots.delete('.agents/skills');
-      const method = opts.method || 'link';
+      const method = opts.method || ([...hostRoots].some((root) => COPY_ONLY_ROOTS.has(root)) ? 'copy' : 'link');
       const fetcher = createSourceFetcher({ env });
       const started = Date.now();
       let run;

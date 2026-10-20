@@ -107,6 +107,20 @@ test('install: --preset sigma needs no network and --agent adds the host folder'
   }
 });
 
+test('install: --global --agent agy writes a real copy in ~/.gemini/config/skills, a junction is invisible to agy', async () => {
+  const box = createSandbox();
+  try {
+    const { code, out, err } = await run(box, ['install', 'sigmawrite', '--global', '--yes', '--agent', 'agy']);
+    assert.equal(code, 0, err);
+    assert.match(out, /\.gemini\/config\/skills\s+copy\s+Antigravity CLI/);
+    const folder = path.join(box.home, '.gemini', 'config', 'skills', 'sigmawrite');
+    assert.ok(fs.existsSync(path.join(folder, 'SKILL.md')));
+    assert.ok(!fs.lstatSync(folder).isSymbolicLink(), 'a real folder, not a link');
+  } finally {
+    box.cleanup();
+  }
+});
+
 test('install: --all still means every Sigma skill and keeps the old output', async () => {
   const box = createSandbox();
   try {
