@@ -421,7 +421,7 @@ def readme_vs_repo(root: Path, files, entries) -> dict:
             ci += 1
         if kind == "docs" or low.startswith(".env") or low.endswith((".env.example", ".env.sample")):
             docs_text.append(data.decode("utf-8", errors="replace"))
-        if kind == "code":
+        if kind == "code" and not TEST_RX.search(rel):  # test fixtures invent variables; the product's own code counts
             text = data.decode("utf-8", errors="replace")
             for rx in ENV_RX:
                 for var in rx.findall(text):
@@ -445,12 +445,21 @@ def readme_vs_repo(root: Path, files, entries) -> dict:
         if r and cmd not in seen:
             seen.add(cmd)
             out["commands"].append({"cmd": cmd, "ok": r[0], "why": r[1]})
+    names = {rel.rsplit("/", 1)[-1] for rel, _, _ in files}
     for token in re.findall(r"`([^`\n]{2,120})`|\]\((?!https?:|#|mailto:)([^)\s#]+)", readme):
         p = (token[0] or token[1]).strip().rstrip("/")
         if not PATHISH.match(p) or "<" in p or p in seen:
             continue
         seen.add(p)
-        out["paths"].append({"path": p, "ok": (root / p.lstrip("./")).exists()})
+        rel = p[2:] if p.startswith("./") else p
+        if "/" not in rel:  # a bare name: fine anywhere in the repo; an output name the repo never holds is not a claim
+            if rel in names or (root / rel).exists():
+                out["paths"].append({"path": p, "ok": True})
+            continue
+        first = rel.split("/", 1)[0]
+        if not (root / first).exists() and not re.search(r"\.\w{1,5}$", rel):
+            continue  # owner/repo, origin/main: not a path in this repo
+        out["paths"].append({"path": p, "ok": (root / rel).exists()})
     out["paths"] = out["paths"][:40]
     out["scripts_unmentioned"] = [k for k in scripts if not re.search(r"(?<![\w-])" + re.escape(k) + r"(?![\w-])", readme)][:30]
     tops = sorted({rel.split("/", 1)[0] for rel, _, _ in files if "/" in rel})
@@ -589,7 +598,7 @@ def cmd_selftest() -> int:
         (repo / "src").mkdir(parents=True)
         (repo / "node_modules" / "x").mkdir(parents=True)
         (repo / "package.json").write_text(json.dumps({"name": "demo", "scripts": {"build": "node src/main.js", "lint": "x"}}), encoding="utf-8")
-        (repo / "src" / "main.js").write_text("// entry\nconst k = process.env.DEMO_TOKEN;\n// TODO: retry\nconsole.log(k)\n", encoding="utf-8")
+        (repo / "src" / "main.js").write_text("// entry\nconst k = process.env." + "DEMO_TOKEN;\n// TODO: retry\nconsole.log(k)\n", encoding="utf-8")
         (repo / "README.md").write_text("# Demo\n\n```bash\nnpm run build\nnpm run deploy\npython tools/gen.py\n```\n\nSee `src/main.js` and `docs/guide.md`.\n", encoding="utf-8")
         d = scan(repo)
         cmds = {c["cmd"]: c["ok"] for c in d["readme"]["commands"]}

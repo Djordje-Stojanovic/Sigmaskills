@@ -684,7 +684,7 @@ th { color: var(--mute); font-size: 12px; font-weight: 700; letter-spacing: .08e
     ];
     const has = R.has || {};
     cl.innerHTML = `<div class="verdicts">
-        <div style="--c: var(--ok)"><b>${okC + okP} of ${cmds.length + paths.length}</b><span>README commands and paths that check out</span></div>
+        <div style="--c: var(--ok)"><b>${cmds.length + paths.length ? `${okC + okP} of ${cmds.length + paths.length}` : "none"}</b><span>${cmds.length + paths.length ? "README commands and paths that check out" : "README commands or repo paths to check (outside tools are skipped)"}</span></div>
         <div style="--c: var(--err)"><b>${cmds.length + paths.length - okC - okP}</b><span>README commands and paths the repo does not have</span></div>
         <div style="--c: var(--warn)"><b>${fmt(hidden)}</b><span>settings, scripts and folders the README never names</span></div></div>
       ${rows.length ? `<input class="filter" type="search" data-for="claims-t" placeholder="Filter the checks" aria-label="Filter the checks">
@@ -723,7 +723,8 @@ th { color: var(--mute); font-size: 12px; font-weight: 700; letter-spacing: .08e
       steps.forEach((s, i) => {
         const w = $(".where", s);
         const li = document.createElement("li");
-        li.innerHTML = `<button type="button">${i + 1}. ${esc(((w && w.textContent) || $("h4", s).textContent).split(":")[0].split("/").pop())}</button>`;
+        const label = w ? w.textContent.split(",")[0].trim().split("/").pop() : $("h4", s).textContent;
+        li.innerHTML = `<button type="button" title="${esc($("h4", s).textContent)}">${i + 1}. ${esc(label)}</button>`;
         $("button", li).addEventListener("click", () => go(i));
         route.appendChild(li);
       });

@@ -274,13 +274,15 @@ class TestPlatforms(Base):
 
     def test_x_post_url_reads_fxtwitter_without_login(self):
         fx = {"tweet": {"id": "20", "text": "just setting up my twttr", "likes": 300000, "replies": 17000,
-                        "created_at": "Tue Mar 21 20:50:14 +0000 2006", "author": {"screen_name": "jack"}}}
+                        "created_at": "Tue Mar 21 20:50:14 +0000 2006", "created_timestamp": 1142974214,
+                        "author": {"screen_name": "jack"}}}
         f = self.use(Fake(extra={"https://api.fxtwitter.com/status/20": json.dumps(fx)}))
         r = rd.read_x("https://twitter.com/jack/status/20?s=46")
         self.assertEqual(r["route"], "fxtwitter")
         self.assertEqual((r["items"][0]["text"], r["items"][0]["score"], r["items"][0]["replies"]),
                          ("just setting up my twttr", 300000, 17000))
         self.assertEqual(r["items"][0]["url"], "https://x.com/jack/status/20")
+        self.assertEqual(r["items"][0]["date"][:10], "2006-03-21")
         self.assertEqual(f.calls, ["https://api.fxtwitter.com/status/20"])
 
     def test_x_post_url_falls_back_to_embed_json(self):

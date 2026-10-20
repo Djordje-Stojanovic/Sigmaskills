@@ -10,6 +10,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - `sigmaresearch`: Reddit and X never end at a block. The Reddit reader reads a thread's post and full comment tree from the Arctic Shift archive when JSON is blocked (401 login wall or 403 network policy), and searches titles there inside a subreddit; a removed archive copy takes its body from the live feed. The HTTP core follows a host's own window (`x-ratelimit-remaining`, `x-ratelimit-reset`): the Reddit feed allows one read per minute, so the next read waits for the reset instead of failing. `read.py x <post URL>` reads a post without a login (the FxTwitter API, then X's embed JSON) with its likes and reply count; a browser dump is filtered by the query words, so off-topic posts never reach the answer. `references/reddit.md` and `references/x.md` give the full route order: the reader's routes, a real browser (also a stealth Chromium on a server), another network address, more archives; tested on three threads and three posts.
 - SigmaHuman follows blader/humanizer upstream: a vendored copy (`sigmahuman/upstream/humanizer-SKILL.md`, commit and version in `UPSTREAM.json`) and one update command, `python sigmahuman/scripts/upstream.py status | sync [--ref R] | check`. `sync` rewrites the 26 patterns, the licence and the version lines and lists upstream's other changes for our layer; `check` runs in `npm test`. Lanes, section G, the write mode and `factcheck.py` stay ours.
 
+### Changed
+
+- Sigma Installer: the owner's studio folder preset is now the generic `local` pack (`--preset local`, alias `own`, folder from `SIGMA_LOCAL_SKILLS_DIR` or `dirs.local` in `~/.sigmaskills/packs.json`, no id prefix). A named pack with a prefix goes into `~/.sigmaskills/packs.json` under `packs`.
+- The public package names no private repository, host or path any more: `DESIGN.md` (now Black-Green), `AGENTS.md`, the installer guide, the arena template, the deeplook tests (real files from `SIGMADEEPLOOK_REAL`, else `~/.cache/sigmadeeplook/real`) and the guardrail lint. A repo invariant fails when one comes back. Tracked `__pycache__` files are gone.
+
 ## [0.13.0] — 2026-10-20
 
 ### Changed

@@ -542,7 +542,7 @@ def parse_x_fx(doc, url):
     t = doc.get("tweet") or {}
     if not t.get("text") and not t.get("id"):
         return []
-    return [item("x", url, "", t.get("text", ""), t.get("likes"), t.get("created_at", ""),
+    return [item("x", url, "", t.get("text", ""), t.get("likes"), t.get("created_timestamp") or t.get("created_at", ""),
                  (t.get("author") or {}).get("screen_name", ""), "x.com", "post",
                  "full post (FxTwitter JSON); replies not included", replies=t.get("replies"), reposts=t.get("retweets"))]
 
