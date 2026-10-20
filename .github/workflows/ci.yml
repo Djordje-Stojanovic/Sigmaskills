@@ -47,3 +47,26 @@ jobs:
           node-version: '24' # same Node as release.yml
       - name: Preview, dispatch, validate, and publish with real npm pack and stubbed network
         run: node ./scripts/release-rehearsal.js
+
+  # Ticket 83 I17 (2026-10-21): one more run of the same suite on the dev box runner (label "devbox", free, idle when no job).
+  # Only for pushes and for pull requests from this repository: a fork pull request never reaches the box (this repository is public).
+  test-box:
+    name: Linux · Node 24 · dev box
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, devbox]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # baseline tests rebuild hashes from Release tags
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Run structural and installer tests
+        env:
+          # a short path: the installer tests print a path and the terminal wraps long lines (the runner's own temp folder is long)
+          TMPDIR: /tmp/sigma-test-fs
+        run: |
+          mkdir -p "${TMPDIR}"
+          npm test
