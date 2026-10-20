@@ -1,6 +1,6 @@
 # Host facts and prompt skeletons
 
-Checked 2026-10-19. Hosts change fast: when a fact matters, check the linked source. Each host file marks every fact **ran** (run by the author on Windows 11), **doc** (host documentation or its own bundled guide), or **source** (host source code); a step not run says "live run pending". A host not listed gets the plain instruction (last section).
+Checked 2026-10-20. Hosts change fast: when a fact matters, check the linked source. Each host file marks every fact **ran** (run by the author on Windows 11), **doc** (host documentation or its own bundled guide), or **source** (host source code); a step not run says "live run pending". A host not listed gets the plain instruction (last section).
 
 Every prompt carries the same five things: ranked order, crew and model mix, wake rules, landing rules, stop line. The loop file holds the long form; the prompt points to it and repeats only what the host needs to hold the loop.
 
@@ -18,7 +18,7 @@ A prompt that needs a tool the host lacks stalls the run. Pick the row for the h
 | T3 Code | `schedule_task` tool, or Settings, Scheduled tasks | Interval, fixed time, webhook | The thread runs on the host provider | the provider's own folder |
 | Gemini CLI | None: plain instruction, `AfterAgent` hook | None | `gemini -p` | `.agents/skills`, `~/.gemini/skills` |
 
-Invoke SigmaLoop the host's way (`/sigmaloop` in Claude Code, `/skill:sigmaloop` in pi). Skill folders in the table come from the installer registry, except `agy`, whose folders come from its bundled guide. Windows: in Git Bash a leading `/word` argument is rewritten to a path (ran, Claude Code and `agy`); use PowerShell or `MSYS_NO_PATHCONV=1` (ran: it fixed `/loop`).
+Invoke SigmaLoop the host's way (`/sigmaloop` in Claude Code, `$sigmaloop` in Codex, `/skill:sigmaloop` in pi). Skill folders in the table come from the installer registry, except `agy`, whose global folder is proven by a run (the installer overrides the registry) and must be a real copy, not a junction (ran). Windows: in Git Bash a leading `/word` argument is rewritten to a path (ran, Claude Code and `agy`); use PowerShell or `MSYS_NO_PATHCONV=1` (ran: it fixed `/loop`).
 
 
 Per-host facts and the prompt skeleton: [Claude Code](host-claude-code.md), [Codex](host-codex.md), [Antigravity and Gemini CLI](host-antigravity.md), [pi and lapi](host-pi.md), [T3 Code](host-t3-code.md). Read only the one file for the host the user named.

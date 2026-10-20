@@ -2,7 +2,7 @@
 
 Marks: **ran** (run by the author, Windows 11), **doc**, **source**. See [hosts.md](hosts.md) for the table and the plain instruction.
 
-Facts for lapi (source: the Plan and Code prompts, `qwen-general-sampling.ts` and `lapi-lib.ts` of the lapi extension, a pi setup with Plan and Code modes; [pi docs](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/docs)). Not run: live run pending.
+Facts for lapi (source: the Plan and Code prompts, `qwen-general-sampling.ts` and `lapi-lib.ts` of the lapi extension, a pi setup with Plan and Code modes; [pi docs](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/docs)). `pi -p "/skill:sigmaloop …"` loads the skill and answers from `hosts.md` (ran, Windows and Linux). The plan loop needs the interactive session: `pi -p "/code"` only switches the session to Code mode and exits; a following `pi -p -c` ran one turn, ticked one box, and exited without starting the next (ran). Over `--mode rpc` the agent ticked two of three boxes in one run and stopped (ran). Live run of the TUI loop pending.
 
 - Stock pi has no loop and no scheduler (doc). lapi adds one: in Code mode, when the dated plan file under `.pi/plans/` has open `- [ ]` boxes inside `<!-- lapi-workflow -->` … `<!-- /lapi-workflow -->`, lapi starts the next turn each time the agent goes idle (source). Boxes outside the fence are not a loop; no fence means no loop (source).
 - The loop starts from Plan mode. In chat the plan is one `[LAPI_PLAN]` … `[/LAPI_PLAN]` block with nothing after it. The dated file holds the same block, then the fence (Plan may write only there). `/code`, or `/code-fresh` for a new session, starts Code mode (source).

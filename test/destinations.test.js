@@ -9,6 +9,7 @@ import {
   defaultSelectedRoots,
   detectHost,
   findDestinationConflicts,
+  listGlobalDestinationGroups,
   listProjectDestinationGroups,
   loadHostRegistry,
   resolveSkillPath,
@@ -196,4 +197,15 @@ test('colliding, overlapping, duplicate, invalid, and occupied-unowned destinati
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
+});
+
+test('agy global skills go to ~/.gemini/config/skills, the folder the CLI reads', () => {
+  const registry = loadHostRegistry(ROOT);
+  const home = path.join(os.tmpdir(), 'sigma-agy-home');
+  const groups = listGlobalDestinationGroups({ registry, homeDir: home });
+  const agy = groups.find((group) => group.hosts.some((host) => host.id === 'antigravity-cli'));
+  assert.equal(agy.relativeRoot, '.gemini/config/skills');
+  assert.equal(agy.absoluteRoot, path.join(home, '.gemini', 'config', 'skills'));
+  const ide = groups.find((group) => group.hosts.some((host) => host.id === 'antigravity'));
+  assert.equal(ide.relativeRoot, '.gemini/antigravity/skills');
 });

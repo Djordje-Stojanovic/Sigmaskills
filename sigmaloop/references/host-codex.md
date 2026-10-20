@@ -9,6 +9,7 @@ Facts ([slash commands](https://learn.chatgpt.com/codex/reference/slash-commands
 - Each continuation turn tells the model to judge progress from files and command output, to prove every requirement before it calls the goal complete, and to call `update_goal` only then (source). Status values: active, paused, stalled, usage limited, limited by budget, complete (source). A token budget is optional.
 - There is no timer. "Waking" is the next turn, so a clock stop line works only if the objective says to read the clock each turn.
 - `codex exec "/goal …"` sent the text to the model as a plain prompt: one turn, exit 0, no continuation (ran). For a headless loop use a `Stop` hook: in `.codex/hooks.json` it prints `{"decision":"block","reason":"…"}` and Codex starts a new turn with the reason as its prompt (doc). A two-iteration hook ran under `codex exec --dangerously-bypass-hook-trust` (ran). Otherwise re-run `codex exec resume --last` from a shell loop.
+- SigmaLoop sets `allow_implicit_invocation: false` in `agents/openai.yaml`, so Codex leaves it out of the skill list it shows the model. Type `$sigmaloop`: `codex exec "$sigmaloop …"` loaded the skill and read `hosts.md` (ran, Windows, `codex-cli` 0.163.0).
 - Scheduled tasks exist in the desktop app and on the web, not in the CLI (doc). A task scheduled inside a chat returns to that chat (doc).
 
 Prompt skeleton (under 4,000 characters):
