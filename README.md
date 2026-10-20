@@ -34,15 +34,13 @@ Run the Sigma Installer in your project:
 npx @djordje-stojanovic/sigmaskills
 ```
 
-A full-screen installer opens in three steps: **What** (packs and single skills), **Where** (Agent Hosts), **Review**. It writes nothing until you confirm, and it ends with a summary of what changed.
+The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm.
 
 ![The What step: packs with counts, one pack opened to pick single skills](https://raw.githubusercontent.com/Djordje-Stojanovic/Sigmaskills/main/docs/images/installer-what.svg)
 
 ![The summary after an install](https://raw.githubusercontent.com/Djordje-Stojanovic/Sigmaskills/main/docs/images/installer-done.svg)
 
 ### Presets
-
-A preset is a whole pack. Sigma ships inside the package. The other packs come from their GitHub repositories when you install them.
 
 | Preset | Skills | Source |
 |--------|--------|--------|
@@ -56,7 +54,7 @@ A preset is a whole pack. Sigma ships inside the package. The other packs come f
 
 ### Without the wizard
 
-Every choice has a flag, so scripts and CI never open the wizard. Name skills, a preset, or both, and the Agent Hosts (`claude`, `codex`, `gemini`, `agy`, `pi`, `cursor`, or any id from the host registry). Hosts that read `.agents/skills` need no folder of their own.
+Every choice has a flag, so scripts and CI skip the wizard. Name skills, presets, and Agent Hosts (`claude`, `codex`, `gemini`, `agy`, `pi`, `cursor`, or any registry id).
 
 ```bash
 npx @djordje-stojanovic/sigmaskills install sigmawrite --project .
@@ -66,8 +64,6 @@ npx @djordje-stojanovic/sigmaskills list --packs
 npx @djordje-stojanovic/sigmaskills update --global --yes
 npx @djordje-stojanovic/sigmaskills uninstall --skill tdd --yes
 ```
-
-Several skills install together: if one Sigma skill fails, none stay installed. Pack skills that fail are listed in the summary and the exit code is 1. `--dry-run` shows the plan and writes nothing. A copy you edited stays until you pass `--force`, which saves it to a private backup first.
 
 The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/installer.md) explains presets, host folders, Global Installation, `status`, `update`, `restore`, `uninstall`, and `purge`.
 
