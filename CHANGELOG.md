@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- SigmaHuman follows blader/humanizer upstream: a vendored copy (`sigmahuman/upstream/humanizer-SKILL.md`, commit and version in `UPSTREAM.json`) and one update command, `python sigmahuman/scripts/upstream.py status | sync [--ref R] | check`. `sync` rewrites the 26 patterns, the licence and the version lines and lists upstream's other changes for our layer; `check` runs in `npm test`. Lanes, section G, the write mode and `factcheck.py` stay ours.
+
 ## [0.13.0] — 2026-10-20
 
 ### Changed
