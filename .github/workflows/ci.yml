@@ -65,7 +65,8 @@ jobs:
           package-manager-cache: false
       - name: Run structural and installer tests
         env:
-          TMPDIR: ${{ runner.temp }}/sigma-test-fs
+          # a short path: the installer tests print a path and the terminal wraps long lines (the runner's own temp folder is long)
+          TMPDIR: /tmp/sigma-test-fs
         run: |
           mkdir -p "${TMPDIR}"
           npm test
