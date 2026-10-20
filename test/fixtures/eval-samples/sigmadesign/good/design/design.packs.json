@@ -1,0 +1,26 @@
+{
+  "teal-black": {
+    "mode": "dark",
+    "accent": "#2dd4bf",
+    "colors": {
+      "canvas": "#0a0b0b",
+      "glow": "#092a26",
+      "surface": "#111313",
+      "surface-2": "#181b1b",
+      "surface-3": "#1f2323",
+      "hairline": "#262b2b",
+      "hairline-strong": "#3e4645",
+      "ink": "#f4f5f5",
+      "body": "#d4d8d8",
+      "mute": "#99a3a2",
+      "primary": "#2dd4bf",
+      "primary-hover": "#57ddcc",
+      "primary-deep": "#25b3a2",
+      "on-primary": "#07221e",
+      "ok": "#64f7ad",
+      "warn": "#f7cd64",
+      "err": "#f77064",
+      "info": "#64c8f7"
+    }
+  }
+}

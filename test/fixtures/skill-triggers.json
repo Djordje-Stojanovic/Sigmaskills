@@ -233,5 +233,20 @@
     "prompt": "Duplicate this repository, install the skill bundle and give me a mini course to learn it",
     "skill": "sigmafork",
     "near": "sigmaimprove"
+  },
+  {
+    "prompt": "Make a design system for my app from one accent colour, with dark and light and a yellow colour pack",
+    "skill": "sigmadesign",
+    "near": "sigmataste"
+  },
+  {
+    "prompt": "Create a design template with tokens and a sample page, then move every repo I own onto one DESIGN.md",
+    "skill": "sigmadesign",
+    "near": "sigmaimprove"
+  },
+  {
+    "prompt": "Replace the hard-coded hex colours in this site with design tokens and add a new red-white theme",
+    "skill": "sigmadesign",
+    "near": "sigmarefactor"
   }
 ]

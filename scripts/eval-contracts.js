@@ -373,7 +373,34 @@ function sigmafork({ files, result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmadesign writes a design system under design/ (DESIGN.md, built CSS, a sample page) and changes no other file.
+function sigmadesign({ files, result }) {
+  const problems = [];
+  for (const [name, text] of Object.entries(files)) {
+    if (name.startsWith('design/')) continue;
+    const original = path.join(FIXTURE, ...name.split('/'));
+    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed a file outside design/: ${name}`);
+  }
+  const design = files['design/DESIGN.md'] ?? '';
+  if (!design) return [...problems, 'missing design/DESIGN.md'];
+  problems.push(...requireText(design, [/^---\r?\n[\s\S]*?^colors:/m, /^\s+primary:\s*"?#[0-9a-fA-F]{6}/m, /^\s+light-canvas:/m, /^typography:/m, /^rounded:/m, /^components:/m, /^## Overview/m], 'design/DESIGN.md'));
+  if (/\bFILL\b/.test(design)) problems.push('design/DESIGN.md: FILL markers left from the template');
+  const tokens = files['design/site/tokens.css'] ?? '';
+  if (!tokens) problems.push('missing design/site/tokens.css');
+  else problems.push(...requireText(tokens, [/:root\s*\{/, /:root\[data-theme="light"\]/, /--primary:\s*#[0-9a-fA-F]{6}/], 'design/site/tokens.css'));
+  const components = files['design/site/components.css'] ?? '';
+  if (!components) problems.push('missing design/site/components.css');
+  else if (/#[0-9a-fA-F]{3,6}\b/.test(components.replace(/\/\*[\s\S]*?\*\//g, ''))) problems.push('design/site/components.css: a colour literal instead of a token');
+  const page = files['design/site/index.html'] ?? '';
+  if (!page) problems.push('missing design/site/index.html');
+  else problems.push(...requireText(page, [/tokens\.css/, /components\.css/, /<title>[^<]+<\/title>/], 'design/site/index.html'));
+  if (!/design\/DESIGN\.md/.test(result)) problems.push('reply does not name design/DESIGN.md');
+  if (!/contrast/i.test(result)) problems.push('reply does not give the contrast check result');
+  if (!/looked|screenshot/i.test(result)) problems.push('reply does not say the page was looked at');
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

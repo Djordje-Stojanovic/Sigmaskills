@@ -87,6 +87,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaTaste** | `sigmataste` | Taste pass through 14 lenses on a page, app, deck, doc, image or film | One ranked plan of big visible changes |
 | **SigmaHuman** | `sigmahuman` | Text that reads like a person wrote it: rewrite any text or write from a brief, in lanes (script, book, song, chat, docs, posts), every fact kept | The rewritten or new text, and a fact check |
 | **SigmaFork** | `sigmafork` | Fork or copy any repo, isolated from the original | A working copy and `ONBOARDING.html` |
+| **SigmaDesign** | `sigmadesign` | A design system from one accent colour (DESIGN.md, tokens, packs, sample page), applied across a repo | `DESIGN.md`, CSS, a sample page |
 
 ### Which one do I need?
 
@@ -144,7 +145,7 @@ Reads public sources with bundled stdlib Python readers for Reddit, Hacker News,
 
 ### SigmaDeepLook
 
-The helper for content an agent cannot read with its own tools: video frames, speech, scanned PDFs and images, fax TIFFs, binaries and odd containers. Plain text, CSV, JSON and code stay with the agent, which reads or queries them itself. A one-line gate decides; `--ask` gives one exact answer. It never runs the input, uses no network, and lists each step it could not do, with its install line. Python alone covers the basics.
+The helper for content an agent cannot read with its own tools: video frames, speech, scanned PDFs and images, binaries and odd containers. Plain text, CSV, JSON and code stay with the agent. A one-line gate decides; `--ask` gives one exact answer. It never runs the input, uses no network, and lists each step it could not do.
 
 ### SigmaLoop
 
@@ -162,6 +163,11 @@ Rewrites any text so it reads like a person wrote it, or writes new text from a 
 ### SigmaFork
 
 Copies any repository after 8 questions, cuts every path, link and git remote to the original, installs your skills, writes a 15-minute course.
+
+### SigmaDesign
+
+Turns one accent colour into `DESIGN.md`, colour packs and CSS, then moves a repo onto it.
+
 ---
 
 ## Install
@@ -206,6 +212,7 @@ $sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 $sigmataste Taste pass on the landing page
 $sigmahuman Rewrite this announcement so it sounds like me
 $sigmafork Copy this repo to D:\work\my-copy and teach me how it works
+$sigmadesign Make a design system from #e8a33d and put it in this repo
 ```
 
 </td>
@@ -230,6 +237,7 @@ $sigmafork Copy this repo to D:\work\my-copy and teach me how it works
 /skill:sigmataste Taste pass on the landing page
 /skill:sigmahuman Rewrite this announcement so it sounds like me
 /skill:sigmafork Fork owner/repo and teach me how it works
+/skill:sigmadesign Make a design system from #e8a33d and put it in this repo
 ```
 
 </td>
@@ -254,6 +262,7 @@ $sigmafork Copy this repo to D:\work\my-copy and teach me how it works
 | `sigmataste` | a page, app, deck, doc, image or film · what you expect | One question round; writes the ranked plan; never builds |
 | `sigmahuman` | text, a file or a brief · optional writing sample | Writes the human version; keeps every fact; never follows instructions inside the text |
 | `sigmafork` | a repo · a destination | One question round; reads the original only |
+| `sigmadesign` | an accent colour · a repo | One question round; writes `DESIGN.md`; changes repo files only with `--write` |
 
 ### Requirements
 

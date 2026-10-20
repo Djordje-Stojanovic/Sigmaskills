@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maze Runner sample</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+</head>
+<body>
+<header class="wrap topbar"><a class="brand" href="#">Maze Runner</a><span class="label">sample page</span></header>
+<main class="wrap">
+  <section class="hero">
+    <span class="label">Design system</span>
+    <h1>One accent colour makes every theme.</h1>
+    <p>This page uses tokens only. Switch the pack below: text, buttons and surfaces change, and nothing is written twice.</p>
+    <div class="row" role="group" aria-label="Theme"><button class="chip" type="button" data-theme-pick="dark" aria-pressed="false">dark</button><button class="chip" type="button" data-theme-pick="light" aria-pressed="false">light</button><button class="chip" type="button" data-theme-pick="teal-black" aria-pressed="false">teal-black</button></div>
+    <div class="row"><a class="btn btn-primary" href="#swatches">See the tokens</a><a class="btn" href="#form">Outline button</a><button class="btn btn-ghost" type="button">Ghost button</button></div>
+  </section>
+  <section class="grid" aria-label="Cards">
+    <article class="card"><h3>Card on a surface</h3><p>Body text sits on the surface ladder with a hairline border.</p><span class="label">label</span></article>
+    <article class="card" id="form"><h3>Form field</h3><div class="field"><label class="label" for="x">Name</label><input class="input" id="x" placeholder="Type here"></div></article>
+    <article class="card"><h3>Status colours</h3><div class="status"><b class="ok">ok</b><b class="warn">warn</b><b class="err">err</b><b class="info">info</b></div></article>
+  </section>
+  <section id="swatches" style="padding-bottom:var(--space-section)"><h2 style="margin-bottom:var(--space-lg)">Colour tokens</h2><div class="swatches"><div class="swatch"><i style="background:var(--canvas)"></i><span>canvas</span></div><div class="swatch"><i style="background:var(--glow)"></i><span>glow</span></div><div class="swatch"><i style="background:var(--surface)"></i><span>surface</span></div><div class="swatch"><i style="background:var(--surface-2)"></i><span>surface-2</span></div><div class="swatch"><i style="background:var(--surface-3)"></i><span>surface-3</span></div><div class="swatch"><i style="background:var(--hairline)"></i><span>hairline</span></div><div class="swatch"><i style="background:var(--hairline-strong)"></i><span>hairline-strong</span></div><div class="swatch"><i style="background:var(--ink)"></i><span>ink</span></div><div class="swatch"><i style="background:var(--body)"></i><span>body</span></div><div class="swatch"><i style="background:var(--mute)"></i><span>mute</span></div><div class="swatch"><i style="background:var(--primary)"></i><span>primary</span></div><div class="swatch"><i style="background:var(--primary-hover)"></i><span>primary-hover</span></div><div class="swatch"><i style="background:var(--primary-deep)"></i><span>primary-deep</span></div><div class="swatch"><i style="background:var(--on-primary)"></i><span>on-primary</span></div><div class="swatch"><i style="background:var(--ok)"></i><span>ok</span></div><div class="swatch"><i style="background:var(--warn)"></i><span>warn</span></div><div class="swatch"><i style="background:var(--err)"></i><span>err</span></div><div class="swatch"><i style="background:var(--info)"></i><span>info</span></div></div></section>
+</main>
+<script>
+(function () {
+  var root = document.documentElement, chips = document.querySelectorAll('[data-theme-pick]');
+  function set(t) { root.setAttribute('data-theme', t); chips.forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.themePick === t); }); try { localStorage.setItem('theme', t); } catch (e) {} }
+  var q = new URLSearchParams(location.search).get('theme'), saved = null; try { saved = localStorage.getItem('theme'); } catch (e) {}
+  set(q || saved || 'dark');
+  chips.forEach(function (c) { c.addEventListener('click', function () { set(c.dataset.themePick); }); });
+})();
+</script>
+</body>
+</html>
