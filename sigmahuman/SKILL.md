@@ -85,6 +85,8 @@ Keep the details that carry the writer's voice unless they hurt the meaning: a s
 
 Patterns, the method and most examples: [blader/humanizer](https://github.com/blader/humanizer) v3.1.0, commit 8c307f3, MIT, copyright (c) 2025 Siqi Chen; licence text in [references/LICENSE-humanizer.txt](references/LICENSE-humanizer.txt). The patterns come from Wikipedia's ["Signs of AI writing"](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) (WikiProject AI Cleanup). What was merged from where: [references/sources.md](references/sources.md).
 
+Upstream tracking: `upstream/humanizer-SKILL.md` is the vendored copy at the commit in `upstream/UPSTREAM.json`; sections A to F of patterns.md equal it byte for byte, and everything else here is our layer. `python scripts/upstream.py status` says whether blader/humanizer moved; `sync` pulls the new patterns, licence and version lines and prints the upstream changes outside A to F for the layer.
+
 ## Personal instructions
 
 <sigmaskills-custom>

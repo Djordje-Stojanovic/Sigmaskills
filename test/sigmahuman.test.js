@@ -82,3 +82,14 @@ test('sigmahuman ships the upstream MIT notice and the 26 upstream patterns', ()
     assert.match(readFileSync(join(root, 'sigmahuman', 'references', 'lanes.md'), 'utf8'), new RegExp(`^## ${lane}`, 'm'));
   }
 });
+
+test('sigmahuman upstream: patterns A-F equal the vendored blader/humanizer copy', (t) => {
+  const python = findPython();
+  if (!python) return t.skip('python 3 not found');
+  const r = spawnSync(python, ['-I', join(root, 'sigmahuman', 'scripts', 'upstream.py'), 'check'], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const meta = JSON.parse(readFileSync(join(root, 'sigmahuman', 'upstream', 'UPSTREAM.json'), 'utf8'));
+  assert.match(meta.commit, /^[0-9a-f]{40}$/);
+  const skill = readFileSync(join(root, 'sigmahuman', 'SKILL.md'), 'utf8');
+  assert.ok(skill.includes(`blader/humanizer ${meta.version}`), 'SKILL.md names the vendored version');
+});

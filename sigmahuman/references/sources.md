@@ -21,3 +21,7 @@ SigmaHuman is one skill made from every humanizer-like skill the Sigmaskills own
 
 - Getting past AI detectors. The upstream README says detectors still flag most of its output, and the 2026-10-19 test found the detectors failed their own control texts. SigmaHuman writes for human readers.
 - The upstream plugin manifests (`.claude-plugin/`, `.cursor-plugin/`): the Sigmaskills installer and `npx skills` install this skill on every agent host.
+
+## Upstream updates
+
+The vendored copy is `upstream/humanizer-SKILL.md`; its commit and version are in `upstream/UPSTREAM.json`. `python scripts/upstream.py check` (offline, also run by `npm test`) proves patterns.md A-F equals it. `status` compares with GitHub; `sync [--ref <commit or tag>]` rewrites A-F, `LICENSE-humanizer.txt` and the version lines in SKILL.md, patterns.md and this file, then lists what upstream changed in its method, voice and "when not to act" sections, which our SKILL.md folds in by hand. Our layer (lanes, section G, the write mode, `factcheck.py`) is never overwritten.
