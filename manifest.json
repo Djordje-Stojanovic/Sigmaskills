@@ -73,6 +73,11 @@
       "id": "sigmahuman",
       "title": "SigmaHuman",
       "needsReferences": true
+    },
+    {
+      "id": "sigmafork",
+      "title": "SigmaFork",
+      "needsReferences": true
     }
   ],
   "retired": [

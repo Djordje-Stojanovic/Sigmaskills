@@ -1,0 +1,12 @@
+interface:
+  display_name: SigmaFork
+  short_description: Fork or copy any repo, isolated from the original, with an onboarding course
+  default_prompt: Use $sigmafork to fork or copy this repository, ask the 8 grill questions,
+    cut every path back to the original, install the chosen skill bundle, and write the
+    onboarding course.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

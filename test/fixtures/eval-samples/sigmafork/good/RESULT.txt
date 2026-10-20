@@ -1,0 +1,7 @@
+Copy: out/copy, a plain local copy. verify: ISOLATED, no path, link or git remote reaches the original.
+Original: unchanged (same git status and HEAD before and after).
+Skill bundle: none.
+Owner steps: none, no keys needed.
+Guide: out/copy/ONBOARDING.html, rendered with no console errors.
+
+Is there anything else you need?

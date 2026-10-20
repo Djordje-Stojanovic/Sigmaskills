@@ -53,3 +53,4 @@ description: Taste pass on a page, app, deck, doc, image or film. Asks
 # 2026-10-19: sigmaship's own safety behaviour in its changelog (a property of the ship flow, not a rule on the owner)
 never checks out, resets or commits in a shared main checkout
 description: 'Makes any text read like a person wrote it. Takes text in
+description: 'Fork or copy any repository, from GitHub or a local folder, end to end
