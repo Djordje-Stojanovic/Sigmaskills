@@ -11,7 +11,7 @@
 
 
 
-You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaimprove`, `sigmabrief`, `sigmaship`, `sigmawrite`, `sigmarefactor`, `sigmaresearch`, `sigmadeeplook`, `sigmawritegui`, `sigmacreatearena`, `sigmafreedom`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
+You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaimprove`, `sigmabrief`, `sigmaship`, `sigmawrite`, `sigmarefactor`, `sigmaresearch`, `sigmadeeplook`, `sigmawritegui`, `sigmacreatearena`, `sigmafreedom`, `sigmaloop`, `sigmataste`, `sigmahuman`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
 
 **Where to look**
 
@@ -22,7 +22,7 @@ You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) 
 | [`docs/maintainers.md`](docs/maintainers.md) | Maintainer guide: layout, tests, CI, releases, registry automation |
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history (`[Unreleased]` for WIP) |
 | [`DESIGN.md`](DESIGN.md) | The one design file for every site and app UI (tokens, type, layout, components): read it before any UI work. Master: Thinkcenter_Setup `docs/templates/DESIGN.md`; this copy stays byte-identical to it |
-| `sigmareview/` · `sigmaimprove/` · `sigmabrief/` · `sigmaship/` · `sigmawrite/` · `sigmarefactor/` · `sigmaresearch/` · `sigmadeeplook/` · `sigmawritegui/` · `sigmacreatearena/` · `sigmafreedom/` | The skills |
+| `sigmareview/` · `sigmaimprove/` · `sigmabrief/` · `sigmaship/` · `sigmawrite/` · `sigmarefactor/` · `sigmaresearch/` · `sigmadeeplook/` · `sigmawritegui/` · `sigmacreatearena/` · `sigmafreedom/` · `sigmaloop/` · `sigmataste/` · `sigmahuman/` | The skills |
 | [`test/repo-invariants.test.js`](test/repo-invariants.test.js) | `KNOWN_SKILLS` registry + `npm test` guards |
 | `.github/` | Issue forms, PR template, CI |
 
@@ -115,6 +115,14 @@ Prefer clear who-does-what over foggy abstractions. Prefer one clean idea per se
 **Bad:** We refactored the orchestration layer to idempotently hydrate the ephemeral projection surface across seven modules.
 
 **Good:** I changed how temporary data loads across seven files. The load can run twice without creating duplicate records. Here is what each file does and why.
+
+Five habits from [blader/humanizer](https://github.com/blader/humanizer), the core of `sigmahuman`, for every text you write here:
+
+- **Lead with the main point.** The answer, decision or ask comes first; keep only the reasoning that would change whether the reader agrees.
+- **Facts from the source only.** Add no name, number, date, quote or citation that the source or the owner did not give. A detail is missing: ask, or write a simpler sentence without it.
+- **One term for one thing.** The same item keeps the same word in code, docs and UI.
+- **Every sentence adds something.** Cut staging ("not X but Y", "Here's the thing", one-line closers), chatbot wrappers and lines about the document instead of its subject.
+- **Every word of an always-read file earns its place.** A `SKILL.md` or this file is read on every use: one clear instruction beats another exception, and a test beats a prose rule.
 
 Soft steers only — do not paste hard numbered writing laws into skills or docs. Canonical package if you need the pasteable system-prompt block: [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md).
 

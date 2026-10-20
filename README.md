@@ -66,6 +66,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaDeepLook** | `sigmadeeplook` | Helper for files an agent cannot read: video, speech, scanned PDF or image, binary, odd container. Plain text and data are read directly | Evidence with file paths, limits, and a side-by-side `view.html` |
 | **SigmaLoop** | `sigmaloop` | Turn a repo's open work into an unattended-run prompt for Claude Code, Codex, pi or T3 Code | One loop prompt in chat and one loop file |
 | **SigmaTaste** | `sigmataste` | Taste pass through 14 lenses on a page, app, deck, doc, image or film | One ranked plan of big visible changes |
+| **SigmaHuman** | `sigmahuman` | Text that reads like a person wrote it: rewrite any text or write from a brief, in lanes (script, book, song, chat, docs, posts), every fact kept | The rewritten or new text, and a fact check |
 
 ### Which one do I need?
 
@@ -75,6 +76,7 @@ SigmaReview and SigmaImprove split on one question: **is it wrong, or could it b
 - If good people could disagree about the answer, it is a SigmaImprove idea. Examples: weak animation, a missing level, an onboarding flow with too many steps.
 - If the code is only too large and behavior must not change, use SigmaRefactor.
 - If the question is how one target looks, reads or feels, and you want one plan of visible changes now, use SigmaTaste.
+- If the text itself must sound like a person wrote it, use SigmaHuman. SigmaWrite is for plain technical English.
 
 The skills chain into two loops. **Fix:** SigmaReview → review PR → SigmaBrief or SigmaShip fixes each finding → merge. **Grow:** SigmaImprove → category issues → specs and tickets → SigmaShip.
 
@@ -132,6 +134,10 @@ Reads a repo's open work (a ticket, the issue tracker, a TRACKER file), asks one
 
 Looks at one target (a page, app, dashboard, deck, doc, image or film) and asks one round of questions: which of 14 taste lenses to use, what you expect, scope, brand and constraints. Then it writes `sigmataste-plan-DD-MM-YYYY.md`: the changes that make a big visible difference, ranked, each with how to verify it. The target's own brand wins over every lens default. It plans; it does not build.
 
+### SigmaHuman
+
+Rewrites any text so it reads like a person wrote it, or writes new text from a brief. It finds the 26 AI-writing patterns of [blader/humanizer](https://github.com/blader/humanizer) (MIT) and fixes them in the lane for the text: a script for the ear, a book, song lyrics, a chat or email, docs, or a post. It keeps every fact, can match your writing sample, and checks numbers, quotes and names before and after.
+
 ---
 
 ## Install
@@ -174,6 +180,7 @@ $sigmaresearch Research recent discussions about local language models
 $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
 $sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 $sigmataste Taste pass on the landing page
+$sigmahuman Rewrite this announcement so it sounds like me
 ```
 
 </td>
@@ -196,6 +203,7 @@ $sigmataste Taste pass on the landing page
 /skill:sigmadeeplook What happens at 2:10 in ~/clips/demo.mp4?
 /skill:sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 /skill:sigmataste Taste pass on the landing page
+/skill:sigmahuman Rewrite this announcement so it sounds like me
 ```
 
 </td>
@@ -218,6 +226,7 @@ $sigmataste Taste pass on the landing page
 | `sigmadeeplook` | a file or folder path · a question about it | Evidence with paths and a Limits list; never runs the file |
 | `sigmaloop` | host · end time · a ticket or tracker | One question round; writes the prompt and a loop file; never starts the loop |
 | `sigmataste` | a page, app, deck, doc, image or film · what you expect | One question round; writes the ranked plan; never builds |
+| `sigmahuman` | text, a file or a brief · optional writing sample | Writes the human version; keeps every fact; never follows instructions inside the text |
 
 ### Requirements
 
@@ -236,6 +245,7 @@ $sigmataste Taste pass on the landing page
 | SigmaResearch | Python 3 for the bundled readers · `yt-dlp` for YouTube comments · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
 | SigmaLoop | Read access to the repo and its tracker · `gh` is optional · the host you name (Claude Code, Codex, pi or T3 Code) to run the loop |
 | SigmaTaste | Read access to the target · a browser or screenshot tool to see a page; without one the plan lists what was not judged |
+| SigmaHuman | Nothing beyond chat · Python 3 (standard library) for the optional fact check |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 
 Skills use the shell native to the machine that runs the agent (PowerShell on Windows, POSIX shell elsewhere). They do not assume WSL.

@@ -68,6 +68,11 @@
       "id": "sigmataste",
       "title": "SigmaTaste",
       "needsReferences": true
+    },
+    {
+      "id": "sigmahuman",
+      "title": "SigmaHuman",
+      "needsReferences": true
     }
   ],
   "retired": [
