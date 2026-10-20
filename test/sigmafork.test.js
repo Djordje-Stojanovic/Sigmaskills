@@ -30,7 +30,11 @@ test('the onboarding template carries FILL markers and every stop the guide name
   const { readFileSync } = await import('node:fs');
   const html = readFileSync(join(root, 'sigmafork', 'assets', 'guide-template.html'), 'utf8');
   assert.match(html, /\bFILL\b/);
-  for (const stop of ['What it is', 'The map', 'Run it', 'Real example projects', 'How a change flows', 'Your first three tasks', 'Where things are', 'Keys and access', 'Part 2']) {
+  for (const stop of ['What it is', 'One job, start to finish', 'The repo in numbers', 'The map', 'Run it', 'Real example projects', 'How a change flows', 'Your first three tasks', 'Where things are', 'Keys and access', 'Part 2']) {
     assert.ok(html.includes(stop), `template is missing the stop "${stop}"`);
   }
+  for (const id of ['sigmafork-data', 'map-notes', 'folder-notes', 'explorer', 'numbers', 'iso']) {
+    assert.ok(html.includes(`id="${id}"`), `template is missing #${id}`);
+  }
+  assert.match(html, /--canvas: #09090b/, 'the template wears the Storge-Black-Green tokens of DESIGN.md');
 });

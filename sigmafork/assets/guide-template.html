@@ -7,115 +7,285 @@
 <title>FILL Repo Name course</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800&family=Overpass+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Tokens. When the copy has its own DESIGN.md or brand tokens, map them here and change nothing else:
-   --paper = canvas, --ink = main text, --accent = primary, --font = its body face. */
+/* Tokens. Default look: Storge-Black-Green (DESIGN.md of Sigmaskills): a near-black zinc room, one green light.
+   When the copy has its own DESIGN.md or brand tokens, map them here and change nothing else.
+   --l1..--l5 are diagram colours (map lines, language bar), never buttons or links. */
 :root {
-  --paper: #f6f7f9; --surface: #ffffff; --ink: #14171c; --mute: #5b6470; --rule: #d9dee5;
-  --accent: #1b6ca8; --on-accent: #ffffff;
-  --l1: #d7263d; --l2: #1b6ca8; --l3: #2a9d5c; --l4: #e09f00; --l5: #7b4bc4;
-  --font: "Overpass", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
-  --mono: "Overpass Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
-  --radius: 10px;
-}
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --paper: #0f1216; --surface: #171b21; --ink: #eef1f5; --mute: #9aa4b2; --rule: #2a3039;
-  --accent: #5aa9e6; --on-accent: #06121c; --l1: #ff6b6b; --l2: #5aa9e6; --l3: #4cc38a; --l4: #ffc145; --l5: #b18cf2;
-} }
-:root[data-theme="dark"] {
-  --paper: #0f1216; --surface: #171b21; --ink: #eef1f5; --mute: #9aa4b2; --rule: #2a3039;
-  --accent: #5aa9e6; --on-accent: #06121c; --l1: #ff6b6b; --l2: #5aa9e6; --l3: #4cc38a; --l4: #ffc145; --l5: #b18cf2;
+  color-scheme: dark;
+  --canvas: #09090b; --glow: #0b2a20; --surface: #111113; --surface-2: #18181b; --surface-3: #1f1f23;
+  --hairline: #27272a; --hairline-strong: #3f3f46; --ink: #f4f4f5; --body: #d4d4d8; --mute: #a1a1aa;
+  --primary: #34d399; --primary-hover: #6ee7b7; --primary-deep: #10b981; --on-primary: #022c22;
+  --ok: #6ee7b7; --warn: #fbbf24; --err: #f87171; --info: #7dd3fc;
+  --l1: #34d399; --l2: #7dd3fc; --l3: #fbbf24; --l4: #f472b6; --l5: #a78bfa; --l0: #52525b;
+  --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 16px;
 }
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation: none !important; transition: none !important; } }
-body { margin: 0; background: var(--paper); color: var(--ink); font: 400 17px/1.65 var(--font); }
-a { color: var(--accent); }
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-code, pre, kbd { font-family: var(--mono); font-size: 0.86em; }
-code { background: var(--surface); border: 1px solid var(--rule); border-radius: 5px; padding: 0.05em 0.35em; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+body { margin: 0; color: var(--body); font: 400 17px/1.7 var(--font); -webkit-font-smoothing: antialiased;
+  background: radial-gradient(1200px 700px at 85% -10%, var(--glow) 0%, transparent 60%) no-repeat, var(--canvas); }
+h1, h2, h3, h4, strong, b { color: var(--ink); }
+a { color: var(--primary); text-underline-offset: 3px; }
+a:hover { color: var(--primary-hover); }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+::selection { background: color-mix(in srgb, var(--primary) 35%, transparent); }
+code, pre, kbd { font-family: var(--mono); font-size: 13.5px; }
+:not(pre) > code { background: var(--surface-2); color: var(--ink); border-radius: var(--r-sm); padding: 1px 6px; overflow-wrap: anywhere; }
+.num { font-variant-numeric: tabular-nums; }
 
-/* top bar: name and progress */
-.bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 10px 24px;
-  background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
-.bar strong { font-weight: 800; letter-spacing: -0.01em; }
-.bar .meter { flex: 1; max-width: 320px; height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; margin-left: auto; }
-.bar .meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
-.bar .count { color: var(--mute); font-size: 14px; white-space: nowrap; }
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 16px; height: 52px; padding: 0 24px;
+  background: color-mix(in oklab, var(--canvas) 82%, transparent); backdrop-filter: blur(14px) saturate(1.2);
+  border-bottom: 1px solid var(--hairline); }
+.bar strong { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 10px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar strong::before { content: ""; width: 10px; height: 10px; border-radius: 50%; flex: none;
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary-deep)); }
+.bar .meter { flex: 1; max-width: 280px; height: 4px; border-radius: 2px; background: var(--hairline); overflow: hidden; margin-left: auto; }
+.bar .meter i { display: block; height: 100%; width: 0; background: var(--primary); transition: width .3s ease-out; }
+.bar .count { color: var(--mute); font-size: 13px; white-space: nowrap; }
 
-/* hero: the repo's own map is the first thing seen */
-.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 40px; align-items: center;
-  max-width: 1180px; margin: 0 auto; padding: 56px 24px 40px; }
-.hero h1 { font-size: clamp(36px, 5vw, 60px); line-height: 1.02; letter-spacing: -0.03em; font-weight: 800; margin: 0 0 16px; }
-.hero p { font-size: 19px; color: var(--mute); margin: 0 0 24px; max-width: 34ch; }
-.start { display: inline-block; background: var(--accent); color: var(--on-accent); text-decoration: none; font-weight: 600;
-  padding: 12px 20px; border-radius: var(--radius); }
-.map { background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; padding: 12px; }
+/* hero: the map is the first thing seen */
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.hero { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 48px; align-items: center; padding-top: 56px; padding-bottom: 32px; }
+.hero h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); line-height: 1.06; letter-spacing: -0.025em; font-weight: 600; margin: 0 0 16px;
+  background: linear-gradient(180deg, #fafafa 30%, var(--mute)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero .lead { font-size: 18px; line-height: 1.6; color: var(--body); margin: 0 0 24px; max-width: 38ch; }
+.hero .meta { color: var(--mute); font-size: 14px; margin: 16px 0 0; }
+.btn { display: inline-flex; align-items: center; height: 40px; padding: 0 18px; border-radius: var(--r-md); font: 500 14px var(--font);
+  background: var(--primary); color: var(--on-primary); text-decoration: none; border: 0; cursor: pointer; }
+.btn:hover { background: var(--primary-hover); color: var(--on-primary); }
+figure { margin: 0; }
+.map { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--r-xl); padding: 14px; }
 .map svg { width: 100%; height: auto; display: block; }
 .map text { font: 600 13px var(--font); fill: var(--ink); }
 .map .sub { font: 400 11px var(--font); fill: var(--mute); }
-.map .line { fill: none; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
-.map .stop { fill: var(--surface); stroke: var(--ink); stroke-width: 3; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 8px 6px 2px; font-size: 14px; color: var(--mute); }
-.legend span::before { content: ""; display: inline-block; width: 18px; height: 6px; border-radius: 3px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+.map .line { fill: none; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.map .stop circle { fill: var(--canvas); stroke: var(--ink); stroke-width: 3; transition: fill .15s, stroke .15s; }
+.map .stop { cursor: pointer; outline: none; }
+.map .stop:hover circle, .map .stop:focus-visible circle { stroke: var(--primary); stroke-width: 4; }
+.map .stop.on circle { fill: var(--primary); stroke: var(--primary); }
+.map .stop:focus-visible text { fill: var(--primary); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 10px 6px 4px; font-size: 13px; color: var(--mute); }
+.legend span::before { content: ""; display: inline-block; width: 18px; height: 5px; border-radius: 3px; margin-right: 7px; vertical-align: middle; background: var(--c); }
+.panel { margin-top: 10px; border-top: 1px solid var(--hairline); padding: 12px 6px 4px; min-height: 92px; font-size: 15px; line-height: 1.55; }
+.panel h3 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+.panel p { margin: 0 0 6px; }
+.panel .hint { color: var(--mute); }
+.panel dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; margin: 6px 0 0; font-size: 14px; }
+.panel dt { color: var(--mute); }
+.panel dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 
-/* course: the line on the left, the stops on the right */
-.course { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; max-width: 1180px; margin: 0 auto; padding: 24px 24px 96px; }
-.rail { position: sticky; top: 72px; align-self: start; list-style: none; margin: 0; padding: 0 0 0 18px; border-left: 6px solid var(--rule); }
-.rail li { position: relative; margin: 0 0 14px; }
-.rail li::before { content: ""; position: absolute; left: -31px; top: 5px; width: 14px; height: 14px; border-radius: 50%;
-  background: var(--paper); border: 3px solid var(--rule); }
-.rail li.done::before { background: var(--accent); border-color: var(--accent); }
-.rail a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15px; display: block; line-height: 1.3; }
-.rail small { color: var(--mute); font-size: 13px; }
-.stop-sec { padding: 8px 0 40px; border-bottom: 1px solid var(--rule); margin-bottom: 40px; scroll-margin-top: 72px; }
-.stop-sec h2 { font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 800; margin: 0 0 4px; }
-.stop-sec .min { color: var(--mute); font-size: 14px; margin: 0 0 20px; }
-.stop-sec p, .stop-sec li { max-width: 68ch; }
-.stop-sec h3 { font-size: 20px; margin: 28px 0 8px; }
-.done-btn { margin-top: 20px; font: 600 14px var(--font); color: var(--ink); background: var(--surface); border: 1px solid var(--rule);
-  border-radius: var(--radius); padding: 9px 14px; cursor: pointer; }
-.done-btn[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+/* numbers band */
+.numbers { padding-top: 8px; padding-bottom: 24px; }
+.tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; background: var(--hairline);
+  border: 1px solid var(--hairline); border-radius: var(--r-lg); overflow: hidden; }
+.tile { background: var(--surface); padding: 16px 18px; }
+.tile b { display: block; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile span { color: var(--mute); font-size: 13px; line-height: 1.4; display: block; margin-top: 4px; }
+.langbar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin: 18px 0 8px; background: var(--hairline); }
+.langbar i { display: block; height: 100%; }
+.langkey { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--mute); margin: 0; padding: 0; list-style: none; }
+.langkey li::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; background: var(--c); }
+.langkey b { color: var(--ink); font-weight: 500; }
+.leftout { color: var(--mute); font-size: 14px; margin: 10px 0 0; max-width: 90ch; }
 
-/* code with a copy button */
-.code { position: relative; margin: 12px 0; }
-.code pre { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 14px 16px; overflow-x: auto; margin: 0; line-height: 1.5; }
-.code button { position: absolute; top: 8px; right: 8px; font: 600 12px var(--font); border: 1px solid var(--rule); background: var(--paper);
-  color: var(--ink); border-radius: 6px; padding: 4px 8px; cursor: pointer; }
-.out { border-left: 4px solid var(--l3); }
+/* course: a rail on the left, the stops on the right */
+.course { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 56px; padding-top: 24px; padding-bottom: 96px; }
+.rail { position: sticky; top: 76px; align-self: start; list-style: none; margin: 0; padding: 4px 0 0 22px; border-left: 4px solid var(--hairline); }
+.rail li { position: relative; margin: 0 0 12px; }
+.rail li::before { content: ""; position: absolute; left: -31px; top: 4px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--canvas); border: 3px solid var(--hairline-strong); }
+.rail li.done::before { background: var(--primary); border-color: var(--primary); }
+.rail li.here a { color: var(--primary); }
+.rail a { color: var(--ink); text-decoration: none; font-weight: 500; font-size: 14px; display: block; line-height: 1.35; }
+.rail small { color: var(--mute); font-size: 12px; }
+.stop-sec { padding: 0 0 48px; margin-bottom: 48px; border-bottom: 1px solid var(--hairline); scroll-margin-top: 72px; }
+.stop-sec > h2 { font-size: clamp(1.45rem, 3.4vw, 1.85rem); line-height: 1.2; letter-spacing: -0.015em; font-weight: 600; margin: 0 0 4px; }
+.stop-sec > .min { color: var(--mute); font-size: 13px; margin: 0 0 18px; }
+.stop-sec > .oneline { font-size: 19px; line-height: 1.55; color: var(--ink); margin: 0 0 18px; max-width: 60ch; }
+.stop-sec p, .stop-sec li { max-width: 64ch; }
+.stop-sec h3 { font-size: 18px; font-weight: 600; margin: 32px 0 8px; }
+.done-btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; margin-top: 24px; padding: 0 16px; font: 500 14px var(--font);
+  color: var(--ink); background: var(--surface); border: 1px solid var(--hairline-strong); border-radius: var(--r-md); cursor: pointer; }
+.done-btn:hover { background: var(--surface-2); }
+.done-btn[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
 
-/* a real example project: the case, the command, what really came out */
-.case { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 0; border-top: 1px dashed var(--rule); }
+/* words that need a meaning: tap or hover */
+.term { border-bottom: 1px dashed var(--mute); cursor: help; color: inherit; }
+.term:hover, .term:focus-visible { border-bottom-color: var(--primary); color: var(--ink); }
+#tip { position: absolute; z-index: 30; max-width: min(320px, calc(100vw - 32px)); background: var(--ink); color: #18181b;
+  font-size: 13px; line-height: 1.45; padding: 8px 11px; border-radius: var(--r-md); pointer-events: none; box-shadow: 0 18px 50px rgba(0,0,0,.45); }
+#tip[hidden] { display: none; }
+
+/* code with a header: what it is, and a copy button that never covers the text */
+.code { margin: 14px 0; border: 1px solid var(--hairline-strong); border-radius: var(--r-lg); background: var(--surface-2); overflow: hidden; }
+.code .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 6px 4px 14px; border-bottom: 1px solid var(--hairline); font-size: 12px; color: var(--mute); }
+.code .head button { font: 500 12px var(--font); color: var(--ink); background: transparent; border: 1px solid var(--hairline-strong); border-radius: var(--r-sm); padding: 4px 10px; cursor: pointer; min-height: 28px; }
+.code .head button:hover { background: var(--surface-3); }
+.code pre { margin: 0; padding: 12px 14px; overflow-x: auto; line-height: 1.55; color: var(--ink); }
+.code.out { background: var(--surface); border-color: var(--hairline); }
+.code.out pre { color: var(--body); }
+.code.out .head::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); margin-right: 8px; }
+.code.out .head { justify-content: flex-start; }
+
+/* callouts */
+.note { background: var(--surface); border: 1px solid var(--hairline); border-left: 3px solid var(--info); border-radius: var(--r-lg); padding: 12px 16px; margin: 16px 0; max-width: 72ch; }
+.note.warn { border-left-color: var(--warn); }
+.note p { margin: 0; }
+
+/* the use case: one job as a strip of frames on a line */
+.story { list-style: none; padding: 0; margin: 20px 0 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; counter-reset: f; position: relative; }
+.story li { counter-increment: f; position: relative; background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: 12px; max-width: none; display: flex; flex-direction: column; gap: 8px; }
+.story .pic { aspect-ratio: 16 / 10; border-radius: var(--r-md); background: var(--surface-2); overflow: hidden; display: grid; place-items: center; color: var(--primary); }
+.story .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.story .pic svg { width: 46%; height: auto; }
+.story h4 { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.3; display: flex; gap: 8px; align-items: baseline; }
+.story h4::before { content: counter(f); flex: none; display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  font-size: 12px; font-weight: 700; color: var(--on-primary); background: linear-gradient(135deg, var(--primary-hover), var(--primary-deep)); }
+.story p { margin: 0; font-size: 14px; line-height: 1.5; }
+.story code { font-size: 12px; margin-top: auto; }
+
+/* the folder explorer */
+.explorer { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--r-xl); padding: 14px; margin: 18px 0; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0 0 10px; font-size: 14px; }
+.crumbs button { font: 500 14px var(--font); background: none; border: 0; color: var(--primary); cursor: pointer; padding: 6px 4px; min-height: 32px; }
+.crumbs button[aria-current] { color: var(--ink); cursor: default; }
+.crumbs span { color: var(--mute); }
+.rows { list-style: none; margin: 0; padding: 0; }
+.rows li { max-width: none; }
+.row { width: 100%; display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 3fr) 92px 74px; gap: 12px; align-items: center; text-align: left;
+  background: none; border: 0; border-top: 1px solid var(--hairline); color: var(--body); font: 400 14px var(--font); padding: 9px 6px; cursor: pointer; min-height: 44px; }
+.row:hover, .row:focus-visible { background: var(--surface-2); }
+.row[disabled] { cursor: default; }
+.row[disabled]:hover { background: none; }
+.row .nm { color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+.row .nm small { display: block; color: var(--mute); font-weight: 400; font-size: 13px; line-height: 1.35; margin-top: 2px; }
+.row .track { height: 10px; border-radius: 5px; background: var(--surface-3); overflow: hidden; display: flex; }
+.row .track i { display: block; height: 100%; background: var(--primary); }
+.row .track i + i { background: var(--l2); opacity: .55; }
+.row .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+.row .f { text-align: right; font-variant-numeric: tabular-nums; color: var(--mute); }
+.rows .headrow { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 3fr) 92px 74px; gap: 12px; padding: 0 6px 6px; font-size: 12px; color: var(--mute); }
+.rows .headrow span:nth-child(n+3) { text-align: right; }
+.filesbox { margin: 12px 0 0; font-size: 13px; color: var(--mute); }
+.filesbox ol { margin: 6px 0 0; padding-left: 20px; }
+.filesbox li { max-width: none; }
+.filesbox code { font-size: 12.5px; }
+.key2 { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--mute); margin-top: 10px; }
+.key2 span::before { content: ""; display: inline-block; width: 14px; height: 8px; border-radius: 3px; margin-right: 6px; background: var(--c); vertical-align: middle; }
+
+/* the map, line by line */
+.lines { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 12px; }
+.lines li { max-width: none; background: var(--surface); border: 1px solid var(--hairline); border-left: 5px solid var(--c); border-radius: var(--r-lg); padding: 12px 16px; }
+.lines h4 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+.lines p { margin: 0; font-size: 15px; }
+
+/* how a change flows: steps on one line */
+.flow { list-style: none; padding: 0; margin: 20px 0; display: flex; gap: 0; overflow-x: auto; }
+.flow li { flex: 1 1 0; min-width: 130px; max-width: none; position: relative; padding: 30px 10px 0 0; font-size: 14px; line-height: 1.45; }
+.flow li::before { content: ""; position: absolute; top: 9px; left: 0; right: 0; height: 4px; background: var(--primary); }
+.flow li:first-child::before { left: 8px; }
+.flow li:last-child::before { right: auto; width: 8px; }
+.flow li::after { content: ""; position: absolute; top: 2px; left: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--canvas); border: 3px solid var(--ink); box-sizing: border-box; }
+.flow li:last-child::after { background: var(--primary); border-color: var(--primary); }
+.flow b { display: block; font-weight: 600; }
+.flow code { font-size: 12px; }
+.flow span { display: block; color: var(--mute); margin-top: 2px; }
+
+/* real example projects */
+.case { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--hairline); }
 .case h3 { margin-top: 0; }
-.case .path { font-family: var(--mono); font-size: 13px; color: var(--mute); }
+.case .path { font-family: var(--mono); font-size: 13px; color: var(--mute); margin: 0 0 10px; overflow-wrap: anywhere; }
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 8px 0; }
+.shots figure { background: var(--surface); border: 1px solid var(--hairline-strong); border-radius: var(--r-md); overflow: hidden; }
+.shots img { width: 100%; display: block; aspect-ratio: 16 / 9; object-fit: cover; }
+.shots figcaption { font-size: 12px; color: var(--mute); padding: 6px 10px; }
 
 /* check yourself */
-details.check { margin-top: 18px; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 12px 16px; }
-details.check summary { cursor: pointer; font-weight: 600; }
+.quiz { margin-top: 24px; background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: 14px 16px; max-width: 72ch; }
+.quiz .q { margin: 0 0 10px; color: var(--ink); font-weight: 500; }
+.quiz .q::before { content: "Check yourself"; display: block; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); margin-bottom: 4px; }
+.quiz ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.quiz li { max-width: none; }
+.quiz button { width: 100%; text-align: left; font: 400 15px/1.45 var(--font); color: var(--body); background: var(--surface-2); border: 1px solid var(--hairline-strong); border-radius: var(--r-md); padding: 10px 12px; cursor: pointer; min-height: 44px; }
+.quiz button:hover { background: var(--surface-3); }
+.quiz button.right { border-color: var(--ok); color: var(--ink); background: color-mix(in srgb, var(--ok) 12%, var(--surface-2)); }
+.quiz button.wrong { border-color: var(--err); background: color-mix(in srgb, var(--err) 10%, var(--surface-2)); }
+.quiz .why { margin: 10px 0 0; font-size: 15px; }
 
-/* where things are */
-.tablewrap { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-size: 15px; }
-th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
-th { color: var(--mute); font-weight: 600; }
+/* tasks */
+.tasks { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 12px; }
+.tasks li { max-width: none; background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: 14px 16px; }
+.tasks label { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+.tasks input { width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--primary); flex: none; }
+.tasks h4 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+.tasks p { margin: 0 0 6px; font-size: 15px; }
+.tasks .seen { color: var(--mute); font-size: 14px; }
+.tasks li.ticked h4 { color: var(--primary); }
+
+/* tables */
+.filter { width: 100%; max-width: 360px; height: 40px; padding: 0 12px; margin: 4px 0 12px; font: 400 14px var(--font); color: var(--ink);
+  background: var(--surface-2); border: 1px solid var(--hairline-strong); border-radius: var(--r-md); }
+.filter::placeholder { color: var(--mute); }
+.tablewrap { overflow-x: auto; border: 1px solid var(--hairline); border-radius: var(--r-lg); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.5; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { color: var(--mute); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: var(--surface); }
+.badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); }
+.badge.ok { color: var(--ok); } .badge.warn { color: var(--warn); } .badge.info { color: var(--info); }
+
+/* the copy and the original */
+.iso { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); gap: 14px; align-items: center; margin: 18px 0; }
+.iso .box { background: var(--surface); border: 1px solid var(--hairline-strong); border-radius: var(--r-lg); padding: 14px 16px; }
+.iso .box.mine { border-color: color-mix(in srgb, var(--primary) 55%, var(--hairline)); }
+.iso .box b { display: block; font-size: 16px; }
+.iso .box span { display: block; color: var(--mute); font-size: 13px; line-height: 1.45; margin-top: 2px; }
+.iso .arrows { display: grid; gap: 10px; font-size: 13px; line-height: 1.4; }
+.iso .arrow { position: relative; padding: 0 0 8px; border-bottom: 3px solid var(--primary); color: var(--body); }
+.iso .arrow::after { content: ""; position: absolute; right: -2px; bottom: -8px; border: 7px solid transparent; border-left-color: var(--primary); }
+.iso .arrow.back { border-bottom: 3px dashed var(--err); text-align: right; }
+.iso .arrow.back::after { right: auto; left: -2px; border-left-color: transparent; border-right-color: var(--err); }
+.iso .verdict { margin-top: 6px; }
 
 /* part 2 */
-.qa { border-left: 4px solid var(--accent); padding: 4px 0 4px 16px; margin: 20px 0; }
+.qa { border-left: 3px solid var(--primary); padding: 4px 0 4px 16px; margin: 20px 0; }
 .qa h3 { margin: 0 0 6px; }
 .res { counter-reset: r; list-style: none; padding: 0; }
-.res li { counter-increment: r; position: relative; padding: 0 0 18px 48px; }
-.res li::before { content: counter(r); position: absolute; left: 0; top: -2px; width: 34px; height: 34px; border-radius: 50%;
-  display: grid; place-items: center; font-weight: 800; background: var(--accent); color: var(--on-accent); }
+.res li { counter-increment: r; position: relative; padding: 0 0 18px 46px; }
+.res li::before { content: counter(r); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 13px; font-weight: 700; color: var(--on-primary); background: linear-gradient(135deg, var(--primary-hover), var(--primary-deep));
+  box-shadow: 0 0 0 4px rgba(52,211,153,.12), 0 6px 18px rgba(52,211,153,.18); }
 .empty { color: var(--mute); font-style: italic; }
+.res li.empty { padding-left: 0; }
+.res li.empty::before { display: none; }
 
+@media (max-width: 1000px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 860px) {
+  .wrap { padding: 0 16px; }
   .hero, .case { grid-template-columns: minmax(0, 1fr); }
+  .hero { padding-top: 32px; gap: 28px; }
   .course { grid-template-columns: minmax(0, 1fr); }
   .rail { display: none; }
-  .hero { padding-top: 32px; }
-  .bar { padding: 10px 16px; }
-  .hero, .course { padding-left: 16px; padding-right: 16px; }
+  .map { overflow-x: auto; }
+  .map svg { min-width: 600px; }
+  .map .legend, .map .panel { position: sticky; left: 0; max-width: calc(100vw - 62px); }
+  .bar { padding: 0 16px; }
+  .bar .meter { max-width: 96px; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .row, .rows .headrow { grid-template-columns: minmax(0, 1fr) 70px 54px; }
+  .row .track, .rows .headrow span:nth-child(2) { display: none; }
+  .iso { grid-template-columns: minmax(0, 1fr); }
+  .flow { flex-direction: column; }
+  .flow li { padding: 0 0 18px 34px; min-width: 0; }
+  .flow li::before { top: 0; bottom: 0; left: 7px; right: auto; width: 4px; height: auto; }
+  .flow li:first-child::before { left: 7px; top: 9px; }
+  .flow li:last-child::before { height: 9px; bottom: auto; width: 4px; }
+  .flow li::after { top: 2px; }
 }
 </style>
 </head>
@@ -123,115 +293,179 @@ th { color: var(--mute); font-weight: 600; }
 <header class="bar">
   <strong><!-- FILL -->FILL Repo Name</strong>
   <div class="meter" aria-hidden="true"><i id="meter"></i></div>
-  <span class="count" id="count">0 of 8 stops</span>
+  <span class="count" id="count">0 of 10 stops</span>
 </header>
 
-<section class="hero">
+<section class="hero wrap">
   <div>
-    <!-- FILL: what the owner will be able to do after 15 minutes, in his words -->
-    <h1>FILL Learn Repo Name in 15 minutes</h1>
-    <!-- FILL: one sentence, what the repo does and for whom -->
-    <p>FILL One sentence: what it does, for whom, and what you will run by the end.</p>
-    <a class="start" href="#s1">Start the course</a>
+    <!-- FILL: what the owner can do after 15 minutes, in his words. No accented word, no all-caps. -->
+    <h1>FILL Run your own Repo Name in 15 minutes</h1>
+    <!-- FILL: one or two sentences: what the repo does, for whom, and what he will run by the end. -->
+    <p class="lead">FILL What it does, for whom, and what you will run by the end.</p>
+    <a class="btn" href="#s1">Start the course</a>
+    <p class="meta">10 stops, about 15 minutes. Tap any stop on the map.</p>
   </div>
   <figure class="map" aria-labelledby="map-cap">
-    <!-- FILL: the repo drawn as a transit map. One line per main flow (its colour = --l1..--l5),
-         one stop per folder, tool or step that matters, labels with the real names.
-         Keep stops on a 40 px grid; lines bend at 45 or 90 degrees. Replace the example below. -->
-    <svg viewBox="0 0 640 360" role="img" aria-label="FILL: one sentence that says what the map shows">
-      <path class="line" style="stroke: var(--l1)" d="M40 280 H200 L280 200 H440 L520 120 H600"/>
-      <path class="line" style="stroke: var(--l2)" d="M120 80 H280 V200 V300 H600"/>
-      <circle class="stop" cx="40" cy="280" r="9"/><text x="40" y="312" text-anchor="middle">FILL idea</text>
-      <circle class="stop" cx="200" cy="280" r="9"/><text x="200" y="312" text-anchor="middle">FILL step</text>
-      <circle class="stop" cx="280" cy="200" r="12"/><text x="300" y="188">FILL hub</text>
-      <circle class="stop" cx="440" cy="200" r="9"/><text x="440" y="232" text-anchor="middle">FILL step</text>
-      <circle class="stop" cx="600" cy="120" r="9"/><text x="600" y="104" text-anchor="end">FILL output</text>
-      <circle class="stop" cx="120" cy="80" r="9"/><text x="120" y="64" text-anchor="middle">FILL start</text>
-      <circle class="stop" cx="600" cy="300" r="9"/><text x="600" y="332" text-anchor="end">FILL output</text>
+    <!-- FILL: the repo as a transit map. One line per main flow (colour --l1..--l5), one stop per folder, tool or
+         step that matters, with its real name. Stops on a 40 px grid; lines bend at 45 or 90 degrees.
+         Every stop is <g class="stop" data-stop="ID"> and has a note with the same ID in #map-notes below. -->
+    <svg viewBox="0 0 640 340" role="img" aria-label="FILL: one sentence that says what the map shows">
+      <path class="line" style="stroke: var(--l1)" d="M40 260 H200 L280 180 H440 L520 100 H600"/>
+      <path class="line" style="stroke: var(--l2)" d="M120 60 H280 V180 V280 H600"/>
+      <g class="stop" data-stop="start"><circle cx="40" cy="260" r="9"/><text x="40" y="292" text-anchor="middle">FILL idea</text></g>
+      <g class="stop" data-stop="step"><circle cx="200" cy="260" r="9"/><text x="200" y="292" text-anchor="middle">FILL step</text></g>
+      <g class="stop" data-stop="hub"><circle cx="280" cy="180" r="12"/><text x="300" y="168">FILL hub</text></g>
+      <g class="stop" data-stop="out"><circle cx="600" cy="100" r="9"/><text x="600" y="84" text-anchor="end">FILL output</text></g>
+      <g class="stop" data-stop="side"><circle cx="120" cy="60" r="9"/><text x="120" y="44" text-anchor="middle">FILL start</text></g>
+      <g class="stop" data-stop="end"><circle cx="600" cy="280" r="9"/><text x="600" y="312" text-anchor="end">FILL output</text></g>
     </svg>
     <figcaption class="legend" id="map-cap">
       <span style="--c: var(--l1)">FILL flow one</span><span style="--c: var(--l2)">FILL flow two</span>
     </figcaption>
+    <div class="panel" id="panel" aria-live="polite"><p class="hint">Tap a stop to see what it is, where it lives and how to run it.</p></div>
   </figure>
 </section>
 
-<main class="course">
+<!-- Drawn from the data block by the page script: the numbers, the language bar, what was left out. -->
+<section class="numbers wrap" aria-label="The repo in numbers">
+  <figure id="numbers"><p class="empty">Run <code>python sigmafork.py guide &lt;copy&gt;</code> to fill the numbers.</p></figure>
+</section>
+
+<main class="course wrap">
   <ol class="rail" id="rail" aria-label="Course stops"></ol>
   <div id="stops">
 
     <section class="stop-sec" id="s1" data-min="1">
       <h2>What it is</h2>
       <p class="min">1 minute</p>
-      <!-- FILL: the job, the user, the result. Then why this copy exists (grill Q1, Q2). -->
+      <!-- FILL: one line that says the job and the result. Then at most two short paragraphs: who uses it, and why this
+           copy exists (grill Q1, Q2). Wrap each word a newcomer would not know in <span class="term" data-def="...">. -->
+      <p class="oneline">FILL The job and the result, in one sentence.</p>
       <p>FILL</p>
-      <details class="check"><summary>Check yourself: FILL a question</summary><p>FILL the answer</p></details>
+      <div class="quiz" data-answer="1">
+        <p class="q">FILL a question whose answer is in this stop</p>
+        <ol><li><button type="button">FILL the right answer</button></li><li><button type="button">FILL a wrong one</button></li><li><button type="button">FILL a wrong one</button></li></ol>
+        <p class="why" hidden>FILL why the right answer is right</p>
+      </div>
     </section>
 
     <section class="stop-sec" id="s2" data-min="2">
-      <h2>The map</h2>
+      <h2>One job, start to finish</h2>
       <p class="min">2 minutes</p>
-      <!-- FILL: walk the hero map line by line. One paragraph per line: where it starts, each stop, what comes out. -->
-      <p>FILL</p>
-      <details class="check"><summary>Check yourself: FILL</summary><p>FILL</p></details>
+      <!-- FILL: the use case three ways. Told: a two-sentence story (who wants what, what he types, what comes out).
+           Shown: 4-5 frames, each a real picture from the copy (a screenshot or an output frame) or an inline icon,
+           a short title, one sentence, the command. Pictured: the last frame is the real result. -->
+      <p class="oneline">FILL You want X. You type Y. Z comes out.</p>
+      <figure>
+        <ol class="story">
+          <li><div class="pic"><!-- FILL: <img src="onboarding/..." alt="..."> or an inline svg --></div><h4>FILL step</h4><p>FILL one sentence</p><code>FILL command</code></li>
+          <li><div class="pic"></div><h4>FILL step</h4><p>FILL</p><code>FILL</code></li>
+          <li><div class="pic"></div><h4>FILL step</h4><p>FILL</p><code>FILL</code></li>
+          <li><div class="pic"></div><h4>FILL the result</h4><p>FILL</p><code>FILL</code></li>
+        </ol>
+      </figure>
     </section>
 
     <section class="stop-sec" id="s3" data-min="2">
-      <h2>Run it</h2>
+      <h2>The repo in numbers</h2>
       <p class="min">2 minutes</p>
-      <!-- FILL: the commands that ran in the copy, in order, each with its real output. -->
-      <div class="code"><pre><code>FILL command</code></pre></div>
-      <div class="code"><pre class="out"><code>FILL its real output</code></pre></div>
+      <!-- FILL: one line on what the numbers say (where the weight is). The explorer below is drawn from the data block;
+           give the main folders a one-line note in #folder-notes. -->
+      <p class="oneline">FILL Where most of the code lives, in one sentence.</p>
+      <figure class="explorer" id="explorer" aria-label="Folder explorer"><p class="empty">Run <code>python sigmafork.py guide &lt;copy&gt;</code> to draw the folders.</p></figure>
+      <p>FILL two or three sentences: which folders matter first, and which are big but can wait.</p>
+      <div class="quiz" data-answer="2">
+        <p class="q">FILL</p>
+        <ol><li><button type="button">FILL</button></li><li><button type="button">FILL</button></li><li><button type="button">FILL</button></li></ol>
+        <p class="why" hidden>FILL</p>
+      </div>
     </section>
 
-    <section class="stop-sec" id="s4" data-min="4">
+    <section class="stop-sec" id="s4" data-min="1">
+      <h2>The map</h2>
+      <p class="min">1 minute</p>
+      <!-- FILL: one card per map line: where it starts, the stops, what comes out. Tell him to tap the stops above. -->
+      <p class="oneline">FILL The map in one sentence: what the lines are and where they meet.</p>
+      <figure>
+        <ol class="lines">
+          <li style="--c: var(--l1)"><h4>FILL line one</h4><p>FILL from start to output, each stop by name.</p></li>
+          <li style="--c: var(--l2)"><h4>FILL line two</h4><p>FILL</p></li>
+        </ol>
+      </figure>
+    </section>
+
+    <section class="stop-sec" id="s5" data-min="2">
+      <h2>Run it</h2>
+      <p class="min">2 minutes</p>
+      <!-- FILL: the commands that ran in the copy, in order, each with its real output. data-label names the shell. -->
+      <p class="oneline">FILL What these commands prove, in one sentence.</p>
+      <div class="code" data-label="FILL PowerShell"><pre><code>FILL command</code></pre></div>
+      <div class="code out" data-label="Output"><pre><code>FILL its real output</code></pre></div>
+    </section>
+
+    <section class="stop-sec" id="s6" data-min="3">
       <h2>Real example projects</h2>
-      <p class="min">4 minutes</p>
-      <!-- FILL: two or three real projects from this repo. Never hello world. -->
+      <p class="min">3 minutes</p>
+      <!-- FILL: two or three real projects from this repo. Never hello world. Pictures go in .shots. -->
       <article class="case">
         <div>
           <h3>FILL project name</h3>
           <p class="path">FILL path/in/the/repo</p>
-          <p>FILL what it is, what it shows about the repo, and the one file to open first.</p>
+          <p>FILL what it is and what it shows about the repo. Open FILL first.</p>
         </div>
         <div>
-          <div class="code"><pre><code>FILL the command that builds or runs it</code></pre></div>
-          <div class="code"><pre class="out"><code>FILL what came out</code></pre></div>
+          <div class="code" data-label="FILL PowerShell"><pre><code>FILL the command that builds or runs it</code></pre></div>
+          <div class="code out" data-label="Output"><pre><code>FILL what came out</code></pre></div>
         </div>
       </article>
     </section>
 
-    <section class="stop-sec" id="s5" data-min="2">
-      <h2>How a change flows</h2>
-      <p class="min">2 minutes</p>
-      <!-- FILL: one small inline SVG sequence: from the file you edit to the result you see, with the real names. -->
-      <p>FILL</p>
-    </section>
-
-    <section class="stop-sec" id="s6" data-min="3">
-      <h2>Your first three tasks</h2>
-      <p class="min">3 minutes to read, 20 to do</p>
-      <!-- FILL: three hands-on tasks, easy to harder, each with the files to touch and how to see it worked. -->
-      <ol><li>FILL</li><li>FILL</li><li>FILL</li></ol>
-    </section>
-
     <section class="stop-sec" id="s7" data-min="1">
+      <h2>How a change flows</h2>
+      <p class="min">1 minute</p>
+      <!-- FILL: from the file you edit to the result you see. One li per step: the name, the file or command, what happens. -->
+      <p class="oneline">FILL You edit X; Y turns it into Z.</p>
+      <figure>
+        <ol class="flow">
+          <li><b>FILL you edit</b><code>FILL file</code><span>FILL</span></li>
+          <li><b>FILL step</b><code>FILL command</code><span>FILL</span></li>
+          <li><b>FILL you see</b><code>FILL output</code><span>FILL</span></li>
+        </ol>
+      </figure>
+    </section>
+
+    <section class="stop-sec" id="s8" data-min="1">
+      <h2>Your first three tasks</h2>
+      <p class="min">1 minute to read, about 20 to do</p>
+      <!-- FILL: three hands-on tasks, easy to harder: what to do, the files, how to see it worked. -->
+      <ol class="tasks">
+        <li><label><input type="checkbox" data-task="t1"><span><h4>FILL task one</h4><p>FILL what to do and the file.</p><p class="seen">FILL how you see it worked.</p></span></label></li>
+        <li><label><input type="checkbox" data-task="t2"><span><h4>FILL task two</h4><p>FILL</p><p class="seen">FILL</p></span></label></li>
+        <li><label><input type="checkbox" data-task="t3"><span><h4>FILL task three</h4><p>FILL</p><p class="seen">FILL</p></span></label></li>
+      </ol>
+    </section>
+
+    <section class="stop-sec" id="s9" data-min="1">
       <h2>Where things are</h2>
       <p class="min">1 minute, then keep it open</p>
-      <div class="tablewrap"><table>
+      <input class="filter" type="search" data-for="where" placeholder="Filter, for example: test" aria-label="Filter the table">
+      <div class="tablewrap"><table id="where">
         <thead><tr><th>You want</th><th>Look in</th><th>Run</th></tr></thead>
         <!-- FILL: the 8-12 rows the owner will need most, plus the installed skills. -->
         <tbody><tr><td>FILL</td><td><code>FILL</code></td><td><code>FILL</code></td></tr></tbody>
       </table></div>
     </section>
 
-    <section class="stop-sec" id="s8" data-min="1">
+    <section class="stop-sec" id="s10" data-min="1">
       <h2>Keys and access</h2>
       <p class="min">1 minute</p>
-      <!-- FILL: each login and key, what needs it, where it goes, and whether it is set. Names only, never values.
-           Also: the shared read-only paths the copy still reads, and that the original is never written. -->
+      <!-- The figure is drawn from the data block (copy.json, paths.json, verify). Below it: each login and key by name,
+           never a value, where it goes and whether it is set; then what the copy still shares on purpose. -->
+      <p class="oneline">FILL What the copy owns, what it shares, and the one thing to be careful with.</p>
+      <figure id="iso"><p class="empty">Run <code>python sigmafork.py guide &lt;copy&gt; --source &lt;original&gt;</code> to draw this.</p></figure>
       <div class="tablewrap"><table>
         <thead><tr><th>What</th><th>Needed by</th><th>Where it goes</th><th>Status</th></tr></thead>
-        <tbody><tr><td>FILL</td><td>FILL</td><td><code>FILL</code></td><td>FILL</td></tr></tbody>
+        <tbody><tr><td>FILL</td><td>FILL</td><td><code>FILL</code></td><td><span class="badge ok">FILL</span></td></tr></tbody>
       </table></div>
     </section>
 
@@ -248,53 +482,244 @@ th { color: var(--mute); font-weight: 600; }
 
   </div>
 </main>
+<div id="tip" role="tooltip" hidden></div>
+
+<!-- FILL: one note per map stop, keyed by its data-stop ID. "path" is a folder or file in the copy (the page adds its
+     numbers); "run" is a real command. -->
+<script type="application/json" id="map-notes">
+{
+  "start": {"title": "FILL", "what": "FILL one or two sentences", "path": "FILL folder", "open": "FILL file to open first", "run": "FILL command"}
+}
+</script>
+<!-- FILL: a one-line note for each folder that matters, keyed by its path in the copy ("tools", "tools/render"). -->
+<script type="application/json" id="folder-notes">
+{
+  "FILL folder": "FILL what lives here, in a few words"
+}
+</script>
+<!-- Written by `python sigmafork.py guide <copy>`: never by hand. -->
+<script type="application/json" id="sigmafork-data">FILL by sigmafork.py guide</script>
 
 <script>
 (() => {
-  const KEY = "sigmafork-progress:" + document.title;
-  let done = {};
-  try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { done = {}; }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} };
-  const stops = [...document.querySelectorAll(".stop-sec:not([data-part])")];
-  const rail = document.getElementById("rail");
-  const all = [...document.querySelectorAll(".stop-sec")];
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const fmt = (n) => Number(n || 0).toLocaleString("en-US");
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const json = (id) => { try { return JSON.parse($("#" + id).textContent); } catch (e) { return null; } };
+  const data = json("sigmafork-data") || {};
+  const S = data.stats, F = data.fork || {};
+  const notes = json("folder-notes") || {};
+  const stopNotes = json("map-notes") || {};
+  const PAL = ["var(--l1)", "var(--l2)", "var(--l3)", "var(--l4)", "var(--l5)"];
+  const KEY = "sigmafork:" + document.title;
+  let state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { state = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+  state.done = state.done || {}; state.tasks = state.tasks || {};
+
+  // find a folder in the tree by its path ("tools/render")
+  function nodeAt(path) {
+    if (!S || !S.tree) return null;
+    let n = S.tree;
+    for (const part of String(path || "").replace(/\\/g, "/").split("/").filter(Boolean)) {
+      n = (n.k || []).find((k) => k.n === part);
+      if (!n) return null;
+    }
+    return n;
+  }
+
+  // the numbers band
+  if (S) {
+    const langs = S.langs || [];
+    const tiles = [
+      [fmt(S.files), "files the repo owns"],
+      [fmt(S.folders), "folders (paths)"],
+      [fmt(S.code), "lines of code, without blank and comment lines"],
+      [fmt(S.docs), "lines of docs"],
+      [fmt(langs.length), langs.length === 1 ? "language" : "languages"],
+    ];
+    const total = langs.reduce((a, l) => a + l.code, 0) || 1;
+    const top = langs.slice(0, 5), restN = total - top.reduce((a, l) => a + l.code, 0);
+    const parts = top.map((l, i) => ({ name: l.name, code: l.code, c: PAL[i] }));
+    if (restN > 0) parts.push({ name: `${langs.length - top.length} more`, code: restN, c: "var(--l0)" });
+    const lo = Object.entries(S.left_out || {});
+    const loN = lo.reduce((a, [, v]) => a + v, 0);
+    const big = (S.biggest || [])[0];
+    $("#numbers").innerHTML =
+      `<div class="tiles">${tiles.map(([b, s]) => `<div class="tile"><b>${b}</b><span>${s}</span></div>`).join("")}</div>
+       <div class="langbar" role="img" aria-label="Code lines by language">${parts.map((p) => `<i style="width:${(100 * p.code / total).toFixed(2)}%;background:${p.c}" title="${esc(p.name)}: ${fmt(p.code)} lines"></i>`).join("")}</div>
+       <ul class="langkey">${parts.map((p) => `<li style="--c:${p.c}"><b>${esc(p.name)}</b> ${fmt(p.code)} (${Math.round(100 * p.code / total)} %)</li>`).join("")}</ul>
+       <figcaption class="leftout">Not counted: ${fmt(loN)} files of installed packages, build output and caches${lo.length ? " (" + lo.slice(0, 5).map(([k, v]) => `${esc(k)} ${fmt(v)}`).join(", ") + ")" : ""}, and ${fmt(S.generated)} generated files such as lock files and minified bundles.${big ? ` The biggest code file is <code>${esc(big.path)}</code> with ${fmt(big.code)} lines.` : ""}</figcaption>`;
+  }
+
+  // the folder explorer
+  const ex = $("#explorer");
+  if (S && S.tree && ex) {
+    let path = [];
+    const draw = (focus) => {
+      const node = nodeAt(path.join("/")) || S.tree;
+      const kids = node.k || [];
+      const max = Math.max(1, ...kids.map((k) => k.c + k.d));
+      const crumbs = [S.tree.n, ...path].map((p, i, a) => i === a.length - 1
+        ? `<button type="button" aria-current="location">${esc(p)}</button>`
+        : `<button type="button" data-up="${i}">${esc(p)}</button><span>/</span>`).join("");
+      const rows = kids.map((k, i) => {
+        const full = [...path, k.n].join("/");
+        const note = notes[full] || notes[full + "/"] || "";
+        const can = !k.more && k.k;
+        return `<li><button type="button" class="row" data-i="${i}" ${can ? "" : "disabled"} aria-label="${esc(k.n)}: ${fmt(k.c)} code lines, ${fmt(k.f)} files${can ? ", open" : ""}">
+          <span class="nm">${esc(k.n)}${can ? "/" : ""}${note ? `<small>${esc(note)}</small>` : ""}</span>
+          <span class="track"><i style="width:${(100 * k.c / max).toFixed(1)}%"></i><i style="width:${(100 * k.d / max).toFixed(1)}%"></i></span>
+          <span class="n">${fmt(k.c)}</span><span class="f">${fmt(k.f)}</span></button></li>`;
+      }).join("");
+      const files = (node.t || []).map(([n, c, lg]) => `<li><code>${esc(n)}</code> ${fmt(c)} lines, ${esc(lg)}</li>`).join("");
+      ex.innerHTML = `<nav class="crumbs" aria-label="Folder path">${crumbs}</nav>
+        <ul class="rows"><li class="headrow" aria-hidden="true"><span>Folder</span><span>Size</span><span>Code lines</span><span>Files</span></li>${rows || '<li class="empty">No folders here.</li>'}</ul>
+        ${files ? `<div class="filesbox">Biggest code files in this folder<ol>${files}</ol></div>` : ""}
+        <div class="key2"><span style="--c: var(--primary)">code lines</span><span style="--c: color-mix(in srgb, var(--l2) 55%, transparent)">doc lines</span><span>Tap a folder to go in.</span></div>`;
+      $$(".row", ex).forEach((b) => b.addEventListener("click", () => { path.push(kids[+b.dataset.i].n); draw(true); }));
+      $$("[data-up]", ex).forEach((b) => b.addEventListener("click", () => { path = path.slice(0, +b.dataset.up); draw(true); }));
+      if (focus) ($(".row:not([disabled])", ex) || $(".crumbs button", ex)).focus({ preventScroll: true });
+    };
+    draw(false);
+  }
+
+  // the clickable map
+  const panel = $("#panel");
+  $$(".map .stop").forEach((g) => {
+    const id = g.dataset.stop, n = stopNotes[id];
+    g.setAttribute("tabindex", "0");
+    g.setAttribute("role", "button");
+    g.setAttribute("aria-label", (n && n.title) || (g.textContent || id).trim());
+    try { // a padded hit area over the stop and its label, so a tap anywhere near it counts
+      const bb = g.getBBox(), pad = 8, r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("x", bb.x - pad); r.setAttribute("y", bb.y - pad);
+      r.setAttribute("width", bb.width + 2 * pad); r.setAttribute("height", bb.height + 2 * pad);
+      r.setAttribute("fill", "transparent"); r.setAttribute("pointer-events", "all");
+      g.insertBefore(r, g.firstChild);
+    } catch (e) {}
+    const show = () => {
+      $$(".map .stop.on").forEach((x) => x.classList.remove("on"));
+      g.classList.add("on");
+      if (!n) { panel.innerHTML = `<h3>${esc(g.textContent.trim())}</h3>`; return; }
+      const nd = n.path ? nodeAt(n.path) : null;
+      const size = nd ? `${fmt(nd.f)} files, ${fmt(nd.c)} code lines` : "";
+      panel.innerHTML = `<h3>${esc(n.title)}</h3><p>${esc(n.what)}</p><dl>
+        ${n.path ? `<dt>Lives in</dt><dd><code>${esc(n.path)}</code>${size ? " " + size : ""}</dd>` : ""}
+        ${n.open ? `<dt>Open first</dt><dd><code>${esc(n.open)}</code></dd>` : ""}
+        ${n.run ? `<dt>Run</dt><dd><code>${esc(n.run)}</code></dd>` : ""}</dl>`;
+    };
+    g.addEventListener("click", show);
+    g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); show(); } });
+  });
+
+  // the copy and the original
+  const iso = $("#iso");
+  if (iso && (F.copied_files || F.paths_rewritten != null)) {
+    const ok = F.isolated !== false;
+    iso.innerHTML = `<div class="iso">
+      <div class="box"><b>The original</b><span>${esc(F.source_name || "the source repo")}: read, never written</span></div>
+      <div class="arrows">
+        <div class="arrow">Copied once: ${fmt(F.copied_files)} files, ${fmt(F.copied_mb)} MB; ${fmt(F.links_remade)} links remade inside the copy</div>
+        <div class="arrow back">No way back: ${fmt(F.paths_rewritten)} paths rewritten in ${fmt(F.files_rewritten)} files${F.remapped ? `, ${fmt(F.remapped)} outside folders moved to the copy's own` : ""}</div>
+      </div>
+      <div class="box mine"><b>Your copy</b><span>${S ? fmt(S.files) + " files you own" : "yours to change"}</span>
+        <div class="verdict">${F.isolated == null ? "" : ok ? '<span class="badge ok">verify: ISOLATED</span>' : '<span class="badge warn">verify: not isolated</span>'}</div></div>
+    </div>`;
+  }
+
+  // words that need a meaning
+  const tip = $("#tip");
+  const showTip = (el) => {
+    tip.textContent = el.dataset.def; tip.hidden = false;
+    const r = el.getBoundingClientRect(), w = tip.offsetWidth;
+    tip.style.left = Math.max(8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 8)) + "px";
+    tip.style.top = (window.scrollY + r.bottom + 8) + "px";
+  };
+  $$(".term[data-def]").forEach((t) => {
+    t.setAttribute("tabindex", "0");
+    t.setAttribute("aria-description", t.dataset.def);
+    t.addEventListener("mouseenter", () => showTip(t));
+    t.addEventListener("focus", () => showTip(t));
+    t.addEventListener("click", () => showTip(t));
+    t.addEventListener("mouseleave", () => { tip.hidden = true; });
+    t.addEventListener("blur", () => { tip.hidden = true; });
+  });
+
+  // check yourself
+  $$(".quiz").forEach((q) => {
+    const right = +q.dataset.answer;
+    $$("button", q).forEach((b, i) => b.addEventListener("click", () => {
+      b.classList.add(i + 1 === right ? "right" : "wrong");
+      if (i + 1 === right) { $(".why", q).hidden = false; }
+    }));
+  });
+
+  // tasks
+  $$(".tasks input[data-task]").forEach((c) => {
+    c.checked = !!state.tasks[c.dataset.task];
+    c.closest("li").classList.toggle("ticked", c.checked);
+    c.addEventListener("change", () => { state.tasks[c.dataset.task] = c.checked; c.closest("li").classList.toggle("ticked", c.checked); save(); });
+  });
+
+  // table filter
+  $$(".filter[data-for]").forEach((f) => f.addEventListener("input", () => {
+    const q = f.value.trim().toLowerCase();
+    $$("#" + f.dataset.for + " tbody tr").forEach((tr) => { tr.hidden = q && !tr.textContent.toLowerCase().includes(q); });
+  }));
+
+  // code blocks: a head with the label and a copy button
+  $$(".code").forEach((c) => {
+    const head = document.createElement("div");
+    head.className = "head";
+    head.textContent = c.dataset.label || (c.classList.contains("out") ? "Output" : "Command");
+    if (!c.classList.contains("out")) {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = "Copy";
+      b.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText($("pre", c).innerText); b.textContent = "Copied"; }
+        catch (e) { b.textContent = "Select and copy"; }
+        setTimeout(() => (b.textContent = "Copy"), 1500);
+      });
+      head.appendChild(b);
+    }
+    c.prepend(head);
+  });
+
+  // the rail, progress and where you are
+  const all = $$(".stop-sec"), stops = all.filter((s) => !s.dataset.part), rail = $("#rail");
   for (const s of all) {
     const li = document.createElement("li");
     li.dataset.id = s.id;
     const min = +s.dataset.min;
     li.innerHTML = `<a href="#${s.id}"></a><small>${min ? min + " min" : "after your questions"}</small>`;
-    li.querySelector("a").textContent = s.querySelector("h2").textContent;
+    $("a", li).textContent = $("h2", s).textContent;
     rail.appendChild(li);
     if (s.dataset.part) continue;
     const b = document.createElement("button");
-    b.className = "done-btn";
-    b.type = "button";
-    b.addEventListener("click", () => { done[s.id] = !done[s.id]; save(); paint(); });
+    b.className = "done-btn"; b.type = "button";
+    b.addEventListener("click", () => { state.done[s.id] = !state.done[s.id]; save(); paint(); });
     s.appendChild(b);
   }
   function paint() {
     let n = 0;
     for (const s of stops) {
-      const on = !!done[s.id];
+      const on = !!state.done[s.id];
       n += on;
-      const b = s.querySelector(".done-btn");
+      const b = $(".done-btn", s);
       b.setAttribute("aria-pressed", on);
       b.textContent = on ? "Done" : "Mark as done";
-      rail.querySelector(`[data-id="${s.id}"]`).classList.toggle("done", on);
+      $(`[data-id="${s.id}"]`, rail).classList.toggle("done", on);
     }
-    document.getElementById("count").textContent = `${n} of ${stops.length} stops`;
-    document.getElementById("meter").style.width = (100 * n / stops.length) + "%";
+    $("#count").textContent = `${n} of ${stops.length} stops`;
+    $("#meter").style.width = (100 * n / stops.length) + "%";
   }
-  for (const pre of document.querySelectorAll(".code pre:not(.out)")) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.textContent = "Copy";
-    b.addEventListener("click", async () => {
-      try { await navigator.clipboard.writeText(pre.innerText); b.textContent = "Copied"; }
-      catch (e) { b.textContent = "Select and copy"; }
-      setTimeout(() => (b.textContent = "Copy"), 1500);
-    });
-    pre.parentElement.appendChild(b);
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting) $$("li", rail).forEach((li) => li.classList.toggle("here", li.dataset.id === e.target.id));
+    }), { rootMargin: "-30% 0px -60% 0px" });
+    all.forEach((s) => io.observe(s));
   }
   paint();
 })();

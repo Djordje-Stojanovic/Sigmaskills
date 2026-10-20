@@ -4,6 +4,15 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmafork`: the onboarding course v2 (ticket 83 P13.75, the owner's verdict on v1: one good graphic, too little explained, hard to read, not his look). The template now wears the Storge-Black-Green look of `DESIGN.md` (zinc canvas, green glow, one emerald, Inter) and has 10 stops with at least 6 figures: the transit map is clickable (each stop shows its folder with its numbers, the file to open first and the command), a numbers band and language bar, a folder explorer (folders sized by code lines, tap to go in), the use case as a strip of real frames ("One job, start to finish"), map line cards, a change-flow strip, and a copy-and-original figure. Check-yourself questions are quizzes, tasks are tick boxes, the cheat sheet has a filter, terms explain themselves on tap. Code blocks get a header so the Copy button never covers a command. `references/guide.md` sets the `/sigmawrite` voice: one lead line per stop, three sentences a paragraph at most, commands in code blocks.
+
+### Added
+
+- `sigmafork.py stats` counts what a repo really holds: files, folders, code lines without blank and comment lines, doc lines, languages, the biggest code files. It leaves out installed dependencies, build output, caches, venvs and generated files (lock files, minified bundles, "do not edit" headers) and says how much it left out.
+- `sigmafork.py guide` makes `ONBOARDING.html` from the template and writes the stats, the folder tree and the copy facts (`copy.json`, `paths.json`, `verify`) into its data block, from which the page draws its numbers. `guide --check` lists what is still wrong: `FILL` left or no data (exit 1), long paragraphs, chip-heavy text, terms without a meaning and too few figures (fixes).
+
 ## [0.12.0] — 2026-10-20
 
 ### Fixed

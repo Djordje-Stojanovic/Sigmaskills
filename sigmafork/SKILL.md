@@ -45,9 +45,9 @@ Follow [copy.md](references/copy.md) for the source kind (GitHub fork, GitHub cl
 
 ## 4. Onboarding guide
 
-Write `ONBOARDING.html` at the root of the copy: a 10-15 minute mini course in one self-contained page. Start from [assets/guide-template.html](assets/guide-template.html) and follow [guide.md](references/guide.md): the course plan, a map of the repo drawn as a real diagram, the real example projects, the first three tasks, the cheat sheet, and the empty part 2. When the copy has its own `DESIGN.md` or brand tokens, the guide wears them.
+Write `ONBOARDING.html` at the root of the copy: a 10-15 minute mini course in one self-contained page, mostly pictures he can tap. `python scripts/sigmafork.py guide <dest> --source <source>` makes it from [assets/guide-template.html](assets/guide-template.html) and writes the repo numbers into it (files, folders, code lines without blanks, comments and scaffolding, languages, the folder tree, the copy facts); the page draws the numbers band, the folder explorer and the copy-and-original figure from them. Then fill it by [guide.md](references/guide.md): the clickable transit map, the use case as a story of real frames, the map line by line, the real example projects, the change flow, the first three tasks, the cheat sheet, and the empty part 2. Words in the `/sigmawrite` voice: one lead line per stop, three sentences a paragraph at most, a tap-to-explain meaning for every term. When the copy has its own `DESIGN.md` or brand tokens, the guide wears them.
 
-Then open it in a browser at desktop and phone width, look at it (a screenshot), check the console for errors, and fix what is broken. Every `FILL` marker from the template must be gone.
+Then run `python scripts/sigmafork.py guide <dest> --check` and fix its list, open the page in a browser at desktop and phone width, look at it (a screenshot), click the map, the explorer and a quiz, check the console for errors, and fix what is broken. Every `FILL` marker from the template must be gone.
 
 ## 5. Questions, then part 2
 
