@@ -1,5 +1,7 @@
 # Use the Emberforge visual language
 
+> **Superseded in part by [0007](0007-packs-wizard-and-design-palette.md):** the palette is now DESIGN.md (near-black and emerald), and color terminals open a full-screen wizard. The rest of this record, on layout, plain terminals, and the animation decision, still holds.
+
 The Sigma Installer uses Emberforge's warm LAPI WezTerm palette. The original prototype included a molten Sigma reveal. The decision below supersedes that animation after installer repetition and terminal overflow were reported.
 
 ## Current interactive layout

@@ -14,10 +14,10 @@ import {
 } from './destinations.js';
 import { destinationRowTitle, isSearchChar, pickerItems, selectableGroups, visibleDestinationItems } from './destination-items.js';
 import { recommendedLinkMethod } from './links.js';
-import { EMBERFORGE_PALETTE, TerminalRenderer, isCiEnv, wrapWords } from './terminal.js';
+import { SIGMA_PALETTE, TerminalRenderer, isCiEnv, wrapWords } from './terminal.js';
 import { KeyInput } from './key-input.js';
 
-export { EMBERFORGE_PALETTE, isCiEnv };
+export { SIGMA_PALETTE, isCiEnv };
 
 function isHelpKey(key) {
   return Boolean(key && (key.ch === '?' || key.sequence === '?' || key.name === '?'));
@@ -25,7 +25,7 @@ function isHelpKey(key) {
 
 function helpLines(renderer) {
   return [
-    renderer.style(renderer.brand, EMBERFORGE_PALETTE.gold, true),
+    renderer.style(renderer.brand, SIGMA_PALETTE.primary, true),
     'Keyboard',
     '',
     '↑/↓ move focus',
@@ -95,7 +95,7 @@ function compact(value, width) {
 function menuLines(renderer, { heading, rows, cursor, details = [], footer, error }) {
   const width = Math.max(1, renderer.width - 1);
   const head = [compact(heading, width)];
-  if (renderer.height >= 12) head.unshift(renderer.style(renderer.brand, EMBERFORGE_PALETTE.gold, true));
+  if (renderer.height >= 12) head.unshift(renderer.style(renderer.brand, SIGMA_PALETTE.primary, true));
   const hints = width < 70
     ? (renderer.static ? '# toggle /search next/prev enter esc ?' : '↑↓ move · space · enter · esc · ?')
     : footer;
@@ -126,7 +126,7 @@ function pickerLines(renderer, catalog, selected, cursor, error, scope) {
 
 function globalWarningLines(renderer) {
   return [
-    renderer.style('Global Installation warning', EMBERFORGE_PALETTE.red, true),
+    renderer.style('Global Installation warning', SIGMA_PALETTE.err, true),
     '',
     'Global Installation writes skills for this operating-system user.',
     'Other projects can pick them up. Project Installation remains the safer default.',
@@ -309,7 +309,7 @@ async function selectDestinations(renderer, input, groups, scope = 'project') {
 function summaryLines(renderer, plans, scope = 'project') {
   const title = scope === 'global' ? 'Confirm Global Installation' : 'Confirm Project Installation';
   const lines = [
-    renderer.style(`${title} · Stage 4/4`, EMBERFORGE_PALETTE.gold, true),
+    renderer.style(`${title} · Stage 4/4`, SIGMA_PALETTE.primary, true),
     '',
     'Resolved destinations:',
   ];
@@ -350,7 +350,7 @@ function methodPickerLines(renderer, cursor) {
     { title: 'Copy', detail: 'Independent managed copy at every destination' },
   ];
   const lines = [
-    renderer.style(renderer.brand, EMBERFORGE_PALETTE.gold, true),
+    renderer.style(renderer.brand, SIGMA_PALETTE.primary, true),
     `Project Installation · method · Stage 3/4${renderer.narrow ? ' · narrow' : ''}`,
     '',
     'Choose how host-specific destinations are written. The installer never changes method silently.',
@@ -387,7 +387,7 @@ async function selectMethod(renderer, input) {
 
 function fallbackLines(renderer, failure) {
   return [
-    renderer.style('Link failed', EMBERFORGE_PALETTE.red, true),
+    renderer.style('Link failed', SIGMA_PALETTE.err, true),
     '',
     ...wrapWords(failure.relativeDestination || failure.destination || '', Math.max(20, renderer.width - 2)),
     `Cause: ${failure.cause}`,

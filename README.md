@@ -34,19 +34,38 @@ Run the Sigma Installer in your project:
 npx @djordje-stojanovic/sigmaskills
 ```
 
-Pick the skills you want and confirm. By default the installer writes only to `.agents/skills/<id>`, the folder that many Agent Hosts read. It writes nothing until you confirm.
+The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm.
 
-To install without the picker, name one or more skills, or pass `--all`. Several skills install together: if one fails, none stay installed.
+![The What step: packs with counts, one pack opened to pick single skills](https://raw.githubusercontent.com/Djordje-Stojanovic/Sigmaskills/main/docs/images/installer-what.svg)
+
+![The summary after an install](https://raw.githubusercontent.com/Djordje-Stojanovic/Sigmaskills/main/docs/images/installer-done.svg)
+
+### Presets
+
+| Preset | Skills | Source |
+|--------|--------|--------|
+| `sigma` | the Sigma skills below | this package |
+| `mattpocock` | grill, spec, TDD, triage, deep modules | [mattpocock/skills](https://github.com/mattpocock/skills) |
+| `threejs` | 13 Three.js skills | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) |
+| `hyperframes` | HyperFrames and the student kit | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes), [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit) |
+| `minimax-h3` | MiniMax H3 prompt and recipe skills | [MiniMax-AI/MiniMax-H3](https://github.com/MiniMax-AI/MiniMax-H3) |
+| `storgestudio` | a folder of your own skills | `SIGMA_STORGESTUDIO_DIR` or `~/.sigmaskills/packs.json` |
+| `all` | every pack that is available | |
+
+### Without the wizard
+
+Every choice has a flag, so scripts and CI skip the wizard. Name skills, presets, and Agent Hosts (`claude`, `codex`, `gemini`, `agy`, `pi`, `cursor`, or any registry id).
 
 ```bash
 npx @djordje-stojanovic/sigmaskills install sigmawrite --project .
-npx @djordje-stojanovic/sigmaskills install sigmawrite sigmareview sigmaship --project .
-npx @djordje-stojanovic/sigmaskills install --all --project .
+npx @djordje-stojanovic/sigmaskills install --preset sigma --preset mattpocock --agent claude --project .
+npx @djordje-stojanovic/sigmaskills install --preset all --global --yes
+npx @djordje-stojanovic/sigmaskills list --packs
+npx @djordje-stojanovic/sigmaskills update --global --yes
+npx @djordje-stojanovic/sigmaskills uninstall --skill tdd --yes
 ```
 
-Then call a skill with your host's normal skill syntax (`$sigmawrite`, `/skill:sigmawrite`, the skill picker, …).
-
-The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/installer.md) explains host folders, Global Installation, `status`, `update`, `restore`, `uninstall`, and `purge`.
+The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/installer.md) explains presets, host folders, Global Installation, `status`, `update`, `restore`, `uninstall`, and `purge`.
 
 ---
 

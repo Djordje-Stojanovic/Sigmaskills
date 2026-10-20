@@ -192,12 +192,12 @@ test('installer heading uses the warm palette without an opening animation', asy
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-reveal-skip-'));
   try {
     const io = createTerminalIo('x\x1b', { tty: true, env: { ...process.env, CI: '' } });
-    const code = await runCli(['--project', projectRoot], io);
+    const code = await runCli(['--classic', '--project', projectRoot], io);
 
     assert.equal(code, 0);
     assert.doesNotMatch(io.getStdout(), /█/, 'opening animation must be absent');
-    assert.match(io.getStdout(), /\x1b\[48;2;26;23;20m/); // base #1a1714
-    assert.match(io.getStdout(), /\x1b\[1;38;2;212;165;100m/); // gold #d4a564
+    assert.match(io.getStdout(), /\x1b\[48;2;9;9;11m/); // canvas #09090b
+    assert.match(io.getStdout(), /\x1b\[1;38;2;52;211;153m/); // primary #34d399
 
 
   } finally {
@@ -209,7 +209,7 @@ test('dynamic output separates the final prompt from the installation result', a
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-dynamic-output-'));
   try {
     const io = createTerminalIo('x \r\ry', { tty: true });
-    const code = await runCli(['--project', projectRoot], io);
+    const code = await runCli(['--classic', '--project', projectRoot], io);
 
     assert.equal(code, 0);
     const output = io.getStdout();
@@ -226,7 +226,7 @@ test('Ctrl+C at startup cancels before any write', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-reveal-cancel-'));
   try {
     const io = createTerminalIo('\x03', { tty: true });
-    const code = await runCli(['--project', projectRoot], io);
+    const code = await runCli(['--classic', '--project', projectRoot], io);
 
     assert.equal(code, 130);
     assert.match(io.getStdout(), /Installation cancelled\. No files were written\./);
@@ -255,7 +255,7 @@ test('installer shows skill selection before receiving any input', async () => {
       },
     });
 
-    const run = runCli(['--project', projectRoot], io);
+    const run = runCli(['--classic', '--project', projectRoot], io);
     await promptShown;
     const code = await run;
 

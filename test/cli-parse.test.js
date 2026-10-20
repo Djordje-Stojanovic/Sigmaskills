@@ -34,6 +34,12 @@ const FLAG_CASES = {
   '--narrow': [['--narrow'], { narrow: true }],
   '-y': [['-y'], { yes: true }],
   '--yes': [['--yes'], { yes: true }],
+  '--force': [['--force'], { force: true }],
+  '--classic': [['--classic'], { classic: true }],
+  '--packs': [['list', '--packs'], { packs: true }],
+  '--preset': [['--preset', 'sigma,mattpocock', '--preset=threejs'], { presets: ['sigma,mattpocock', 'threejs'] }],
+  '-a': [['-a', 'claude'], { agents: ['claude'] }],
+  '--agent': [['--agent', 'codex', '--agent=pi'], { agents: ['codex', 'pi'] }],
 };
 
 function helpFlags() {

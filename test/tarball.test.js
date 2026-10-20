@@ -35,6 +35,13 @@ const USER_SRC_FILES = [
   'transaction.js',
   'uninstall.js',
   'update.js',
+  'agents.js',
+  'install-run.js',
+  'pack-install.js',
+  'pack-source.js',
+  'packs.js',
+  'report.js',
+  'wizard.js',
 ];
 
 function listFiles(root, relative = '') {
@@ -91,6 +98,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       'package/manifest.json',
       'package/bin/sigmaskills.js',
       'package/registry/agent-hosts.json',
+      'package/registry/packs.json',
       'package/registry/schema.json',
       'package/registry/skill-baselines.json',
       'package/registry/source.json',

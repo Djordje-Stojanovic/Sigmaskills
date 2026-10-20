@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { getCatalog, findPackageRoot } from './catalog.js';
 import { formatPlanHuman, formatPlanJson } from './plan.js';
 import { isCiEnv, runProjectInstaller } from './interactive.js';
@@ -13,7 +14,16 @@ import {
   formatPurgeJson,
 } from './purge.js';
 import { executeProjectInstall, executeProjectInstallBatch } from './transaction.js';
-import { resolveHomeDir } from './destinations.js';
+import { listGlobalDestinationGroups, listProjectDestinationGroups, loadHostRegistry, resolveHomeDir } from './destinations.js';
+import { loadPackCatalog, resolveSelection } from './packs.js';
+import { createSourceFetcher } from './pack-source.js';
+import { packStatus, uninstallPackSkills, updatePackSkills } from './pack-install.js';
+import { resolveAgentRoots, suggestAgents } from './agents.js';
+import { runInstall } from './install-run.js';
+import { describeRoots } from './agents.js';
+import { formatPackList, formatSummary } from './report.js';
+import { createStyler } from './terminal.js';
+import { runWizard, wizardAvailable } from './wizard.js';
 
 /**
  * Format and print help message.
@@ -34,7 +44,7 @@ Usage:
   sigmaskills [options] [command]
 
 Commands:
-  install <skill...> Install one or more skills in one transaction (.agents/skills/<skill>)
+  install <skill...> Install skills (Sigma or from a pack) in one run (.agents/skills/<skill>)
   add <skill...>    Alias for install
   update            Update selected whole skills to the running CLI Release
   restore           Restore the latest retained backup for a skill
@@ -48,7 +58,14 @@ Options:
   -v, --version     Show version number
   -h, --help        Show help
   --skill <name>    Skill identifier to install, update, restore, or uninstall (repeatable)
-  --all             Install every shipped skill, or uninstall every recorded Sigma skill in the chosen scope
+  --all             Install every shipped Sigma skill, or uninstall every recorded skill in the chosen scope
+  --preset <pack>   Install a whole pack: sigma, mattpocock, threejs, hyperframes, minimax-h3, storgestudio, or all
+                    (repeatable, or comma-separated; 'list --packs' shows each pack)
+  -a, --agent <host> Agent Host to install for, such as claude, codex, gemini, agy, pi, cursor
+                    (repeatable, or comma-separated; '*' for every host; .agents/skills is always included)
+  --force           Replace pack skills that have local edits or a folder in the way, after a private backup
+  --packs           With 'list': show every pack and its skills
+  --classic         Use the line-by-line installer instead of the full-screen wizard
   --dry-run         Preview install, update, restore, uninstall, or purge without writing files
   --confirm-purge <phrase>
                     Exact typed confirmation for purge; --yes, CI, non-TTY, and JSON are not enough
@@ -82,7 +99,13 @@ Options:
   --narrow          Use the narrow-terminal layout
   -y, --yes         Skip interactive confirmations
 
-Run without a command to start the interactive Project Installation.
+Run without a command to start the interactive installer.
+
+Examples:
+  sigmaskills install --preset sigma --preset mattpocock --agent claude --project .
+  sigmaskills install --preset all --global --yes
+  sigmaskills update --global --yes
+  sigmaskills uninstall --skill grill-me --yes
 
 Available Skills:
 ${skillsList}
@@ -111,6 +134,11 @@ const FLAGS = [
   { name: '--copy', key: 'copy' },
   { name: '--link', key: 'link' },
   { name: '--list', key: 'list' },
+  { name: '--force', key: 'force' },
+  { name: '--classic', key: 'classic' },
+  { name: '--packs', key: 'packs' },
+  { name: '--preset', alias: '--pack', key: 'presets', value: true, repeatable: true },
+  { name: '--agent', alias: '-a', key: 'agents', value: true, repeatable: true },
   { name: '--skill', key: 'skillIds', value: true, repeatable: true },
   { name: '--destination', key: 'destinations', value: true, repeatable: true },
   { name: '--project', alias: '--cwd', key: 'projectRoot', value: true },
@@ -155,6 +183,8 @@ export function parseCliArgs(args) {
     command: null,
     skillIds: [],
     destinations: [],
+    presets: [],
+    agents: [],
     unknown: [],
   };
   for (const flag of FLAGS) {
@@ -257,15 +287,40 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       return 1;
     }
 
-    const installing = opts.command === 'install' || opts.command === 'add' || (!opts.command && opts.skillIds.length > 0);
-    const knownIds = catalog.skills.map((skill) => skill.id)
-      .concat(installing ? [] : catalog.manifest.retired || []);
-    const unknownId = opts.skillIds.find((id) => !knownIds.includes(id));
+    const installing = opts.command === 'install' || opts.command === 'add'
+      || (!opts.command && (opts.skillIds.length > 0 || opts.presets.length > 0));
+    const env = io.env || process.env;
+    const homeDir = resolveHomeDir(env);
+    const scopeName = opts.global ? 'global' : 'project';
+    const projectBase = opts.projectRoot || process.cwd();
+    let packCatalogCache;
+    const getPacks = () => {
+      packCatalogCache ??= loadPackCatalog({ catalog, packageRoot: rootDir, homeDir, env });
+      return packCatalogCache;
+    };
+    const stateParams = () => ({ scope: scopeName, projectRoot: projectBase, homeDir, customStateDir: opts.stateDir });
+    const bundledIds = new Set(catalog.skills.map((skill) => skill.id).concat(installing ? [] : catalog.manifest.retired || []));
+    const packable = installing || ['update', 'uninstall'].includes(opts.command);
+    let unknownId;
+    for (const id of opts.skillIds) {
+      if (bundledIds.has(id)) continue;
+      if (packable && getPacks().skills.has(id)) continue;
+      if (['update', 'uninstall'].includes(opts.command) && packStatus(stateParams()).some((entry) => entry.id === id)) continue;
+      unknownId = id;
+      break;
+    }
     if (unknownId !== undefined) {
       writeErr(`sigmaskills error: unknown skill '${unknownId}'`);
-      writeErr(`The skill '${unknownId}' was not found in Skill Pack ${catalog.manifest.name}. Run 'sigmaskills list' to see skill ids.`);
+      writeErr(`The skill '${unknownId}' was not found in Skill Pack ${catalog.manifest.name} or in any pack. Run 'sigmaskills list --packs' to see skill ids.`);
       return 1;
     }
+    const externalIdsOf = (ids) => ids.filter((id) => !catalog.skills.some((skill) => skill.id === id) && !(catalog.manifest.retired || []).includes(id));
+    const hostGroups = () => {
+      const registry = loadHostRegistry(rootDir);
+      return scopeName === 'global'
+        ? listGlobalDestinationGroups({ registry, homeDir, env })
+        : listProjectDestinationGroups({ registry, projectRoot: projectBase, env });
+    };
 
     if (opts.command === 'purge') {
       const env = io.env || process.env;
@@ -308,7 +363,6 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     }
 
     if (opts.command === 'update') {
-      const env = io.env || process.env;
       if (opts.global && !opts.dryRun && !opts.yes) {
         writeErr('sigmaskills error: Global Installation requires both --global and --yes; CI, TTY, JSON, and Agent Host detection never imply that authority');
         return 1;
@@ -317,26 +371,55 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeErr('sigmaskills error: update requires --yes to apply all changed skills, or --skill <id> to select complete skills; use --dry-run to preview');
         return 1;
       }
-      const result = executeUpdate({
+      const externalIds = externalIdsOf(opts.skillIds);
+      const sigmaIds = opts.skillIds.filter((id) => !externalIds.includes(id));
+      const onlyExternal = opts.skillIds.length > 0 && sigmaIds.length === 0;
+      const result = onlyExternal ? null : executeUpdate({
         catalog,
         projectRoot: opts.projectRoot || process.cwd(),
-        homeDir: resolveHomeDir(env),
+        homeDir,
         scope: opts.global ? 'global' : 'project',
         customStateDir: opts.stateDir,
         packageRoot: rootDir,
         dryRun: opts.dryRun,
         env,
-        skillIds: opts.skillIds,
+        skillIds: sigmaIds,
         outsideEdit: opts.outsideEdit || undefined,
         malformedMarkers: opts.malformedMarkers || undefined,
         exportDir: opts.exportDir || undefined,
       });
-      writeOut(opts.json ? formatUpdateJson(result) : formatUpdateHuman(result));
-      return 0;
+      const recorded = packStatus(stateParams());
+      let packEntries = [];
+      if (onlyExternal || (opts.skillIds.length === 0 && recorded.length > 0)) {
+        const fetcher = createSourceFetcher({ env });
+        try {
+          packEntries = updatePackSkills({
+            ...stateParams(), packCatalog: getPacks(), skillIds: externalIds, fetcher, dryRun: opts.dryRun, force: opts.force, version: catalog.manifest.version,
+          }).results;
+        } finally {
+          fetcher.close();
+        }
+      }
+      if (packEntries.length > 0) {
+        const packTitles = new Map(getPacks().packs.map((pack) => [pack.id, pack.title]));
+        packEntries = packEntries.map((entry) => ({ ...entry, packTitle: packTitles.get(entry.pack) || entry.pack }));
+      }
+      if (opts.json) {
+        const base = result ? JSON.parse(formatUpdateJson(result)) : {};
+        writeOut(JSON.stringify(packEntries.length > 0 ? { ...base, packs: packEntries } : base, null, 2));
+      } else {
+        if (result) writeOut(formatUpdateHuman(result));
+        if (packEntries.length > 0) {
+          const styler = createStyler(io.stdout, env, { noColor: opts.noColor });
+          writeOut(formatSummary({
+            styler, action: 'Update', dryRun: opts.dryRun, scope: scopeName, base: scopeName === 'global' ? homeDir : projectBase, entries: packEntries, version: catalog.manifest.version,
+          }).join('\n'));
+        }
+      }
+      return packEntries.some((entry) => entry.status === 'failed') ? 1 : 0;
     }
 
     if (opts.command === 'uninstall') {
-      const env = io.env || process.env;
       if (opts.global && !opts.dryRun && !opts.yes) {
         writeErr('sigmaskills error: Global Installation requires both --global and --yes; CI, TTY, JSON, and Agent Host detection never imply that authority');
         return 1;
@@ -353,25 +436,46 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeErr('sigmaskills error: uninstall requires --yes to apply, or --dry-run to preview');
         return 1;
       }
-      const result = executeUninstall({
+      const externalIds = externalIdsOf(opts.skillIds);
+      const sigmaIds = opts.skillIds.filter((id) => !externalIds.includes(id));
+      const runSigma = opts.all || sigmaIds.length > 0;
+      const result = runSigma ? executeUninstall({
         catalog,
         projectRoot: opts.projectRoot || process.cwd(),
-        homeDir: resolveHomeDir(env),
+        homeDir,
         scope: opts.global ? 'global' : 'project',
         customStateDir: opts.stateDir,
         packageRoot: rootDir,
         dryRun: opts.dryRun,
         env,
-        skillIds: opts.skillIds,
+        skillIds: sigmaIds,
         all: opts.all,
         yes: opts.yes,
         clean: opts.clean || (opts.yes || opts.all ? 'remove' : undefined),
         changed: opts.changed || (opts.all ? 'backup' : undefined),
         exportDir: opts.exportDir || undefined,
-      });
-      writeOut(opts.json ? formatUninstallJson(result) : formatUninstallHuman(result));
-      if ((result.summary?.failed || []).length > 0) return 1;
-      return 0;
+      }) : null;
+      let packEntries = [];
+      if (externalIds.length > 0 || (opts.all && packStatus(stateParams()).length > 0)) {
+        const packTitles = new Map(getPacks().packs.map((pack) => [pack.id, pack.title]));
+        packEntries = uninstallPackSkills({
+          ...stateParams(), skillIds: externalIds, all: opts.all, dryRun: opts.dryRun, force: opts.force,
+        }).results.map((entry) => ({ ...entry, packTitle: packTitles.get(entry.pack) || entry.pack }));
+      }
+      if (opts.json) {
+        const base = result ? JSON.parse(formatUninstallJson(result)) : {};
+        writeOut(JSON.stringify(packEntries.length > 0 ? { ...base, packs: packEntries } : base, null, 2));
+      } else {
+        if (result) writeOut(formatUninstallHuman(result));
+        if (packEntries.length > 0) {
+          const styler = createStyler(io.stdout, env, { noColor: opts.noColor });
+          writeOut(formatSummary({
+            styler, action: 'Uninstall', dryRun: opts.dryRun, scope: scopeName, base: scopeName === 'global' ? homeDir : projectBase, entries: packEntries,
+          }).join('\n'));
+        }
+      }
+      if ((result?.summary?.failed || []).length > 0) return 1;
+      return packEntries.some((entry) => entry.status === 'failed') ? 1 : 0;
     }
 
     if (opts.command === 'restore') {
@@ -405,17 +509,44 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     }
 
     if (opts.command === 'status') {
-      const env = io.env || process.env;
       const report = collectStatus({
         catalog,
         projectRoot: opts.projectRoot || process.cwd(),
-        homeDir: resolveHomeDir(env),
+        homeDir,
         scope: opts.global ? 'global' : 'project',
         customStateDir: opts.stateDir,
         packageRoot: rootDir,
         env,
       });
-      writeOut(opts.json ? formatStatusJson(report) : formatStatusHuman(report));
+      const packRows = packStatus(stateParams());
+      if (opts.json) {
+        const base = JSON.parse(formatStatusJson(report));
+        writeOut(JSON.stringify(packRows.length > 0 ? { ...base, packs: packRows } : base, null, 2));
+      } else {
+        writeOut(formatStatusHuman(report));
+        if (packRows.length > 0) {
+          writeOut(`\nPack skills (${packRows.length})`);
+          for (const row of packRows) {
+            writeOut(`  ${row.id}  [${row.pack}]  ${row.state}  ${row.method}  ${row.path}`);
+          }
+        }
+      }
+      return 0;
+    }
+
+    if (opts.command === 'list' && opts.packs) {
+      const packs = getPacks();
+      if (opts.json) {
+        writeOut(JSON.stringify({
+          schemaVersion: 1,
+          packs: packs.packs.map((pack) => ({
+            id: pack.id, title: pack.title, aliases: pack.aliases, available: pack.available, note: pack.note,
+            skills: pack.skills.map((skill) => ({ id: skill.id, description: skill.description })),
+          })),
+        }, null, 2));
+      } else {
+        writeOut(formatPackList(createStyler(io.stdout, env, { noColor: opts.noColor }), packs).join('\n'));
+      }
       return 0;
     }
 
@@ -453,6 +584,102 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       }
       writeOut(`\nAll ${catalog.skills.length} skills in Skill Pack validated successfully.`);
       return 0;
+    }
+
+    if (installing && (opts.presets.length > 0 || opts.agents.length > 0 || externalIdsOf(opts.skillIds).length > 0)) {
+      if (opts.all && opts.skillIds.length > 0) {
+        writeErr('sigmaskills error: install --all cannot be combined with skill ids');
+        return 1;
+      }
+      if (!opts.all && opts.skillIds.length === 0 && opts.presets.length === 0) {
+        writeErr("sigmaskills error: missing required skill name for install command (e.g. 'sigmaskills install sigmawrite', --preset <pack>, or --all)");
+        return 1;
+      }
+      if (opts.global && !opts.dryRun && !opts.yes) {
+        writeErr('sigmaskills error: Global Installation requires both --global and --yes; CI, TTY, JSON, and Agent Host detection never imply that authority');
+        return 1;
+      }
+      const packs = getPacks();
+      const picked = resolveSelection(packs, { presets: opts.presets, skillIds: opts.skillIds });
+      if (picked.unknownPresets.length > 0) {
+        writeErr(`sigmaskills error: unknown preset '${picked.unknownPresets[0]}'`);
+        writeErr(`Presets: ${packs.packs.map((pack) => pack.id).join(', ')}, all. Run 'sigmaskills list --packs' for details.`);
+        return 1;
+      }
+      if (picked.unavailable.length > 0) {
+        writeErr(`sigmaskills error: pack '${picked.unavailable[0].id}' is not available on this machine: ${picked.unavailable[0].note}`);
+        return 1;
+      }
+      const skills = [...picked.skills];
+      if (opts.all) {
+        for (const skill of catalog.skills) {
+          if (!skills.some((item) => item.id === skill.id)) skills.push(packs.skills.get(skill.id));
+        }
+      }
+      if (skills.length === 0) {
+        writeErr('sigmaskills error: nothing to install: the chosen presets hold no skills');
+        return 1;
+      }
+      const hostRoots = new Set(opts.destinations);
+      const groups = hostGroups();
+      if (opts.agents.length > 0) {
+        const agentRoots = resolveAgentRoots(opts.agents, groups);
+        if (agentRoots.unknown.length > 0) {
+          const near = suggestAgents(agentRoots.unknown[0], groups);
+          writeErr(`sigmaskills error: unknown agent '${agentRoots.unknown[0]}'${near.length ? `. Did you mean: ${near.join(', ')}?` : ''}`);
+          return 1;
+        }
+        agentRoots.roots.forEach((root) => hostRoots.add(root));
+      }
+      hostRoots.delete('.agents/skills');
+      const method = opts.method || 'link';
+      const fetcher = createSourceFetcher({ env });
+      const started = Date.now();
+      let run;
+      try {
+        run = runInstall({
+          catalog,
+          skills,
+          scope: scopeName,
+          projectRoot: opts.projectRoot,
+          homeDir,
+          customStateDir: opts.stateDir,
+          packageRoot: rootDir,
+          env,
+          dryRun: opts.dryRun,
+          force: opts.force,
+          roots: [...hostRoots],
+          method: hostRoots.size > 0 ? method : undefined,
+          adopt: {
+            adoptChanged: opts.adoptChanged || undefined,
+            adoptLegacy: opts.adoptLegacy || undefined,
+            adoptUnverified: opts.adoptUnverified || undefined,
+            adoptMalformed: opts.adoptMalformed || undefined,
+            exportDir: opts.exportDir || undefined,
+          },
+          fetcher,
+          version: catalog.manifest.version,
+          packTitles: new Map(packs.packs.map((pack) => [pack.id, pack.title])),
+        });
+      } finally {
+        fetcher.close();
+      }
+      if (opts.json) {
+        writeOut(JSON.stringify({ schemaVersion: 1, scope: scopeName, dryRun: Boolean(opts.dryRun), entries: run.entries }, null, 2));
+      } else {
+        writeOut(formatSummary({
+          styler: createStyler(io.stdout, env, { noColor: opts.noColor }),
+          dryRun: opts.dryRun,
+          scope: scopeName,
+          base: scopeName === 'global' ? homeDir : path.resolve(projectBase),
+          entries: run.entries,
+          hostNames: describeRoots(groups),
+          roots: [{ root: '.agents/skills', method: 'copy' }, ...[...hostRoots].map((root) => ({ root, method }))],
+          version: catalog.manifest.version,
+          seconds: (Date.now() - started) / 1000,
+        }).join('\n'));
+      }
+      return run.entries.some((entry) => entry.status === 'failed') ? 1 : 0;
     }
 
     if (opts.command === 'install' || opts.command === 'add' || opts.skillIds.length > 0) {
@@ -519,6 +746,33 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     }
 
     if (!opts.command && opts.skillIds.length === 0 && !opts.dryRun && !opts.yes) {
+      const interactiveIo = {
+        stdin: io.stdin || process.stdin,
+        stdout: io.stdout,
+        stderr: io.stderr,
+        env,
+      };
+      const rendererOptions = {
+        noColor: opts.noColor,
+        static: opts.static,
+        narrow: opts.narrow,
+        json: opts.json,
+      };
+      if (!opts.classic && wizardAvailable(interactiveIo, rendererOptions)) {
+        const code = await runWizard({
+          catalog,
+          packCatalog: getPacks(),
+          packageRoot: rootDir,
+          projectRoot: path.resolve(projectBase),
+          homeDir,
+          customStateDir: opts.stateDir,
+          initialScope: scopeName,
+          io: interactiveIo,
+          options: rendererOptions,
+          version: catalog.manifest.version,
+        });
+        if (code !== null) return code;
+      }
       return await runProjectInstaller({
         catalog,
         packageRoot: rootDir,

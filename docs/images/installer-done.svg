@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="881" height="336" viewBox="0 0 881 336" role="img" aria-label="npx @djordje-stojanovic/sigmaskills install --preset sigma --preset threejs --agent claude">
+  <title>npx @djordje-stojanovic/sigmaskills install --preset sigma --preset threejs --agent claude</title>
+  <rect width="881" height="336" rx="10" fill="#09090b" stroke="#27272a"/>
+  <circle cx="22" cy="17" r="5" fill="#3f3f46"/><circle cx="40" cy="17" r="5" fill="#3f3f46"/><circle cx="58" cy="17" r="5" fill="#34d399"/>
+  <text x="440.5" y="21" text-anchor="middle" fill="#a1a1aa" font-family="ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace" font-size="12">npx @djordje-stojanovic/sigmaskills install --preset sigma --preset threejs --agent claude</text>
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace" font-size="14">
+  <text x="18" y="67.2" xml:space="preserve"><tspan fill="#34d399" font-weight="700">Σ SIGMA SKILLS</tspan><tspan fill="#a1a1aa">  v0.11.0</tspan></text>
+  <text x="18" y="86.2" xml:space="preserve"><tspan fill="#f4f4f5" font-weight="700">28 skills installed in 2.2s</tspan></text>
+  <text x="18" y="105.19999999999999" xml:space="preserve"></text>
+  <text x="18" y="124.2" xml:space="preserve"><tspan fill="#d4d4d8">  </tspan><tspan fill="#6ee7b7" font-weight="700">✓</tspan><tspan fill="#d4d4d8"> 28 installed</tspan></text>
+  <text x="18" y="143.2" xml:space="preserve"></text>
+  <text x="18" y="162.2" xml:space="preserve"><tspan fill="#d4d4d8">  </tspan><tspan fill="#f4f4f5" font-weight="700">Sigma     </tspan><tspan fill="#a1a1aa">15 of 15</tspan></text>
+  <text x="18" y="181.2" xml:space="preserve"><tspan fill="#d4d4d8">  </tspan><tspan fill="#f4f4f5" font-weight="700">Three.js  </tspan><tspan fill="#a1a1aa">13 of 13</tspan></text>
+  <text x="18" y="200.2" xml:space="preserve"></text>
+  <text x="18" y="219.20000000000002" xml:space="preserve"><tspan fill="#d4d4d8">  </tspan><tspan fill="#34d399" font-weight="700">Project</tspan><tspan fill="#d4d4d8">  </tspan><tspan fill="#a1a1aa">~/my-project</tspan></text>
+  <text x="18" y="238.20000000000002" xml:space="preserve"><tspan fill="#d4d4d8">  </tspan><tspan fill="#f4f4f5">.agents/skills        </tspan><tspan fill="#d4d4d8"> </tspan><tspan fill="#a1a1aa">copy   </tspan><tspan fill="#d4d4d8"> </tspan><tspan fill="#a1a1aa">Codex, Gemini CLI, Antigravity CLI, Pi +20</tspan></text>
+  <text x="18" y="257.20000000000005" xml:space="preserve"><tspan fill="#d4d4d8">  </tspan><tspan fill="#f4f4f5">.claude/skills        </tspan><tspan fill="#d4d4d8"> </tspan><tspan fill="#a1a1aa">linked </tspan><tspan fill="#d4d4d8"> </tspan><tspan fill="#a1a1aa">Claude Code</tspan></text>
+  <text x="18" y="276.20000000000005" xml:space="preserve"></text>
+  <text x="18" y="295.20000000000005" xml:space="preserve"><tspan fill="#d4d4d8">  </tspan><tspan fill="#34d399" font-weight="700">Use</tspan><tspan fill="#d4d4d8">   </tspan><tspan fill="#f4f4f5">/sigmareview</tspan><tspan fill="#d4d4d8"> </tspan><tspan fill="#a1a1aa">in Claude Code</tspan><tspan fill="#d4d4d8">   </tspan><tspan fill="#f4f4f5">$sigmareview</tspan><tspan fill="#d4d4d8"> </tspan><tspan fill="#a1a1aa">in Codex</tspan><tspan fill="#d4d4d8">   </tspan><tspan fill="#f4f4f5">/skill:sigmareview</tspan><tspan fill="#d4d4d8"> </tspan><tspan fill="#a1a1aa">in Pi</tspan></text>
+  <text x="18" y="314.2" xml:space="preserve"><tspan fill="#d4d4d8">  </tspan><tspan fill="#34d399" font-weight="700">Next</tspan><tspan fill="#d4d4d8">  </tspan><tspan fill="#f4f4f5">sigmaskills status</tspan><tspan fill="#d4d4d8"> </tspan><tspan fill="#a1a1aa">·</tspan><tspan fill="#d4d4d8"> </tspan><tspan fill="#f4f4f5">sigmaskills update</tspan><tspan fill="#d4d4d8"> </tspan><tspan fill="#a1a1aa">·</tspan><tspan fill="#d4d4d8"> </tspan><tspan fill="#f4f4f5">sigmaskills uninstall</tspan></text>
+  </g>
+</svg>

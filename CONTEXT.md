@@ -12,6 +12,14 @@ _Avoid_: Bundle, plugin
 A Sigma-branded interactive installer that lets a person select skills from the Skill Pack.
 _Avoid_: Matt's installer, generic installer
 
+**Pack**:
+A named group of skills the Sigma Installer can install together, such as `sigma`, `mattpocock`, or `threejs`. A **Preset** is a pack chosen by name (`--preset`).
+_Avoid_: Bundle, collection
+
+**Wizard**:
+The full-screen installer for color terminals: What, Where, Review. Plain terminals use the classic line-by-line installer.
+_Avoid_: GUI
+
 **Agent Host**:
 A coding-agent product that can receive and load installed Agent Skills.
 _Avoid_: Agent, platform
