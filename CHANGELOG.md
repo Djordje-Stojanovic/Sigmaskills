@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-10-20
+
 ### Fixed
 
 - Sigma Installer: `--agent agy` (Antigravity CLI) now installs global skills to `~/.gemini/config/skills`, the only folder `agy` 1.4.2 reads (probe skills in `~/.gemini/antigravity-cli/skills` and `~/.gemini/skills` were not listed). The override sits in `src/destinations.js`, so `registry:sync` cannot undo it. A link method is invisible to `agy` (a Windows junction listed no skills, the same folder as a copy did), so `install --agent agy` writes a copy unless you pass `--link`. In the wizard press `m` for Copy.
@@ -343,7 +345,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.2...v0.10.0
 [0.9.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.1...v0.9.2
