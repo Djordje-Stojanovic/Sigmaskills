@@ -36,5 +36,5 @@ test('the onboarding template carries FILL markers and every stop the guide name
   for (const id of ['sigmafork-data', 'map-notes', 'folder-notes', 'explorer', 'numbers', 'iso']) {
     assert.ok(html.includes(`id="${id}"`), `template is missing #${id}`);
   }
-  assert.match(html, /--canvas: #09090b/, 'the template wears the Storge-Black-Green tokens of DESIGN.md');
+  assert.match(html, /--canvas: #09090b/, 'the template wears the Black-Green tokens of DESIGN.md');
 });

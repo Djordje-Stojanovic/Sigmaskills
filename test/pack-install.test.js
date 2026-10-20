@@ -235,8 +235,8 @@ test('pack install: a folder source installs from a local folder', async () => {
   try {
     const folder = path.join(box.root, 'local-skills');
     writeSkills(folder, { 'local-one': 'One.', 'local-two': 'Two.' }, '.');
-    writeUserConfig(box.home, { packs: [{ id: 'local', title: 'Local', sources: [{ type: 'dir', path: folder }] }] });
-    const { code, err } = await run(['install', '--preset', 'local']);
+    writeUserConfig(box.home, { packs: [{ id: 'mine', title: 'Mine', sources: [{ type: 'dir', path: folder }] }] });
+    const { code, err } = await run(['install', '--preset', 'mine']);
     assert.equal(code, 0, err);
     assert.ok(fs.existsSync(path.join(box.project, '.agents', 'skills', 'local-two', 'SKILL.md')));
   } finally {

@@ -59,7 +59,7 @@ test('wizard: opens on the grouped picker in the DESIGN.md palette', async () =>
     const first = io.frames()[1];
     assert.match(first, /Σ SIGMA SKILLS/);
     assert.match(first, /1 What\s+2 Where\s+3 Review/);
-    for (const title of ['Sigma', 'Matt Pocock', 'Three.js', 'HyperFrames', 'MiniMax H3', 'StorgeStudio']) {
+    for (const title of ['Sigma', 'Matt Pocock', 'Three.js', 'HyperFrames', 'MiniMax H3', 'Local']) {
       assert.ok(first.includes(title), `${title} row`);
     }
     assert.match(first, /0\/38/);

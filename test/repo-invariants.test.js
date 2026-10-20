@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
@@ -15,6 +16,7 @@ const KNOWN_SKILLS = [
   { id: 'sigmahuman', title: 'SigmaHuman', needsReferences: true },
   { id: 'sigmafork', title: 'SigmaFork', needsReferences: true },
   { id: 'sigmadesign', title: 'SigmaDesign', needsReferences: true },
+  { id: 'sigmatour', title: 'SigmaTour', needsReferences: true },
   { id: 'sigmawritegui', title: 'SigmaWriteGUI', needsReferences: false },
   { id: 'sigmacreatearena', title: 'SigmaCreateArena', needsReferences: true },
   {
@@ -528,12 +530,23 @@ test('every relative link and anchor in the skill folders resolves', () => {
   assert.deepEqual(problems, []);
 });
 
+// The owner's private repositories, hosts and paths never ship in the public package.
+const PRIVATE_PARTS = /Thinkcenter_Setup|Design_Experiments|geldtools|lazy_toolkits|\bCT100\b|storgestudio|StorgeStudio/i;
+
+test('no tracked file outside the history names a private repository, host or path', () => {
+  const skip = new Set(['CHANGELOG.md', 'registry/skill-baselines.json', 'test/repo-invariants.test.js', 'test/sigmawritegui.test.js']);
+  const files = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' }).split('\n').filter(Boolean)
+    .filter((f) => !skip.has(f) && !f.startsWith('docs/audits/') && !/\.(png|jpe?g|gif|webp|ico|woff2?|pdf|mp4|wav)$/i.test(f));
+  const hits = files.filter((f) => fs.existsSync(path.join(ROOT, f)) && PRIVATE_PARTS.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
+  assert.deepEqual(hits, []);
+});
+
 test('skills name one grilling skill and no private tools', () => {
   const files = KNOWN_SKILLS.flatMap((skill) => walkFiles(path.join(ROOT, skill.id))).filter((f) => f.endsWith('.md'));
   for (const file of [...files, path.join(ROOT, 'README.md')]) {
     const text = fs.readFileSync(file, 'utf8');
     const rel = path.relative(ROOT, file);
-    assert.doesNotMatch(text, /Thinkcenter_Setup/, `${rel} names a private repository`);
+    assert.doesNotMatch(text, PRIVATE_PARTS, `${rel} names a private repository, host or path`);
     assert.doesNotMatch(text, /grill-me/, `${rel} must call the grilling skill /grilling`);
   }
 });

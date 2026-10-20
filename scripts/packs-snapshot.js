@@ -62,11 +62,11 @@ const PACKS = [
     sources: [{ repo: 'MiniMax-AI/MiniMax-H3', clone: 'MiniMax-H3', path: 'skills' }],
   },
   {
-    id: 'storgestudio',
-    title: 'StorgeStudio',
-    blurb: 'The StorgeStudio film, audio, image and publishing skills (local to the owner).',
-    aliases: ['storge'],
-    sources: [{ type: 'dir', env: 'SIGMA_STORGESTUDIO_DIR', prefix: 'storgestudio-' }],
+    id: 'local',
+    title: 'Local',
+    blurb: 'A folder of your own skills on this machine.',
+    aliases: ['own'],
+    sources: [{ type: 'dir', env: 'SIGMA_LOCAL_SKILLS_DIR' }],
   },
 ];
 

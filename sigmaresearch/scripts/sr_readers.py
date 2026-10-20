@@ -1,8 +1,9 @@
 """One reader per platform. Each returns {"items": [...], "gaps": [...], "route": "..."}.
 
-A reader that is blocked reports the status as a gap and tries only the documented fallback
-for that platform. It never rotates identities, proxies or accounts.
+A reader that is blocked reports the status as a gap and takes the next documented route for that
+platform. Browser, session and network routes (references/reddit.md, references/x.md) sit after these.
 """
+import time
 import json
 import os
 import re
@@ -93,6 +94,46 @@ def parse_reddit_thread(doc, limit, depth=3):
     walk(doc[1].get("data", {}).get("children", []), 1)
     flat.sort(key=lambda i: -(i["score"] or 0))
     return posts + flat[:limit]
+
+
+ARCTIC = "https://arctic-shift.photon-reddit.com/api"
+
+
+def arctic_thread_urls(thread_url):
+    """(post_url, tree_url) on the Arctic Shift archive for a Reddit thread URL; None when no id is in it."""
+    m = re.search(r"/comments/([a-z0-9]+)", thread_url)
+    if not m:
+        return None
+    tid = m.group(1)
+    return f"{ARCTIC}/posts/ids?ids={tid}", f"{ARCTIC}/comments/tree?link_id=t3_{tid}&limit=9999"
+
+
+def arctic_search_url(sub, query, limit, now=None):
+    """Title search inside one subreddit over the last year (the archive needs a subreddit for a word search)."""
+    since = time.strftime("%Y-%m-%d", time.gmtime((now or time.time()) - 365 * 86400))
+    return f"{ARCTIC}/posts/search?subreddit={_q(sub)}&title={_q(query)}&after={since}&limit={min(100, max(limit, 1))}&sort=desc"
+
+
+def _arctic_data(resp):
+    """The `data` list of an Arctic Shift answer, or (None, why)."""
+    try:
+        doc = resp.json()
+    except ValueError:
+        return None, "arctic-shift answer unparseable"
+    if doc.get("data") is None:
+        return None, "arctic-shift: " + str(doc.get("error") or "no data")[:80]
+    return doc["data"], ""
+
+
+def parse_arctic_thread(post_doc, tree_doc, limit, depth=3):
+    """Arctic Shift keeps Reddit's own shapes: the post, then the comment tree with nested replies."""
+    posts = post_doc.get("data") or []
+    doc = [{"data": {"children": [{"kind": "t3", "data": p} for p in posts[:1]]}},
+           {"data": {"children": tree_doc.get("data") or []}}]
+    out = parse_reddit_thread(doc, limit, depth)
+    for i in out:
+        i["scope"] += "; archive copy (Arctic Shift), votes as archived"
+    return out
 
 
 def parse_reddit_rss(xml_text, kind):
@@ -187,6 +228,29 @@ def read_reddit(target, limit=10, depth=3, threads=2):
             gaps.append("reddit json unparseable")
     else:
         gaps.append(_blocked("old.reddit.com json", r))
+    if not items and kind == "thread" and arctic_thread_urls(jurl):
+        route = "arctic-shift"
+        post_url, tree_url = arctic_thread_urls(jurl)
+        pr, tr = core.get(post_url), core.get(tree_url)
+        if pr.ok and tr.ok:
+            pdata, why = _arctic_data(pr)
+            tdata, why2 = _arctic_data(tr)
+            if pdata and tdata is not None:
+                items = parse_arctic_thread({"data": pdata}, {"data": tdata}, limit, depth)
+                if items and items[0]["kind"] == "post" and items[0]["text"] in ("[removed]", "[deleted]"):
+                    live = core.get(rurl)  # the archive caught a removed copy: the live feed may still hold the body
+                    try:
+                        fresh = [i for i in parse_reddit_rss(live.text, "thread") if i["kind"] == "post"] if live.ok else []
+                    except ET.ParseError:
+                        fresh = []
+                    if fresh:
+                        items[0] = fresh[0]
+                    else:
+                        gaps.append("post body removed in the archive copy and the live feed; comments are complete")
+            else:
+                gaps.append(why or why2 or "arctic-shift has no copy of this thread yet")
+        else:
+            gaps.append(_blocked("arctic-shift", pr if not pr.ok else tr))
     if not items:
         route = "rss"
         r = core.get(rurl)
@@ -197,6 +261,16 @@ def read_reddit(target, limit=10, depth=3, threads=2):
                 gaps.append("reddit rss unparseable")
         else:
             gaps.append(_blocked("reddit.com rss", r))
+    in_sub = re.match(r"https://old\.reddit\.com/r/([^/]+)/search\.json", jurl)
+    if not items and kind == "search" and in_sub and query:
+        route = "arctic-shift"
+        r = core.get(arctic_search_url(in_sub.group(1), query, limit))
+        data, why = _arctic_data(r) if r.ok else (None, _blocked("arctic-shift", r))
+        if data:
+            listing = {"data": {"children": [{"kind": "t3", "data": p} for p in data]}}
+            items = screen(parse_reddit_listing(listing, scope="search hit (Arctic Shift archive); thread not opened"))
+        else:
+            gaps.append(why or "arctic-shift: no hits")
     if not items:
         route = "search-engine"
         if kind == "thread":
@@ -224,9 +298,10 @@ def read_reddit(target, limit=10, depth=3, threads=2):
     if dropped:
         gaps.append(f"relevance filter dropped {dropped} off-topic item(s) that lacked the query terms")
     if kind == "thread" and not items:
-        gaps.append("BLOCKED: no comments could be read for this thread (json, rss and archive all failed); open it in a browser")
+        gaps.append("BLOCKED: no comments could be read for this thread (json, arctic-shift, rss and wayback all failed); "
+                    "take the browser route in references/reddit.md")
     # Open the top threads of a search so comments get read, not only titles.
-    if kind != "thread" and threads and route in ("json", "rss") and items:
+    if kind != "thread" and threads and route in ("json", "rss", "arctic-shift") and items:
         top = sorted([i for i in items if "/comments/" in i["url"]], key=lambda i: -(i["score"] or 0))[:threads]
         for p in top:
             sub = read_reddit(p["url"], limit=max(3, limit // 2), depth=depth, threads=0)
@@ -444,31 +519,84 @@ def read_youtube(target, limit=10, depth=3, threads=0):
     return _result(parse_yt(info, limit), [], "yt-dlp")
 
 
-# ============================ X (signed-in Chrome, read-only) ============================
+# ============================ X ============================
 
-X_GAP = ("X is read only through the owner's signed-in Chrome: run the JS in references/x.md in a Chrome tab, "
-         "save its JSON, then `read.py x --from-json FILE`")
+X_GAP = ("X search and replies need a signed-in browser: run the JS in references/x.md on the search page, "
+         "save its JSON, then `read.py x \"<query>\" --from-json FILE`. A post URL reads without a login.")
+X_STATUS = re.compile(r"https?://(?:www\.|mobile\.)?(?:x|twitter|fxtwitter|vxtwitter|fixupx|nitter\.[a-z.]+|xcancel)\.com/"
+                      r"([A-Za-z0-9_]+)/status(?:es)?/(\d+)")
 
 
 def parse_x_dump(doc):
-    """doc = list of {text, datetime, url, author?, likes?} from the Chrome snippet."""
+    """doc = list of {text, datetime, url, author?, likes?} from the browser snippet."""
     out = []
     for t in doc if isinstance(doc, list) else doc.get("posts", []):
         url = t.get("url") or ""
         out.append(item("x", url, "", t.get("text", ""), t.get("likes"), t.get("datetime"), t.get("author", ""),
-                        "x.com", "post", "post text as rendered in Chrome; replies only if listed"))
+                        "x.com", "post", "post text as rendered in the browser; replies only if listed"))
     return out
 
 
+def parse_x_fx(doc, url):
+    """api.fxtwitter.com/status/ID: {"tweet": {text, likes, replies, created_at, author{screen_name}}}."""
+    t = doc.get("tweet") or {}
+    if not t.get("text") and not t.get("id"):
+        return []
+    return [item("x", url, "", t.get("text", ""), t.get("likes"), t.get("created_timestamp") or t.get("created_at", ""),
+                 (t.get("author") or {}).get("screen_name", ""), "x.com", "post",
+                 "full post (FxTwitter JSON); replies not included", replies=t.get("replies"), reposts=t.get("retweets"))]
+
+
+def parse_x_syndication(doc, url):
+    """cdn.syndication.twimg.com/tweet-result: the embed JSON (text, favorite_count, conversation_count, user)."""
+    if not doc.get("text"):
+        return []
+    return [item("x", url, "", doc.get("text", ""), doc.get("favorite_count"), doc.get("created_at", ""),
+                 (doc.get("user") or {}).get("screen_name", ""), "x.com", "post",
+                 "full post (embed JSON); replies not included", replies=doc.get("conversation_count"))]
+
+
+def read_x_status(target):
+    """One post by URL, no login: the FxTwitter API, then the embed (syndication) JSON."""
+    m = X_STATUS.match(target.strip())
+    user, sid = m.group(1), m.group(2)
+    url = f"https://x.com/{user}/status/{sid}"
+    gaps = []
+    for route, api, parse in (("fxtwitter", f"https://api.fxtwitter.com/status/{sid}", parse_x_fx),
+                              ("syndication", f"https://cdn.syndication.twimg.com/tweet-result?id={sid}&token=a",
+                               parse_x_syndication)):
+        r = core.get(api)
+        if r.ok:
+            try:
+                found = parse(r.json(), url)
+            except ValueError:
+                found = []
+            if found:
+                return _result(found, gaps + ["replies need the browser route in references/x.md"], route)
+            gaps.append(f"{route}: no post in the answer")
+        else:
+            gaps.append(_blocked(route, r))
+    return _result([], gaps + ["post unreadable without a browser: take the browser route in references/x.md"], "none")
+
+
 def read_x(target, limit=10, depth=3, threads=0, from_json=None):
+    if not from_json and X_STATUS.match(target.strip()):
+        return read_x_status(target)
     if not from_json:
-        return _result([], [X_GAP], "chrome")
+        return _result([], [X_GAP], "browser")
     if from_json == "-":
         raw = sys.stdin.read()
     else:
         with open(from_json, encoding="utf-8") as f:
             raw = f.read()
-    return _result(parse_x_dump(json.loads(raw))[:limit], [], "chrome")
+    items, gaps, dropped = parse_x_dump(json.loads(raw)), [], 0
+    if target.strip() and target.strip() != "-":  # X search mixes in loose matches: keep posts that hold the query
+        items, dropped = keep_relevant(items, target)
+        if dropped:
+            gaps.append(f"relevance filter dropped {dropped} off-topic post(s) that lacked the query terms")
+    res = _result(items[:limit], gaps, "browser")
+    res["dropped"] = dropped
+    return res
 
 
 READERS = {"reddit": read_reddit, "hn": read_hn, "github": read_github, "stackoverflow": read_stackoverflow,
@@ -477,4 +605,5 @@ ALIASES = {"so": "stackoverflow", "yt": "youtube", "hackernews": "hn", "twitter"
 
 # One fixed query per platform for the self-test; pass = at least N items parsed.
 SELFTEST = {"reddit": ("r/programming python", 3), "hn": ("sqlite", 3), "github": ("yt-dlp/yt-dlp", 3),
-            "stackoverflow": ("python asyncio", 3), "youtube": ("https://www.youtube.com/watch?v=jNQXAC9IVRw", 2)}
+            "stackoverflow": ("python asyncio", 3), "youtube": ("https://www.youtube.com/watch?v=jNQXAC9IVRw", 2),
+            "x": ("https://x.com/jack/status/20", 1)}

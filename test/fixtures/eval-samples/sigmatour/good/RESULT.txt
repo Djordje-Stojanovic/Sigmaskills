@@ -1,0 +1,6 @@
+Tour: tour/fixture-tour.html, 15 minutes, 9 stops (what it does, numbers, how it works, one request, examples, README check, deep dive, where things are, try it).
+Ran for real: npm test (4 passed) and node src/cli.js with a 5x5 board. Nothing was skipped.
+The README does not say: the wall check lives in src/logic.js, the board size comes from argv, and there is no CI.
+The page rendered with no console errors at 1440 px and 390 px.
+
+Is there anything else you want to see?

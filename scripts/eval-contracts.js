@@ -400,7 +400,26 @@ function sigmadesign({ files, result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmatour reads the repository and writes one tour page under tour/, with the scan's data block and a trace.
+function sigmatour({ files, result }) {
+  const problems = [];
+  for (const [name, text] of Object.entries(files)) {
+    if (name.startsWith('tour/')) continue;
+    const original = path.join(FIXTURE, ...name.split('/'));
+    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed a file outside tour/: ${name}`);
+  }
+  const pageName = Object.keys(files).find((name) => /^tour\/[^/]+-tour\.html$/.test(name));
+  if (!pageName) return [...problems, 'missing tour/<name>-tour.html'];
+  const page = files[pageName];
+  if (/\bFILL\b/.test(page)) problems.push(`${pageName}: FILL markers left from the template`);
+  problems.push(...requireText(page, [/id="sigmatour-data">\{/, /<svg[\s>]/, /<title>[^<]+<\/title>/, /What the README says/], pageName));
+  if ((page.match(/<li[^>]*class="[^"]*\bstep\b/g) || []).length < 4) problems.push(`${pageName}: the trace has fewer than 4 steps`);
+  if (!result.includes(pageName.split('/').pop())) problems.push('reply does not name the tour page');
+  if (!/anything else/i.test(result)) problems.push('reply does not ask whether there is anything else to see');
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

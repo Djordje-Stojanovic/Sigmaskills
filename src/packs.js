@@ -9,7 +9,7 @@ const USER_CONFIG_FILE = 'packs.json';
 /**
  * The owner's own config: `~/.sigmaskills/packs.json`.
  *   { "dirs": { "<pack id>": "<folder>" }, "packs": [ <full pack definitions> ] }
- * `dirs` points a folder source (such as StorgeStudio) at a folder on this machine.
+ * `dirs` points a folder source (such as the Local pack) at a folder on this machine.
  * `packs` adds whole packs. Both are optional, and a missing file is fine.
  */
 export function userConfigPath(homeDir) {

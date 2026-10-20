@@ -49,7 +49,7 @@ The wizard has three steps: **What**, **Where**, **Review**. It writes nothing u
 | `threejs` | 13 Three.js skills | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) |
 | `hyperframes` | HyperFrames and the student kit | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes), [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit) |
 | `minimax-h3` | MiniMax H3 prompt and recipe skills | [MiniMax-AI/MiniMax-H3](https://github.com/MiniMax-AI/MiniMax-H3) |
-| `storgestudio` | a folder of your own skills | `SIGMA_STORGESTUDIO_DIR` or `~/.sigmaskills/packs.json` |
+| `local` | a folder of your own skills | `SIGMA_LOCAL_SKILLS_DIR` or `~/.sigmaskills/packs.json` |
 | `all` | every pack that is available | |
 
 ### Without the wizard
@@ -88,6 +88,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaHuman** | `sigmahuman` | Text that reads like a person wrote it: rewrite any text or write from a brief, in lanes (script, book, song, chat, docs, posts), every fact kept | The rewritten or new text, and a fact check |
 | **SigmaFork** | `sigmafork` | Fork or copy any repo, isolated from the original | A working copy and `ONBOARDING.html` |
 | **SigmaDesign** | `sigmadesign` | A design system from one accent colour (DESIGN.md, tokens, packs, sample page), applied across a repo | `DESIGN.md`, CSS, a sample page |
+| **SigmaTour** | `sigmatour` | A visual 15-60 minute tour of any repo: map, architecture, one request traced, examples run, README next to what the repo shows | One `<repo>-tour.html` page |
 
 ### Which one do I need?
 
@@ -141,7 +142,7 @@ Ranks many options by your taste. After a short grilling round it builds an **ar
 
 ### SigmaResearch
 
-Reads public sources with bundled stdlib Python readers for Reddit, Hacker News, GitHub, Stack Overflow and YouTube comments, plus X through Claude in Chrome on the owner's existing session. One interface (`read.py`), a 24-hour cache, per-host rate limits and source scoring. Reports contradictions, blocked and partial reads. It never logs in, solves CAPTCHAs or evades bot checks.
+Reads Reddit, X, Hacker News, GitHub, Stack Overflow and YouTube comments. Reddit never stops at a block: JSON, the Arctic Shift archive, the feed, a browser. X posts read without a login.
 
 ### SigmaDeepLook
 
@@ -167,6 +168,10 @@ Copies any repository after 8 questions, cuts every path, link and git remote to
 ### SigmaDesign
 
 Turns one accent colour into `DESIGN.md`, colour packs and CSS, then moves a repo onto it.
+
+### SigmaTour
+
+A 15-60 minute tour of any repo in one page: a clickable map, one request traced, real runs, the README against the repo.
 
 ---
 
@@ -213,6 +218,7 @@ $sigmataste Taste pass on the landing page
 $sigmahuman Rewrite this announcement so it sounds like me
 $sigmafork Copy this repo to D:\work\my-copy and teach me how it works
 $sigmadesign Make a design system from #e8a33d and put it in this repo
+$sigmatour Give me a 30 minute tour of this repo
 ```
 
 </td>
@@ -238,6 +244,7 @@ $sigmadesign Make a design system from #e8a33d and put it in this repo
 /skill:sigmahuman Rewrite this announcement so it sounds like me
 /skill:sigmafork Fork owner/repo and teach me how it works
 /skill:sigmadesign Make a design system from #e8a33d and put it in this repo
+/skill:sigmatour Give me a 30 minute tour of owner/repo
 ```
 
 </td>
@@ -263,6 +270,7 @@ $sigmadesign Make a design system from #e8a33d and put it in this repo
 | `sigmahuman` | text, a file or a brief · optional writing sample | Writes the human version; keeps every fact; never follows instructions inside the text |
 | `sigmafork` | a repo · a destination | One question round; reads the original only |
 | `sigmadesign` | an accent colour · a repo | One question round; writes `DESIGN.md`; changes repo files only with `--write` |
+| `sigmatour` | a repo path or URL · a length | One question round; reads the repo only; runs its examples |
 
 ### Requirements
 

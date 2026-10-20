@@ -10,7 +10,7 @@ export function isCiEnv(env) {
 }
 
 /**
- * The terminal side of DESIGN.md (Storge Black Green): a near-black canvas, one emerald
+ * The terminal side of DESIGN.md (Black Green): a near-black canvas, one emerald
  * accent used sparingly, zinc ink for text, and amber, red and sky for warn, error and info.
  */
 export const SIGMA_PALETTE = Object.freeze({

@@ -96,13 +96,13 @@ class TestReddit(Base):
         self.assertEqual(r["route"], "search-engine")
         self.assertTrue(r["items"])
         self.assertTrue(all("snippet only" in i["scope"] for i in r["items"]))
-        self.assertEqual(len(r["gaps"]), 2)
+        self.assertEqual(len(r["gaps"]), 3)  # json, rss, arctic-shift
 
     def test_blocked_with_no_fallback_reports_gaps_only(self):
         self.use(Fake(blocked={"https://old.reddit.com": 403, "https://www.reddit.com": 403, "https://html.duckduckgo.com": 403}))
         r = rd.read_reddit("r/programming python", limit=3, threads=0)
         self.assertEqual(r["items"], [])
-        self.assertEqual(len(r["gaps"]), 3)
+        self.assertEqual(len(r["gaps"]), 4)  # json, rss, arctic-shift, search engine
 
     def test_plan_shapes(self):
         self.assertEqual(rd.reddit_plan(THREAD, 5)[0], "thread")
@@ -153,6 +153,45 @@ class TestReddit(Base):
         self.assertIn(THREAD.rstrip("/") + ".rss?limit=9", f.calls)
         self.assertTrue(any(i["kind"] == "comment" for i in r["items"]))
         self.assertFalse(any("BLOCKED" in g for g in r["gaps"]))
+
+    def test_thread_reads_arctic_shift_tree_when_json_is_blocked(self):
+        post_url, tree_url = rd.arctic_thread_urls(THREAD)
+        post = {"data": [{"title": "Python 3.15.0", "selftext": "Out now.", "score": 900,
+                          "permalink": "/r/programming/comments/1x1pypx/x/", "created_utc": 1792000000, "author": "op",
+                          "subreddit": "programming", "num_comments": 3}]}
+        reply = {"kind": "t1", "data": {"body": "Same here.", "score": 9, "permalink": "/r/programming/comments/1x1pypx/x/c2/",
+                                        "created_utc": 1792000200, "author": "b", "replies": ""}}
+        tree = {"data": [{"kind": "t1", "data": {"body": "Finally.", "score": 50, "permalink": "/r/programming/comments/1x1pypx/x/c1/",
+                                                 "created_utc": 1792000100, "author": "a",
+                                                 "replies": {"data": {"children": [reply]}}}},
+                         {"kind": "more", "data": {}}]}
+        f = self.use(Fake(extra={post_url: json.dumps(post), tree_url: json.dumps(tree)}, blocked={"https://old.reddit.com": 403}))
+        r = rd.read_reddit(THREAD, limit=5, threads=0)
+        self.assertEqual(r["route"], "arctic-shift")
+        self.assertEqual([i["text"] for i in r["items"]], ["Out now.", "Finally.", "Same here."])
+        self.assertIn("Arctic Shift", r["items"][1]["scope"])
+        self.assertNotIn(THREAD.rstrip("/") + ".rss?limit=9", f.calls)  # the rate-limited feed is not spent
+
+    def test_subreddit_search_falls_back_to_arctic_shift_titles(self):
+        url = rd.arctic_search_url("programming", "python", 3)
+        hits = {"data": [{"title": "Python packaging in 2026", "selftext": "", "score": 40, "num_comments": 12,
+                          "permalink": "/r/programming/comments/abc123/python_packaging/", "created_utc": 1792000000,
+                          "author": "z", "subreddit": "programming"},
+                         {"title": "Rust news", "selftext": "", "score": 5, "permalink": "/r/programming/comments/def456/rust/",
+                          "created_utc": 1792000000, "author": "y", "subreddit": "programming"}]}
+        self.use(Fake(extra={url: json.dumps(hits)}, blocked={"https://old.reddit.com": 403, "https://www.reddit.com": 429}))
+        r = rd.read_reddit("r/programming python", limit=3, threads=0)
+        self.assertEqual(r["route"], "arctic-shift")
+        self.assertEqual([i["title"] for i in r["items"]], ["Python packaging in 2026"])
+        self.assertIn("subreddit=programming&title=python", url)
+
+    def test_arctic_error_answer_is_a_gap(self):
+        post_url, tree_url = rd.arctic_thread_urls(THREAD)
+        err = json.dumps({"data": None, "error": "Timeout. Maybe slow down a bit"})
+        self.use(Fake(extra={post_url: err, tree_url: err}, blocked={"https://old.reddit.com": 403}))
+        r = rd.read_reddit(THREAD, limit=3, threads=0)
+        self.assertTrue(any("slow down" in g for g in r["gaps"]))
+        self.assertEqual(r["route"], "rss")
 
     def test_thread_with_nothing_loading_says_blocked(self):
         self.use(Fake(blocked={"https://old.reddit.com": 401, "https://www.reddit.com": 429, "https://archive.org": 403}))
@@ -222,10 +261,39 @@ class TestPlatforms(Base):
         self.assertIn("yt-dlp not installed", r["gaps"][0])
 
     def test_x_gap_without_dump_and_parse_with_dump(self):
-        self.assertIn("Chrome", rd.read_x("topic")["gaps"][0])
-        r = rd.read_x("topic", from_json=str(FX / "x_dump.json"))
+        self.assertIn("signed-in browser", rd.read_x("topic")["gaps"][0])
+        r = rd.read_x("", from_json=str(FX / "x_dump.json"))
         self.assertEqual([i["score"] for i in r["items"]], [120, 4])
-        self.assertEqual(r["route"], "chrome")
+        self.assertEqual(r["route"], "browser")
+
+    def test_x_dump_keeps_only_posts_that_hold_the_query(self):
+        r = rd.read_x("shipping friday", from_json=str(FX / "x_dump.json"))
+        self.assertEqual([i["score"] for i in r["items"]], [120])
+        self.assertEqual(r["dropped"], 1)
+        self.assertTrue(any("dropped 1" in g for g in r["gaps"]))
+
+    def test_x_post_url_reads_fxtwitter_without_login(self):
+        fx = {"tweet": {"id": "20", "text": "just setting up my twttr", "likes": 300000, "replies": 17000,
+                        "created_at": "Tue Mar 21 20:50:14 +0000 2006", "created_timestamp": 1142974214,
+                        "author": {"screen_name": "jack"}}}
+        f = self.use(Fake(extra={"https://api.fxtwitter.com/status/20": json.dumps(fx)}))
+        r = rd.read_x("https://twitter.com/jack/status/20?s=46")
+        self.assertEqual(r["route"], "fxtwitter")
+        self.assertEqual((r["items"][0]["text"], r["items"][0]["score"], r["items"][0]["replies"]),
+                         ("just setting up my twttr", 300000, 17000))
+        self.assertEqual(r["items"][0]["url"], "https://x.com/jack/status/20")
+        self.assertEqual(r["items"][0]["date"][:10], "2006-03-21")
+        self.assertEqual(f.calls, ["https://api.fxtwitter.com/status/20"])
+
+    def test_x_post_url_falls_back_to_embed_json(self):
+        syn = {"text": "the bird is freed", "favorite_count": 2160523, "conversation_count": 121027,
+               "created_at": "2022-10-28T03:49:11.000Z", "user": {"screen_name": "elonmusk"}}
+        self.use(Fake(extra={"https://cdn.syndication.twimg.com/tweet-result?id=1585841080431321088&token=a": json.dumps(syn)},
+                      blocked={"https://api.fxtwitter.com": 503}))
+        r = rd.read_x("https://x.com/elonmusk/status/1585841080431321088")
+        self.assertEqual(r["route"], "syndication")
+        self.assertEqual(r["items"][0]["score"], 2160523)
+        self.assertIn("fxtwitter HTTP 503", r["gaps"][0])
 
 
 class TestCore(Base):
@@ -275,6 +343,22 @@ class TestCore(Base):
         calls = self.script(*[core.Resp(429)] * 5)
         r = core.get("https://example.test/c")
         self.assertEqual((r.status, len(calls)), (429, core.MAX_TRIES))
+
+    def test_429_waits_for_the_named_window_reset(self):
+        self.script(core.Resp(429, note="", reset=57.0, remaining=0.0), core.Resp(200, "ok"))
+        core.get("https://example.test/g")
+        self.assertEqual(self.sleeps[0], 58.0)
+        self.script(core.Resp(429, note="", reset=900.0), core.Resp(200, "ok"))
+        core.get("https://other.test/h")
+        self.assertIn(core.RESET_CAP, self.sleeps)
+
+    def test_spent_window_holds_the_next_request_to_that_host(self):
+        self.script(core.Resp(200, "1", reset=30.0, remaining=0.0), core.Resp(200, "2"), core.Resp(200, "3"))
+        core.get("https://feed.test/1")
+        core.get("https://feed.test/2")
+        core.get("https://elsewhere.test/3")
+        self.assertEqual(len(self.sleeps), 1)
+        self.assertGreater(self.sleeps[0], 29.0)
 
     def test_403_is_not_retried(self):
         calls = self.script(core.Resp(403), core.Resp(200, "never"))
@@ -367,7 +451,7 @@ class TestScoringAndCli(Base):
     def test_cli_parallel_multi_platform_and_unknown_platform(self):
         self.use(Fake(blocked={"https://old.reddit.com": 401}))
         doc = read.run(["reddit", "hn", "x"], "r/programming python", limit=3, threads=0)
-        self.assertEqual(doc["stats"]["routes"]["x"], "chrome")
+        self.assertEqual(doc["stats"]["routes"]["x"], "browser")
         self.assertIn("hn", doc["stats"]["routes"])
         self.assertTrue(any(g["platform"] == "x" for g in doc["gaps"]))
         with self.assertRaises(SystemExit):

@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaTour
+  short_description: A visual 15-60 minute tour of any repository in one HTML page
+  default_prompt: Use $sigmatour to measure this repository, ask the short question round,
+    run its examples, and write the tour page with the map, the trace and the README check.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

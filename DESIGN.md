@@ -1,7 +1,7 @@
 ---
 version: alpha
-name: Storge-Black-Green
-description: The one look of our sites (home.geldtools.com, studio.geldtools.com, me.geldtools.com and its /docs). A near-black zinc canvas with a faint green glow, one emerald accent, hairline borders, Inter, and one character picture from our own art library behind the page. The art carries the colour and the drama; the UI stays quiet, dense and fast. Built from what the four sites already share, with the best of Spotify (the art is the colour), Raycast (surface ladder, hairlines, command palette) and Supabase (one emerald, used scarce, dark ink on green).
+name: Black-Green
+description: The one look of the SigmaSkills pages, the installer and the owner's sites (a homepage, an audio studio, a personal site with docs). A near-black zinc canvas with a faint green glow, one emerald accent, hairline borders, Inter, and one character picture from our own art library behind the page. The art carries the colour and the drama; the UI stays quiet, dense and fast. Built from what the four sites already share, with the best of Spotify (the art is the colour), Raycast (surface ladder, hairlines, command palette) and Supabase (one emerald, used scarce, dark ink on green).
 
 colors:
   canvas: "#09090b"
@@ -364,7 +364,7 @@ The UI stays almost colourless so that the picture is the colour. This is the Sp
 
 ## Colors
 
-> **Source:** `config/homepage/custom.css` (home.geldtools.com), `lazy_toolkits/spark-audio-studio/web/src/index.css` (studio.geldtools.com), `personal/src/app/globals.css` and `personal/src/app/docs/docs.css` (me.geldtools.com and /docs). The four files already share the same zinc and emerald values; this file names them once.
+> **Source:** the stylesheets of the homepage, the audio studio and the personal site with its docs. The four files already share the same zinc and emerald values; this file names them once.
 
 ### Surface
 - **Canvas** (`{colors.canvas}`, `#09090b`): the page ground on every site.
@@ -550,7 +550,7 @@ A callout with a 3px coloured left edge keeps that edge square: `border-radius: 
 
 ## Where our sites disagree today, and the rule
 
-| What | home.geldtools.com | studio.geldtools.com | me.geldtools.com + /docs | The rule |
+| What | The homepage | The audio studio | The personal site + docs | The rule |
 |---|---|---|---|---|
 | Inter font | Named, not loaded (system font shows) | Named, not loaded | Self-hosted variable file | Self-host the one Inter variable WOFF2 on every site |
 | Card radius | Tiles 14px, chips 10px | Buttons 6px, cards 8px, panels 12px | Callouts 14px, tables and code 12px, inputs 8-10px, search 16px | `md` 10px for controls, `lg` 14px for cards, `xl` 16px for floats |

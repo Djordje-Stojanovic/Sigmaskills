@@ -83,6 +83,11 @@
       "id": "sigmadesign",
       "title": "SigmaDesign",
       "needsReferences": true
+    },
+    {
+      "id": "sigmatour",
+      "title": "SigmaTour",
+      "needsReferences": true
     }
   ],
   "retired": [

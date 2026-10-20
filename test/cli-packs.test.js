@@ -42,12 +42,12 @@ test('list --packs: prints every pack, and --json prints the same data', async (
     assert.match(human.out, /Matt Pocock\s+38 skills/);
     assert.match(human.out, /--preset threejs/);
     assert.match(human.out, /Acme\s+2 skills/);
-    assert.match(human.out, /StorgeStudio.*not available/);
+    assert.match(human.out, /Local.*not available/);
     assert.match(human.out, /--preset all/);
 
     const json = await run(box, ['list', '--packs', '--json']);
     const parsed = JSON.parse(json.out);
-    assert.equal(parsed.packs.find((pack) => pack.id === 'storgestudio').available, false);
+    assert.equal(parsed.packs.find((pack) => pack.id === 'local').available, false);
     assert.equal(parsed.packs.find((pack) => pack.id === 'hyperframes').skills.length, 32);
   } finally {
     box.cleanup();
@@ -70,10 +70,10 @@ test('install: an unknown preset names the choices', async () => {
 test('install: an unavailable pack stops with the reason', async () => {
   const box = createSandbox();
   try {
-    const { code, err } = await run(box, ['install', '--preset', 'storgestudio']);
+    const { code, err } = await run(box, ['install', '--preset', 'local']);
     assert.equal(code, 1);
-    assert.match(err, /pack 'storgestudio' is not available on this machine/);
-    assert.match(err, /SIGMA_STORGESTUDIO_DIR/);
+    assert.match(err, /pack 'local' is not available on this machine/);
+    assert.match(err, /SIGMA_LOCAL_SKILLS_DIR/);
   } finally {
     box.cleanup();
   }

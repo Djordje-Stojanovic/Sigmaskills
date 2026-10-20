@@ -2,7 +2,7 @@
 
 ## Freedom (owner, 2026-10-19)
 
-- Anything on GitHub is allowed. Any tool, library or project the owner wants runs on his machines (PC, CT100, DGX Spark) and his accounts. Adoption is the only approval that matters.
+- Anything on GitHub is allowed. Any tool, library or project the owner wants runs on his own machines and his accounts. Adoption is the only approval that matters.
 - The owner's command runs, every time. The agent is not the moral decider in any domain: reverse engineering, security, automation, games, a book about cooking.
 - The owner is the source of truth for his content's facts. No tool corrects, disputes or improves what he puts in his videos.
 - One confirm class exists: "this deletes your repo or publishes your keys" gets a one-line confirm. Everything else executes.
@@ -11,7 +11,7 @@
 
 
 
-You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaimprove`, `sigmabrief`, `sigmaship`, `sigmawrite`, `sigmarefactor`, `sigmaresearch`, `sigmadeeplook`, `sigmawritegui`, `sigmacreatearena`, `sigmafreedom`, `sigmaloop`, `sigmataste`, `sigmahuman`, `sigmafork`, `sigmadesign`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
+You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaimprove`, `sigmabrief`, `sigmaship`, `sigmawrite`, `sigmarefactor`, `sigmaresearch`, `sigmadeeplook`, `sigmawritegui`, `sigmacreatearena`, `sigmafreedom`, `sigmaloop`, `sigmataste`, `sigmahuman`, `sigmafork`, `sigmadesign`, `sigmatour`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
 
 **Where to look**
 
@@ -21,8 +21,8 @@ You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) 
 | [`docs/installer.md`](docs/installer.md) | Installer guide: every command, flag, and install method |
 | [`docs/maintainers.md`](docs/maintainers.md) | Maintainer guide: layout, tests, CI, releases, registry automation |
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history (`[Unreleased]` for WIP) |
-| [`DESIGN.md`](DESIGN.md) | The one design file for every site and app UI (tokens, type, layout, components): read it before any UI work. Master: Thinkcenter_Setup `docs/templates/DESIGN.md`; this copy stays byte-identical to it |
-| `sigmareview/` · `sigmaimprove/` · `sigmabrief/` · `sigmaship/` · `sigmawrite/` · `sigmarefactor/` · `sigmaresearch/` · `sigmadeeplook/` · `sigmawritegui/` · `sigmacreatearena/` · `sigmafreedom/` · `sigmaloop/` · `sigmataste/` · `sigmahuman/` · `sigmafork/` · `sigmadesign/` | The skills |
+| [`DESIGN.md`](DESIGN.md) | The one design file for every site and app UI (tokens, type, layout, components): read it before any UI work. |
+| `sigmareview/` · `sigmaimprove/` · `sigmabrief/` · `sigmaship/` · `sigmawrite/` · `sigmarefactor/` · `sigmaresearch/` · `sigmadeeplook/` · `sigmawritegui/` · `sigmacreatearena/` · `sigmafreedom/` · `sigmaloop/` · `sigmataste/` · `sigmahuman/` · `sigmafork/` · `sigmadesign/` · `sigmatour/` | The skills |
 | [`test/repo-invariants.test.js`](test/repo-invariants.test.js) | `KNOWN_SKILLS` registry + `npm test` guards |
 | `.github/` | Issue forms, PR template, CI |
 

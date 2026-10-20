@@ -32,7 +32,7 @@ test('sigmaresearch reader unit tests pass (python unittest, offline)', (t) => {
 
 const SOURCE_LOG = join(root, 'sigmaresearch', 'scripts', 'source_log.py');
 
-// The same fixture the StorgeStudio kit tests use: both counters must give the same numbers.
+// A fixed log with repeats, digests and several sites: the counter must give the same numbers every run.
 const LOG = `# agent A
 1. Reddit | https://www.reddit.com/r/energy/comments/1x5csut/title/ | 2026-10-14 | en | read=full | 1757 | post + 95 comments
 2. Reddit | https://old.reddit.com/r/energy/comments/1x5csut/ | 2026-10-14 | en | read=full | 1757 | same thread again
