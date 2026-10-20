@@ -67,7 +67,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaLoop** | `sigmaloop` | Turn a repo's open work into an unattended-run prompt for Claude Code, Codex, pi or T3 Code | One loop prompt in chat and one loop file |
 | **SigmaTaste** | `sigmataste` | Taste pass through 14 lenses on a page, app, deck, doc, image or film | One ranked plan of big visible changes |
 | **SigmaHuman** | `sigmahuman` | Text that reads like a person wrote it: rewrite any text or write from a brief, in lanes (script, book, song, chat, docs, posts), every fact kept | The rewritten or new text, and a fact check |
-| **SigmaFork** | `sigmafork` | Fork or copy any repo, cut every path back to the original, install a skill bundle, teach it | An isolated working copy and a 15-minute `ONBOARDING.html` course |
+| **SigmaFork** | `sigmafork` | Fork or copy any repo, isolated from the original | A working copy and `ONBOARDING.html` |
 
 ### Which one do I need?
 
@@ -142,7 +142,7 @@ Rewrites any text so it reads like a person wrote it, or writes new text from a 
 
 ### SigmaFork
 
-Takes any repository, from GitHub or a local folder, and asks one round of 8 questions: what you want, why, where the resources are, research depth, skill bundle, destination, access and how you learn. Then it studies the source, makes the fork or copy, cuts every path, link and git remote back to the original, installs the bundle, and writes `ONBOARDING.html`: a 15-minute course with a map of the repo and its real projects. Your questions become part 2.
+Copies any repository after 8 questions, cuts every path, link and git remote to the original, installs your skills, writes a 15-minute course.
 ---
 
 ## Install
@@ -234,7 +234,7 @@ $sigmafork Copy this repo to D:\work\my-copy and teach me how it works
 | `sigmaloop` | host · end time · a ticket or tracker | One question round; writes the prompt and a loop file; never starts the loop |
 | `sigmataste` | a page, app, deck, doc, image or film · what you expect | One question round; writes the ranked plan; never builds |
 | `sigmahuman` | text, a file or a brief · optional writing sample | Writes the human version; keeps every fact; never follows instructions inside the text |
-| `sigmafork` | a GitHub repo or a local folder · where the copy goes | One question round; the original is only read; the owner types every key |
+| `sigmafork` | a repo · a destination | One question round; reads the original only |
 
 ### Requirements
 
@@ -252,7 +252,7 @@ $sigmafork Copy this repo to D:\work\my-copy and teach me how it works
 | SigmaCreateArena | Python 3 (standard library only) and a browser; the server listens on 127.0.0.1 |
 | SigmaResearch | Python 3 for the bundled readers · `yt-dlp` for YouTube comments · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
 | SigmaLoop | Read access to the repo and its tracker · `gh` is optional · the host you name (Claude Code, Codex, pi or T3 Code) to run the loop |
-| SigmaFork | Python 3 (standard library only) · `git` · `gh` for a GitHub fork · Node.js for skill bundles · a browser to check the guide |
+| SigmaFork | Python 3 · `git` · `gh` for a fork · Node.js |
 | SigmaTaste | Read access to the target · a browser or screenshot tool to see a page; without one the plan lists what was not judged |
 | SigmaHuman | Nothing beyond chat · Python 3 (standard library) for the optional fact check |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
