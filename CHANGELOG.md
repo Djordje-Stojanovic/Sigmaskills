@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-10-20
+
 ### Added
 
 - `sigmahuman` (SigmaHuman): makes any text read like a person wrote it. Two modes: Rewrite (text, a file or another skill's output in, the human version out) and Write (a brief in, new text out). Seven lanes in `references/lanes.md`: Ear (a script for the ear: keep the narrator's sentence-length band), Book, Song (meter, rhyme, the hook), Chat (lead with the answer), Docs, Post and Brief. Voice matching from a writing sample. Facts come from the source only: a missing detail is asked for or written around, never invented. A pipeline pass mode edits a set of files once and the caller takes the result as written. The 26 patterns are [blader/humanizer](https://github.com/blader/humanizer) v3.1.0 unchanged (MIT, Siqi Chen; notice in `references/LICENSE-humanizer.txt`), plus five tells from its v2.5.1 copy. `scripts/factcheck.py` compares numbers (digits and number words), quotes, inline code, links, names and the sentence-length band before and after a rewrite.
@@ -13,7 +15,6 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - `sigmaresearch`: the merge conflict in `SKILL.md` is gone and the freedom side stays; the model-written bans (never log in, stop on 403 or 429, no mirrors) are deleted from the card and its references. New persistence ladder in the card, "Keep going until the answer is found": name the target, walk the routes, keep a route list (it goes under `## Access gaps`), retry a 429 slower with backoff, take another route when a login wall, paywall, CAPTCHA or bot check closes one (solving the check is not a route), widen the query, and stop only when a second source agrees or every fitting route is listed. New `references/deep-routes.md`: site feeds, sitemaps and the JSON a page loads, Wayback, archive.today, Common Crawl, search operators, PDFs, filings and transcripts, GitHub code and issue search, Hacker News Algolia, Reddit JSON, RSS and archives, academic indexes, other languages, and the owner's signed-in Chrome as a reading route on any site.
 - `sigmaloop`: one portable card, one host file per host. `references/hosts.md` is now a table (loop mechanism, clock wake, headless run, skill folder) and the plain instruction; `host-claude-code.md`, `host-codex.md`, `host-antigravity.md`, `host-pi.md` and `host-t3-code.md` hold each host's facts, each marked run, doc or source, and the prompt skeleton. New: Antigravity `agy` (`/goal`, `/schedule`, Stop hook), the lapi plan-file loop for pi (a `lapi-workflow` box fence, or nothing loops), T3 Code's `schedule_task` tool (the old card said it had no scheduler), headless runs (`claude -p "/goal"`, `agy -p "/goal"`, a Codex `Stop` hook; `codex exec` does not expand `/goal`, and `claude -p "/loop"` runs once), and the Git Bash path rewrite of a leading `/word` on Windows.
 
-## [0.11.0] — 2026-10-19
 
 ### Added
 
