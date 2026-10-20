@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.14.0] — 2026-10-20
+
 ### Added
 
 - `sigmatour` (SigmaTour): a visual 15-60 minute tour of any repository in one HTML page. `scripts/sigmatour.py` (standard library) measures the repo without writing to it: size, languages, folder tree, history, entry points (package scripts and bins, console scripts, Makefile targets, main files, Dockerfiles), tests and CI, and the README held against the repo (commands with no script or file behind them, paths that do not exist, environment variables the code reads that no doc names, scripts and top folders the README never mentions, TODO and FIXME notes). `build` writes that into `assets/tour-template.html`, which draws the numbers band, the folder explorer, the history band, the README check and the entry points; the agent adds the transit map, the architecture figure, a stepper that follows one real request file by file, examples run for real, the hidden and missing list and the deep dives that set the length. `check` lists what is left. Plain technical English in the `/sigmawrite` voice.
@@ -367,7 +369,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.10.0...v0.11.0
