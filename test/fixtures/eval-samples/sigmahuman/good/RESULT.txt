@@ -1,0 +1,1 @@
+Rewrote docs/ANNOUNCE.md: cut the launch hype, the not-X-but-Y line, the closers and the chatbot sign-off; every number and code name kept. Fact check: nothing lost or added.

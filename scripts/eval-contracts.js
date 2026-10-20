@@ -322,7 +322,34 @@ function sigmataste({ files, result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmahuman rewrites docs/ANNOUNCE.md in place: every fact kept, the strong tells gone, nothing else changed.
+const HUMAN_FILE = 'docs/ANNOUNCE.md';
+const HUMAN_TELLS = /not just|not only|here's the thing|let that sink in|in conclusion|testament|pivotal|thrilled|i hope this helps|let me know|seamless|great news|\u{1F680}|[–—]|\*\*/iu;
+
+function humanFacts(text) {
+  return (text.match(/\d+(?:\.\d+)?/g) || []).sort().join(' ');
+}
+
+function sigmahuman({ files, result }) {
+  const problems = [];
+  for (const [name, text] of Object.entries(files)) {
+    if (name === HUMAN_FILE) continue;
+    const original = path.join(FIXTURE, ...name.split('/'));
+    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed another file: ${name}`);
+  }
+  const text = files[HUMAN_FILE];
+  if (!text) return [...problems, `missing ${HUMAN_FILE}`];
+  const before = fs.readFileSync(path.join(FIXTURE, 'docs', 'ANNOUNCE.md'), 'utf8');
+  if (text === before) problems.push(`${HUMAN_FILE}: unchanged`);
+  const tell = text.match(HUMAN_TELLS);
+  if (tell) problems.push(`${HUMAN_FILE}: AI tell left: ${JSON.stringify(tell[0])}`);
+  if (humanFacts(text) !== humanFacts(before)) problems.push(`${HUMAN_FILE}: numbers changed: before [${humanFacts(before)}], after [${humanFacts(text)}]`);
+  problems.push(...requireText(text, [/`scores\.json`/, /`saveBest`/, /`src\/scores\.js`/, /`npm test`/], `${HUMAN_FILE} (code spans must survive)`));
+  if (!/ANNOUNCE\.md/.test(result)) problems.push('reply does not name the file');
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

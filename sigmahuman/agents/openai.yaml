@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaHuman
+  short_description: Text that reads like a person wrote it, every fact kept
+  default_prompt: Use $sigmahuman to rewrite this text, or write it from the brief,
+    so it reads like a person wrote it, in the right lane and voice, with every fact kept.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: true

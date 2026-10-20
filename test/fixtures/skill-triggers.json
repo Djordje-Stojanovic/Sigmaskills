@@ -203,5 +203,20 @@
     "prompt": "Look at the film and the thumbnail image and plan the visible taste changes",
     "skill": "sigmataste",
     "near": "sigmareview"
+  },
+  {
+    "prompt": "Humanize this AI-sounding draft and de-slop it, keep every number",
+    "skill": "sigmahuman",
+    "near": "sigmawrite"
+  },
+  {
+    "prompt": "Write a song chorus from my brief in a human voice",
+    "skill": "sigmahuman",
+    "near": "sigmawritegui"
+  },
+  {
+    "prompt": "Rewrite my video script for the ear so it sounds human, matching my voice sample",
+    "skill": "sigmahuman",
+    "near": "sigmataste"
   }
 ]
