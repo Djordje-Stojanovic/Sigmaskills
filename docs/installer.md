@@ -44,7 +44,7 @@ npx @djordje-stojanovic/sigmaskills
 
 In a color terminal it opens the full-screen wizard, drawn in the [DESIGN.md](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/DESIGN.md) palette (near-black canvas, one emerald accent). Three steps, one screen each:
 
-1. **What.** One row per pack, with a count (`13/13`). Space on a pack row picks or clears the whole pack; the number keys `1`-`9` do the same. Right arrow opens a pack so you can pick single skills; left arrow closes it. `/` filters every skill by name, description, or pack. `a` picks everything that is available. A pack that cannot be reached on this machine (for example StorgeStudio without a folder) is marked `[!]` and says why.
+1. **What.** One row per pack, with a count (`13/13`). Space on a pack row picks or clears the whole pack; the number keys `1`-`9` do the same. Right arrow opens a pack so you can pick single skills; left arrow closes it. `/` filters every skill by name, description, or pack. `a` picks everything that is available. A pack that cannot be reached on this machine (for example the Local pack without a folder) is marked `[!]` and says why.
 2. **Where.** The scope (`s` switches between Project and Global), then the Agent Hosts. Hosts that read `.agents/skills` show as covered and cannot be unchecked. A host with its own folder, such as Claude Code, is a row you can toggle; a host whose folder exists in your home folder is marked `found here` and starts checked. `/` searches every host in the registry. `m` switches Link and Copy.
 3. **Review.** The skill count per pack, the destinations, the sources that will be downloaded, and a warning for Global Installation (it needs an explicit `y`; Enter alone does not install globally). If a Sigma skill already exists with different content, you choose `r` replace (after a private backup), `s` skip, or `e` export before you can continue.
 
@@ -126,7 +126,7 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `threejs` | `three` | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) |
 | `hyperframes` | `hf` | the HyperFrames skills and the student kit |
 | `minimax-h3` | `minimax`, `h3` | the MiniMax H3 prompt and recipe skills |
-| `storgestudio` | `storge` | a folder of your own skills; see [Your own packs](#your-own-packs) |
+| `local` | `own` | a folder of your own skills; see [Your own packs](#your-own-packs) |
 | `all` | | every pack that is available on this machine |
 
 ```bash
@@ -160,7 +160,7 @@ Most hosts (Codex, Cursor, Gemini CLI, Antigravity CLI, Pi, OpenCode, GitHub Cop
 
 ```json
 {
-  "dirs": { "storgestudio": "C:/AI/Design_Experiments/.claude/skills" },
+  "dirs": { "local": "D:/work/my-skills" },
   "packs": [
     {
       "id": "acme",
@@ -175,7 +175,7 @@ Most hosts (Codex, Cursor, Gemini CLI, Antigravity CLI, Pi, OpenCode, GitHub Cop
 }
 ```
 
-A `git` source needs the skill ids in `skills`, so the picker can show them without a download. A `dir` source lists the skills it finds. `prefix` keeps only ids that start with it. The `storgestudio` pack is a `dir` source with the prefix `storgestudio-`; set its folder with `dirs` or with the `SIGMA_STORGESTUDIO_DIR` variable. `SIGMA_GIT_BASE` changes where `repo` names are cloned from (default `https://github.com/`), which tests and mirrors use.
+A `git` source needs the skill ids in `skills`, so the picker can show them without a download. A `dir` source lists the skills it finds. `prefix` keeps only ids that start with it. The `local` pack is a `dir` source with no prefix; set its folder with `dirs` or with the `SIGMA_LOCAL_SKILLS_DIR` variable. `SIGMA_GIT_BASE` changes where `repo` names are cloned from (default `https://github.com/`), which tests and mirrors use.
 
 ## Existing copies
 
@@ -404,6 +404,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmataste -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmahuman -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmafork -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadesign -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmatour -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmarefactor -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawritegui -g
@@ -434,6 +435,7 @@ $skill-installer install sigmataste from https://github.com/Djordje-Stojanovic/S
 $skill-installer install sigmahuman from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmafork from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmadesign from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmatour from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmarefactor from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawritegui from https://github.com/Djordje-Stojanovic/Sigmaskills
@@ -461,6 +463,7 @@ cp -R Sigmaskills/sigmataste ~/.agents/skills/sigmataste
 cp -R Sigmaskills/sigmahuman ~/.agents/skills/sigmahuman
 cp -R Sigmaskills/sigmafork ~/.agents/skills/sigmafork
 cp -R Sigmaskills/sigmadesign ~/.agents/skills/sigmadesign
+cp -R Sigmaskills/sigmatour ~/.agents/skills/sigmatour
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
 cp -R Sigmaskills/sigmarefactor ~/.agents/skills/sigmarefactor
 cp -R Sigmaskills/sigmawritegui ~/.agents/skills/sigmawritegui
@@ -484,6 +487,7 @@ Copy-Item -Recurse Sigmaskills\sigmataste    "$HOME\.agents\skills\sigmataste"
 Copy-Item -Recurse Sigmaskills\sigmahuman    "$HOME\.agents\skills\sigmahuman"
 Copy-Item -Recurse Sigmaskills\sigmafork     "$HOME\.agents\skills\sigmafork"
 Copy-Item -Recurse Sigmaskills\sigmadesign   "$HOME\.agents\skills\sigmadesign"
+Copy-Item -Recurse Sigmaskills\sigmatour     "$HOME\.agents\skills\sigmatour"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
 Copy-Item -Recurse Sigmaskills\sigmarefactor "$HOME\.agents\skills\sigmarefactor"
 Copy-Item -Recurse Sigmaskills\sigmawritegui      "$HOME\.agents\skills\sigmawritegui"

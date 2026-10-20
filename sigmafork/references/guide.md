@@ -8,7 +8,7 @@ One file, `ONBOARDING.html`, at the root of the copy. A mini course of 10-15 min
 2. Replace every `FILL` (text and comments). Keep the stops unless the grill asks for something else: a stop that does not fit this repo goes, a stop it needs comes in.
 3. `python scripts/sigmafork.py guide <copy> --check` lists what is still wrong: `FILL` left or no data (blocking), then fixes (long paragraphs, too many inline code chips, terms without a meaning, fewer than 6 figures). Fix the list.
 
-**Look:** the template wears the Storge-Black-Green look (`DESIGN.md` of this skill pack): near-black zinc, a green glow at the top right, one emerald accent, hairlines, Inter. When the copy has its own `DESIGN.md`, brand tokens or a theme file, map its colours and font onto the template's `:root` tokens and change nothing else. `--l1` to `--l5` are diagram colours (map lines, the language bar), never buttons or links.
+**Look:** the template wears the Black-Green look (`DESIGN.md` of this skill pack): near-black zinc, a green glow at the top right, one emerald accent, hairlines, Inter. When the copy has its own `DESIGN.md`, brand tokens or a theme file, map its colours and font onto the template's `:root` tokens and change nothing else. `--l1` to `--l5` are diagram colours (map lines, the language bar), never buttons or links.
 
 ## The stops
 

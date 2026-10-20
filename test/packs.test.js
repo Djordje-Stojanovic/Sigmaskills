@@ -24,7 +24,7 @@ test('packs: the registry lists the bundled Sigma pack and the five outside pack
   const box = createSandbox();
   try {
     const packs = load(box);
-    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'storgestudio']);
+    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'local']);
     const sigma = findPack(packs, 'sigma');
     assert.equal(sigma.skills.length, catalog.skills.length);
     assert.ok(sigma.skills.every((skill) => skill.kind === 'bundled'));
@@ -40,24 +40,28 @@ test('packs: the registry lists the bundled Sigma pack and the five outside pack
   }
 });
 
-test('packs: StorgeStudio is unavailable until a folder is set, then lists the prefixed skills', () => {
+test('packs: Local is unavailable until a folder is set, then lists its skills; a prefix keeps only matching ids', () => {
   const box = createSandbox();
   try {
     let packs = load(box);
-    const storge = findPack(packs, 'storge');
-    assert.equal(storge.available, false);
-    assert.match(storge.note, /SIGMA_STORGESTUDIO_DIR/);
+    const own = findPack(packs, 'own');
+    assert.equal(own.available, false);
+    assert.match(own.note, /SIGMA_LOCAL_SKILLS_DIR/);
 
     const folder = path.join(box.root, 'skills-folder');
-    writeSkills(folder, { 'storgestudio-film': 'Make films.', 'storgestudio-audio': 'Make audio.', 'unrelated-skill': 'Skip me.' }, '.');
-    packs = load(box, { dirs: { storgestudio: folder } });
-    const found = findPack(packs, 'storgestudio');
+    writeSkills(folder, { 'studio-film': 'Make films.', 'studio-audio': 'Make audio.', 'unrelated-skill': 'Other.' }, '.');
+    packs = load(box, { dirs: { local: folder } });
+    const found = findPack(packs, 'local');
     assert.equal(found.available, true);
-    assert.deepEqual(found.skills.map((skill) => skill.id), ['storgestudio-audio', 'storgestudio-film']);
+    assert.deepEqual(found.skills.map((skill) => skill.id), ['studio-audio', 'studio-film', 'unrelated-skill']);
     assert.equal(found.skills[0].description, 'Make audio.');
 
-    const viaEnv = loadPackCatalog({ catalog, packageRoot, homeDir: path.join(box.root, 'other-home'), env: { ...box.env, SIGMA_STORGESTUDIO_DIR: folder } });
-    assert.equal(findPack(viaEnv, 'storgestudio').skills.length, 2);
+    const viaEnv = loadPackCatalog({ catalog, packageRoot, homeDir: path.join(box.root, 'other-home'), env: { ...box.env, SIGMA_LOCAL_SKILLS_DIR: folder } });
+    assert.equal(findPack(viaEnv, 'local').skills.length, 3);
+
+    const studio = { id: 'studio', title: 'Studio', sources: [{ type: 'dir', path: folder, prefix: 'studio-' }] };
+    const prefixed = load(box, { packs: [studio] });
+    assert.deepEqual(findPack(prefixed, 'studio').skills.map((skill) => skill.id), ['studio-audio', 'studio-film']);
   } finally {
     box.cleanup();
   }
@@ -94,9 +98,9 @@ test('packs: resolveSelection joins presets and skill ids and reports what it ca
     assert.deepEqual(picked.unknownPresets, ['nope']);
     assert.deepEqual(picked.unknownSkills, ['missing']);
 
-    const storge = resolveSelection(packs, { presets: ['storgestudio'] });
-    assert.equal(storge.skills.length, 0);
-    assert.deepEqual(storge.unavailable.map((pack) => pack.id), ['storgestudio']);
+    const own = resolveSelection(packs, { presets: ['local'] });
+    assert.equal(own.skills.length, 0);
+    assert.deepEqual(own.unavailable.map((pack) => pack.id), ['local']);
 
     const all = resolveSelection(packs, { presets: ['all'] });
     assert.ok(all.skills.length > 80);

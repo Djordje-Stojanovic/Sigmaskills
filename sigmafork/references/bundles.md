@@ -4,7 +4,7 @@ Install into the copy (project scope), from inside `<dest>`. The `skills` CLI wr
 
 | Bundle | What it brings | Install |
 |---|---|---|
-| The source's own skills | The skills the repo ships (for example its `storgestudio-*` set), nothing else | They came with the copy. Remove the others: list the skill folders (`.agents/skills`, `.claude/skills`) and delete the folders not in the kept set. If the repo has a `skills-lock.json`, `npx skills experimental_install` restores the locked ones |
+| The source's own skills | The skills the repo ships (for example its own `studio-*` set), nothing else | They came with the copy. Remove the others: list the skill folders (`.agents/skills`, `.claude/skills`) and delete the folders not in the kept set. If the repo has a `skills-lock.json`, `npx skills experimental_install` restores the locked ones |
 | All Sigma | Review, improve, ship, brief, research, taste, loop, and the rest | `npx @djordje-stojanovic/sigmaskills install --all --project .` |
 | All Matt Pocock | Grilling, TDD, domain modeling, codebase design, prototype, PR, code review | `npx skills add mattpocock/skills --all --copy` |
 | All Three.js | Fundamentals, geometry, materials, lighting, shaders, loaders, animation, performance | `npx skills add CloudAI-X/threejs-skills --all --copy` |

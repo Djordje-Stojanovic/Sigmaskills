@@ -108,7 +108,7 @@ async function main() {
   fs.mkdirSync(path.join(home, '.codex'), { recursive: true });
   const env = { ...process.env, HOME: home, USERPROFILE: home, TERM: 'xterm-256color', CI: '' };
   delete env.NO_COLOR;
-  delete env.SIGMA_STORGESTUDIO_DIR;
+  delete env.SIGMA_LOCAL_SKILLS_DIR;
 
   // 1. What: Sigma, Matt Pocock and Three.js picked, HyperFrames opened with two skills picked.
   const what = await simulate(

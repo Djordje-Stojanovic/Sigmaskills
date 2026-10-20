@@ -18,7 +18,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 SCRIPTS = ROOT / "sigmadeeplook" / "scripts"
 LOOK = SCRIPTS / "look.py"
-REAL = Path(os.environ.get("SIGMADEEPLOOK_REAL") or r"C:\AI\Design_Experiments\.scratch\deeplook\real")
+REAL = Path(os.environ.get("SIGMADEEPLOOK_REAL") or Path.home() / ".cache" / "sigmadeeplook" / "real")
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(SCRIPTS))
 import dl_binx  # noqa: E402

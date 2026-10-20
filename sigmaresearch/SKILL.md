@@ -15,10 +15,10 @@ Run the bundled reader from this skill's folder. It needs Python 3 and no packag
 python scripts/read.py <platform[,platform]|all> "<query or URL>" [--limit N] [--threads K] [--depth D] [--json]
 ```
 
-Platforms: `reddit`, `hn`, `github`, `stackoverflow`, `youtube`, `x`. Every item has `platform, source, url, title, text, score, date, author` (hashed), `kind, scope, quote, rank`. A list such as `reddit,hn,stackoverflow` fetches in parallel. Hosts are spaced apart, a repeat URL inside 24 hours comes from `~/.cache/sigmaresearch` (`--no-cache` skips it), and comments come back top N by score.
+Platforms: `reddit`, `hn`, `github`, `stackoverflow`, `youtube`, `x` (a post URL, or `--from-json` from the browser). Every item has `platform, source, url, title, text, score, date, author` (hashed), `kind, scope, quote, rank`. A list such as `reddit,hn,stackoverflow` fetches in parallel. Hosts are spaced apart, a repeat URL inside 24 hours comes from `~/.cache/sigmaresearch` (`--no-cache` skips it), and comments come back top N by score.
 
-- **Reddit:** [reddit.md](references/reddit.md). JSON, then RSS, then a search-engine or archive fallback. Say which route answered.
-- **X:** [x.md](references/x.md). Owner's signed-in Chrome only.
+- **Reddit:** [reddit.md](references/reddit.md). JSON, the Arctic Shift archive (full comment tree), RSS, then a search-engine or Wayback fallback; beyond the reader, a real browser, another address, more archives. Say which route answered.
+- **X:** [x.md](references/x.md). A post URL reads without a login (FxTwitter, then the embed JSON); search and replies through a signed-in browser, filtered by the query.
 - **GitHub, Hacker News, Stack Overflow, YouTube, Hugging Face:** [public-sources.md](references/public-sources.md).
 - **Video sites** (YouTube, Bilibili, Rumble and others) and **pages in another language:** [access ladder](references/access-ladder.md). Subtitles the site gives without a login, else audio and a local speech-to-text run; fetch the original page, translate inline, keep the original quote and URL.
 - **Other public pages:** the host's search and fetch tools.

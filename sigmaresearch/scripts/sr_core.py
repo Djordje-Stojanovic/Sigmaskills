@@ -18,13 +18,15 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-UA = "sigmaresearch/2.0 (read-only research script; +https://github.com/Djordje-Stojanovic/Sigmaskills)"
+UA = "sigmaresearch/2.1 (read-only research script; +https://github.com/Djordje-Stojanovic/Sigmaskills)"
 CACHE_TTL = 24 * 3600
 # Minimum seconds between two requests to one host (shared by all threads).
-HOST_GAP = {"reddit.com": 6.0, "duckduckgo.com": 3.0, "archive.org": 1.0, "stackexchange.com": 0.5}
+HOST_GAP = {"reddit.com": 6.0, "duckduckgo.com": 3.0, "archive.org": 1.0, "stackexchange.com": 0.5,
+            "photon-reddit.com": 2.0, "fxtwitter.com": 1.0, "twimg.com": 1.0}
 DEFAULT_GAP = 0.25
 MAX_TRIES = 3  # 429 only: waits 2 s, 4 s (or Retry-After, capped), then gives up
 MAX_WAIT = 20.0
+RESET_CAP = 65.0  # a host that names its own window (x-ratelimit-reset, Reddit: one feed read per minute) gets up to this
 
 _lock = threading.Lock()
 _next_ok = {}
@@ -32,8 +34,9 @@ USE_CACHE = True
 
 
 class Resp:
-    def __init__(self, status, text="", url="", cached=False, note=""):
+    def __init__(self, status, text="", url="", cached=False, note="", reset=None, remaining=None):
         self.status, self.text, self.url, self.cached, self.note = status, text, url, cached, note
+        self.reset, self.remaining = reset, remaining  # x-ratelimit-reset (seconds) and x-ratelimit-remaining, when sent
 
     @property
     def ok(self):
@@ -80,7 +83,17 @@ def _retry_wait(resp, attempt):
         wait = float(resp.note)
     except ValueError:
         wait = 0.0
+    if wait <= 0 and resp.reset:  # the host said when its window opens again: wait that long, plus one second
+        return min(RESET_CAP, resp.reset + 1.0)
     return min(MAX_WAIT, wait if wait > 0 else 2.0 ** (attempt + 1))
+
+
+def _respect_window(url, resp):
+    """A response that spent the last request of the host's window holds the next request until the window resets."""
+    if resp.remaining is not None and resp.remaining < 1 and resp.reset:
+        key = _host_key(url)
+        with _lock:
+            _next_ok[key] = max(_next_ok.get(key, 0.0), time.monotonic() + min(RESET_CAP, resp.reset + 1.0))
 
 
 def get(url, headers=None, use_cache=True):
@@ -99,6 +112,7 @@ def get(url, headers=None, use_cache=True):
     for attempt in range(MAX_TRIES):
         _wait_turn(url)
         resp = _once(url, req_headers)
+        _respect_window(url, resp)
         if resp.status != 429 or attempt == MAX_TRIES - 1:
             break
         sleep(_retry_wait(resp, attempt))
@@ -109,6 +123,16 @@ def get(url, headers=None, use_cache=True):
         except OSError:
             pass
     return resp
+
+
+def _rate(h):
+    """(reset, remaining) from x-ratelimit-* headers; None when absent or odd."""
+    def num(k):
+        try:
+            return float(h.get(k)) if h and h.get(k) not in (None, "") else None
+        except (TypeError, ValueError):
+            return None
+    return num("x-ratelimit-reset"), num("x-ratelimit-remaining")
 
 
 def _once(url, headers, hops=0):
@@ -122,7 +146,8 @@ def _once(url, headers, hops=0):
             raw = r.read()
             if r.headers.get("Content-Encoding") == "gzip":
                 raw = gzip.decompress(raw)
-            return Resp(r.status, raw.decode("utf-8", "replace"), url)
+            reset, left = _rate(r.headers)
+            return Resp(r.status, raw.decode("utf-8", "replace"), url, reset=reset, remaining=left)
     except urllib.error.HTTPError as e:
         loc = e.headers.get("Location", "")
         if e.code in (301, 302, 303, 307, 308) and loc:
@@ -130,7 +155,15 @@ def _once(url, headers, hops=0):
                 return Resp(401, url=url, note="login wall")
             if hops < 3:
                 return _once(urllib.parse.urljoin(url, loc), headers, hops + 1)
-        return Resp(e.code, url=url, note=e.headers.get("Retry-After", "") or "")
+        reset, left = _rate(e.headers)
+        note = e.headers.get("Retry-After", "") or ""
+        if e.code == 403 and not note:
+            try:  # Reddit answers some networks with "blocked due to a network policy": name it, so the next route is clear
+                if b"network policy" in e.read(4096):
+                    note = "network policy block"
+            except Exception:
+                pass
+        return Resp(e.code, url=url, note=note, reset=reset, remaining=left)
     except Exception as e:  # network down, timeout, DNS
         return Resp(0, url=url, note=type(e).__name__)
 

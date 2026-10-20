@@ -41,7 +41,7 @@ OWNER = re.compile(r"\(owner\b|\bowner[: ]|\bowner (word|rule|decision|call)\b",
 SKIP = {"node_modules", ".venv", "venv", "__pycache__", "vendor", ".git", "dist", "build", "out",
         "site-packages", ".next", "coverage", ".scratch", ".pi", ".history", "changelog", "archive",
         "archives", "animations", "library", "thumbs", "fixtures", "evidence", "tests", "test"}
-EXTRA = ("lazy_toolkits/lahelp.txt",)          # instruction files outside docs/ go here
+EXTRA = ()                                    # instruction files outside docs/ go here
 
 
 def targets(root, given):
