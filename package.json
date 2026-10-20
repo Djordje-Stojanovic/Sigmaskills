@@ -22,6 +22,7 @@
     "src",
     "registry/agent-hosts.json",
     "registry/source.json",
+    "registry/packs.json",
     "registry/schema.json",
     "registry/skill-baselines.json",
     "manifest.json",

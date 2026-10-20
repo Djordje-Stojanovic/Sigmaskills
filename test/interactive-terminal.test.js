@@ -65,16 +65,16 @@ function sandboxProject() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-emberforge-'));
 }
 
-test('Emberforge keeps the warm LAPI palette and does not blend Prismgrid or Monolith', async () => {
+test('the terminal keeps the DESIGN.md green-on-black palette and does not blend Prismgrid or Monolith', async () => {
   const projectRoot = sandboxProject();
   try {
     const io = createSimulatedTerminal('\x1b');
-    const code = await runCli(['--project', projectRoot], io);
+    const code = await runCli(['--classic', '--project', projectRoot], io);
 
     assert.equal(code, 0);
     const output = io.getStdout();
-    assert.match(output, /\x1b\[48;2;26;23;20m/);
-    assert.match(output, /\x1b\[1;38;2;212;165;100m/);
+    assert.match(output, /\x1b\[48;2;9;9;11m/);
+    assert.match(output, /\x1b\[1;38;2;52;211;153m/);
     
     
     assert.match(output, /SIGMA SKILLS/);
@@ -89,35 +89,35 @@ test('Emberforge keeps the warm LAPI palette and does not blend Prismgrid or Mon
   }
 });
 
-test('reduced motion, CI, NO_COLOR, and JSON disable Emberforge animation and decoration', async (t) => {
+test('reduced motion, CI, NO_COLOR, and JSON disable animation and decoration', async (t) => {
   const cases = [
     {
       name: 'REDUCED_MOTION',
-      args: (projectRoot) => ['--project', projectRoot],
+      args: (projectRoot) => ['--classic', '--project', projectRoot],
       options: { env: { REDUCED_MOTION: '1' } },
       expectJson: false,
     },
     {
       name: 'prefers-reduced-motion',
-      args: (projectRoot) => ['--project', projectRoot],
+      args: (projectRoot) => ['--classic', '--project', projectRoot],
       options: { env: { PREFERS_REDUCED_MOTION: 'reduce' } },
       expectJson: false,
     },
     {
       name: 'CI',
-      args: (projectRoot) => ['--project', projectRoot],
+      args: (projectRoot) => ['--classic', '--project', projectRoot],
       options: { env: { CI: 'true' } },
       expectJson: false,
     },
     {
       name: 'NO_COLOR',
-      args: (projectRoot) => ['--project', projectRoot],
+      args: (projectRoot) => ['--classic', '--project', projectRoot],
       options: { forceNoColor: true },
       expectJson: false,
     },
     {
       name: 'JSON',
-      args: () => ['--json'],
+      args: () => ['--classic', '--json'],
       options: {},
       expectJson: true,
     },
@@ -192,7 +192,7 @@ test('truecolor, 256-color, basic color, and ASCII fallbacks stay readable and k
       const projectRoot = sandboxProject();
       try {
         const io = createSimulatedTerminal('x\r\x1b', { colorDepth: scenario.colorDepth });
-        const code = await runCli(['--project', projectRoot], io);
+        const code = await runCli(['--classic', '--project', projectRoot], io);
         assert.equal(code, 0);
         const output = io.getStdout();
         assert.match(output, scenario.match);
@@ -215,7 +215,7 @@ test('simulated terminal opens directly to skill selection without animation', a
   const projectRoot = sandboxProject();
   try {
     const io = createSimulatedTerminal('x\x1b');
-    const code = await runCli(['--project', projectRoot], io);
+    const code = await runCli(['--classic', '--project', projectRoot], io);
     assert.equal(code, 0);
     assert.doesNotMatch(io.getStdout(), /█/, 'opening animation must be absent');
     assert.match(io.getStdout(), /Stage 1\/4/);
@@ -241,7 +241,7 @@ test('simulated terminal shows skill selection before receiving any input', asyn
         }
       },
     });
-    const run = runCli(['--project', projectRoot], io);
+    const run = runCli(['--classic', '--project', projectRoot], io);
     await promptShown;
     const code = await run;
     assert.equal(code, 0);
@@ -342,7 +342,7 @@ test('keyboard help, focus, search, selection, confirmation, and cancellation st
   const projectRoot = sandboxProject();
   try {
     const io = createSimulatedTerminal('x?x \rp\x1b\x1b');
-    const code = await runCli(['--project', projectRoot], io);
+    const code = await runCli(['--classic', '--project', projectRoot], io);
     assert.equal(code, 0);
     const output = io.getStdout();
     assert.match(output, /\? help/);
@@ -374,7 +374,7 @@ test('cursor and raw mode restore after success, failure, interrupt, EOF, and ex
       const projectRoot = sandboxProject();
       try {
         const io = createSimulatedTerminal(scenario.keys);
-        const code = await runCli(['--project', projectRoot], io);
+        const code = await runCli(['--classic', '--project', projectRoot], io);
         assert.equal(code, scenario.code);
         assert.match(io.getStdout(), /\x1b\[\?25h/);
         assert.deepEqual(io.getRawModes(), [true, false]);
@@ -399,7 +399,7 @@ test('cursor and raw mode restore after success, failure, interrupt, EOF, and ex
       fs.mkdirSync(dest, { recursive: true });
       fs.writeFileSync(path.join(dest, 'unowned.txt'), 'keep', 'utf8');
       const io = createSimulatedTerminal('x \r\r');
-      const code = await runCli(['--project', projectRoot], io);
+      const code = await runCli(['--classic', '--project', projectRoot], io);
       assert.equal(code, 1);
       assert.match(io.getStderr(), /already exists and is not owned/);
       assert.match(io.getStdout(), /\x1b\[\?25h/);
@@ -414,7 +414,7 @@ test('dynamic cancel leaves the alternate screen before printing persist copy', 
   const projectRoot = sandboxProject();
   try {
     const io = createSimulatedTerminal('x\x1b');
-    const code = await runCli(['--project', projectRoot], io);
+    const code = await runCli(['--classic', '--project', projectRoot], io);
     assert.equal(code, 0);
     const output = io.getStdout();
     const enter = output.match(/\x1b\[\?1049h/g) || [];
@@ -434,7 +434,7 @@ test('static prompts print an unchanged page once after an ignored key', async (
   const projectRoot = sandboxProject();
   try {
     const io = createSimulatedTerminal('xq\x1b', { tty: false, forceNoColor: true });
-    const code = await runCli(['--project', projectRoot], io);
+    const code = await runCli(['--classic', '--project', projectRoot], io);
     assert.equal(code, 0);
     const output = io.getStdout();
     assert.equal((output.match(/Stage 1\/4/g) || []).length, 1);
@@ -469,7 +469,7 @@ test('short dynamic screens retain focus and navigation within the terminal boun
   const projectRoot = sandboxProject();
   try {
     const io = createSimulatedTerminal(' \r' + '\x1b[B'.repeat(20) + '\x1b', { rows: 8, columns: 44 });
-    assert.equal(await runCli(['--project', projectRoot], io), 0);
+    assert.equal(await runCli(['--classic', '--project', projectRoot], io), 0);
     const frames = io.getStdout().split('\x1b[2J\x1b[H').slice(1, -1);
     assert.ok(frames.length > 20);
     for (const frame of frames) {
@@ -490,7 +490,7 @@ test('Ctrl+C in help exits and releases parser and resize listeners', async () =
     const io = createSimulatedTerminal('?\x03');
     const inputListeners = io.stdin.listenerCount('data');
     const resizeListeners = io.stdout.listenerCount('resize');
-    assert.equal(await runCli(['--project', projectRoot], io), 130);
+    assert.equal(await runCli(['--classic', '--project', projectRoot], io), 130);
     assert.equal(io.stdin.listenerCount('data'), inputListeners);
     assert.equal(io.stdout.listenerCount('resize'), resizeListeners);
     assert.deepEqual(io.getRawModes(), [true, false]);
@@ -519,7 +519,7 @@ test('dynamic destination picker windows a short terminal and shows a path statu
         }
       },
     });
-    const code = await runCli(['--project', projectRoot], io);
+    const code = await runCli(['--classic', '--project', projectRoot], io);
     assert.equal(code, 0);
     const output = io.getStdout();
     assert.match(output, /Showing \d+–\d+ of \d+/);
@@ -548,7 +548,7 @@ test('picker focus area shows each skill short description in normal, narrow, an
       const projectRoot = sandboxProject();
       try {
         const io = createSimulatedTerminal('\x1b[B'.repeat(skills.length - 1) + '\x1b', mode.options);
-        assert.equal(await runCli([...mode.args, '--project', projectRoot], io), 0);
+        assert.equal(await runCli(['--classic', ...mode.args, '--project', projectRoot], io), 0);
         const text = io.getStdout().replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '').replace(/\s+/g, ' ');
         for (const skill of skills) {
           assert.ok(text.includes(`Focused: ${skill.title} ${skill.short} `), `${mode.name}: ${skill.title} short description`);

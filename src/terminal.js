@@ -9,15 +9,24 @@ export function isCiEnv(env) {
   return ci !== undefined && ci !== '' && ci !== '0' && String(ci).toLowerCase() !== 'false';
 }
 
-export const EMBERFORGE_PALETTE = Object.freeze({
-  base: '#1a1714',
-  crust: '#0e0c0a',
-  text: '#e0d8cc',
-  gold: '#d4a564',
-  orange: '#cc8844',
-  green: '#8cb87c',
-  teal: '#7cb8a8',
-  red: '#d4645c',
+/**
+ * The terminal side of DESIGN.md (Storge Black Green): a near-black canvas, one emerald
+ * accent used sparingly, zinc ink for text, and amber, red and sky for warn, error and info.
+ */
+export const SIGMA_PALETTE = Object.freeze({
+  base: '#09090b',
+  surface: '#111113',
+  hairline: '#27272a',
+  ink: '#f4f4f5',
+  text: '#d4d4d8',
+  mute: '#a1a1aa',
+  primary: '#34d399',
+  primaryDeep: '#10b981',
+  onPrimary: '#022c22',
+  ok: '#6ee7b7',
+  warn: '#fbbf24',
+  err: '#f87171',
+  info: '#7dd3fc',
 });
 
 const RESET = '\x1b[0m';
@@ -28,14 +37,19 @@ const HIDE_CURSOR = '\x1b[?25l';
 const SHOW_CURSOR = '\x1b[?25h';
 
 const ANSI16_FG = Object.freeze({
-  '#1a1714': 30,
-  '#0e0c0a': 30,
-  '#e0d8cc': 37,
-  '#d4a564': 33,
-  '#cc8844': 33,
-  '#8cb87c': 32,
-  '#7cb8a8': 36,
-  '#d4645c': 31,
+  '#09090b': 30,
+  '#111113': 30,
+  '#27272a': 90,
+  '#f4f4f5': 97,
+  '#d4d4d8': 37,
+  '#a1a1aa': 90,
+  '#34d399': 32,
+  '#10b981': 32,
+  '#022c22': 30,
+  '#6ee7b7': 32,
+  '#fbbf24': 33,
+  '#f87171': 31,
+  '#7dd3fc': 36,
 });
 
 function hexToRgb(hex) {
@@ -75,6 +89,31 @@ function detectColorMode(stdout, env, options) {
   if (depth >= 8) return 'ansi256';
   if (depth >= 4) return 'ansi16';
   return 'plain';
+}
+
+function paint(colorMode, value, hex, bold) {
+  if (colorMode === 'plain') return value;
+  if (colorMode === 'truecolor') return `${truecolorFg(hex, bold)}${value}${RESET}`;
+  if (colorMode === 'ansi256') {
+    const [red, green, blue] = hexToRgb(hex);
+    return `\x1b[${bold ? '1;' : ''}38;5;${rgbTo256(red, green, blue)}m${value}${RESET}`;
+  }
+  return `\x1b[${bold ? '1;' : ''}${ANSI16_FG[hex] || 37}m${value}${RESET}`;
+}
+
+/**
+ * A color helper for output that is not a full-screen renderer (summaries, progress lines).
+ * It follows the same rules as the renderer: no color for NO_COLOR, TERM=dumb, --no-color,
+ * --json, or a stream that is not a terminal.
+ */
+export function createStyler(stdout, env = process.env, options = {}) {
+  const colorMode = detectColorMode(stdout, env, options);
+  return {
+    colorMode,
+    noColor: colorMode === 'plain',
+    ascii: typeof stdout.getColorDepth === 'function' && stdout.getColorDepth(env) < 4,
+    style: (value, hex, bold = false) => paint(colorMode, value, hex, bold),
+  };
 }
 
 export function wrapWords(value, width) {
@@ -167,22 +206,13 @@ export class TerminalRenderer {
   }
 
   style(value, hex, bold = false) {
-    if (this.noColor) return value;
-    if (this.colorMode === 'truecolor') {
-      return `${truecolorFg(hex, bold)}${value}${RESET}`;
-    }
-    if (this.colorMode === 'ansi256') {
-      const [red, green, blue] = hexToRgb(hex);
-      return `\x1b[${bold ? '1;' : ''}38;5;${rgbTo256(red, green, blue)}m${value}${RESET}`;
-    }
-    const code = ANSI16_FG[hex] || 37;
-    return `\x1b[${bold ? '1;' : ''}${code}m${value}${RESET}`;
+    return paint(this.colorMode, value, hex, bold);
   }
 
   fill() {
-    if (this.colorMode === 'truecolor') return truecolorBg(EMBERFORGE_PALETTE.base);
+    if (this.colorMode === 'truecolor') return truecolorBg(SIGMA_PALETTE.base);
     if (this.colorMode === 'ansi256') {
-      const [red, green, blue] = hexToRgb(EMBERFORGE_PALETTE.base);
+      const [red, green, blue] = hexToRgb(SIGMA_PALETTE.base);
       return `\x1b[48;5;${rgbTo256(red, green, blue)}m`;
     }
     if (this.colorMode === 'ansi16') return '\x1b[40m';

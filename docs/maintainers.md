@@ -73,6 +73,11 @@ If one is missing, CI fails on purpose.
 - `npm run registry:sync` rebuilds `registry/agent-hosts.json` from the pinned `vercel-labs/skills` revision. Flags: `--fetch` (download the pinned revision), `--dry-run`, `--allow-review` (write even when the diff needs owner review).
 - `npm run registry:validate` checks the snapshot against `registry/schema.json` and the safety rules. `npm test` runs the same checks.
 
+### Packs and screenshots
+
+- `registry/packs.json` is the snapshot of the outside packs (ids and one-line descriptions), so the picker needs no network. Rebuild it with `node scripts/packs-snapshot.js <clones-dir>`, where the folder holds a shallow clone of each source repo (the script's header names them). Review the diff: a skill that left its repository should leave the snapshot. The pack list lives in that script.
+- `node scripts/capture-installer.js` runs the real wizard in a simulated terminal and rewrites the three SVG screenshots in `docs/images/` that the README shows. Run it after any change to the wizard or the summary. It needs the network for the summary capture.
+
 ## Releases
 
 Releases run from a repository checkout, never from the published package. The npm package ships only the user CLI. Release and registry automation live in `scripts/`.

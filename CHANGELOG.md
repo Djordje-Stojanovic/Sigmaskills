@@ -7,6 +7,16 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Added
 
 - `sigmafork` (SigmaFork): fork or copy any repository, from GitHub or a local folder, and onboard the owner. One grill round of 8 questions with a recommended answer each (what, why, where the resources are, research depth, skill bundle, where it goes, access, how he learns best), a study of the source with `/sigmaresearch` at the chosen depth, then the fork, clone or copy. `scripts/sigmafork.py` (standard library) copies a folder without installed dependencies or caches, remakes links that point inside the source so they point inside the copy, rewrites every spelling of the source path (`C:\x`, `C:/x`, escaped, Git Bash, WSL, `file:///`) byte for byte, lists other outside paths and git remotes, and `verify` prints `ISOLATED` only when nothing in the copy reaches the original. The owner types every login and key himself. It installs the chosen skill bundle, writes `ONBOARDING.html` (a 10-15 minute course from `assets/guide-template.html`: the repo as a transit map, real example projects, first three tasks, cheat sheet), and turns the owner's questions into part 2 with the top 3 resources.
+- Sigma Installer: **packs and presets.** `--preset sigma|mattpocock|threejs|hyperframes|minimax-h3|storgestudio|all` installs a whole pack (repeatable or comma-separated). The five outside packs ship as a snapshot in `registry/packs.json` and download from their GitHub repositories at install time; `~/.sigmaskills/packs.json` adds your own packs and points the StorgeStudio folder pack at a folder. Pack skills install to `.agents/skills/<id>` with links or copies into host folders, with a private ownership record, and `update`, `uninstall` and `status` cover them. A copy you edited stays until `--force`, which backs it up first. `list --packs` shows every pack.
+- Sigma Installer: **`--agent` / `-a`** names Agent Hosts (`claude`, `codex`, `gemini`, `agy`, `pi`, `cursor`, any registry id, or `*`). Hosts that read `.agents/skills` need no folder; `--agent claude` adds `.claude/skills`. An unknown name suggests the closest ids.
+- Sigma Installer: **a full-screen wizard** for color terminals: What (packs with counts, open a pack to pick single skills, `/` filter, number keys), Where (scope, Agent Hosts with the found ones marked, Link or Copy), Review (counts, destinations, downloads, conflict choice, an explicit `y` for Global), then progress and a clean summary by pack. `--classic` keeps the line-by-line installer, which also serves plain, static, CI, JSON and piped sessions.
+- `--force` (pack skills), `--classic`, `--packs`. README screenshots, `docs/images/`, and `scripts/capture-installer.js` to refresh them.
+- ADR 0007 records the decision; CONTEXT.md gains Pack and Wizard.
+
+### Changed
+
+- Sigma Installer: the terminal palette is the DESIGN.md palette (near-black canvas, one emerald accent) in both installers. The warm Emberforge colors are gone.
+- Sigma Installer: install, update and uninstall of several skills with `--preset` or `--agent` print one summary (counts, packs, destinations, what was kept and why). A plain `install <id>` or `install --all` keeps its old output.
 
 ## [0.11.0] — 2026-10-20
 

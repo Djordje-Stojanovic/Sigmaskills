@@ -115,6 +115,7 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
       'package/registry/source.json',
       'package/registry/schema.json',
       'package/registry/skill-baselines.json',
+      'package/registry/packs.json',
       ...expectedSrc,
       ...expectedSkills,
     ]) {

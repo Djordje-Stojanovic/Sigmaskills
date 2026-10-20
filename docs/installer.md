@@ -13,6 +13,9 @@ Some short forms are hidden from `--help` on purpose. They work, and scripts may
 - [Scopes](#scopes)
 - [Interactive install](#interactive-install)
 - [Install from the command line](#install-from-the-command-line)
+- [Packs and presets](#packs-and-presets)
+- [Agent Hosts](#agent-hosts)
+- [Your own packs](#your-own-packs)
 - [Existing copies](#existing-copies)
 - [Global Installation](#global-installation)
 - [Private state folder](#private-state-folder)
@@ -39,7 +42,21 @@ Run the installer with no command:
 npx @djordje-stojanovic/sigmaskills
 ```
 
-The installer reads the Skill Pack from `manifest.json` and the Agent Host registry that ships with it. It opens straight to the skill picker, under a small Sigma heading in the warm LAPI palette. Each skill shows its short description (`short_description` in `agents/openai.yaml`) on at most two lines.
+In a color terminal it opens the full-screen wizard, drawn in the [DESIGN.md](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/DESIGN.md) palette (near-black canvas, one emerald accent). Three steps, one screen each:
+
+1. **What.** One row per pack, with a count (`13/13`). Space on a pack row picks or clears the whole pack; the number keys `1`-`9` do the same. Right arrow opens a pack so you can pick single skills; left arrow closes it. `/` filters every skill by name, description, or pack. `a` picks everything that is available. A pack that cannot be reached on this machine (for example StorgeStudio without a folder) is marked `[!]` and says why.
+2. **Where.** The scope (`s` switches between Project and Global), then the Agent Hosts. Hosts that read `.agents/skills` show as covered and cannot be unchecked. A host with its own folder, such as Claude Code, is a row you can toggle; a host whose folder exists in your home folder is marked `found here` and starts checked. `/` searches every host in the registry. `m` switches Link and Copy.
+3. **Review.** The skill count per pack, the destinations, the sources that will be downloaded, and a warning for Global Installation (it needs an explicit `y`; Enter alone does not install globally). If a Sigma skill already exists with different content, you choose `r` replace (after a private backup), `s` skip, or `e` export before you can continue.
+
+`b` goes back, Escape cancels, Ctrl+C aborts with exit code 130. Nothing is written before the last step. After the confirmation the wizard leaves the alternate screen and prints progress and a summary into your normal scrollback.
+
+The summary groups the result by pack, lists each destination with its method, names every skill it kept and why, and ends with the call syntax for Claude Code, Codex, and Pi.
+
+`--classic` opens the older line-by-line installer instead. It also opens for `--static`, `--no-color`, `--json`, `NO_COLOR`, `TERM=dumb`, `CI`, redirected output, or a session that is not a TTY. The rest of this section describes that installer.
+
+### Classic installer
+
+The classic installer reads the Skill Pack from `manifest.json` and the Agent Host registry that ships with it. It opens straight to the skill picker. Each skill shows its short description (`short_description` in `agents/openai.yaml`) on at most two lines.
 
 Next, you choose destinations. Only the universal `.agents/skills/` folder is selected by default. The installer lists the Agent Hosts that read that folder. Host folders such as `.claude/skills` stay unselected until you choose them, even for detected hosts. Search finds every supported Agent Host, detected or not. A destination page shows at most eight rows and fits the terminal height. The first Escape on this page clears the search; a second Escape cancels.
 
@@ -97,6 +114,68 @@ The installer checks input before it plans anything:
 - An unknown skill id stops with `unknown skill '<id>'`.
 - A flag that needs a value stops with the flag name when the value is missing or starts with `-`. For a value that really starts with `-`, write `--flag=value`.
 - `--all` cannot be combined with skill ids.
+
+## Packs and presets
+
+A **pack** is a named group of skills. `--preset <pack>` installs all of it, and you can repeat the flag or join names with commas. `list --packs` prints every pack, its aliases, and its skills.
+
+| Preset | Aliases | What it installs |
+|--------|---------|------------------|
+| `sigma` | `sigmaskills` | the skills bundled in this package |
+| `mattpocock` | `matt`, `pocock` | the skills in [mattpocock/skills](https://github.com/mattpocock/skills) |
+| `threejs` | `three` | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) |
+| `hyperframes` | `hf` | the HyperFrames skills and the student kit |
+| `minimax-h3` | `minimax`, `h3` | the MiniMax H3 prompt and recipe skills |
+| `storgestudio` | `storge` | a folder of your own skills; see [Your own packs](#your-own-packs) |
+| `all` | | every pack that is available on this machine |
+
+```bash
+npx @djordje-stojanovic/sigmaskills install --preset threejs --agent claude --project .
+npx @djordje-stojanovic/sigmaskills install --preset sigma,mattpocock --global --yes
+npx @djordje-stojanovic/sigmaskills install grill-me tdd sigmawrite --project .
+```
+
+You can also name a pack skill by its id, next to Sigma skills. `--all` keeps its old meaning (every bundled Sigma skill); `--preset all` means every pack.
+
+How pack skills install:
+
+- The group list ships with the package in `registry/packs.json`, so the picker needs no network. Installing a pack skill downloads its repository once (a shallow `git clone` into a temporary folder that is deleted afterwards), so `git` must be on the path. `--dry-run` also downloads, to compare content.
+- Each skill is copied to `.agents/skills/<id>`. A host folder links to that copy, or holds its own copy with `--copy`, as for Sigma skills.
+- A private record, `packs.json` in the [state folder](#private-state-folder), says what the installer owns. It never touches a folder it does not own.
+- A folder that is in the way and not owned stays untouched, and the summary says so. A copy you edited stays during `update` and `uninstall`. `--force` replaces or removes either one after a backup in `pack-backups/` in the state folder.
+- Bundled Sigma skills install first, as one transaction. If a pack skill then fails, the Sigma skills stay installed and the summary lists the failure. The exit code is 1.
+- `update` also refreshes pack skills: it downloads each source again and replaces only the copies that are unchanged since the install. `update --skill <id>` limits it. `uninstall --skill <id>` and `uninstall --all` remove pack skills and every link the installer made for them. `status` lists them under *Pack skills*.
+- `purge` removes bundled Sigma content only. Use `uninstall --all` for pack skills.
+- Global scope works the same way, under your home folder, and needs `--global --yes`.
+
+## Agent Hosts
+
+`--agent <host>` (`-a`) adds the host's folder to the install. It takes a host id, a display name, a registry alias, or one of these short names: `claude`, `gemini`, `agy`, `copilot`, `kimi`. Repeat the flag, or join names with commas. `--agent '*'` selects every host in the registry. An unknown name stops with the closest ids.
+
+Most hosts (Codex, Cursor, Gemini CLI, Antigravity CLI, Pi, OpenCode, GitHub Copilot, Kimi Code CLI and others) read `.agents/skills`, which every install writes, so `--agent codex` adds no folder. Claude Code, Windsurf, Reasonix and a few others read their own folder, and `--agent claude` adds `.claude/skills`. `--destination <dir>` still adds a raw folder.
+
+## Your own packs
+
+`~/.sigmaskills/packs.json` adds packs or points a folder pack at a folder on this machine:
+
+```json
+{
+  "dirs": { "storgestudio": "C:/AI/Design_Experiments/.claude/skills" },
+  "packs": [
+    {
+      "id": "acme",
+      "title": "Acme",
+      "aliases": ["ac"],
+      "sources": [
+        { "type": "git", "repo": "acme/skills", "path": "skills", "skills": [{ "id": "alpha" }] },
+        { "type": "dir", "path": "C:/team/skills", "prefix": "acme-" }
+      ]
+    }
+  ]
+}
+```
+
+A `git` source needs the skill ids in `skills`, so the picker can show them without a download. A `dir` source lists the skills it finds. `prefix` keeps only ids that start with it. The `storgestudio` pack is a `dir` source with the prefix `storgestudio-`; set its folder with `dirs` or with the `SIGMA_STORGESTUDIO_DIR` variable. `SIGMA_GIT_BASE` changes where `repo` names are cloned from (default `https://github.com/`), which tests and mirrors use.
 
 ## Existing copies
 
@@ -297,6 +376,8 @@ Safety:
 
 - `list` prints every skill in the Skill Pack with its Skill Revision and short description. `list --json` gives the full description and the file list.
 - `verify` checks the manifest and every skill's files and prints each Skill Revision.
+
+`list --packs` prints every pack with its preset name, aliases, and skills. With `--json` it prints the same data.
 
 ## Other install methods
 

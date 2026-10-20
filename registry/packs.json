@@ -1,0 +1,475 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "scripts/packs-snapshot.js",
+  "packs": [
+    {
+      "id": "sigma",
+      "title": "Sigma",
+      "blurb": "Review, improve, ship, research and write. The first-party Sigma skills.",
+      "aliases": [
+        "sigmaskills"
+      ],
+      "bundled": true
+    },
+    {
+      "id": "mattpocock",
+      "title": "Matt Pocock",
+      "blurb": "Skills for real engineers: grill, spec, TDD, triage, deep modules.",
+      "aliases": [
+        "matt",
+        "pocock"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "mattpocock/skills",
+          "path": "skills",
+          "skills": [
+            {
+              "id": "ask-matt",
+              "description": "Ask which skill or flow fits your situation."
+            },
+            {
+              "id": "chief-of-staff",
+              "description": "Pursue a long-running goal in a single session by co-ordinating subagents."
+            },
+            {
+              "id": "claude-handoff",
+              "description": "Hand the current conversation off to a fresh background agent that picks up the work immediately."
+            },
+            {
+              "id": "code-review",
+              "description": "Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes: Standards (does the code follow this repo's documented..."
+            },
+            {
+              "id": "codebase-design",
+              "description": "Shared vocabulary for designing deep modules."
+            },
+            {
+              "id": "diagnosing-bugs",
+              "description": "Diagnosis loop for hard bugs and performance regressions."
+            },
+            {
+              "id": "domain-modeling",
+              "description": "Build and sharpen a project's domain model."
+            },
+            {
+              "id": "git-guardrails-claude-code",
+              "description": "Set up Claude Code hooks to block dangerous git commands (push, reset --hard, clean, branch -D, etc.) before they execute."
+            },
+            {
+              "id": "grill-me",
+              "description": "A relentless interview to sharpen a plan or design."
+            },
+            {
+              "id": "grill-with-docs",
+              "description": "A relentless interview to sharpen a plan or design, which also creates docs (ADR's and glossary) as we go."
+            },
+            {
+              "id": "grilling",
+              "description": "Grill the user relentlessly about a plan, decision, or idea."
+            },
+            {
+              "id": "handoff",
+              "description": "Compact the current conversation into a handoff document for another agent to pick up."
+            },
+            {
+              "id": "implement",
+              "description": "Implement a piece of work based on a spec or set of tickets."
+            },
+            {
+              "id": "implement-spec",
+              "description": "Implement the result of /to-spec and /to-tickets in code."
+            },
+            {
+              "id": "improve-codebase-architecture",
+              "description": "Scan a codebase for deepening opportunities, present them as a visual HTML report, then grill through whichever one you pick."
+            },
+            {
+              "id": "loop-me",
+              "description": "Grill me about specs for the workflows I want to build, within this workspace."
+            },
+            {
+              "id": "migrate-to-shoehorn",
+              "description": "Migrate test files from `as` type assertions to @total-typescript/shoehorn."
+            },
+            {
+              "id": "pr",
+              "description": "Use when writing a PR body."
+            },
+            {
+              "id": "prototype",
+              "description": "Build a throwaway prototype to answer a design question."
+            },
+            {
+              "id": "research",
+              "description": "Investigate a question against high-trust primary sources and capture the findings as a Markdown file in the repo."
+            },
+            {
+              "id": "retro",
+              "description": "Conduct a retrospective on a coding session."
+            },
+            {
+              "id": "scaffold-exercises",
+              "description": "Create exercise directory structures with sections, problems, solutions, and explainers that pass linting."
+            },
+            {
+              "id": "setup-matt-pocock-skills",
+              "description": "Configure this repo for the engineering skills: set up its issue tracker, triage label vocabulary, and domain doc layout."
+            },
+            {
+              "id": "setup-pre-commit",
+              "description": "Set up Husky pre-commit hooks with lint-staged (Prettier), type checking, and tests in the current repo."
+            },
+            {
+              "id": "setup-ts-deep-modules",
+              "description": "Wire dependency-cruiser into a TypeScript repo so each package is a deep module, with implementation hidden in subfolders and reachable only throug..."
+            },
+            {
+              "id": "tdd",
+              "description": "Test-driven development."
+            },
+            {
+              "id": "teach",
+              "description": "Teach the user a new skill or concept, within this workspace."
+            },
+            {
+              "id": "to-questionnaire",
+              "description": "Turn a decision you can't fully answer into a questionnaire for someone else to fill in."
+            },
+            {
+              "id": "to-spec",
+              "description": "Turn the current conversation into a spec and publish it to the project issue tracker: no interview, just synthesis of what you've already discussed."
+            },
+            {
+              "id": "to-tickets",
+              "description": "Break a plan, spec, or the current conversation into a set of tracer-bullet tickets, each declaring its blocking edges, published to the configured..."
+            },
+            {
+              "id": "triage",
+              "description": "Move issues and external PRs through a state machine of triage roles, categorise, verify, grill if needed, and write agent-ready briefs."
+            },
+            {
+              "id": "wait-what",
+              "description": "Stop."
+            },
+            {
+              "id": "wayfinder",
+              "description": "Plan a huge chunk of work (more than one agent session can hold) as a shared map of decision tickets on your issue tracker, and resolve them one at..."
+            },
+            {
+              "id": "wizard",
+              "description": "Generate an interactive bash wizard that walks a human through steps only they can perform."
+            },
+            {
+              "id": "writing-beats",
+              "description": "Writing, exploit; assemble raw material into a journey of beats, grounding each term before a beat leans on it."
+            },
+            {
+              "id": "writing-for-agents",
+              "description": "Writing documents for agents."
+            },
+            {
+              "id": "writing-fragments",
+              "description": "Writing, explore: mine raw fragments, no structure yet."
+            },
+            {
+              "id": "writing-shape",
+              "description": "Writing, exploit: shape raw material into an article, paragraph by paragraph."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "threejs",
+      "title": "Three.js",
+      "blurb": "Geometry, materials, lighting, shaders, loaders, post-processing, R3F.",
+      "aliases": [
+        "three"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "CloudAI-X/threejs-skills",
+          "path": "skills",
+          "skills": [
+            {
+              "id": "threejs-animation",
+              "description": "Keyframe, skeletal and morph-target animation, procedural motion and clip blending, on WebGL or with WebGPU and TSL."
+            },
+            {
+              "id": "threejs-asset-pipeline",
+              "description": "Shrinking glTF assets for three.js with gltf-transform: inspect, validate and optimize commands, Draco, meshopt and quantization, KTX2, WebP and AV..."
+            },
+            {
+              "id": "threejs-fundamentals",
+              "description": "Three.js scene setup: scenes and fog, cameras, the renderer and tone mapping, the animation loop, object hierarchies, transforms, core math and cle..."
+            },
+            {
+              "id": "threejs-geometry",
+              "description": "Creating and shaping three.js geometry: built-in shapes, 3D text, vertex buffers and attributes, merging, instancing, batching, point clouds and li..."
+            },
+            {
+              "id": "threejs-interaction",
+              "description": "Picking with raycasting, camera controls, transform gizmos, drag, hover and box selection for three.js, identical under WebGL and WebGPU."
+            },
+            {
+              "id": "threejs-lighting",
+              "description": "Light types and physical units, shadow maps, HDR environment lighting, light probes, and lighting performance, on WebGL or with WebGPU and TSL."
+            },
+            {
+              "id": "threejs-loaders",
+              "description": "Loading three.js assets: glTF with Draco, meshopt and KTX2 compression, other model formats, textures, HDR and EXR environments, progress, caching,..."
+            },
+            {
+              "id": "threejs-materials",
+              "description": "Choosing and configuring three.js materials - unlit, diffuse, specular, PBR, toon, point and line materials - shared properties like blending and s..."
+            },
+            {
+              "id": "threejs-performance",
+              "description": "Measuring and optimizing three.js speed: render statistics, memory counters, fewer draw calls via merging, instancing, batching and LOD, fill rate,..."
+            },
+            {
+              "id": "threejs-postprocessing",
+              "description": "Three.js post-processing: composer pass chains, built-in renderer effects, and the WebGPU/TSL node pipeline — bloom, depth of field, ambient occlus..."
+            },
+            {
+              "id": "threejs-react-three-fiber",
+              "description": "Building three.js scenes from React with React Three Fiber and drei: renderer setup, the scene graph as JSX, frame-loop, state and loading hooks, p..."
+            },
+            {
+              "id": "threejs-shaders",
+              "description": "Custom GLSL vertex and fragment shaders: uniforms, varyings, shader chunks, extending built-in materials, instanced attributes, plus the same effec..."
+            },
+            {
+              "id": "threejs-textures",
+              "description": "Three.js textures: image loading, color spaces, UV channels and transforms, texture types from canvas to HDR and KTX2, render targets, texture memory."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hyperframes",
+      "title": "HyperFrames",
+      "blurb": "HTML to video: core, animation, audio, captions, registry, plus the student kit.",
+      "aliases": [
+        "hf"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "heygen-com/hyperframes",
+          "path": "skills",
+          "skills": [
+            {
+              "id": "embedded-captions",
+              "description": ">"
+            },
+            {
+              "id": "faceless-explainer",
+              "description": "Turn arbitrary text — an article, notes, a topic, a brief — into a faceless explainer video: there is no site or footage to capture, so the visuals..."
+            },
+            {
+              "id": "figma",
+              "description": "Import Figma content into a HyperFrames composition — rendered assets, brand tokens, components, storyboard sections → reconstructed motion (frames..."
+            },
+            {
+              "id": "general-video",
+              "description": ">"
+            },
+            {
+              "id": "hyperframes",
+              "description": ">"
+            },
+            {
+              "id": "hyperframes-animation",
+              "description": "All animation knowledge for HyperFrames — atomic motion rules, multi-phase scene blueprints, scene transitions, broader motion-design techniques, A..."
+            },
+            {
+              "id": "hyperframes-audio",
+              "description": ">"
+            },
+            {
+              "id": "hyperframes-cli",
+              "description": ">"
+            },
+            {
+              "id": "hyperframes-core",
+              "description": "The HyperFrames composition contract — build one renderable project."
+            },
+            {
+              "id": "hyperframes-creative",
+              "description": "Non-animation creative direction for HyperFrames videos."
+            },
+            {
+              "id": "hyperframes-keyframes",
+              "description": ">"
+            },
+            {
+              "id": "hyperframes-registry",
+              "description": "Search, install, and wire registry blocks and components into HyperFrames compositions."
+            },
+            {
+              "id": "hyperframes-studio",
+              "description": ">"
+            },
+            {
+              "id": "media-use",
+              "description": "Agent Media OS for a HyperFrames project."
+            },
+            {
+              "id": "motion-graphics",
+              "description": ">"
+            },
+            {
+              "id": "music-to-video",
+              "description": "Turn a music track (an audio file, a video to pull audio from, or a track generated from a mood brief) into a beat-synced video — lyric video, slid..."
+            },
+            {
+              "id": "pr-to-video",
+              "description": "Turn a GitHub pull request (a PR URL, owner/repo#N, or 'this PR' in a checked-out repo) into a code-change explainer video — changelog, feature rev..."
+            },
+            {
+              "id": "product-launch-video",
+              "description": "Turn a product or marketing URL, pasted script, or brief into a product launch / promo video — SaaS promos, feature reveals, product demos, app and..."
+            },
+            {
+              "id": "remotion-to-hyperframes",
+              "description": "Port an existing Remotion (React) composition's source to HyperFrames HTML."
+            },
+            {
+              "id": "slideshow",
+              "description": ">"
+            },
+            {
+              "id": "talking-head-recut",
+              "description": "Package an existing talking-head / interview / podcast video with timed, designed GRAPHIC OVERLAY cards — kinetic titles, lower-thirds, data callou..."
+            }
+          ]
+        },
+        {
+          "type": "git",
+          "repo": "nateherkai/hyperframes-student-kit",
+          "path": ".agents/skills",
+          "skills": [
+            {
+              "id": "cut-mistakes",
+              "description": "Agent 2 of the video editing pipeline."
+            },
+            {
+              "id": "cut-silences",
+              "description": "Agent 1 of the video editing pipeline."
+            },
+            {
+              "id": "edit-video",
+              "description": "Edit a raw talking-head video through transcription, silence trimming, mistake review, visual storytelling, motion graphics, and verified HyperFram..."
+            },
+            {
+              "id": "gsap",
+              "description": "GSAP animation reference for HyperFrames."
+            },
+            {
+              "id": "hyperframes-video-beats",
+              "description": "Plan, write, time, style, and validate motion-graphic beats for long-form talking-head HyperFrames videos."
+            },
+            {
+              "id": "make-a-video",
+              "description": "Beginner-friendly end-to-end video creator for HyperFrames."
+            },
+            {
+              "id": "motion-showreel",
+              "description": "Design and build a 10-30 second motion-design showreel or brand reel in the style of Nate's Opus 5.5 \"CLAUDE / MOTION REEL\": one brand motif transf..."
+            },
+            {
+              "id": "short-form-edit",
+              "description": "Turn talking-head footage into a finished reel, YouTube Short, or short advertisement with curiosity-led openings, earned payoffs, story-driven cut..."
+            },
+            {
+              "id": "style-library",
+              "description": "Select, customize, or extend the project's reusable motion-graphics card library and style templates."
+            },
+            {
+              "id": "video-storytelling",
+              "description": "Design and build the visual layer of a long-form talking-head video as one persistent world the camera moves through, instead of a sequence of sepa..."
+            },
+            {
+              "id": "website-to-hyperframes",
+              "description": "|"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "minimax-h3",
+      "title": "MiniMax H3",
+      "blurb": "Prompt writing and eight video recipes for the MiniMax H3 model.",
+      "aliases": [
+        "minimax",
+        "h3"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "MiniMax-AI/MiniMax-H3",
+          "path": "skills",
+          "skills": [
+            {
+              "id": "3d-animation-short-generator",
+              "description": "|"
+            },
+            {
+              "id": "brand-promo-video-generator",
+              "description": "For marketers and creators producing promotional content for brands, products, websites, apps, shops, or personal projects."
+            },
+            {
+              "id": "co-op-game-intro-generator",
+              "description": "For users creating a two-player co-op game menu or opening animation."
+            },
+            {
+              "id": "h3-prompt-writing",
+              "description": "Write MiniMax H3 video generation prompts for T2VA, I2VA, FL2VA, L2VA, and Ref2VA."
+            },
+            {
+              "id": "handdrawn-live-video-generator",
+              "description": "|"
+            },
+            {
+              "id": "minimalist-product-ad-generator",
+              "description": "|"
+            },
+            {
+              "id": "music-video-subtitle-generator",
+              "description": "|"
+            },
+            {
+              "id": "paper-collage-explainer-generator",
+              "description": "|"
+            },
+            {
+              "id": "papercraft-stop-motion-explainer",
+              "description": "For creators explaining science, education, or general knowledge through tactile handmade papercraft visuals."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "storgestudio",
+      "title": "StorgeStudio",
+      "blurb": "The StorgeStudio film, audio, image and publishing skills (local to the owner).",
+      "aliases": [
+        "storge"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "env": "SIGMA_STORGESTUDIO_DIR",
+          "prefix": "storgestudio-"
+        }
+      ]
+    }
+  ]
+}
