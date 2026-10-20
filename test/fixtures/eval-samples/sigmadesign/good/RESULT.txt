@@ -1,0 +1,7 @@
+Design system: design/DESIGN.md, built into design/site/ (tokens.css, tailwind.css, components.css, index.html).
+Palette: amber #e8a33d on a cool near-black ground, dark default with light, one pack (teal-black).
+Contrast: python sigmadesign.py check exited 0 for dark, light and teal-black; the accent needed no change.
+Lint: not run, no network.
+Looked at: design/site/index.html at 1440 and 375 px, no sideways scroll, no console errors.
+Repo files outside design/: unchanged.
+Next: python scripts/sigmadesign.py pack design/DESIGN.md --name red-white --accent "#dc2626" --light

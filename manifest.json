@@ -78,6 +78,11 @@
       "id": "sigmafork",
       "title": "SigmaFork",
       "needsReferences": true
+    },
+    {
+      "id": "sigmadesign",
+      "title": "SigmaDesign",
+      "needsReferences": true
     }
   ],
   "retired": [

@@ -1,0 +1,12 @@
+interface:
+  display_name: SigmaDesign
+  short_description: A design system from one accent colour, applied across a repo
+  default_prompt: Use $sigmadesign to make a design system from one accent colour,
+    write DESIGN.md, build the tokens, packs and sample page, check contrast, and
+    integrate it into the repo.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false
