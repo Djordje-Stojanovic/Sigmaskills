@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-10-20
+
 ### Changed
 
 - `sigmafork`: the onboarding course v2 (ticket 83 P13.75, the owner's verdict on v1: one good graphic, too little explained, hard to read, not his look). The template now wears the Storge-Black-Green look of `DESIGN.md` (zinc canvas, green glow, one emerald, Inter) and has 10 stops with at least 6 figures: the transit map is clickable (each stop shows its folder with its numbers, the file to open first and the command), a numbers band and language bar, a folder explorer (folders sized by code lines, tap to go in), the use case as a strip of real frames ("One job, start to finish"), map line cards, a change-flow strip, and a copy-and-original figure. Check-yourself questions are quizzes, tasks are tick boxes, the cheat sheet has a filter, terms explain themselves on tap. Code blocks get a header so the Copy button never covers a command. `references/guide.md` sets the `/sigmawrite` voice: one lead line per stop, three sentences a paragraph at most, commands in code blocks.
@@ -354,7 +356,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.9.2...v0.10.0
