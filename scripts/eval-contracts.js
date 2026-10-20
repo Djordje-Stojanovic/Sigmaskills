@@ -349,7 +349,31 @@ function sigmahuman({ files, result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmafork copies the repository to out/copy, leaves the original as it was, and writes the course into the copy.
+function sigmafork({ files, result }) {
+  const problems = [];
+  for (const [name, text] of Object.entries(files)) {
+    if (name.startsWith('copy/')) continue;
+    const original = path.join(FIXTURE, ...name.split('/'));
+    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`wrote into the original: ${name}`);
+  }
+  for (const name of ['copy/package.json', 'copy/src/logic.js']) {
+    if (!(name in files)) problems.push(`the copy is missing ${name}`);
+  }
+  const grill = files['copy/.sigmafork/grill.md'] ?? '';
+  if (!grill) problems.push('missing copy/.sigmafork/grill.md');
+  else if ((grill.match(/^(?:Q[1-8]|Ruling)\b/gm) || []).length < 8) problems.push('grill.md: expected an answer or Ruling line for each of the 8 questions');
+  const guide = files['copy/ONBOARDING.html'] ?? '';
+  if (!guide) return [...problems, 'missing copy/ONBOARDING.html'];
+  if (/\bFILL\b/.test(guide)) problems.push('ONBOARDING.html: FILL markers left from the template');
+  problems.push(...requireText(guide, [/<svg[\s>]/, /Part 2/, /<title>[^<]+<\/title>/], 'ONBOARDING.html'));
+  if (!/ONBOARDING\.html/.test(result)) problems.push('reply does not name the guide');
+  if (!/isolated/i.test(result)) problems.push('reply does not give the isolation result');
+  if (!/anything else/i.test(result)) problems.push('reply does not ask whether anything else is needed');
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

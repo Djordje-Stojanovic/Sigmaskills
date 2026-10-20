@@ -218,5 +218,20 @@
     "prompt": "Rewrite my video script for the ear so it sounds human, matching my voice sample",
     "skill": "sigmahuman",
     "near": "sigmataste"
+  },
+  {
+    "prompt": "Fork this GitHub repo to my account, copy it locally and teach me how it works with an onboarding course",
+    "skill": "sigmafork",
+    "near": "sigmaship"
+  },
+  {
+    "prompt": "Copy my project folder to a new place so the copy never writes into the original, then onboard me",
+    "skill": "sigmafork",
+    "near": "sigmarefactor"
+  },
+  {
+    "prompt": "Duplicate this repository, install the skill bundle and give me a mini course to learn it",
+    "skill": "sigmafork",
+    "near": "sigmaimprove"
   }
 ]

@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmafork` (SigmaFork): fork or copy any repository, from GitHub or a local folder, and onboard the owner. One grill round of 8 questions with a recommended answer each (what, why, where the resources are, research depth, skill bundle, where it goes, access, how he learns best), a study of the source with `/sigmaresearch` at the chosen depth, then the fork, clone or copy. `scripts/sigmafork.py` (standard library) copies a folder without installed dependencies or caches, remakes links that point inside the source so they point inside the copy, rewrites every spelling of the source path (`C:\x`, `C:/x`, escaped, Git Bash, WSL, `file:///`) byte for byte, lists other outside paths and git remotes, and `verify` prints `ISOLATED` only when nothing in the copy reaches the original. The owner types every login and key himself. It installs the chosen skill bundle, writes `ONBOARDING.html` (a 10-15 minute course from `assets/guide-template.html`: the repo as a transit map, real example projects, first three tasks, cheat sheet), and turns the owner's questions into part 2 with the top 3 resources.
+
 ## [0.11.0] — 2026-10-20
 
 ### Added
