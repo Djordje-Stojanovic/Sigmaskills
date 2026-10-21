@@ -10,7 +10,7 @@ The reader takes the post from the FxTwitter API (`api.fxtwitter.com/status/ID`:
 
 ## 2. Search: Grok first, then a signed-in browser
 
-0. If a Grok route exists (an xAI sign-in behind an OpenAI-compatible Responses endpoint, with the `x_search` tool), ask it for the posts. It returns post URLs and short summaries, so it is a lead list, not a read. Read every URL in full with section 1. Grok cannot open one post by URL, so its answer counts as a lead only, and the read is always section 1. Keep the endpoint and the key out of the log; the call looks like this:
+0. If a Grok route exists (an xAI sign-in behind an OpenAI-compatible Responses endpoint, with the `x_search` tool), ask it for the posts. It returns post URLs and short summaries: a lead list, not a read. Grok cannot open one post by URL, so every URL is read in full with section 1. Keep the endpoint and the key out of the log; the call looks like this:
 
 ```bash
 curl -s "$ENDPOINT/v1/responses" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \

@@ -1,6 +1,6 @@
 ---
 name: sigmatour
-description: 'A visual 15-60 minute tour of any repository, end to end, in one HTML page: its job, how it works, a clickable map and architecture diagram, one real request traced file by file, examples run for real, the repo in numbers, and the README held against the repo (hidden settings, missing files, dead commands). Length by the user''s wish and the repo''s size. Plain technical English. Use when the user wants to understand, learn, explore or get a walkthrough or tour of a repo or codebase. Do not use to copy or fork the repo (SigmaFork), to review it for bugs (SigmaReview), or to suggest improvements (SigmaImprove).'
+description: 'Visual tour of one repo or codebase: how it works, a traced request, examples run, README gaps. Use to understand, learn or walk through it. Do not use to fork, review or improve it.'
 ---
 
 # SigmaTour
@@ -40,7 +40,7 @@ Read the README against the repo. The scan finds the mechanical part: README com
 
 `python scripts/sigmatour.py build <repo> --out <page> --minutes <N>` makes the page from [the template](assets/tour-template.html) and writes the scan into its data block. The page draws the numbers band, the folder explorer, the history band, the README check and the entry points from it. Fill every `FILL` by [tour.md](references/tour.md): the transit map, how it works, the trace of one request, the examples with their real output, the hidden and missing list, the deep dives (their count sets the length), where things are, and three hands-on tasks.
 
-Write in the `/sigmawrite` voice: clear technical English a sharp outsider follows on the first read (the ASD-STE100 spirit). One lead line per stop, three sentences a paragraph at most, a tap-to-explain meaning for every term a newcomer would stop at (the wait-what check). When `/sigmahuman` is installed, give the text one pass with it.
+Write in the `/sigmawrite` voice: clear technical English a sharp outsider follows on the first read (the ASD-STE100 spirit). One lead line per stop, three sentences a paragraph at most, a tap-to-explain meaning for every term a newcomer would stop at. When `/sigmahuman` is installed, give the text one pass with it.
 
 ## 4. Check
 

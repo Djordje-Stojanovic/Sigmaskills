@@ -30,7 +30,7 @@ Inventory every tracked file by role. Build the system map: entry points, primar
 
 Run the passes in [method.md](references/method.md) in order, and go deepest where the risk is highest. Try to break the system the way its users, attackers, and heaviest workloads will. Under authority B, run the test suite, build, start the app, measure the primary journeys, and probe your own local instance as [measure.md](references/measure.md) describes. Evidence you produce yourself beats evidence you infer.
 
-**Bugs only, no hypothetical risks.** A finding needs the input or the path that fails today, with its proof. A possible future problem is not a finding: leave it out.
+**No hypothetical risks.** A possible future problem is not a finding; section 4 sets the proof bar.
 
 ## 4. Prove
 

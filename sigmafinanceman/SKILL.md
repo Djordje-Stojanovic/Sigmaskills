@@ -1,6 +1,6 @@
 ---
 name: sigmafinanceman
-description: 'The finance analyst: DCF, LBO, trading comps, three-statement models, ratios, statement analysis with red flags, a value-investing scorecard, earnings reviews and personal budgets, from public filings (SEC EDGAR) or the user''s own numbers. Asks one question round, then builds Excel with live formulas in banker colours, a slide deck, SVG charts and an HTML page, and checks every workbook. Use to value a company, model a deal, compare peers, read a 10-K, review a quarter or plan a budget. Do not use to place trades or move money, for tax filing, or for live intraday market data.'
+description: 'Finance models from SEC filings or your numbers: DCF, LBO, comps, three-statement, budget, Excel. Use to value a company, model a deal, read a 10-K or plan a budget. Do not use to trade or file taxes.'
 ---
 
 # SigmaFinanceMan
