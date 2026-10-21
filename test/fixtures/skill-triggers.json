@@ -258,5 +258,15 @@
   "prompt": "Walk me through this codebase end to end with a diagram so I understand it",
   "skill": "sigmatour",
   "near": "sigmareview"
+ },
+ {
+  "prompt": "Build me a DCF and a comps table for this ticker in Excel",
+  "skill": "sigmafinanceman",
+  "near": "sigmaresearch"
+ },
+ {
+  "prompt": "Help me plan a monthly budget from my income and spending",
+  "skill": "sigmafinanceman",
+  "near": "sigmahuman"
  }
 ]

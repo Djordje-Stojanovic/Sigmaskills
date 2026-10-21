@@ -89,6 +89,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaFork** | `sigmafork` | Fork or copy any repo, isolated from the original | A working copy and `ONBOARDING.html` |
 | **SigmaDesign** | `sigmadesign` | A design system from one accent colour (DESIGN.md, tokens, packs, sample page), applied across a repo | `DESIGN.md`, CSS, a sample page |
 | **SigmaTour** | `sigmatour` | A visual 15-60 minute tour of any repo: map, architecture, one request traced, examples run, README next to what the repo shows | One `<repo>-tour.html` page |
+| **SigmaFinanceMan** | `sigmafinanceman` | DCF, LBO, comps, three-statement models, ratios, red flags, a value scorecard, earnings reviews and budgets from SEC filings or your numbers | Excel with live formulas, a deck, SVG charts, an HTML page |
 
 ### Which one do I need?
 
@@ -106,7 +107,7 @@ The skills chain into two loops. **Fix:** SigmaReview → review PR → SigmaBri
 
 Finds everything that breaks the system's own promises: bugs, security holes, slow paths, broken rendering, and weak tests. It measures performance and runs security probes only when you allow it, and only on a local instance. Each finding has a location, a mechanism, an impact, evidence, a fix, and a proof test, so an LLM can fix it from that finding alone. All findings go into `SIGMAREVIEW-YYYY-MM-DD.md` on one pull request. It never changes your code.
 
-SigmaPerformance is retired. Its measurement method now lives in SigmaReview.
+SigmaPerformance is retired into SigmaReview.
 
 ### SigmaImprove
 
@@ -158,7 +159,7 @@ Looks at one target (a page, app, dashboard, deck, doc, image or film) and asks 
 
 ### SigmaHuman
 
-Rewrites any text so it reads like a person wrote it, or writes new text from a brief. It finds the 26 AI-writing patterns of [blader/humanizer](https://github.com/blader/humanizer) (MIT) and fixes them in the lane for the text: a script for the ear, a book, song lyrics, a chat or email, docs, or a post. It keeps every fact, can match your writing sample, and checks numbers, quotes and names before and after.
+Rewrites any text so it reads like a person wrote it, or writes new text from a brief. It finds the 26 AI-writing patterns of [blader/humanizer](https://github.com/blader/humanizer) (MIT) and fixes them in the lane for the text: a script for the ear, a book, song lyrics, a chat or email, docs, or a post. It keeps every fact and can match your writing sample.
 
 
 ### SigmaFork
@@ -172,6 +173,10 @@ Turns one accent colour into `DESIGN.md`, colour packs and CSS, then moves a rep
 ### SigmaTour
 
 A 15-60 minute tour of any repo in one page: a clickable map, one request traced, real runs, the README against the repo.
+
+### SigmaFinanceMan
+
+Finance models from SEC filings, checked before they ship.
 
 ---
 
@@ -219,6 +224,7 @@ $sigmahuman Rewrite this announcement so it sounds like me
 $sigmafork Copy this repo to D:\work\my-copy and teach me how it works
 $sigmadesign Make a design system from #e8a33d and put it in this repo
 $sigmatour Give me a 30 minute tour of this repo
+$sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 ```
 
 </td>
@@ -245,6 +251,7 @@ $sigmatour Give me a 30 minute tour of this repo
 /skill:sigmafork Fork owner/repo and teach me how it works
 /skill:sigmadesign Make a design system from #e8a33d and put it in this repo
 /skill:sigmatour Give me a 30 minute tour of owner/repo
+/skill:sigmafinanceman Build a three-statement model of MSFT
 ```
 
 </td>
@@ -271,6 +278,7 @@ $sigmatour Give me a 30 minute tour of this repo
 | `sigmafork` | a repo · a destination | One question round; reads the original only |
 | `sigmadesign` | an accent colour · a repo | One question round; writes `DESIGN.md`; changes repo files only with `--write` |
 | `sigmatour` | a repo path or URL · a length | One question round; reads the repo only; runs its examples |
+| `sigmafinanceman` | a ticker and peers, or a budget file | One question round; reads public data; writes files only to the output folder |
 
 ### Requirements
 
