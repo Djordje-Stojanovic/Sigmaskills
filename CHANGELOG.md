@@ -4,6 +4,9 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+- `sigmafinanceman` (SigmaFinanceMan): the finance analyst. `scripts/finman.py` reads SEC EDGAR company facts (10-K and 10-Q), Yahoo chart prices and the FRED 10-year yield, and builds a DCF, an LBO, trading comps, a three-statement model, ratios, a statement analysis with red flags (Sloan accruals, Altman Z, Piotroski F), a ten-test value scorecard, an earnings review and a personal 50/30/20 budget. Each run writes an Excel workbook with live formulas in banker colours (inputs with source comments, a Checks sheet), a 16:9 deck with native charts, SVG charts and one HTML page in the Ledger look. `audit` recalculates a workbook in LibreOffice and lists formula errors and checks; `selftest` runs offline. Folds in the methods of anthropics/financial-services (Apache-2.0) and the open finance skills listed in `references/sources.md`.
+
 ### Changed
 - `sigmaship`, `sigmabrief`, `sigmareview`, `sigmaresearch`, `code-review` and `research`: prior-art search before a build (SigmaShip), three questions and a sub-agent honesty rule in every brief, bugs-only review wording, and a critic pass on big research (ticket 83 K29a-3, K29a-4, K29a-14, K29a-16, K29a-21).
 

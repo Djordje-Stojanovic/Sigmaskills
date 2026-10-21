@@ -88,6 +88,11 @@
       "id": "sigmatour",
       "title": "SigmaTour",
       "needsReferences": true
+    },
+    {
+      "id": "sigmafinanceman",
+      "title": "SigmaFinanceMan",
+      "needsReferences": true
     }
   ],
   "retired": [

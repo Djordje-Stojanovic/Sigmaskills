@@ -56,3 +56,4 @@ description: 'Makes any text read like a person wrote it. Takes text in
 description: 'Fork or copy any repository, from GitHub or a local folder, end to end
 description: 'Make a design system end to end from one accent colour
 description: 'A visual 15-60 minute tour of any repository, end to end, in one HTML page
+description: 'The finance analyst: DCF, LBO, trading comps

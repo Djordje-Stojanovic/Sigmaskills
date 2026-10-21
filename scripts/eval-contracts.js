@@ -419,7 +419,40 @@ function sigmatour({ files, result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmafinanceman writes its files under finance/ (workbook, report data, page) and changes no other file.
+function sigmafinanceman({ files, result }) {
+  const problems = [];
+  for (const [name, text] of Object.entries(files)) {
+    if (name.startsWith('finance/')) continue;
+    const original = path.join(FIXTURE, ...name.split('/'));
+    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed a file outside finance/: ${name}`);
+  }
+  if (!Object.keys(files).some((name) => /^finance\/[^/]+\.xlsx$/.test(name))) problems.push('missing finance/<stem>.xlsx');
+  const reportName = Object.keys(files).find((name) => /^finance\/[^/]+\.report\.json$/.test(name));
+  if (!reportName) problems.push('missing finance/<stem>.report.json');
+  else {
+    try {
+      const report = JSON.parse(files[reportName]);
+      if (!report.hero || !report.hero.value) problems.push(`${reportName}: no hero number`);
+      if (!Array.isArray(report.sources) || report.sources.length === 0) problems.push(`${reportName}: no sources`);
+    } catch {
+      problems.push(`${reportName}: not JSON`);
+    }
+  }
+  const pageName = Object.keys(files).find((name) => /^finance\/[^/]+\.html$/.test(name));
+  if (!pageName) problems.push('missing finance/<stem>.html');
+  else {
+    const page = files[pageName];
+    const hero = page.indexOf('class="hero"');
+    const table = page.indexOf('<table');
+    if (hero === -1 || (table !== -1 && table < hero)) problems.push(`${pageName}: the page does not lead with the answer`);
+  }
+  if (!/(^|\D)0 errors/.test(result)) problems.push('reply does not give the workbook audit result');
+  if (!/Ruling:/.test(result)) problems.push('reply does not list the defaults it took');
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];
