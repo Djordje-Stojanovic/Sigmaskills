@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.15.0] — 2026-10-21
+
 ### Added
 - `sigmafinanceman` (SigmaFinanceMan): the finance analyst. `scripts/finman.py` reads SEC EDGAR company facts (10-K and 10-Q), Yahoo chart prices and the FRED 10-year yield, and builds a DCF, an LBO, trading comps, a three-statement model, ratios, a statement analysis with red flags (Sloan accruals, Altman Z, Piotroski F), a ten-test value scorecard, an earnings review and a personal 50/30/20 budget. Each run writes an Excel workbook with live formulas in banker colours (inputs with source comments, a Checks sheet), a 16:9 deck with native charts, SVG charts and one HTML page in the Ledger look. `audit` recalculates a workbook in LibreOffice and lists formula errors and checks; `selftest` runs offline. Folds in the methods of anthropics/financial-services (Apache-2.0) and the open finance skills listed in `references/sources.md`.
 
@@ -377,7 +379,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.11.0...v0.12.0
