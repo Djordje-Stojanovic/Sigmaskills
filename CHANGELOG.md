@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook --ask`: a question with two numeric words (such as "how many tool errors") no longer takes a column that names only one of them. `hookErrors` and `shape.tools` no longer answer it. The look now says no table answers exactly, and it shows the matching lines (ticket 83, K29a-1).
+
 ## [0.15.0] — 2026-10-21
 
 ### Added

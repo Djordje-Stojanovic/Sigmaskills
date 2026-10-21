@@ -381,6 +381,18 @@ def col_for(t, w, numeric=None):
     return None
 
 
+def named_words(t, pq):
+    """The question words that name a numeric column, except the words that name the group ('per region', 'which tool')."""
+    skip = set(pq["group"]) | ({pq["which"]} if pq["which"] else set())
+    return [w for w in dict.fromkeys(pq["words"]) if w not in skip and col_for(t, w, True) is not None]
+
+
+def measure_ok(t, pq, i):
+    """A column may answer when the question names all of its words, or when the question names only one numeric word.
+    'How many tool errors' names two: hookErrors and shape.tools each name only one of them, so neither answers it."""
+    return len(named_words(t, pq)) < 2 or (t.colw[i] - {"count"}) <= set(pq["words"])
+
+
 def pick_measure(t, pq, exclude=()):
     best = None
     for w in pq["words"]:
@@ -389,7 +401,7 @@ def pick_measure(t, pq, exclude=()):
             sc = len(t.colw[i] & set(pq["words"])) / len(t.colw[i])
             if best is None or sc > best[0]:
                 best = (sc, i)
-    return best[1] if best else None
+    return best[1] if best and measure_ok(t, pq, best[1]) else None
 
 
 def answer(t, pq, q, vals):
@@ -459,10 +471,13 @@ def answer(t, pq, q, vals):
 
     main_op = next((o for o in ("mean", "sum", "max", "min", "distinct", "count") if o in ops), None)
     hm = AL.compiled(pq["lang"])["howmany"].search(pq["fq"])
-    if main_op == "count" and hm and stem(hm.group(1)) not in t.namew and col_for(t, stem(hm.group(1)), True) is not None:   # "how many units": the Units column, summed
-        measure, main_op = col_for(t, stem(hm.group(1)), True), "sum"
+    hw = col_for(t, stem(hm.group(1)), True) if main_op == "count" and hm and stem(hm.group(1)) not in t.namew else None
+    if hw is not None and measure_ok(t, pq, hw):   # "how many units": the Units column, summed
+        measure, main_op = hw, "sum"
     if main_op == "count" and measure is not None and "sum" in ops:
         main_op = "sum"
+    if measure is None and main_op in ("count", "sum", "mean", "max", "min") and len(named_words(t, pq)) >= 2:
+        return None   # the question names two numeric columns and no column names both: no table answers it exactly
     if group is not None and main_op in (None, "count", "sum", "mean", "max", "min"):
         uniq = len({str(t.rows[k][group]) for k in keep}) == len(keep)
         if uniq and measure is not None and main_op in ("max", "min", None):   # which <id> has the highest <measure>: a row-level answer
@@ -627,7 +642,8 @@ def run(o, path, out, lj):
     elif stated:
         lines.append("Counts stated in the look: " + "; ".join(f"{k} {P.fmt(v) if isinstance(v, (int, float)) else v}" for k, v in stated))
     if not got:
-        lines.append("No table answers this exactly" + (" (no table matched the question words)" if tables else " (this file has no table the look can re-read)") + "; the lines below match the question words.")
+        why = " (no column names every question word)" if ranked and ranked[0][0][0] > 0 else " (no table matched the question words)" if tables else " (this file has no table the look can re-read)"
+        lines.append("No table answers this exactly" + why + "; the lines below match the question words.")
     srcs = dl_drill.text_sources(out, lj, path)
     figs = [s for s in ((lj.get("facts") or {}).get("stated_figures") or []) if sum(1 for w in pq["words"] if w in set(words(s))) >= max(1, len(pq["words"]) // 2)]
     if figs:
