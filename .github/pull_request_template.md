@@ -1,3 +1,7 @@
+Red test: <!-- the test you wrote first and saw fail (name and run result), or `n/a (docs/config only)` -->
+Review: <!-- bugs-only findings and how each was fixed, or `none found` and what you read -->
+Skills: <!-- the skills you used, /pr included, e.g. tdd, pr -->
+
 ## What changed?
 
 One or two sentences. Pretend you forgot this is an Agent Skills repo (skills, prompts, contracts, install docs, and the Sigma Installer CLI).
