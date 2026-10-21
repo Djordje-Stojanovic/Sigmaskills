@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaresearch` X search: when an xAI route with the `x_search` tool exists, Grok lists post URLs first and each one is read in full by URL. Grok cannot open one post by URL, so a Grok answer counts as a lead only.
+
 ## [0.14.0] — 2026-10-20
 
 ### Added
