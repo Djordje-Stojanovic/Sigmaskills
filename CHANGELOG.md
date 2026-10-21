@@ -8,6 +8,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 - `sigmaloop`, `sigmabrief`, `sigmaship`: the Claude Code run mode. A `/goal` line names one printed command that proves the end state. The loop file is the run file, read every turn. Dated items are `CronCreate` tasks, and a handoff file is rewritten before each long wait. `sigmaloop`'s Claude Code host file, loop-file template and stop-line question carry it. A `sigmabrief` session brief and a `sigmaship` run point at it (ticket 83, GL4).
 
+## [0.15.1] — 2026-10-21
+
 ### Fixed
 
 - `sigmadeeplook --ask`: a question with two numeric words (such as "how many tool errors") no longer takes a column that names only one of them. `hookErrors` and `shape.tools` no longer answer it. The look now says no table answers exactly, and it shows the matching lines (ticket 83, K29a-1).
@@ -387,7 +389,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.1...HEAD
+[0.15.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.12.0...v0.13.0
