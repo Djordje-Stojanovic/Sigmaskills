@@ -8,7 +8,7 @@ The stops carry their minutes in `data-min`; the page adds them up in the hero, 
 
 | Target | Stops |
 |---|---|
-| 15 min | the eight base stops, at most one deep dive |
+| 15 min | the base stops, at most one deep dive |
 | 30 min | the base stops, two or three deep dives, a longer trace (6-8 steps) |
 | 45 min | four or five deep dives, a second trace for the second main flow |
 | 60 min | five to eight deep dives, two traces, every example the repo ships that runs here |

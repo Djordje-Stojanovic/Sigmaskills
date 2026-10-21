@@ -20,7 +20,7 @@ One visual system for the workbook, the deck, the charts and the page: a white r
 
 Number formats: money `#,##0_);(#,##0);"-"_)`, percent `0.0%`, multiple `0.0"x"`, per share `$#,##0.00_);($#,##0.00)`. Negatives in brackets. The `_)` pad keeps positive digits in line with bracketed negatives; the page copies it with a hidden `)`.
 
-## The three fixes from the design audit (2026-10-21)
+## Layout rules
 
 1. **Exact tables.** Digits line up (the pad above). Each header aligns with its column. 22 px between stacked tables. Totals bold with a thin top rule; the final line (value per share, equity out, left over) has a double bottom rule.
 2. **The answer first, colour roles clean.** One hero number at 44 px (60 pt on the title slide), then one sentence, then a small KPI row. Green and red only for gain and loss; parts of a total (PV of cash flows, PV of terminal value, savings) are steel. Green and red differ in lightness, and brackets and pass/fail words carry the meaning without colour.

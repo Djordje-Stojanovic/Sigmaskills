@@ -55,5 +55,5 @@ never checks out, resets or commits in a shared main checkout
 description: 'Makes any text read like a person wrote it. Takes text in
 description: 'Fork or copy any repository, from GitHub or a local folder, end to end
 description: 'Make a design system end to end from one accent colour
-description: 'A visual 15-60 minute tour of any repository, end to end, in one HTML page
-description: 'The finance analyst: DCF, LBO, trading comps
+description: 'Visual tour of one repo or codebase: how it works, a traced request, examples run, README gaps. Use to understand, learn or walk through it. Do not use to fork, review or improve it.'
+description: 'Finance models from SEC filings or your numbers: DCF, LBO, comps, three-statement, budget, Excel. Use to value a company, model a deal, read a 10-K or plan a budget. Do not use to trade or file taxes.'
