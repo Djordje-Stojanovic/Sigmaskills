@@ -5,6 +5,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ## [Unreleased]
 
 ### Changed
+- `sigmaship`, `sigmabrief`, `sigmareview`, `sigmaresearch`, `code-review` and `research`: prior-art search before a build (SigmaShip), three questions and a sub-agent honesty rule in every brief, bugs-only review wording, and a critic pass on big research (ticket 83 K29a-3, K29a-4, K29a-14, K29a-16, K29a-21).
 
 - `sigmaresearch` X search: when an xAI route with the `x_search` tool exists, Grok lists post URLs first and each one is read in full by URL. Grok cannot open one post by URL, so a Grok answer counts as a lead only.
 
