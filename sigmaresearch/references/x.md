@@ -1,6 +1,6 @@
 # X
 
-X has three jobs with different routes: one post by URL (no login), search (a signed-in browser), and replies (a signed-in browser). Follow [Access and persistence](../SKILL.md#access-and-persistence) and write each route on the route list.
+X has three jobs with different routes: one post by URL (no login), search (Grok's `x_search` when an xAI route exists, else a signed-in browser), and replies (a signed-in browser). Follow [Access and persistence](../SKILL.md#access-and-persistence) and write each route on the route list.
 
 ## 1. One post by URL: no login
 
@@ -8,7 +8,16 @@ X has three jobs with different routes: one post by URL (no login), search (a si
 
 The reader takes the post from the FxTwitter API (`api.fxtwitter.com/status/ID`: full text, likes, reply and repost counts, date, author), then from X's own embed JSON (`cdn.syndication.twimg.com/tweet-result?id=ID&token=a`). Links from `twitter.com`, `fxtwitter.com`, `fixupx.com` and mirrors work too. Replies are not in these answers: take route 3 for them.
 
-## 2. Search: a signed-in browser
+## 2. Search: Grok first, then a signed-in browser
+
+0. If a Grok route exists (an xAI sign-in behind an OpenAI-compatible Responses endpoint, with the `x_search` tool), ask it for the posts. It returns post URLs and short summaries, so it is a lead list, not a read. Read every URL in full with section 1. Grok cannot open one post by URL, so its answer counts as a lead only, and the read is always section 1. Keep the endpoint and the key out of the log; the call looks like this:
+
+```bash
+curl -s "$ENDPOINT/v1/responses" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
+  -d '{"model":"grok-4.7","input":"Find recent public X posts about QUERY. Give each x.com URL, the author, the date and a one-line summary.","tools":[{"type":"x_search"}]}'
+```
+
+Read the post URLs from the message text (`output[].content[].text`); the citation list can hold posts that the text does not name. If the route answers with a refusal or with no URLs, log it and continue with step 1.
 
 1. Use a browser where the owner is already signed in to X (for example Claude in Chrome, `mcp__claude-in-chrome__*`). Open your own tab. If a login wall shows, the session has expired: log the gap and tell the owner that signing in again unlocks it.
 2. Build a tight query, because X search mixes in loose matches. Quote the key phrase, add `lang:en`, a floor such as `min_faves:200`, and a date `since:YYYY-MM-DD`. URL-encode the whole query and open `https://x.com/search?q=ENCODED&f=top` (`f=live` for newest). Wait about five seconds.
