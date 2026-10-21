@@ -44,6 +44,8 @@ Only when useful: overlaps, upstream waits, already fixed, human-only tests.
 11. Use the shell native to the executing machine (PowerShell on Windows, POSIX shell elsewhere). No WSL assumptions.
 12. **Do not merge. Keep any worktree while the PR is open. Cleanup only after human merge or user cancel/abandon.**
 13. Report back in this format: `Status: DONE | DONE_WITH_CONCERNS | BLOCKED` · PR URL · checks run and results · rulings or open questions · concerns.
+14. Before you build, answer three questions in the PR body: "Is there a stupid simple solution?" "How hard is this before you build?" "Could a prompt answer this instead of a feature?"
+15. Sub-agent honesty rule: read the real code for each claim, and cite no file you did not open.
 
 ## 3. Worktree create
 

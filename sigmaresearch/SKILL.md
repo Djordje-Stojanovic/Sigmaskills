@@ -70,6 +70,8 @@ Return a concise answer with links near the claims, then these sections in this 
 - `## Contradictions`: one line per disputed claim: `claim: [source A] says X; [source B] says Y; stronger because ...`. Write `None found` only after you looked. Never smooth a disagreement into a consensus.
 - `## Access gaps`: blocked, missing-tool, missing-session and partial-read limits, what they leave unanswered, and the route list from the persistence ladder (route, URL or query, result), so every route tried shows. `None` when there are none.
 
+For a big run (a counted plan, or a claim that drives a decision), start one critic agent. Its only job is to break the top findings: find the best source against each one. Re-run the counts yourself, and list what the critic broke.
+
 Use the user's requested location; otherwise reply in chat. Do not create repo files for a research log, except the source log a counted plan needs. Never claim live access from a past run.
 
 ## Personal instructions

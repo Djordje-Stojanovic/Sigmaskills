@@ -57,6 +57,8 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 ### 4. Spawn both sub-agents in parallel
 
+Both sub-agents flag real bugs and documented violations only, each with its proof. No hypothetical risks.
+
 **Standards sub-agent prompt** — include:
 
 - The full diff command and commit list.
