@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaloop`, `sigmabrief`, `sigmaship`: the Claude Code run mode. A `/goal` line names one printed command that proves the end state. The loop file is the run file, read every turn. Dated items are `CronCreate` tasks, and a handoff file is rewritten before each long wait. `sigmaloop`'s Claude Code host file, loop-file template and stop-line question carry it. A `sigmabrief` session brief and a `sigmaship` run point at it (ticket 83, GL4).
+
 ### Fixed
 
 - `sigmadeeplook --ask`: a question with two numeric words (such as "how many tool errors") no longer takes a column that names only one of them. `hookErrors` and `shape.tools` no longer answer it. The look now says no table answers exactly, and it shows the matching lines (ticket 83, K29a-1).

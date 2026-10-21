@@ -29,7 +29,7 @@ Accept:
 - a SigmaReview report (`SIGMAREVIEW-*.md`): one brief per finding or per tight group of findings, reusing each finding's fix, proof test, and `Done when` verbatim instead of re-describing them;
 - SigmaImprove category issues: brief only entries marked `chosen`, and carry the chosen option and its sketch;
 - non-GitHub work: features, upgrades, bugs, plain English tasks;
-- `this session`: a session brief so a fresh agent can continue the current conversation;
+- `this session`: a session brief so a fresh agent can continue the current conversation. For a Claude Code run to done, the brief names the run file, the handoff file, the `CronCreate` list and the goal line (one printed command; see `sigmaloop`);
 - constraints: skip N, do not merge, finish PR M only, max agents.
 
 ## 3. Light research

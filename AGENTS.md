@@ -28,6 +28,8 @@ You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) 
 
 When you add a skill (or rename/remove one): update `KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js) together with README, the per-skill install lines in `docs/installer.md`, and CHANGELOG, or CI fails on purpose. Folder name = frontmatter `name` = `--skill` id. Then run `npm test`.
 
+Long runs: Claude Code (`/goal`, `/loop`) follows the run mode in [`sigmaloop/references/host-claude-code.md`](sigmaloop/references/host-claude-code.md). Codex, pi, DeepSeek and T3 keep their own loop rules (the sigmaloop host files).
+
 Follow every rule below. They are mandatory for this repo.
 
 ---

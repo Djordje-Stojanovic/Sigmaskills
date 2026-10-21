@@ -10,7 +10,7 @@ A prompt that needs a tool the host lacks stalls the run. Pick the row for the h
 
 | Host | Loop that fits | Clock wake | Headless run | Skill folder |
 |---|---|---|---|---|
-| Claude Code | `/loop` (clock), `/goal` (back to back) | `ScheduleWakeup`, cron tools | `claude -p "/goal …"` loops to the end (ran). `/loop` needs a live session | `~/.claude/skills` or `.claude/skills` |
+| Claude Code | `/goal` (run to done, one printed command), `/loop` (clock) | `CronCreate`, `ScheduleWakeup` | `claude -p "/goal …"` loops to the end (ran). `/loop` needs a live session | `~/.claude/skills` or `.claude/skills` |
 | Codex CLI and app | `/goal` | Scheduled tasks: desktop app and web only | `codex exec` does not expand `/goal` (ran). A `Stop` hook loops (ran) | `.agents/skills`, `~/.agents/skills` |
 | Antigravity `agy` | `/goal`, `/schedule` | `schedule` tool: timers, max iterations | `agy -p "/goal …"` loops (ran) | `.agents/skills`, `~/.gemini/config/skills` |
 | pi with lapi | Plan file with a `lapi-workflow` box fence, then `/code` | None | Not run | `~/.agents/skills` (invoke `/skill:sigmaloop`) |

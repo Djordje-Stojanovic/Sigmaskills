@@ -26,8 +26,11 @@ Max <N> sub-agents at once: <mix by model and effort>. <Which job goes to which 
 2. Re-read the tracker's how-to-work notes, the handoff, and every open line; run <the repo's overview or status command>.
 3. For each finished agent, one quick check (its key test or output). Fix wrong ticks, add dated evidence, merge or deploy what it left.
 4. Fill every free slot from Priority. Skip items that share files with a running agent.
-5. Update the handoff: time, running agents and items, done since the last wake, queue.
+5. Update the handoff (<path>): time, running agents and items, done since the last wake, queue. Rewrite it in full before each long wait and before the context fills.
 6. <Host wake call and delay rule, from the host file.>
+
+## Dated items
+<Each one: date, time, zone, what happens. Claude Code: one `CronCreate` task each, created in the first turn. Delete the section when there are none.>
 
 ## Priority
 <The ranked list, or the section of the tracker that holds it, with who owns what. Items that need the user live: wait; write their facts, never decide them. No-touch list: files, items, agents, systems.>

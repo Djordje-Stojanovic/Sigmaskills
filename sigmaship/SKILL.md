@@ -74,6 +74,8 @@ After the merge, finish the repository's own follow-through with proof: its depl
 
 **Done when:** the PR is merged, the issue is closed, the map and tracker are updated, the remote and local branches and the worktree are gone, local `<base>` equals `origin/<base>`, and the deploy proof is shown. Prove each point with the commands in [land.md](references/land.md#verify).
 
+Under a Claude Code `/goal`, the goal line names the printed proof: the verify commands of [land.md](references/land.md#verify). Print their output every turn.
+
 ## Final response
 
 Five lines at most: PR link, criteria met, review rounds and findings fixed, follow-ups and known reds, and cleanup and deploy verified.
