@@ -30,7 +30,7 @@ If those skills are not installed, write the acceptance criteria into the issue 
 
 ## 2. Set up
 
-1. Sync: `git fetch origin`, and confirm the base branch (usually `main`) from the repository.
+1. Sync: `git fetch origin`, and confirm the base branch (usually `main`) from the repository. Then search open PRs and issues for the same change before you write code: `gh pr list --state open --search "<words>"` and `gh issue list --state open --search "<words>"`. If an open PR already does the job, record it in the ledger and build on that PR instead.
 2. Create the branch `ship/<issue>-<slug>` in a fresh worktree cut from `origin/<base>`, outside the main checkout: the host's worktree tool, or `git worktree add <path> -b <branch> origin/<base>`. If you are already in a linked worktree, use it. Another agent may have uncommitted work in the main checkout: never check out, reset, commit, or force there.
 3. Install and run the baseline checks (tests, type check, lint, build). A red in this ticket's area stops the run: report it. A red that belongs to another lane (prove it: it is also red on `origin/<base>`) is named under *Known reds* in the ledger, not fixed here.
 

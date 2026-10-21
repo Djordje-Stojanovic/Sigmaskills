@@ -26,6 +26,7 @@ Apply these invariants throughout the run:
 - **Do not merge. Keep any worktree while the PR is open. Cleanup only after human merge or user cancel/abandon.**
 - **Shell native to the executing machine:** use the shell of the machine that runs the agent: PowerShell and Windows paths on Windows, POSIX shell elsewhere. Do not assume WSL.
 - **No secrets** in briefs. Redact tokens, keys, and credentials from issue bodies or notes.
+- **Three questions and the honesty rule.** Every brief carries invariants 14 and 15 of [prompt-contract.md](references/prompt-contract.md): three questions before a build, and sub-agents read the real code for each claim and cite no file they did not open.
 
 ## Resolve inputs
 
