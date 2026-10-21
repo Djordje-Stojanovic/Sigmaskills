@@ -1,0 +1,6 @@
+700 EUR left over each month (finance/budget.html, finance/budget.xlsx).
+Ruling: the 50/30/20 rule as the yardstick - the household gave no other target.
+Ruling: outputs xlsx, pptx, svg, html - the recommended set.
+Audit: budget.xlsx 36 formulas, 0 errors, checks PASS.
+Looked at: the deck pages and the page at 1280 px and 390 px; wants are 21 points under target.
+Next: the savings line moves the 12-month fund most: finman.py budget finance/household.json after changing it.

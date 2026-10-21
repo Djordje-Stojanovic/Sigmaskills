@@ -1,0 +1,239 @@
+{
+ "kind": "budget",
+ "title": "Monthly budget",
+ "subtitle": "Net pay 3,600 EUR a month; the 50/30/20 rule as the yardstick.",
+ "hero": {
+  "value": "700 EUR",
+  "label": "left over each month",
+  "line": "Needs 55%, wants 9%, savings 17% of net pay; the emergency fund covers 2.5 months of needs."
+ },
+ "kpis": [
+  [
+   "Needs",
+   "1,980"
+  ],
+  [
+   "Wants",
+   "320"
+  ],
+  [
+   "Savings",
+   "600"
+  ],
+  [
+   "Saved per month",
+   "1,300"
+  ],
+  [
+   "Fund in 12 months",
+   "20,600"
+  ]
+ ],
+ "tables": [
+  {
+   "title": "50/30/20 check",
+   "columns": [
+    "Bucket",
+    "Now",
+    "Share",
+    "Target",
+    "Gap"
+   ],
+   "rows": [
+    [
+     "needs",
+     1980.0,
+     0.55,
+     0.5,
+     180.0
+    ],
+    [
+     "wants",
+     320.0,
+     0.08888888888888889,
+     0.3,
+     -760.0
+    ],
+    [
+     "savings",
+     600.0,
+     0.16666666666666666,
+     0.2,
+     -120.0
+    ],
+    [
+     "Left over",
+     700.0,
+     0.19444444444444445,
+     null,
+     null
+    ]
+   ],
+   "formats": [
+    "text",
+    "money",
+    "pct",
+    "pct",
+    "money"
+   ],
+   "totals": [],
+   "double": [
+    3
+   ],
+   "note": null
+  },
+  {
+   "title": "Monthly lines (EUR)",
+   "columns": [
+    "Line",
+    "Bucket",
+    "Amount",
+    "Share of pay"
+   ],
+   "rows": [
+    [
+     "Rent",
+     "needs",
+     1200.0,
+     0.3333333333333333
+    ],
+    [
+     "Groceries",
+     "needs",
+     450.0,
+     0.125
+    ],
+    [
+     "Transport",
+     "needs",
+     150.0,
+     0.041666666666666664
+    ],
+    [
+     "Insurance",
+     "needs",
+     120.0,
+     0.03333333333333333
+    ],
+    [
+     "Phone and internet",
+     "needs",
+     60.0,
+     0.016666666666666666
+    ],
+    [
+     "Going out",
+     "wants",
+     220.0,
+     0.06111111111111111
+    ],
+    [
+     "Subscriptions",
+     "wants",
+     100.0,
+     0.027777777777777776
+    ],
+    [
+     "Hobbies",
+     "wants",
+     0.0,
+     0.0
+    ],
+    [
+     "Savings plan (ETF)",
+     "savings",
+     600.0,
+     0.16666666666666666
+    ]
+   ],
+   "formats": [
+    "text",
+    "text",
+    "money",
+    "pct"
+   ],
+   "totals": [],
+   "double": [],
+   "note": null
+  }
+ ],
+ "charts": [
+  {
+   "kind": "waterfall",
+   "title": "Net pay to left over (EUR)",
+   "steps": [
+    [
+     "Net pay",
+     3600.0,
+     "total"
+    ],
+    [
+     "Needs",
+     -1980.0,
+     "delta"
+    ],
+    [
+     "Wants",
+     -320.0,
+     "delta"
+    ],
+    [
+     "Savings",
+     -600.0,
+     "part"
+    ],
+    [
+     "Left over",
+     700.0,
+     "total"
+    ]
+   ]
+  },
+  {
+   "kind": "bars",
+   "title": "Emergency fund over 12 months (EUR)",
+   "labels": [
+    "M0",
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M7",
+    "M8",
+    "M9",
+    "M10",
+    "M11",
+    "M12"
+   ],
+   "series": [
+    [
+     "Fund",
+     [
+      5000.0,
+      6300.0,
+      7600.0,
+      8900.0,
+      10200.0,
+      11500.0,
+      12800.0,
+      14100.0,
+      15400.0,
+      16700.0,
+      18000.0,
+      19300.0,
+      20600.0
+     ],
+     "total"
+    ]
+   ]
+  }
+ ],
+ "notes": [
+  "Left over counts as savings in the 12-month path."
+ ],
+ "sources": [
+  "the household's own numbers"
+ ]
+}
