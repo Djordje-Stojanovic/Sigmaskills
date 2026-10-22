@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.16.2] — 2026-10-22
+
 ### Changed
 
 - Every skill description is 200 characters or less. Fourteen skills were longer (up to 791); each keeps its job, its trigger and its exclusion line. A repository test now fails above 200 characters.
@@ -420,7 +422,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.1...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.2...HEAD
+[0.16.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.1...v0.16.2
 [0.16.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.2...v0.16.0
 [0.15.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.1...v0.15.2
