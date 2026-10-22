@@ -1,6 +1,6 @@
 Red test: <!-- the test you wrote first and saw fail (name and run result), or `n/a (docs/config only)` -->
 Review: <!-- bugs-only findings and how each was fixed, or `none found` and what you read -->
-Skills: <!-- the skills you used, /pr included, e.g. tdd, pr -->
+Skills: <!-- the skills you used, /pr included, e.g. tdd, pr; a code PR also names code-review; a PR that changes SKILL.md, CLAUDE.md or AGENTS.md also names writing-for-agents -->
 
 ## What changed?
 
