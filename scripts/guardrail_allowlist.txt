@@ -1,17 +1,13 @@
 
-description: Find everything that is wrong in a codebase or system - b
 - Flaky, order-dependent, time-dependent, skipped, or never-run tests;
 skill scope routing like "Do not use this skill for X"
 | Freedom limit | "do not use stealth tools", "never copy raw YouTube"
-description: Write and explain in clear, STE-inspired Simplified Techn
 `owner/repo`, a repo URL or an issue URL, or a topic query (repo searc
 class is not a forbidden item; it is a normal dependency. An agent tha
 | Moral voice | "we will not help with X", "handle Y with care" | Dele
 | Model-compliance rule | "against the terms of service", "risk of ban
-description: Find what would make a product, game, codebase, or system
 - Signal handlers in the install transaction that could never run, the
 | 5 | Archive mirror | `https://web.archive.org/web/<URL>` for a publi
-description: Ship one fully planned GitHub issue end to end - feature 
 # guardrail keep-list (2026-10-17): vetted keeps (skill scope routing, mechanical guards, the doctrine itself).
 never / must not / do not / not allowed / forbidden
 - A PDF that carries script or an open action is data to describe, nev
@@ -27,7 +23,6 @@ Near-miss triggers (in `npm test`). Score = prompt words found in the
 If `laloc` is missing, fails, or cannot read a file, say so. Count the
 - **The input is never run.** No executable, script, macro, notebook c
 - `src/transaction.js:225-226,609-610`: the SIGINT/SIGTERM rollback ha
-description: Guide safe, user-approved reduction of repository code si
 - `.msg`: without extract-msg the look lists the OLE streams and says 
 Subtitles first, with no login. With `yt-dlp` (an existing install; do
 Do not use to add or keep restrictions
@@ -57,3 +52,15 @@ description: 'Fork or copy any repository, from GitHub or a local folder, end to
 description: 'Make a design system end to end from one accent colour
 description: 'Visual tour of one repo or codebase: how it works, a traced request, examples run, README gaps. Use to understand, learn or walk through it. Do not use to fork, review or improve it.'
 description: 'Finance models from SEC filings or your numbers: DCF, LBO, comps, three-statement, budget, Excel. Use to value a company, model a deal, read a 10-K or plan a budget. Do not use to trade or file taxes.'
+# keep (ticket 83 M18, 2026-10-23): the 'Do not use' line of each skill description (200-character rule); skill scope routing
+Do not use to implement work or on ordinary chat.
+Do not use for 2-3 options or measurable checks.
+Do not use to critique a look (SigmaTaste).
+Do not use to cut jargon (sigmawrite).
+Do not use for bugs (SigmaReview).
+Do not use for an unattended rewrite, a line-count contest or a performance audit.
+Do not use to post or reply.
+Do not use for feature ideas (SigmaImprove).
+Do not use without acceptance criteria.
+Do not use to rewrite code, paths or APIs, or override an output contract.
+Do not use for a product dashboard.
