@@ -2,7 +2,7 @@
 
 CSV, TSV, JSON, JSONL, Parquet, Arrow, SQLite, XML, YAML, TOML, dBASE/FoxPro `.dbf` (header decoded, rows profiled like a CSV, deleted records left out; memo text is not read). Give the agent the schema and a sample, never the table. Answers come from a query that you show, not from reading rows.
 
-Also read from their own headers: SPSS `.sav` (every variable label and value label, every case profiled), netCDF classic `.nc` (dimensions, units, every value of every variable), gettext `.mo` and `.po` (entry counts, translated and fuzzy, plurals, the last entry). Every table-like print has a `Last row` (`Last case`, `Last record`) line, so the end of the file is in step 1.
+Also read from their own headers: SPSS `.sav` (every variable label and value label, every case profiled), netCDF classic `.nc` (dimensions, units, every value of every variable), gettext `.mo` and `.po` (entry counts, translated and fuzzy, plurals, the last entry). Every table-like print has a `Last row` (`Last case`, `Last record`) line, so the end of the file is in step 1, and the records at fixed positions (#1-5, 10, 20, 25, 30, 40, 50, 75, 100 ... and the middle) with their file line; plain text, subtitle cues, `.mo` entries and Word paragraphs get the same.
 
 ## When look.py is not enough
 

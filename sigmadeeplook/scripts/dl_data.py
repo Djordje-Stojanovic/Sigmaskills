@@ -380,6 +380,8 @@ def data_csv(look):
         legend = COLUMN_LEGEND if not (prefix_cut or partial) else COLUMN_LEGEND.replace("every count is exact over every row", f"every count is exact over the {profiled:,} rows profiled only (PARTIAL read)")
         if gp.last_line():
             look.line(gp.last_line(), 85, "last")
+            if gp.n == n and not partial:   # row numbers at fixed positions only when every row was profiled
+                gp.marks_facts(look, 74)
         look.line(legend + chr(10) + chr(10).join(crow[:40]) + (f"{chr(10)}... {len(crow) - 40} more columns below" if len(crow) > 40 else ""), 86, "profile")
         if len(crow) > 40:
             look.line("More columns:" + chr(10) + chr(10).join(crow[40:]), 36, "profile")

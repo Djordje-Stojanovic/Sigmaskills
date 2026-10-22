@@ -6,6 +6,10 @@ What a careful reader of any plain-text file wants in step 1, whatever the forma
 - `line_starts`: how often each first word or marker opens a line (`msgid 121`, `msgstr 121`, `#: 120`), for files built from repeated records.
 - `directives`: `.. note::` style directive names with counts.
 - `tail`: the last non-blank lines with their numbers, so a question about the end of the file needs no later step.
+- `landmarks` / `marks_lines` (fix round 9): records at fixed positions (1-5, then 10, 20, 25, 30, 40, 50, 75, 100 ... and the middle), so a
+  question about the Nth line, row, cue, entry or paragraph is answered in step 1 for the round positions a reader asks about most.
+- `rst_structure` (fix round 9): reST title, docinfo fields, tables (grid, simple, list-table, csv-table), code and literal blocks, figures,
+  footnotes, targets and substitutions.
 Every figure is exact over every line. `facts` puts them into a look; `text_profile` in dl_prof calls it.
 """
 import re
@@ -16,6 +20,8 @@ DIRECTIVE_RE = re.compile(r"^\s*\.\.\s+([\w][\w:+-]*)::")
 WORD_RE = re.compile(r"\w+", re.U)
 START_RE = re.compile(r"^\s*([^\s\"']{1,16})")
 TAIL_LINES = 6
+MARK_STEPS = (1, 2, 2.5, 3, 4, 5, 7.5)   # x 10^k: the positions a reader asks about ("the 100th row", "line 250")
+MARK_MAJOR = (1, 5)                      # x 10^k: printed first, in their own line
 
 
 def rst_headings(lines):
@@ -123,4 +129,141 @@ def facts(look, lines, short, pri=84):
     t = tail(lines)
     if t:
         look.line(f"Last lines (the file ends at line {n:,}; the last {len(t)} non-blank lines):\n" + "\n".join(f"{i}: {x}" for i, x in t), pri, "tail")
+    if n > TAIL_LINES:
+        marks_lines(look, n, lambda k: numbered_line(k, lines[k - 1]), "line", pri - 10, f"Lines at fixed positions ({n:,} lines; blank lines count)")
     return len(bl)
+
+
+# ---------------------------------------------------------------- records at fixed positions (fix round 9)
+def landmarks(n):
+    """-> (major, minor): sorted record positions 1..n worth printing. Major: 1, 5, 10, 50, 100, 500 ... the middle and the last record; minor: 2, 3, 4,
+    20, 25, 30, 40, 75, 200, 250 ... (positions over n dropped)."""
+    if n <= 0:
+        return [], []
+    major, minor = set(), set()
+    for k in range(1, 6):
+        (major if k in (1, 5) else minor).add(k)
+    e = 10
+    while e <= n:
+        for m in MARK_STEPS:
+            v = int(m * e)
+            (major if m in MARK_MAJOR else minor).add(v)
+        e *= 10
+    major.add((n + 1) // 2)
+    major.add(n)
+    major = sorted(x for x in major if x <= n)
+    minor = sorted(x for x in minor if x <= n and x not in major)
+    return major, minor
+
+
+def is_landmark(k):
+    """True when position k (1-based) is one `landmarks` would print for some n >= k (the middle aside): for streams of unknown length."""
+    if k <= 5:
+        return True
+    e = 10
+    while e * 10 <= k:
+        e *= 10
+    return any(int(m * e) == k for m in MARK_STEPS)
+
+
+def marks_lines(look, n, show, noun, pri=72, title=None, keep=None):
+    """Two facts with the records at fixed positions: `show(k)` -> the text of record k (1-based), or None to leave it out. `keep`: the
+    positions available (for a stream that kept only some). -> nothing; the facts go into the look."""
+    major, minor = landmarks(n)
+    if keep is not None:
+        major = [k for k in major if k in keep]
+        minor = [k for k in minor if k in keep]
+    head = title or f"{noun.capitalize()}s at fixed positions ({n:,} in all; #k = the k-th {noun})"
+    for part, ks, p in (("", major, pri), (" (more positions)", minor, pri - 8)):
+        rows = []
+        for k in ks:
+            t = show(k)
+            if t is not None:
+                rows.append(t)
+        if rows:
+            look.line(f"{head}{part}:" + chr(10) + chr(10).join(rows), p, "marks")
+
+
+def numbered_line(k, text, width=110):
+    t = " ".join(text.split())
+    return f"line {k:,}: {t[:width] if t else '(blank)'}"
+
+
+# ---------------------------------------------------------------- reStructuredText structure (fix round 9)
+DOCINFO_RE = re.compile(r"^:([A-Za-z][\w -]{0,30}):\s+(\S.*)$")
+GRID_RE = re.compile(r"^\s*\+[-=+]{3,}\+\s*$")
+SIMPLE_RE = re.compile(r"^\s*={2,}(\s+={2,})+\s*$")
+CODE_DIRECTIVES = {"code-block", "code", "sourcecode", "highlight-block", "doctest", "testcode", "ipython"}
+TABLE_DIRECTIVES = {"list-table", "csv-table", "table", "flat-table"}
+
+
+def rst_structure(lines, heads):
+    """-> dict of reST facts: title, docinfo fields, tables, code blocks, figures, footnotes, citations, targets, substitutions, comments."""
+    out = {"fields": [], "tables": 0, "code": 0, "figures": 0, "images": 0, "footnotes": 0, "citations": 0, "targets": 0, "substitutions": 0, "toctree": 0}
+    if heads:
+        out["title"] = heads[0][1]
+    for ln in lines[:80]:
+        m = DOCINFO_RE.match(ln)
+        if m:
+            out["fields"].append((m.group(1), m.group(2).strip()))
+    n = len(lines)
+    in_grid = in_simple = False
+    simple_rules = 0
+    for i, ln in enumerate(lines):
+        s = ln.strip()
+        g = bool(GRID_RE.match(ln))
+        if g and not in_grid:
+            out["tables"] += 1
+        in_grid = g or (in_grid and s.startswith("|"))
+        if SIMPLE_RE.match(ln):
+            if not in_simple:
+                in_simple, simple_rules = True, 0
+            simple_rules += 1
+            if simple_rules == 2:
+                out["tables"] += 1
+        elif not s and in_simple and (i + 1 >= n or not lines[i + 1].strip()):
+            in_simple = False
+        m = DIRECTIVE_RE.match(ln)
+        if m:
+            name = m.group(1).lower()
+            if name in TABLE_DIRECTIVES:
+                out["tables"] += 1
+            elif name in CODE_DIRECTIVES:
+                out["code"] += 1
+            elif name == "figure":
+                out["figures"] += 1
+            elif name == "image":
+                out["images"] += 1
+            elif name == "toctree":
+                out["toctree"] += 1
+            continue
+        if s.startswith(".. [#") or re.match(r"^\.\.\s+\[\d+\]", s):
+            out["footnotes"] += 1
+        elif re.match(r"^\.\.\s+\[[A-Za-z][\w.-]*\]", s):
+            out["citations"] += 1
+        elif re.match(r"^\.\.\s+_[^:]+:", s):
+            out["targets"] += 1
+        elif re.match(r"^\.\.\s+\|[^|]+\|", s):
+            out["substitutions"] += 1
+        elif s.endswith("::") and not s.startswith(".."):
+            j = i + 1   # a literal block: '::' at the end of a paragraph, then a blank line and an indented block
+            while j < n and not lines[j].strip():
+                j += 1
+            if j < n and lines[j][:1].isspace() and j > i + 1:
+                out["code"] += 1
+    return out
+
+
+def rst_facts(look, lines, heads, short, pri=86):
+    """The reST facts in the look; -> (tables, code blocks) for the counts line."""
+    r = rst_structure(lines, heads)
+    bits = []
+    if r.get("title"):
+        bits.append(f"Title: {short(r['title'], 80)}")
+    bits += [f"{k}: {short(v, 60)}" for k, v in r["fields"][:12]]
+    if bits:
+        look.line("Document title and fields: " + "; ".join(bits), pri, "structure")
+    extra = [(k, r[k]) for k in ("figures", "images", "footnotes", "citations", "targets", "substitutions", "toctree") if r[k]]
+    if extra:
+        look.line("reST parts: " + "; ".join(f"{k} {v:,}" for k, v in extra) + f"; tables {r['tables']:,}; code and literal blocks {r['code']:,}", pri - 6, "structure")
+    return r["tables"], r["code"]

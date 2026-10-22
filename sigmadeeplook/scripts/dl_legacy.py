@@ -138,24 +138,48 @@ def po_facts(look, text):
 
 
 def look_gettext(look):
-    """A binary .mo catalogue: header, entry table, plurals, contexts, first and last entry."""
+    """A binary .mo catalogue: header, entry table, plurals, contexts, untranslated entries, the first, last and Nth entries, and every
+    entry in text.md (fix round 9: each table row is checked against the file size; a damaged one is flagged CORRUPT, never guessed)."""
     raw = look.path.read_bytes()
-    if len(raw) < 28:
-        look.line("Gettext .mo file too short for its header.")
+    size = len(raw)
+    if size < 28:
+        look.flag("CORRUPT", "header", f"{size} bytes; a .mo header needs 28", "not a readable gettext catalogue")
+        look.line(f"Gettext .mo file too short for its header ({size} bytes).")
         return
     m = struct.unpack_from("<I", raw, 0)[0]
+    if m not in (0x950412DE, 0xDE120495):
+        look.flag("CORRUPT", "magic", f"0x{m:08x}", "not the gettext magic number")
+        return
     e = "<" if m == 0x950412DE else ">"
     rev, n, oo, to, hs, ho = struct.unpack_from(e + "6I", raw, 4)
+    major, minor = rev >> 16, rev & 0xFFFF
+    room = max(0, (size - 28) // 16)
+    problems = []
+    if n > room:
+        problems.append(f"{n:,} entries declared, room for at most {room:,}")
+    if oo + 8 * min(n, room) > size or to + 8 * min(n, room) > size:
+        problems.append(f"entry tables at {oo:,} and {to:,} run past the end of the {size:,}-byte file")
+    if hs and ho + 4 * hs > size:
+        problems.append(f"hash table ({hs:,} slots at {ho:,}) runs past the end")
+    if major > 1:
+        problems.append(f"unknown format revision {major}.{minor}")
     look.headline = f"Gettext binary catalogue: {max(0, n - 1):,} entries"
     look.fact("mo_entries", n)
     ents, bad = [], 0
-    for i in range(min(n, 5_000_000)):
-        try:
-            ol, op = struct.unpack_from(e + "2I", raw, oo + 8 * i)
-            tl, tp = struct.unpack_from(e + "2I", raw, to + 8 * i)
-            ents.append((raw[op:op + ol], raw[tp:tp + tl]))
-        except struct.error:
+    for i in range(min(n, room, 5_000_000)):
+        if oo + 8 * i + 8 > size or to + 8 * i + 8 > size:
+            bad += min(n, room) - i
+            break
+        ol, op = struct.unpack_from(e + "2I", raw, oo + 8 * i)
+        tl, tp = struct.unpack_from(e + "2I", raw, to + 8 * i)
+        if op + ol > size or tp + tl > size:
             bad += 1
+            continue
+        ents.append((raw[op:op + ol], raw[tp:tp + tl]))
+    if bad:
+        problems.append(f"{bad:,} table rows point outside the file")
+    if problems:
+        look.flag("CORRUPT", "entry table", "; ".join(problems), "the readable rows are listed; the rest is not guessed")
     enc = "utf-8"
     hdr = next((t for o, t in ents if o == b""), b"")
     h = _header_fields(hdr.decode("utf-8", "replace"))
@@ -171,19 +195,34 @@ def look_gettext(look):
     body = [(o, t) for o, t in ents if o != b""]
     pl = [x for x in body if b"\0" in x[0]]
     cx = [x for x in body if b"\x04" in x[0]]
-    major, minor = rev >> 16, rev & 0xFFFF
-    P.counts(look, [("entries", len(body)), ("table entries incl. header", n), ("plural entries", len(pl)), ("with context", len(cx)), ("hash table size", hs)], 96, "Gettext binary catalogue counts")
+    un = [x for x in body if not x[1].replace(b"\0", b"").strip()]
+    src_words = sum(len(dec(o.split(b"\x04")[-1]).split()) for o, _ in body)
+    tr_words = sum(len(dec(t).replace("\0", " ").split()) for _, t in body)
+    P.counts(look, [("entries", len(body)), ("table entries incl. header", n), ("plural entries", len(pl)), ("with context", len(cx)),
+                    ("untranslated (empty msgstr)", len(un)), ("source words", src_words), ("translation words", tr_words), ("hash table size", hs)], 96,
+             "Gettext binary catalogue counts")
     look.line(f"Gettext binary catalogue: format revision {major}.{minor}, {'little' if e == '<' else 'big'}-endian, {len(body):,} entries ({n:,} in the table with the header), "
-              f"{len(pl):,} plural, {len(cx):,} with context, charset {enc}" + (f"; {bad} unreadable table rows" if bad else "") + ".", 94, "structure")
+              f"{len(pl):,} plural, {len(cx):,} with context, charset {enc}; tables: msgids at byte {oo:,}, translations at {to:,}, hash {hs:,} slots at {ho:,}; "
+              f"file {size:,} bytes" + (f"; {bad} unreadable table rows" if bad else "") + ".", 94, "structure")
     if h:
         look.line("Catalogue header: " + _header_line(h), 95, "structure")
-    if body:
-        def show(x):
-            o, t = x
-            o = dec(o).replace("\x04", " | ").replace("\0", " / ")
-            return f"'{short(o, 60)}' -> '{short(dec(t).replace(chr(0), ' / '), 60)}'"
-        look.line(f"First entry (table order, sorted by msgid): {show(body[0])}. Last entry: {show(body[-1])}. Last 3 entries: " + "; ".join(show(x) for x in body[-3:]) + ".", 93, "structure")
-        look.excerpt("Entries", "\n".join(f"{i}: {show(x)}" for i, x in enumerate(body[:12], 1)), pri=40)
+    if not body:
+        look.step("Gettext .mo header and entries", "stdlib")
+        return
+
+    def show(x, w=60):
+        o, t = x
+        o = dec(o).replace("\x04", " | ").replace("\0", " / ")
+        return f"'{short(o, w)}' -> '{short(dec(t).replace(chr(0), ' / '), w)}'"
+    hdr_first = bool(ents) and ents[0][0] == b""
+    look.line(f"First entry (table order, sorted by msgid; #1 is the first after the header{', which is table row 0' if hdr_first else ''}): {show(body[0])}. "
+              f"Last entry (#{len(body):,}): {show(body[-1])}. Last 3 entries: " + "; ".join(show(x) for x in body[-3:]) + ".", 93, "tail")
+    if un:
+        idx = [i for i, x in enumerate(body, 1) if not x[1].replace(b"\0", b"").strip()]
+        look.line(f"Untranslated entries (empty msgstr), by #: " + ", ".join(str(i) for i in idx[:20]) + (f" ... last #{idx[-1]}" if len(idx) > 20 else ""), 80, "structure")
+    import dl_textx
+    dl_textx.marks_lines(look, len(body), lambda k: f"#{k} {show(body[k - 1], 50)}", "entry", 84, f"Entries at fixed positions ({len(body):,} entries; #k = the k-th entry after the header)")
+    look.write_text("text.md", "\n".join(f"#{i} {show(x, 200)}" for i, x in enumerate(body, 1)), "every entry in table order: #, msgid (context | msgid, plural forms split by /) -> msgstr", value=6)
     look.step("Gettext .mo header and entries", "stdlib")
 
 

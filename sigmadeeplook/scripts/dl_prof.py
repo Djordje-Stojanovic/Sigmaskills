@@ -16,6 +16,8 @@ import math
 import re
 from collections import Counter
 
+import dl_textx
+
 DISTINCT_CAP = 50_000      # distinct values kept with their counts per field
 HASH_CAP = 5_000_000       # past that, distinct values are counted by hash up to this many
 ENUM_ALL = 40              # a field with at most this many distinct values gets every value with its count (in --more)
@@ -295,12 +297,15 @@ class Profiler:
         self.fields, self.n = {}, 0
         self.keys_per_record = Counter()
         self.last = None   # (index, [(field, value)]) of the last record fed: the end of the file is a fact too
+        self.marks = {}    # record number -> (index, pairs) at the fixed positions (1-5, 10, 20, 25 ...): "the 100th row" is a fact too
 
     def add(self, rec, idx=None):
         self.n += 1
         idx = self.n if idx is None else idx
         flat = flat_of(rec)
         self.last = (idx, flat)
+        if dl_textx.is_landmark(self.n):
+            self.marks[self.n] = (idx, list(flat.items()))
         self.keys_per_record[len(flat)] += 1
         for k, v in flat.items():
             f = self.fields.get(k)
@@ -321,8 +326,23 @@ class Profiler:
         self.n += 1
         co = self.coerce
         self.last = (idx, cols, values)
+        if dl_textx.is_landmark(self.n):
+            self.marks[self.n] = (idx, [(f.name, v) for f, v in zip(cols, values)])
         for f, v in zip(cols, values):
             f.add(v, idx, co)
+
+    def marks_facts(self, look, pri=74, width=36, fields=10):
+        """The records at fixed positions (row 1-5, 10, 20, 25 ... 100 ...) as two facts, each with its file index."""
+        noun = "row" if self.label in ("line", "row", "sheet row") else self.label
+
+        def show(k):
+            if k not in self.marks:
+                return None
+            idx, pairs = self.marks[k]
+            body = "; ".join(f"{a}={short(v, width)}" for a, v in pairs[:fields]) + (f"; +{len(pairs) - fields} more" if len(pairs) > fields else "")
+            return f"#{k} ({self.label} {idx}): {body}"
+        if self.n > 3:
+            dl_textx.marks_lines(look, self.n, show, noun, pri, keep=set(self.marks))
 
     def last_line(self, width=44, fields=16):
         """'Last row (line 801; 800 in all): id=800; name=n0 ...': the final record, so a question about the end of the file needs no later step."""
@@ -502,6 +522,7 @@ def emit(look, p, extra, what, key_pri=88, more_pri=30, field_limit=24, write_na
     ll = p.last_line()
     if ll:
         look.line(prefix + ll, key_pri - 2, "last")
+        p.marks_facts(look, key_pri - 14)
     head = f"{what}: {fmt(p.n)} records, {fmt(len([f for f in p.fields if not f.endswith(LEN)]))} fields"
     look.line(head + ". Fields (type, missing, distinct, min/max with the " + p.label + " where it first occurs, sum, mean, top values):\n"
               + "\n".join("  " + x for x in fl[:field_limit]) + (f"\n  ... {len(fl) - field_limit} more fields below" if len(fl) > field_limit else ""), key_pri, "profile")
@@ -597,6 +618,9 @@ def text_profile(look, text, pri=90, kind="Text"):
     per_level = Counter(h[0] for h in heads)
     pairs = [("lines", n), ("non-blank lines", n - blank), ("words", words), ("characters", len(text))]
     paragraphs = dl_textx.facts(look, lines, short, pri - 6)
+    is_rst = bool(rst) or str(getattr(look, "path", "")).lower().endswith((".rst", ".rest")) or len(dl_textx.directives(lines)) >= 2
+    if is_rst:   # Sphinx files often use only = and - underlines (read as markdown titles above): the reST parts are counted all the same
+        tables, fences = dl_textx.rst_facts(look, lines, heads, short, pri - 2)
     if paragraphs > 1:
         pairs.append(("paragraphs", paragraphs))
     if heads:

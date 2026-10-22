@@ -45,8 +45,9 @@ def read_cfb(data):
         fat += struct.unpack(f"<{ssz // 4}I", sector(sec).ljust(ssz, b"\0"))
 
     def chain(start, table, limit=1 << 20):
-        out, s = [], start
-        while s < FREE - 1 and s < len(table) and len(out) < limit:
+        out, s, seen = [], start, set()
+        while s < FREE - 1 and s < len(table) and len(out) < limit and s not in seen:   # a damaged table can loop: each sector once
+            seen.add(s)
             out.append(s)
             s = table[s]
         return out
