@@ -1,6 +1,6 @@
 ---
 name: sigmafork
-description: 'Fork or copy any repository, from GitHub or a local folder, end to end, then onboard the owner. One grill round of 8 questions, a study of the source with a chosen research depth, a copy whose paths, links and git remotes can never write into the original, the chosen skill bundle installed, a visual 10-15 minute HTML onboarding course with real example projects, and a question round that becomes part 2 of the course. Use when the user wants to fork, clone, copy or duplicate a repo or project folder and learn it. Do not use for a plain git clone with no onboarding, to sync or merge an existing fork, or to review the code (SigmaReview).'
+description: Fork or copy a repo or folder, isolated from the original, then onboard the owner with an HTML course. Use when the user wants to fork or copy a project and learn it. Do not use for a plain git clone.
 ---
 
 # SigmaFork

@@ -445,6 +445,13 @@ test('skill names and descriptions follow the Agent Skills limits', () => {
   }
 });
 
+test('skill descriptions stay within 200 characters (the writing-for-agents trigger budget)', () => {
+  for (const skill of KNOWN_SKILLS) {
+    const { description } = parseFrontmatter(read(path.join(skill.id, 'SKILL.md')));
+    assert.ok(description.length <= 200, `${skill.id}: description has ${description.length} characters (max 200)`);
+  }
+});
+
 test('every SKILL.md header is strict YAML: a plain description never holds ": "', () => {
   for (const skill of KNOWN_SKILLS) {
     const raw = read(path.join(skill.id, 'SKILL.md')).match(/^description:[ 	]*(.*)$/m)[1].trim();

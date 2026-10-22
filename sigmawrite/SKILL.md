@@ -1,6 +1,6 @@
 ---
 name: sigmawrite
-description: Write and explain in clear, STE-inspired Simplified Technical English — high quality, readable, still technical. Use when the user wants less jargon or gibberish, ASD-STE100 / simplified technical English, or outsider-clear explanations. Do not use to rewrite code identifiers, paths, or APIs, or to override another skill’s rigid output contract.
+description: Write clear, STE-inspired technical English. Use when the user wants less jargon, gibberish or outsider-clear explanations. Do not use to rewrite code, paths or APIs, or override an output contract.
 ---
 
 # SigmaWrite

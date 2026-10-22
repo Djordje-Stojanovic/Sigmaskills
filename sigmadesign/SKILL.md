@@ -1,6 +1,6 @@
 ---
 name: sigmadesign
-description: 'Make a design system end to end from one accent colour: a DESIGN.md of tokens (colour, type, spacing, corners, components), dark and light, colour packs, generated CSS and a sample page. Then apply it to any page or app and integrate it across a repo (one DESIGN.md, a pointer in AGENTS.md, hard-coded colours moved to tokens). Use when the user wants a design system, design template, theme, colour pack or a new look for a site or app, or wants a repo to follow one design file. Do not use to critique an existing page (SigmaTaste), to draw a logo or picture, or to write the product copy.'
+description: Build a repo's design system from one accent colour (DESIGN.md tokens). Use when the user wants a design system, template, theme or one design file. Do not use to critique a look (SigmaTaste).
 ---
 
 # SigmaDesign

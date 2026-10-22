@@ -4,6 +4,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- Every skill description is 200 characters or less. Fourteen skills were longer (up to 791); each keeps its job, its trigger and its exclusion line. A repository test now fails above 200 characters.
+- `sigmadeeplook` `references/office.md`: the legacy `.doc` paragraph list names the fixed positions the code prints (#1-5, 10, 20, 25, 30, 40, 50, 75, 100 and the middle). A test keeps the two in step.
+
 ## [0.16.1] — 2026-10-22
 
 ### Changed
