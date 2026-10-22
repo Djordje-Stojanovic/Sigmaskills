@@ -644,22 +644,6 @@ def speech_for(look, dur, ready=None):
     return write_transcript(look, got[0], got[1], dur)
 
 
-def scenes_list(look, dur):
-    ff = look.tool("ffmpeg")
-    if not ff:
-        return
-    r, _, err = look.run_text([ff, "-hide_banner", "-nostats", "-i", str(look.path), "-an", "-vf", "select='gt(scene,0.4)',showinfo", "-fps_mode", "passthrough", "-f", "null", "-"], timeout=300)
-    if r is None:
-        return
-    times = [float(x) for x in re.findall(r"pts_time:([\d.]+)", err)]
-    look.fact("scene_cuts", len(times))
-    if times:
-        look.write_text("scenes.csv", "start_s\n0.0\n" + "\n".join(f"{t:.2f}" for t in times), f"{len(times)} scene cuts (ffmpeg scene score above 0.4)")
-        look.line(f"Scene cuts: {len(times)} (list in scenes.csv).")
-    else:
-        look.line("Scene cuts: none above the 0.4 score (one continuous shot, or soft transitions).")
-
-
 # ---------------------------------------------------------------- sheets
 def grab_png(look, t, width):
     ff = look.tool("ffmpeg")

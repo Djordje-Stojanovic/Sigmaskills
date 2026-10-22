@@ -761,43 +761,33 @@ def safe_extract(look, members, which, dest):
             raise ValueError(f"member escapes the folder: {name}")
         return real
 
+    def copy(src, name):
+        nonlocal total
+        out = target(name)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with src, open(out, "wb") as dst:
+            while True:
+                chunk = src.read(1 << 16)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > MAX_TOTAL or time.time() - t0 > core.TIMEOUT:
+                    raise ValueError("extraction limit hit (bytes or time)")
+                dst.write(chunk)
+        written.append(out)
+
     if zipfile.is_zipfile(p) and look.subtype != "tar":
         with zipfile.ZipFile(p) as z:
             for name in which:
                 info = z.getinfo(name)
-                if info.is_dir() or info.flag_bits & 1:
-                    continue
-                out = target(name)
-                out.parent.mkdir(parents=True, exist_ok=True)
-                with z.open(info) as src, open(out, "wb") as dst:
-                    while True:
-                        chunk = src.read(1 << 16)
-                        if not chunk:
-                            break
-                        total += len(chunk)
-                        if total > MAX_TOTAL or time.time() - t0 > core.TIMEOUT:
-                            raise ValueError("extraction limit hit (bytes or time)")
-                        dst.write(chunk)
-                written.append(out)
+                if not (info.is_dir() or info.flag_bits & 1):
+                    copy(z.open(info), name)
     else:
         with tarfile.open(p, "r:*") as t:
             for name in which:
                 m = t.getmember(name)
-                if not m.isfile():
-                    continue
-                out = target(name)
-                out.parent.mkdir(parents=True, exist_ok=True)
-                src = t.extractfile(m)
-                with open(out, "wb") as dst:
-                    while True:
-                        chunk = src.read(1 << 16)
-                        if not chunk:
-                            break
-                        total += len(chunk)
-                        if total > MAX_TOTAL or time.time() - t0 > core.TIMEOUT:
-                            raise ValueError("extraction limit hit (bytes or time)")
-                        dst.write(chunk)
-                written.append(out)
+                if m.isfile():
+                    copy(t.extractfile(m), name)
     return written
 
 
