@@ -1,6 +1,6 @@
 ---
 name: sigmawritegui
-description: 'SigmaWrite plus a GUI: plain, short English in interactive status and question boards the user reads and types into. Use when the user says "easy talk", asks for a SigmaWriteGUI board, or pastes an EASYTALK REPLY. Keep the mode on until "easy talk off". Do not use for building a product dashboard or for prose editing alone (SigmaWrite).'
+description: Plain, short English in interactive status and question boards. Use when the user says easy talk, asks for a SigmaWriteGUI board or pastes an EASYTALK REPLY. Do not use for a product dashboard.
 ---
 
 # SigmaWriteGUI

@@ -1,6 +1,6 @@
 ---
 name: sigmaimprove
-description: Find what would make a product, game, codebase, or system clearly better, measured against the world's top 1-3 products and best-practice frameworks - across a full category list (new features, speed, latency, control, UI, colors, feel, native feel, accessibility, backend, quality, content, and more). Files one living issue per category (1-20 issues) holding weighed ideas and "look at this" signals, and updates those issues on every later run instead of duplicating them. Use when the user asks for SigmaImprove by name, or asks what to improve, add, cut, or redesign next. Do not use to find bugs, security holes, or slow paths against existing goals (SigmaReview), to shrink code without changing behavior (SigmaRefactor), or to write agent briefs (SigmaBrief). Never edits the system.
+description: Find what would make a product better than the world's top 1-3, one living issue per category. Use when asked for SigmaImprove, feature ideas or what to improve. Do not use for bugs (SigmaReview).
 ---
 
 # SigmaImprove

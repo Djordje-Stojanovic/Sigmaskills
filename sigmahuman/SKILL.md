@@ -1,6 +1,6 @@
 ---
 name: sigmahuman
-description: 'Makes any text read like a person wrote it. Takes text in (pasted, a file, another skill''s output) and writes it back human, or writes new text from a brief, keeps every fact, and can match a voice sample. Lanes: a script for the ear, a book, song lyrics, a chat or email to colleagues, docs, posts. Use to humanize, de-AI or de-slop a draft, or to write a script, chapter, song, message or post in a human voice. Do not use to cut jargon from technical English (sigmawrite) or for a ranked taste plan (sigmataste).'
+description: Rewrites text to read like a person wrote it, keeping every fact, or writes new text from a brief. Use to humanize, de-AI or de-slop a draft or write a script. Do not use to cut jargon (sigmawrite).
 license: MIT
 metadata:
   upstream: "blader/humanizer v3.1.0 (MIT, Siqi Chen)"

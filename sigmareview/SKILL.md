@@ -1,6 +1,6 @@
 ---
 name: sigmareview
-description: Find everything that is wrong in a codebase or system - bugs, security holes, slow or wasteful paths, broken rendering, weak tests, unmet goals - prove each finding, and publish one feature-branch pull request with one review file that any LLM can use to fix every problem, whether there is 1 or 1000. Covers correctness, security testing, and measured performance in one run. Never fixes anything itself. Use when the user asks for SigmaReview by name, or wants a full review, bug hunt, security review, or performance audit of a repository. Do not use for new feature ideas, design taste, or product direction (SigmaImprove), for size-only refactoring (SigmaRefactor), or for reviewing one small diff.
+description: Find and prove what is wrong in a repo (bugs, security, slow paths) and publish one review PR. Use when the user asks for SigmaReview or a full review. Do not use for feature ideas (SigmaImprove).
 ---
 
 # SigmaReview
