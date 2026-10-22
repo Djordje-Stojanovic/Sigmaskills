@@ -1,7 +1,9 @@
 name: PR body check
 
 # Ticket 83 PRBODY (2026-10-21): every pull request body needs a filled Red test, Review and Skills line
-# (template: .github/pull_request_template.md). The job reads only the event payload: no secrets, no network.
+# (template: .github/pull_request_template.md), and the Skills line must name the skills the changed files need
+# (code-review for code, writing-for-agents for SKILL.md, CLAUDE.md, AGENTS.md; 2026-10-22).
+# The job reads the event payload and the git history of the checkout (fetch-depth 0): no secrets, no network.
 # Public repository, so the GitHub-hosted runner is free.
 on:
   pull_request:
@@ -17,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
       - name: Check the Red test, Review and Skills lines
         run: python3 .github/scripts/check_pr_body.py "$GITHUB_EVENT_PATH"
