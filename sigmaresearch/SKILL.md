@@ -1,6 +1,6 @@
 ---
 name: sigmaresearch
-description: 'Read public sources (Reddit, X, Hacker News, GitHub, YouTube, Hugging Face) with access ladders and counts. Use to research a topic or when agents cannot read Reddit or X. Do not post or log in.'
+description: 'Read public sources for general web research, including Reddit, X, Hacker News, GitHub, YouTube comments, Stack Overflow and Hugging Face, video sites and non-English pages, with bundled readers that cache, rate-limit and score sources, an access ladder, a persistence ladder that keeps going route by route until the answer is found (deep and hidden information included), and a count of sources read in full. Use when researching a topic, when asked for N sources or a depth, gathering source evidence, or when agents cannot read Reddit or X reliably. Do not use to post, reply, change accounts, or log in as the owner: it is a reader.'
 ---
 
 # SigmaResearch

@@ -1,6 +1,6 @@
 ---
 name: sigmabrief
-description: 'Prepare paste-ready agent briefs or a session handoff from issues, SigmaReview findings or plain work, in parallel waves. Use only when asked for briefs or handoffs. Do not implement or auto-fire.'
+description: Prepare copy-pastable parallel-agent or single-agent execution briefs from GitHub issues, SigmaReview findings, SigmaImprove issues, features, upgrades, bugs, or plain work statements, grouped into safe parallel waves - or a session brief that lets a fresh agent continue the current conversation. Use only when the user explicitly asks for briefs, handoffs, spawn/dispatch prompts, or parallel agent prompts. Do not use to implement the work, audit a whole repository, open fix PRs against the target product repository, or auto-fire on ordinary chat.
 ---
 
 # SigmaBrief

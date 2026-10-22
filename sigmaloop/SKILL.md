@@ -1,6 +1,6 @@
 ---
 name: sigmaloop
-description: 'Write a paste-ready unattended-run prompt (Claude Code /loop, Codex /goal, Antigravity /goal, pi with lapi, T3 Code) and a loop file from open work. Do not use to start the run.'
+description: Write a paste-ready unattended-run prompt (Claude Code /loop, Codex /goal, Antigravity /goal, pi with lapi, T3 Code) and a loop file from open work after one question round. Do not use to start or work the run.
 ---
 
 # SigmaLoop
