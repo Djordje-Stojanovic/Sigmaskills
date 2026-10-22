@@ -52,17 +52,6 @@ def infer(vals):
     return "float" if seen["float"] else "int"
 
 
-def decode_best(b):
-    for enc in ("utf-8-sig", "utf-16"):
-        try:
-            if enc == "utf-16" and not b.startswith((b"\xff\xfe", b"\xfe\xff")):
-                continue
-            return b.decode(enc), enc
-        except UnicodeDecodeError:
-            pass
-    return b.decode("latin-1"), "latin-1"
-
-
 def look_data(look):
     st = look.subtype
     fn = {"csv": data_csv, "tsv": data_csv, "json": data_json, "jsonl": data_jsonl, "sqlite": data_sqlite, "parquet": data_parquet,
@@ -239,22 +228,6 @@ def profile_findings(look, header, prof, total, repeats):
 
 COLUMN_LEGEND = ("Columns (name: type, null and empty counts, distinct values, min and max with the file line where each first occurs "
                  "(xN = N rows hold it), sum, mean, top values (count)); every count is exact over every row:")
-
-
-def profile_line(p, total):
-    s = p.summary(total)
-    bits = [f"{s['type']}"]
-    if s["null_pct"]:
-        bits.append(f"{s['null_pct']:g} % empty")
-    d = s["distinct"]
-    bits.append(f"{U.compact(d) if isinstance(d, int) and d >= 10000 else d} distinct")
-    if "p50" in s and s.get("p50") is not None:
-        bits.append(f"range {num(s['min'])} to {num(s['max'])}, median {num(s['p50'])}")
-    elif "top_values" in s:
-        bits.append("top: " + ", ".join(f"{v} ({n})" for v, n in s["top_values"][:5]))
-    elif "min" in s:
-        bits.append(f"{str(s['min'])[:24]} .. {str(s['max'])[:24]}")
-    return f"{p.name}: " + ", ".join(bits)
 
 
 QUICK_BYTES = 4 << 20   # the quick tier profiles the first 4 MB of a big table; the line count and the repeated-header search cover the whole file

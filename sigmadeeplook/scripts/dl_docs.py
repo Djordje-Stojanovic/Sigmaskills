@@ -1504,35 +1504,6 @@ def unfold(text):
     return re.sub(r"\r?\n[ \t]", "", text)
 
 
-def mail_ics(look):
-    text = unfold(open(look.path, "rb").read(5 << 20).decode("utf-8", "replace"))
-    events = []
-    for blk in re.findall(r"BEGIN:VEVENT(.*?)END:VEVENT", text, re.S):
-        ev = {}
-        for ln in blk.strip().splitlines():
-            if ":" not in ln:
-                continue
-            k, v = ln.split(":", 1)
-            name, *params = k.split(";")
-            ev[name] = v
-            if name in ("DTSTART", "DTEND"):
-                tz = next((p.split("=", 1)[1] for p in params if p.startswith("TZID=")), "UTC" if v.endswith("Z") else "floating")
-                ev[name + "_TZ"] = tz
-        events.append(ev)
-    buf = io.StringIO()
-    w = csv.writer(buf)
-    w.writerow(["uid", "summary", "start", "start_tz", "end", "organizer"])
-    for e in events:
-        w.writerow([e.get("UID"), e.get("SUMMARY"), e.get("DTSTART"), e.get("DTSTART_TZ"), e.get("DTEND"), e.get("ORGANIZER")])
-    look.write_text("events.csv", buf.getvalue(), f"{len(events)} events with time zone")
-    look.fact("events", [{"summary": e.get("SUMMARY"), "start": e.get("DTSTART"), "tz": e.get("DTSTART_TZ")} for e in events])
-    look.headline = f"calendar, {len(events)} event(s)"
-    look.dims = f"{len(events)} events"
-    look.line(f"Calendar: {len(events)} events. " + "; ".join(f"{e.get('SUMMARY')} at {e.get('DTSTART')} ({e.get('DTSTART_TZ')})" for e in events[:5]))
-    ics_recurrence(look, events)
-    look.ask_human("Is the time zone shown the one you expect?")
-
-
 def ics_recurrence(look, events):
     """Rules in words, the next occurrences, and the traps: forever-repeating events, floating times, rules this look cannot expand."""
     import datetime as dt

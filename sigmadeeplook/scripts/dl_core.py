@@ -342,25 +342,6 @@ def direct_eligible(path, type_, subtype, size):
     return True
 
 
-def collapse_direct(look):
-    """After the usual analysis of a direct-tier file: keep the real flags and facts, drop the summary, artifacts and missing-tool rows."""
-    for a in look.artifacts:
-        try:
-            p = Path(a["path"])
-            if p.is_file() and look.out.resolve() in p.resolve().parents:
-                p.unlink()
-        except OSError:
-            pass
-    for d in sorted((x for x in look.out.rglob("*") if x.is_dir()), reverse=True):
-        try:
-            d.rmdir()  # only empty folders go
-        except OSError:
-            pass
-    look.artifacts, look.steps, look.ask, look.children, look.items, look.cmds = [], [], [], [], [], []
-    look.direct = True
-    look.summary = []
-
-
 SOURCE_CONTENT_MAX = 600_000   # bytes: a text file up to this size is also in the stream, whole, after every fact (--more reaches it)
 SOURCE_KINDS = {"data": {"csv", "tsv", "json", "jsonl", "xml", "yaml", "toml", "ini"}, "code": None, "log": {"log"}, "subtitle": None,
                 "email": {"eml", "ics", "vcf", "mbox"}, "web": {"html"}, "image": {"svg"}}
@@ -980,13 +961,6 @@ class Look:
         except Exception:
             return None
 
-    def need_tool(self, name, step, reason=None):
-        p = self.tool(name)
-        if not p:
-            why = reason or ("disabled by --no-tools" if self.no_tools else f"{name} not found")
-            self.skip(step, why, name)
-        return p
-
     def need_mod(self, name, step, reason=None):
         m = self.mod(name)
         if not m:
@@ -1280,12 +1254,6 @@ def scan_injection(look, text, where, hidden_only=False):
         if n >= 10:
             break
     return n
-
-
-def md_table(headers, rows):
-    out = ["| " + " | ".join(headers) + " |", "|" + "---|" * len(headers)]
-    out += ["| " + " | ".join(esc_cell(c) for c in r) + " |" for r in rows]
-    return "\n".join(out)
 
 
 def entropy(b):
