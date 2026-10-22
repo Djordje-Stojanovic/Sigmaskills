@@ -31,15 +31,15 @@ def body(skills):
 
 
 def test_code_pr_without_code_review_is_missing_it():
-    assert check.missing_skills(body("tdd, pr"), ["lazy_toolkits/x.py"]) == ["code-review"]
+    assert check.missing_skills(body("tdd, pr"), ["tools/x.py"]) == ["code-review"]
 
 
 def test_code_pr_naming_code_review_passes():
-    assert check.missing_skills(body("tdd, code-review, pr"), ["lazy_toolkits/x.py"]) == []
+    assert check.missing_skills(body("tdd, code-review, pr"), ["tools/x.py"]) == []
 
 
 def test_slash_form_counts_as_naming_the_skill():
-    assert check.missing_skills(body("/tdd, /code-review, /pr"), ["lazy_toolkits/x.py"]) == []
+    assert check.missing_skills(body("/tdd, /code-review, /pr"), ["tools/x.py"]) == []
 
 
 def test_none_invoked_does_not_name_code_review():
@@ -128,12 +128,12 @@ def run_main(tmp_path, monkeypatch, pr_body, files):
 
 
 def test_main_fails_a_code_pr_without_code_review(tmp_path, monkeypatch, capsys):
-    assert run_main(tmp_path, monkeypatch, body("tdd, pr"), ["lazy_toolkits/x.py"]) == 1
+    assert run_main(tmp_path, monkeypatch, body("tdd, pr"), ["tools/x.py"]) == 1
     assert "code-review" in capsys.readouterr().out
 
 
 def test_main_passes_a_code_pr_with_code_review(tmp_path, monkeypatch):
-    assert run_main(tmp_path, monkeypatch, body("tdd, code-review, pr"), ["lazy_toolkits/x.py"]) == 0
+    assert run_main(tmp_path, monkeypatch, body("tdd, code-review, pr"), ["tools/x.py"]) == 0
 
 
 def test_main_still_fails_a_body_without_the_lines(tmp_path, monkeypatch):
