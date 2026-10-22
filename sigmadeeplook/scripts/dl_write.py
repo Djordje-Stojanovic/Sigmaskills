@@ -93,7 +93,7 @@ def headline(look):
     if look.headline:
         return look.headline, None
     first = next((it for it in sorted(look.items, key=lambda i: (-i[1], i[3])) if it[0] == "key" and "```" not in it[2]
-                  and (it[4] if len(it) > 4 else "") not in ("note", "counts", "profile", "aggregates", "values", "records", "outline", "tree", "props", "manifest", "formulas", "timeline", "tail", "last", "structure")), None)
+                  and (it[4] if len(it) > 4 else "") not in ("note", "counts", "profile", "aggregates", "values", "records", "outline", "tree", "props", "manifest", "formulas", "timeline", "tail", "last", "structure", "marks")), None)
     if first:
         return _clip(first[2].split(". ")[0].rstrip("."), 150), first
     return f"{look.subtype or look.type}, {core.human(look.size)}", None
@@ -183,6 +183,8 @@ def build_stream(look):
     for it in look.items:
         if it is used:
             rest = it[2].split(". ", 1)[1].strip() if ". " in it[2] else ""
+            if len(it[2].split(". ")[0]) > 150:   # the headline clipped the first sentence: the whole fact stays, nothing is lost
+                rest = it[2]
             if rest and "```" not in rest:   # the headline keeps only the first sentence: the rest (columns, row counts) stays a fact
                 raw.append((it[0], it[1], rest, it[4] if len(it) > 4 else "", 1000 + it[3]))
             continue
@@ -533,9 +535,11 @@ def first_budget(budget=None):
 
 
 def render_first(look, stream=None, budget=None, detail=False):
-    """-> (text, next_index): step 1, the first ~1,000 tokens (or --budget N), recap and footer included."""
+    """-> (text, next_index): step 1, the first ~1,000 tokens (or --budget N), recap and footer included. The raw-content cap holds at the
+    default budget only: a caller who asks for more tokens gets them filled (content follows every fact in the stream anyway)."""
     stream = stream if stream is not None else look.stream
-    chunks, nxt = window(stream, 0, first_budget(budget), detail, CONTENT_FIRST)
+    cap = CONTENT_FIRST if not budget or budget <= FIRST_TOKENS else None
+    chunks, nxt = window(stream, 0, first_budget(budget), detail, cap)
     return render_window(chunks, 0, detail) + footer(stream, 0, nxt, 0, detail=detail), nxt
 
 

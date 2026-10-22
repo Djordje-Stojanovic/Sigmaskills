@@ -69,14 +69,16 @@ _COMMON_CE.update({c: 0.8 for c in "ăâîșțşţĂÂÎȘȚŞŢĺľŕĹĽŔ"})
 _COMMON_TR = {c: 1.2 for c in "ğışĞİŞ"}
 _COMMON_TR.update(_COMMON_LATIN)
 REPL = chr(0xFFFD)
+WORDISH_RE = re.compile(r"[^\s\d.,;:|\"'()\[\]{}<>=+/\_-]+")   # a word for scoring: split on space, digits and the usual field and number marks
 _CODEPAGES = ("cp1252", "cp1250", "cp1251", "koi8_r", "cp866", "cp1253", "cp1254")
 
 
 def _latin_score(text, table):
     """Mean plausibility of the non-ASCII characters of a Latin-script reading: common letters score high, symbols and control codes low,
-    and words made mostly of accented letters (a Cyrillic page read as Latin) are punished."""
+    and words made mostly of accented letters (a Cyrillic page read as Latin) are punished. A word is a run of letters and the bytes that
+    decode to symbols (fix round 9): a delimited record ('4000;Èâàíîâ;Ìîñêâà') is three words, not one word mostly made of ASCII."""
     total = n = 0.0
-    for m in re.finditer(r"\S+", text):
+    for m in WORDISH_RE.finditer(text):
         w = m.group()
         hi = [c for c in w if ord(c) > 127]
         if not hi:
@@ -123,7 +125,7 @@ def _script_score(text, table, lo, hi):
     """Mean plausibility of the letters of one script: how common each letter is in real text; a word that mixes ASCII letters with this
     script, or flips from lower to upper case inside the word, is almost surely the wrong code page."""
     total = n = 0.0
-    for m in re.finditer(r"\S+", text):
+    for m in WORDISH_RE.finditer(text):
         w = m.group()
         if not any(ord(c) > 127 for c in w):
             continue

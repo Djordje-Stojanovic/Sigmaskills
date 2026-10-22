@@ -465,7 +465,7 @@ def parse_cues(text, kind, numbers=None):
                 m = re.match(r"(\d+):(\d{2}):(\d{2})\.(\d{3}),(\d+):(\d{2}):(\d{2})\.(\d{3})", lines[0]) if lines else None
                 if m:
                     g = m.groups()
-                    cues.append((hms(g[0], g[1], g[2], g[3]), hms(g[4], g[5], g[6], g[7]), " ".join(lines[1:])))
+                    cues.append((hms(g[0], g[1], g[2], g[3]), hms(g[4], g[5], g[6], g[7]), chr(10).join(lines[1:])))   # each text line kept (fix round 9)
             return cues
         rx = CUE_SRT if kind == "srt" else CUE_VTT
         for b in re.split(r"\r?\n\r?\n", text.strip()):
@@ -586,6 +586,10 @@ def look_subtitle(look):
     def crow(i):
         return f"#{nums[i]} {stamp(cues[i][0])}-{stamp(cues[i][1])} ({durs[i]:.3f} s): {P.short(' / '.join(x for x in plain[i].splitlines() if x.strip()), 70)}"
     look.line(f"First cue: {crow(0)}. Last cue: {crow(len(cues) - 1)}. Cue numbers run {nums[0]} to {nums[-1]}.", 84, "tail")
+    if len(cues) > 3:
+        look.line("Last 3 cues: " + "; ".join(crow(i) for i in range(len(cues) - 3, len(cues))), 83, "tail")
+    import dl_textx
+    dl_textx.marks_lines(look, len(cues), lambda k: crow(k - 1), "cue", 82, f"Cues at fixed positions ({len(cues):,} cues; #k = the k-th cue in the file)")
     look.line("Longest cues: " + "; ".join(crow(i) for i in order[:5]), 80)
     look.line("Shortest cues: " + "; ".join(crow(i) for i in order[::-1][:5]), 78)
     look.line("Cues ranked by duration, longest first (top 40): " + "; ".join(crow(i) for i in order[:40]), 30, "ranking")

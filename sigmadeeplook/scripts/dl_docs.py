@@ -1147,6 +1147,11 @@ def office_legacy(look):
         look.flag("MACRO", "OLE", "VBA storage present", "the macros were not opened or run")
         import dl_adapt
         dl_adapt.olevba_facts(look, open(look.path, "rb").read(32 << 20), look.path.name)
+    if st == "doc":   # fix round 9: the text, tables, styles and properties from the file's own bytes first; LibreOffice only renders pages
+        import dl_worddoc
+        if dl_worddoc.look_doc(look):
+            render_office(look)
+            return
     so = look.tool("soffice")
     done = False
     target = {"doc": "docx", "xls": "xlsx", "ppt": "pptx"}[st]

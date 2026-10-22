@@ -4,6 +4,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmadeeplook` fix round 9 (set 8 miss categories): records at fixed positions (#1-5, 10, 20, 25 ... 100 ... the middle and the last) for text lines, table rows, subtitle cues, `.mo` entries and Word paragraphs; a standard-library reader for legacy Word `.doc` (Word 97-2003, 6 and 95: header, saved properties, paragraphs with heading levels, tables with rows and cells, last paragraphs); exact per-channel sample statistics for Sun `.au`; every `.mo` entry in `text.md`; reST title, fields, tables and code blocks counted.
+
+### Fixed
+
+- `sigmadeeplook`: a `--budget` above 1,000 tokens is now filled with file content (step 1 stopped at a 230-token content cap); semicolon records in Windows-1251 were read as Windows-1252; `.sbv` cues with two text lines were joined into one; a long first fact used as the title lost its end; a damaged `.mo`, `.au` or `.doc` is flagged `CORRUPT`; a looping OLE sector chain no longer reads the same sector again.
+
 ## [0.16.0] — 2026-10-22
 
 ### Added

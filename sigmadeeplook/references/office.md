@@ -17,7 +17,7 @@ Excel binary workbooks (`.xlsb`) are read from their records with the standard l
 2. docx: counts of `w:ins`, `w:del`, `w:moveFrom` by author (`revisions.json`, flag `TRACKED-CHANGES`), comments with author (`comments.json`), footnotes, headers and footers. Text in `text.md` with `[+inserted+]` and `[-deleted-]` marks (pandoc `--track-changes=all` when present, else a stdlib walk over `w:t` and `w:delText`).
 3. xlsx: sheets, visibility (`HIDDEN-SHEET`), size, merged ranges (`MERGED-CELLS`), formulas against cached values (`UNCACHED-FORMULA` count). When any formula has no cached value, LibreOffice recalculates a copy and the result is quoted as "recalculated". Output `workbook.json`, `cells.md` (shape, header, head, tail, 10 random rows), never a full dump.
 4. pptx: per slide, text including text inside groups, tables, picture alt text, speaker notes, hidden slides (`HIDDEN-SLIDE`), charts count (`slides.md`). Hidden slides are exported to the render.
-5. Legacy `.doc`, `.xls`, `.ppt`: converted to OOXML by LibreOffice first, then the steps above.
+5. Legacy `.doc` (Word 97-2003, Word 6 and 95): read from its own bytes with the standard library: header (version, language, flags), saved properties (title, author, dates, pages), every paragraph with its heading level from the style sheet, tables with rows and cells, the last paragraphs and the paragraphs at fixed positions (#1, 5, 10, 50, 100 ...). A damaged file is flagged `CORRUPT` and falls back to LibreOffice. Legacy `.xls` and `.ppt`: converted to OOXML by LibreOffice first, then the steps above.
 6. Render: `soffice.com` (Windows) or `soffice` with a throwaway profile, macro security at its highest level, to PDF, then the PDF pipeline for pages and a slide or page sheet.
 
 ## Failure modes

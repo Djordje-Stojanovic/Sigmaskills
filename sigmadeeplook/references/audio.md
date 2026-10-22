@@ -9,7 +9,7 @@ An agent cannot hear. `look.py` turns audio into numbers, text and two pictures.
 - Music beyond tempo (key, chords, stems, notes): not in v1. Say so under Limits.
 - Sound effects: no label model is bundled. Describe the waveform and spectrogram, and ask.
 
-A `Sound activity` line counts the bursts of sound over the quiet floor (beeps, knocks, alarms, words): how many, when each starts and ends, the strongest frequency of each, and when the last one ends. Sun/NeXT `.au` files are read from their own header. Over 30 minutes it says it read the first 30 and flags `PARTIAL`.
+A `Sound activity` line counts the bursts of sound over the quiet floor (beeps, knocks, alarms, words): how many, when each starts and ends, the strongest frequency of each, and when the last one ends. Sun/NeXT `.au` files are read from their own header, with exact sample statistics per channel (min, max, mean, RMS and peak in dBFS, zero and full-scale samples, the first non-zero frame, the first and last frames); a header that points outside the file is flagged `CORRUPT`. Over 30 minutes it says it read the first 30 and flags `PARTIAL`.
 
 ## Pipeline
 

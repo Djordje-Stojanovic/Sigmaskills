@@ -216,6 +216,8 @@ def container_counts(look):
             c = au_counts(look.path)
             if c:
                 au_lines(look, c)
+            else:
+                look.flag("CORRUPT", ".au header", f"{look.size} bytes; a .snd header needs 24 starting with '.snd'", "no sample format to read")
         elif st == "flac":
             c = flac_counts(look.path)
             if c:
@@ -231,6 +233,7 @@ def container_counts(look):
 # ---------------------------------------------------------------------------------------------- Sun/NeXT .au (.snd)
 AU_ENC = {1: ("mu-law", 1), 2: ("linear PCM 8-bit", 1), 3: ("linear PCM 16-bit", 2), 4: ("linear PCM 24-bit", 3), 5: ("linear PCM 32-bit", 4),
           6: ("float 32-bit", 4), 7: ("float 64-bit", 8), 27: ("A-law", 1)}
+AU_FULL = {1: 32768, 27: 32768, 2: 128, 3: 32768, 4: 8388608, 5: 2147483648, 6: 1.0, 7: 1.0}   # full scale of each encoding's sample value
 AU_READ_CAP = 64 << 20
 
 
@@ -247,58 +250,153 @@ def au_counts(path):
     have = max(0, size - off)
     n = have if dsize in (0, 0xFFFFFFFF) else min(dsize, have)
     frames = n // (width * ch) if width and ch else None
-    return {"offset": off, "declared": dsize, "bytes": n, "enc": enc, "enc_name": name, "width": width, "rate": rate, "ch": ch, "frames": frames, "note": note, "size": size}
+    problems = []
+    if off < 24 or off > size:
+        problems.append(f"data offset {off:,} is outside the {size:,}-byte file")
+    if dsize not in (0, 0xFFFFFFFF) and dsize > have:
+        problems.append(f"header says {dsize:,} data bytes, {have:,} present (cut short)")
+    if not ch or not rate:
+        problems.append(f"{ch} channels at {rate} Hz")
+    if not width:
+        problems.append(f"encoding {enc} is not a sample format this reader decodes")
+    return {"offset": off, "declared": dsize, "bytes": n, "enc": enc, "enc_name": name, "width": width, "rate": rate, "ch": ch, "frames": frames, "note": note,
+            "size": size, "problems": problems}
 
 
-def au_samples(path, c, cap_bytes=AU_READ_CAP):
-    """Mono samples in -1..1 as array('f'), the first channel of a file read up to `cap_bytes`; None for an encoding not decoded."""
+def _ulaw_table():
+    out = []
+    for b in range(256):
+        v = ~b & 0xFF
+        t = (((v & 0x0F) << 3) + 0x84) << ((v & 0x70) >> 4)
+        out.append((0x84 - t) if v & 0x80 else (t - 0x84))
+    return out
+
+
+def _alaw_table():
+    out = []
+    for b in range(256):
+        v = b ^ 0x55
+        seg = (v & 0x70) >> 4
+        t = ((v & 0x0F) << 4) + 8 if seg == 0 else (((v & 0x0F) << 4) + 0x108) << (seg - 1)
+        out.append(t if v & 0x80 else -t)
+    return out
+
+
+def au_channels(path, c, cap_bytes=AU_READ_CAP, np=None):
+    """-> (channels, frames read): one sequence of sample values per channel (ints in the encoding's own scale, linear 16-bit for mu-law and
+    A-law, floats for the float encodings), from a read capped at `cap_bytes`. numpy arrays when numpy is given, else array.array. None when
+    the encoding is not decoded."""
     import array
-    import math
-    w, enc = c["width"], c["enc"]
-    if not w or not c["ch"]:
+    import sys
+    w, enc, ch = c["width"], c["enc"], c["ch"]
+    if not w or not ch or c["offset"] > c["size"]:
         return None
     with open(path, "rb") as f:
         f.seek(c["offset"])
         raw = f.read(min(c["bytes"], cap_bytes))
-    step = w * c["ch"]
-    raw = raw[:len(raw) // step * step]
-    out = array.array("f")
-    if enc == 1:
-        for b in raw[0::step]:
-            v = ~b & 0xFF
-            t = (((v & 0x0F) << 3) + 0x84) << ((v & 0x70) >> 4)
-            out.append(((0x84 - t) if v & 0x80 else (t - 0x84)) / 32768.0)
-    elif enc == 27:
-        for b in raw[0::step]:
-            v = b ^ 0x55
-            seg = (v & 0x70) >> 4
-            t = ((v & 0x0F) << 4) + 8 if seg == 0 else (((v & 0x0F) << 4) + 0x108) << (seg - 1)
-            out.append((t if v & 0x80 else -t) / 32768.0)
-    elif enc == 2:
-        out.extend((struct.unpack_from("b", raw, i)[0] / 128.0) for i in range(0, len(raw), step))
-    elif enc == 3:
-        out.extend(struct.unpack_from(">h", raw, i)[0] / 32768.0 for i in range(0, len(raw), step))
+    raw = raw[:len(raw) // (w * ch) * (w * ch)]
+    frames = len(raw) // (w * ch)
+    if np is not None:
+        if enc in (1, 27):
+            a = np.array(_ulaw_table() if enc == 1 else _alaw_table(), dtype=np.int32)[np.frombuffer(raw, dtype=np.uint8)]
+        elif enc == 4:
+            b = np.frombuffer(raw, dtype=np.uint8).reshape(-1, 3).astype(np.int32)
+            a = (b[:, 0] << 16) | (b[:, 1] << 8) | b[:, 2]
+            a = np.where(a >= 1 << 23, a - (1 << 24), a)
+        else:
+            a = np.frombuffer(raw, dtype={2: ">i1", 3: ">i2", 5: ">i4", 6: ">f4", 7: ">f8"}[enc]).astype(np.float64 if enc in (6, 7) else np.int64)
+        return [a[k::ch] for k in range(ch)], frames
+    if enc in (1, 27):
+        tbl = _ulaw_table() if enc == 1 else _alaw_table()
+        a = array.array("i", map(tbl.__getitem__, raw))
     elif enc == 4:
-        out.extend(int.from_bytes(raw[i:i + 3], "big", signed=True) / 8388608.0 for i in range(0, len(raw), step))
-    elif enc == 5:
-        out.extend(struct.unpack_from(">i", raw, i)[0] / 2147483648.0 for i in range(0, len(raw), step))
-    elif enc == 6:
-        out.extend(struct.unpack_from(">f", raw, i)[0] for i in range(0, len(raw), step))
-    elif enc == 7:
-        out.extend(struct.unpack_from(">d", raw, i)[0] for i in range(0, len(raw), step))
+        b = bytearray(len(raw) // 3 * 4)
+        b[0::4], b[1::4], b[2::4] = raw[0::3], raw[1::3], raw[2::3]
+        a = array.array("i", bytes(b))
+        if sys.byteorder == "little":
+            a.byteswap()
+        a = array.array("i", (x >> 8 for x in a))
     else:
+        a = array.array({2: "b", 3: "h", 5: "i", 6: "f", 7: "d"}[enc], raw)
+        if sys.byteorder == "little" and enc != 2:
+            a.byteswap()
+    return [a[k::ch] for k in range(ch)], frames
+
+
+def _num(v, is_float):
+    return f"{v:.6g}" if is_float else f"{int(v):,}"
+
+
+def au_stats(look, c, np=None):
+    """Exact per-channel sample statistics: min, max, mean (DC), RMS and peak in dBFS, zero and full-scale samples, the first non-zero frame,
+    the first and last frames. -> the first-channel samples as floats in -1..1 (for the sound-burst pass), or None."""
+    import math
+    got = au_channels(look.path, c, AU_READ_CAP, np)
+    if not got:
         return None
-    return out
+    chans, frames = got
+    if not frames:
+        return None
+    is_float = c["enc"] in (6, 7)
+    full = AU_FULL[c["enc"]]
+    partial = c["frames"] and frames < c["frames"]
+    rows, zeros, first_nz = [], 0, None
+    for k, x in enumerate(chans, 1):
+        if np is not None:
+            lo, hi, s, sq = float(x.min()), float(x.max()), float(x.sum(dtype=np.float64)), float(np.dot(x.astype(np.float64), x.astype(np.float64)))
+            z = int(np.count_nonzero(x == 0))
+            nz = np.flatnonzero(x)
+            fz = int(nz[0]) if nz.size else None
+            clip = int(np.count_nonzero(np.abs(x) >= (full if is_float else full - 1)))
+        else:
+            import operator
+            lo, hi, s = min(x), max(x), math.fsum(x) if is_float else sum(x)
+            sq = math.fsum(map(operator.mul, x, x))
+            z = x.count(0)
+            fz = next((i for i, v in enumerate(x) if v), None)
+            lim = full if is_float else full - 1
+            clip = 0 if max(abs(lo), abs(hi)) < lim else sum(1 for v in x if abs(v) >= lim)
+        zeros += z
+        if fz is not None:
+            first_nz = fz if first_nz is None else min(first_nz, fz)
+        n = len(x)
+        mean, rms = s / n, math.sqrt(sq / n)
+        peak = max(abs(lo), abs(hi)) / full
+        db = (lambda v: f"{20 * math.log10(v):.2f} dBFS" if v > 0 else "-inf dBFS" if v == 0 else "not a number (NaN samples)")
+        rows.append(f"channel {k}: min {_num(lo, is_float)}, max {_num(hi, is_float)}, mean {mean:.6g}, RMS {db(rms / full)}, peak {db(peak)}, "
+                    f"zero samples {z:,}, at full scale {clip:,}")
+    first = ", ".join(_num(x[0], is_float) for x in chans)
+    last = ", ".join(_num(x[frames - 1], is_float) for x in chans)
+    scale = {1: "mu-law decoded to linear 16-bit", 27: "A-law decoded to linear 16-bit"}.get(c["enc"], f"raw {c['enc_name']} values" if not is_float else "float values")
+    look.line(f"Sample statistics over {'the first ' if partial else 'all '}{frames:,} frames ({scale}; full scale {full if is_float else format(full, ',')}" + (f"; PARTIAL: {c['frames']:,} frames in the file" if partial else "")
+              + "): " + "; ".join(rows) + f". All channels: zero samples {zeros:,}; "
+              + (f"first non-zero sample at frame {first_nz:,} ({first_nz / c['rate']:.3f} s)" if first_nz is not None else "every sample is zero")
+              + f"; first frame: {first}; last frame: {last}.", 93, "signal")
+    x = chans[0]
+    if np is not None:
+        return x.astype(np.float32) / full
+    import array
+    return array.array("f", map((1.0 / full).__mul__, x)) if full != 1.0 else array.array("f", x)
 
 
 def au_lines(look, c):
     dur = c["frames"] / c["rate"] if c["frames"] and c["rate"] else None
+    if c.get("problems"):
+        look.flag("CORRUPT", ".au header", "; ".join(c["problems"]), "facts below come from the readable part only")
     look.line(f"Sun/NeXT .au header: encoding {c['enc']} ({c['enc_name']}), {c['rate']} Hz, {c['ch']} channel(s), data offset {c['offset']}, "
               f"data size {'unknown (streamed)' if c['declared'] in (0, 0xFFFFFFFF) else format(c['declared'], ',') + ' bytes'}, {c['bytes']:,} bytes present"
               + (f" = {c['frames']:,} sample frames = {dur:.3f} s" if dur is not None else "") + (f"; annotation '{c['note']}'" if c["note"] else "") + ".", 94, "container")
     look.fact("au_frames", c["frames"])
-    if dur is not None and not look.quick:
-        import dl_sig
-        s = au_samples(look.path, c)
-        if s is not None:
+    if c["frames"]:
+        look.line(f"Counts: sample frames {c['frames']:,}; samples {c['frames'] * c['ch']:,}; channels {c['ch']}; bytes per sample {c['width']}; "
+                  f"byte rate {c['rate'] * c['ch'] * c['width']:,} B/s; header and annotation {c['offset']:,} bytes; file {c['size']:,} bytes.", 95, "counts")
+    if dur is not None and c["width"] and c["offset"] <= c["size"]:
+        np = look.mod("numpy")
+        try:
+            s = au_stats(look, c, np)
+        except (MemoryError, ValueError, OverflowError) as e:
+            look.fail("sample statistics", "stdlib", e)
+            s = None
+        if s is not None and not look.quick:
+            import dl_sig
             dl_sig.sound_events(look, s, c["rate"])

@@ -25,7 +25,7 @@ Every analysis produces one ranked list of chunks (identity, then traps at prior
 
 | Call | Prints |
 |---|---|
-| `look.py FILE` | step 1: chunks from the top, about 1,000 tokens (`--budget N` changes it) |
+| `look.py FILE` | step 1: chunks from the top, about 1,000 tokens (`--budget N` changes it; above 1,000 the file content fills the rest) |
 | `--more` | next ~2,000 tokens (about 3k in all), then next ~7,000 (about 10k in all), then 5,000 each time |
 | `--more N` | the next N tokens |
 | `--from K` | re-read from chunk K (the cursor moves only forward on `--more`) |

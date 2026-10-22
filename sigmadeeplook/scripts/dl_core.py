@@ -544,7 +544,7 @@ def detect(path):
         t, st, mg = ("video", "ogv", "OggS") if ext == ".ogv" else ("audio", "ogg", "OggS")
     elif is_(b"fLaC"):
         t, st, mg = "audio", "flac", "fLaC"
-    elif is_(b".snd") and size >= 24:
+    elif is_(b".snd"):   # any size: a .snd file too short for its header is still a (damaged) .au file
         t, st, mg = "audio", "au", "Sun/NeXT audio (.snd magic)"
     elif is_(b"ID3") or (len(h) > 2 and h[0] == 0xFF and (h[1] & 0xE0) == 0xE0 and ext in (".mp3", ".mp2", ".aac")):
         t, st, mg = "audio", "mp3", "ID3/MPEG sync"
