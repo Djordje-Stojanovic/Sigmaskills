@@ -132,7 +132,8 @@ def docx_counts(look, z, names, doc):
         trs = [r for r in tb if strip(r.tag) == "tr"]
         first = [("".join(t.text or "" for t in c.iter() if strip(t.tag) == "t")).strip() for c in trs[0] if strip(c.tag) == "tc"] if trs else []
         ncol = max((sum(1 for c in r if strip(c.tag) == "tc") for r in trs), default=0)
-        look.line(f"Table {i}: {len(trs)} rows x {ncol} columns; first row: " + " | ".join(P.short(x, 30) for x in first), 40 - min(10, i), "tables")
+        last = [("".join(t.text or "" for t in c.iter() if strip(t.tag) == "t")).strip() for c in trs[-1] if strip(c.tag) == "tc"] if trs else []
+        look.line(f"Table {i}: {len(trs)} rows x {ncol} columns; first row: " + " | ".join(P.short(x, 30) for x in first) + "; last row: " + " | ".join(P.short(x, 30) for x in last), 90 - min(20, i), "tables")
 
 
 def sheet_aggregates(look, name, cells, formulas, header_hint=True):
@@ -268,7 +269,7 @@ def pptx_counts(look, z, names):
     slides = sorted((n for n in names if re.match(r"ppt/slides/slide\d+\.xml$", n)), key=lambda n: int(re.findall(r"\d+", n)[-1]))
     notes = [n for n in names if re.match(r"ppt/notesSlides/notesSlide\d+\.xml$", n)]
     tot = Counter()
-    per = []
+    per, tabs = [], []
     hidden = 0
     for n in slides:
         root = _xml(z, n)
@@ -282,6 +283,11 @@ def pptx_counts(look, z, names):
         tot.update({"shapes": tags.get("sp", 0), "pictures": tags.get("pic", 0), "tables": tags.get("tbl", 0), "group shapes": tags.get("grpSp", 0),
                     "graphic frames": tags.get("graphicFrame", 0), "words": w, "paragraphs": tags.get("p", 0)})
         per.append((int(re.findall(r"\d+", n)[-1]), w, tags.get("pic", 0)))
+        for ti, tb in enumerate([e for e in root.iter() if strip(e.tag) == "tbl"], 1):
+            trs = [r for r in tb if strip(r.tag) == "tr"]
+            cell = lambda c: " ".join((t.text or "") for t in c.iter() if strip(t.tag) == "t").strip()   # noqa: E731
+            ncol = max((sum(1 for c in r if strip(c.tag) == "tc") for r in trs), default=0)
+            tabs.append((int(re.findall(r"\d+", n)[-1]), ti, len(trs), ncol, [cell(c) for c in trs[0] if strip(c.tag) == "tc"] if trs else [], [cell(c) for c in trs[-1] if strip(c.tag) == "tc"] if trs else []))
     charts = sum(1 for n in names if re.match(r"ppt/charts/chart\d+\.xml$", n))
     media = sum(1 for n in names if n.startswith("ppt/media/"))
     layouts = sum(1 for n in names if re.match(r"ppt/slideLayouts/slideLayout\d+\.xml$", n))
@@ -289,5 +295,7 @@ def pptx_counts(look, z, names):
     P.counts(look, [("slides", len(slides)), ("hidden slides", hidden), ("notes pages", len(notes)), ("shapes", tot["shapes"]), ("pictures", tot["pictures"]),
                     ("tables", tot["tables"]), ("charts", charts), ("media files", media), ("words on slides", tot["words"]), ("text paragraphs", tot["paragraphs"]),
                     ("layouts", layouts), ("masters", masters)], 95, "Slide counts")
+    for sl, ti, nr, nc, first, last in tabs[:30]:
+        look.line(f"Slide {sl} table {ti}: {nr} rows x {nc} columns; first row: " + " | ".join(P.short(x, 30) for x in first) + "; last row: " + " | ".join(P.short(x, 30) for x in last), 88, "tables")
     if per:
         look.line("Words per slide: " + ", ".join(f"{i}: {w}" for i, w, _ in per) + ". Most words: slide " + str(max(per, key=lambda t: t[1])[0]) + ".", 60)

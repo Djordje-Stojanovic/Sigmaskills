@@ -9,6 +9,8 @@ Photos, screenshots, diagrams, charts. A model does not receive metadata, resize
 - A diagram: look for the source first (`.dot`, `.mmd`, `.drawio`, `.svg` are text). Only pixels: transcribe to DOT or Mermaid, render it, compare with the original.
 - Counting and positions are approximate. Do not identify people.
 
+Pixel facts come from every pixel, not a guess: the exact count of distinct colours, the most frequent colours with their share, named pixels (corners, centre, thirds), a full grid for a picture of 256 pixels or fewer, transparent pixels, palette size. BMP and PCX headers (bits per pixel, planes, palette, compression, resolution) are read without Pillow, and both are decoded without it.
+
 ## Pipeline
 
 1. Header facts with the standard library (size, format). With Pillow: mode, frames, `ImageOps.exif_transpose` so the picture is upright, never upscaled.

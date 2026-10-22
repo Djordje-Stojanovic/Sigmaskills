@@ -221,6 +221,7 @@ def log_extras(look, r, max_lines):
     bytes_sum = access = 0
     hours = Counter()
     year = SysYear(look.path, max_lines)
+    tail = []   # the last non-blank lines with their numbers
 
     def lines():
         nonlocal blank, cont, bytes_sum, access
@@ -232,6 +233,8 @@ def log_extras(look, r, max_lines):
                 if not line.strip():
                     blank += 1
                     continue
+                tail.append((ln, line[:160]))
+                del tail[:-6]
                 if CONT_RE.match(line):
                     cont += 1
                 lm = LEVEL_RE.search(line[:200])
@@ -263,6 +266,8 @@ def log_extras(look, r, max_lines):
     P.counts(look, [("lines", r["lines"]), ("blank lines", blank), ("timed records", r["timed"]), ("non-blank lines without a timestamp", r["untimed"]),
                     ("continuation / stack lines", cont or None), ("message templates", len(r["drain"].clusters) if r["timed"] else None)]
              + [(f"{k} lines", lv_n[k]) for k in order], 96, "Log counts")
+    if tail:
+        look.line(f"Last lines (the file has {r['lines']:,} lines; the last {len(tail)} non-blank):\n" + "\n".join(f"{n}: {t}" for n, t in tail), 90, "tail")
     if lv_n:
         look.line("Levels (lines, first line, last line): " + "; ".join(f"{k} {lv_n[k]:,} (lines {lv_first[k]}-{lv_last[k]})" for k in order)
                   + ". A level counts once per line, wherever the word stands.", 91)
@@ -580,6 +585,7 @@ def look_subtitle(look):
 
     def crow(i):
         return f"#{nums[i]} {stamp(cues[i][0])}-{stamp(cues[i][1])} ({durs[i]:.3f} s): {P.short(' / '.join(x for x in plain[i].splitlines() if x.strip()), 70)}"
+    look.line(f"First cue: {crow(0)}. Last cue: {crow(len(cues) - 1)}. Cue numbers run {nums[0]} to {nums[-1]}.", 84, "tail")
     look.line("Longest cues: " + "; ".join(crow(i) for i in order[:5]), 80)
     look.line("Shortest cues: " + "; ".join(crow(i) for i in order[::-1][:5]), 78)
     look.line("Cues ranked by duration, longest first (top 40): " + "; ".join(crow(i) for i in order[:40]), 30, "ranking")

@@ -271,6 +271,29 @@ def text_of(el):
     return "".join(out)
 
 
+def odf_tables(body):
+    """Every table of an OpenDocument text body: rows and columns (repeat counts expanded), first and last row text, cells and the paragraphs in them."""
+    tt, rr, cc = q("table", "table"), q("table", "table-row"), q("table", "table-cell")
+    rep_r, rep_c = q("table", "number-rows-repeated"), q("table", "number-columns-repeated")
+    out, rows_all, cells_all, paras = [], 0, 0, 0
+    for tb in body.iter(tt):
+        rows = []
+        for r in tb.iter(rr):
+            cells = [x for x in r if x.tag == cc or x.tag == q("table", "covered-table-cell")]
+            texts = []
+            for c in cells:
+                n = min(int(c.get(rep_c) or 1), 200)
+                texts += [" ".join(text_of(p) for p in c.iter(q("text", "p"))).strip()] * n
+            rows.append((int(r.get(rep_r) or 1), texts))
+        nr = sum(min(n, 100000) for n, _ in rows)
+        nc = max((len(t) for _, t in rows), default=0)
+        rows_all += nr
+        cells_all += sum(n * len(t) for n, t in rows)
+        paras += sum(1 for _ in tb.iter(q("text", "p")))
+        out.append({"name": tb.get(q("table", "name")) or "?", "rows": nr, "cols": nc, "first": rows[0][1] if rows else [], "last": rows[-1][1] if rows else []})
+    return {"tables": out, "rows": rows_all, "cells": cells_all, "paras": paras}
+
+
 def look_odt(look, z, names):
     root = _xml(z, "content.xml") if "content.xml" in names else None
     meta = odf_meta(look, z, names)
@@ -329,12 +352,18 @@ def look_odt(look, z, names):
     h1 = [t for l, t in heads if l == 1]
     body_h1 = [t for t in h1 if not FRONT_RE.match(t) and not BACK_RE.match(t)]
     words = sum(len(x.split()) for x in lines if not x.startswith("#"))
+    tinfo = odf_tables(body)
+    items = sum(1 for _ in body.iter(q("text", "list-item")))
     look.headline = f"OpenDocument text: {len(heads)} headings ({len(h1)} top level), {paras} paragraphs, {words:,} words"
     P.counts(look, [("headings", len(heads))] + [(f"heading {k}", lvls[k]) for k in sorted(lvls)] + [("top-level sections without front/back matter", len(body_h1) if len(body_h1) != len(h1) else None),
                     ("paragraphs (non-empty, outside tables)", paras), ("words", words), ("tables", tables), ("lists", lists or None), ("comments", len(comments)),
                     ("tracked changes", len(changes)), ("insertions", sum(1 for c in changes if c["kind"] == "insertion") or None),
                     ("deletions", sum(1 for c in changes if c["kind"] == "deletion") or None), ("format changes", sum(1 for c in changes if c["kind"] == "format-change") or None),
-                    ("notes", notes or None), ("images", images or None)], 97, "Document counts")
+                    ("notes", notes or None), ("images", images or None), ("table rows", tinfo["rows"] or None), ("table cells", tinfo["cells"] or None),
+                    ("paragraphs inside tables", tinfo["paras"] or None), ("list items", items or None), ("last paragraph", f"'{P.short(lines[-1], 80)}'" if lines else None)], 97, "Document counts")
+    for k, t in enumerate(tinfo["tables"][:30], 1):
+        look.line(f"Table {k} '{t['name']}': {t['rows']} rows x {t['cols']} columns; first row: " + " | ".join(P.short(x, 30) for x in t["first"])
+                  + f"; last row: " + " | ".join(P.short(x, 30) for x in t["last"]), 90 - min(k, 20) // 2, "tables")
     if heads:
         look.line("Outline (level, heading, words under it):\n" + "\n".join(f"  {'  ' * (l - 1)}{l}. {P.short(t, 70)} ({w} words)" for (l, t), w in zip(heads[:80], words_under[:80]))
                   + (f"\n  ... {len(heads) - 80} more" if len(heads) > 80 else ""), 94, "outline")

@@ -68,7 +68,7 @@ def look_data(look):
     fn = {"csv": data_csv, "tsv": data_csv, "json": data_json, "jsonl": data_jsonl, "sqlite": data_sqlite, "parquet": data_parquet,
           "arrow": data_arrow, "avro": lambda lk: __import__("dl_adapt").look_avro(lk), "xml": data_xml, "yaml": data_text_struct, "toml": data_toml,
           "ini": lambda lk: __import__("dl_conf").look_ini(lk), "reg": lambda lk: __import__("dl_reg").look_reg(lk), "pcap": lambda lk: __import__("dl_pcap").look_pcap(lk),
-          "pcapng": lambda lk: __import__("dl_pcap").look_pcap(lk), "dbf": lambda lk: __import__("dl_dbf").look_dbf(lk)}.get(st) or getattr(__import__("dl_tab2"), "look_" + st, None) or getattr(__import__("dl_misc"), "look_" + st, data_text_struct)
+          "pcapng": lambda lk: __import__("dl_pcap").look_pcap(lk), "dbf": lambda lk: __import__("dl_dbf").look_dbf(lk)}.get(st) or getattr(__import__("dl_tab2"), "look_" + st, None) or getattr(__import__("dl_legacy"), "look_" + st, None) or getattr(__import__("dl_misc"), "look_" + st, data_text_struct)
     fn(look)
     look.ask_human("What question should this data answer?", "Which columns or tables matter, and are any of them personal data?")
 
@@ -405,6 +405,8 @@ def data_csv(look):
         extra = csv_second_pass(look, text, delim, header, gp, norm=norm) if gp.n else []
         crow = gp.field_lines()
         legend = COLUMN_LEGEND if not (prefix_cut or partial) else COLUMN_LEGEND.replace("every count is exact over every row", f"every count is exact over the {profiled:,} rows profiled only (PARTIAL read)")
+        if gp.last_line():
+            look.line(gp.last_line(), 85, "last")
         look.line(legend + chr(10) + chr(10).join(crow[:40]) + (f"{chr(10)}... {len(crow) - 40} more columns below" if len(crow) > 40 else ""), 86, "profile")
         if len(crow) > 40:
             look.line("More columns:" + chr(10) + chr(10).join(crow[40:]), 36, "profile")
@@ -1291,7 +1293,15 @@ def plain(v):
     except ImportError:
         pass
     if isinstance(v, (bytes, bytearray, memoryview)):
-        return f"<{len(bytes(v))} bytes>"
+        b = bytes(v)
+        if len(b) <= 4096:   # text that a reader left as bytes (SAS, some databases) is counted as the text it is, never as "<8 bytes>" for every value
+            try:
+                t = b.decode("utf-8")
+                if t.isprintable():
+                    return t
+            except UnicodeDecodeError:
+                pass
+        return f"<{len(b)} bytes>"
     return str(v)
 
 

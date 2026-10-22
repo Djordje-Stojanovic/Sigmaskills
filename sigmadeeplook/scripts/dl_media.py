@@ -907,6 +907,12 @@ def look_audio(look, ffp=None):
     res = one_pass_checks(look, False, True, dur)
     report_checks(look, res, dur)
     look.step("loudness and silence", "ffmpeg")
+    if not look.quick and look.subtype != "au":   # a .au file got its bursts from its own samples in container_counts
+        try:
+            import dl_sig
+            dl_sig.bursts_of_file(look, dur)
+        except Exception as e:
+            look.fail("sound bursts", "ffmpeg", e)
     ff = look.tool("ffmpeg")
     w = look.path_for("waveform.png")
     r = look.run([ff, "-y", "-v", "error", "-i", str(look.path), "-filter_complex", "showwavespic=s=2000x400:colors=#2a9d8f", "-frames:v", "1", str(w)])
@@ -990,6 +996,8 @@ def audio_bare(look):
                     look.fact("silence", [[round(a, 2), round(b, 2)] for a, b in silent])
                     for a, b in silent:
                         look.flag("SILENCE", f"{core.mmss(a)} ({a:.1f}s)", f"{b - a:.1f}s near zero", "pause, dropout or missing audio")
+                    import dl_sig
+                    dl_sig.sound_events(look, dl_sig.pcm16_to_floats(data.tobytes()), sr)
         except (wave.Error, OSError, EOFError) as e:
             look.flag("WAV-ERROR", "header", str(e)[:100], "")
     elif look.subtype == "flac":
@@ -1065,6 +1073,11 @@ def look_image(look):
         look.fact("height", wh[1])
     if not pil:
         look.line(f"Image ({st}): {wh[0]}x{wh[1]} px (header read with the standard library)." if wh else f"Image ({st}); size unreadable without Pillow.")
+        try:
+            import dl_legacy
+            dl_legacy.picture_header(look, native_pixels=True)
+        except Exception as e:
+            look.fail("picture header and pixels", "stdlib", e)
         why = "disabled by --no-tools" if look.no_tools else "Pillow not importable"
         if wh and wh[0] * wh[1] > 2 * 89478485:
             look.flag("DECOMPRESSION-BOMB?", "header", f"{wh[0]}x{wh[1]} = {wh[0] * wh[1] / 1e6:.0f} megapixels", "the header claims a huge picture; it was not decoded")
@@ -1089,6 +1102,13 @@ def look_image(look):
             look.fact("frames", frames)
             exif = im.getexif()
             look.line(f"Image {fmt}: {size[0]}x{size[1]} px, mode {mode}, {frames} frame(s).")
+            try:
+                import dl_legacy
+                import dl_sig
+                dl_legacy.picture_header(look)
+                dl_sig.pil_pixel_facts(look, im)
+            except Exception as e:
+                look.fail("pixel facts", "PIL", e)
             if fmt == "ICO" and im.info.get("sizes"):
                 look.line("Icon image sizes inside the file: " + ", ".join(f"{a}x{b}" for a, b in sorted(im.info["sizes"])) + ".", 88)
             info = exif_facts(look, exif)

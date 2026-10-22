@@ -181,7 +181,13 @@ def look_sas7bdat(look):
         look.line("SAS data file; reading it needs pandas.")
         return
     import pandas as pd
-    df = pd.read_sas(str(look.path))
+    try:
+        df = pd.read_sas(str(look.path), encoding="infer")   # without an encoding pandas returns every text value as bytes
+    except (TypeError, ValueError, LookupError):
+        df = pd.read_sas(str(look.path))
+    for c in df.columns:   # a file with no usable encoding name: decode what is left as bytes (the code page is a guess, said so)
+        if df[c].dtype == object and len(df) and isinstance(df[c].iloc[0], (bytes, bytearray)):
+            df[c] = df[c].map(lambda b: b.decode("utf-8", "replace").rstrip() if isinstance(b, (bytes, bytearray)) else b)
     _frame_look(look, "SAS", df)
     look.step("SAS rows", "pandas")
 

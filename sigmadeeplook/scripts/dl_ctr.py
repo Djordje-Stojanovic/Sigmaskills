@@ -212,6 +212,10 @@ def container_counts(look):
             c = wav_counts(look.path)
             if c:
                 wav_lines(look, c)
+        elif st == "au":
+            c = au_counts(look.path)
+            if c:
+                au_lines(look, c)
         elif st == "flac":
             c = flac_counts(look.path)
             if c:
@@ -222,3 +226,79 @@ def container_counts(look):
                 mp3_lines(look, c)
     except Exception as e:
         look.fail("container counts", "stdlib", e)
+
+
+# ---------------------------------------------------------------------------------------------- Sun/NeXT .au (.snd)
+AU_ENC = {1: ("mu-law", 1), 2: ("linear PCM 8-bit", 1), 3: ("linear PCM 16-bit", 2), 4: ("linear PCM 24-bit", 3), 5: ("linear PCM 32-bit", 4),
+          6: ("float 32-bit", 4), 7: ("float 64-bit", 8), 27: ("A-law", 1)}
+AU_READ_CAP = 64 << 20
+
+
+def au_counts(path):
+    with open(path, "rb") as f:
+        h = f.read(24)
+        if len(h) < 24 or h[:4] != b".snd":
+            return None
+        off, dsize, enc, rate, ch = struct.unpack(">5I", h[4:24])
+        size = f.seek(0, 2)
+        f.seek(24)
+        note = f.read(max(0, min(off - 24, 4096))).split(b"\0")[0].decode("latin-1", "replace") if off > 24 else ""
+    name, width = AU_ENC.get(enc, (f"encoding {enc}", 0))
+    have = max(0, size - off)
+    n = have if dsize in (0, 0xFFFFFFFF) else min(dsize, have)
+    frames = n // (width * ch) if width and ch else None
+    return {"offset": off, "declared": dsize, "bytes": n, "enc": enc, "enc_name": name, "width": width, "rate": rate, "ch": ch, "frames": frames, "note": note, "size": size}
+
+
+def au_samples(path, c, cap_bytes=AU_READ_CAP):
+    """Mono samples in -1..1 as array('f'), the first channel of a file read up to `cap_bytes`; None for an encoding not decoded."""
+    import array
+    import math
+    w, enc = c["width"], c["enc"]
+    if not w or not c["ch"]:
+        return None
+    with open(path, "rb") as f:
+        f.seek(c["offset"])
+        raw = f.read(min(c["bytes"], cap_bytes))
+    step = w * c["ch"]
+    raw = raw[:len(raw) // step * step]
+    out = array.array("f")
+    if enc == 1:
+        for b in raw[0::step]:
+            v = ~b & 0xFF
+            t = (((v & 0x0F) << 3) + 0x84) << ((v & 0x70) >> 4)
+            out.append(((0x84 - t) if v & 0x80 else (t - 0x84)) / 32768.0)
+    elif enc == 27:
+        for b in raw[0::step]:
+            v = b ^ 0x55
+            seg = (v & 0x70) >> 4
+            t = ((v & 0x0F) << 4) + 8 if seg == 0 else (((v & 0x0F) << 4) + 0x108) << (seg - 1)
+            out.append((t if v & 0x80 else -t) / 32768.0)
+    elif enc == 2:
+        out.extend((struct.unpack_from("b", raw, i)[0] / 128.0) for i in range(0, len(raw), step))
+    elif enc == 3:
+        out.extend(struct.unpack_from(">h", raw, i)[0] / 32768.0 for i in range(0, len(raw), step))
+    elif enc == 4:
+        out.extend(int.from_bytes(raw[i:i + 3], "big", signed=True) / 8388608.0 for i in range(0, len(raw), step))
+    elif enc == 5:
+        out.extend(struct.unpack_from(">i", raw, i)[0] / 2147483648.0 for i in range(0, len(raw), step))
+    elif enc == 6:
+        out.extend(struct.unpack_from(">f", raw, i)[0] for i in range(0, len(raw), step))
+    elif enc == 7:
+        out.extend(struct.unpack_from(">d", raw, i)[0] for i in range(0, len(raw), step))
+    else:
+        return None
+    return out
+
+
+def au_lines(look, c):
+    dur = c["frames"] / c["rate"] if c["frames"] and c["rate"] else None
+    look.line(f"Sun/NeXT .au header: encoding {c['enc']} ({c['enc_name']}), {c['rate']} Hz, {c['ch']} channel(s), data offset {c['offset']}, "
+              f"data size {'unknown (streamed)' if c['declared'] in (0, 0xFFFFFFFF) else format(c['declared'], ',') + ' bytes'}, {c['bytes']:,} bytes present"
+              + (f" = {c['frames']:,} sample frames = {dur:.3f} s" if dur is not None else "") + (f"; annotation '{c['note']}'" if c["note"] else "") + ".", 94, "container")
+    look.fact("au_frames", c["frames"])
+    if dur is not None and not look.quick:
+        import dl_sig
+        s = au_samples(look.path, c)
+        if s is not None:
+            dl_sig.sound_events(look, s, c["rate"])

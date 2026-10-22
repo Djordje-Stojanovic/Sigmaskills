@@ -14,9 +14,11 @@ import random
 import re
 import sys
 import shutil
+import struct
 import tempfile
 import time
 import zipfile
+import zlib
 import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
@@ -531,8 +533,37 @@ def look_office(look):
         office_xlsx(look, z, names)
     elif st in ("pptx", "pptm"):
         office_pptx(look, z, names)
+    elif st == "xlsb":
+        office_xlsb(look)
     elif st in ("odt", "ods", "odp"):
         office_odf(look, z, names)
+    render_office(look)
+
+
+def office_xlsb(look):
+    """An Excel binary workbook: its BIFF12 records are read with the standard library and written as a plain .xlsx, which the xlsx reader then looks at."""
+    import dl_xlsb
+    tmp = look.out / "_xlsb"
+    tmp.mkdir(parents=True, exist_ok=True)
+    conv = tmp / "converted.xlsx"
+    try:
+        info = dl_xlsb.to_xlsx(look.path, conv)
+    except (KeyError, zipfile.BadZipFile, struct.error, ValueError, IndexError, OverflowError, zlib.error) as e:
+        look.flag("CORRUPT", "xlsb", f"{type(e).__name__}: {e}"[:120], "the binary workbook could not be read")
+        shutil.rmtree(tmp, ignore_errors=True)
+        return
+    keep = (look.subtype, look.path)
+    look.subtype, look.path = "xlsx", conv
+    try:
+        office_xlsx(look, zipfile.ZipFile(conv), zipfile.ZipFile(conv).namelist())
+    finally:
+        look.subtype, look.path = keep
+    n_f = sum(f for _n, _s, _c, f in info["sheets"])
+    look.headline = look.headline.replace("xlsx workbook", "xlsb workbook", 1)
+    look.line(f"Excel binary workbook (.xlsb): {len(info['sheets'])} sheets, {sum(c for _n, _s, c, _f in info['sheets']):,} non-empty cells, {info['strings']:,} shared strings, read from the BIFF12 records "
+              f"with the standard library; {n_f:,} formula cells keep their stored results (formula text is not decoded).", 60)
+    look.step("xlsb records to xlsx", "stdlib")
+    shutil.rmtree(tmp, ignore_errors=True)
     render_office(look)
 
 

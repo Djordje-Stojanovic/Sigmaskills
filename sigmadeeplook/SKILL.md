@@ -60,7 +60,7 @@ Open the reference for the type before you answer: when `look.py` is not enough,
 | exe, dll, ELF, Mach-O, wasm, class, dex, unknown bytes | [binary](references/binary.md) |
 | ttf, otf, woff, woff2 | [font](references/font.md) |
 | zip, tar, gz, 7z, rar, iso, Docker image, git bundle | [archive](references/archive.md) |
-| parquet, sqlite, avro (plain csv, tsv, json, jsonl, xml, yaml, toml are read by you, see Before you look) | [data](references/data.md) |
+| parquet, sqlite, avro, sav, netcdf, gettext mo/po (plain csv, tsv, json, jsonl, xml, yaml, toml are read by you, see Before you look) | [data](references/data.md) |
 | ipynb | [notebook](references/notebook.md) |
 | html file or one URL | [web](references/web.md) |
 | glb, gltf, stl, obj, ply, usd, fbx, blend | [3d](references/3d.md) |

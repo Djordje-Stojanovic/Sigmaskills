@@ -4,6 +4,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmadeeplook` fix round 8 (set 7 miss categories): the end of the file in step 1 (a `Last row` or `Last lines` fact for tables, text, logs, subtitles and configs); text structure (reST headings of any underline, paragraphs, line starts, directives, frequent words); gettext `.po` and `.mo`, SPSS `.sav`, netCDF classic and Excel `.xlsb` readers; PCX and BMP headers with exact pixel facts; sound bursts (count, times, frequency) for audio and Sun `.au`; MPEG-TS service names; OpenDocument and PowerPoint table rows.
+
+### Fixed
+
+- `sigmadeeplook`: SAS text columns were counted as `<8 bytes>` (a wrong distinct count); a legacy code page was printed as replacement characters in the whole-file block; a partial head view is now marked `PARTIAL`.
+
 ## [0.15.2] — 2026-10-21
 
 ### Changed

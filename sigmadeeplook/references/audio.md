@@ -9,6 +9,8 @@ An agent cannot hear. `look.py` turns audio into numbers, text and two pictures.
 - Music beyond tempo (key, chords, stems, notes): not in v1. Say so under Limits.
 - Sound effects: no label model is bundled. Describe the waveform and spectrogram, and ask.
 
+A `Sound activity` line counts the bursts of sound over the quiet floor (beeps, knocks, alarms, words): how many, when each starts and ends, the strongest frequency of each, and when the last one ends. Sun/NeXT `.au` files are read from their own header. Over 30 minutes it says it read the first 30 and flags `PARTIAL`.
+
 ## Pipeline
 
 1. Facts: `ffprobe` (codec, rate, channels, bit rate, tags). No ffprobe: WAV header and FLAC STREAMINFO read with the standard library, plus a PCM waveform drawn with Pillow.
