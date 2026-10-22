@@ -378,7 +378,7 @@ def read(data):
         p["level"] = heading_level(sty.get(p["istd"])) if not p["intable"] else 0
         p["style"] = sty.get(p["istd"], (None, ""))[1]
     res["paras"] = paras
-    tables, cur, row = [], None, []
+    tables, cur, row, buf = [], None, [], []
     for p in paras:
         if p["intable"]:
             if cur is None:
@@ -386,17 +386,20 @@ def read(data):
                 tables.append(cur)
             if p["ttp"]:
                 cur.append(row)
-                row = []
-            elif p["cell"]:
-                row.append(p["text"])
+                row, buf = [], []
+            elif p["cell"]:   # the cell mark ends the cell's last paragraph; earlier paragraphs of the cell end in a paragraph mark
+                row.append(" / ".join(x for x in buf + [p["text"]] if x))
+                buf = []
+            elif p["text"]:
+                buf.append(p["text"])
         else:
             if row:
                 cur.append(row)
                 row = []
-            cur = None
+            cur, buf = None, []
     if row and cur is not None:
         cur.append(row)
-    res["tables"] = [t for t in tables if t]
+    res["tables"] = tables   # in document order, empty ones too (text.md walks them by position)
     return res
 
 
@@ -439,13 +442,14 @@ def look_doc(look):
     main = r["parts"]["text"]
     plain = "\n".join(p["text"] for p in paras if p["text"])
     words = len(plain.split())
-    tables = r["tables"]
+    all_tables = r["tables"]
+    tables = [t for t in all_tables if t]
     pairs = [("paragraph and cell marks", main.count(chr(13)) + main.count(chr(7))), ("non-empty paragraphs", len(ne) + sum(1 for c in cells if c["text"])),
              ("non-empty paragraphs outside tables", len(ne)), ("empty paragraphs outside tables", len(body) - len(ne)), ("tables", len(tables)),
              ("table rows", sum(len(t) for t in tables)), ("table cells", len(cells)), ("headings", len(heads))]
     pairs += [(f"heading {k}", per[k]) for k in sorted(per)]
     pairs += [("page or section breaks", main.count("\x0c") or None), ("fields", main.count("\x13") or None), ("pictures and objects", (main.count("\x01") + main.count("\x08")) or None),
-              ("footnotes", r["parts"]["footnotes"].count("\x02") or (1 if r["parts"]["footnotes"].strip() else None)), ("comments", r["parts"]["comments"].count("\x05") or None),
+              ("footnotes", r["parts"]["footnotes"].count("\x02") or None), ("comments", r["parts"]["comments"].count("\x05") or None),
               ("words", words), ("characters (no spaces)", len(re.sub(r"\s+", "", plain))), ("characters with spaces", len(plain.replace("\n", "")))]
     P.counts(look, pairs, 96, "Word counts")
     look.fact("paragraphs", len(ne))
@@ -483,7 +487,7 @@ def look_doc(look):
     for p in paras:
         if p["intable"]:
             if seen_table is None:
-                seen_table = tables[ti] if ti < len(tables) else []
+                seen_table = all_tables[ti] if ti < len(all_tables) else []
                 ti += 1
                 md += [""] + ["| " + " | ".join(c.replace("|", "/") for c in row) + " |" for row in seen_table] + [""]
             continue

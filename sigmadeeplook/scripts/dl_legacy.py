@@ -163,7 +163,6 @@ def look_gettext(look):
         problems.append(f"hash table ({hs:,} slots at {ho:,}) runs past the end")
     if major > 1:
         problems.append(f"unknown format revision {major}.{minor}")
-    look.headline = f"Gettext binary catalogue: {max(0, n - 1):,} entries"
     look.fact("mo_entries", n)
     ents, bad = [], 0
     for i in range(min(n, room, 5_000_000)):
@@ -193,10 +192,11 @@ def look_gettext(look):
         except LookupError:
             return b.decode("utf-8", "replace")
     body = [(o, t) for o, t in ents if o != b""]
+    look.headline = f"Gettext binary catalogue: {len(body):,} entries" + (f" readable ({max(0, n - 1):,} declared)" if problems else "")
     pl = [x for x in body if b"\0" in x[0]]
     cx = [x for x in body if b"\x04" in x[0]]
     un = [x for x in body if not x[1].replace(b"\0", b"").strip()]
-    src_words = sum(len(dec(o.split(b"\x04")[-1]).split()) for o, _ in body)
+    src_words = sum(len(dec(o.split(b"\x04")[-1]).replace("\0", " ").split()) for o, _ in body)
     tr_words = sum(len(dec(t).replace("\0", " ").split()) for _, t in body)
     P.counts(look, [("entries", len(body)), ("table entries incl. header", n), ("plural entries", len(pl)), ("with context", len(cx)),
                     ("untranslated (empty msgstr)", len(un)), ("source words", src_words), ("translation words", tr_words), ("hash table size", hs)], 96,

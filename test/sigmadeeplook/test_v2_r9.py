@@ -322,6 +322,33 @@ class Au(R9Base):
         self.assertIn("CORRUPT", self.kinds(lj))
 
 
+# ------------------------------------------------------------------ review findings (code-review pass of this round)
+class ReviewFixes(R9Base):
+    def test_a_cell_of_two_paragraphs_keeps_both(self):
+        out, lj, _ = self.look(FX / "r9_cells.doc")
+        self.assertIn("first row: first part / second part | B1", out)
+        self.assertIn("last row: A2 | B2", out)
+
+    def test_two_simple_tables_one_paragraph_apart(self):
+        import dl_textx
+        L = ["=====  =====", "a      b", "=====  =====", "1      2", "=====  =====", "", "Text between.", "", "===  ===", "x    y", "===  ===", ""]
+        self.assertEqual(dl_textx.rst_structure(L, [])["tables"], 2)
+
+    def test_mo_source_words_count_both_plural_forms(self):
+        p = self.tmp / "pl.mo"
+        write_mo(p, {"": "Content-Type: text/plain; charset=UTF-8\n", "one file\0many files": "eine Datei\0viele Dateien"})
+        out, _, _ = self.look(p)
+        self.assertIn("source words 4", out)
+        self.assertIn("translation words 4", out)
+
+    def test_au_header_only_is_corrupt(self):
+        p = self.tmp / "h.au"
+        p.write_bytes(b".snd" + b"\0" * 16)
+        _, lj, _ = self.look(p, ok=(0, 1, 3))
+        self.no_crash(lj)
+        self.assertIn("CORRUPT", self.kinds(lj))
+
+
 # ------------------------------------------------------------------ the step-1 budget is filled
 class Budget(R9Base):
     def test_a_bigger_budget_prints_more_content(self):

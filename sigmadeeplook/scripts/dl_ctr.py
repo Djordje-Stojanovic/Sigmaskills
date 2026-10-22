@@ -216,6 +216,8 @@ def container_counts(look):
             c = au_counts(look.path)
             if c:
                 au_lines(look, c)
+            else:
+                look.flag("CORRUPT", ".au header", f"{look.size} bytes; a .snd header needs 24 starting with '.snd'", "no sample format to read")
         elif st == "flac":
             c = flac_counts(look.path)
             if c:
@@ -321,18 +323,6 @@ def au_channels(path, c, cap_bytes=AU_READ_CAP, np=None):
     return [a[k::ch] for k in range(ch)], frames
 
 
-def au_samples(path, c, cap_bytes=AU_READ_CAP, np=None):
-    """Mono samples in -1..1 of the first channel (numpy array or array('f')); None for an encoding not decoded."""
-    import array
-    got = au_channels(path, c, cap_bytes, np)
-    if not got:
-        return None
-    x, full = got[0][0], AU_FULL[c["enc"]]
-    if np is not None:
-        return x.astype(np.float32) / full
-    return array.array("f", map((1.0 / full).__mul__, x)) if full != 1.0 else array.array("f", x)
-
-
 def _num(v, is_float):
     return f"{v:.6g}" if is_float else f"{int(v):,}"
 
@@ -372,13 +362,13 @@ def au_stats(look, c, np=None):
         n = len(x)
         mean, rms = s / n, math.sqrt(sq / n)
         peak = max(abs(lo), abs(hi)) / full
-        db = (lambda v: f"{20 * math.log10(v):.2f} dBFS" if v > 0 else "-inf dBFS")
+        db = (lambda v: f"{20 * math.log10(v):.2f} dBFS" if v > 0 else "-inf dBFS" if v == 0 else "not a number (NaN samples)")
         rows.append(f"channel {k}: min {_num(lo, is_float)}, max {_num(hi, is_float)}, mean {mean:.6g}, RMS {db(rms / full)}, peak {db(peak)}, "
                     f"zero samples {z:,}, at full scale {clip:,}")
     first = ", ".join(_num(x[0], is_float) for x in chans)
     last = ", ".join(_num(x[frames - 1], is_float) for x in chans)
     scale = {1: "mu-law decoded to linear 16-bit", 27: "A-law decoded to linear 16-bit"}.get(c["enc"], f"raw {c['enc_name']} values" if not is_float else "float values")
-    look.line(f"Sample statistics over {'the first ' if partial else 'all '}{frames:,} frames ({scale}; full scale {full:g}" + (f"; PARTIAL: {c['frames']:,} frames in the file" if partial else "")
+    look.line(f"Sample statistics over {'the first ' if partial else 'all '}{frames:,} frames ({scale}; full scale {full if is_float else format(full, ',')}" + (f"; PARTIAL: {c['frames']:,} frames in the file" if partial else "")
               + "): " + "; ".join(rows) + f". All channels: zero samples {zeros:,}; "
               + (f"first non-zero sample at frame {first_nz:,} ({first_nz / c['rate']:.3f} s)" if first_nz is not None else "every sample is zero")
               + f"; first frame: {first}; last frame: {last}.", 93, "signal")

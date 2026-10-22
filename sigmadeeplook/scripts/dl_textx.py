@@ -207,22 +207,23 @@ def rst_structure(lines, heads):
         if m:
             out["fields"].append((m.group(1), m.group(2).strip()))
     n = len(lines)
-    in_grid = in_simple = False
-    simple_rules = 0
+    in_grid = False
+    simple_rules = -1   # rule lines in the current block when the block opened with a rule line, else -1
     for i, ln in enumerate(lines):
         s = ln.strip()
         g = bool(GRID_RE.match(ln))
         if g and not in_grid:
             out["tables"] += 1
         in_grid = g or (in_grid and s.startswith("|"))
-        if SIMPLE_RE.match(ln):
-            if not in_simple:
-                in_simple, simple_rules = True, 0
-            simple_rules += 1
-            if simple_rules == 2:
-                out["tables"] += 1
-        elif not s and in_simple and (i + 1 >= n or not lines[i + 1].strip()):
-            in_simple = False
+        if not s:
+            simple_rules = -1
+        elif SIMPLE_RE.match(ln):
+            if i == 0 or not lines[i - 1].strip():
+                simple_rules = 0
+            if simple_rules >= 0:
+                simple_rules += 1
+                if simple_rules == 2:
+                    out["tables"] += 1
         m = DIRECTIVE_RE.match(ln)
         if m:
             name = m.group(1).lower()

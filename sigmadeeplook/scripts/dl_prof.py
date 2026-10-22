@@ -575,7 +575,6 @@ def text_profile(look, text, pri=90, kind="Text"):
     n = len(lines)
     blank = sum(1 for x in lines if not x.strip())
     words = len(WORD_RE.findall(text))
-    import dl_textx
     rst = dl_textx.rst_headings(lines)   # reST-style underlines of any character: the titles come from there, not from the markdown rules
     heads, in_code, fences, code_lines = (list(rst) if rst else []), False, 0, 0
     lists = tasks = done_tasks = table_rows = tables = quotes = 0
