@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes — Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?). Runs both reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to "review since X".
+description: 'Reviews changes since a fixed point on two axes, standards and spec, in parallel sub-agents. Use when a branch, PR or work in progress is to be reviewed "since X".'
 ---
 
 Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
@@ -57,7 +57,7 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 ### 4. Spawn both sub-agents in parallel
 
-Both sub-agents flag real bugs and documented violations only, each with its proof. No hypothetical risks.
+Both sub-agents report only what the diff or a cited source proves. No hypothetical risks.
 
 **Standards sub-agent prompt** — include:
 

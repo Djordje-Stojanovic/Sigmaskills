@@ -1,6 +1,6 @@
 ---
 name: sigmabrief
-description: Prepare copy-pastable parallel-agent or single-agent execution briefs from GitHub issues, SigmaReview findings, SigmaImprove issues, features, upgrades, bugs, or plain work statements, grouped into safe parallel waves - or a session brief that lets a fresh agent continue the current conversation. Use only when the user explicitly asks for briefs, handoffs, spawn/dispatch prompts, or parallel agent prompts. Do not use to implement the work, audit a whole repository, open fix PRs against the target product repository, or auto-fire on ordinary chat.
+description: 'Prepare paste-ready agent briefs or a session handoff from issues, SigmaReview findings or plain work, in parallel waves. Use only when asked for briefs or handoffs. Do not implement or auto-fire.'
 ---
 
 # SigmaBrief
@@ -21,7 +21,7 @@ Apply these invariants throughout the run:
 - **Waves before parallelism.** Items that touch the same files, schema, or shared state run one after another in the same lane. Only independent items run in parallel. Honor `Depends on` lines from SigmaReview.
 - **Light research then emit.** Read local standards when present (`CLAUDE.md`, `AGENTS.md`, `README`, `CONTRIBUTING`, LEARNINGS, version pins). For GitHub work, inspect issues and open PRs so an in-flight PR becomes a finish brief, never a second greenfield. Use the web only when needed.
 - **Simple briefs.** Short fenced `text` blocks. No collision-matrix novels. Still mark overlaps and out-of-scope boundaries when obvious.
-- **Quality gate in every brief:** plan first → (executing agent may use `/grilling` or focused questions, including worktree yes/no) → wait for plan approval → baseline checks green → execute → validate → update docs only when needed → commit → push → open PR (`Closes #N` when applicable) → **do not merge** → self-review for high quality, docs, validation, and low bug-introduction risk before opening the PR → report back in the fixed format.
+- **Quality gate in every brief:** plan first → (executing agent may use `/grilling` or focused questions, including worktree yes/no) → wait for plan approval → baseline checks green → execute → validate → update docs only when needed → commit → push → open PR (`Closes #N` when applicable) → self-review for high quality, docs, validation, and low bug-introduction risk before opening the PR → report back in the fixed format.
 - **Approval modes.** `approval: plan` (default) waits for plan approval. `approval: auto` lets the agent decide ambiguities itself, record each decision as a ruling in the PR body, and stop only for irreversible or destructive actions, security-sensitive actions, or side effects outside its branch.
 - **Do not merge. Keep any worktree while the PR is open. Cleanup only after human merge or user cancel/abandon.**
 - **Shell native to the executing machine:** use the shell of the machine that runs the agent: PowerShell and Windows paths on Windows, POSIX shell elsewhere. Do not assume WSL.
@@ -50,7 +50,7 @@ Return in chat only:
 2. Paste-ready fenced `text` briefs.
 3. Brief notes when needed (collisions, upstream waits, already fixed, human-only tests).
 
-Do not paste long research dumps. Do not create files in the target product repository.
+Do not paste long research dumps.
 
 ## Personal instructions
 

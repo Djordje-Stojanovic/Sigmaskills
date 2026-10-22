@@ -1,6 +1,6 @@
 ---
 name: sigmaship
-description: Ship one fully planned GitHub issue end to end - feature worktree and branch, draft PR linked to the ticket, spec, and map, test-first commits pushed as it goes, green CI, independent review rounds through handoffs to fresh agents until a round comes back clean, then merge, close the ticket, delete the branches and worktree, bring local main up to origin, and run the repo's deploy step. Use when the user asks for SigmaShip by name or to implement, build, or ship a ready ticket. Do not use for tickets without acceptance criteria (it names the skill to run first), for audits (SigmaReview), for ideas (SigmaImprove), or for writing briefs only (SigmaBrief).
+description: 'Ship one planned GitHub issue end to end: worktree, test-first commits, green CI, review rounds, merge, cleanup, deploy. Use for SigmaShip or a ready ticket. Do not use without acceptance criteria.'
 ---
 
 # SigmaShip
