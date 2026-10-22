@@ -2,6 +2,8 @@
 
 CSV, TSV, JSON, JSONL, Parquet, Arrow, SQLite, XML, YAML, TOML, dBASE/FoxPro `.dbf` (header decoded, rows profiled like a CSV, deleted records left out; memo text is not read). Give the agent the schema and a sample, never the table. Answers come from a query that you show, not from reading rows.
 
+Also read from their own headers: SPSS `.sav` (every variable label and value label, every case profiled), netCDF classic `.nc` (dimensions, units, every value of every variable), gettext `.mo` and `.po` (entry counts, translated and fuzzy, plurals, the last entry). Every table-like print has a `Last row` (`Last case`, `Last record`) line, so the end of the file is in step 1.
+
 ## When look.py is not enough
 
 - Anything that needs the whole table: sums, joins, filters, group-bys. Write SQL (DuckDB, SQLite) or pandas against the file on disk, run it, and quote the result with the query. Never total rows by eye.

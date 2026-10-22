@@ -294,11 +294,13 @@ class Profiler:
         self.coerce, self.label = coerce, label
         self.fields, self.n = {}, 0
         self.keys_per_record = Counter()
+        self.last = None   # (index, [(field, value)]) of the last record fed: the end of the file is a fact too
 
     def add(self, rec, idx=None):
         self.n += 1
         idx = self.n if idx is None else idx
         flat = flat_of(rec)
+        self.last = (idx, flat)
         self.keys_per_record[len(flat)] += 1
         for k, v in flat.items():
             f = self.fields.get(k)
@@ -318,8 +320,22 @@ class Profiler:
         """Fast path for tables: values line up with cols (from columns())."""
         self.n += 1
         co = self.coerce
+        self.last = (idx, cols, values)
         for f, v in zip(cols, values):
             f.add(v, idx, co)
+
+    def last_line(self, width=44, fields=16):
+        """'Last row (line 801; 800 in all): id=800; name=n0 ...': the final record, so a question about the end of the file needs no later step."""
+        if not self.last:
+            return ""
+        idx = self.last[0]
+        if len(self.last) == 3:
+            pairs = [(f.name, v) for f, v in zip(self.last[1], self.last[2])]
+        else:
+            pairs = list(self.last[1].items()) if isinstance(self.last[1], dict) else list(self.last[1])
+        noun = "row" if self.label in ("line", "row", "sheet row") else self.label
+        body = "; ".join(f"{k}={short(v, width)}" for k, v in pairs[:fields]) + (f"; +{len(pairs) - fields} more fields" if len(pairs) > fields else "")
+        return f"Last {noun} ({self.label} {idx}; {fmt(self.n)} in all): {body}"
 
     def ordered(self):
         return sorted(self.fields.values(), key=lambda f: f.order)
@@ -483,6 +499,9 @@ def profile(records, coerce=False, label="record", second=True):
 def emit(look, p, extra, what, key_pri=88, more_pri=30, field_limit=24, write_name=None, prefix=""):
     """Put a profile into a look: one compact 'Fields' fact (step 1), then the full enumerations at a lower priority (--more)."""
     fl = p.field_lines()
+    ll = p.last_line()
+    if ll:
+        look.line(prefix + ll, key_pri - 2, "last")
     head = f"{what}: {fmt(p.n)} records, {fmt(len([f for f in p.fields if not f.endswith(LEN)]))} fields"
     look.line(head + ". Fields (type, missing, distinct, min/max with the " + p.label + " where it first occurs, sum, mean, top values):\n"
               + "\n".join("  " + x for x in fl[:field_limit]) + (f"\n  ... {len(fl) - field_limit} more fields below" if len(fl) > field_limit else ""), key_pri, "profile")
@@ -535,11 +554,17 @@ def text_profile(look, text, pri=90, kind="Text"):
     n = len(lines)
     blank = sum(1 for x in lines if not x.strip())
     words = len(WORD_RE.findall(text))
-    heads, in_code, fences, code_lines = [], False, 0, 0
+    import dl_textx
+    rst = dl_textx.rst_headings(lines)   # reST-style underlines of any character: the titles come from there, not from the markdown rules
+    heads, in_code, fences, code_lines = (list(rst) if rst else []), False, 0, 0
     lists = tasks = done_tasks = table_rows = tables = quotes = 0
     prev_table = False
     for i, ln in enumerate(lines, 1):
         s = ln.strip()
+        if rst:
+            if LIST_RE.match(ln):
+                lists += 1
+            continue
         if s.startswith("```") or s.startswith("~~~"):
             in_code = not in_code
             fences += 1 if in_code else 0
@@ -571,6 +596,9 @@ def text_profile(look, text, pri=90, kind="Text"):
     dates = sorted(set(DATE_RE.findall(text)))
     per_level = Counter(h[0] for h in heads)
     pairs = [("lines", n), ("non-blank lines", n - blank), ("words", words), ("characters", len(text))]
+    paragraphs = dl_textx.facts(look, lines, short, pri - 6)
+    if paragraphs > 1:
+        pairs.append(("paragraphs", paragraphs))
     if heads:
         pairs.append(("headings", len(heads)))
         pairs += [(f"level-{k} headings", per_level[k]) for k in sorted(per_level)]

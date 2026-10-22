@@ -112,6 +112,11 @@ def look_ini(look):
                     ("repeated keys", len(dup_keys) or None), ("repeated section headers", len(dup_secs) or None), ("lines", len(text.splitlines()))], 96)
     look.line("Keys per section (in file order, with the line of the header): " + "; ".join(f"[{k}] {len(s['keys'])} (line {s['line']})" if k != NOSEC else f"{k} {len(s['keys'])}" for k, s in secs.items())
               + ". Value kinds: " + ", ".join(f"{k} {v}" for k, v in kinds.most_common()), 95, "counts")
+    last_sec = next((n for n in reversed(list(secs)) if secs[n]["keys"]), None)
+    if last_sec is not None:
+        ks = list(secs[last_sec]["keys"].items())
+        look.line(f"Last keys of the file (section {last_sec if last_sec != NOSEC else '(no section)'}; {n_keys:,} keys in all): "
+                  + "; ".join(f"{shown(k, v)} (line {ln})" for k, (v, ln) in ks[-3:]) + ".", 93, "tail")
     rows, size = [], 0
     for name, s in secs.items():
         body = "; ".join(shown(k, v) + (f" (line {ln})" if len(s["keys"]) > 12 else "") for k, (v, ln) in s["keys"].items())

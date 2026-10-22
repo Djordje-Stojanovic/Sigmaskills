@@ -9,6 +9,8 @@ Word, Excel and PowerPoint files (and their OpenDocument and legacy cousins) are
 - Charts and SmartArt are not text. Ask whether to read them as pictures or as data.
 - Password-protected files: listed as `ENCRYPTED`; nothing more is read.
 
+Excel binary workbooks (`.xlsb`) are read from their records with the standard library and looked at as a workbook (sheet names, hidden state, counts, rows); formula text is not decoded, stored results are. An OpenDocument text print lists every table with its rows, columns, first and last row.
+
 ## Pipeline
 
 1. Package listing (stdlib): parts such as comments, footnotes, headers, notes, media and embeddings; macros flagged; hidden Unicode in text scanned.

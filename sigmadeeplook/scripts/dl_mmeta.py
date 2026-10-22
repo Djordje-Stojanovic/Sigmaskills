@@ -42,7 +42,7 @@ def probe_full(look, count=True):
     fp = look.tool("ffprobe")
     if not fp:
         return None
-    args = [fp, "-v", "error", "-show_format", "-show_streams", "-show_chapters", "-of", "json"]
+    args = [fp, "-v", "error", "-show_format", "-show_streams", "-show_chapters", "-show_programs", "-of", "json"]
     if count:
         args.insert(3, "-count_packets")
     r, out, _ = look.run_text(args + [str(look.path)])
@@ -84,6 +84,15 @@ def media_meta(look, pri=93):
     tags = fmt.get("tags", {})
     look.line(f"Container: {fmt.get('format_long_name') or fmt.get('format_name')} ({fmt.get('format_name')}); start {fmt.get('start_time')} s; size {int(fmt.get('size', 0)):,} B"
               + (f"; tags: " + "; ".join(f"{k} = {P.short(x, 80)}" for k, x in tags.items()) if tags else "; no container tags"), pri, "props")
+    progs = j.get("programs") or []
+    if progs and (fmt.get("format_name") == "mpegts" or any(p.get("tags") for p in progs)):
+        rows = []
+        for p in progs:
+            t = p.get("tags") or {}
+            rows.append(f"program {p.get('program_num', p.get('program_id'))}: " + ("; ".join(f"{k} = {P.short(v, 60)}" for k, v in t.items()) or "no service tags")
+                        + f"; {p.get('nb_streams', len(p.get('streams', [])))} streams, PMT pid {p.get('pmt_pid')}, PCR pid {p.get('pcr_pid')}")
+        look.line(f"Programs in the stream ({len(progs)}): " + " | ".join(rows), pri - 1, "props")
+        look.fact("programs", len(progs))
     for s in streams:
         bits = [f"#{s.get('index')} {s.get('codec_type')}: {s.get('codec_name')}" + (f" ({s.get('profile')})" if s.get("profile") else "")]
         if s.get("codec_type") == "video":

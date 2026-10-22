@@ -201,7 +201,11 @@ def look_code(look):
             look.line(f"{len(ol)} definitions found ({how}): " + ", ".join(d["name"] for d in ol[:8]) + (" ..." if len(ol) > 8 else ""))
         look.fact("definitions", len(ol))
     import dl_prof as P
-    prose = lang in ("Markdown", "Text") or ext in (".md", ".txt", ".rst", ".adoc", "")
+    prose = lang in ("Markdown", "Text") or ext in (".md", ".txt", ".rst", ".adoc", "", ".po", ".pot")
+    if ext in (".po", ".pot") or (re.search(r'(?m)^msgid "', text) and re.search(r'(?m)^msgstr(\[\d+\])? "', text)):
+        import dl_legacy
+        if dl_legacy.po_facts(look, text):
+            look.headline = look.headline or f"Gettext catalogue, {len(lines):,} lines"
     if prose:
         P.text_profile(look, text, 90, "Text")
     else:
@@ -212,7 +216,8 @@ def look_code(look):
         look.line(f"Skeleton: {len(rows)} definitions with their signatures in skeleton.md; the body of one is one call away.", 40)
         look.cmd("--func NAME", "the body of one function or class (--func list names them all)", None)
     else:
-        look.write_text("head.txt", "\n".join(lines[:200]), "first 200 lines", inline=False if len(lines) <= 200 and look.size <= core.SOURCE_CONTENT_MAX else None)   # the whole file ends the stream
+        look.write_text("head.txt", "\n".join(lines[:200]), "first 200 lines" + (f" of {len(lines):,}" if len(lines) > 200 else ""), inline=False if len(lines) <= 200 and look.size <= core.SOURCE_CONTENT_MAX else None,
+                        partial=f"the first 200 of {len(lines):,} lines; the rest is NOT shown here (see the last lines and counts above)" if len(lines) > 200 else None)   # the whole file ends the stream
     ctags = look.tool("ctags")
     if ctags and ext != ".py":
         r, out, _ = look.run_text([ctags, "--output-format=json", "-f", "-", str(look.path)])

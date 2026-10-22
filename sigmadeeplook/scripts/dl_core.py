@@ -378,6 +378,9 @@ def add_source_content(look):
         return
     if text is None:
         return
+    if _enc and _enc.lower().replace("_", "-") not in ("utf-8", "utf8", "ascii", "us-ascii", "utf-8-sig"):   # a legacy code page: the stored copy is decoded, never raw bytes read as UTF-8
+        look.write_text("file.utf8.txt", redact(text) if any(f["kind"] in ("SECRET?", "PRIVATE-KEY") for f in look.flags) else text, f"the file itself, whole, decoded from {_enc} (after every fact)", value=-6)
+        return
     if any(f["kind"] in ("SECRET?", "PRIVATE-KEY") for f in look.flags):   # the facts did not print the values: the whole file must not either
         look.write_text("file.redacted.txt", redact(text), "the file itself, whole, with secret-like values replaced (after every fact)", value=-6)
         return
@@ -560,6 +563,8 @@ def detect(path):
         t, st, mg = ("video", "ogv", "OggS") if ext == ".ogv" else ("audio", "ogg", "OggS")
     elif is_(b"fLaC"):
         t, st, mg = "audio", "flac", "fLaC"
+    elif is_(b".snd") and size >= 24:
+        t, st, mg = "audio", "au", "Sun/NeXT audio (.snd magic)"
     elif is_(b"ID3") or (len(h) > 2 and h[0] == 0xFF and (h[1] & 0xE0) == 0xE0 and ext in (".mp3", ".mp2", ".aac")):
         t, st, mg = "audio", "mp3", "ID3/MPEG sync"
     elif is_(b"\x89PNG\r\n\x1a\n"):
@@ -570,6 +575,8 @@ def detect(path):
         t, st, mg = "image", "gif", "GIF"
     elif is_(b"BM") and size > 26 and ext in (".bmp", ".dib", ""):
         t, st, mg = "image", "bmp", "BMP"
+    elif h[:1] == b"\x0a" and (ext == ".pcx" or size > 4096) and __import__("dl_legacy").pcx_plausible(h, size):
+        t, st, mg = "image", "pcx", "PCX header (0x0A, version, RLE, planes)"
     elif is_(b"II*\0", b"MM\0*"):
         t, st, mg = "image", "tiff", "TIFF"
     elif is_(b"\0\1\0\0", b"OTTO", b"true", b"ttcf"):
@@ -600,6 +607,12 @@ def detect(path):
         t, st, mg = "data", "duckdb", "DuckDB database (header 'DUCK')"
     elif is_(b"<stata_dta>") or (ext == ".dta" and h[:1] in (b"p", b"s", b"q", b"r") and len(h) >= 4 and h[1] in (1, 2) and h[2] == 1 and h[3] == 0):
         t, st, mg = "data", "stata", "Stata dta"
+    elif is_(b"\xde\x12\x04\x95", b"\x95\x04\x12\xde") and size >= 28:
+        t, st, mg = "data", "gettext", "GNU gettext message catalogue (.mo)"
+    elif h[:3] == b"CDF" and h[3:4] in (b"\x01", b"\x02", b"\x05") and size >= 32:
+        t, st, mg = "data", "netcdf", "netCDF classic (CDF magic)"
+    elif is_(b"$FL2", b"$FL3") and size >= 176:
+        t, st, mg = "data", "sav", "SPSS system file ($FL2 / $FL3)"
     elif is_(b"\x93NUMPY"):
         t, st, mg = "data", "npy", "NumPy array (.npy)"
     elif is_(b"HEADER RECORD*******LIBRARY"):
@@ -684,6 +697,8 @@ def zip_kind(p):
         return "archive", "zip", "PK (zip, unreadable directory)"
     lower = [n.lower() for n in names]
     if "[content_types].xml" in lower:
+        if "xl/workbook.bin" in lower:
+            return "office", "xlsb", "PK + xl/workbook.bin (Excel binary workbook)"
         for pre, (a, b) in OOXML.items():
             if any(n.startswith(pre) for n in lower):
                 macro = any(n.endswith("vbaproject.bin") for n in lower)
@@ -835,8 +850,8 @@ def config_sniff(s, ext):
 
 EXT_OK = {
     "video": {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".wmv", ".flv", ".ogv", ".mpg", ".mpeg", ".ts", ".3gp"},
-    "audio": {".mp3", ".wav", ".flac", ".ogg", ".opus", ".m4a", ".aac", ".wma", ".aiff", ".aif", ".mka", ".weba", ".mp4", ".webm", ".oga"},
-    "image": {".png", ".jpg", ".jpeg", ".gif", ".webp", ".tif", ".tiff", ".bmp", ".heic", ".heif", ".avif", ".svg", ".ico"},
+    "audio": {".mp3", ".wav", ".flac", ".ogg", ".opus", ".m4a", ".aac", ".wma", ".aiff", ".aif", ".mka", ".weba", ".mp4", ".webm", ".oga", ".au", ".snd"},
+    "image": {".png", ".jpg", ".jpeg", ".gif", ".webp", ".tif", ".tiff", ".bmp", ".heic", ".heif", ".avif", ".svg", ".ico", ".pcx", ".dib"},
     "pdf": {".pdf"},
     "font": {".ttf", ".otf", ".woff", ".woff2", ".ttc", ".otc"},
     "notebook": {".ipynb"},
@@ -1017,7 +1032,7 @@ class Look:
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
 
-    def write_text(self, name, text, what, kind="text", cost=True, value=None, inline=None, slice_cmd=None):
+    def write_text(self, name, text, what, kind="text", cost=True, value=None, inline=None, slice_cmd=None, partial=None):
         p = self.path_for(name)
         data = text if isinstance(text, str) else str(text)
         b = data.encode("utf-8", "replace")
@@ -1025,14 +1040,16 @@ class Look:
             b = b[:MAX_TEXT]
             self.flag("TRUNCATED", name, f"{MAX_TEXT} bytes", "artifact capped at 2 MB; the file has more")
         p.write_bytes(b)
-        self.add(p, kind, what, value=value, inline=inline, slice_cmd=slice_cmd)
+        self.add(p, kind, what, value=value, inline=inline, slice_cmd=slice_cmd, partial=partial)
         return p
 
-    def add(self, path, kind, what, px=None, pages=None, tokens=None, secret=False, value=None, slice_cmd=None, inline=None):
+    def add(self, path, kind, what, px=None, pages=None, tokens=None, secret=False, value=None, slice_cmd=None, inline=None, partial=None):
         p = Path(path)
         a = {"path": str(p), "kind": kind, "what": what}
         if inline is not None:
             a["inline"] = inline
+        if partial:
+            a["partial"] = partial   # printed in the heading of the content block: this is a part of the file, not the whole
         if value is not None:
             a["value"] = value
         if slice_cmd:
@@ -1124,6 +1141,9 @@ def image_size(p):
             if h[:2] == b"BM":
                 w, hh = struct.unpack("<ii", h[18:26])
                 return w, abs(hh)
+            if h[:1] == b"\x0a" and len(h) >= 12 and h[1] in (0, 2, 3, 4, 5) and h[2] == 1:   # PCX: the window is inclusive
+                x0, y0, x1, y1 = struct.unpack("<4H", h[4:12])
+                return (x1 - x0 + 1, y1 - y0 + 1) if x1 >= x0 and y1 >= y0 else None
             if h[:4] == b"RIFF" and h[8:12] == b"WEBP":
                 if h[12:16] == b"VP8X":
                     return 1 + int.from_bytes(h[24:27], "little"), 1 + int.from_bytes(h[27:30], "little")
