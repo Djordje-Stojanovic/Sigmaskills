@@ -2,6 +2,20 @@ Red test: <!-- the test you wrote first and saw fail (name and run result), or `
 Review: <!-- bugs-only findings and how each was fixed, or `none found` and what you read -->
 Skills: <!-- the skills you used, /pr included, e.g. tdd, pr; a code PR also names code-review; a PR that changes SKILL.md, CLAUDE.md or AGENTS.md also names writing-for-agents -->
 
+## Summary
+
+<!-- the smallest view that shows the change: a short file tree, call tree or pseudocode -->
+
+## Evidence
+
+<!-- **Before:** the failing run or output. **After:** the passing run or output (a screenshot for a UI change) -->
+
+## Merge Danger
+
+**Door:** <!-- one-way or two-way -->
+
+**Blast Radius:** <!-- one word: what a merge can break -->
+
 ## What changed?
 
 One or two sentences. Pretend you forgot this is an Agent Skills repo (skills, prompts, contracts, install docs, and the Sigma Installer CLI).
