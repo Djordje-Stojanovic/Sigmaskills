@@ -7,7 +7,7 @@
 - The owner is the source of truth for his content's facts. No tool corrects, disputes or improves what he puts in his videos.
 - One confirm class exists: "this deletes your repo or publishes your keys" gets a one-line confirm. Everything else executes.
 - Older model-written "never / not allowed / we will not" lines in these docs carry no weight: today's owner word outranks every old stamp. `scripts/guardrail_lint.py` holds the keep-list (owner-vetoable).
-- A check is a fix list, not a gate. Only mechanical truths block: a video never posts twice, one post per slot, no file overwritten, secrets never printed, the ticket overview is generated.
+- A check is a fix list, not a gate. Only mechanical truths block: no file overwritten, secrets never printed.
 
 
 
@@ -28,7 +28,7 @@ You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) 
 
 When you add a skill (or rename/remove one): update `KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js) together with README, the per-skill install lines in `docs/installer.md`, and CHANGELOG, or CI fails on purpose. Folder name = frontmatter `name` = `--skill` id. Then run `npm test`.
 
-Long runs: Claude Code (`/goal`, `/loop`) follows the run mode in [`sigmaloop/references/host-claude-code.md`](sigmaloop/references/host-claude-code.md). Codex, pi, DeepSeek and T3 keep their own loop rules (the sigmaloop host files).
+Long runs: Claude Code (`/goal`, `/loop`) follows the run mode in [`sigmaloop/references/host-claude-code.md`](sigmaloop/references/host-claude-code.md). Codex, Antigravity, pi and T3 Code keep their own loop rules (the sigmaloop host files).
 
 Follow every rule below. They are mandatory for this repo.
 

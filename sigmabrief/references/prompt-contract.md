@@ -42,14 +42,14 @@ Only when useful: overlaps, upstream waits, already fixed, human-only tests.
 9. Self-review: high quality, docs, validation, low regression risk before opening the PR.
 10. Explicit out-of-scope / do-not-touch list.
 11. Use the shell native to the executing machine (PowerShell on Windows, POSIX shell elsewhere). No WSL assumptions.
-12. **Do not merge. Keep any worktree while the PR is open. Cleanup only after human merge or user cancel/abandon.**
+12. **Keep any worktree while the PR is open. Cleanup only after human merge or user cancel/abandon.**
 13. Report back in this format: `Status: DONE | DONE_WITH_CONCERNS | BLOCKED` · PR URL · checks run and results · rulings or open questions · concerns.
 14. Before you build, answer three questions in the PR body: "Is there a stupid simple solution?" "How hard is this before you build?" "Could a prompt answer this instead of a feature?"
 15. Sub-agent honesty rule: read the real code for each claim, and cite no file you did not open.
 
 ## 3. Worktree create
 
-When isolation is on, the **executing agent** creates the worktree (Approach A). If the host has a native worktree tool (for example Cursor `/worktree`, a `--worktree` flag, or an `EnterWorktree` tool), use it: the host can then see and clean up the worktree. Otherwise use the git commands below. If the agent already runs inside a linked worktree, it creates no second one.
+When isolation is on, the **executing agent** creates the worktree. If the host has a native worktree tool (for example Cursor `/worktree`, a `--worktree` flag, or an `EnterWorktree` tool), use it: the host can then see and clean up the worktree. Otherwise use the git commands below. If the agent already runs inside a linked worktree, it creates no second one.
 
 ### Prerequisites (verify before add)
 
