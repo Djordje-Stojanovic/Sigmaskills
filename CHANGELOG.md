@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-10-22
+
 ### Added
 
 - `sigmadeeplook` fix round 8 (set 7 miss categories): the end of the file in step 1 (a `Last row` or `Last lines` fact for tables, text, logs, subtitles and configs); text structure (reST headings of any underline, paragraphs, line starts, directives, frequent words); gettext `.po` and `.mo`, SPSS `.sav`, netCDF classic and Excel `.xlsb` readers; PCX and BMP headers with exact pixel facts; sound bursts (count, times, frequency) for audio and Sun `.au`; MPEG-TS service names; OpenDocument and PowerPoint table rows.
@@ -403,7 +405,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.2...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.2...v0.16.0
 [0.15.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.14.0...v0.15.0
