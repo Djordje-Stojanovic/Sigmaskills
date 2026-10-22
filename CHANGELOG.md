@@ -4,7 +4,9 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
-### Added
+## [0.16.1] — 2026-10-22
+
+### Changed
 
 - `sigmadeeplook` fix round 9 (set 8 miss categories): records at fixed positions (#1-5, 10, 20, 25 ... 100 ... the middle and the last) for text lines, table rows, subtitle cues, `.mo` entries and Word paragraphs; a standard-library reader for legacy Word `.doc` (Word 97-2003, 6 and 95: header, saved properties, paragraphs with heading levels, tables with rows and cells, last paragraphs); exact per-channel sample statistics for Sun `.au`; every `.mo` entry in `text.md`; reST title, fields, tables and code blocks counted.
 
@@ -413,7 +415,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.1...HEAD
+[0.16.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.2...v0.16.0
 [0.15.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.0...v0.15.1
