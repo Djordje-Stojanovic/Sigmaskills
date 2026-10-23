@@ -61,6 +61,13 @@ def short(v, n=40):
     return s if len(s) <= n else s[:n - 1] + "…"
 
 
+def short_id(v, n=40, keep=200):
+    """short(), but a value with no blank in it (a URL, path, e-mail, key, file name) stays whole up to `keep` characters: a cut
+    identifier reads as another identifier (fix round 10: a feed URL cut with an ellipsis gave a confident wrong answer)."""
+    s = " ".join(str(v).split())
+    return s if len(s) <= n or (" " not in s and len(s) <= keep) else s[:n - 1] + "…"
+
+
 def keyof(v):
     """The value as counted and grouped: stripped text, lower-case booleans, whole floats as ints."""
     if isinstance(v, str):
@@ -339,7 +346,7 @@ class Profiler:
             if k not in self.marks:
                 return None
             idx, pairs = self.marks[k]
-            body = "; ".join(f"{a}={short(v, width)}" for a, v in pairs[:fields]) + (f"; +{len(pairs) - fields} more" if len(pairs) > fields else "")
+            body = "; ".join(f"{a}={short_id(v, width)}" for a, v in pairs[:fields]) + (f"; +{len(pairs) - fields} more" if len(pairs) > fields else "")
             return f"#{k} ({self.label} {idx}): {body}"
         if self.n > 3:
             dl_textx.marks_lines(look, self.n, show, noun, pri, keep=set(self.marks))
@@ -354,7 +361,7 @@ class Profiler:
         else:
             pairs = list(self.last[1].items()) if isinstance(self.last[1], dict) else list(self.last[1])
         noun = "row" if self.label in ("line", "row", "sheet row") else self.label
-        body = "; ".join(f"{k}={short(v, width)}" for k, v in pairs[:fields]) + (f"; +{len(pairs) - fields} more fields" if len(pairs) > fields else "")
+        body = "; ".join(f"{k}={short_id(v, width)}" for k, v in pairs[:fields]) + (f"; +{len(pairs) - fields} more fields" if len(pairs) > fields else "")
         return f"Last {noun} ({self.label} {idx}; {fmt(self.n)} in all): {body}"
 
     def ordered(self):
@@ -543,6 +550,17 @@ def emit(look, p, extra, what, key_pri=88, more_pri=30, field_limit=24, write_na
 def plural(w):
     """record -> records, index -> indexes, entry -> entries."""
     return w[:-1] + "ies" if w.endswith("y") and w[-2:-1] not in "aeiou" else w + "es" if w.endswith(("x", "s", "ch", "sh")) else w + "s"
+
+
+TABLE_ROWS_MAX = 40   # a document table up to this many rows is printed row by row (fix round 10: a value in a middle row is a fact)
+
+
+def table_rows(title, rows, limit=TABLE_ROWS_MAX, width=60):
+    """A small table of a document, every row with its cells joined by ' | ' -> the fact text, or '' when it has more rows than `limit`."""
+    if not rows or len(rows) > limit:
+        return ""
+    return f"{title} ({len(rows)} rows, every row; cells split by ' | '):\n" + "\n".join(
+        f"row {k}: " + " | ".join(short(c, width) for c in r) for k, r in enumerate(rows, 1))
 
 
 def counts(look, pairs, pri=94, title="Counts"):

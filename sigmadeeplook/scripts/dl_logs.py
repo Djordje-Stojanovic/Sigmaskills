@@ -592,6 +592,15 @@ def look_subtitle(look):
     dl_textx.marks_lines(look, len(cues), lambda k: crow(k - 1), "cue", 82, f"Cues at fixed positions ({len(cues):,} cues; #k = the k-th cue in the file)")
     look.line("Longest cues: " + "; ".join(crow(i) for i in order[:5]), 80)
     look.line("Shortest cues: " + "; ".join(crow(i) for i in order[::-1][:5]), 78)
+    holding, first_at = Counter(), {}   # repeated text (a tour script, a chorus, a test file): each distinct line and how many cues hold it
+    for i, p in enumerate(plain):
+        for x in {" ".join(t.split()) for t in p.splitlines() if t.strip()}:
+            holding[x] += 1
+            first_at.setdefault(x, i)
+    if holding and len(holding) <= 60 and len(holding) <= len(cues) // 2:
+        rows = [(f"{n:,} cues: " if n > 1 else f"1 cue (#{nums[first_at[x]]}): ") + P.short(x, 120) for x, n in sorted(holding.items(), key=lambda kv: (-kv[1], first_at[kv[0]]))]
+        look.line(f"Cue text lines: {len(holding)} distinct lines in {len(cues):,} cues (the text repeats); each line with the number of cues that hold it, "
+                  "a line held once with its cue number:\n" + "\n".join(rows), 75, "values")
     look.line("Cues ranked by duration, longest first (top 40): " + "; ".join(crow(i) for i in order[:40]), 30, "ranking")
     rows = [f"#{nums[i]} [{stamp(c[0])} --> {stamp(c[1])}] {' / '.join(x.strip() for x in p.splitlines() if x.strip())}" for i, (c, p) in enumerate(zip(cues, plain))]
     look.write_text("text.md", "\n".join(rows), "every cue with its number and exact start and end time (H:MM:SS.mmm)", value=6)

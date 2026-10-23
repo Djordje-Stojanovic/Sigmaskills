@@ -31,7 +31,8 @@ LANG = {0x0409: "en-US", 0x0809: "en-GB", 0x0407: "de-DE", 0x040C: "fr-FR", 0x04
 NFIB_NEW = {0x00D9: "Word 2000", 0x0101: "Word 2002", 0x010C: "Word 2003", 0x0112: "Word 2007 or later"}
 PIDSI = {2: "Title", 3: "Subject", 4: "Author", 5: "Keywords", 6: "Comments", 7: "Template", 8: "Last saved by", 9: "Revision", 10: "Total editing time",
          11: "Last printed", 12: "Created", 13: "Last saved", 14: "Pages", 15: "Words", 16: "Characters", 18: "Application", 19: "Security"}
-PIDDSI = {2: "Category", 5: "Lines", 6: "Paragraphs", 14: "Manager", 15: "Company"}
+PIDDSI = {2: "Category", 3: "Presentation format", 5: "Lines", 6: "Paragraphs", 7: "Slides", 8: "Notes", 9: "Hidden slides", 10: "Multimedia clips",
+          14: "Manager", 15: "Company", 23: "Application version"}
 SPLIT_RE = re.compile(r"[\r\x07]")
 
 
@@ -95,6 +96,26 @@ def property_set(data, names):
     except (struct.error, IndexError):
         pass
     return out
+
+
+def props_line(look, props, dprops, app="the app"):
+    """The SummaryInformation and DocumentSummaryInformation values as one step-1 fact (every field, labelled, never cut short)."""
+    props = dict(props)
+    props.update(dprops)
+    v = props.get("Application version")
+    if isinstance(v, int) and not isinstance(v, bool):
+        props["Application version"] = f"{v >> 16}.{v & 0xFFFF}"
+    if not props:
+        return
+    look.line(f"Document properties (as {app} saved them): " + "; ".join(f"{k}: {short(v, 200) if isinstance(v, str) else (f'{v:,}' if isinstance(v, int) and not isinstance(v, bool) else v)}"
+                                                                     for k, v in props.items()), 95, "props")
+    look.fact("doc_properties", props)
+
+
+def ole_props(look, data, app):
+    """Document properties of any legacy Office file (PowerPoint, Excel): the two property-set streams of its OLE container."""
+    st = dl_vba.read_cfb(data)
+    props_line(look, property_set(st.get("\x05SummaryInformation", b""), PIDSI), property_set(st.get("\x05DocumentSummaryInformation", b""), PIDDSI), app)
 
 
 # ---------------------------------------------------------------- File Information Block
@@ -422,12 +443,7 @@ def look_doc(look):
     look.line(f"Word binary header: nFib {f['nfib']} ({version_label(f)}); language {lang}; " + (f"flags: {', '.join(flags)}; " if flags else "flags: none set; ")
               + (f"table stream {f['table']}; " if f["word97"] else "") + f"quick saves {f['quick_saves']}; characters stored: "
               + ", ".join(f"{k} {v:,}" for k, v in ccp.items() if v or k == "text") + (f"; text pieces {r['pieces']}" if r.get("pieces") else "") + ".", 94, "structure")
-    props = dict(r["props"])
-    props.update(r["dprops"])
-    if props:
-        look.line("Document properties (as Word saved them): " + "; ".join(f"{k}: {short(v, 70) if isinstance(v, str) else (f'{v:,}' if isinstance(v, int) and not isinstance(v, bool) else v)}"
-                                                                           for k, v in props.items()), 95, "props")
-        look.fact("doc_properties", props)
+    props_line(look, r["props"], r["dprops"], "Word")
     if r.get("encrypted"):
         look.flag("ENCRYPTED", "Word binary", "the document is encrypted or obfuscated", "the text cannot be read without the password")
         return True
@@ -465,6 +481,9 @@ def look_doc(look):
         ncol = max(len(x) for x in t)
         look.line(f"Table {i}: {len(t)} rows x {ncol} columns; first row: " + " | ".join(short(x, 30) for x in t[0]) + "; last row: " + " | ".join(short(x, 30) for x in t[-1]),
                   90 - min(20, i), "tables")
+        full = P.table_rows(f"Table {i} rows", t)
+        if full:
+            look.line(full, 79 - min(20, 2 * i), "tables")
     if heads:
         idx = {id(p): k for k, p in enumerate(ne, 1)}
         rows = [f"{'  ' * (p['level'] - 1)}{p['level']}. {short(p['text'], 80)} (#{idx[id(p)]})" for p in heads]

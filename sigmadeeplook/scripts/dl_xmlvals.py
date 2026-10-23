@@ -61,7 +61,7 @@ def row(path, s, width=44):
         body = f"numbers {nmin:,.12g} .. {nmax:,.12g}, sum {nsum:,.12g}"
     else:
         top = sorted(vals.items(), key=lambda kv: -kv[1])[:10 if len(vals) <= 60 else 6]
-        body = "; ".join(f"{v[:width]}" + (f" (x{c})" if c > 1 else "") for v, c in top)
+        body = "; ".join((v if len(v) <= width else v[:width - 1] + "…") + (f" (x{c})" if c > 1 else "") for v, c in top)   # a cut value says so
         if len(vals) > len(top):
             body += f"; +{len(vals) - len(top)} more"
     return f"{path} [{count:,} value{'s' if count != 1 else ''}, {len(vals)}{'+' if over else ''} distinct]: {body}"

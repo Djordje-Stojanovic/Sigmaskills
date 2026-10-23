@@ -16,6 +16,7 @@ import dl_core as core
 import dl_util as U
 
 SAMPLE_ROWS = 20000
+TAIL_ROWS = 20   # the last rows of a table, printed whole in step 2 (the file content shows its head)
 TIME_CAP = 180.0   # a full pass: every count exact (accuracy over speed); the quick tier profiles the first 4 MB
 INT_RE = re.compile(r"^-?\d{1,18}$")
 FLOAT_RE = re.compile(r"^-?\d*\.\d+([eE][-+]?\d+)?$|^-?\d+[eE][-+]?\d+$")
@@ -297,6 +298,10 @@ def data_csv(look):
     delim, mode_n, share = D.sniff_dialect(text, "\t" if look.subtype == "tsv" else ",")
     if look.subtype in ("csv", "tsv"):
         look.subtype = "tsv" if delim == "\t" else "csv"
+    off = 0   # physical lines before the table (a title block above the header row); every line number below adds it
+    region = None if prefix_cut else D.table_region(text, delim, mode_n)
+    if region:
+        text, off = region_facts(look, region, delim)
     first_rec = next(csv.reader(io.StringIO(text[:200000], newline=""), delimiter=delim), [])
     dec_cols = D.decimal_comma_columns(text, delim, len(first_rec))
     norm = D.normalizer(dec_cols)
@@ -321,23 +326,23 @@ def data_csv(look):
         if len(rec) != ncols:
             n += 1
             if len(rejects) < 100:
-                rejects.append((rd.line_num, len(rec), rec))
+                rejects.append((rd.line_num + off, len(rec), rec))
             continue
         if rec == header:
-            repeats.append(rd.line_num)
+            repeats.append(rd.line_num + off)
             continue
         if norm:
             rec = norm(rec)
         n += 1
-        ln = rd.line_num
+        ln = rd.line_num + off
         for i in range(ncols):
             prof[i].add(rec[i], ln)
         gp.add_row(gcols, rec, ln)
         lcols.add_row(rec)
         if len(rows) < SAMPLE_ROWS:
             rows.append(rec)
-        tail.append(rec)
-        if len(tail) > 5:
+        tail.append((ln, rec))
+        if len(tail) > TAIL_ROWS:
             tail.pop(0)
         if time.time() - t0 > TIME_CAP:
             partial = True
@@ -375,7 +380,7 @@ def data_csv(look):
     look.write_text("schema.json", json.dumps(schema, indent=1, default=str), ("per-column profile over the first rows only (PARTIAL read)" if read_cut else "per-column profile over every row") + ": type mix, empty %, distinct, range, median, top values", "json")
     notes = [n for n in notes if "empty" in n]   # every other finding is a flag and is listed once, under Watch out; the empty % sits in each column row
     if prof:   # one legend, then one compact row per column, exact counts over every row (positions are file line numbers)
-        extra = csv_second_pass(look, text, delim, header, gp, norm=norm) if gp.n else []
+        extra = csv_second_pass(look, text, delim, header, gp, norm=norm, line_off=off) if gp.n else []
         crow = gp.field_lines()
         legend = COLUMN_LEGEND if not (prefix_cut or partial) else COLUMN_LEGEND.replace("every count is exact over every row", f"every count is exact over the {profiled:,} rows profiled only (PARTIAL read)")
         if gp.last_line():
@@ -398,7 +403,10 @@ def data_csv(look):
     if (enc not in ("utf-8", "utf-8-sig") or norm or delim not in (",", "\t") or look.facts.get("unpacked_from")) and not prefix_cut and len(text) <= 200 << 20:
         write_table_copy(look, text, delim, ncols, norm)
     import dl_sample
-    dl_sample.build_sample(look, text, delim, header, prof, n, repeats, tail, rows, partial or prefix_cut)
+    if len(tail) > 1 and not prefix_cut:   # the content shows the head of the file; its end is shown here, as the file has it
+        look.line(f"Last {len(tail)} rows (lines {tail[0][0]}-{tail[-1][0]} of {n:,} rows; as the file has them, after the header row):" + chr(10)
+                  + chr(10).join(f"{ln_}: " + P.short(delim.join(r), 240) for ln_, r in tail), 70, "tail")
+    dl_sample.build_sample(look, text, delim, header, prof, n, repeats, [r for _, r in tail[-5:]], rows, partial or prefix_cut, line_off=off)
     if rejects:
         buf = io.StringIO()
         w = csv.writer(buf)
@@ -409,6 +417,29 @@ def data_csv(look):
         for ln, k, rec in rejects[:5]:
             look.flag("REJECT-ROW", f"line {ln}", f"{k} fields, expected {len(header)}", "short or long row: a missing or unquoted delimiter")
     look.step("schema and rejects", "stdlib csv")
+
+
+def region_facts(look, region, delim, cap=60):
+    """A table inside a text (fix round 10): print where it sits and every line around it (the title block above, the totals and notes
+    below: a stated total is a fact the rows cannot give), then -> (the table's own text, physical lines before it)."""
+    lines, head, end = region
+    body = "".join(lines[head:end])
+    pre = [(i + 1, ln.strip()) for i, ln in enumerate(lines[:head]) if ln.strip()]
+    post = [(i + 1, ln.strip()) for i, ln in enumerate(lines[end:], end) if ln.strip()]
+    look.line(f"Table inside the text: header row at line {head + 1}, table lines {head + 2}-{end}; {head} line(s) before it (title block), "
+              f"{len(lines) - end} line(s) after it (totals and notes). Rows, columns and counts below are the table's; the lines around it are printed whole.", 95, "structure")
+    look.fact("table_lines", [head + 1, end])
+
+    import dl_prof as P
+    nl = chr(10)
+
+    def show(items):
+        return nl.join(f"{i}: {P.short(t, 240)}" for i, t in items[:cap]) + (f"{nl}... {len(items) - cap} more lines" if len(items) > cap else "")
+    if post:
+        look.line(f"Lines after the table ({len(post)} non-blank; totals and notes as the file states them):{nl}" + show(post), 94, "tail")
+    if pre:
+        look.line(f"Lines before the table ({len(pre)} non-blank; title block):{nl}" + show(pre), 92, "structure")
+    return body, head
 
 
 def write_table_copy(look, text, delim, ncols, norm):
@@ -430,8 +461,9 @@ def complete_rows(text, delim, ncols):
     return sum(1 for r in rd if len(r) == ncols and all(c.strip() for c in r))
 
 
-def csv_second_pass(look, text, delim, header, gp, cap_s=40.0, norm=None):
-    """Group-by counts and sums and the top / bottom rows by each number (one more pass over the rows, time-capped)."""
+def csv_second_pass(look, text, delim, header, gp, cap_s=40.0, norm=None, line_off=0):
+    """Group-by counts and sums and the top / bottom rows by each number (one more pass over the rows, time-capped).
+    `line_off`: physical lines of the file before `text` (a title block above the table)."""
     import dl_prof as P
     sp = P.SecondPass(gp)
     names = [h.lstrip("﻿").strip() or f"column {i + 1}" for i, h in enumerate(header)]
@@ -441,9 +473,9 @@ def csv_second_pass(look, text, delim, header, gp, cap_s=40.0, norm=None):
     for k, rec in enumerate(rd):
         if len(rec) != len(header) or rec == header:
             continue
-        sp.add_row(names, norm(rec) if norm else rec, rd.line_num)
+        sp.add_row(names, norm(rec) if norm else rec, rd.line_num + line_off)
         if k % 5000 == 0 and time.time() - t0 > cap_s:
-            look.flag("PARTIAL", "group-by and top rows", f"stopped at line {rd.line_num}", "time cap: the group sums cover the rows up to that line only")
+            look.flag("PARTIAL", "group-by and top rows", f"stopped at line {rd.line_num + line_off}", "time cap: the group sums cover the rows up to that line only")
             break
     return sp.lines()
 
@@ -1156,6 +1188,8 @@ def data_xml(look):
     dl_xmlvals.emit(look, root, "XML", 88 + base)   # the values, by element path, over the whole document: a late element's text is in the first print too
     if attrs:
         look.line("Attributes (element@name, count): " + ", ".join(f"{k} ({v:,})" for k, v in attrs.most_common(40)), 60)
+    for t in sorted({c for (par, c) in parent_of if par == c}, key=lambda c: -counts[c])[:2]:
+        nested_tree(look, root, t, 87 + base)
     # records: the most repeated element that has attributes or children, each as {@attr, child: text}
     best = None
     for (par, t), n in sorted(parent_of.items(), key=lambda kv: -kv[1]):
@@ -1193,6 +1227,54 @@ def data_xml(look):
         rows = [f"[{i}] " + "; ".join(f"{k}={P.short(x if not isinstance(x, P.Multi) else ', '.join(map(str, x)), 60)}" for k, x in P.flat_of(r).items() if not k.endswith(P.LEN)) for i, r in recs]
         for k in range(0, len(rows), 20):
             look.line(f"<{t}> records:\n" + "\n".join(rows[k:k + 20]), 18, "records")
+
+
+def nested_tree(look, root, tag, pri):
+    """An element that nests in itself (OPML <outline>, a folder tree, a menu): per top-level node and per group under it, how many
+    items (nodes with no child of the same tag) sit anywhere below. 'How many feeds are under Endgames' is a count over a subtree."""
+    def local(t):
+        return t.rsplit("}", 1)[-1] if isinstance(t, str) else str(t)
+
+    def kids(e):
+        return [c for c in e if local(c.tag) == tag]
+
+    def label(e):
+        for a in ("text", "title", "name", "label", "id"):
+            if e.get(a):
+                return e.get(a)
+        return (e.text or "").strip() or f"<{tag}>"
+
+    def leaves(e, depth=0):
+        ks = kids(e)
+        if not ks:
+            return [e]
+        return [x for c in ks for x in leaves(c, depth + 1)] if depth < 60 else []
+
+    def items(e):
+        lv = leaves(e)
+        kinds = Counter(x.get("type") for x in lv if x.get("type"))
+        typed = (" (" + ", ".join(f"{k} {v:,}" for k, v in kinds.most_common(4)) + ")" if len(kinds) > 1 or sum(kinds.values()) < len(lv)
+                 else f" (all {next(iter(kinds))})" if kinds else "")
+        return f"{len(lv):,} items{typed}"
+    tops, stack = [], [iter([root])]
+    while stack and len(tops) < 400:   # the outermost nodes of the tag, in document order
+        e = next(stack[-1], None)
+        if e is None:
+            stack.pop()
+        elif e is not root and local(e.tag) == tag:
+            tops.append(e)
+        elif len(stack) < 60:
+            stack.append(iter(list(e)))
+    groups = [e for e in tops if kids(e)]
+    if not groups:
+        return
+    short = __import__("dl_prof").short
+    look.line(f"Nested <{tag}> tree: {len(tops):,} top-level nodes, {sum(len(leaves(e)) for e in tops):,} items in all (an item is a <{tag}> with no <{tag}> inside it; "
+              "by its type attribute in brackets); items anywhere under each top-level node: "
+              + "; ".join(f"{short(label(e), 40)}: {items(e)} in {len(kids(e))} groups" if kids(e) else f"{short(label(e), 40)}: an item" for e in tops[:60])
+              + (f"; ... {len(tops) - 60} more" if len(tops) > 60 else ""), pri, "structure")
+    rows = [f"{short(label(e), 40)} > " + "; ".join(f"{short(label(c), 40)} {items(c)}" for c in kids(e)[:40]) for e in groups[:60]]
+    look.line(f"Nested <{tag}> tree, items under each group of each top-level node:\n" + "\n".join(rows), max(30, pri - 25), "structure")
 
 
 def data_toml(look):

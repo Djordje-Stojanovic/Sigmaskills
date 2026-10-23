@@ -38,7 +38,7 @@ def anomaly_lines(prof, repeats, dominant_skip=("empty", "null-token")):
     return want
 
 
-def fetch(text, delim, n_cols, line_targets, idx_targets):
+def fetch(text, delim, n_cols, line_targets, idx_targets, line_off=0):
     """Second pass: rows whose line number or row index is wanted. -> {key: record}, key = ('line', n) or ('idx', i)."""
     got = {}
     need_l, need_i = set(line_targets), set(idx_targets)
@@ -52,7 +52,7 @@ def fetch(text, delim, n_cols, line_targets, idx_targets):
         if len(rec) != n_cols:
             continue
         i += 1
-        ln = rd.line_num
+        ln = rd.line_num + line_off
         if ln in need_l:
             got[("line", ln)] = rec
             need_l.discard(ln)
@@ -64,13 +64,13 @@ def fetch(text, delim, n_cols, line_targets, idx_targets):
     return got
 
 
-def build_sample(look, text, delim, header, prof, rows_n, repeats, tail, rows_head, partial=False, max_anomaly=14):
+def build_sample(look, text, delim, header, prof, rows_n, repeats, tail, rows_head, partial=False, max_anomaly=14, line_off=0):
     """Write sample.md and return nothing. Rows: anomalies (with reason), strata, head, tail."""
     lines = anomaly_lines(prof, repeats)
     line_targets = dict(list(lines.items())[:max_anomaly])
     plan = U.sample_plan(rows_n, anomalies=(), head=3, tail=3, strata=10)
     idx_targets = {i: lab for i, lab in plan}
-    got = {} if partial else fetch(text, delim, len(header), set(line_targets), set(idx_targets))
+    got = {} if partial else fetch(text, delim, len(header), set(line_targets), set(idx_targets), line_off)
     table_head = "| why | " + " | ".join(header) + " |\n|---|" + "---|" * len(header) + "\n"
     out_rows = []
     seen = set()

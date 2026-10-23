@@ -18,14 +18,50 @@ NOSEC = "(no section)"
 LIST_CHARS = 9000   # the key listing in step 1; past this it continues at a lower priority
 
 
-def parse(text):
-    """-> (sections: OrderedDict name -> {'line', 'keys': OrderedDict key -> (value, line)}, stats Counter, dup_keys, dup_sections)."""
+ESC_RE = re.compile(r"\\(u[0-9a-fA-F]{4}|.)")
+ESC_CHARS = {"t": "\t", "n": "\n", "r": "\r", "f": "\f"}
+
+
+def java_unescape(s):
+    """A .properties key or value as Java reads it: a backslash-u escape with four hex digits is that character, a backslash with t, n, r
+    or f is the control character, any other backslash pair is its second character."""
+    if "\\" not in s:
+        return s
+    return ESC_RE.sub(lambda m: chr(int(m.group(1)[1:], 16)) if len(m.group(1)) == 5 else ESC_CHARS.get(m.group(1), m.group(1)), s)
+
+
+def java_lines(text, st):
+    """Physical lines -> [(first line number, logical line)]: a line that ends in an odd number of backslashes goes on with the next
+    line, whose leading blanks are dropped (the .properties rule; a comment line never goes on)."""
+    out, buf, start = [], None, 0
+    for ln, raw in enumerate(text.splitlines(), 1):
+        if buf is not None:
+            st["continuation lines"] += 1
+            raw = raw.lstrip(" \t\f")
+        elif raw.strip().startswith(("#", "!")):
+            out.append((ln, raw))
+            continue
+        else:
+            start, buf = ln, ""
+        if (len(raw) - len(raw.rstrip("\\"))) % 2:
+            buf += raw[:-1]
+            continue
+        out.append((start, buf + raw))
+        buf = None
+    if buf is not None:
+        out.append((start, buf))
+    return out
+
+
+def parse(text, java=False):
+    """-> (sections: OrderedDict name -> {'line', 'keys': OrderedDict key -> (value, line)}, stats Counter, dup_keys, dup_sections).
+    `java`: a .properties file (backslash line continuation and escapes, no sections, no indented continuation)."""
     secs = OrderedDict()
     st = Counter()
     dup_keys, dup_secs = [], []
     cur = NOSEC
     last = None
-    for ln, raw in enumerate(text.splitlines(), 1):
+    for ln, raw in (java_lines(text, st) if java else enumerate(text.splitlines(), 1)):
         s = raw.strip()
         if not s:
             st["blank lines"] += 1
@@ -34,7 +70,7 @@ def parse(text):
         if s.startswith((";", "#", "!", "//")):
             st["comment lines"] += 1
             continue
-        m = SECTION_RE.match(raw)
+        m = None if java else SECTION_RE.match(raw)
         if m:
             cur = m.group(1) or "(empty name)"
             if cur in secs:
@@ -43,7 +79,7 @@ def parse(text):
                 secs[cur] = {"line": ln, "keys": OrderedDict()}
             last = None
             continue
-        if last is not None and raw[:1] in (" ", "\t"):   # continuation of the last value
+        if last is not None and raw[:1] in (" ", "\t") and not java:   # continuation of the last value
             k = last
             v, kl = secs[cur]["keys"][k]
             secs[cur]["keys"][k] = ((v + "\n" + s) if v else s, kl)
@@ -59,6 +95,8 @@ def parse(text):
             else:
                 k, v = s, None   # a bare key (allowed by some readers)
                 st["keys without a value"] += 1
+        if java:
+            k, v = java_unescape(k), (java_unescape(v) if v is not None else None)
         sec = secs.setdefault(cur, {"line": ln, "keys": OrderedDict()})
         if k in sec["keys"]:
             dup_keys.append((cur, k, ln))
@@ -98,7 +136,7 @@ def look_ini(look):
     raw = open(look.path, "rb").read(16 << 20)
     import dl_delim
     text, enc = dl_delim.sniff_encoding(raw)
-    secs, st, dup_keys, dup_secs = parse(text)
+    secs, st, dup_keys, dup_secs = parse(text, java=look.path.suffix.lower() == ".properties")
     n_keys = sum(len(s["keys"]) for s in secs.values())
     named = [s for s in secs if s != NOSEC]
     kinds = Counter(kind(v) for s in secs.values() for v, _ in s["keys"].values())
@@ -112,6 +150,10 @@ def look_ini(look):
                     ("repeated keys", len(dup_keys) or None), ("repeated section headers", len(dup_secs) or None), ("lines", len(text.splitlines()))], 96)
     look.line("Keys per section (in file order, with the line of the header): " + "; ".join(f"[{k}] {len(s['keys'])} (line {s['line']})" if k != NOSEC else f"{k} {len(s['keys'])}" for k, s in secs.items())
               + ". Value kinds: " + ", ".join(f"{k} {v}" for k, v in kinds.most_common()), 95, "counts")
+    prefix = Counter(k.split(".", 1)[0] for sec in secs.values() for k in sec["keys"] if "." in k.strip("."))
+    if prefix and max(prefix.values()) > 1:   # message catalogues and Java configs group keys by namespace: 'error.*', 'menu.*'
+        look.line(f"Keys by prefix (the part before the first '.'; {len(prefix)} prefixes, keys per prefix): "
+                  + "; ".join(f"{k} {v:,}" for k, v in prefix.most_common(30)) + (f"; +{len(prefix) - 30} more" if len(prefix) > 30 else ""), 94, "counts")
     last_sec = next((n for n in reversed(list(secs)) if secs[n]["keys"]), None)
     if last_sec is not None:
         ks = list(secs[last_sec]["keys"].items())

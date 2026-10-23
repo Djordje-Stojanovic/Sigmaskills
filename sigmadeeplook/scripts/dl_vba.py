@@ -62,6 +62,8 @@ def read_cfb(data):
         typ = d[i + 66]
         left, right, child = struct.unpack_from("<III", d, i + 68)
         start, size = struct.unpack_from("<IQ", d, i + 116)
+        if ssz == 512:   # version 3 files: the high 32 bits of a stream size are undefined and must be ignored (Word 97 leaves garbage there)
+            size &= 0xFFFFFFFF
         name = d[i:i + max(0, nlen - 2)].decode("utf-16-le", "replace")
         ents.append((name, typ, left, right, child, start, size))
     if not ents:
