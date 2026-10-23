@@ -142,7 +142,7 @@ def gradient_line(w, h, rgb, top, n, sample=40_000):
         for x in range(0, w, s):
             q = 3 * (y * w + x)
             px = rgb[q:q + 3]
-            if px not in solid:
+            if bytes(px) not in solid:
                 pts.append((x, y, px[0], px[1], px[2]))
     taken = ((h + s - 1) // s) * ((w + s - 1) // s)
     if len(pts) < 1000 or len(pts) < 0.2 * taken:
@@ -181,7 +181,7 @@ def gradient_line(w, h, rgb, top, n, sample=40_000):
     else:
         body = ", ".join(t + (f" ({md})" if md else "") for t, md in forms)
     return (f"Colour gradient {'under the solid colours above ' if solid else ''}(x, y from the top left; checked on {len(pts):,} pixels, "
-            f"{100 * worst:.0f} % or more exact): {body}.")
+            f"{math.floor(100 * worst)} % or more of them exact, or within 1 where a channel says so): {body}.")
 
 
 # ------------------------------------------------------------------------------------------ sound
@@ -307,6 +307,11 @@ def _tone_edges(np, xa, sr, f, s0, s1, core):
     return (s0 + int(idx[0])) / sr, (s0 + int(idx[-1]) + 1) / sr
 
 
+def _mid(xs):
+    xs = sorted(xs)
+    return (xs[(len(xs) - 1) // 2] + xs[len(xs) // 2]) / 2
+
+
 def tone_events(look, x, sr, pri=87, side=6):
     """Tones: stretches where one frequency dominates the sound and stands far above its own usual level (alarm beeps, calibration tones,
     a test signal), found in every sample with short spectra: how many per frequency, when each starts, how long. A steady hum that
@@ -361,7 +366,7 @@ def tone_events(look, x, sr, pri=87, side=6):
     groups = []
     for ev in sorted(found):
         g = groups[-1] if groups else None
-        if g and abs(ev[0] - g[len(g) // 2][0]) <= max(3.0, 0.02 * ev[0]):
+        if g and abs(ev[0] - g[0][0]) <= max(2.0, 0.003 * ev[0]):   # the fit is good to a fraction of a hertz: 1000 and 1015 Hz stay apart
             g.append(ev)
         else:
             groups.append([ev])
@@ -369,18 +374,18 @@ def tone_events(look, x, sr, pri=87, side=6):
     parts = []
     for g in groups[:side]:
         g.sort(key=lambda e: e[1])
-        f = sorted(e[0] for e in g)[len(g) // 2]
+        f = _mid(e[0] for e in g)
         starts = [f"{e[1]:.2f}" for e in g]
         if len(starts) > 24:
             starts = starts[:12] + ["..."] + starts[-12:]
         lens = [e[2] - e[1] for e in g]
         ln = f"each {sum(lens) / len(lens):.2f} s" if max(lens) - min(lens) < 0.02 else f"{min(lens):.2f}-{max(lens):.2f} s long"
         parts.append(f"{int(round(f))} Hz: {len(g)} tone{'s' if len(g) != 1 else ''}, starts {', '.join(starts)} s (the last at {g[-1][1]:.2f} s), {ln}, "
-                     f"{max(e[3] for e in g):.0f} dB above its usual level")
+                     + ("over digital silence" if max(e[3] for e in g) > 150 else f"{max(e[3] for e in g):.0f} dB above its usual level"))
     more = f"; {len(groups) - side} more frequencies" if len(groups) > side else ""
-    look.fact("tone_events", {str(int(round(sorted(e[0] for e in g)[len(g) // 2]))): len(g) for g in groups[:20]})
+    look.fact("tone_events", {str(int(round(_mid(e[0] for e in g)))): len(g) for g in groups[:20]})
     look.line(f"Tones (one frequency at least {TONE_DB:.0f} dB above its usual level in this file and most of the sound's power, for {TONE_FRAMES * L / sr:.2f} s or more; "
-              f"every sample read, starts to about 5 ms): {len(found)} tones at {len(groups)} frequenc{'ies' if len(groups) != 1 else 'y'}. " + "; ".join(parts) + more + ".", pri, "sound")
+              f"every whole frame read, start times to about 5 ms): {len(found)} tone{'s' if len(found) != 1 else ''} at {len(groups)} frequenc{'ies' if len(groups) != 1 else 'y'}. " + "; ".join(parts) + more + ".", pri, "sound")
 
 
 def pcm16_to_floats(raw):

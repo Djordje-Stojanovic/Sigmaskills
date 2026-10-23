@@ -84,7 +84,7 @@ def key_frames(look, v, pri=89, listed=60):
         spacing = f"; one every {gaps[0]:.3f} s" if max(gaps) - min(gaps) < 0.0015 else f"; {min(gaps):.3f}-{max(gaps):.3f} s apart, mean {sum(gaps) / len(gaps):.3f} s"
     rel = f" ({keys[-1] - start:.3f} s after the stream start {start:.3f} s)" if start is not None else ""
     look.fact("key_frames", len(keys))
-    look.line(f"Key frames of video stream #{v['index']} (every packet's key flag read; times are presentation times): {len(keys):,} key frames in {total:,} packets; "
+    look.line(f"Key frames of video stream #{v['index']} (every packet's key flag read; presentation times, or decode times where a packet has none): {len(keys):,} key frames in {total:,} packets; "
               f"first at {keys[0]:.3f} s, last at {keys[-1]:.3f} s{rel}{spacing}.", pri, "props")
     if 2 < len(keys) <= listed:
         look.line(f"Key frame times (s), every one: {', '.join(f'{t:.3f}' for t in keys)}", pri - 30, "props")

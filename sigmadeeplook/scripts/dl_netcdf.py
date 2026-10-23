@@ -156,8 +156,8 @@ def look_netcdf(look):
         v["record"] = bool(v["dimids"]) and v["dimids"][0] == unlimited
     rec_vars = [v for v in vs if v["record"]]
     recsize = sum(v["vsize"] for v in rec_vars)
-    if len(rec_vars) == 1 and rec_vars[0]["vsize"] and recsize == rec_vars[0]["vsize"]:
-        pass
+    if len(rec_vars) == 1:   # a lone record variable is stored without the padding its vsize counts (netCDF classic format)
+        recsize = _prod(rec_vars[0]["shape"][1:]) * TYPES.get(rec_vars[0]["type"], ("?", None, 1))[2]
     ver = {1: "CDF-1 (classic)", 2: "CDF-2 (64-bit offset)", 5: "CDF-5 (64-bit data)"}[nc["version"]]
     look.headline = f"netCDF {ver}: {len(dims)} dimensions, {len(vs)} variables"
     look.dims = " x ".join(f"{n}={s or nc['numrecs']}" for n, s in dims[:4])
@@ -203,13 +203,18 @@ def look_netcdf(look):
                 body = f"; values not read ({type(e).__name__})"
         elif tn == "char" and total and not look.quick:
             ents = char_entries(raw, nc, v, recsize)
-            text = "; ".join(f"{i} '{e}'" for i, e in enumerate(ents[:CHAR_ENTRIES], 1)) + (f"; ... {len(ents) - CHAR_ENTRIES:,} more" if len(ents) > CHAR_ENTRIES else "")
-            what = f"; {len(ents):,} entries (numbered from 1, trailing blanks dropped): " if len(v["shape"]) >= 2 else "; text: "
+            many = len(v["shape"]) >= 2
+            if many:
+                text = "; ".join(f"{i} '{e}'" for i, e in enumerate(ents[:CHAR_ENTRIES], 1)) + (f"; ... {len(ents) - CHAR_ENTRIES:,} more" if len(ents) > CHAR_ENTRIES else "")
+            else:
+                text = ents[0] if ents else ""
+            what = f"; {len(ents):,} entries (numbered from 1, trailing blanks dropped): " if many else "; text: "
             if len(text) <= 1200:
                 body = what + text
             else:
-                body = what.split(" (")[0] + ", every one in the next fact"
-                look.line(f"Variable {v['name']} (char){what}{text}"[:CHAR_TEXT_CAP], 56, "values")
+                cut = len(text) > CHAR_TEXT_CAP
+                body = f"; {len(ents):,} entries, listed in the next fact" if many else f"; {len(text):,} characters of text, in the next fact"
+                look.line(f"Variable {v['name']} (char){what}{text[:CHAR_TEXT_CAP]}" + (f" ... (cut at {CHAR_TEXT_CAP:,} of {len(text):,} characters)" if cut else ""), 56, "values")
         look.line(head + body + ".", 92 - min(k, 40) // 4, "structure")
     if len(vs) > 60:
         look.line(f"{len(vs) - 60} more variables: " + ", ".join(v["name"] for v in vs[60:200]), 40, "structure")
@@ -240,7 +245,8 @@ def _var_bytes(raw, nc, v, recsize):
     if not v["record"]:
         return raw[v["begin"]:v["begin"] + total]
     per = _prod(v["shape"][1:]) * size
-    return b"".join(raw[v["begin"] + i * recsize:v["begin"] + i * recsize + per] for i in range(nc["numrecs"]))
+    last = min(nc["numrecs"], (len(raw) - v["begin"]) // recsize + 1 if recsize else 1)   # a damaged or streaming record count stops at the end of the file
+    return b"".join(raw[v["begin"] + i * recsize:v["begin"] + i * recsize + per] for i in range(max(0, last)))
 
 
 def char_entries(raw, nc, v, recsize):

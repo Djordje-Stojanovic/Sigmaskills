@@ -423,5 +423,52 @@ class NestedTable(R10Base):
         self.assertIn(f"First row (line 2): gauge={a}; day={b}; level={c}", out)
 
 
+# ------------------------------------------------------------------ review findings (code-review pass of this lane)
+class ReviewFixesR10(R10Base):
+    @unittest.skipUnless(HAVE_NUMPY, "numpy")
+    def test_close_tones_stay_apart_and_one_tone_is_singular(self):
+        import numpy as np
+        import dl_sig
+        from test_v2_r8c import Stub
+        sr = 8000
+        x = (np.random.default_rng(1).standard_normal(sr * 8) * 0.01).astype(np.float32)
+        t = np.arange(int(0.4 * sr)) / sr
+        for t0, f in ((1.0, 1000), (4.0, 1015)):
+            x[int(t0 * sr):int(t0 * sr) + len(t)] += (0.5 * np.sin(2 * np.pi * f * t)).astype(np.float32)
+        st = Stub(numpy=True)
+        dl_sig.tone_events(st, x, sr)
+        text = "\n".join(st.lines)
+        self.assertIn("1000 Hz: 1 tone,", text)
+        self.assertIn("1015 Hz: 1 tone,", text)
+        self.assertIn("2 tones at 2 frequencies", text)
+
+    def test_lone_record_variable_is_read_without_padding(self):
+        """Three records of three shorts: the file stores 6 bytes per record, though the header's vsize says 8."""
+        data = bytearray(nc_file([("time", 0), ("x", 3)], [], [("v", [0, 1], 3, [], b"".join(struct.pack(">h", k) for k in range(1, 10)))], 3))
+        at = data.index(b"\0\0\0\x03\0\0\0\x06")         # the type (short) and vsize of v
+        data[at + 4:at + 8] = struct.pack(">I", 8)
+        p = self.tmp / "lone.nc"
+        p.write_bytes(bytes(data))
+        out, lj = self.look2(p)
+        self.no_crash(lj)
+        self.assertIn("time[1]: 4 5 6", out)
+        self.assertIn("time[2]: 7 8 9", out)
+
+    def test_streaming_record_count_and_long_text_do_not_hang_or_lie(self):
+        body = nc_file([("rec", 0), ("w", 8)], [], [("tag", [0, 1], 2, [], b"abcdefgh" * 4)], 4)
+        data = bytearray(body)
+        data[4:8] = b"\xff\xff\xff\xff"                     # numrecs: streaming
+        p = self.tmp / "stream.nc"
+        p.write_bytes(bytes(data))
+        _, lj = self.look2(p, ok=(0, 1))
+        self.no_crash(lj)
+        p = self.tmp / "note.nc"
+        p.write_bytes(nc_file([("n", 1600)], [], [("note", [0], 2, [], b"abc " * 400)], 0))
+        out, lj = self.look2(p)
+        self.assertIn(f"{len(('abc ' * 400).rstrip()):,} characters of text, in the next fact", out)
+        self.assertIn("text: abc abc", out)
+        self.assertNotIn("text: ,", out)
+
+
 if __name__ == "__main__":
     unittest.main()
