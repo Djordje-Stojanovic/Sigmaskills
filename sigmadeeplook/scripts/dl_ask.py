@@ -44,7 +44,7 @@ MAX_CELLS = U.byte_cap("ASK_CELLS", 40_000_000)   # cells held over all tables o
 JSON_DOC_CAP = U.byte_cap("ASK_JSON", 256 << 20)  # a JSON document is parsed whole: past this size it is named, not loaded
 SNIFF_BYTES = 8 << 20
 STREAM_CELLS = U.byte_cap("ASK_STREAM", 1_000_000)   # a source with more cells than this is searched for the rows that hold a value of the question, not held whole
-STREAM_KEEP = 5000                                   # rows kept by such a search
+STREAM_KEEP = U.byte_cap("ASK_KEEP", 5000)           # rows kept by such a search; a search that fills the list says PARTIAL
 
 
 def stem(w):
@@ -71,9 +71,11 @@ def num(v):
 
 
 class Table:
-    def __init__(self, name, cols, rows, pos, where, unit="row", total=None):
+    def __init__(self, name, cols, rows, pos, where, unit="row", total=None, ident=None):
         self.name, self.cols, self.rows, self.pos, self.where, self.unit = name, [str(c) for c in cols], rows, pos, where, unit
         self.total = total   # the rows the source holds when only part was read (None: every row is here)
+        self.partial = None  # the PARTIAL sentence of a search that stopped early (its rows are only some of the matches)
+        self.ident = ident   # the table's own name in the file (a database table): a question that writes it names this table
         self.colw = [set(words(c)) for c in self.cols]
         self.ownw = [set(words(c.rsplit(".", 1)[-1])) for c in self.cols]   # the column's own name, without its ancestors' prefix
         self.namew = set(words(re.sub(r"\[\]", "", name).rsplit(".", 1)[-1]))   # a record set is named by its last path step
@@ -190,11 +192,15 @@ def json_sets(doc):
     return out
 
 
+NOT_A_KEY = re.compile(r"\b\d+\s*(?:decimals?|decimal places?|places?|digits?|dp|significant|sig figs?|nachkommastellen?|dezimalstellen?|decimale|cifr\w*)\b"
+                      r"|\b(?:round\w*|to)\s+\d+\b|\b(?:first|last|top|bottom|erste\w*|letzte\w*|prv\w+|poslednj\w+)\s+\d+\b")   # "to 1 decimal", "top 5": a precision or a count of rows, not a value
+
+
 def wanted(pq):
     """For a pure lookup (no operation, group, comparison or year): the numbers and the key-like strings the question names, as a row test; else None."""
     if pq["ops"] or pq["group"] or pq["cmps"] or pq["years"]:
         return None
-    blank = pq["blank"]
+    blank = NOT_A_KEY.sub(" ", pq["blank"])
     nums = {float(x) for x in re.findall(r"(?<![\w.])\d+(?:\.\d+)?(?![\w])", blank)}
     cands = key_candidates(blank)
     strs = {c.lower() for c in cands}
@@ -219,14 +225,18 @@ def read_rows(name, cols, rows, total, where, unit, budget, hint):
     STREAM_CELLS cells that is asked a pure lookup (`hint` = its row test) is read in one pass and only the rows that hold a value of the
     question are kept; otherwise it is held up to the row and cell budget, and the answer says PARTIAL when that cuts it."""
     if hint is not None and total is not None and total * max(1, len(cols)) > STREAM_CELLS:
-        keep, pos = [], []
+        keep, pos, stopped = [], [], None
         for p, r in rows:
             if hint(r):
                 keep.append(list(r))
                 pos.append(p)
                 if len(keep) >= STREAM_KEEP:
+                    stopped = p
                     break
-        return Table(name, cols, keep, pos, where + "; one pass, only the rows that hold a value named in the question are kept", unit)
+        t = Table(name, cols, keep, pos, where + "; one pass, only the rows that hold a value named in the question are kept", unit, total if stopped is not None else None)
+        if stopped is not None:
+            t.partial = f"PARTIAL: the scan stopped at {unit} {stopped:,} of {total:,} after {len(keep):,} {unit}s that hold a value named in the question; this answer covers those {unit}s only"
+        return t
     out, pos, cut = [], [], None
     for p, r in rows:
         out.append(list(r))
@@ -296,7 +306,7 @@ def load_tables(path, out, lj, notes=None, hint=None):
                     if len(rows) >= MAX_ROWS or budget.spent(len(chunk) * max(1, len(cols))):
                         total = con.execute(f'SELECT COUNT(*) FROM "{name}"').fetchone()[0]
                         break
-                tables.append(Table(f"SQLite table {name}", cols, [[__import__("dl_data").plain(x) for x in r[1:]] for r in rows], [r[0] for r in rows], "the database", "rowid", total if total and total > len(rows) else None))
+                tables.append(Table(f"SQLite table {name}", cols, [[__import__("dl_data").plain(x) for x in r[1:]] for r in rows], [r[0] for r in rows], "the database", "rowid", total if total and total > len(rows) else None, ident=name))
             con.close()
         elif inner == "ini":
             tables.append(ini_table(src))
@@ -379,6 +389,42 @@ def store_table(look, name, cols, rows, where="the file", unit="row", total=None
     p = look.path_for(f"asktable-{k + 1}.json")
     p.write_text(json.dumps({"name": name, "cols": cols, "rows": rows, "where": where, "unit": unit, "total": total}, default=str), encoding="utf-8")
     look.add(p, "internal", f"{name} as rows for --ask")
+
+
+# ---------------------------------------------------------------- "contain the word X": a text filter (fix round 12)
+_Q = "\"'`‘’‚‛“”„‟«»‹›"
+_VERB = r"(?:contain\w*|includ\w*|mention\w*|enth[aä]lt\w*|enthaelt\w*|sadr[zž]\w*|spominj\w*)"
+_VERB_WITH = r"(?:with|having|has|have|hat|haben|ima|imaju)"
+_NOUN = r"(?:words?|terms?|phrases?|texts?|strings?|wort|wörter|begriff\w*|re[cč]i?|izraz\w*|tekst\w*)"
+_ART = r"(?:the\s+|das\s+|die\s+|den\s+|ove\s+|tu\s+)?"
+CONTAINS_QUOTED = re.compile(rf"\b(?:{_VERB}\s+{_ART}(?:{_NOUN}\s+)?|{_VERB_WITH}\s+{_ART}{_NOUN}\s+)([{_Q}])(.+?)[{_Q}](?!\w)", re.I)
+CONTAINS_BARE = re.compile(rf"\b{_VERB}\s+{_ART}{_NOUN}\s+([^\s{_Q}?!,;:()]+)", re.I)
+IGNORE_CASE = re.compile(r"\b(?:ignor\w*\s+(?:the\s+)?case|case[- ]?insensitiv\w*|any\s+case|regardless\s+of\s+(?:the\s+)?case|in\s+any\s+capitali[sz]ation|(?:upper|lower)\s*(?:case)?\s+or\s+(?:upper|lower)\s*case)\b", re.I)
+CASE_NOTE = re.compile(r"\(?\b(?:in\s+)?(?:lower|upper)\s*case\b\)?|\bcase[- ]?sensitiv\w*|\bas\s+written\b|\bexact(?:ly)?\s+as\s+(?:written|spelled)\b", re.I)
+
+
+def contains_filter(q):
+    """'How many cues contain the word 'riego' (lower case)?' -> dict(needle, nocase, rest) where `rest` is the question without the clause, or None.
+    The word is matched whole and as written (case counts) unless the question says to ignore case."""
+    m = CONTAINS_QUOTED.search(q)
+    needle = m.group(2).strip() if m else None
+    if not m:
+        m = CONTAINS_BARE.search(q)
+        needle = m.group(1).strip(".") if m else None
+    if not m or not needle:
+        return None
+    nocase = bool(IGNORE_CASE.search(q))
+    rest = q[:m.start()] + " " + q[m.end():]
+    rest = CASE_NOTE.sub(" ", IGNORE_CASE.sub(" ", rest))
+    return {"needle": needle, "nocase": nocase, "rest": rest}
+
+
+def needle_regex(needle, nocase):
+    """The needle as a whole word or phrase (spaces match any run of white space), case as written unless `nocase`."""
+    body = r"\s+".join(re.escape(x) for x in needle.split())
+    lead = r"(?<!\w)" if re.match(r"\w", needle) else ""
+    tail = r"(?!\w)" if re.search(r"\w$", needle) else ""
+    return re.compile(lead + body + tail, re.I if nocase else 0)
 
 
 # ---------------------------------------------------------------- the question
@@ -467,6 +513,8 @@ def score(t, pq, q):
     fw = sum(1 for w in set(pq["words"]) if col_for(t, w) is not None)
     vals = match_values(t, q, pq["blank"])
     named = sum(3 for w in set(pq["words"]) if w in t.namew)
+    if t.ident and re.search(r"(?<!\w)" + re.escape(t.ident) + r"(?!\w)", q, re.I):   # the question writes the table's own name (gpkg_contents): that table, not a look-alike
+        named += 100
     return fw * 2 + len(vals) * 2 + named, vals
 
 
@@ -571,6 +619,32 @@ def point_answer(t, pq, keep, fcols, lines):
     return lines
 
 
+FILLER = {"contain", "include", "hold", "list", "listed", "stored", "recorded", "present", "available", "exist", "dataset", "spreadsheet", "workbook", "database",
+          "collection", "sheet", "worksheet", "entry", "item", "line", "case", "observation", "element", "cue", "message", "packet", "event", "record", "row"}   # words that name the rows or the file, not a condition
+
+
+def leftover_words(t, pq):
+    """The content words of a count question that name no column, no part of the table's name, no row noun and no value: a condition this table could not apply."""
+    unit = set(words(t.unit))
+    return [w for w in dict.fromkeys(pq["words"]) if w not in FILLER and w not in t.namew and w not in unit and col_for(t, w) is None]
+
+
+def text_columns(t, pq):
+    """The columns a word filter reads: the text columns the question names, else every text column."""
+    text = [i for i in range(len(t.cols)) if not t.numeric(i)]
+    named = [i for i in text if t.colw[i] and t.colw[i] <= pq["allw"]]
+    return named or text
+
+
+def refusal(t, head, left):
+    """A count that matched no filter: say so, list what `--ask` can do on this table, and give no figure."""
+    cols = ", ".join(t.cols[:12]) + (f", ... ({len(t.cols)} columns)" if len(t.cols) > 12 else "")
+    return [head,
+            "Answer: not answered: no filter matched the question" + (f" ({'; '.join(left[:4])})" if left else "") + f", so no count was made. The table has {len(t.rows):,} {t.unit}s in all.",
+            f"It can count {t.unit}s where a column compares with a number (\"<column> over N\"), where a column equals a value as the data writes it (\"<column> = '<value>'\"), "
+            f"where a text column contains a whole word (\"contain the word 'X'\"), or per column (\"{t.unit}s per <column>\"). Columns: {cols}."]
+
+
 def answer(t, pq, q, vals):
     lines = []
     keep = list(range(len(t.rows)))
@@ -600,6 +674,17 @@ def answer(t, pq, q, vals):
         keep = hit
         filt.append(f"{t.cols[ci]} = {lit}")
         fcols.add(ci)
+    unmatched = []   # parts of the question that asked for a filter this table could not apply
+    tf = pq.get("contains")
+    if tf:
+        cols = text_columns(t, pq)
+        if cols:
+            rx = needle_regex(tf["needle"], tf["nocase"])
+            keep = [k for k in keep if any(rx.search(str(t.rows[k][i])) for i in cols if i < len(t.rows[k]))]
+            filt.append(f"text contains the whole {'phrase' if len(tf['needle'].split()) > 1 else 'word'} {tf['needle']!r} ({'any case' if tf['nocase'] else 'case as written'}) in "
+                        + (f"column {t.cols[cols[0]]}" if len(cols) == 1 else f"any of the {len(cols)} text columns"))
+        else:
+            unmatched.append(f"the word {tf['needle']!r} (this table has no text column)")
     measure = pick_measure(t, pq, exclude={group})
     for op, val, at in pq["cmps"]:
         before = re.findall(r"[^\W_]+", pq["fq"][:at])
@@ -610,6 +695,7 @@ def answer(t, pq, q, vals):
             ci = col_for(t, stem(w), True)
         ci = ci if ci is not None else measure
         if ci is None:
+            unmatched.append(f"the comparison {op} {P.fmt(val)} (no column named)")
             continue
         f = {">": lambda a: a > val, ">=": lambda a: a >= val, "<": lambda a: a < val, "<=": lambda a: a <= val, "=": lambda a: a == val}[op]
         keep = [k for k in keep if (lambda x: x is not None and f(x))(num(t.rows[k][ci] if ci < len(t.rows[k]) else None))]
@@ -625,6 +711,8 @@ def answer(t, pq, q, vals):
     head = f"Table: {t.name} ({len(t.rows):,} {t.unit}s, read from {t.where})"
     lines.append(head)
     lines.append("Filters: " + ("; ".join(filt) if filt else "none") + f" -> {len(keep):,} {t.unit}s")
+    if unmatched:   # the question asked for a filter this table cannot apply: no figure over the unfiltered rows may stand as the answer
+        return refusal(t, head, unmatched)
 
     def pos_list(ks, n=20):
         if not ks:
@@ -648,7 +736,7 @@ def answer(t, pq, q, vals):
     main_op = next((o for o in ("mean", "sum", "max", "min", "distinct", "count") if o in ops), None)
     hm = AL.compiled(pq["lang"])["howmany"].search(pq["fq"])
     hw = col_for(t, stem(hm.group(1)), True) if main_op == "count" and hm and stem(hm.group(1)) not in t.namew else None
-    if hw is not None and measure_ok(t, pq, hw):   # "how many units": the Units column, summed
+    if hw is not None and measure_ok(t, pq, hw) and not (t.colw[hw] & EQ_TAIL):   # "how many units": the Units column, summed (an id or code column is never summed)
         measure, main_op = hw, "sum"
     if main_op == "count" and measure is not None and "sum" in ops:
         main_op = "sum"
@@ -722,7 +810,11 @@ def answer(t, pq, q, vals):
         lines.append(f"{t.unit.capitalize()}s used: {pos_list(keep)}")
         return lines
     if main_op == "count" or (main_op in ("max", "min") and measure is None):
-        lines.insert(0, f"Answer: {len(keep):,} {t.unit}s match" + (" (no filter matched the question, so this is every row)" if not filt else ""))
+        if not filt:   # nothing the question asked for was applied: the row count of the whole table is not its answer
+            left = unmatched + [f"the word {w!r}" for w in leftover_words(t, pq)]
+            if left or main_op != "count":
+                return refusal(t, head, left)
+        lines.insert(0, f"Answer: {len(keep):,} {t.unit}s match" + (" (the question names no condition, so this is every row)" if not filt else ""))
         lines.append(f"{t.unit.capitalize()}s: {pos_list(keep)}")
         return lines
     if pq["order"] and keep and main_op is None and not (pq["order_next"] and col_for(t, pq["order_next"]) is not None):   # "the first order", "the last 3 rows": by position in the file, said so
@@ -798,7 +890,10 @@ def run(o, path, out, lj):
     got_px = dl_pixel.try_ask(q, path, lj, getattr(o, "no_tools", False))
     if got_px:
         return dl_drill.done(got_px)
-    pq = parse(q)
+    tf = contains_filter(q)
+    qe = tf["rest"] if tf else q   # a "contain the word X" clause is a filter of its own: its words are not table or column words
+    pq = parse(qe)
+    pq["contains"] = tf
     lines = [f"--ask {q!r}", f"Read as: operation {', '.join(pq['ops']) or 'lookup'}; words {', '.join(pq['words']) or '(none)'}"
              + (f"; group by {', '.join(pq['group'])}" if pq["group"] else "") + (f"; comparisons {', '.join(f'{a} {P.fmt(b)}' for a, b, _ in pq['cmps'])}" if pq["cmps"] else "") + f"; language {pq['lang']}"]
     import dl_wordcount   # fix round 11: "how many times does the word X appear" is counted over the whole text, not over a table
@@ -815,14 +910,14 @@ def run(o, path, out, lj):
         except (OSError, ValueError, struct.error, IndexError, KeyError) as e:   # a cut or damaged file: named, never a crash
             notes.append(f"The netCDF grid could not be read for --ask ({type(e).__name__}: {str(e)[:150]}).")
     tables = [] if cell else load_tables(path, out, lj, notes, wanted(pq))
-    ranked = sorted(((score(t, pq, q), t) for t in tables), key=lambda x: (-x[0][0], -len(x[1].rows)))
+    ranked = sorted(((score(t, pq, qe), t) for t in tables), key=lambda x: (-x[0][0], -len(x[1].rows)))
     got = cell or None
     lines += cell or []
     if ranked and ranked[0][0][0] > 0:
         (_, vals), t = ranked[0]
-        got = answer(t, pq, q, vals)
+        got = answer(t, pq, qe, vals)
         if got and t.total:   # only part of the table is in memory: no figure may read as a total
-            note = f"PARTIAL: {len(t.rows):,} of {t.total:,} {t.unit}s were read (row and memory budget); this answer covers those {t.unit}s only"
+            note = t.partial or f"PARTIAL: {len(t.rows):,} of {t.total:,} {t.unit}s were read (row and memory budget); this answer covers those {t.unit}s only"
             got = [x.replace("Answer:", f"Answer ({note}):", 1) if x.startswith("Answer:") else x for x in got]
             got.insert(1, note + ".")
         if got:
@@ -835,7 +930,8 @@ def run(o, path, out, lj):
     cw = set(pq["words"])
     stated = [(k, v) for k, v in counts.items() if set(words(k)) and set(words(k)) <= cw | {"non", "empty"} and set(words(k)) & cw]
     exact = [(k, v) for k, v in stated if set(words(k)) == cw]
-    if exact and "count" in pq["ops"]:   # the look's own count names exactly what was asked: it is the answer, the table count is context
+    filtered = bool(tf) or any(x.startswith("Answer: not answered") for x in lines)   # a word filter or a refusal: the look's whole-file count is not the answer
+    if exact and "count" in pq["ops"] and not filtered:   # the look's own count names exactly what was asked: it is the answer, the table count is context
         k, v = exact[0]
         lines = [x.replace("Answer:", "Table count:", 1) if x.startswith("Answer:") else x for x in lines]
         lines.insert(2, f"Answer: {k} {P.fmt(v) if isinstance(v, (int, float)) else v} (the look's own exact count of exactly these words)")

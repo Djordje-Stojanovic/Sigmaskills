@@ -25,6 +25,16 @@ def fold(s):
     return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
 
 
+QUOTES = "\"'`\u2018\u2019\u201a\u201b\u201c\u201d\u201e\u201f\u00ab\u00bb\u2039\u203a"
+_QUOTED_NUM = re.compile("[" + QUOTES + r"]+\s*(-?\d[\d.]*(?:\s*[,;/]\s*-?\d[\d.]*)*)\s*[" + QUOTES + "]+")
+
+
+def unquote_numbers(q):
+    """A number the question wrote in quotes ("3287", `23`, curly or angle quotes, "336,519") is the same number without them, so the index,
+    coordinate and key readers see 3287 and 336,519. Quotes around words are left alone."""
+    return _QUOTED_NUM.sub(r" \1 ", q)
+
+
 LANGS = {
     "en": dict(
         marks="the of is are how what which who many much per by with and in for total average",

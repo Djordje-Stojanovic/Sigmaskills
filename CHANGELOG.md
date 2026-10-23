@@ -28,6 +28,16 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook --ask` (fix round 12, lane F1, from held-out set 11):
+  - A big `.sav` is searched to the last case. A rounding number ("to 1 decimal", "top 5") no longer counts as a key, and a search that fills its keep list says PARTIAL instead of "0 matching".
+  - A number in quotes (`time index "3287"`, `pixel "336,519"`, curly quotes, backticks) reads as the plain number in netCDF and picture questions. `(x,y)` alone names a pixel on a picture.
+  - Step 1 of every table-like file has an `Ask a count:` line: the count forms `--ask` answers, with the file's own column names.
+  - `contain the word 'X'` is a real filter over cue text and text columns: whole word, case as written, `ignoring case` to ignore it.
+  - A count whose condition matches no filter now says `no filter matched` and lists what it can do. It no longer answers with the row total (the sbv "1,240 cues" answer). An id or code column is never summed for "how many".
+  - A question that writes a table's own name (`gpkg_contents`) is answered from that table, not from a look-alike (`gpkg_ogr_contents`).
+
 ## [0.16.8] — 2026-10-23
 
 ### Changed

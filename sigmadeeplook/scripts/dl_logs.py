@@ -590,7 +590,7 @@ def look_subtitle(look):
         return f"#{nums[i]} {stamp(cues[i][0])}-{stamp(cues[i][1])} ({durs[i]:.3f} s): {P.short(' / '.join(x for x in plain[i].splitlines() if x.strip()), 70)}"
     uniq = len(set(nums)) == len(nums)
     P.find_line(look, [f"{len(cues):,} cues, cue numbers {nums[0]} .. {nums[-1]}{' (unique)' if uniq else ''}, {stamp(start)} to {stamp(end)}"],
-                ask='ask "first line of cue number N", "start of cue N" or "text of cue N" with --ask', pri=93)
+                ask='ask "first line of cue number N", "start of cue N" or "text of cue N" with --ask; "how many cues contain the word \'X\'" counts a whole word', pri=93)
     lines_of = [[x.strip() for x in p.splitlines() if x.strip()] for p in plain]
     names = ("first line", "second line", "third line", "fourth line")
     wide = min(len(names), max((len(x) for x in lines_of), default=1))

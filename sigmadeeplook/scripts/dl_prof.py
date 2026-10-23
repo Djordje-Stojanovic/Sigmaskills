@@ -410,6 +410,7 @@ class Profiler:
 
     def find_part(self, name=None, noun="rows", limit=3):
         """'table survey_marks, 5,200 rows, key column mark_code (unique, SM-00001 .. SM-05200)', or '' when no field names one record."""
+        ASKABLE.append((name, self))   # the next find_line also says which counts can be asked of this table
         keys = self.key_fields(limit, text_first=limit == 1)
         if not keys:
             return ""
@@ -572,14 +573,57 @@ def profile(records, coerce=False, label="record", second=True):
 
 
 FIND_ASK = 'ask "<measure> of <key value>" with '
+ASKABLE = []   # (table name or None, Profiler) of each find_part call; the next find_line turns them into one 'Ask a count' line
+
+
+ASK_SKIP_RE = re.compile(r"date|time|stamp|year|(^|[_\s.-])(id|no|nr|code|key)$|^id$", re.I)   # not the best column to show in an example
+
+
+def ask_forms(look, entries, pri):
+    """'Ask a count: --ask "how many rows have <number column> over N" or ...; columns: ...' (fix round 12): the count forms `--ask` answers for a table,
+    with the file's own column names, so an agent that reads step 1 knows it may ask. One line per look; several tables are named in it."""
+    if not entries or getattr(look, "ask_forms_done", False):
+        return
+    tabs = []
+    for name, p in entries[:4]:
+        cols = [f for f in p.ordered() if p.n and "[]" not in f.name and not f.name.endswith(LEN)
+                and not (f.dominant() == "text" and any(str(k).startswith("<") and "bytes>" in str(k) for k in list(f.counts)[:3]))]
+        if not cols:
+            continue
+        numeric = [f for f in cols if f.numeric() and not ASK_SKIP_RE.search(f.name)] or [f for f in cols if f.numeric()]
+        num = next((f for f in numeric if 1 < f.distinct() < p.n), None) or next(iter(numeric), None)
+        txt = next((f for f in cols if not f.numeric() and not f.overflow and 2 <= f.distinct() <= 40 and f.distinct() < p.n), None)
+        top = 10 if len(entries) == 1 else 6
+        shown = ", ".join(short(f.name, 28) for f in cols[:top]) + (f", +{len(cols) - top} more" if len(cols) > top else "")
+        tabs.append((name[6:] if name and name.startswith("table ") else name, plural(p.label), num, txt, shown))
+    if not tabs:
+        return
+    look.ask_forms_done = True
+    name, noun, num, txt, _ = next((t for t in tabs if t[2] or t[3]), tabs[0])
+    what = name if len(tabs) > 1 and name else noun
+    forms = ([f'"how many {what} have {num.name} over N"'] if num else []) + ([f"\"how many {what} have {txt.name} = '<value>'\"", f'"{what} per {txt.name}"'] if txt else [])
+    cols = tabs[0][4] if len(tabs) == 1 else " | ".join(f"{t[0]}: {t[4]}" for t in tabs)
+    look.line("Ask a count: --ask " + (" or ".join(forms) if forms else f'"how many {what} have <column> over N"') + ("; name the table in the question" if len(tabs) > 1 else "")
+              + f". Columns: {cols}.", pri, "locate")
+
+
+def ask_line(look, text, pri):
+    """The 'Ask a count' line of a family that has no profiler (subtitle cues, gettext messages); one per look."""
+    if not getattr(look, "ask_forms_done", False):
+        look.ask_forms_done = True
+        look.line("Ask a count: --ask " + text, pri, "locate")
 
 
 def find_line(look, parts, route="--ask", pri=91, ask=None):
     """'Find one record: <table, rows, key column and range> | <next table ...>; ask "<measure> of <key value>" with --ask': where a single
-    record lives, in step 1. parts: the find_part texts (empty ones are dropped). `ask`: the family's own wording of the last clause."""
+    record lives, in step 1. parts: the find_part texts (empty ones are dropped). `ask`: the family's own wording of the last clause.
+    The tables whose find_part ran since the last call also get one 'Ask a count' line."""
+    entries = list(ASKABLE)
+    ASKABLE.clear()
     parts = [x for x in parts if x]
     if parts:
         look.line("Find one record: " + " | ".join(parts) + "; " + (ask or FIND_ASK + route), pri, "locate")
+    ask_forms(look, entries, pri)
 
 
 def emit(look, p, extra, what, key_pri=88, more_pri=30, field_limit=24, write_name=None, prefix="", find=None, route="--ask"):
