@@ -4,15 +4,12 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
-### Added
+### Changed
 
 - Four new packs, each pinned to one commit or tag: `anthropic` (19 skills from anthropics/skills), `design-md` (84 brand looks from VoltAgent/awesome-design-md, one skill per brand), `last30days` (mvanhorn/last30days-skill v3.30.0) and `financial-services` (anthropics/financial-services: 62 skills, 10 agents and 27 commands as 99 skills; the MCP connectors an agent needs are named in the skill, not installed). Pick a whole pack or single skills; one owner per skill name still holds.
 - Design.md installs at most 3 skills at a time. A 4th pick stops with a choice: `--drop <id>` (repeatable), or in the wizard a list where Enter drops one and Esc keeps all. `--preset design-md` is refused and `--preset all` skips it.
 - Pack sources are fetched in parallel (up to four at once), sparse and shallow, and a pinned source is cached in `~/.sigmaskills/cache/git`. A pack source can set `transform` and a pack can set `limit`.
 - Wizard: key `0` picks the tenth pack; a limited pack shows `held/3`; installed skills are marked; the filter matches a skill's group.
-
-### Changed
-
 - `list --packs` stops long lists after eight rows and notes a pack's limit. `list --packs --json` adds `limit` and `group`.
 - `scripts/packs-snapshot.js` keeps the packs it does not list.
 
