@@ -56,7 +56,7 @@ Principles:
 - Buffett P2. Hold great businesses for as long as they stay great. Time works for quality and against junk.
 - Buffett P3. Be bold when others panic and careful when others are euphoric. Mood in the market is the signal.
 - Buffett P4. Stay inside what you understand. Knowing the edge of your knowledge matters more than knowing a lot.
-- Buffett P5. Never use debt that can wipe you out. One zero ruins a long string of good years.
+- Buffett P5. Keep debt small enough that it cannot wipe you out. One zero ruins a long string of good years.
 - Buffett P6. Keep cash ready. Cash is only noticed when it is gone, and then nothing else matters.
 
 ## Jensen Huang
