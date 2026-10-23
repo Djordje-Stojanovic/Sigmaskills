@@ -21,6 +21,7 @@ THOUSANDS_DOT_RE = re.compile(r"^[-+]?\d{1,3}(\.\d{3})+$")          # 1.234 (a w
 PLAIN_INT_RE = re.compile(r"^[-+]?\d+$")
 DOT_DEC_RE = re.compile(r"^[-+]?\d*\.\d+$")
 SAMPLE_LINES = 400
+NUMBERISH_RE = re.compile(r"^[-+]?[0-9.,]*$")
 
 
 def sniff_encoding(raw):
@@ -62,7 +63,7 @@ def sniff_encoding(raw):
 LEGACY_LABELS = {"cp1252": "Windows-1252", "latin-1": "Latin-1", "cp1250": "Windows-1250 (Central European)", "cp1251": "Windows-1251 (Cyrillic)",
                  "koi8_r": "KOI8-R (Cyrillic)", "cp866": "CP866 (DOS Cyrillic)", "cp1253": "Windows-1253 (Greek)", "cp1254": "Windows-1254 (Turkish)"}
 _COMMON_LATIN = {c: 1.0 for c in "éáíóúñüöäßàçêâîôåøÉÁÍÓÚÑÜÖÄ"}
-_COMMON_LATIN.update({c: 0.7 for c in "èùëïûãõìòœÿýÈÀºª"})   # º ª: the ordinal marks of Spanish, Portuguese and Italian (n.º 5, 1.ª)
+_COMMON_LATIN.update({c: 0.7 for c in "èùëïûãõìòœÿýÈÀ"})
 _COMMON_CE = {c: 1.0 for c in "éáíóúüöäýěščřžůťďňÉÁÍÓÚÜÖÄ"}   # Central-European letters the Western pages lack (the bulk of cp1250 text)
 _COMMON_CE.update({c: 1.2 for c in "čćšžđČĆŠŽĐąęłśźżńĄĘŁŚŹŻŃőűŐŰ"})
 _COMMON_CE.update({c: 0.8 for c in "ăâîșțşţĂÂÎȘȚŞŢĺľŕĹĽŔ"})
@@ -337,15 +338,17 @@ def table_region(text, delim, ncols, ahead=5):
             if len(rec) == ncols:
                 last_end = prev
             if len(early) < 4000:
-                early.append((start, len(rec)))
+                early.append((start, len(rec), rec if len(rec) == ncols else None))
     except csv.Error:
         return None
-    for k, (start, n) in enumerate(early):
+    for k, (start, n, rec) in enumerate(early):
         if n != ncols:
             continue
-        nxt = [m for _, m in early[k + 1:k + 1 + ahead]]
+        nxt = [m for _, m, _ in early[k + 1:k + 1 + ahead]]
         if nxt and sum(1 for m in nxt if m == ncols) >= max(1, (len(nxt) + 1) // 2):
             head = start
+            if all(NUMBERISH_RE.match(c.strip()) for c in rec):   # a data row, not a header: the file's first line is a short header, not a title
+                return None
             break
     if head is None or last_end is None or last_end <= head + 1:
         return None

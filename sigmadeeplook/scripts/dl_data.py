@@ -331,6 +331,7 @@ def data_csv(look):
         if rec == header:
             repeats.append(rd.line_num + off)
             continue
+        orig = rec
         if norm:
             rec = norm(rec)
         n += 1
@@ -341,7 +342,7 @@ def data_csv(look):
         lcols.add_row(rec)
         if len(rows) < SAMPLE_ROWS:
             rows.append(rec)
-        tail.append((ln, rec))
+        tail.append((ln, orig))
         if len(tail) > TAIL_ROWS:
             tail.pop(0)
         if time.time() - t0 > TIME_CAP:
@@ -405,7 +406,7 @@ def data_csv(look):
     import dl_sample
     if len(tail) > 1 and not prefix_cut:   # the content shows the head of the file; its end is shown here, as the file has it
         look.line(f"Last {len(tail)} rows (lines {tail[0][0]}-{tail[-1][0]} of {n:,} rows; as the file has them, after the header row):" + chr(10)
-                  + chr(10).join(f"{ln_}: " + P.short(delim.join(r), 240) for ln_, r in tail), 70, "tail")
+                  + chr(10).join(f"{ln_}: " + P.short(csv_line(r, delim), 240) for ln_, r in tail), 70, "tail")
     dl_sample.build_sample(look, text, delim, header, prof, n, repeats, [r for _, r in tail[-5:]], rows, partial or prefix_cut, line_off=off)
     if rejects:
         buf = io.StringIO()
@@ -417,6 +418,13 @@ def data_csv(look):
         for ln, k, rec in rejects[:5]:
             look.flag("REJECT-ROW", f"line {ln}", f"{k} fields, expected {len(header)}", "short or long row: a missing or unquoted delimiter")
     look.step("schema and rejects", "stdlib csv")
+
+
+def csv_line(rec, delim):
+    """A record written back as one delimited line, quoted where the file had to quote it."""
+    buf = io.StringIO()
+    csv.writer(buf, delimiter=delim, lineterminator="").writerow(rec)
+    return buf.getvalue()
 
 
 def region_facts(look, region, delim, cap=60):
@@ -1257,7 +1265,7 @@ def nested_tree(look, root, tag, pri):
                  else f" (all {next(iter(kinds))})" if kinds else "")
         return f"{len(lv):,} items{typed}"
     tops, stack = [], [iter([root])]
-    while stack and len(tops) < 400:   # the outermost nodes of the tag, in document order
+    while stack:   # the outermost nodes of the tag, in document order
         e = next(stack[-1], None)
         if e is None:
             stack.pop()
@@ -1269,10 +1277,14 @@ def nested_tree(look, root, tag, pri):
     if not groups:
         return
     short = __import__("dl_prof").short
-    look.line(f"Nested <{tag}> tree: {len(tops):,} top-level nodes, {sum(len(leaves(e)) for e in tops):,} items in all (an item is a <{tag}> with no <{tag}> inside it; "
-              "by its type attribute in brackets); items anywhere under each top-level node: "
-              + "; ".join(f"{short(label(e), 40)}: {items(e)} in {len(kids(e))} groups" if kids(e) else f"{short(label(e), 40)}: an item" for e in tops[:60])
-              + (f"; ... {len(tops) - 60} more" if len(tops) > 60 else ""), pri, "structure")
+
+    def under(e):
+        g = sum(1 for c in kids(e) if kids(c))
+        return f"{short(label(e), 40)}: {items(e)}" + (f" in {g} groups" if g else "")
+    loose = len(tops) - len(groups)
+    look.line(f"Nested <{tag}> tree: {len(tops):,} top-level nodes ({len(groups):,} with nodes inside, {loose:,} without), {sum(len(leaves(e)) for e in tops):,} items in all "
+              f"(an item is a <{tag}> with no <{tag}> inside it; its type attribute in parentheses); items anywhere under each top-level node that holds any: "
+              + "; ".join(under(e) for e in groups[:60]) + (f"; ... {len(groups) - 60} more" if len(groups) > 60 else ""), pri, "structure")
     rows = [f"{short(label(e), 40)} > " + "; ".join(f"{short(label(c), 40)} {items(c)}" for c in kids(e)[:40]) for e in groups[:60]]
     look.line(f"Nested <{tag}> tree, items under each group of each top-level node:\n" + "\n".join(rows), max(30, pri - 25), "structure")
 

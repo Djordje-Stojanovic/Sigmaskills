@@ -27,7 +27,22 @@ def java_unescape(s):
     or f is the control character, any other backslash pair is its second character."""
     if "\\" not in s:
         return s
-    return ESC_RE.sub(lambda m: chr(int(m.group(1)[1:], 16)) if len(m.group(1)) == 5 else ESC_CHARS.get(m.group(1), m.group(1)), s)
+    out = ESC_RE.sub(lambda m: chr(int(m.group(1)[1:], 16)) if len(m.group(1)) == 5 else ESC_CHARS.get(m.group(1), m.group(1)), s)
+    return out.encode("utf-16", "surrogatepass").decode("utf-16", "replace")   # an escaped pair (an emoji) joins; a lone half becomes U+FFFD
+
+
+def java_split(line):
+    """A logical .properties line -> (key, value or None): the key ends at the first '=', ':' or blank that no backslash escapes."""
+    s = line.lstrip(" \t\f")
+    i = 0
+    while i < len(s) and s[i] not in "=: \t\f":
+        i += 2 if s[i] == "\\" else 1
+    key, rest = s[:i], s[i:].lstrip(" \t\f")
+    if rest[:1] in ("=", ":"):
+        rest = rest[1:].lstrip(" \t\f")
+    elif not rest and i >= len(s):
+        return java_unescape(key), None
+    return java_unescape(key), java_unescape(rest)
 
 
 def java_lines(text, st):
@@ -85,8 +100,12 @@ def parse(text, java=False):
             secs[cur]["keys"][k] = ((v + "\n" + s) if v else s, kl)
             st["continuation lines"] += 1
             continue
-        m = KV_RE.match(raw)
-        if m:
+        m = None if java else KV_RE.match(raw)
+        if java:
+            k, v = java_split(raw)
+            if v is None:
+                st["keys without a value"] += 1
+        elif m:
             k, v = m.group(1).strip(), m.group(3).strip()
         else:
             m = SPACE_RE.match(raw)
@@ -95,8 +114,6 @@ def parse(text, java=False):
             else:
                 k, v = s, None   # a bare key (allowed by some readers)
                 st["keys without a value"] += 1
-        if java:
-            k, v = java_unescape(k), (java_unescape(v) if v is not None else None)
         sec = secs.setdefault(cur, {"line": ln, "keys": OrderedDict()})
         if k in sec["keys"]:
             dup_keys.append((cur, k, ln))

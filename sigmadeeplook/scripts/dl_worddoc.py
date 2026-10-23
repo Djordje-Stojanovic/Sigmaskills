@@ -114,7 +114,10 @@ def props_line(look, props, dprops, app="the app"):
 
 def ole_props(look, data, app):
     """Document properties of any legacy Office file (PowerPoint, Excel): the two property-set streams of its OLE container."""
-    st = dl_vba.read_cfb(data)
+    try:
+        st = dl_vba.read_cfb(data)
+    except (struct.error, IndexError, ValueError, OverflowError, MemoryError):
+        return
     props_line(look, property_set(st.get("\x05SummaryInformation", b""), PIDSI), property_set(st.get("\x05DocumentSummaryInformation", b""), PIDDSI), app)
 
 

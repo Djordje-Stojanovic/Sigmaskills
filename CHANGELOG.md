@@ -4,6 +4,16 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook` fix round 10, lane F1 (set 9 miss causes):
+  - A table inside a text is read from its own header row. A weighing protocol with a title block and a totals block was read as a one-column CSV with 100 reject rows. The title and total lines are now printed whole, and the last 20 rows of every table are printed as the file has them.
+  - A legacy Word file with junk in the high half of a stream size lost its text (`CORRUPT: no WordDocument stream`). Version 3 OLE files now ignore those bits, as the format requires.
+  - `.ppt` and `.xls` files print their saved properties: application, revision, dates, word and slide counts. Small `.doc` and `.odt` tables print every row. `.odt` footnote and endnote text is printed and kept in `text.md`.
+  - A last-record or fixed-position value with no blank in it (a URL, path or key) is no longer cut. A cut feed URL had given a confident wrong answer.
+  - New counts: `.po` flag lines per flag; `.properties` and INI keys per prefix; items under each node of a self-nesting XML tree (OPML); each distinct `.sbv`/subtitle line with its cue count when the text repeats.
+  - `.properties` values are read as Java reads them: escapes decoded, continued lines joined, escaped separators kept in the key. Latin-1 Spanish (`¿`, `ñ`) is no longer read as Windows-1250.
+
 ## [0.16.4] — 2026-10-23
 
 ### Fixed

@@ -438,5 +438,47 @@ class OdtTablesNotes(R10Base):
             self.no_crash(lj)
 
 
+# ------------------------------------------------------------------ review findings (bugs found in this round's own review)
+class ReviewFixes(R10Base):
+    def test_properties_escaped_pairs_and_separators(self):
+        p = self.tmp / "edge2.properties"
+        bs = "\\"
+        p.write_bytes(("smile=" + bs + "ud83d" + bs + "ude00 ok\nlone=" + bs + "ud83d x\nkey" + bs + "=x=1\nk2" + bs + ":y: v\nsp" + bs + " key value\n").encode("latin-1"))
+        out, lj, _ = self.look(p)
+        self.no_crash(lj)
+        self.assertIn("smile = \U0001f600 ok", out, "an escaped surrogate pair is one character")
+        self.assertIn("key=x = 1", out, "an escaped '=' stays in the key")
+        self.assertIn("k2:y = v", out)
+        self.assertIn("sp key = value", out)
+
+    def test_romanian_cp1250_stays_cp1250(self):
+        import dl_delim as D
+        ro = ("Şi aşa mai departe, înşelat de şansă. Şcoala şi şeful. Ţara îşi aşteaptă oamenii. " * 30).encode("cp1250")
+        self.assertEqual(D.guess_codepage(ro), "cp1250")
+
+    def test_last_rows_keep_quotes_and_decimal_commas(self):
+        p = self.tmp / "dec.csv"
+        p.write_text("id;amount;note\n" + "\n".join(f'{i};{i},50;"a;{i}"' for i in range(1, 31)) + "\n", encoding="utf-8")
+        out, _, _ = self.look(p, "--budget", "3000")
+        self.assertIn('31: 30;30,50;"a;30"', out)
+
+    def test_short_header_over_longer_rows_is_not_a_title(self):
+        p = self.tmp / "short_header.csv"
+        p.write_text("a,b,c\n" + "\n".join(f"{i},{i + 1},{i + 2},{i + 3}" for i in range(1, 21)) + "\n", encoding="utf-8")
+        out, _, _ = self.look(p)
+        self.assertNotIn("Table inside the text", out)
+
+    def test_tree_after_many_flat_nodes(self):
+        flat = "".join(f'<outline type="rss" text="Flat {i}" xmlUrl="https://x.example/{i}.xml"/>' for i in range(450))
+        p = self.tmp / "flat.opml"
+        p.write_text('<?xml version="1.0"?><opml version="2.0"><head/><body>' + flat
+                     + '<outline text="Folder"><outline type="rss" text="A" xmlUrl="https://x.example/a.xml"/><outline type="rss" text="B" xmlUrl="https://x.example/b.xml"/></outline></body></opml>',
+                     encoding="utf-8")
+        out, _, _ = self.look(p, "--budget", "3000")
+        self.assertIn("451 top-level nodes (1 with nodes inside, 450 without), 452 items in all", out)
+        self.assertIn("Folder: 2 items (all rss)", out)
+        self.assertNotIn("Folder: 2 items (all rss) in", out, "a folder of plain items has no groups")
+
+
 if __name__ == "__main__":
     unittest.main()
