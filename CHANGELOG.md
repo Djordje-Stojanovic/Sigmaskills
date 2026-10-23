@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.16.3] — 2026-10-23
+
 ### Changed
 
 - `sigmafinanceman` carries the investors' knowledge. `references/masters.md` holds ten verbatim, sourced quotes and the core principles of 14 investors and operators (Musk, Buffett, Huang, Ackman, Munger, Jobs, Altman, Bezos, Zuckerberg, Druckenmiller, Horowitz, Leone, Thiel, Andreessen). `references/strategy.md` merges them into one nine-step method for any investment, names where the masters disagree and how the method decides, and gives a playbook per kind (growth and dividend stocks, index funds, macro and trading, private equity and venture, real estate, crypto, a rented-out asset such as GPUs, reselling, cars, buying a business). The question round reads the method first, and `finman.py --principles "Buffett P1,Munger P5"` names the applied principles in the workbook (Method sheet), the deck, the page and the report. A test checks that every quote has a source and a link, and that the skill links both files.
@@ -426,7 +428,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.2...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.3...HEAD
+[0.16.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.2...v0.16.3
 [0.16.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.1...v0.16.2
 [0.16.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.15.2...v0.16.0
