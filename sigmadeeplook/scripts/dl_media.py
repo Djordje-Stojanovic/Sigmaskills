@@ -114,6 +114,11 @@ def report_checks(look, res, dur, probe=None):
         look.line(dl_mediax.clock_line(clock), 93, "props")
         look.fact("clock", {"container_start": round(clock["container"], 6), "first_video_frame": round(clock["first_frame"], 6),
                             "streams": [[i, k, round(t, 6)] for i, k, t in clock["streams"]]})
+    if clock and res["black"]:   # the first picture is black: the end of that stretch is the first non-black frame (a key fact, so it is in the first print)
+        a0, b0 = res["black"][0]
+        if a0 - clock["offset"] <= 0.1 and b0 < dur - 0.2:   # a video that is black to its end has no non-black frame
+            rb = max(0.0, b0 - clock["offset"])
+            look.line(f"Black lead-in: first non-black {'keyframe' if look.quick else 'frame'} at {rb:.1f} s after the first video frame (container time {rb + clock['first_frame']:.2f} s).", 93, "props")
     dl_mediax.flag_runs(look, "BLACK", res["black"], 1.0, "of black", "a designed card or a defect? confirm with the tile at that time", clock)
     dl_mediax.flag_runs(look, "FREEZE", res["freeze"], 2.0, "frozen picture", "still image or a stuck frame", clock)
     dl_mediax.flag_runs(look, "SILENCE", res["silence"], 2.0, "below -50 dB", "pause, dropout or missing audio")
@@ -143,11 +148,6 @@ def report_checks(look, res, dur, probe=None):
                 return [f"{label} x{times(kind)}"] if many else [f"{label} {dl_mediax.span_text(a, b, clock)}" for a, b in res[kind]]
             return [f"{label} x{times(kind)}" if many else f"{label} at {times(kind)}"]
         parts = at("black", "black") + at("frozen", "freeze") + at("silence", "silence")
-        if clock and res["black"]:   # the first picture is black: the end of that stretch is the first non-black frame
-            a0, b0 = res["black"][0]
-            if a0 - clock["offset"] <= 0.1 and b0 < dur - 0.2:   # a video that is black to its end has no non-black frame
-                rb = max(0.0, b0 - clock["offset"])
-                parts.append(f"first non-black {'keyframe' if look.quick else 'frame'} at {rb:.1f} s after the first video frame (container time {rb + clock['first_frame']:.2f} s)")
         look.line("Machine checks: " + "; ".join(parts))
     else:
         look.line("Machine checks: no black, frozen or silent stretch found." if not look.quick else "Machine checks: no black (keyframes) or silent stretch found; frozen pictures are not checked at the quick tier.")
