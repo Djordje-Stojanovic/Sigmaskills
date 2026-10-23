@@ -23,6 +23,7 @@ FMT = {"money": MONEY, "pct": "0.0%", "x": '0.0"x"', "ps": '$#,##0.00_);($#,##0.
        "int": "0", "text": "@", "date": "@"}
 THIN, DOUBLE = Side(style="thin", color=C["ink"]), Side(style="double", color=C["ink"])
 FONT = "Calibri"
+PRINCIPLES = []   # set by finman --principles; saved as a Method sheet
 
 
 class Book:
@@ -52,6 +53,11 @@ class Book:
                 put(ws, f"C{i}", what)
             put(ws, f"A{len(self.checks) + 5}", "All checks", bold=True)
             put(ws, f"B{len(self.checks) + 5}", f"=AND(B4:B{len(self.checks) + 3})", "calc", bold=True)
+        if PRINCIPLES:
+            ws = self.sheet("Method", (24, 90))
+            title(ws, 1, "Method", "Principles applied (references/masters.md)")
+            put(ws, "A3", "Principles applied", bold=True)
+            put(ws, "B3", ", ".join(PRINCIPLES))
         self.wb.save(path)
         return path
 

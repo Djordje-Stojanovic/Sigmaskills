@@ -20,7 +20,7 @@ The helper is plain Python 3.10+ with `openpyxl` and `python-pptx` (`pip install
 
 ## 1. Ask once
 
-Read what the user gave: tickers, a filing, a spreadsheet, a budget. Then ask one numbered round, at most 7 questions, each with `Recommended:` and a few words of why. Skip what is already answered; log each answer you took for the user as `Ruling:`. The questions and their defaults: [grill.md](references/grill.md). When the user is away or says "just run it", take every default and list them in the final response.
+Read what the user gave: tickers, a filing, a spreadsheet, a budget. Then ask one numbered round, at most 7 questions, each with `Recommended:` and a few words of why. Skip what is already answered; log each answer you took for the user as `Ruling:`. A question that ends in a buy, size or sell call (any investment, not only a listed company) first goes through the method in section 4. The questions and their defaults: [grill.md](references/grill.md). When the user is away or says "just run it", take every default and list them in the final response.
 
 ## 2. Pick the models
 
@@ -46,17 +46,27 @@ Peers for comps: 4 to 8 companies with the same business model and a similar siz
 3. Run `finman.py render <file>` on each workbook and deck, and open the PNG pages. Open the HTML page at desktop and phone width. Look for: cut-off labels, `n/a` where a number should be, a hero number that contradicts a table, a sensitivity centre that is not highlighted.
 4. Read the numbers like an analyst. Terminal value above 75 % of EV, a WACC under the risk-free rate, an IRR above 40 %, a negative EBITDA multiple: each needs a sentence in the reply or a changed input. The checks per model: [methods.md](references/methods.md) "Sanity checks".
 
-## 4. Report
+## 4. Judge the investment
+
+For any buy, size or sell call, and for any model that backs one, apply the one method that merges 14 investors and run the playbook for the kind of investment (growth or dividend stocks, index funds, macro and trading, private equity and venture, real estate, crypto, an asset rented out such as GPUs, reselling goods, cars, buying a business).
+
+- [strategy.md](references/strategy.md): read first. Nine steps (thesis and edge, downside, numbers, sizing, funding, entry, hold, sell, review), where the masters disagree and how the method decides, and a playbook per kind.
+- [masters.md](references/masters.md): read when a claim needs the investor's own words, or to cite a principle by tag. Ten sourced quotes and the principles of Musk, Buffett, Huang, Ackman, Munger, Jobs, Altman, Bezos, Zuckerberg, Druckenmiller, Horowitz, Leone, Thiel and Andreessen.
+
+Pass `--principles "Buffett P1,Munger P5"` to every `finman.py` run so the workbook (Method sheet), deck, page and report name the principles applied. Unknown tags stop the run.
+
+## 5. Report
 
 The look of every output (the Ledger system: tokens, banker colours, number formats, chart rules) is in [outputs.md](references/outputs.md). Where the data and the folded-in methods come from: [sources.md](references/sources.md).
 
 ## Final response
 
 1. The hero line of each model, one per line, with the folder path.
-2. The defaults you took (`Ruling:` lines) and the inputs the user set.
-3. The audit result per workbook (`N formulas, 0 errors, checks PASS`).
-4. What you looked at, and anything a reader should question (the sanity flags).
-5. One next step: the input whose change moves the answer most, with the command to try it.
+2. The principles applied (tags from masters.md), the edge, the worst case in money and the sell rule when the question was an investment call.
+3. The defaults you took (`Ruling:` lines) and the inputs the user set.
+4. The audit result per workbook (`N formulas, 0 errors, checks PASS`).
+5. What you looked at, and anything a reader should question (the sanity flags).
+6. One next step: the input whose change moves the answer most, with the command to try it.
 
 ## Personal instructions
 

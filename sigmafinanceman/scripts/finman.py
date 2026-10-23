@@ -5,6 +5,7 @@
   python finman.py lbo CROX | comps MSFT --peers AAPL,GOOGL,META | three MSFT | ratios MSFT | analyze MSFT | score MSFT | earnings MSFT
   python finman.py budget household.json           a personal monthly budget (format: references/budget.md)
   python finman.py all MSFT --peers AAPL,GOOGL     every company model in one go
+  add --principles "Buffett P1,Munger P3"          names the masters' principles the run applied in every output
   python finman.py audit FILE.xlsx                 recalculate in LibreOffice, list formula errors and the Checks sheet
   python finman.py render FILE.xlsx|FILE.pptx      PDF + PNG pages (LibreOffice + pdftoppm) to look at the file
   python finman.py fetch MSFT                      the normalized facts as JSON
@@ -16,6 +17,7 @@ Needs Python 3.10+, openpyxl and python-pptx. LibreOffice is optional (audit, re
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -29,6 +31,8 @@ import fin_models as F  # noqa: E402
 import fin_report as RP  # noqa: E402
 import fin_svg as S  # noqa: E402
 
+PRINCIPLES = []   # tags such as "Buffett P1", set by --principles; every writer prints them
+
 KINDS = ("dcf", "lbo", "comps", "three", "ratios", "analyze", "score", "earnings")
 
 
@@ -40,8 +44,23 @@ def parse_sets(items):
     return out
 
 
+def parse_principles(text):
+    """`--principles "Buffett P1,Munger P3"`: each tag must name a principle in references/masters.md."""
+    tags = [t.strip() for t in (text or "").split(",") if t.strip()]
+    if not tags:
+        return tags
+    masters = (HERE.parent / "references" / "masters.md").read_text(encoding="utf-8")
+    known = set(re.findall(r"^- (\w+ P\d+)\.", masters, re.M))
+    bad = [t for t in tags if t not in known]
+    if bad:
+        raise SystemExit(f"unknown principle: {', '.join(bad)} (tags are in references/masters.md, for example Buffett P1)")
+    return tags
+
+
 def write_outputs(rep, stem, out, formats, xlsx_fn=None):
     out.mkdir(parents=True, exist_ok=True)
+    if PRINCIPLES:
+        rep["notes"] = list(rep.get("notes", [])) + ["Principles applied: " + ", ".join(PRINCIPLES)]
     files = []
     if "xlsx" in formats and xlsx_fn:
         p, cells = xlsx_fn(str(out / f"{stem}.xlsx"))
@@ -178,7 +197,11 @@ def main(argv=None):
     ap.add_argument("--out", default="finman-out")
     ap.add_argument("--formats", default="xlsx,pptx,svg,html")
     ap.add_argument("--years", type=int, default=5)
+    ap.add_argument("--principles", default="", help='principles this run applied (tags in references/masters.md), e.g. "Buffett P1,Munger P3"')
     args = ap.parse_args(argv)
+    PRINCIPLES[:] = parse_principles(args.principles)
+    import fin_xlsx
+    fin_xlsx.PRINCIPLES[:] = PRINCIPLES
     out, formats = Path(args.out), set(args.formats.split(","))
     if args.cmd == "selftest":
         import fin_selftest

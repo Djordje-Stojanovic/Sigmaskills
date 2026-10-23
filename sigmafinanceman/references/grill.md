@@ -9,7 +9,9 @@ One numbered round, at most 7 questions. Each question carries `Recommended:` an
 | 3 | Which peers for comps? | 4-8 same-model companies of similar size; name why each is in | comps are only as good as the peer set |
 | 4 | Which outputs? | `xlsx,pptx,svg,html` | the workbook for checking, the deck for showing, the page for the phone |
 | 5 | Any inputs to override (growth, margin, WACC parts, terminal growth, leverage)? | none: the filed-data defaults | each default names its source; change one later with `--set` |
-| 6 | Projection years and scenario? | 5 years, base case | most analyses use 5; a bear or bull case is a `--set` run |
+| 6 | Projection years and scenario? For a buy, size or sell call: horizon, loss budget, funding? | 5 years, base case; horizon and loss budget from the user's plan | most analyses use 5; [strategy.md](strategy.md) sizes the bet from the loss budget |
 | 7 | Where do the files go? | a new folder named after the ticker and date | nothing is overwritten |
 
 Defaults that the round never asks about (they are conventions): money in millions of the filing currency, mid-year discounting, banker colours, a 5 x 5 sensitivity grid with the base case in the centre.
+
+For an investment call that no listed company fits (a flat, a coin, a GPU, a car, a business), read [strategy.md](strategy.md) first. Its nine steps decide what to ask in questions 1, 5 and 6: the kind of investment, the edge, the worst case in money, the funding and the sell rule.
