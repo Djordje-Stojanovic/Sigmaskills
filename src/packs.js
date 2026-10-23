@@ -71,6 +71,13 @@ export function loadPackCatalog({ catalog, packageRoot, homeDir, env = process.e
 
   const packs = [];
   const bySkill = new Map();
+  // One owner per skill name: the first pack that lists a name keeps it (the Sigma pack comes
+  // first), so a later pack never installs the same name again.
+  const own = (pack, skill) => {
+    if (bySkill.has(skill.id)) return;
+    bySkill.set(skill.id, skill);
+    pack.skills.push(skill);
+  };
   for (const def of definitions) {
     const pack = {
       id: def.id,
@@ -84,14 +91,16 @@ export function loadPackCatalog({ catalog, packageRoot, homeDir, env = process.e
       skills: [],
     };
     if (def.bundled) {
-      pack.skills = catalog.skills.map((skill) => ({
-        id: skill.id,
-        title: skill.title,
-        description: skill.shortDescription || skill.description,
-        pack: pack.id,
-        kind: 'bundled',
-        source: null,
-      }));
+      for (const skill of catalog.skills) {
+        own(pack, {
+          id: skill.id,
+          title: skill.title,
+          description: skill.shortDescription || skill.description,
+          pack: pack.id,
+          kind: 'bundled',
+          source: null,
+        });
+      }
     } else {
       for (const source of pack.sources) {
         if (source.type === 'dir') {
@@ -102,16 +111,15 @@ export function loadPackCatalog({ catalog, packageRoot, homeDir, env = process.e
             pack.note = found.note || 'no skills found';
           }
           for (const skill of found.skills) {
-            pack.skills.push({ id: skill.id, title: skill.id, description: skill.description, pack: pack.id, kind: 'external', source });
+            own(pack, { id: skill.id, title: skill.id, description: skill.description, pack: pack.id, kind: 'external', source });
           }
         } else {
           for (const skill of source.skills || []) {
-            pack.skills.push({ id: skill.id, title: skill.id, description: skill.description || '', pack: pack.id, kind: 'external', source });
+            own(pack, { id: skill.id, title: skill.id, description: skill.description || '', pack: pack.id, kind: 'external', source });
           }
         }
       }
     }
-    for (const skill of pack.skills) if (!bySkill.has(skill.id)) bySkill.set(skill.id, skill);
     packs.push(pack);
   }
   return { packs, skills: bySkill };

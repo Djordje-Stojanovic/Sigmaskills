@@ -48,7 +48,7 @@ test('list --packs: prints every pack, and --json prints the same data', async (
     const json = await run(box, ['list', '--packs', '--json']);
     const parsed = JSON.parse(json.out);
     assert.equal(parsed.packs.find((pack) => pack.id === 'local').available, false);
-    assert.equal(parsed.packs.find((pack) => pack.id === 'hyperframes').skills.length, 32);
+    assert.equal(parsed.packs.find((pack) => pack.id === 'hyperframes').skills.length, 18);
   } finally {
     box.cleanup();
   }

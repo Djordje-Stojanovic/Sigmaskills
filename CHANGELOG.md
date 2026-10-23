@@ -6,6 +6,9 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Fixed
 
+- Installer: a fresh install no longer reports skills as failed or kept.
+  - The HyperFrames pack followed a moving head, so 14 skills that upstream folded into `hyperframes` (`embedded-captions`, `faceless-explainer`, `general-video`, `hyperframes-animation`, `-audio`, `-core`, `-creative`, `-keyframes`, `-studio`, `motion-graphics`, `music-to-video`, `pr-to-video`, `product-launch-video`, `talking-head-recut`) failed with "not found in heygen-com/hyperframes". The pack now lists the 7 skills that exist in release `v0.8.188` (`figma`, `hyperframes`, `hyperframes-cli`, `hyperframes-registry`, `media-use`, `remotion-to-hyperframes`, `slideshow`) and clones that tag. A pack source may name a `ref`.
+  - One owner per skill name. The Local pack listed Sigma skills again, so the picker wrote them twice and the second copy showed "kept (folder in the way)". The first pack that lists a name keeps it (Sigma first), so each name is listed, counted and written once.
 - `sigmadeeplook`: three stray scratch files (`scripts/o9.bin`, `o12.bin`, `o12b.bin`, left in by fix round 11 lane F3 and published in 0.16.6) are removed.
 
 ## [0.16.6] — 2026-10-23

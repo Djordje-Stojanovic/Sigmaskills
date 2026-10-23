@@ -253,7 +253,7 @@
     {
       "id": "hyperframes",
       "title": "HyperFrames",
-      "blurb": "HTML to video: core, animation, audio, captions, registry, plus the student kit.",
+      "blurb": "HTML to video: the HyperFrames skill, CLI, registry, media and slideshows, plus the student kit.",
       "aliases": [
         "hf"
       ],
@@ -262,90 +262,35 @@
           "type": "git",
           "repo": "heygen-com/hyperframes",
           "path": "skills",
+          "ref": "v0.8.188",
           "skills": [
             {
-              "id": "embedded-captions",
-              "description": ">"
-            },
-            {
-              "id": "faceless-explainer",
-              "description": "Turn arbitrary text — an article, notes, a topic, a brief — into a faceless explainer video: there is no site or footage to capture, so the visuals..."
-            },
-            {
               "id": "figma",
-              "description": "Import Figma content into a HyperFrames composition — rendered assets, brand tokens, components, storyboard sections → reconstructed motion (frames..."
-            },
-            {
-              "id": "general-video",
-              "description": ">"
+              "description": "Bring Figma into a HyperFrames video - rendered assets, brand tokens, components, storyboard frames as reconstructed motion (frames read as states,..."
             },
             {
               "id": "hyperframes",
-              "description": ">"
-            },
-            {
-              "id": "hyperframes-animation",
-              "description": "All animation knowledge for HyperFrames — atomic motion rules, multi-phase scene blueprints, scene transitions, broader motion-design techniques, A..."
-            },
-            {
-              "id": "hyperframes-audio",
-              "description": ">"
+              "description": "Read first to make, edit, animate or render any video with HyperFrames (HTML rendered to video), including launch films, explainers, music videos,..."
             },
             {
               "id": "hyperframes-cli",
-              "description": ">"
-            },
-            {
-              "id": "hyperframes-core",
-              "description": "The HyperFrames composition contract — build one renderable project."
-            },
-            {
-              "id": "hyperframes-creative",
-              "description": "Non-animation creative direction for HyperFrames videos."
-            },
-            {
-              "id": "hyperframes-keyframes",
-              "description": ">"
+              "description": "The HyperFrames CLI by job - scaffold, check, look at frames, edit the timeline, preview, render locally or in the cloud, publish, project history..."
             },
             {
               "id": "hyperframes-registry",
-              "description": "Search, install, and wire registry blocks and components into HyperFrames compositions."
-            },
-            {
-              "id": "hyperframes-studio",
-              "description": ">"
+              "description": "About 450 ready-made HyperFrames blocks and components installed as editable source - transitions, overlays, titles, kinetic type, captions, charts..."
             },
             {
               "id": "media-use",
-              "description": "Agent Media OS for a HyperFrames project."
-            },
-            {
-              "id": "motion-graphics",
-              "description": ">"
-            },
-            {
-              "id": "music-to-video",
-              "description": "Turn a music track (an audio file, a video to pull audio from, or a track generated from a mood brief) into a beat-synced video — lyric video, slid..."
-            },
-            {
-              "id": "pr-to-video",
-              "description": "Turn a GitHub pull request (a PR URL, owner/repo#N, or 'this PR' in a checked-out repo) into a code-change explainer video — changelog, feature rev..."
-            },
-            {
-              "id": "product-launch-video",
-              "description": "Turn a product or marketing URL, pasted script, or brief into a product launch / promo video — SaaS promos, feature reveals, product demos, app and..."
+              "description": "Get or make any media for a HyperFrames video - music, sound effects, images, icons, logos, voiceover, avatar and generated video, transcripts, cut..."
             },
             {
               "id": "remotion-to-hyperframes",
-              "description": "Port an existing Remotion (React) composition's source to HyperFrames HTML."
+              "description": "Bring existing video code or footage into HyperFrames and verify it frame by frame against the original - Remotion first, also Motion Canvas, Lotti..."
             },
             {
               "id": "slideshow",
-              "description": ">"
-            },
-            {
-              "id": "talking-head-recut",
-              "description": "Package an existing talking-head / interview / podcast video with timed, designed GRAPHIC OVERLAY cards — kinetic titles, lower-thirds, data callou..."
+              "description": "Build a HyperFrames slideshow to present live - slides, fragment reveals, branching hotspots and presenter mode with speaker notes, served by `hype..."
             }
           ]
         },

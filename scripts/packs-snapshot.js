@@ -5,7 +5,8 @@
  *   node scripts/packs-snapshot.js <clones-dir>
  *
  * <clones-dir> holds one shallow clone per repo, named by the repo name
- * (skills, threejs-skills, hyperframes, hyperframes-student-kit, MiniMax-H3).
+ * (skills, threejs-skills, hyperframes, hyperframes-student-kit, MiniMax-H3). The hyperframes
+ * clone must be at the tag named in HYPERFRAMES_RELEASE: `git clone --branch <tag> --depth 1`.
  * The snapshot lets the installer show every group at once, without cloning.
  */
 import fs from 'node:fs';
@@ -15,6 +16,10 @@ import { parseSkillFrontmatter } from '../src/catalog.js';
 import { findSkillDirs } from '../src/pack-source.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// The HyperFrames skills change shape often (14 were folded into `hyperframes` at once). The pack
+// is pinned to one release tag; to move it, clone that tag, change this line, and re-run.
+const HYPERFRAMES_RELEASE = 'v0.8.188';
 
 const PACKS = [
   {
@@ -41,10 +46,10 @@ const PACKS = [
   {
     id: 'hyperframes',
     title: 'HyperFrames',
-    blurb: 'HTML to video: core, animation, audio, captions, registry, plus the student kit.',
+    blurb: 'HTML to video: the HyperFrames skill, CLI, registry, media and slideshows, plus the student kit.',
     aliases: ['hf'],
     sources: [
-      { repo: 'heygen-com/hyperframes', clone: 'hyperframes', path: 'skills' },
+      { repo: 'heygen-com/hyperframes', clone: 'hyperframes', path: 'skills', ref: HYPERFRAMES_RELEASE },
       {
         repo: 'nateherkai/hyperframes-student-kit',
         clone: 'hyperframes-student-kit',
@@ -110,7 +115,7 @@ for (const pack of PACKS) {
         .filter(([id]) => !source.only || source.only.includes(id))
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([id, dir]) => ({ id, description: shortDescription(readDescription(dir)) }));
-      entry.sources.push({ type: 'git', repo: source.repo, path: source.path, skills });
+      entry.sources.push({ type: 'git', repo: source.repo, path: source.path, ...(source.ref ? { ref: source.ref } : {}), skills });
     }
   }
   out.packs.push(entry);
