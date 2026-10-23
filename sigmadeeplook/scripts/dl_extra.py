@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import dl_core as core
+import dl_prof as P
 import dl_util as U
 
 NOW = lambda: datetime.now(timezone.utc)   # noqa: E731
@@ -379,7 +380,7 @@ def model_safetensors(look):
     look.fact("parameters", params)
     look.line(f"{len(names)} tensors, {human_params(params)} parameters; dtypes by parameters: " + ", ".join(f"{k} {100 * v / max(1, params):.0f} %" for k, v in dts.most_common(4)) + (f"; about {layers} repeated layers" if layers else "") + ".", 98)
     if meta:
-        look.line("Metadata: " + "; ".join(f"{k}={str(v)[:60]}" for k, v in list(meta.items())[:6]), 70)
+        look.line("Metadata: " + "; ".join(f"{k}={P.short_meta(v)}" for k, v in list(meta.items())[:6]), 70)
     if expected > look.size:
         look.flag("TRUNCATED", "file", f"the header needs {core.human(expected)}, the file has {core.human(look.size)}", "the download was cut short")
     prefixes = Counter(k.split(".")[0] for k in names)
@@ -861,7 +862,7 @@ def epub_extras(look):
     look.fact("words", words)
     look.headline = f"EPUB \"{title[:60]}\" by {author[:40] or 'unknown'}, {len(chapters)} chapters, {U.compact(words)} words"
     look.dims = f"{len(chapters)} chapters"
-    look.line(f"Title {title[:80]!r}; author {author[:60]!r}; language {lang or '?'}; {len(chapters)} spine documents, {words} words (about {core.direct_tokens(words * 5)} tokens to read whole).", 98)
+    look.line(f"Title {P.short_meta(title)!r}; author {P.short_meta(author)!r}; language {lang or '?'}; {len(chapters)} spine documents, {words} words (about {core.direct_tokens(words * 5)} tokens to read whole).", 98)
     if "META-INF/encryption.xml" in names:
         enc = z.read("META-INF/encryption.xml").decode("utf-8", "replace")
         if re.search(r"EncryptionMethod[^>]*Algorithm=\"(?!http://www.idpf.org/2008/embedding|http://ns.adobe.com/pdf/enc)", enc):

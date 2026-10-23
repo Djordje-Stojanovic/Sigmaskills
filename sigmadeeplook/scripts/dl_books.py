@@ -239,7 +239,7 @@ def odf_meta(look, z, names):
         elif len(el) == 0 and (el.text or "").strip() and t not in ("meta", "document-meta"):
             meta[{"creator": "last modified by", "date": "modified", "initial-creator": "author (initial creator)"}.get(t, t)] = el.text.strip()
     if meta:
-        look.line("Document properties (meta.xml): " + "; ".join(f"{k} {P.short(v, 80)}" for k, v in meta.items()), 95, "props")
+        look.line("Document properties (meta.xml): " + "; ".join(f"{k} {P.short_meta(v)}" for k, v in meta.items()), 95, "props")
     if stats:
         look.line("Statistics stored by the app at its last save (not recounted): " + "; ".join(f"{k} {v}" for k, v in stats.items()), 60, "props")
     look.fact("properties", meta)
@@ -374,8 +374,8 @@ def look_odt(look, z, names):
                     ("notes", notes or None), ("images", images or None), ("table rows", tinfo["rows"] or None), ("table cells", tinfo["cells"] or None),
                     ("paragraphs inside tables", tinfo["paras"] or None), ("list items", items or None), ("last paragraph", f"'{P.short(lines[-1], 80)}'" if lines else None)], 97, "Document counts")
     for k, t in enumerate(tinfo["tables"][:30], 1):
-        look.line(f"Table {k} '{t['name']}': {t['rows']} rows x {t['cols']} columns; first row: " + " | ".join(P.short(x, 30) for x in t["first"])
-                  + f"; last row: " + " | ".join(P.short(x, 30) for x in t["last"]), 90 - min(k, 20) // 2, "tables")
+        look.line(f"Table {k} '{t['name']}': {t['rows']} rows x {t['cols']} columns; first row: " + P.cells_text(t["first"])
+                  + f"; last row: " + P.cells_text(t["last"]), 90 - min(k, 20) // 2, "tables")
         full = P.table_rows(f"Table {k} '{t['name']}' rows", t["all"]) if t["rows"] <= P.TABLE_ROWS_MAX else ""
         if full:
             look.line(full, 88 - min(20, 2 * k), "tables")

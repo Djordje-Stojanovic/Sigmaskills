@@ -391,10 +391,57 @@ def decode_pcx(raw, i):
     return w, h, bytes(rgb), None
 
 
+def tga_info(raw):
+    """The 18-byte header of a Truevision TGA (no magic) -> dict or None."""
+    if len(raw) < 18:
+        return None
+    idlen, cmap, itype = raw[0], raw[1], raw[2]
+    cfirst, clen, csize = struct.unpack_from("<HHB", raw, 3)
+    w, h, bpp, desc = struct.unpack_from("<HHBB", raw, 12)
+    if itype not in (1, 2, 3, 9, 10, 11) or not w or not h or bpp not in (8, 15, 16, 24, 32):
+        return None
+    return {"id_len": idlen, "cmap": cmap, "type": itype, "cmap_len": clen, "cmap_size": csize, "w": w, "h": h, "bpp": bpp, "top_down": bool(desc & 0x20),
+            "right_to_left": bool(desc & 0x10), "alpha_bits": desc & 0x0F, "offset": 18 + idlen + (clen * ((csize + 7) // 8) if cmap else 0)}
+
+
+TGA_TYPES = {1: "uncompressed colour-mapped", 2: "uncompressed true-colour", 3: "uncompressed grey", 9: "run-length colour-mapped", 10: "run-length true-colour", 11: "run-length grey"}
+
+
+def row_size(st, i):
+    """-> (bytes in one stored row, the sentence that says how it adds up) of a BMP, PCX or TGA header dict `i`, or None when the header gives no pixel layout;
+    the bytes are the decoded row where the file is run-length coded."""
+    if i["w"] <= 0 or i["bpp"] <= 0 or (st == "pcx" and i["bpl"] <= 0):   # a header that gives no pixel layout (an embedded JPEG or PNG): no row size
+        return None
+    if st == "bmp":
+        w, bpp = i["w"], i["bpp"]
+        stride = ((w * bpp + 31) // 32) * 4
+        raw = (w * bpp + 7) // 8
+        pad = stride - raw
+        coded = " (the file is run-length coded: this is the decoded row)" if i["comp"] in (1, 2) else ""
+        return stride, (f"{w:,} px x {bpp} bits = {raw:,} bytes of pixels " + (f"+ {pad} padding byte{'s' if pad != 1 else ''}, " if pad else "and no padding, ")
+                        + f"every BMP row is padded to a multiple of 4 bytes{coded}")
+    if st == "pcx":
+        w, bpp, planes, bpl = i["w"], i["bpp"], i["planes"], i["bpl"]
+        raw = (w * bpp + 7) // 8
+        return planes * bpl, f"{planes} plane{'s' if planes != 1 else ''} x {bpl} bytes, {w:,} px x {bpp} bits = {raw:,} bytes of pixels per plane" + (f" + {bpl - raw} padding" if bpl > raw else "")             + "; decoded size, the file stores each scan line run-length coded"
+    w, bpp = i["w"], i["bpp"]
+    row = w * ((bpp + 7) // 8)
+    return row, f"{w:,} px x {(bpp + 7) // 8} byte{'s' if (bpp + 7) // 8 != 1 else ''}" + ("; the file is run-length coded: this is the decoded row" if i["type"] > 8 else "")
+
+
+def stored_row(st, i):
+    """The header-line clause for the stored row size, or '' when the header gives no pixel layout."""
+    got = row_size(st, i)
+    if not got:
+        return ""
+    return (f", stored scan line {got[0]:,} bytes ({got[1]})" if st == "pcx" else f", stored row {got[0]:,} bytes ({got[1]})" if st == "bmp"
+            else f", stored row {got[0]:,} bytes (no row padding: {got[1]})")
+
+
 def picture_header(look, native_pixels=False):
     """Header facts of a BMP or PCX (bits per pixel, planes, palette, compression, resolution) and, with `native_pixels`, exact pixel facts read without Pillow."""
     st = look.subtype
-    if st not in ("bmp", "pcx"):
+    if st not in ("bmp", "pcx", "tga"):
         return
     try:
         raw = look.path.read_bytes() if look.size <= (256 << 20) else look.path.read_bytes()[:1 << 20]
@@ -408,15 +455,22 @@ def picture_header(look, native_pixels=False):
         pal = i["used"] or ((1 << i["bpp"]) if i["bpp"] <= 8 else 0)
         look.line(f"BMP header: {i['w']}x{i['h']} px, {i['bpp']} bits per pixel, {i['planes']} plane, compression {BMP_COMPRESSION.get(i['comp'], i['comp'])}, "
                   f"{pal} colours in the palette" + (f" ({i['important']} important)" if i["important"] else "") + f", {'top-down' if i['top_down'] else 'bottom-up'} rows, "
-                  f"info header {i['header']} bytes, pixel data at offset {i['offset']}, resolution {i['xppm']} x {i['yppm']} pixels per metre"
+                  f"info header {i['header']} bytes, pixel data at offset {i['offset']}{stored_row('bmp', i)}, resolution {i['xppm']} x {i['yppm']} pixels per metre"
                   + (f" ({i['xppm'] * 0.0254:.0f} dpi)" if i["xppm"] else "") + ".", 93, "header")
         dec = decode_bmp(raw, i) if native_pixels else None
+    elif st == "tga":
+        i = tga_info(raw)
+        if not i:
+            return
+        look.line(f"TGA header: {i['w']}x{i['h']} px, {i['bpp']} bits per pixel, image type {i['type']} ({TGA_TYPES[i['type']]}), {'top-down' if i['top_down'] else 'bottom-up'} rows"
+                  f"{', right-to-left' if i['right_to_left'] else ''}, {i['alpha_bits']} alpha bits, pixel data at offset {i['offset']}{stored_row('tga', i)}.", 93, "header")
+        dec = None
     else:
         i = pcx_info(raw)
         if not i:
             return
         look.line(f"PCX header: version {i['version']} ({PCX_VERSIONS[i['version']]}), {i['w']}x{i['h']} px, {i['bpp']} bits per pixel, {i['planes']} colour plane{'s' if i['planes'] != 1 else ''} "
-                  f"(colour depth {i['bpp'] * i['planes']} bits), {i['bpl']} bytes per scan-line plane, RLE compression, resolution {i['hdpi']} x {i['vdpi']} dpi, "
+                  f"(colour depth {i['bpp'] * i['planes']} bits), {i['bpl']} bytes per scan-line plane{stored_row('pcx', i)}, RLE compression, resolution {i['hdpi']} x {i['vdpi']} dpi, "
                   + ("256-colour palette at the end of the file" if i["has_vga_palette"] else "16-colour header palette" if i["bpp"] * i["planes"] <= 4 else "no separate palette") + ".", 93, "header")
         look.headline = f"PCX picture {i['w']}x{i['h']}, {i['bpp'] * i['planes']}-bit"
         dec = decode_pcx(raw, i) if native_pixels else None

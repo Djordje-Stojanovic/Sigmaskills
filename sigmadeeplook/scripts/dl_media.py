@@ -105,10 +105,17 @@ def one_pass_checks(look, has_v, has_a, dur):
     return res
 
 
-def report_checks(look, res, dur):
+def report_checks(look, res, dur, probe=None):
+    """Prints the machine checks. With the full ffprobe JSON of a video (`probe`), black and frozen spans are told from the first video frame and the
+    clock line gives every stream start (fix round 12: a transport stream starts at 1.4 s, and a span "at 0:00" is not at container time 0)."""
     look.silence_runs = list(res["silence"])
-    dl_mediax.flag_runs(look, "BLACK", res["black"], 1.0, "of black", "a designed card or a defect? confirm with the tile at that time")
-    dl_mediax.flag_runs(look, "FREEZE", res["freeze"], 2.0, "frozen picture", "still image or a stuck frame")
+    clock = dl_mediax.video_clock(probe) if probe else None
+    if clock and (res["black"] or res["freeze"] or any(t for _, _, t in clock["streams"]) or clock["container"]):
+        look.line(dl_mediax.clock_line(clock), 93, "props")
+        look.fact("clock", {"container_start": round(clock["container"], 6), "first_video_frame": round(clock["first_frame"], 6),
+                            "streams": [[i, k, round(t, 6)] for i, k, t in clock["streams"]]})
+    dl_mediax.flag_runs(look, "BLACK", res["black"], 1.0, "of black", "a designed card or a defect? confirm with the tile at that time", clock)
+    dl_mediax.flag_runs(look, "FREEZE", res["freeze"], 2.0, "frozen picture", "still image or a stuck frame", clock)
     dl_mediax.flag_runs(look, "SILENCE", res["silence"], 2.0, "below -50 dB", "pause, dropout or missing audio")
     if res["loud"]:
         l = res["loud"]
@@ -123,12 +130,25 @@ def report_checks(look, res, dur):
     look.fact("silence", [[round(a, 2), round(b, 2)] for a, b in res["silence"]])
     if res["black"] or res["freeze"] or res["silence"]:
         def times(kind):   # the flags hold the long ones with their times: here the count and the first
+            if clock and kind != "silence":   # from the first video frame, with the container time
+                sp = res[kind]
+                return f"{len(sp)} (first {dl_mediax.span_text(*sp[0], clock)})" if len(sp) > 3 else "; ".join(dl_mediax.span_text(a, b, clock) for a, b in sp)
             ts = [core.mmss(a) for a, _ in res[kind]]
             return f"{len(ts)} (first {ts[0]})" if len(ts) > 3 else ", ".join(ts)
-        look.line("Machine checks: " + "; ".join(
-            [f"black x{times('black')}" if len(res["black"]) > 3 else f"black at {times('black')}"] * bool(res["black"]) +
-            [f"frozen x{times('freeze')}" if len(res["freeze"]) > 3 else f"frozen at {times('freeze')}"] * bool(res["freeze"]) +
-            [f"silence x{times('silence')}" if len(res["silence"]) > 3 else f"silence at {times('silence')}"] * bool(res["silence"])))
+        def at(label, kind):
+            if not res[kind]:
+                return []
+            many = len(res[kind]) > 3
+            if clock and kind != "silence":   # every span of 3 or fewer is told on its own
+                return [f"{label} x{times(kind)}"] if many else [f"{label} {dl_mediax.span_text(a, b, clock)}" for a, b in res[kind]]
+            return [f"{label} x{times(kind)}" if many else f"{label} at {times(kind)}"]
+        parts = at("black", "black") + at("frozen", "freeze") + at("silence", "silence")
+        if clock and res["black"]:   # the first picture is black: the end of that stretch is the first non-black frame
+            a0, b0 = res["black"][0]
+            if a0 - clock["offset"] <= 0.1 and b0 < dur - 0.2:   # a video that is black to its end has no non-black frame
+                rb = max(0.0, b0 - clock["offset"])
+                parts.append(f"first non-black {'keyframe' if look.quick else 'frame'} at {rb:.1f} s after the first video frame (container time {rb + clock['first_frame']:.2f} s)")
+        look.line("Machine checks: " + "; ".join(parts))
     else:
         look.line("Machine checks: no black, frozen or silent stretch found." if not look.quick else "Machine checks: no black (keyframes) or silent stretch found; frozen pictures are not checked at the quick tier.")
 
@@ -529,7 +549,7 @@ def look_video(look):
         look.fail("container and stream metadata", "ffprobe", e)
     def checks():
         r = one_pass_checks(look, True, bool(au), dur)
-        report_checks(look, r, dur)
+        report_checks(look, r, dur, mj)
         look.step("black, freeze, silence, loudness (one pass)", "ffmpeg")
         return r
     words = []

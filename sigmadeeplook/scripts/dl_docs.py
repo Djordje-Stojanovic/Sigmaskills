@@ -303,7 +303,7 @@ def pdf_date(s):
 def pdf_extras(look, doc, pages):
     """Metadata and its date order, embedded files, annotations, links, signatures, invisible or white text, tables. All read-only."""
     md = doc.metadata or {}
-    bits = [f"{k} {md[k][:60]!r}" for k in ("title", "author", "creator", "producer") if md.get(k)]
+    bits = [f"{k} {P.short_meta(md[k])!r}" for k in ("title", "author", "creator", "producer") if md.get(k)]
     c, m = pdf_date(md.get("creationDate")), pdf_date(md.get("modDate"))
     if bits:
         look.line("Metadata: " + "; ".join(bits) + (f"; created {c[0]:04d}-{c[1]:02d}-{c[2]:02d}" if c else "") + (f", modified {m[0]:04d}-{m[1]:02d}-{m[2]:02d}" if m else "") + ".", 40)

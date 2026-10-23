@@ -10,6 +10,7 @@ from collections import Counter
 
 MAX_ELEMENTS = 2_000_000
 DISTINCT_CAP = 300
+WHOLE = 200   # a path with one value prints it whole up to this many characters
 SKIP_MEMBERS = re.compile(r"(^|/)(\[content_types\]\.xml|theme\d*\.xml|fontTable\.xml|webSettings\.xml|settings\.xml|styles\.xml|numbering\.xml)$|\.rels$", re.I)
 NUM_RE = re.compile(r"^-?\d+(\.\d+)?([eE][-+]?\d+)?$")
 
@@ -61,7 +62,9 @@ def row(path, s, width=44):
         body = f"numbers {nmin:,.12g} .. {nmax:,.12g}, sum {nsum:,.12g}"
     else:
         top = sorted(vals.items(), key=lambda kv: -kv[1])[:10 if len(vals) <= 60 else 6]
-        body = "; ".join((v if len(v) <= width else v[:width - 1] + "…") + (f" (x{c})" if c > 1 else "") for v, c in top)   # a cut value says so
+        # a path with one value names something of the file (a head title, an owner): it stays whole up to 200 characters; every cut says its length
+        limit = WHOLE if count == 1 else width
+        body = "; ".join((v if len(v) <= limit else v[:limit - 1] + f"…(cut, {len(v):,} chars)") + (f" (x{c})" if c > 1 else "") for v, c in top)
         if len(vals) > len(top):
             body += f"; +{len(vals) - len(top)} more"
     return f"{path} [{count:,} value{'s' if count != 1 else ''}, {len(vals)}{'+' if over else ''} distinct]: {body}"
@@ -81,7 +84,9 @@ def emit(look, root, what="XML", pri=88, label=""):
     rows, n, total = value_lines(root)
     if not rows:
         return 0
-    head = f"{what} values by element path{label} (every element read, {n:,} elements; text and attribute values, samples by frequency)"
+    cut = any("(cut, " in r for r in rows)
+    head = (f"{what} values by element path{label} (every element read, {n:,} elements; text and attribute values, samples by frequency"
+            + ("; a cut value says its length, `--grep 'its first words'` prints it whole)" if cut else ")"))
     for k in range(0, len(rows), 12):
         look.line((head if k == 0 else head + " (continued)") + ":\n" + "\n".join(rows[k:k + 12]), pri if k == 0 else max(30, pri - 40), "values")
     if total > len(rows):
