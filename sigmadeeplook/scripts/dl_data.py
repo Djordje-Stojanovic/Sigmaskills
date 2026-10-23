@@ -1319,6 +1319,7 @@ def data_toml(look):
     look.line(f"TOML: {len(v)} top-level keys ({', '.join(v)}); {len(tables)} [tables], {len(arrays)} [[array-of-tables]] entries"
               + (f" ({', '.join(f'{k} x{c}' for k, c in Counter(arrays).most_common(8))})" if arrays else "") + f"; {len(text.splitlines())} lines.", 90)
     look.fact("keys", list(v))
+    __import__("dl_conf").comment_block(look, text, ("#",))
     P.doc_profile(look, v, "TOML")
 
 
@@ -1338,6 +1339,7 @@ def data_text_struct(look):
     look.line((f"{look.subtype.upper()} text file, {nl:,} lines" + (f", {len(docs)} document(s)" if docs is not None else "") + "; top-level keys: " + ", ".join(dict.fromkeys(keys)))
               if keys else f"{look.subtype} text file, {nl:,} lines.", 90)
     look.fact("keys", list(dict.fromkeys(keys)))
+    __import__("dl_conf").comment_block(look, text, ("#",))
     if docs:
         v = docs[0] if len(docs) == 1 else docs
         P.doc_profile(look, v, "YAML" if look.subtype == "yaml" else "Document")

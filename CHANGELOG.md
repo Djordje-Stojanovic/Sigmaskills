@@ -12,6 +12,18 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
   - `--ask` now reads `.sav` (not ZLIB-compressed), SAS and Stata files, `.po`/`.mo` messages, subtitle cues and `.properties` keys as tables. A table over 1,000,000 cells that is asked a pure lookup is read in one pass and only the rows that hold a value of the question are kept (`SIGMADEEPLOOK_ASK_STREAM_CAP`).
   - `--ask` reads one netCDF cell by index or coordinate value (`last time index and station index 17`, 2 decimals), unpacks `scale_factor`/`add_offset` and names fill values.
   - A comparison (`Petal_Length greater than 5.0`) now uses the column whose whole name stands before it. A table inside a text keeps original file line numbers.
+- `sigmadeeplook` fix round 11, lane F3 (set 10 miss causes: structure and counts):
+  - The identity line shows the file's first 8 bytes in hex, in file order (`magic 950412de 00000000`), for every kind found by its magic bytes.
+  - Key/value, YAML and TOML files print a `Comment lines` fact: how many comment lines, at which line numbers, and the first comment block as written. A file version stated in a comment is now in step 1.
+  - `--ask "how many times does the word 'X' appear"` and `"in how many paragraphs ..."` count whole words over the full text of a Word, OpenDocument, PDF, PowerPoint or RTF file, case-sensitive when the quoted word has a capital, and name the text they counted. Before, the agent counted over a clipped print and was off by 1 to 4. A document look also lists its ten most frequent capitalised words.
+  - Office packages (`.docx`, `.xlsx`, `.pptx`, `.odt`, `.ods`, `.odp`) print their hyperlinks with targets, the pictures and media files with path and size, and footnote, endnote and comment counts.
+  - Container headers are read from the file's own bytes, with or without 7-Zip: a cabinet's folders (compression groups), files, data blocks and files per folder; the zip end record; the 7z start header; RAR version and flags; the ISO volume; the OLE sector layout.
+  - New: `.rtf` files are read (text, paragraphs, properties, table rows, picture and footnote counts).
+  - A `.docx` with a damaged part is flagged `CORRUPT` instead of `INTERNAL-ERROR`.
+- `sigmadeeplook` fix round 11, lane F2 (set 10 miss causes):
+  - One pixel of a picture is a lookup: `--ask "RGB colour at pixel x=520, y=600"` answers R,G,B, hex, alpha and palette index, counted from the top-left corner as displayed (bottom-up BMP, palettes, RLE, 24-bit PCX planes, EXIF turns). A pixel outside the picture is answered with the size. The picture print says where to ask (`Ask a pixel`) and gives the size. TGA and Netpbm files are now detected as pictures.
+  - A recording with 2 or more channels prints tones per channel (LEFT, RIGHT, channel 3 ...): count, start times, length and background level per frequency. Short pips of 25 ms and up are found. This works for .au, WAV (with or without ffmpeg) and any audio ffmpeg decodes. Before, only the first channel was read.
+  - A container with several streams prints a stream table: the container id (PID of a transport stream, track id of an MP4), type, codec, language, channels and bit rate. Every audio stream prints its own steady pitch. Without ffprobe a transport stream's PAT and PMT are read in pure Python, so the PIDs, stream types, languages and the service name are still printed.
 
 ## [0.16.5] — 2026-10-23
 

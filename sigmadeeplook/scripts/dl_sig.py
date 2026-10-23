@@ -189,7 +189,7 @@ def _stamp(t):
     return f"{int(t // 60)}:{t - 60 * int(t // 60):05.2f}"
 
 
-def sound_events(look, x, sr, pri=88, drop_below=0.06, merge_gap=0.15, rel_db=30.0):
+def sound_events(look, x, sr, pri=88, drop_below=0.06, merge_gap=0.15, rel_db=30.0, tones=True):
     """Bursts of sound in mono samples x (floats, -1..1; list, array or numpy array) at sample rate sr. Prints one fact and a burst list."""
     np = look.mod("numpy")
     n = len(x)
@@ -198,7 +198,7 @@ def sound_events(look, x, sr, pri=88, drop_below=0.06, merge_gap=0.15, rel_db=30
     if np is None and n / sr > SOUND_PURE_CAP_S:
         look.skip("sound bursts (counts and times)", f"{n / sr / 60:.0f} minutes is over the {SOUND_PURE_CAP_S // 60} minutes the standard library reads in reasonable time", "numpy")
         return
-    if np is not None:
+    if np is not None and tones:
         tone_events(look, x, sr, pri - 1)
     hop = max(1, int(sr * FRAME_S))
     frames = n // hop
@@ -312,29 +312,25 @@ def _mid(xs):
     return (xs[(len(xs) - 1) // 2] + xs[len(xs) // 2]) / 2
 
 
-def tone_events(look, x, sr, pri=87, side=6):
-    """Tones: stretches where one frequency dominates the sound and stands far above its own usual level (alarm beeps, calibration tones,
-    a test signal), found in every sample with short spectra: how many per frequency, when each starts, how long. A steady hum that
-    lasts most of the file is its own usual level, so it is not a tone event. Needs numpy (no-op without it)."""
-    np = look.mod("numpy")
-    if np is None or sr < 400:
-        return
-    xa = np.asarray(x, dtype=np.float32)
-    L = 1 << max(6, int(round(math.log2(sr * 0.05))))
+def _tone_pass(np, xa, sr, L, min_frames):
+    """One pass of the tone finder with frames of L samples: -> (tones as (frequency, start s, end s, dB above usual level), background dBFS), or ([], None)."""
     nf = len(xa) // L
     if nf < 8:
-        return
+        return [], None
     win = np.hanning(L).astype(np.float32)
     S = np.empty((nf, L // 2 + 1), np.float32)
+    power = np.empty(nf, np.float64)
     for a in range(0, nf, 1024):
         b = min(nf, a + 1024)
-        S[a:b] = np.abs(np.fft.rfft(xa[a * L:b * L].reshape(b - a, L) * win, axis=1)) ** 2
+        blk = xa[a * L:b * L].reshape(b - a, L)
+        S[a:b] = np.abs(np.fft.rfft(blk * win, axis=1)) ** 2
+        power[a:b] = np.einsum("ij,ij->i", blk, blk, dtype=np.float64) / L
     db = 10.0 * np.log10(S + 1e-20)
     ex = db - np.median(db, axis=0)
     lo = max(3, int(math.ceil(30 * L / sr)))
     hi = S.shape[1] - 3
     if hi <= lo:
-        return
+        return [], None
     k = lo + np.argmax(ex[:, lo:hi], axis=1)
     rows = np.arange(nf)
     band = sum(S[rows, k + d] for d in range(-2, 3))
@@ -347,11 +343,12 @@ def tone_events(look, x, sr, pri=87, side=6):
         j = i
         while j + 1 < nf and ton[j + 1] and abs(int(k[j + 1]) - int(k[i])) <= 2:
             j += 1
-        if j - i + 1 >= TONE_FRAMES:
+        if j - i + 1 >= min_frames:
             events.append((i, j))
         i = j + 1
-    if not events or len(events) > 2000:
-        return
+    bg = 10.0 * math.log10(max(float(np.median(power)), 1e-18))
+    if len(events) > 2000:
+        return [], bg
     found = []
     for a, b in events:
         f0 = float(np.median(k[a:b + 1])) * sr / L
@@ -363,10 +360,47 @@ def tone_events(look, x, sr, pri=87, side=6):
             if got:
                 t0, t1 = got
         found.append((f, t0, t1, float(ex[a:b + 1][np.arange(b - a + 1), k[a:b + 1]].max())))
+    return found, bg
+
+
+def _narrow(np, xa, sr, ev, share=0.7):
+    """True when the stretch of a short tone holds `share` of its power within the main lobe around its frequency: a pure pip, not a gliding pitch,
+    a vowel (harmonics 100+ Hz apart) or noise."""
+    a, b = int(ev[1] * sr), int(ev[2] * sr)
+    seg = xa[a:b].astype(np.float64)
+    if len(seg) < 16:
+        return False
+    nfft = 1 << int(math.ceil(math.log2(len(seg) * 8)))
+    sp = np.abs(np.fft.rfft(seg * np.hanning(len(seg)), nfft)) ** 2
+    fr = np.arange(len(sp)) * sr / nfft
+    near = np.abs(fr - ev[0]) <= 2.5 * sr / len(seg)
+    return float(sp[near].sum()) >= share * float(sp[fr >= 30].sum())
+
+
+def tone_scan(np, x, sr):
+    """All tones of one channel: frames of about 50 ms (a tone of 0.15 s or more), then frames of about 10 ms (a short pip of 30 ms or more) for the
+    pips the long frames cannot see. -> (tones sorted by frequency, background dBFS), or None when the signal is too short or the rate too low."""
+    if np is None or sr < 400:
+        return None
+    xa = np.asarray(x, dtype=np.float32)
+    L = 1 << max(6, int(round(math.log2(sr * 0.05))))
+    found, bg = _tone_pass(np, xa, sr, L, TONE_FRAMES)
+    if bg is None:
+        return None
+    Lf = 1 << max(5, int(round(math.log2(sr * 0.01))))
+    if Lf < L:
+        for ev in _tone_pass(np, xa, sr, Lf, TONE_FRAMES)[0]:
+            if not any(ev[1] < o[2] + 0.05 and ev[2] > o[1] - 0.05 for o in found) and _narrow(np, xa, sr, ev):
+                found.append(ev)
+    return sorted(found), bg
+
+
+def _tone_groups(found, side):
     groups = []
-    for ev in sorted(found):
+    for ev in found:
         g = groups[-1] if groups else None
-        if g and abs(ev[0] - g[0][0]) <= max(2.0, 0.003 * ev[0]):   # the fit is good to a fraction of a hertz: 1000 and 1015 Hz stay apart
+        d = min(ev[2] - ev[1], g[0][2] - g[0][1]) if g else 1.0
+        if g and abs(ev[0] - g[0][0]) <= max(2.0, 0.003 * ev[0], 0.5 / max(d, 0.02) if d < 0.1 else 0.0):   # good to a fraction of a hertz: 1000 and 1015 Hz stay apart
             g.append(ev)
         else:
             groups.append([ev])
@@ -383,9 +417,154 @@ def tone_events(look, x, sr, pri=87, side=6):
         parts.append(f"{int(round(f))} Hz: {len(g)} tone{'s' if len(g) != 1 else ''}, starts {', '.join(starts)} s (the last at {g[-1][1]:.2f} s), {ln}, "
                      + ("over digital silence" if max(e[3] for e in g) > 150 else f"{max(e[3] for e in g):.0f} dB above its usual level"))
     more = f"; {len(groups) - side} more frequencies" if len(groups) > side else ""
+    return groups, "; ".join(parts) + more
+
+
+def _bg(bg):
+    return "background below -180 dBFS (digital silence)" if bg is None or bg <= -179 else f"background {bg:.1f} dBFS"
+
+
+def _tone_rule(what, sr):
+    short = TONE_FRAMES * (1 << max(5, int(round(math.log2(sr * 0.01))))) / sr
+    return (f"one frequency at least {TONE_DB:.0f} dB above its usual level in this {what} and most of the sound's power, for {short:.2f} s or more; "
+            "every whole frame read, start times to about 5 ms")
+
+
+def tone_events(look, x, sr, pri=87, side=6):
+    """Tones: stretches where one frequency dominates the sound and stands far above its own usual level (alarm beeps, calibration tones,
+    a test signal), found in every sample with short spectra: how many per frequency, when each starts, how long. A steady hum that
+    lasts most of the file is its own usual level, so it is not a tone event. Needs numpy (no-op without it)."""
+    got = tone_scan(look.mod("numpy"), x, sr)
+    if not got or not got[0]:
+        return
+    found, bg = got
+    groups, body = _tone_groups(found, side)
     look.fact("tone_events", {str(int(round(_mid(e[0] for e in g)))): len(g) for g in groups[:20]})
-    look.line(f"Tones (one frequency at least {TONE_DB:.0f} dB above its usual level in this file and most of the sound's power, for {TONE_FRAMES * L / sr:.2f} s or more; "
-              f"every whole frame read, start times to about 5 ms): {len(found)} tone{'s' if len(found) != 1 else ''} at {len(groups)} frequenc{'ies' if len(groups) != 1 else 'y'}. " + "; ".join(parts) + more + ".", pri, "sound")
+    look.line(f"Tones ({_tone_rule('file', sr)}): {len(found)} tone{'s' if len(found) != 1 else ''} at {len(groups)} "
+              f"frequenc{'ies' if len(groups) != 1 else 'y'}. {body}; {_bg(bg)}.", pri, "sound")
+
+
+def channel_label(k, n):
+    return f"{('LEFT', 'RIGHT')[k]} (channel {k + 1})" if k < 2 else f"channel {k + 1}"
+
+
+def tone_events_channels(look, chans, sr, pri=87, side=6):
+    """Tones of every channel on its own (a recording with two or more channels: left and right can carry different tones). One channel: `tone_events`."""
+    if len(chans) == 1:
+        return tone_events(look, chans[0], sr, pri, side)
+    np = look.mod("numpy")
+    out, total, facts = [], 0, {}
+    for k, x in enumerate(chans[:8]):
+        got = tone_scan(np, x, sr)
+        if not got:
+            continue
+        found, bg = got
+        if not found:
+            out.append(f"{channel_label(k, len(chans))}: no tone, {_bg(bg)}")
+            continue
+        groups, body = _tone_groups(found, side)
+        total += len(found)
+        facts[f"channel {k + 1}"] = {str(int(round(_mid(e[0] for e in g)))): len(g) for g in groups[:20]}
+        out.append(f"{channel_label(k, len(chans))}: {len(found)} tone{'s' if len(found) != 1 else ''} at {len(groups)} frequenc{'ies' if len(groups) != 1 else 'y'}. {body}; {_bg(bg)}")
+    if not total:
+        return
+    look.fact("tone_events", facts)
+    look.line(f"Tones per channel ({_tone_rule('channel', sr)}): " + ". ".join(out) + ".", pri, "sound")
+
+
+def _fft(a):
+    """Radix-2 FFT of a list of complex numbers (length a power of two): pure Python, for the few windows the no-numpy path reads."""
+    import cmath
+    n = len(a)
+    j = 0
+    for i in range(1, n):
+        bit = n >> 1
+        while j & bit:
+            j ^= bit
+            bit >>= 1
+        j ^= bit
+        if i < j:
+            a[i], a[j] = a[j], a[i]
+    size = 2
+    while size <= n:
+        w = cmath.exp(-2j * math.pi / size)
+        for s in range(0, n, size):
+            t = 1 + 0j
+            for k in range(size // 2):
+                u, v = a[s + k], a[s + k + size // 2] * t
+                a[s + k], a[s + k + size // 2] = u + v, u - v
+                t *= w
+        size <<= 1
+    return a
+
+
+def tone_summary(look, x, sr, window=8192):
+    """The pitch of one sound: -> {freq (Hz of the strongest steady frequency), share (its part of the power, 0-1), tones (bursts found), tone_freq},
+    or None when the sound is too short. numpy: the average power spectrum of the windows; without it, four windows spread over the sound."""
+    n = len(x)
+    if n < 512 or sr < 100:
+        return None
+    np = look.mod("numpy")
+    out = {"freq": None, "share": 0.0, "tones": 0, "tone_freq": None}
+    if np is not None:
+        xa = np.asarray(x, dtype=np.float32)
+        w = min(window, 1 << int(math.log2(n)))
+        nw = n // w
+        step = max(1, nw // 600)
+        win = np.hanning(w).astype(np.float32)
+        power = np.zeros(w // 2 + 1)
+        for a in range(0, nw, step):
+            power += np.abs(np.fft.rfft(xa[a * w:(a + 1) * w] * win)) ** 2
+        got = tone_scan(np, xa, sr)
+        if got and got[0]:
+            out["tones"] = len(got[0])
+            out["tone_freq"] = _mid(e[0] for e in _tone_groups(got[0], 6)[0][0])
+        seq = [float(v) for v in power]
+    else:
+        w = min(window // 2, 1 << int(math.log2(n)))
+        win = [0.5 - 0.5 * math.cos(2 * math.pi * i / (w - 1)) for i in range(w)]
+        seq = [0.0] * (w // 2 + 1)
+        for t in range(4):
+            a = (n - w) * t // 3
+            sp = _fft([complex(x[a + i] * win[i]) for i in range(w)])
+            for i in range(w // 2 + 1):
+                seq[i] += abs(sp[i]) ** 2
+    lo = max(2, int(math.ceil(20 * w / sr)))
+    if len(seq) - 3 <= lo:
+        return None
+    tot = sum(seq[lo:]) or 1e-30
+    k = max(range(lo, len(seq) - 1), key=seq.__getitem__)
+    la, lb, lc = (math.log(seq[k + d] + 1e-30) for d in (-1, 0, 1))
+    d = 0.5 * (la - lc) / (la - 2 * lb + lc) if la - 2 * lb + lc else 0.0
+    out["freq"] = (k + d) * sr / w
+    out["share"] = sum(seq[max(lo, k - 3):k + 4]) / tot
+    return out
+
+
+def summary_text(s):
+    """One short phrase for `tone_summary`: a steady tone, bursts of a tone, or no tone."""
+    if not s or s["freq"] is None:
+        return "too short for a pitch"
+    if s["share"] >= 0.5:
+        return f"steady tone {s['freq']:.1f} Hz ({100 * s['share']:.0f} % of the power)" + (f", {s['tones']} tone bursts" if s["tones"] else "")
+    if s["tones"]:
+        return f"{s['tones']} tone burst{'s' if s['tones'] != 1 else ''} near {s['tone_freq']:.0f} Hz; strongest steady frequency {s['freq']:.0f} Hz ({100 * s['share']:.0f} % of the power)"
+    return f"no steady tone (strongest frequency {s['freq']:.0f} Hz holds {100 * s['share']:.0f} % of the power)"
+
+
+def sound_events_channels(look, chans, sr, bursts=True):
+    """The sound passes for a recording with channels: bursts of the mix (all channels averaged), tones of each channel."""
+    if len(chans) == 1:
+        if bursts:
+            sound_events(look, chans[0], sr)
+        else:
+            tone_events(look, chans[0], sr)
+        return
+    np = look.mod("numpy")
+    if bursts:
+        mix = sum(np.asarray(c, dtype=np.float32) for c in chans) / len(chans) if np is not None else chans[0]
+        sound_events(look, mix, sr, tones=False)
+    tone_events_channels(look, chans, sr)
 
 
 def pcm16_to_floats(raw):
@@ -395,30 +574,54 @@ def pcm16_to_floats(raw):
     return array.array("f", (v / 32768.0 for v in a))
 
 
-def decode_ffmpeg(look, cap_s=1800, sr=8000):
-    """The first `cap_s` seconds of the file's audio as mono 16-bit samples at `sr`: -> (floats, sr) or None. Needs ffmpeg."""
+def decode_ffmpeg(look, cap_s=1800, sr=8000, channels=1, stream=None):
+    """The first `cap_s` seconds of the file's audio (stream number `stream` among the audio streams, default the first) as 16-bit samples at `sr`:
+    -> (floats, sr), or ([floats of channel 1, channel 2, ...], sr) when `channels` is above 1, or None. Needs ffmpeg."""
     ff = look.tool("ffmpeg")
     if not ff:
         return None
-    r = look.run([ff, "-v", "error", "-nostdin", "-i", str(look.path), "-t", str(cap_s), "-vn", "-ac", "1", "-ar", str(sr), "-f", "s16le", "-"], timeout=300)
-    if r is None or r.returncode != 0 or len(r.stdout) < sr:
+    channels = max(1, min(int(channels or 1), 8))
+    r = look.run([ff, "-v", "error", "-nostdin", "-i", str(look.path), "-t", str(cap_s), "-vn"] + (["-map", f"0:a:{stream}"] if stream is not None else [])
+                 + ["-ac", str(channels), "-ar", str(sr), "-f", "s16le", "-"], timeout=300)
+    if r is None or r.returncode != 0 or len(r.stdout) < sr * channels:
         return None
+    raw = r.stdout[:len(r.stdout) // (2 * channels) * 2 * channels]
     np = look.mod("numpy")
     if np is not None:
-        return np.frombuffer(r.stdout[:len(r.stdout) // 2 * 2], dtype="<i2").astype(np.float32) / 32768.0, sr
-    return pcm16_to_floats(r.stdout), sr
+        a = np.frombuffer(raw, dtype="<i2")
+        if channels == 1:
+            return a.astype(np.float32) / 32768.0, sr
+        return [a[k::channels].astype(np.float32) / 32768.0 for k in range(channels)], sr
+    if channels == 1:
+        return pcm16_to_floats(raw), sr
+    a = array.array("h")
+    a.frombytes(raw)
+    return [array.array("f", (v / 32768.0 for v in a[k::channels])) for k in range(channels)], sr
 
 
 def bursts_of_file(look, dur=None, cap_s=1800):
-    """Decode the file's sound and print its bursts; a file over `cap_s` seconds says how much was read."""
-    got = decode_ffmpeg(look, cap_s)
+    """Decode the file's sound and print its bursts (of the mix) and its tones (of each channel); a file over `cap_s` seconds says how much was read."""
+    ch = look.facts.get("channels") or 1
+    ch = ch if isinstance(ch, int) and ch > 0 else 1
+    if ch > 2:
+        cap_s = cap_s * 2 // min(ch, 8)   # the samples held stay about the same as for a stereo file
+    got = decode_ffmpeg(look, cap_s, channels=ch)
     if got is None:
         return False
     x, sr = got
     if dur and dur > cap_s + 1:
         look.line(f"Sound bursts below cover the first {cap_s // 60} minutes of {dur / 60:.0f} (PARTIAL): later bursts are not counted.", 89, "sound")
-    sound_events(look, x, sr)
+    sound_events_channels(look, x if isinstance(x, list) else [x], sr)
     return True
+
+
+def pcm16_channels(look, data, ch):
+    """Interleaved 16-bit samples (array('h')) -> one float sequence in -1..1 per channel (up to 8; the first only without numpy)."""
+    np = look.mod("numpy")
+    if np is not None:
+        a = np.frombuffer(data, dtype=np.int16)
+        return [a[k::ch].astype(np.float32) / 32768.0 for k in range(min(ch, 8))]
+    return [array.array("f", (v / 32768.0 for v in data[::ch]))]
 
 
 def palette_line(look, pal, pri=55):

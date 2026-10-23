@@ -149,6 +149,40 @@ def shown(k, v):
     return f"{k} = {P.short(v, 120)}"
 
 
+COMMENT_MARKS = (";", "#", "!", "//")
+COMMENT_CHARS = 700    # the leading comment block is printed whole up to about this many characters
+
+
+def spans(nums):
+    """[1, 2, 3, 4, 8, 12] -> '1-4, 8, 12' (at most 24 pieces, then '... last N')."""
+    out, i = [], 0
+    while i < len(nums):
+        j = i
+        while j + 1 < len(nums) and nums[j + 1] == nums[j] + 1:
+            j += 1
+        out.append(str(nums[i]) if i == j else f"{nums[i]}-{nums[j]}")
+        i = j + 1
+    return ", ".join(out[:24]) + (f", ... last {nums[-1]}" if len(out) > 24 else "")
+
+
+def comment_block(look, text, marks=COMMENT_MARKS, pri=93):
+    """Comment lines carry facts (a file version, an owner, an encoding note). One fact line: how many comment lines the file has, on which
+    line numbers, and the first comment block as written (fix round 11). Nothing is printed for a file without comments."""
+    lines = text.splitlines()
+    idx = [n for n, ln in enumerate(lines, 1) if ln.strip().startswith(marks)]
+    if not idx:
+        return
+    block, used = [idx[0]], len(lines[idx[0] - 1])
+    for n in idx[1:]:
+        if any(x.strip() for x in lines[block[-1]:n - 1]) or used + len(lines[n - 1]) > COMMENT_CHARS:   # a key between, or the character budget is spent
+            break
+        block.append(n)
+        used += len(lines[n - 1])
+    shown = " | ".join(P.short(" ".join(lines[n - 1].split()), 160) for n in block)
+    look.line(f"Comment lines: {len(idx):,} (at lines {spans(idx)}). First comment block (lines {spans(block)}, as written): {shown}", pri, "comments")
+    look.fact("comment_lines", idx[:200])
+
+
 def look_ini(look):
     raw = open(look.path, "rb").read(16 << 20)
     import dl_delim
@@ -165,6 +199,7 @@ def look_ini(look):
     P.counts(look, [("sections", len(named)), ("keys", n_keys), ("keys before the first section", len(secs[NOSEC]["keys"]) if NOSEC in secs else None),
                     ("comment lines", st["comment lines"]), ("blank lines", st["blank lines"]), ("continuation lines", st["continuation lines"] or None),
                     ("repeated keys", len(dup_keys) or None), ("repeated section headers", len(dup_secs) or None), ("lines", len(text.splitlines()))], 96)
+    comment_block(look, text)
     look.line("Keys per section (in file order, with the line of the header): " + "; ".join(f"[{k}] {len(s['keys'])} (line {s['line']})" if k != NOSEC else f"{k} {len(s['keys'])}" for k, s in secs.items())
               + ". Value kinds: " + ", ".join(f"{k} {v}" for k, v in kinds.most_common()), 95, "counts")
     prefix = Counter(k.split(".", 1)[0] for sec in secs.values() for k in sec["keys"] if "." in k.strip("."))

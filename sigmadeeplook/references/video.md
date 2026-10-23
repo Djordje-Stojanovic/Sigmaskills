@@ -10,7 +10,7 @@ Claude and Codex take pictures, not video. Only Gemini accepts a video file. So 
 
 ## Pipeline
 
-1. Facts, no AI: `ffprobe` JSON (`probe.json`): duration, streams, codecs, fps, size. No ffprobe: container atoms read with the standard library (duration, streams, a cut file).
+1. Facts, no AI: `ffprobe` JSON (`probe.json`): duration, streams, codecs, fps, size. A `Stream table` line gives each stream's container id (PID of a transport stream, track id of an MP4), type, codec, language and bit rate; `Tone per audio stream` gives the steady pitch of every audio stream. Without ffprobe a transport stream's PAT and PMT are read with the standard library, so the PIDs are still printed. No ffprobe: container atoms read with the standard library (duration, streams, a cut file).
 2. One ffmpeg pass: `blackdetect`, `freezedetect`, `silencedetect`, `ebur128` (integrated LUFS, range, peak) become Flags with times. A black or silent stretch is a hint, not a verdict.
 3. Words: embedded subtitle streams first (`subtitles.srt`), else faster-whisper offline from a cached model with `vad_filter=True` and `condition_on_previous_text=False` (`words.json`, `transcript.srt`). A model that is not cached becomes a Not-looked-at row, never a download.
 4. Cuts: ffmpeg scene score above 0.4 (`scenes.csv`); PySceneDetect when installed. Scene starts are extra tile sources.
