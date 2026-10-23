@@ -8,6 +8,10 @@ Also read from their own headers: SPSS `.sav` (every variable label and value la
 
 A table with a column of unique values (an id, a code, a cue number, a key) gets one `Find one record:` line in the first print. It names the table or sheet, the row count, the key column and its range, and the route. Then run one `--ask`: give the key as a quoted value (`'SM-05200'`) or as a number after the column name (`visit_id 5650000`, `cue number 840`), and name the column you want (`elevation_m of ...`). The answer line holds that column of that one record; the record follows in full. Covered: delimited tables under a title block, SQLite and GeoPackage tables, worksheets, JSON Lines, Parquet, SAS, Stata, SPSS (a big `.sav` is searched in one pass, not loaded), `.po`/`.mo` (original text to translation, plural forms, fuzzy flag), `.properties` and INI keys, `.sbv`/`.srt`/`.vtt` cues. A netCDF grid has its own route: `--ask "discharge at time index 3649 and station index 17"` (also `last time index`, or a coordinate value); packed values are unpacked and a fill value is named.
 
+## Ask a count
+
+Every table-like first print has one `Ask a count:` line with the file's own column names. Run one `--ask` in those forms: `how many rows have <column> over N`, `how many rows have <column> = '<value>'`, `rows per <column>`. In a database, write the table's name (`gpkg_contents`): that table answers. For words in text columns or cues, write `contain the word 'X'`: a whole word, case as written (add `ignoring case` to ignore it). Numbers may sit in quotes (`pixel "336,519"`, `time index "3287"`). When no column or value matches the condition, `--ask` prints `Answer: not answered: no filter matched` with the forms it can do. It does not give the row total as the answer.
+
 ## When look.py is not enough
 
 - Anything that needs the whole table: sums, joins, filters, group-bys. Write SQL (DuckDB, SQLite) or pandas against the file on disk, run it, and quote the result with the query. Never total rows by eye.

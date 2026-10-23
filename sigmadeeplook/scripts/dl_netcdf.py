@@ -384,7 +384,8 @@ def ask(path, question):
     coordinate value when the dimension has a coordinate variable that holds it, else an index. Packed values are unpacked; a fill value is named."""
     import mmap
     import re
-    from dl_asklang import fold
+    from dl_asklang import fold, unquote_numbers
+    question = unquote_numbers(question)   # time index "3287" is time index 3287
     with open(path, "rb") as fh:
         try:
             raw = mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ)
