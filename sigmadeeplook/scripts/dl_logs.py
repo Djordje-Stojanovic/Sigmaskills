@@ -591,6 +591,7 @@ def look_subtitle(look):
     uniq = len(set(nums)) == len(nums)
     P.find_line(look, [f"{len(cues):,} cues, cue numbers {nums[0]} .. {nums[-1]}{' (unique)' if uniq else ''}, {stamp(start)} to {stamp(end)}"],
                 ask='ask "first line of cue number N", "start of cue N" or "text of cue N" with --ask', pri=93)
+    P.ask_line(look, "\"how many cues contain the word 'X'\" (a whole word, case as written; add \"ignoring case\" to ignore it). Columns: cue, start, end, text, first line.", 92)
     lines_of = [[x.strip() for x in p.splitlines() if x.strip()] for p in plain]
     names = ("first line", "second line", "third line", "fourth line")
     wide = min(len(names), max((len(x) for x in lines_of), default=1))

@@ -8,25 +8,26 @@ picture is answered with the size, never with a guess. Pillow reads every format
 """
 import re
 
+import dl_asklang as AL
 import dl_core as core
 
 WORDS = re.compile(r"\b(pixel|pixels|px|colou?r|rgb|hex|value)\b", re.I)
 AT_PAIR = re.compile(r"(?:\b(?:pixel|px|at)\b|\()\s*\(?\s*(\d+)\s*[,;/]\s*(\d+)", re.I)
 LABEL_X = re.compile(r"\b(?:x|col|column)\s*[=:]?\s*(\d+)\b", re.I)
 LABEL_Y = re.compile(r"\b(?:y|row)\s*[=:]?\s*(\d+)\b", re.I)
+PAIR_ONLY = re.compile(r"\(\s*\d+\s*[,;/]\s*\d+\s*\)")
 READ_CAP = 256 << 20
 
 
 def parse_pixel(q):
     """'colour at x=520, y=600' / 'pixel 5,7' / 'pixel (5, 7)' / 'column 5, row 7' -> (x, y, from_bottom), or None when the question names no pixel."""
-    if not WORDS.search(q):
-        return None
+    q = AL.unquote_numbers(q)   # pixel "336,519" and x="336" are the numbers without the quotes
     bottom = bool(re.search(r"\bbottom\b", q, re.I))
     mx, my = LABEL_X.search(q), LABEL_Y.search(q)
-    if mx and my:
+    if mx and my and WORDS.search(q):
         return int(mx.group(1)), int(my.group(1)), bottom
     m = AT_PAIR.search(q)
-    if m:
+    if m and (WORDS.search(q) or PAIR_ONLY.search(q)):   # on a picture "(336,519)" alone names a pixel; a bare "at 3,4" needs a pixel word
         return int(m.group(1)), int(m.group(2)), bottom
     return None
 
