@@ -215,7 +215,8 @@ class RouteLine(R12Base):
         self.check(q, ["ticket", "who", "minutes"])
         s = self.tmp / "talk.sbv"
         s.write_bytes(cue_file("sbv")[0])
-        self.check(s, ["cues", "word"], forms=("--ask", "how many"))
+        text = self.step1(s)
+        self.assertRegex(text, r"how many cues contain the word .X.. counts a whole word")
 
 
 # ------------------------------------------------------------------ 5. a word in cue text is a filter; no filter -> refuse
