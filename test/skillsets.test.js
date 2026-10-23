@@ -93,7 +93,7 @@ test('cache: a pinned source is fetched once; a second project installs with the
   }
 });
 
-test('fetcher: prefetch gets every source in parallel and fetch() then needs no remote', async () => {
+test('fetcher: warm gets every source in parallel and fetch() then needs no remote', async () => {
   const box = boxWithCache();
   try {
     const a = createEmptyRemote(box.remotes, 'acme/one');
@@ -106,7 +106,7 @@ test('fetcher: prefetch gets every source in parallel and fetch() then needs no 
     ];
     const fetcher = createSourceFetcher({ env: box.env });
     try {
-      await fetcher.prefetch(sources);
+      await fetcher.warm(sources);
       fs.rmSync(box.remotes, { recursive: true, force: true });
       assert.equal(fetcher.fetch(sources[0]).revision, shaA);
       assert.equal(fetcher.fetch(sources[1]).revision, shaB);

@@ -189,13 +189,13 @@ function headOf(dir) {
  * a later run makes no network call. A source without a `ref` follows the head and is never cached.
  * A source with a `transform` is turned into skill folders after the fetch (see pack-transform.js).
  *
- * `await prefetch(sources)` fetches every distinct git source at once. `fetch(source)` returns
+ * `await warm(sources)` fetches every distinct git source at once. `fetch(source)` returns
  * `{ root, revision, label }`, where `root` holds the skill folders; it fetches on the spot when
- * the source was not prefetched. `close()` removes the temporary folders.
+ * the source was not warmed. `close()` removes the temporary folders.
  *
  * @param {object} [options]
  * @param {NodeJS.ProcessEnv} [options.env]
- * @returns {{ fetch: Function, prefetch: Function, close: Function }}
+ * @returns {{ fetch: Function, warm: Function, close: Function }}
  */
 export function createSourceFetcher({ env = process.env } = {}) {
   const done = new Map();
@@ -275,7 +275,7 @@ export function createSourceFetcher({ env = process.env } = {}) {
       return entry.value;
     },
 
-    async prefetch(sources) {
+    async warm(sources) {
       const queue = [];
       const seen = new Set();
       for (const source of sources) {

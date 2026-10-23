@@ -630,7 +630,7 @@ export async function runWizard(params) {
       const sources = skills.filter((skill) => skill.kind === 'external').map((skill) => skill.source);
       if (sources.length > 0) {
         renderer.line(`  ${s('·', C.mute)} ${s(`fetching ${new Set(sources.map((source) => JSON.stringify(source))).size} source${sources.length === 1 ? '' : 's'}…`, C.mute)}`);
-        await fetcher.prefetch(sources);
+        await fetcher.warm(sources);
       }
       if (state.drop.size > 0) {
         dropped = uninstallPackSkills({ ...stateParams(), skillIds: [...state.drop] }).results.filter((entry) => entry.status === 'removed').map((entry) => entry.id);

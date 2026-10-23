@@ -398,7 +398,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         const fetcher = createSourceFetcher({ env });
         try {
           const wanted = externalIds.length > 0 ? externalIds : recorded.map((row) => row.id);
-          await fetcher.prefetch(wanted.map((id) => getPacks().skills.get(id)?.source).filter(Boolean));
+          await fetcher.warm(wanted.map((id) => getPacks().skills.get(id)?.source).filter(Boolean));
           packEntries = updatePackSkills({
             ...stateParams(), packCatalog: getPacks(), skillIds: externalIds, fetcher, dryRun: opts.dryRun, force: opts.force, version: catalog.manifest.version,
           }).results;
@@ -669,7 +669,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       let run;
       let dropped = [];
       try {
-        await fetcher.prefetch(skills.filter((skill) => skill.kind === 'external').map((skill) => skill.source));
+        await fetcher.warm(skills.filter((skill) => skill.kind === 'external').map((skill) => skill.source));
         if (opts.drops.length > 0) {
           dropped = uninstallPackSkills({ ...stateParams(), skillIds: opts.drops, dryRun: opts.dryRun }).results
             .filter((entry) => entry.status === 'removed').map((entry) => entry.id);
