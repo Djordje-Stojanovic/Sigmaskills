@@ -76,7 +76,7 @@ If one is missing, CI fails on purpose.
 
 ### Packs and screenshots
 
-- `registry/packs.json` is the snapshot of the outside packs (ids and one-line descriptions), so the picker needs no network. Rebuild it with `node scripts/packs-snapshot.js <clones-dir>`, where the folder holds a shallow clone of each source repo (the script's header names them). Review the diff: a skill that left its repository should leave the snapshot. The pack list lives in that script.
+- `registry/packs.json` is the snapshot of the outside packs (ids and one-line descriptions), so the picker needs no network. Rebuild it with `node scripts/packs-snapshot.js <clones-dir>`, where the folder holds a shallow clone of each source repo (the script's header names them). Review the diff: a skill that left its repository should leave the snapshot. The pack list lives in that script. It keeps the packs it does not list (Anthropic, Design.md, last30days, Financial Services) as they are; their skill lists come from `node scripts/pack-list.js <transform> <repo checkout> <source path>`, run against a checkout at the pinned commit. To move a pin, change `ref` in `registry/packs.json`, re-run that list and review the diff.
 - `node scripts/capture-installer.js` runs the real wizard in a simulated terminal and rewrites the three SVG screenshots in `docs/images/` that the README shows. Run it after any change to the wizard or the summary. It needs the network for the summary capture.
 
 ## Releases

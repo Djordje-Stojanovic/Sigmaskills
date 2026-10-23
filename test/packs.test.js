@@ -20,11 +20,11 @@ function load(box, extra) {
   return loadPackCatalog({ catalog, packageRoot, homeDir: box.home, env: box.env });
 }
 
-test('packs: the registry lists the bundled Sigma pack and the five outside packs', () => {
+test('packs: the registry lists the bundled Sigma pack and the nine outside packs', () => {
   const box = createSandbox();
   try {
     const packs = load(box);
-    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'local']);
+    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'local']);
     const sigma = findPack(packs, 'sigma');
     assert.equal(sigma.skills.length, catalog.skills.length);
     assert.ok(sigma.skills.every((skill) => skill.kind === 'bundled'));

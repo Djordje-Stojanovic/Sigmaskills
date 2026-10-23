@@ -107,7 +107,7 @@ test('wizard: Sigma plus Local in a fresh folder installs each name once', async
     let out = '';
     stdout.setEncoding('utf8');
     stdout.on('data', (chunk) => { out += chunk; });
-    queueMicrotask(() => stdin.end(`16${ENTER}${ENTER}${ENTER}`));
+    queueMicrotask(() => stdin.end(`10${ENTER}${ENTER}${ENTER}`));
     const code = await runCli(['--project', box.project], { stdin, stdout, stderr, env: { ...box.env, TERM: 'xterm-256color' } });
     assert.equal(code, 0);
     const text = out.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');

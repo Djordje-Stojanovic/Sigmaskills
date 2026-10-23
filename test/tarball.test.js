@@ -39,6 +39,7 @@ const USER_SRC_FILES = [
   'install-run.js',
   'pack-install.js',
   'pack-source.js',
+  'pack-transform.js',
   'packs.js',
   'report.js',
   'wizard.js',
