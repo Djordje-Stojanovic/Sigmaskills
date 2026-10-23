@@ -54,6 +54,38 @@ def probe_full(look, count=True):
         return None
 
 
+def stream_id(s, fmt_name):
+    """The container's own id of a stream: the PID of a transport stream, the track id of an MP4 or MOV; '' where ffprobe shows none (Matroska, AVI)."""
+    try:
+        n = int(str(s.get("id")), 0)
+    except (TypeError, ValueError):
+        return ""
+    if fmt_name == "mpegts":
+        return f"PID {n} (0x{n:x})"
+    return f"track id {n}" if "mp4" in fmt_name or "mov" in fmt_name else f"id {n}"
+
+
+def stream_table(look, streams, fmt_name, pri=94):
+    """One line with every stream's container id, type, codec, language, channels and bit rate (so a question about the PID of the video or the codec of
+    the second audio stream is answered from the print)."""
+    rows = []
+    for s in streams[:24]:
+        tags = s.get("tags") or {}
+        br = s.get("bit_rate") if str(s.get("bit_rate", "")).isdigit() else tags.get("BPS") if str(tags.get("BPS", "")).isdigit() else None
+        bits = [f"#{s.get('index')}", stream_id(s, fmt_name), s.get("codec_type", "?"), s.get("codec_name", "?")]
+        if s.get("codec_type") == "video":
+            bits.append(f"{s.get('width')}x{s.get('height')}")
+        elif s.get("codec_type") == "audio":
+            bits += [f"{s.get('channels')} ch" if s.get("channels") else "", f"{s.get('sample_rate')} Hz" if s.get("sample_rate") else ""]
+        if tags.get("language") and tags["language"] != "und":
+            bits.append(tags["language"])
+        if br:
+            bits.append(f"{int(br):,} b/s")
+        rows.append(" ".join(x for x in bits if x))
+    look.line("Stream table (container id where the container stores one: PID of a transport stream, track id of an MP4; else the stream number): " + " | ".join(rows)
+              + (f" | ... {len(streams) - 24} more" if len(streams) > 24 else "") + ".", pri, "props")
+
+
 def key_frames(look, v, pri=89, listed=60):
     """Key frames of the video stream from every packet's key flag (ffprobe reads the packets, nothing is decoded): the count, the first
     and the last presentation time, the spacing; every time when there are few."""
@@ -129,6 +161,8 @@ def media_meta(look, pri=93):
                         + f"; {p.get('nb_streams', len(p.get('streams', [])))} streams, PMT pid {p.get('pmt_pid')}, PCR pid {p.get('pcr_pid')}")
         look.line(f"Programs in the stream ({len(progs)}): " + " | ".join(rows), pri - 1, "props")
         look.fact("programs", len(progs))
+    if len(streams) >= 2 or fmt.get("format_name") == "mpegts":
+        stream_table(look, streams, fmt.get("format_name", ""), pri + 1)
     for s in streams:
         bits = [f"#{s.get('index')} {s.get('codec_type')}: {s.get('codec_name')}" + (f" ({s.get('profile')})" if s.get("profile") else "")]
         if s.get("codec_type") == "video":

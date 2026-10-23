@@ -610,6 +610,10 @@ def run(o, path, out, lj):
     q = o.ask.strip()
     if not q:
         return dl_drill.refuse("--ask needs a question.")
+    import dl_pixel   # a pixel of a still picture ("pixel x,y"): its own exact answer
+    got_px = dl_pixel.try_ask(q, path, lj, getattr(o, "no_tools", False))
+    if got_px:
+        return dl_drill.done(got_px)
     pq = parse(q)
     lines = [f"--ask {q!r}", f"Read as: operation {', '.join(pq['ops']) or 'lookup'}; words {', '.join(pq['words']) or '(none)'}"
              + (f"; group by {', '.join(pq['group'])}" if pq["group"] else "") + (f"; comparisons {', '.join(f'{a} {P.fmt(b)}' for a, b, _ in pq['cmps'])}" if pq["cmps"] else "") + f"; language {pq['lang']}"]

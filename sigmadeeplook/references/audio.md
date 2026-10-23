@@ -13,7 +13,7 @@ A `Sound activity` line counts the bursts of sound over the quiet floor (beeps, 
 
 ## Pipeline
 
-1. Facts: `ffprobe` (codec, rate, channels, bit rate, tags). No ffprobe: WAV header and FLAC STREAMINFO read with the standard library, plus a PCM waveform drawn with Pillow.
+1. Facts: `ffprobe` (codec, rate, channels, bit rate, tags). A file with 2 or more channels gets tones per channel (LEFT, RIGHT, then channel 3 ...): count, start times and length per frequency, and the background level; short pips of 25 ms and up are found. Each audio stream gets its own pitch (`Tone per audio stream`). No ffprobe: WAV header and FLAC STREAMINFO read with the standard library, plus a PCM waveform drawn with Pillow.
 2. Loudness and gaps in one ffmpeg pass: integrated LUFS, loudness range and true peak, with the EBU R128 target as the yardstick (-23 LUFS, peak at most -1 dBTP). `silencedetect` (-50 dB, 2 s) gives SILENCE flags with times. A peak near 0 dBFS gives a LOUD-PEAK flag.
 3. Pictures at 2000 px: `waveform.png` and `spectrogram.png` (frequency up, time right). A spectrogram shows a cut-off at 16 kHz, a hum line, a dropout band, clipping.
 4. Speech: faster-whisper offline (`vad_filter=True`, `condition_on_previous_text=False`, word times) writes `words.json` and `transcript.srt`. The model must be cached.

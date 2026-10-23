@@ -4,6 +4,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook` fix round 11, lane F2 (set 10 miss causes):
+  - One pixel of a picture is a lookup: `--ask "RGB colour at pixel x=520, y=600"` answers R,G,B, hex, alpha and palette index, counted from the top-left corner as displayed (bottom-up BMP, palettes, RLE, 24-bit PCX planes, EXIF turns). A pixel outside the picture is answered with the size. The picture print says where to ask (`Ask a pixel`) and gives the size. TGA and Netpbm files are now detected as pictures.
+  - A recording with 2 or more channels prints tones per channel (LEFT, RIGHT, channel 3 ...): count, start times, length and background level per frequency. Short pips of 25 ms and up are found. This works for .au, WAV (with or without ffmpeg) and any audio ffmpeg decodes. Before, only the first channel was read.
+  - A container with several streams prints a stream table: the container id (PID of a transport stream, track id of an MP4), type, codec, language, channels and bit rate. Every audio stream prints its own steady pitch. Without ffprobe a transport stream's PAT and PMT are read in pure Python, so the PIDs, stream types, languages and the service name are still printed.
+
 ## [0.16.5] — 2026-10-23
 
 ### Fixed
