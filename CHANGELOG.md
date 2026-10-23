@@ -2,6 +2,30 @@
 
 All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigmaskills) are documented here.
 
+## Ticket 83 (2026-10-19 to 2026-10-23)
+
+66 merged pull requests and 68 commits on `main`, shipped as releases 0.10.0 to 0.16.8 (each has its own section in this file). The picture across all four repos: the [ticket 83 changelog page](https://claude.ai/artifact/U1Z7U3z1BMFVu3rUPXAdMJ).
+
+| Release PR | Merged (Vienna) | Title |
+|---|---|---|
+| [#119](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/119) | 10-19 03:53 | release: 0.10.0 - sigmaloop, sigmataste, sigmaship upgrade |
+| [#131](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/131) | 10-20 03:57 | release: 0.11.0 - sigmahuman, sigmaresearch persistence ladder, sigmaloop host files |
+| [#136](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/136) | 10-20 15:03 | Release identities for 0.12.0 |
+| [#139](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/139) | 10-20 17:36 | release: identities for 0.13.0 (sigmafork course v2) |
+| [#142](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/142) | 10-21 01:31 | release: identities for 0.14.0 (sigmatour, sigmaresearch Reddit/X routes) |
+| [#147](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/147) | 10-21 09:17 | release: identities for 0.15.0 (sigmafinanceman) |
+| [#150](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/150) | 10-21 16:50 | release: identities for 0.15.1 (sigmadeeplook --ask fix) |
+| [#152](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/152) | 10-21 18:09 | release: identities for 0.15.2 (Claude Code run mode) |
+| [#159](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/159) | 10-22 23:18 | release: identities for 0.16.0 (sigmadeeplook round 8 and cleanup) |
+| [#162](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/162) | 10-23 00:48 | release: identities for 0.16.1 (sigmadeeplook fix round 9) |
+| [#165](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/165) | 10-23 01:47 | release: identities for 0.16.2 (skill descriptions at 200 characters) |
+| [#167](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/167) | 10-23 11:52 | release: identities for 0.16.3 (sigmafinanceman masters and method) |
+| [#172](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/172) | 10-23 13:06 | release: identities for 0.16.4 (sigmadeeplook S13 round 2, sigmafinanceman FRED fallback) |
+| [#175](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/175) | 10-23 14:39 | release: identities for 0.16.5 (sigmadeeplook fix round 10) |
+| [#179](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/179) | 10-23 17:32 | release: identities for 0.16.6 (sigmadeeplook fix round 11) |
+| [#182](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/182) | 10-23 19:54 | release: identities for 0.16.7 (installer pack fix) |
+| [#185](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/185) | 10-23 21:07 | release: identities for 0.16.8 (four new packs) |
+
 ## [Unreleased]
 
 ## [0.16.8] — 2026-10-23

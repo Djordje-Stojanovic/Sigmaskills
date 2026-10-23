@@ -22,6 +22,14 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
      arena      →  blind pairs that rank any options by Elo
   Σ  research   →  read public sources, record evidence and access gaps
   Σ  deeplook   →  helper for what agents cannot read: video, speech, scans, binaries
+  Σ  loop       →  an unattended-run prompt and a loop file from open work
+  Σ  taste      →  one ranked plan of big visible changes from 14 lenses
+  Σ  human      →  text that reads like a person wrote it, every fact kept
+  Σ  fork       →  an isolated copy of any repo and a course on it
+  Σ  design     →  a design system from one accent colour
+  Σ  tour       →  a visual tour of any repo in one page
+  Σ  financeman →  DCF, LBO, comps and budgets from SEC filings
+  Σ  freedom    →  deletes model-written refusals from a repo's agent docs
 ```
 
 ---
@@ -83,6 +91,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaImprove** | `sigmaimprove` | Find what would make it clearly better, measured against the world's best | One living issue per category (1–20), updated on every run |
 | **SigmaBrief** | `sigmabrief` | Prompt factory for parallel / single agents | Chat briefs only |
 | **SigmaShip** | `sigmaship` | Ship one planned ticket: build, review rounds, merge, clean up | One merged PR, closed ticket, main in sync |
+| **SigmaFreedom** | `sigmafreedom` | De-safeguard a repo: delete model-written refusals and moral limits from agent docs, keep a lint so they never return | A was/now change log and a keep-list for the owner's veto |
 | **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
 | **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
 | **SigmaWriteGUI** | `sigmawritegui` | Plain chat with status and question boards | Interactive HTML board and copied replies |
@@ -272,6 +281,7 @@ $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 | `sigmaimprove` | repo · path · running product | One setup message (vision, focus, constraints, ticket place), then discusses ideas |
 | `sigmabrief` | issue URL · `#N` · `all open` · plain work | Only when you ask for it |
 | `sigmaship` | issue URL · `#N` | Refuses tickets without checkable acceptance criteria |
+| `sigmafreedom` | a repo path | Deletes refusals from agent docs and skill sources; every deletion is in a was/now log |
 | `sigmawrite` | (no input) | Session writing voice until you turn it off |
 | `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
 | `sigmawritegui` | “easy talk” · status or question batch · `EASYTALK REPLY` | Conversation mode until “easy talk off” |
@@ -305,6 +315,10 @@ $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 | SigmaFork | Python 3 · `git` · `gh` for a fork · Node.js |
 | SigmaTaste | Read access to the target · a browser or screenshot tool to see a page; without one the plan lists what was not judged |
 | SigmaHuman | Nothing beyond chat · Python 3 (standard library) for the optional fact check |
+| SigmaDesign | Python 3 (standard library) · a browser to look at the sample page |
+| SigmaTour | Python 3 (standard library) · `git` · a browser for the page |
+| SigmaFinanceMan | Python 3.10 or newer with `openpyxl` and `python-pptx` · LibreOffice is optional (`audit`, `render`) |
+| SigmaFreedom | Python 3 (standard library) for `guardrail_lint.py` |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 
 Skills use the shell native to the machine that runs the agent (PowerShell on Windows, POSIX shell elsewhere). They do not assume WSL.
