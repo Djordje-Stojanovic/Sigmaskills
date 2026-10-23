@@ -376,7 +376,7 @@ def data_csv(look):
         look.line(f"Delimited table: {n:,} data rows, {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows (wrong field count). "
                   f"PARTIAL: rows were read until the time cap ({n:,} rows); every figure below is a lower bound for the part read.", 38)
     else:   # the rows, columns, delimiter, encoding and reject rows are in the Counts and Read as lines: only the full-pass statement is kept, short, so it stays in step 1
-        look.line("Every row was read; the profile below is a full pass, not a sample.", 87, "structure")
+        look.line(f"{n:,} data rows, {len(header)} columns. Every row was read; the profile below is a full pass, not a sample.", 87, "structure")
     total_ok = sum(prof[0].kinds.values()) if prof else 0
     notes = profile_findings(look, header, prof, total_ok, repeats)
     schema = [p.summary(total_ok) for p in prof]
