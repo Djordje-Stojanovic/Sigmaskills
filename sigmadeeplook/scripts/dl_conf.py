@@ -176,6 +176,11 @@ def look_ini(look):
         ks = list(secs[last_sec]["keys"].items())
         look.line(f"Last keys of the file (section {last_sec if last_sec != NOSEC else '(no section)'}; {n_keys:,} keys in all): "
                   + "; ".join(f"{shown(k, v)} (line {ln})" for k, (v, ln) in ks[-3:]) + ".", 93, "tail")
+    allkeys = [(name, k) for name, s in secs.items() for k in s["keys"]]
+    if len(allkeys) > 10:   # where one setting lives: the first and last key name it by file order, the route reads any key
+        sk = lambda x: x[1] if x[0] == NOSEC else f"[{x[0]}] {x[1]}"
+        P.find_line(look, [f"{len(allkeys):,} keys (key = value, line numbers), key names {'unique' if not dup_keys else str(len(dup_keys)) + ' repeated'}, first {P.short(sk(allkeys[0]), 40)}, last {P.short(sk(allkeys[-1]), 40)}"],
+                    ask="ask \"value of key '<key>'\" with --ask (a .properties value comes back with its continuation lines joined and \\uXXXX escapes decoded)", pri=93)
     rows, size = [], 0
     for name, s in secs.items():
         body = "; ".join(shown(k, v) + (f" (line {ln})" if len(s["keys"]) > 12 else "") for k, (v, ln) in s["keys"].items())

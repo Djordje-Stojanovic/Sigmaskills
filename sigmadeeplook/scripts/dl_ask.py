@@ -28,6 +28,7 @@ import math
 import os
 import re
 import sqlite3
+import struct
 from pathlib import Path
 
 import dl_asklang as AL
@@ -42,6 +43,8 @@ MAX_ROWS = U.byte_cap("ASK_ROWS", 2_000_000)      # rows held per table
 MAX_CELLS = U.byte_cap("ASK_CELLS", 40_000_000)   # cells held over all tables of one question (about 2-4 GB of Python strings at the cap)
 JSON_DOC_CAP = U.byte_cap("ASK_JSON", 256 << 20)  # a JSON document is parsed whole: past this size it is named, not loaded
 SNIFF_BYTES = 8 << 20
+STREAM_CELLS = U.byte_cap("ASK_STREAM", 1_000_000)   # a source with more cells than this is searched for the rows that hold a value of the question, not held whole
+STREAM_KEEP = 5000                                   # rows kept by such a search
 
 
 def stem(w):
@@ -187,8 +190,56 @@ def json_sets(doc):
     return out
 
 
-def load_tables(path, out, lj, notes=None):
-    """Every table the look can re-read exactly. Anything that could not be read whole or at all is added to `notes` (printed with the answer)."""
+def wanted(pq):
+    """For a pure lookup (no operation, group, comparison or year): the numbers and the key-like strings the question names, as a row test; else None."""
+    if pq["ops"] or pq["group"] or pq["cmps"] or pq["years"]:
+        return None
+    blank = pq["blank"]
+    nums = {float(x) for x in re.findall(r"(?<![\w.])\d+(?:\.\d+)?(?![\w])", blank)}
+    cands = key_candidates(blank)
+    strs = {c.lower() for c in cands}
+    keys = {loose(c) for c in cands if not re.fullmatch(r"\d+(?:\.\d+)?", c)}
+    if not (nums or keys):
+        return None
+
+    def test(row):
+        for v in row:
+            if v.__class__ is str:
+                s = v.strip()
+                if s.lower() in strs or (keys and loose(s) in keys):
+                    return True
+            elif v is not None and v in nums:
+                return True
+        return False
+    return test
+
+
+def read_rows(name, cols, rows, total, where, unit, budget, hint):
+    """A table from any row source: rows = iterator of (position, values), total = the rows the source holds (None: unknown). A source over
+    STREAM_CELLS cells that is asked a pure lookup (`hint` = its row test) is read in one pass and only the rows that hold a value of the
+    question are kept; otherwise it is held up to the row and cell budget, and the answer says PARTIAL when that cuts it."""
+    if hint is not None and total is not None and total * max(1, len(cols)) > STREAM_CELLS:
+        keep, pos = [], []
+        for p, r in rows:
+            if hint(r):
+                keep.append(list(r))
+                pos.append(p)
+                if len(keep) >= STREAM_KEEP:
+                    break
+        return Table(name, cols, keep, pos, where + "; one pass, only the rows that hold a value named in the question are kept", unit)
+    out, pos, cut = [], [], None
+    for p, r in rows:
+        out.append(list(r))
+        pos.append(p)
+        if len(out) >= MAX_ROWS or budget.spent(max(1, len(cols))):
+            cut = total if total is not None else len(out) + sum(1 for _ in rows)
+            break
+    return Table(name, cols, out, pos, where, unit, cut if cut and cut > len(out) else None)
+
+
+def load_tables(path, out, lj, notes=None, hint=None):
+    """Every table the look can re-read exactly. Anything that could not be read whole or at all is added to `notes` (printed with the answer).
+    `hint`: the row test of a pure lookup (see `wanted`), which lets a very big source be searched instead of held."""
     notes = notes if notes is not None else []
     budget = Budget()
     facts = lj.get("facts") or {}
@@ -199,7 +250,10 @@ def load_tables(path, out, lj, notes=None):
     try:
         if facts.get("table_copy") and Path(facts["table_copy"]).exists():
             cols, rows, pos, _, tot = read_delimited(facts["table_copy"], ",", budget)
-            tables.append(Table("the table", cols, rows, pos, "the table (normalised UTF-8 copy: decimal comma converted)", "line", tot))
+            tl = facts.get("table_lines")
+            if tl and tl[0] > 1:   # a table inside a text: the copy starts at the header row, so a copy line + (header line - 1) is the line of the original file
+                pos = [k + tl[0] - 1 for k in pos]
+            tables.append(Table("the table", cols, rows, pos, "the table (normalised UTF-8 copy: decimal comma converted; line = line of the original file)" if tl else "the table (normalised UTF-8 copy: decimal comma converted)", "line", tot))
         elif inner in ("csv", "tsv", "psv", "delimited", "semicolon", "pipe") or (tp == "data" and inner in ("txt",)):
             cols, rows, pos, enc, tot = read_delimited(src, facts.get("delimiter"), budget)
             tables.append(Table("the table", cols, rows, pos, f"the file ({enc})", "line", tot))
@@ -211,6 +265,23 @@ def load_tables(path, out, lj, notes=None):
             else:
                 text, _ = __import__("dl_delim").sniff_encoding(src.read_bytes())
                 tables += json_sets(json.loads(text))
+        elif inner == "sav":
+            import dl_sav
+            got = dl_sav.ask_source(src)
+            if got:
+                names, n, it = got
+                tables.append(read_rows("SPSS cases", names, it, n, "the file", "case", budget, hint))
+            else:
+                notes.append("The cases of this .sav file are ZLIB-compressed and not decoded: no table was built (the dictionary is in the look).")
+        elif inner in ("sas7bdat", "sasxpt", "stata"):
+            import dl_tab2
+            try:
+                df = dl_tab2.ask_frame(src, inner)
+            except Exception as e:   # pandas reads many formats and raises many errors: a damaged file is named, never a crash
+                df = None
+                notes.append(f"A table of this file could not be read for --ask ({type(e).__name__}: {str(e)[:150]}).")
+            if df is not None:
+                tables.append(read_rows(f"{inner} table", [str(c) for c in df.columns], enumerate(df.itertuples(index=False, name=None), 1), len(df), "the file", "row", budget, hint))
         elif inner == "sqlite":
             con = sqlite3.connect(f"file:{src}?mode=ro", uri=True)
             for (name,) in con.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").fetchall()[:50]:
@@ -225,7 +296,7 @@ def load_tables(path, out, lj, notes=None):
                     if len(rows) >= MAX_ROWS or budget.spent(len(chunk) * max(1, len(cols))):
                         total = con.execute(f'SELECT COUNT(*) FROM "{name}"').fetchone()[0]
                         break
-                tables.append(Table(f"SQLite table {name}", cols, [list(r[1:]) for r in rows], [r[0] for r in rows], "the database", "rowid", total if total and total > len(rows) else None))
+                tables.append(Table(f"SQLite table {name}", cols, [[__import__("dl_data").plain(x) for x in r[1:]] for r in rows], [r[0] for r in rows], "the database", "rowid", total if total and total > len(rows) else None))
             con.close()
         elif inner == "ini":
             tables.append(ini_table(src))
@@ -241,18 +312,18 @@ def load_tables(path, out, lj, notes=None):
                     total = pf.metadata.num_rows
                     break
             tables.append(Table("the Parquet table", cols, rows, list(range(1, len(rows) + 1)), "the file", "row", total if total and total > len(rows) else None))
-    except (OSError, ValueError, sqlite3.Error, csv.Error, MemoryError) as e:
+    except (OSError, ValueError, sqlite3.Error, csv.Error, MemoryError, struct.error, IndexError) as e:
         notes.append(f"A table of this file could not be read for --ask ({type(e).__name__}: {str(e)[:150]}).")
     arts = lj.get("artifacts", [])
     curated = any(Path(a.get("path", "")).name.startswith("asktable-") for a in arts)
     for a in arts:   # tables the look wrote: sheets (header found, total rows out), packets, events
         p = Path(a.get("path", ""))
-        if not p.is_file() or a.get("private") or (curated and p.suffix == ".csv" and p.parent.name == "sheets"):
+        if not p.is_file() or a.get("private") or (curated and p.suffix == ".csv" and (p.parent.name == "sheets" or p.name == "cues.csv")):
             continue
         try:
             if p.name.startswith("asktable-") and p.suffix == ".json":
                 t = json.loads(p.read_text(encoding="utf-8"))
-                tables.append(Table(t["name"], t["cols"], [r[1] for r in t["rows"]], [r[0] for r in t["rows"]], t.get("where", "the file"), t.get("unit", "row")))
+                tables.append(Table(t["name"], t["cols"], [r[1] for r in t["rows"]], [r[0] for r in t["rows"]], t.get("where", "the file"), t.get("unit", "row"), t.get("total")))
             elif p.suffix == ".csv" and p.name != "table.utf8.csv":
                 cols, rows, pos, _, tot = read_delimited(p, ",", budget)
                 tables.append(Table(p.stem, cols, rows, [k - 1 for k in pos], f"{p.name} (written by the look)", f"{p.stem[:-1] if p.stem.endswith('s') else p.stem} row", tot))
@@ -288,29 +359,25 @@ def read_jsonl(src, budget):
 
 
 def ini_table(p):
+    import dl_conf
     import dl_delim
-    text, _ = dl_delim.sniff_encoding(Path(p).read_bytes())
-    sec, rows, pos = "", [], []
-    for n, ln in enumerate(text.splitlines(), 1):
-        s = ln.strip()
-        if not s or s[0] in "#;":
-            continue
-        m = re.match(r"^\[([^\]]+)\]", s)
-        if m:
-            sec = m.group(1).strip()
-            continue
-        m = re.match(r"^([^=:]+?)\s*[=:]\s*(.*)$", s)
-        if m:
-            rows.append([sec, m.group(1).strip(), m.group(2).strip()])
-            pos.append(n)
-    return Table("the settings", ["section", "key", "value"], rows, pos, "the file", "line")
+    text, _ = dl_delim.sniff_encoding(Path(p).read_bytes())   # the look's own parser: a .properties value has its continuation lines joined and its \uXXXX escapes decoded
+    secs = dl_conf.parse(text, java=Path(p).suffix.lower() == ".properties")[0]
+    rows, pos = [], []
+    for sec, d in secs.items():
+        for k, (v, ln) in d["keys"].items():
+            v = "" if v is None else v
+            rows.append(["" if sec == dl_conf.NOSEC else sec, k, f"(secret-like value, {len(v)} chars; not printed)" if v.strip() and dl_conf.SECRET_RE.search(k) else v])
+            pos.append(ln)
+    return Table("the settings", ["section", "key", "value"], rows, pos, "the file (line = where the key starts)", "line")
 
 
-def store_table(look, name, cols, rows, where="the file", unit="row"):
-    """Analysis side: keep one table for --ask (internal artifact, never printed). rows: [(position, [values])]."""
+def store_table(look, name, cols, rows, where="the file", unit="row", total=None):
+    """Analysis side: keep one table for --ask (internal artifact, never printed). rows: [(position, [values])]. `total`: the rows the file
+    holds when only the first `rows` were kept (the answer then says PARTIAL)."""
     k = len([a for a in look.artifacts if Path(a["path"]).name.startswith("asktable-")]) if hasattr(look, "artifacts") else 0
     p = look.path_for(f"asktable-{k + 1}.json")
-    p.write_text(json.dumps({"name": name, "cols": cols, "rows": rows, "where": where, "unit": unit}, default=str), encoding="utf-8")
+    p.write_text(json.dumps({"name": name, "cols": cols, "rows": rows, "where": where, "unit": unit, "total": total}, default=str), encoding="utf-8")
     look.add(p, "internal", f"{name} as rows for --ask")
 
 
@@ -332,24 +399,57 @@ def parse(q):
     ordn = re.search(r"\b(?:first|last|erste\w*|letzte\w*|prv\w+|poslednj\w+)\s+(\d+)\b", blank)
     onext = re.search(r"\b(?:first|last|erste\w*|letzte\w*|prv\w+|poslednj\w+)\s+([a-z]+)", blank)
     stop = STOP | L["stop"]
-    return {"ops": ops, "group": [stem(g) for g in grp], "which": stem(which.group(1)) if which else None, "cmps": cmps, "lang": lang, "fq": fq,
+    return {"blank": blank, "allw": set(words(blank)), "ops": ops, "group": [stem(g) for g in grp], "which": stem(which.group(1)) if which else None, "cmps": cmps, "lang": lang, "fq": fq,
             "order": order, "order_n": int(ordn.group(1)) if ordn else 1, "order_next": stem(onext.group(1)) if onext else None,
             "years": YEAR_RE.findall(q), "words": [w for w in words(q) if w not in stop and not w.isdigit()]}
 
 
-def match_values(t, q):
-    """(column, value) pairs whose value appears in the question as a whole word or phrase (text columns, 1..300 distinct values)."""
+QUOTED_RE = re.compile(r"(?<!\w)(['\"‘“«„])(.+?)(['\"’”»“])(?!\w)")
+PUNCT = "'\"‘’“”«»„.,;:?!()[]{}"
+
+
+def loose(s):
+    """A key compared without case, accents, script (Cyrillic or Latin letters) and separators: 'MZ-0388' = 'мз 0388' = 'mz0388'."""
+    return re.sub(r"[\W_]+", "", AL.fold(s))
+
+
+def key_candidates(q):
+    """The strings of a question that may name one record: quoted text, and bare words that hold a digit (МЗ-0388, 5650000, SM-05200)."""
+    out = [m.group(2).strip() for m in QUOTED_RE.finditer(q)]
+    for tok in q.split():
+        tok = tok.strip(PUNCT)
+        if any(c.isdigit() for c in tok) and len(tok) >= 2:
+            out.append(tok)
+    return list(dict.fromkeys(x for x in out if x))
+
+
+def match_values(t, q, blank=None):
+    """(column, value) pairs whose value appears in the question as a whole word or phrase (text columns, 1..300 distinct values), and
+    (column, value) pairs for the key-like strings of the question (quoted text, words with a digit; `blank` = the question with its
+    comparisons cut out) that equal a cell of a text column: a record id, a code, a name, written with or without hyphens and in either script."""
     ql = " " + re.sub(r"[^\w.@-]+", " ", q.lower()) + " "
-    out = []
+    out, keys, plain = [], None, None
     for i in range(len(t.cols)):
         if t.numeric(i):
             continue
         vals = {str(v).strip() for v in t.values(i) if str(v).strip()}
-        if not vals or len(vals) > max(300, len(t.rows) // 2 + 1):
+        if not vals:
+            continue
+        if keys is None:
+            cands = key_candidates(q if blank is None else blank)
+            plain = {c for c in cands if re.fullmatch(r"\d+(?:\.\d+)?", c)}   # a bare number must equal the cell exactly ('5.0' is not '50')
+            keys = {loose(c): c for c in cands if c not in plain and loose(c)}
+        if keys or plain:
+            hit = []
+            for v in vals:
+                if v in plain or (keys and loose(v) in keys and not re.fullmatch(r"\d+(?:\.\d+)?", v)):
+                    hit.append(v)
+            out += [(i, v) for v in hit]
+        if len(vals) > max(300, len(t.rows) // 2 + 1):   # a high-cardinality column: only a quoted or digit-bearing string of the question names its value
             continue
         for v in sorted(vals, key=len, reverse=True):
             vl = " " + re.sub(r"[^\w.@-]+", " ", v.lower()).strip() + " "
-            if len(vl.strip()) >= 2 and vl in ql and v.lower() not in STOP:
+            if len(vl.strip()) >= 2 and vl in ql and v.lower() not in STOP and (i, v) not in out:
                 out.append((i, v))
     best = {}
     for i, v in out:   # one value may sit in several columns: keep the column whose name is also in the question, else all
@@ -365,7 +465,7 @@ def match_values(t, q):
 
 def score(t, pq, q):
     fw = sum(1 for w in set(pq["words"]) if col_for(t, w) is not None)
-    vals = match_values(t, q)
+    vals = match_values(t, q, pq["blank"])
     named = sum(3 for w in set(pq["words"]) if w in t.namew)
     return fw * 2 + len(vals) * 2 + named, vals
 
@@ -379,6 +479,13 @@ def col_for(t, w, numeric=None):
         if cands:
             return min(cands, key=lambda i: (len(t.colw[i]), i))
     return None
+
+
+def col_phrase(t, ws, numeric=True):
+    """The column whose whole name (all its words) is among the last four words `ws`; the longest name wins, a tie goes to the first column."""
+    sw = {stem(w) for w in ws[-4:]}
+    cands = [i for i in range(len(t.cols)) if t.colw[i] and t.colw[i] <= sw and t.numeric(i) == numeric]
+    return max(cands, key=lambda i: (len(t.colw[i]), -i)) if cands else None
 
 
 def named_words(t, pq):
@@ -404,6 +511,66 @@ def pick_measure(t, pq, exclude=()):
     return best[1] if best and measure_ok(t, pq, best[1]) else None
 
 
+EQ_SKIP = {"number", "no", "nr", "num", "nummer", "broj", "index", "idx", "is", "are", "equals", "equal", "at", "of", "has", "was", "ist", "je", "number:"}
+
+
+EQ_ORDINAL = {"first", "last", "top", "bottom", "next", "previous", "erste", "letzte", "prvi", "poslednji", "zadnji"}
+EQ_TAIL = {"id", "no", "nr", "num", "number", "code", "key"}
+
+
+def eq_filters(t, pq):
+    """(column, number text) pairs: a bare number that the question puts right after the name of a column ('visit_id 5650000',
+    'cue number 840', 'station index 17'). The name is the nearest word before the number, leaving out 'number', 'index', 'is'."""
+    toks = pq["blank"].split()
+    out = []
+    for k, raw in enumerate(toks):
+        s = raw.strip(PUNCT)
+        if not re.fullmatch(r"\d+(?:\.\d+)?", s):
+            continue
+        ws = []
+        for j in range(k - 1, max(-1, k - 4), -1):
+            ws = [w for w in words(toks[j].strip(PUNCT)) if w not in EQ_SKIP]
+            if ws:
+                break
+        sw = set(ws)
+        if not ws or sw & EQ_ORDINAL:   # 'the last 2 rows', 'top 5': a count of records, not a key
+            continue
+        whole = [i for i in range(len(t.cols)) if t.colw[i] and t.colw[i] <= sw]
+        if whole:
+            ci = max(whole, key=lambda i: (len(t.colw[i]), -i))
+        else:   # 'invoice 1234' names the column invoice_no: a column name without its id-like tail words
+            part = [i for i in range(len(t.cols)) if t.colw[i] - EQ_TAIL and t.colw[i] - EQ_TAIL <= sw]
+            if len(part) != 1:
+                continue
+            ci = part[0]
+        out.append((ci, s))
+    return out
+
+
+def point_cols(t, pq, skip):
+    """The columns a lookup question asks for: those whose name words the question holds best (not the key columns it filtered on)."""
+    qw = pq["allw"]   # every word, the filler and operation words too: 'total', 'value' and 'first' name columns of a record
+    scored = [(len(t.colw[i] & qw) / len(t.colw[i]), i) for i in range(len(t.cols)) if i not in skip and t.colw[i] and t.colw[i] & qw]
+    if not scored:
+        return []
+    top = max(sc for sc, _ in scored)
+    return [i for sc, i in scored if sc == top][:3]
+
+
+def point_answer(t, pq, keep, fcols, lines):
+    """One record (or a few) asked for by its key: 'Answer: <column> = <value> (where <key column> = <key>; <unit> <position>)', then the record in full."""
+    pc = point_cols(t, pq, fcols)
+    if not pc:
+        return None
+    said = "; ".join(f"{t.cols[c]} = {P.short(t.rows[k][c], 400)}" for k in keep for c in pc)
+    where = ", ".join(f"{t.cols[f]} = {P.short(t.rows[keep[0]][f], 40)}" for f in sorted(fcols))
+    lines.insert(0, f"Answer: {said} (where {where}; {t.unit} {', '.join(str(t.pos[k]) for k in keep)})")
+    lines.append(f"The {t.unit}(s) in full:")
+    for k in keep:
+        lines.append(f"  {t.unit} {t.pos[k]}: " + "; ".join(f"{c} = {P.short(x, 400)}" for c, x in zip(t.cols, t.rows[k]) if str(x).strip() != ""))
+    return lines
+
+
 def answer(t, pq, q, vals):
     lines = []
     keep = list(range(len(t.rows)))
@@ -424,14 +591,23 @@ def answer(t, pq, q, vals):
             continue
         keep = [k for k in keep if str(t.rows[k][i] if i < len(t.rows[k]) else "").strip().lower() in vs]
         filt.append(f"{t.cols[i]} = " + " or ".join(repr(v) for v in sorted(vs)))
+    fcols = set(by_col)
+    for ci, lit in eq_filters(t, pq):
+        want = float(lit)
+        hit = [k for k in keep if (lambda c: (num(c) == want) if num(c) is not None else str(c).strip() == lit)(t.rows[k][ci] if ci < len(t.rows[k]) else "")]
+        if not hit and not (t.colw[ci] & EQ_TAIL):   # 'sales 2021' names a year, not a sales figure: a measure column that holds no such number is not a key
+            continue
+        keep = hit
+        filt.append(f"{t.cols[ci]} = {lit}")
+        fcols.add(ci)
     measure = pick_measure(t, pq, exclude={group})
     for op, val, at in pq["cmps"]:
         before = re.findall(r"[^\W_]+", pq["fq"][:at])
-        ci = None
+        ci = col_phrase(t, before)   # 'Petal_Length greater than 5': the column whose whole name stands before the comparison, not any column with 'length' in it
         for w in reversed(before[-4:]):
-            ci = col_for(t, stem(w), True)
             if ci is not None:
                 break
+            ci = col_for(t, stem(w), True)
         ci = ci if ci is not None else measure
         if ci is None:
             continue
@@ -476,6 +652,10 @@ def answer(t, pq, q, vals):
         measure, main_op = hw, "sum"
     if main_op == "count" and measure is not None and "sum" in ops:
         main_op = "sum"
+    if group is None and fcols and len(keep) == 1 and main_op in (None, "sum", "mean", "max", "min"):   # a key names one record: its column, not an aggregate of one
+        got = point_answer(t, pq, keep, fcols, lines)
+        if got:
+            return got
     if measure is None and main_op in ("count", "sum", "mean", "max", "min") and len(named_words(t, pq)) >= 2:
         return None   # the question names two numeric columns and no column names both: no table answers it exactly
     if group is not None and main_op in (None, "count", "sum", "mean", "max", "min"):
@@ -555,6 +735,10 @@ def answer(t, pq, q, vals):
     # a lookup: the matching rows in full
     if not filt:
         return None
+    if fcols and 0 < len(keep) <= 5:
+        got = point_answer(t, pq, keep, fcols, lines)
+        if got:
+            return got
     lines.insert(0, f"Answer: {len(keep):,} matching {t.unit}(s)" + (", shown in full" if len(keep) <= 10 else ", the first 10 in full"))
     for k in keep[:10]:
         lines.append(f"  {t.unit} {t.pos[k]}: " + "; ".join(f"{c} = {P.short(x, 60)}" for c, x in zip(t.cols, t.rows[k]) if str(x).strip() != ""))
@@ -614,9 +798,18 @@ def run(o, path, out, lj):
     lines = [f"--ask {q!r}", f"Read as: operation {', '.join(pq['ops']) or 'lookup'}; words {', '.join(pq['words']) or '(none)'}"
              + (f"; group by {', '.join(pq['group'])}" if pq["group"] else "") + (f"; comparisons {', '.join(f'{a} {P.fmt(b)}' for a, b, _ in pq['cmps'])}" if pq["cmps"] else "") + f"; language {pq['lang']}"]
     notes = []
-    tables = load_tables(path, out, lj, notes)
+    cell = None
+    if (lj.get("subtype") or "") == "netcdf" or str((lj.get("facts") or {}).get("inner_type", "")).endswith("netcdf"):   # a grid: one cell by index or coordinate value
+        import dl_netcdf
+        src_ = Path((lj.get("facts") or {}).get("unpacked") or path)
+        try:
+            cell = dl_netcdf.ask(src_, q)
+        except (OSError, ValueError, struct.error, IndexError, KeyError) as e:   # a cut or damaged file: named, never a crash
+            notes.append(f"The netCDF grid could not be read for --ask ({type(e).__name__}: {str(e)[:150]}).")
+    tables = [] if cell else load_tables(path, out, lj, notes, wanted(pq))
     ranked = sorted(((score(t, pq, q), t) for t in tables), key=lambda x: (-x[0][0], -len(x[1].rows)))
-    got = None
+    got = cell or None
+    lines += cell or []
     if ranked and ranked[0][0][0] > 0:
         (_, vals), t = ranked[0]
         got = answer(t, pq, q, vals)

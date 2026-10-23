@@ -142,15 +142,10 @@ def read_values(raw, nc, v, rec_vars, recsize):
     return out
 
 
-def look_netcdf(look):
-    raw = look.path.read_bytes() if look.size <= (512 << 20) else look.path.read_bytes()[:64 << 20]
-    nc = parse(raw)
-    if not nc:
-        look.line("netCDF classic header could not be read.")
-        return
-    dims = nc["dims"]
+def layout(nc):
+    """Give every variable its shape and record flag; -> (index of the unlimited dimension or None, record variables, bytes per record)."""
+    dims, vs = nc["dims"], nc["vars"]
     unlimited = next((i for i, (_, s) in enumerate(dims) if s == 0), None)
-    vs = nc["vars"]
     for v in vs:
         v["shape"] = [nc["numrecs"] if d == unlimited else dims[d][1] for d in v["dimids"]]
         v["record"] = bool(v["dimids"]) and v["dimids"][0] == unlimited
@@ -158,6 +153,18 @@ def look_netcdf(look):
     recsize = sum(v["vsize"] for v in rec_vars)
     if len(rec_vars) == 1:   # a lone record variable is stored without the padding its vsize counts (netCDF classic format)
         recsize = _prod(rec_vars[0]["shape"][1:]) * TYPES.get(rec_vars[0]["type"], ("?", None, 1))[2]
+    return unlimited, rec_vars, recsize
+
+
+def look_netcdf(look):
+    raw = look.path.read_bytes() if look.size <= (512 << 20) else look.path.read_bytes()[:64 << 20]
+    nc = parse(raw)
+    if not nc:
+        look.line("netCDF classic header could not be read.")
+        return
+    dims = nc["dims"]
+    vs = nc["vars"]
+    unlimited, rec_vars, recsize = layout(nc)
     ver = {1: "CDF-1 (classic)", 2: "CDF-2 (64-bit offset)", 5: "CDF-5 (64-bit data)"}[nc["version"]]
     look.headline = f"netCDF {ver}: {len(dims)} dimensions, {len(vs)} variables"
     look.dims = " x ".join(f"{n}={s or nc['numrecs']}" for n, s in dims[:4])
@@ -218,6 +225,7 @@ def look_netcdf(look):
         look.line(head + body + ".", 92 - min(k, 40) // 4, "structure")
     if len(vs) > 60:
         look.line(f"{len(vs) - 60} more variables: " + ", ".join(v["name"] for v in vs[60:200]), 40, "structure")
+    find_cells(look, raw, nc, recsize)
     look.fact("netcdf_variables", [v["name"] for v in vs][:200])
     look.step("netCDF header and values", "stdlib")
 
@@ -329,3 +337,146 @@ def _prod(shape):
     for s in shape:
         n *= s
     return n
+
+
+# ---------------------------------------------------------------- one cell of a grid (fix round 11)
+def cell_at(raw, v, idx, recsize):
+    """The stored value of variable `v` at index tuple `idx`, or None when it lies outside the file."""
+    t = TYPES[v["type"]]
+    flat = 0
+    for d, i in zip(v["shape"][1:] if v["record"] else v["shape"], idx[1:] if v["record"] else idx):
+        flat = flat * d + i
+    at = v["begin"] + (idx[0] * recsize if v["record"] else 0) + flat * t[2]
+    if at < 0 or at + t[2] > len(raw) or not t[1]:
+        return None
+    return struct.unpack_from(">" + t[1], raw, at)[0]
+
+
+def _fill_of(v):
+    at = {n: val for n, _t, val in v["attrs"]}
+    fill = at.get("_FillValue", at.get("missing_value", FILL.get(v["type"] if v["type"] in (1, 3, 4, 5, 6) else 0)))
+    return fill[0] if isinstance(fill, list) and fill else fill
+
+
+def find_cells(look, raw, nc, recsize):
+    """'Find one record' for grids: the variables of two or more dimensions with their sizes, how indexes count and the coordinate ranges."""
+    dims, vs = nc["dims"], nc["vars"]
+    data = [v for v in vs if len(v["shape"]) >= 2 and TYPES.get(v["type"], ("?", None, 1))[1] and _prod(v["shape"]) > 0][:3]
+    if not data:
+        return
+    names = list(dict.fromkeys(dims[d][0] for v in data for d in v["dimids"]))
+    coords = []
+    for dn in names:
+        c = next((x for x in vs if x["name"] == dn and len(x["shape"]) == 1 and TYPES.get(x["type"], ("?", None, 1))[1] and x["shape"][0] > 0), None)
+        if c:
+            a, b = cell_at(raw, c, [0], recsize), cell_at(raw, c, [c["shape"][0] - 1], recsize)
+            if a is not None and b is not None:
+                coords.append(f"{dn} = {P.fmt(a)} .. {P.fmt(b)}")
+    look.fact("netcdf_grids", [v["name"] for v in data])
+    P.find_line(look, [", ".join(f"{v['name']}[" + ", ".join(f"{dims[d][0]}={n:,}" for d, n in zip(v["dimids"], v["shape"])) + "]" for v in data)
+                       + "; indexes count from 0" + ("; coordinates " + ", ".join(coords) if coords else "")],
+                ask="ask \"<variable> at <dim> index N and <dim> index M\" (or \"last <dim> index\", or a coordinate value) with --ask", pri=93)
+
+
+def ask(path, question):
+    """--ask on a netCDF classic grid: 'discharge at the last time index for station index 17' -> answer lines, or None when the question names no variable
+    of two or more dimensions. A dimension is given by `<dim> index N`, `last <dim>`, `first <dim>`, or `<dim> N` / `<coordinate variable> N`, which is a
+    coordinate value when the dimension has a coordinate variable that holds it, else an index. Packed values are unpacked; a fill value is named."""
+    import mmap
+    import re
+    from dl_asklang import fold
+    with open(path, "rb") as fh:
+        try:
+            raw = mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ)
+        except (ValueError, OSError):
+            raw = fh.read()
+        try:
+            return _ask_cell(raw, fold(question), re, fold)
+        finally:
+            if hasattr(raw, "close"):
+                raw.close()
+
+
+def _ask_cell(raw, ql, re, fold):
+    nc = parse(raw)
+    if not nc:
+        return None
+    dims, vs = nc["dims"], nc["vars"]
+    unlimited, rec_vars, recsize = layout(nc)
+    toks = set(re.findall(r"[a-z0-9_]+", ql))
+    grid = [v for v in vs if len(v["shape"]) >= 2 and TYPES.get(v["type"], ("?", None, 1))[1] and fold(v["name"]) in toks]
+    if not grid:
+        return None
+    v = max(grid, key=lambda x: len(x["shape"]))
+    dn = [dims[d][0] for d in v["dimids"]]
+    want = {}   # dimension position -> ("index", n) / ("auto", x, dim name) / ("value", x, variable name) / ("last",) / ("first",)
+    for k, name in enumerate(dn):
+        f = re.escape(fold(name))
+        if re.search(rf"\b(last|final|latest)\s+{f}\b|\b{f}\s+(?:index\s+)?(?:last|final)\b", ql):
+            want[k] = ("last",)
+        elif re.search(rf"\b(first|earliest)\s+{f}\b|\b{f}\s+(?:index\s+)?first\b", ql):
+            want[k] = ("first",)
+    by_var = {fold(x["name"]): x for x in vs if len(x["shape"]) == 1 and x["dimids"] and x["name"] != v["name"] and TYPES.get(x["type"], ("?", None, 1))[1]}
+    for m in re.finditer(r"([a-z_][a-z0-9_]*)\s+(index\s+|idx\s+|number\s+|no\.?\s+)?(?:=\s*|:\s*)?(-?\d+(?:\.\d+)?)(?![\w.])", ql):
+        word, explicit, num = m.group(1), bool(m.group(2)), m.group(3)
+        for k, name in enumerate(dn):
+            if k in want:
+                continue
+            if word == fold(name):
+                want[k] = ("index", int(float(num))) if explicit else ("auto", float(num), name)
+                break
+            c = by_var.get(word)
+            if c is not None and c["dimids"][0] == v["dimids"][k] and not explicit:
+                want[k] = ("value", float(num), c["name"])
+                break
+    if len(want) < len(dn):
+        return [f"Answer: the question names {len(want)} of the {len(dn)} dimensions of {v['name']}[{', '.join(dn)}]; give each as '<dim> index N' (or 'last <dim>').",
+                f"{v['name']} has shape " + ", ".join(f"{n}={s:,}" for n, s in zip(dn, v["shape"])) + "; indexes count from 0."]
+    idx, said = [None] * len(dn), []
+    for k, w in sorted(want.items()):
+        size = v["shape"][k]
+        i, how = None, ""
+        if w[0] == "last":
+            i, how = size - 1, f"{dn[k]} index {size - 1} (the last)"
+        elif w[0] == "first":
+            i, how = 0, f"{dn[k]} index 0 (the first)"
+        elif w[0] == "index":
+            i, how = w[1], f"{dn[k]} index {w[1]}"
+        else:
+            cv = by_var.get(fold(w[2])) if w[0] == "value" else next((x for x in vs if x["name"] == dn[k] and len(x["shape"]) == 1 and TYPES.get(x["type"], ("?", None, 1))[1]), None)
+            if cv is not None:
+                for j in range(cv["shape"][0]):
+                    x = cell_at(raw, cv, [j], recsize)
+                    if x is not None and abs(x - w[1]) <= 1e-9 * max(1.0, abs(w[1])):
+                        i, how = j, f"{dn[k]} index {j} ({cv['name']} = {P.fmt(x)})"
+                        break
+            if i is None and w[0] == "auto" and w[1] == int(w[1]):
+                i, how = int(w[1]), f"{dn[k]} index {int(w[1])}"
+            elif i is None:
+                return [f"Answer: no {dn[k]} with value {P.fmt(w[1])} in {v['name']}: the {dn[k]} coordinates do not hold it."]
+        if not 0 <= i < size:
+            return [f"Answer: {dn[k]} index {i} is outside {v['name']} ({dn[k]} runs 0 to {size - 1})."]
+        idx[k] = i
+        said.append(how)
+    x = cell_at(raw, v, idx, recsize)
+    cell = f"{v['name']}[{', '.join(f'{dn[k]}={i}' for k, i in enumerate(idx))}]"
+    tail = "; " + "; ".join(said)
+    if x is None:
+        return [f"Answer: the value at {cell} lies outside the file (a cut or damaged file)."]
+    at = {n: val for n, _t, val in v["attrs"]}
+    unit = at.get("units", "")
+    fill = _fill_of(v)
+    if x != x:
+        return [f"Answer: {cell} = NaN (not a number){tail}"]
+    if fill is not None and x == fill:
+        return [f"Answer: {cell} = fill value ({P.fmt(fill)}): no measurement is stored there{tail}"]
+    pk = _packing(at)
+    val = x * pk[0] + pk[1] if pk else x
+    dec = re.search(r"(\d+)\s+decimal", ql)
+    single = TYPES[v["type"]][0] == "float"
+    if isinstance(val, float):
+        shown = f"{val:.{int(dec.group(1))}f}" if dec else (f"{val:.7g}" if single else f"{val:.12g}")
+    else:
+        shown = str(val)
+    how = f" (stored {x!r} x scale_factor {pk[0]:g} + add_offset {pk[1]:g})" if pk else (f" (stored as {x:.9g}, a single-precision number)" if single and not dec else "")
+    return [f"Answer: {cell} = {shown}" + (f" {unit}" if unit else "") + (f" ({dec.group(1)} decimals)" if dec else "") + how + tail]

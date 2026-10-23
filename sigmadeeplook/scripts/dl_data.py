@@ -372,9 +372,11 @@ def data_csv(look):
     if prefix_cut:
         look.line(f"Delimited table: about {n:,} data rows (line count over the whole file), {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows in the part profiled. "
                   + (f"Column profile: first {profiled:,} rows only." if quick_cut else f"PARTIAL: only the first {len(raw):,} of {look.size:,} bytes ({profiled:,} rows) were profiled; every figure below is for those rows, not for the whole file."))
-    else:
+    elif partial:
         look.line(f"Delimited table: {n:,} data rows, {len(header)} columns, delimiter {delim!r}, encoding {enc}, {nrej} reject rows (wrong field count). "
-                  + (f"PARTIAL: rows were read until the time cap ({n:,} rows); every figure below is a lower bound for the part read." if partial else "Every row was read; the profile below is a full pass, not a sample."), 38)
+                  f"PARTIAL: rows were read until the time cap ({n:,} rows); every figure below is a lower bound for the part read.", 38)
+    else:   # the rows, columns, delimiter, encoding and reject rows are in the Counts and Read as lines: only the full-pass statement is kept, short, so it stays in step 1
+        look.line("Every row was read; the profile below is a full pass, not a sample.", 87, "structure")
     total_ok = sum(prof[0].kinds.values()) if prof else 0
     notes = profile_findings(look, header, prof, total_ok, repeats)
     schema = [p.summary(total_ok) for p in prof]
@@ -384,6 +386,8 @@ def data_csv(look):
         extra = csv_second_pass(look, text, delim, header, gp, norm=norm, line_off=off) if gp.n else []
         crow = gp.field_lines()
         legend = COLUMN_LEGEND if not (prefix_cut or partial) else COLUMN_LEGEND.replace("every count is exact over every row", f"every count is exact over the {profiled:,} rows profiled only (PARTIAL read)")
+        if not (prefix_cut or partial) and gp.n == n:
+            P.find_line(look, [gp.find_part(None, "rows")], "--ask or run --sql", 92)
         if gp.last_line():
             look.line(gp.last_line(), 85, "last")
             if gp.n == n and not partial:   # row numbers at fixed positions only when every row was profiled
@@ -401,7 +405,7 @@ def data_csv(look):
             look.line(ln_, 32, "aggregates")
         for ln_ in gp.enum_lines():
             look.line(ln_, 30, "values")
-    if (enc not in ("utf-8", "utf-8-sig") or norm or delim not in (",", "\t") or look.facts.get("unpacked_from")) and not prefix_cut and len(text) <= 200 << 20:
+    if (enc not in ("utf-8", "utf-8-sig") or norm or delim not in (",", "\t") or region or look.facts.get("unpacked_from")) and not prefix_cut and len(text) <= 200 << 20:
         write_table_copy(look, text, delim, ncols, norm)
     import dl_sample
     if len(tail) > 1 and not prefix_cut:   # the content shows the head of the file; its end is shown here, as the file has it
@@ -649,7 +653,7 @@ def data_jsonl(look):
     p, extra = P.profile(recs, False, "line")
     full = sum(1 for _, o in recs if isinstance(o, dict) and len(o.keys() & keys.keys()) == len(keys)) if keys else None
     P.counts(look, [("records", n), ("invalid lines", bad), ("distinct keys", len(keys)), ("records with every key", full)])
-    P.emit(look, p, extra, "Records (positions are file line numbers)", 86, 30, 30)
+    P.emit(look, p, extra, "Records (positions are file line numbers)", 86, 30, 30, find="", route="--ask or run --sql")
     if n <= 3000:
         rows = []
         for ln, o in recs:
@@ -858,6 +862,7 @@ def data_sqlite(look):
             con.close()
         except sqlite3.Error as e:
             look.fail("table profiles", "sqlite3", e)
+        emit_finds(look)
     look.write_text("tables.md", "\n".join(md), "every table: rows, columns, indexes, foreign keys, 2 example rows", value=5, slice_cmd="--table NAME", inline=False if ntab > 6 else None)
     look.write_text("schema.json", json.dumps(info, indent=1, default=str), "tables, columns, row counts, example rows (json)", "json", inline=False)
     look.cmd("--table NAME", "profile of one table: nulls, distinct, min, max per column, indexes, foreign keys, 5 rows")
@@ -1036,7 +1041,7 @@ def data_parquet(look):
                         k += 1
                         yield k, r
             try:
-                table_profile(look, "Rows", names, rows, "row", md.num_rows, 84, 28, cap_s=TABLE_PROFILE_S * (3 if look.deep else 1))
+                table_profile(look, "Rows", names, rows, "row", md.num_rows, 84, 28, cap_s=TABLE_PROFILE_S * (3 if look.deep else 1), route="--ask or run --sql")
             except Exception as e:
                 look.fail("exact row profile", "pyarrow", e)
         t = f.read_row_group(0).slice(0, 5).to_pylist() if md.num_row_groups else []
@@ -1346,6 +1351,14 @@ def data_text_struct(look):
     P.counts(look, [("list items (- )", items), ("indent levels", len(ind)), ("comment lines", sum(1 for x in text.splitlines() if x.lstrip().startswith("#")))], 80, "Structure counts")
 
 
+def emit_finds(look, route="--ask or run --sql", pri=87, limit=6):
+    """One 'Find one record' line for the tables of a database that table_profile collected (the biggest first; system tables left out)."""
+    parts = sorted(getattr(look, "find_parts", []), key=lambda x: -x[0])
+    look.find_parts = []
+    import dl_prof as P
+    P.find_line(look, [p.find_part(nm, limit=1) for _, nm, p in parts if not nm.split(" ", 1)[-1].startswith(("gpkg_", "rtree_", "sqlite_"))][:limit], route, pri)
+
+
 # ---------------------------------------------------------------- exact table profile (sqlite tables, parquet): fix round 4
 TABLE_PROFILE_S = 60.0
 TABLE_LISTING_ROWS = 400
@@ -1374,7 +1387,7 @@ def plain(v):
     return str(v)
 
 
-def table_profile(look, what, names, rows, label="row", total=None, key_pri=84, more_pri=28, cap_s=TABLE_PROFILE_S, listing=True):
+def table_profile(look, what, names, rows, label="row", total=None, key_pri=84, more_pri=28, cap_s=TABLE_PROFILE_S, listing=True, route="--ask"):
     """Every row of one table through the field profiler and the group-by pass. rows: a callable giving (index, values) each time it
     is called (walked twice). Exact over every row unless the time cap stops it, which is flagged with the row it stopped at."""
     import dl_prof as P
@@ -1405,8 +1418,11 @@ def table_profile(look, what, names, rows, label="row", total=None, key_pri=84, 
     if stopped is not None:
         look.flag("PARTIAL", what, f"profile stopped at {label} {stopped:,} of {total:,}" if total else f"profile stopped at {label} {stopped:,}",
                   "time cap: the counts below cover the rows up to there only")
+    multi = what.startswith("Table ")   # several tables in one file (a database): one combined 'Find one record' line, from emit_finds
     P.emit(look, p, sp.lines(), f"{what} ({label}s numbered from 1" + (", every row read" if stopped is None else ", PARTIAL") + ")", key_pri, more_pri, 24,
-           prefix=f"{what}: " if what.startswith("Table ") else "")
+           prefix=f"{what}: " if multi else "", find=None if stopped is not None or multi else "", route=route)
+    if multi and stopped is None and p.n:
+        look.__dict__.setdefault("find_parts", []).append((p.n, what.lower(), p))
     if listing and first and (total or p.n) <= TABLE_LISTING_ROWS:
         rws = [f"{label} {i}: " + "; ".join(f"{n}={P.short(v, 60)}" for n, v in zip(names, vals)) for i, vals in first]
         for k in range(0, len(rws), 20):

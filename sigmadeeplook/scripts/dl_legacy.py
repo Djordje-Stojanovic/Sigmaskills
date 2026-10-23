@@ -101,6 +101,25 @@ def _entry_text(e):
     return f"msgid '{short(e['id'], 60)}' -> '{short(s, 60)}'" + (" [fuzzy]" if e.get("fuzzy") else "")
 
 
+ASK_MESSAGES = 250_000   # messages kept as a table for --ask
+
+
+def gettext_table(look, rows):
+    """The catalogue as one --ask table and its 'Find one record' line. rows: [(position, msgid, msgstr forms, msgid_plural, fuzzy, msgctxt)] in file order."""
+    if len(rows) < 11:
+        return
+    a, b = rows[0][1], rows[-1][1]
+    P.find_line(look, [f"{len(rows):,} messages, key column msgid (first '{short(a, 30)}', last '{short(b, 30)}'; with msgctxt when one is set)"],
+                ask="ask \"translation of the original text '<msgid>'\" with --ask (the row has plural forms, fuzzy flag, context)", pri=93)
+    try:
+        import dl_ask
+        dl_ask.store_table(look, "gettext messages", ["original text (msgid)", "translation (msgstr)", "plural original (msgid_plural)", "flags", "context (msgctxt)"],
+                           [[pos, [mid, " / ".join(forms), plural or "", "fuzzy" if fz else "", ctx or ""]] for pos, mid, forms, plural, fz, ctx in rows[:ASK_MESSAGES]],
+                           "the catalogue", "message", total=len(rows) if len(rows) > ASK_MESSAGES else None)
+    except OSError as e:
+        look.fail("table for --ask", "stdlib", e)
+
+
 def po_facts(look, text):
     """Counts and the first and last entries of a gettext .po/.pot text; -> True when the text holds a catalogue."""
     entries, obsolete = parse_po(text)
@@ -144,6 +163,7 @@ def po_facts(look, text):
                 look.line(f"{name.capitalize()} entries at lines: " + ", ".join(str(x) for x in lines[:12]) + (f" ... last at line {lines[-1]}" if len(lines) > 12 else ""), 80, "structure")
         long_ = max(body, key=lambda e: len(e["id"]))
         look.line(f"Longest msgid: {len(long_['id'])} characters (line {long_['line']}): '{short(long_['id'], 80)}'", 60, "structure")
+        gettext_table(look, [(e["line"], e["id"], [e["strs"][k] for k in sorted(e["strs"])], e["plural"], e["fuzzy"], e["ctx"]) for e in body])
     return True
 
 
@@ -233,6 +253,12 @@ def look_gettext(look):
     import dl_textx
     dl_textx.marks_lines(look, len(body), lambda k: f"#{k} {show(body[k - 1], 50)}", "entry", 84, f"Entries at fixed positions ({len(body):,} entries; #k = the k-th entry after the header)")
     look.write_text("text.md", "\n".join(f"#{i} {show(x, 200)}" for i, x in enumerate(body, 1)), "every entry in table order: #, msgid (context | msgid, plural forms split by /) -> msgstr", value=6)
+    rows = []
+    for i, (o, t) in enumerate(body, 1):
+        ctx, _, mid = dec(o).rpartition("\x04") if b"\x04" in o else ("", "", dec(o))
+        ids = mid.split("\0")
+        rows.append((i, ids[0], dec(t).split("\0"), " / ".join(ids[1:]) or None, False, ctx or None))
+    gettext_table(look, rows)
     look.step("Gettext .mo header and entries", "stdlib")
 
 

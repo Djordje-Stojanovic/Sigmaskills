@@ -26,6 +26,8 @@ GROUP_MAX_KEYS = 3         # categorical fields used for group-by
 GROUP_MAX_NUM = 5          # numeric fields summed per group
 GROUP_MAX_DISTINCT = 30    # a categorical field with at most this many values is a group-by key
 TOPN = 5
+KEY_MIN_ROWS = 11          # a table with fewer rows is printed in full: no "find one record" line
+KEY_MAX_LEN = 60
 NUM_RE = re.compile(r"^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$")
 NUM_SEP_RE = re.compile(r"^[-+]?\d{1,3}(,\d{3})+(\.\d+)?$")
 ID_RE = re.compile(r"(^|[_\s.-])(id|key|uuid|guid|sku|code|zip|phone)$|^id$", re.I)
@@ -367,6 +369,52 @@ class Profiler:
     def ordered(self):
         return sorted(self.fields.values(), key=lambda f: f.order)
 
+    # ---- where one record lives (fix round 11)
+    def _edge(self, which, name):
+        """The value of field `name` in the first (marks[1]) or last record fed, or None."""
+        rec = self.marks.get(1) if which == "first" else self.last
+        if not rec:
+            return None
+        if which == "first":
+            return dict(rec[1]).get(name)
+        if len(rec) == 3:
+            return next((v for f, v in zip(rec[1], rec[2]) if f.name == name), None)
+        return dict(rec[1]).get(name) if not isinstance(rec[1], dict) else rec[1].get(name)
+
+    def key_fields(self, limit=3, text_first=False):
+        """Fields that name one record: present in every record and different in each (text up to 60 characters, or whole numbers)."""
+        out = []
+        for f in self.ordered():
+            if self.n < KEY_MIN_ROWS or "[]" in f.name or f.name.endswith(LEN) or f.present != self.n or f.nulls or f.empties:
+                continue
+            if not f.distinct_exact() or f.distinct() != self.n or f.dominant() not in ("int", "text", "float"):
+                continue
+            if f.dominant() == "float" and not (f.n == self.n and f.lo is not None and f.hi is not None and float(f.lo).is_integer() and float(f.hi).is_integer() and f.hi - f.lo + 1 <= 4 * self.n):
+                continue   # SAS and Excel hold whole numbers as floats: a float field is a key only when it is a dense run of whole numbers
+            if f.dominant() == "text" and (f.len_hi or 0) > KEY_MAX_LEN:
+                continue
+            out.append(f)
+        if text_first:   # a database line names one key per table: the text one (mark_code) before the row number (fid)
+            out.sort(key=lambda f: f.dominant() != "text")
+        return out[:limit]
+
+    def key_range(self, f):
+        """'first .. last' of a key field: numbers by value, text by sorted order when every value is held, else in file order."""
+        if f.dominant() in ("int", "float") and f.lo is not None:
+            return f"{fmt(f.lo)} .. {fmt(f.hi)}"
+        if f.counts and not f.overflow:
+            ks = [str(k) for k in f.counts]
+            return f"{short(min(ks), 24)} .. {short(max(ks), 24)}"
+        a, b = self._edge("first", f.name), self._edge("last", f.name)
+        return f"{short(a, 24)} .. {short(b, 24)} (file order)" if a is not None and b is not None else ""
+
+    def find_part(self, name=None, noun="rows", limit=3):
+        """'table survey_marks, 5,200 rows, key column mark_code (unique, SM-00001 .. SM-05200)', or '' when no field names one record."""
+        keys = self.key_fields(limit, text_first=limit == 1)
+        if not keys:
+            return ""
+        return f"{name + ', ' if name else ''}{fmt(self.n)} {noun}, key column{'s' if len(keys) > 1 else ''} " + ", ".join(f"{f.name} (unique, {self.key_range(f)})" for f in keys)
+
     # ---- printing
     def field_line(self, f):
         bits = [f.dominant()]
@@ -523,8 +571,22 @@ def profile(records, coerce=False, label="record", second=True):
     return p, extra
 
 
-def emit(look, p, extra, what, key_pri=88, more_pri=30, field_limit=24, write_name=None, prefix=""):
-    """Put a profile into a look: one compact 'Fields' fact (step 1), then the full enumerations at a lower priority (--more)."""
+FIND_ASK = 'ask "<measure> of <key value>" with '
+
+
+def find_line(look, parts, route="--ask", pri=91, ask=None):
+    """'Find one record: <table, rows, key column and range> | <next table ...>; ask "<measure> of <key value>" with --ask': where a single
+    record lives, in step 1. parts: the find_part texts (empty ones are dropped). `ask`: the family's own wording of the last clause."""
+    parts = [x for x in parts if x]
+    if parts:
+        look.line("Find one record: " + " | ".join(parts) + "; " + (ask or FIND_ASK + route), pri, "locate")
+
+
+def emit(look, p, extra, what, key_pri=88, more_pri=30, field_limit=24, write_name=None, prefix="", find=None, route="--ask"):
+    """Put a profile into a look: one compact 'Fields' fact (step 1), then the full enumerations at a lower priority (--more).
+    `find`: the table's name for its 'Find one record' line ("" for the only table; the line is left out when None)."""
+    if find is not None:
+        find_line(look, [p.find_part(find or None, plural(p.label))], route)
     fl = p.field_lines()
     ll = p.last_line()
     if ll:
