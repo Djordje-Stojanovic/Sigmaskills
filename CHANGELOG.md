@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.16.8] — 2026-10-23
+
 ### Changed
 
 - Four new packs, each pinned to one commit or tag: `anthropic` (19 skills from anthropics/skills), `design-md` (84 brand looks from VoltAgent/awesome-design-md, one skill per brand), `last30days` (mvanhorn/last30days-skill v3.30.0) and `financial-services` (anthropics/financial-services: 62 skills, 10 agents and 27 commands as 99 skills; the MCP connectors an agent needs are named in the skill, not installed). Pick a whole pack or single skills; one owner per skill name still holds.
@@ -499,7 +501,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.7...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.8...HEAD
+[0.16.8]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.7...v0.16.8
 [0.16.7]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.6...v0.16.7
 [0.16.6]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.5...v0.16.6
 [0.16.5]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.4...v0.16.5
