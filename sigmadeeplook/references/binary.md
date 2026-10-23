@@ -11,7 +11,7 @@ PE (`.exe`, `.dll`), ELF, Mach-O, WebAssembly, Java `.class`, Android `.dex`. Th
 
 ## Pipeline
 
-1. Identity: sha256, size, magic, extension. An extension that disagrees with the bytes (`fake.pdf` that is a PE) is the first Flag.
+1. Identity: sha256, size, magic, extension. When the kind was found by the file's first bytes, the identity line shows them in hex, in file order (`magic 950412de 00000000`: the first four bytes, then the next four). An extension that disagrees with the bytes (`fake.pdf` that is a PE) is the first Flag.
 2. Header, stdlib: PE machine, timestamp, subsystem, sections with size and entropy, imports (all with pefile, DLL names without); ELF class, architecture, sections; Mach-O CPU type; wasm and class versions (`header.json`).
 3. Strings: ASCII and UTF-16LE, minimum length 8, capped at 20,000 (`strings.txt`). Keys and tokens are named by kind in Flags (`SECRET?`), never echoed into LOOK.md.
 4. Entropy for the whole file and per section. Over about 7.2 in a code section gives `PACKED?`.

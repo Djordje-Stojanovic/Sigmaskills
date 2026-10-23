@@ -103,6 +103,8 @@ def identity(look, elapsed, detail=False):
     bits = [f"{look.type}/{look.subtype}" if look.subtype and look.subtype != look.type else look.type, core.human(look.size)]
     if look.dims:
         bits.append(look.dims)
+    if (getattr(look, "detector", None) or {}).get("hex"):   # the file's first bytes in hex, in file order, when its kind was found by them
+        bits.append("magic " + look.detector["hex"])
     bits.append(look.tier_name + ("" if look.tier() == "full" else f" ({look.tier()})"))
     if detail:   # ids and timings do not help the answer: they come with --detail
         bits += [f"{elapsed:.1f}s", f"sha {look.sha[:12]}"]

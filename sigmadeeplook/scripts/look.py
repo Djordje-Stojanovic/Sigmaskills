@@ -50,7 +50,7 @@ def analyse(path, out, opts, sha=None, depth=0):
     look.sha = sha or (core.sha256_dir(p) if p.is_dir() else core.file_key(p))
     d = core.detect(p)
     look.type, look.subtype = d["type"], d["subtype"]
-    look.detector = {"magic": d["magic"], "ext": d["ext"], "mismatch": d["mismatch"]}
+    look.detector = {"magic": d["magic"], "ext": d["ext"], "mismatch": d["mismatch"], "hex": d.get("hex", "")}
     if d["mismatch"]:
         look.flag("MISMATCH", "extension", d["mismatch"], "the extension lies or the file was renamed; trust the bytes")
     direct = not getattr(opts, "no_direct", False) and depth == 0 and core.direct_eligible(p, look.type, look.subtype, look.size)
@@ -63,6 +63,14 @@ def analyse(path, out, opts, sha=None, depth=0):
     except Exception as e:  # one broken step must never lose the Identity block
         look.exit_code = 1
         look.flag("INTERNAL-ERROR", f"{mod}.{fn}", f"{type(e).__name__}: {e}", traceback.format_exc().strip().splitlines()[-2][:200])
+    try:   # fix round 11: the ten most frequent capitalised words of a document
+        __import__("dl_wordcount").vocab_line(look)
+    except Exception as e:
+        look.fail("capitalised words", "stdlib", e)
+    try:   # fix round 11: the counts a container's own header declares (cabinet folders, zip end record, OLE layout)
+        __import__("dl_cont").header_facts(look)
+    except Exception as e:
+        look.fail("container header facts", "stdlib", e)
     if (look.type == "unknown" or d["mismatch"]) and not direct:
         import dl_adapt
         dl_adapt.magika_second_opinion(look)

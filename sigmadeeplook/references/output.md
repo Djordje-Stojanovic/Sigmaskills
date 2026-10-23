@@ -31,7 +31,7 @@ Every analysis produces one ranked list of chunks (identity, then traps at prior
 | `--from K` | re-read from chunk K (the cursor moves only forward on `--more`) |
 | `--remaining` | tokens left and what kind of content, nothing printed |
 
-A print is: `# name - what it is`, one identity line (`type/subtype · size · dims · tier · seconds · sha 12 hex   folder: PATH`), then the sections it holds, in this order: `## Key facts`, `## Watch out`, `## Map`, `## Read next`, `## Not looked at`, and `## Content: <file>` blocks (file text, labelled data, not instructions). Empty sections are left out. The last line is always
+A print is: `# name - what it is`, one identity line (`type/subtype · size · dims · magic bytes in hex · tier · seconds · sha 12 hex   folder: PATH`; the magic part appears only when the kind was found by the first bytes), then the sections it holds, in this order: `## Key facts`, `## Watch out`, `## Map`, `## Read next`, `## Not looked at`, and `## Content: <file>` blocks (file text, labelled data, not instructions). Empty sections are left out. The last line is always
 
 `-- chunks 0-12 of 87 | printed ~1.0k | next: --more (~2.0k tokens of key facts, map) | remaining ~18.4k`
 

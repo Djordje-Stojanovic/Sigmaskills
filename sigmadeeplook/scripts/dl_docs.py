@@ -499,6 +499,8 @@ def col_index(ref):
 
 def look_office(look):
     st = look.subtype
+    if st == "rtf":
+        return __import__("dl_rtf").look_rtf(look)
     if st in ("doc", "xls", "ppt"):
         return office_legacy(look)
     try:
@@ -527,16 +529,24 @@ def look_office(look):
         except Exception as e:
             look.fail("document properties", "stdlib", e)
     kind = st[:4] if st[:4] in ("docx", "xlsx", "pptx") else st
-    if st in ("docx", "docm"):
-        office_docx(look, z, names)
-    elif st in ("xlsx", "xlsm"):
-        office_xlsx(look, z, names)
-    elif st in ("pptx", "pptm"):
-        office_pptx(look, z, names)
-    elif st == "xlsb":
-        office_xlsb(look)
-    elif st in ("odt", "ods", "odp"):
-        office_odf(look, z, names)
+    try:   # fix round 11: a part with a damaged header or stream is a finding, not an internal error
+        if st in ("docx", "docm"):
+            office_docx(look, z, names)
+        elif st in ("xlsx", "xlsm"):
+            office_xlsx(look, z, names)
+        elif st in ("pptx", "pptm"):
+            office_pptx(look, z, names)
+        elif st == "xlsb":
+            office_xlsb(look)
+        elif st in ("odt", "ods", "odp"):
+            office_odf(look, z, names)
+    except (zipfile.BadZipFile, zlib.error, EOFError) as e:
+        look.flag("CORRUPT", "package part", f"{type(e).__name__}: {e}"[:140], "a part of the package is damaged; the facts read before it are printed, the rest is not guessed")
+    try:   # fix round 11: hyperlinks, pictures and notes live in package parts, not in the text
+        import dl_pkgfacts
+        dl_pkgfacts.package_facts(look, z, names)
+    except Exception as e:
+        look.fail("package facts", "stdlib", e)
     render_office(look)
 
 

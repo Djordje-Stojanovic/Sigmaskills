@@ -9,7 +9,7 @@ Word, Excel and PowerPoint files (and their OpenDocument and legacy cousins) are
 - Charts and SmartArt are not text. Ask whether to read them as pictures or as data.
 - Password-protected files: listed as `ENCRYPTED`; nothing more is read.
 
-Excel binary workbooks (`.xlsb`) are read from their records with the standard library and looked at as a workbook (sheet names, hidden state, counts, rows); formula text is not decoded, stored results are. An OpenDocument text print lists every table with its rows, columns, first and last row, every row of a table up to 40 rows, and the text of every footnote and endnote.
+Excel binary workbooks (`.xlsb`) are read from their records with the standard library and looked at as a workbook (sheet names, hidden state, counts, rows); formula text is not decoded, stored results are. An OpenDocument text print lists every table with its rows, columns, first and last row, every row of a table up to 40 rows, and the text of every footnote and endnote. Rich Text Format (`.rtf`) is read from its own bytes: text, paragraphs, table rows, the info group (title, author), picture, field and footnote counts; the text is in `text.md`.
 
 ## Pipeline
 
@@ -18,7 +18,8 @@ Excel binary workbooks (`.xlsb`) are read from their records with the standard l
 3. xlsx: sheets, visibility (`HIDDEN-SHEET`), size, merged ranges (`MERGED-CELLS`), formulas against cached values (`UNCACHED-FORMULA` count). When any formula has no cached value, LibreOffice recalculates a copy and the result is quoted as "recalculated". Output `workbook.json`, `cells.md` (shape, header, head, tail, 10 random rows), never a full dump.
 4. pptx: per slide, text including text inside groups, tables, picture alt text, speaker notes, hidden slides (`HIDDEN-SLIDE`), charts count (`slides.md`). Hidden slides are exported to the render.
 5. Legacy `.doc` (Word 97-2003, Word 6 and 95): read from its own bytes with the standard library: header (version, language, flags), saved properties (title, author, dates, pages), every paragraph with its heading level from the style sheet, tables with rows and cells (every row up to 40 rows), the last paragraphs and the paragraphs at fixed positions (#1-5, 10, 20, 25, 30, 40, 50, 75, 100 ... and the middle). A damaged file is flagged `CORRUPT` and falls back to LibreOffice. Legacy `.xls` and `.ppt`: saved properties (application, revision, dates, slide and word counts) from the file's own bytes, then converted to OOXML by LibreOffice, then the steps above.
-6. Render: `soffice.com` (Windows) or `soffice` with a throwaway profile, macro security at its highest level, to PDF, then the PDF pipeline for pages and a slide or page sheet.
+6. Package facts for every docx, xlsx, pptx, odt, ods and odp: the hyperlinks of the body with their targets, the pictures and media inside the package with path and size (`Pictures/...`, `word/media/...`), footnote, endnote and comment counts. A word count (`--ask "how many times does the word 'X' appear"`, `"in how many paragraphs ..."`) runs over the whole extracted text, whole-word, case-sensitive when the quoted word has a capital; the step 1 or first `--more` print lists the ten most frequent capitalised words with counts.
+7. Render: `soffice.com` (Windows) or `soffice` with a throwaway profile, macro security at its highest level, to PDF, then the PDF pipeline for pages and a slide or page sheet.
 
 ## Failure modes
 
