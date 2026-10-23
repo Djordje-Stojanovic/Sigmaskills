@@ -38,7 +38,7 @@ def strip(tag):
 
 def parse_xml(look, data):
     """Parse XML bytes safely: entity declarations are refused, defusedxml is used when present."""
-    if b"<!ENTITY" in data[:200000]:
+    if b"<!ENTITY" in data:
         look.flag("ENTITY-DECLARATION", "xml", "DTD entity declared", "not parsed: entity expansion can exhaust memory")
         return None
     if len(data) > MAX_XML:
@@ -502,7 +502,7 @@ def look_office(look):
     if st in ("doc", "xls", "ppt"):
         return office_legacy(look)
     try:
-        z = zipfile.ZipFile(look.path)
+        z = core.CappedZip(look.path, look=look)
     except zipfile.BadZipFile:
         look.flag("CORRUPT", "package", "not a readable zip", "")
         return

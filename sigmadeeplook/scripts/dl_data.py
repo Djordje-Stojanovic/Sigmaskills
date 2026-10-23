@@ -1052,7 +1052,7 @@ def xml_entity_danger(raw):
     """None, or the reason an XML must not be expanded: an entity that refers to itself, expands past 1 million characters, or would put more
     than 50 million characters into the document. A harmless declaration (a copyright sign, a company name) is no reason to refuse the file."""
     values = {}
-    for m in ENTITY_DECL.finditer(raw[:1_000_000]):
+    for m in ENTITY_DECL.finditer(raw):
         v = m.group(2) if m.group(2) is not None else m.group(3)
         if v is not None:
             values[m.group(1).decode("latin-1")] = v.decode("utf-8", "replace")

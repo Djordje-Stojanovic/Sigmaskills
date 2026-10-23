@@ -8,7 +8,6 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -211,7 +210,7 @@ def native_for(d, src, assets, base):
         prev = assets / "preview.mp4"
         ff = core.find_tool("ffmpeg")
         if ff and not prev.exists():
-            subprocess.run([ff, "-y", "-v", "error", "-t", "20", "-i", str(src), "-vf", "scale=-2:360", "-c:v", "libx264", "-crf", "30", "-preset", "veryfast", "-c:a", "aac", "-b:a", "64k", str(prev)], capture_output=True, timeout=300)
+            core.run_tree([ff, "-y", "-v", "error", "-t", "20", "-i", str(src), "-vf", "scale=-2:360", "-c:v", "libx264", "-crf", "30", "-preset", "veryfast", "-c:a", "aac", "-b:a", "64k", str(prev)], 300)
         return f'<video controls preload="metadata" src="{esc(rel(base, prev))}"></video><div class="px">first 20 s, 360p preview of the original</div>' if prev.exists() else "<p>No browser player for this video.</p>"
     if t == "audio":
         return f'<audio controls src="{local() if size < 6 << 20 else esc(uri)}"></audio>'

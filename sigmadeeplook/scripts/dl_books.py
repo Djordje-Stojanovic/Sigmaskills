@@ -76,7 +76,7 @@ def opf_meta(opf):
 
 def look_epub(look):
     try:
-        z = zipfile.ZipFile(look.path)
+        z = core.CappedZip(look.path, look=look)
     except zipfile.BadZipFile:
         return
     names = set(z.namelist())
@@ -219,7 +219,8 @@ def q(prefix, name):
 def _xml(z, name):
     import xml.etree.ElementTree as ET
     try:
-        return ET.fromstring(z.read(name))
+        data = z.read(name)
+        return None if b"<!ENTITY" in data else ET.fromstring(data)
     except Exception:
         return None
 

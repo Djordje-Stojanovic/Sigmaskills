@@ -23,7 +23,8 @@ def strip(tag):
 def _xml(z, name):
     import xml.etree.ElementTree as ET
     try:
-        return ET.fromstring(z.read(name))
+        data = z.read(name)
+        return None if b"<!ENTITY" in data else ET.fromstring(data)
     except Exception:
         return None
 

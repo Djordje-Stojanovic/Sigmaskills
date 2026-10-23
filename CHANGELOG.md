@@ -4,6 +4,12 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook`: a small zip-based document can no longer eat gigabytes. A 600 KB `.docx` with a 600 MB `docProps/core.xml` took 7.1 GB in the properties reader; a part over 256 MB, or over 16 MB and more than 200 times its packed size, now reads as empty and is flagged `TRUNCATED` (peak 409 MB on the same file). The same limit covers EPUB, OpenDocument and the `--page` pptx reader.
+- `sigmadeeplook`: the XML entity guards looked only at the first 200 KB (`parse_xml`) and 1 MB (`xml_entity_danger`) of a file, so a long comment before the DOCTYPE hid a billion-laughs declaration. They now read the whole part. Property parts of office, EPUB and OpenDocument files refuse a declared entity too.
+- `sigmadeeplook`: a tool's timeout now ends the whole tool, not only the first process. On Windows a tool behind a `.cmd` shim (diec on a truncated `.exe`) kept running at 100 % CPU and held the output pipe, so the look never returned. `dl_core.run_tree` kills the process tree (`taskkill /T`, a process group elsewhere); the look returns at the limit with a `TIMEOUT` flag.
+
 ## [0.16.2] — 2026-10-22
 
 ### Changed

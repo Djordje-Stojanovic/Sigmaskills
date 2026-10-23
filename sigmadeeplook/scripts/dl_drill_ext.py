@@ -70,14 +70,13 @@ def page_pdf(o, path):
         except Exception as e:
             return D.refuse(f"--page: the PDF could not be read ({type(e).__name__}: {e}).")
     elif core.find_tool("pdftotext"):
-        import subprocess
         try:
             a, _, b = str(o.page).partition("-")
             a = int(a)
             b = int(b or a)
         except ValueError:
             return D.refuse("--page takes a range like 5-9 (pages start at 1).")
-        r = subprocess.run([core.find_tool("pdftotext"), "-f", str(a), "-l", str(b), "-layout", str(path), "-"], capture_output=True, timeout=120)
+        r = core.run_tree([core.find_tool("pdftotext"), "-f", str(a), "-l", str(b), "-layout", str(path), "-"], 120)
         txt = r.stdout.decode("utf-8", "replace")
         texts = dict(zip(range(a, b + 1), txt.split("\f")))
         n = b
@@ -101,7 +100,7 @@ def page_pdf(o, path):
 
 def page_pptx(o, path):
     try:
-        z = zipfile.ZipFile(path)
+        z = core.CappedZip(path)
     except zipfile.BadZipFile:
         return D.refuse("--page: not a readable pptx.")
     slides = sorted((n for n in z.namelist() if re.match(r"ppt/slides/slide\d+\.xml$", n)), key=lambda s: int(re.search(r"(\d+)", s.rsplit("/", 1)[1]).group(1)))
