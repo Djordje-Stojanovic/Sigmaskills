@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmafinanceman` carries the investors' knowledge. `references/masters.md` holds ten verbatim, sourced quotes and the core principles of 14 investors and operators (Musk, Buffett, Huang, Ackman, Munger, Jobs, Altman, Bezos, Zuckerberg, Druckenmiller, Horowitz, Leone, Thiel, Andreessen). `references/strategy.md` merges them into one nine-step method for any investment, names where the masters disagree and how the method decides, and gives a playbook per kind (growth and dividend stocks, index funds, macro and trading, private equity and venture, real estate, crypto, a rented-out asset such as GPUs, reselling, cars, buying a business). The question round reads the method first, and `finman.py --principles "Buffett P1,Munger P5"` names the applied principles in the workbook (Method sheet), the deck, the page and the report. A test checks that every quote has a source and a link, and that the skill links both files.
+
 ## [0.16.2] — 2026-10-22
 
 ### Changed

@@ -25,3 +25,8 @@ Read on 2026-10-21 (shallow clones; the skill files of each). Licences listed pe
 | [jeremylongshore/excel-analyst-pro-skill-md](https://github.com/jeremylongshore/excel-analyst-pro-skill-md) | proprietary licence: read, nothing copied | the recalculate-and-scan step before a workbook ships (our `audit`) |
 | [openaccountants/openaccountants](https://github.com/openaccountants/openaccountants) | AGPL-3.0: read, nothing copied | the forensic stance of the red-flag checks (a flag is a question, not a verdict) |
 | Sloan (1996), Altman (1968), Piotroski (2000) | published methods | the red-flag thresholds, Altman Z, Piotroski F |
+
+## The masters (masters.md, strategy.md)
+
+Read on 2026-10-23: 68 pages fetched (28 read in full, 40 full texts searched for the quote), 53 of them carry a quote. Each of the 140 quotes was matched word for word against its page twice: once by the research lane, once by an independent script. A quote that did not match was dropped, never paraphrased. Wikiquote and quote sites were leads only. Third-party transcripts (Ackman's Holy Grail of Investing interview, Leone's 2026 London summit talk) are named by outlet in the source line: check the recording when a decision depends on one. Owner earnings come from the Berkshire 1986 letter; the index-fund advice from the 2013 letter.
+
