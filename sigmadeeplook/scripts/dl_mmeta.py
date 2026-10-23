@@ -54,6 +54,42 @@ def probe_full(look, count=True):
         return None
 
 
+def key_frames(look, v, pri=89, listed=60):
+    """Key frames of the video stream from every packet's key flag (ffprobe reads the packets, nothing is decoded): the count, the first
+    and the last presentation time, the spacing; every time when there are few."""
+    fp = look.tool("ffprobe")
+    if not fp or v.get("index") is None:
+        return
+    r, out, _ = look.run_text([fp, "-v", "error", "-select_streams", str(v["index"]), "-show_entries", "packet=pts_time,dts_time,flags", "-of", "csv=p=0", str(look.path)],
+                              timeout=180)
+    if r is None or r.returncode != 0:
+        return
+    total, keys = 0, []
+    for ln in out.splitlines():
+        f = ln.split(",")
+        if len(f) < 3:
+            continue
+        total += 1
+        t = secs(f[0]) if f[0] not in ("", "N/A") else secs(f[1])
+        if "K" in f[2] and t is not None:
+            keys.append(t)
+    if not keys:
+        look.line(f"Key frames of video stream #{v['index']}: none flagged in {total:,} packets.", pri, "props")
+        return
+    keys.sort()
+    start = secs(v.get("start_time"))
+    gaps = [b - a for a, b in zip(keys, keys[1:])]
+    spacing = ""
+    if gaps:
+        spacing = f"; one every {gaps[0]:.3f} s" if max(gaps) - min(gaps) < 0.0015 else f"; {min(gaps):.3f}-{max(gaps):.3f} s apart, mean {sum(gaps) / len(gaps):.3f} s"
+    rel = f" ({keys[-1] - start:.3f} s after the stream start {start:.3f} s)" if start is not None else ""
+    look.fact("key_frames", len(keys))
+    look.line(f"Key frames of video stream #{v['index']} (every packet's key flag read; times are presentation times): {len(keys):,} key frames in {total:,} packets; "
+              f"first at {keys[0]:.3f} s, last at {keys[-1]:.3f} s{rel}{spacing}.", pri, "props")
+    if 2 < len(keys) <= listed:
+        look.line(f"Key frame times (s), every one: {', '.join(f'{t:.3f}' for t in keys)}", pri - 30, "props")
+
+
 def media_meta(look, pri=93):
     """Adds the metadata facts to the look; returns the probe dict (or None)."""
     j = probe_full(look, count=not look.quick)
@@ -120,6 +156,8 @@ def media_meta(look, pri=93):
         if st:
             bits.append("tags " + "; ".join(f"{k} = {P.short(x, 60)}" for k, x in st.items()))
         look.line("Stream " + ", ".join(bits), pri - 3 if s is v or s is a else pri - 12, "props")
+    if v is not None:
+        key_frames(look, v, pri - 4)
     if chapters:
         look.line(f"Chapters ({len(chapters)}): " + "; ".join(f"{c.get('tags', {}).get('title', '#' + str(i))} {hms(secs(c.get('start_time')))}-{hms(secs(c.get('end_time')))}" for i, c in enumerate(chapters, 1)), pri - 5)
     look.fact("probe_full", {"format": {k: fmt.get(k) for k in ("format_name", "duration", "bit_rate", "size")}, "streams": len(streams)})

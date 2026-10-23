@@ -1074,6 +1074,9 @@ def inner_tables(look, texts):
                     sp.add_row(names, r, ln)
                 look.line(f"Member table {n}: {len(body):,} data rows, {len(head)} columns, {len(body) - len(good)} rows with the wrong field count. Columns (exact over every row, positions are member line numbers):\n"
                           + "\n".join("  " + x for x in p.field_lines()), 72, "profile")
+                if good:   # the first and the last record of the member, so its ends need no extraction
+                    first = "; ".join(f"{f.name}={P.short(v, 44)}" for f, v in zip(cols, good[0][1]))
+                    look.line(f"{n}: First row (line {good[0][0]}): {first}. {p.last_line()}", 71, "last")
                 for x in p.stats_lines() + sp.lines():
                     look.line(f"{n}: {x}", 34, "aggregates")
                 for x in p.enum_lines():
