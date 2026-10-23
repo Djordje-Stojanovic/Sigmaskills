@@ -329,7 +329,7 @@ def _num(v, is_float):
 
 def au_stats(look, c, np=None):
     """Exact per-channel sample statistics: min, max, mean (DC), RMS and peak in dBFS, zero and full-scale samples, the first non-zero frame,
-    the first and last frames. -> the first-channel samples as floats in -1..1 (for the sound-burst pass), or None."""
+    the first and last frames. -> one float sequence in -1..1 per channel (up to 8; the first only without numpy) for the sound passes, or None."""
     import math
     got = au_channels(look.path, c, AU_READ_CAP, np)
     if not got:
@@ -372,11 +372,11 @@ def au_stats(look, c, np=None):
               + "): " + "; ".join(rows) + f". All channels: zero samples {zeros:,}; "
               + (f"first non-zero sample at frame {first_nz:,} ({first_nz / c['rate']:.3f} s)" if first_nz is not None else "every sample is zero")
               + f"; first frame: {first}; last frame: {last}.", 93, "signal")
-    x = chans[0]
     if np is not None:
-        return x.astype(np.float32) / full
+        return [x.astype(np.float32) / full for x in chans[:8]]
     import array
-    return array.array("f", map((1.0 / full).__mul__, x)) if full != 1.0 else array.array("f", x)
+    x = chans[0]
+    return [array.array("f", map((1.0 / full).__mul__, x)) if full != 1.0 else array.array("f", x)]
 
 
 def au_lines(look, c):
@@ -397,6 +397,6 @@ def au_lines(look, c):
         except (MemoryError, ValueError, OverflowError) as e:
             look.fail("sample statistics", "stdlib", e)
             s = None
-        if s is not None and not look.quick:
+        if s is not None:
             import dl_sig
-            dl_sig.sound_events(look, s, c["rate"])
+            dl_sig.sound_events_channels(look, s, c["rate"], bursts=not look.quick)   # bursts of the mix, tones of each channel

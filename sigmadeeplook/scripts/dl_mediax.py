@@ -15,6 +15,34 @@ import dl_core as core
 import dl_util as U
 
 
+# ----------------------------------------------------------------------------- the pitch of every audio stream
+def stream_tones(look, probe, always=False):
+    """One line with the strongest steady frequency (and the tone bursts) of EVERY audio stream, each named by its container id (PID, track id or
+    stream number): a file with two audio tracks carries two different sounds. Prints for a file with 2 or more audio streams, or when a stream is tonal."""
+    import dl_mmeta
+    import dl_sig
+    streams = [x for x in (probe or {}).get("streams", []) if x.get("codec_type") == "audio"]
+    if not streams or not look.tool("ffmpeg"):
+        return
+    fmt = (probe.get("format") or {}).get("format_name", "")
+    cap = 120 if look.quick else 600
+    items, tonal = [], False
+    for k, st in enumerate(streams[:8]):
+        got = dl_sig.decode_ffmpeg(look, cap, 16000, 1, stream=k)
+        label = f"#{st.get('index')} audio {dl_mmeta.stream_id(st, fmt)} {st.get('codec_name', '?')}".replace("  ", " ")
+        lang = (st.get("tags") or {}).get("language")
+        label += f" {lang}" if lang and lang != "und" else ""
+        if got is None:
+            items.append(f"{label}: no sound could be decoded")
+            continue
+        s = dl_sig.tone_summary(look, got[0], got[1])
+        tonal = tonal or bool(s and s["freq"] is not None and (s["share"] >= 0.5 or s["tones"]))
+        items.append(f"{label}: {dl_sig.summary_text(s)}")
+    if len(streams) >= 2 or tonal or always:
+        look.line(f"Tone per audio stream (the first {cap // 60} minutes of each, 16 kHz mono; the strongest steady frequency and its share of the power): " + " | ".join(items) + ".", 94, "sound")
+        look.fact("stream_tones", items)
+
+
 # ----------------------------------------------------------------------------- event runs
 def runs(events, gap=1.5):
     """[(start, end)] sorted -> [(start, end, n)]: events closer than `gap` seconds become one run."""

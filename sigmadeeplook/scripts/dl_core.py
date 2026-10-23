@@ -643,6 +643,10 @@ def detect(path):
         t, st, mg = "data", "torrent", "bencoded BitTorrent metainfo"
     elif h[:4] == b"\0\0\x01\0" and ext in (".ico", ".cur"):
         t, st, mg = "image", "ico", "ICO"
+    elif ext in (".tga", ".icb", ".vda", ".vst") and tga_plausible(h, size):
+        t, st, mg = "image", "tga", "TGA header (image type, depth, size; no magic)"
+    elif ext in (".pbm", ".pgm", ".ppm", ".pnm") and re.match(rb"P[1-6][ \t\r\n]", h[:3]):
+        t, st, mg = "image", "pnm", "Netpbm " + h[:2].decode()
     elif is_(b"ORC") and ext in (".orc", ""):
         t, st, mg = "data", "orc", "ORC"
     elif h[8:12] == b"DUCK":
@@ -893,7 +897,7 @@ def config_sniff(s, ext):
 EXT_OK = {
     "video": {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".wmv", ".flv", ".ogv", ".mpg", ".mpeg", ".ts", ".3gp"},
     "audio": {".mp3", ".wav", ".flac", ".ogg", ".opus", ".m4a", ".aac", ".wma", ".aiff", ".aif", ".mka", ".weba", ".mp4", ".webm", ".oga", ".au", ".snd"},
-    "image": {".png", ".jpg", ".jpeg", ".gif", ".webp", ".tif", ".tiff", ".bmp", ".heic", ".heif", ".avif", ".svg", ".ico", ".pcx", ".dib"},
+    "image": {".png", ".jpg", ".jpeg", ".gif", ".webp", ".tif", ".tiff", ".bmp", ".heic", ".heif", ".avif", ".svg", ".ico", ".pcx", ".dib", ".tga", ".pbm", ".pgm", ".ppm", ".pnm"},
     "pdf": {".pdf"},
     "font": {".ttf", ".otf", ".woff", ".woff2", ".ttc", ".otc"},
     "notebook": {".ipynb"},
@@ -1162,6 +1166,14 @@ def tier_of(o):
 
 def opts_key(o):
     return "|".join(str(getattr(o, k, "")) for k in ("reader", "tier", "deep", "quick", "budget", "extract", "recurse", "no_tools", "allow_network", "no_direct", "query"))
+
+
+def tga_plausible(h, size):
+    """A Truevision TGA has no magic: an 18-byte header with a known image type, colour-map flag, depth and a non-empty size."""
+    if len(h) < 18 or size < 19:
+        return False
+    cmap, itype, w, hh, bpp = h[1], h[2], struct.unpack("<H", h[12:14])[0], struct.unpack("<H", h[14:16])[0], h[16]
+    return cmap in (0, 1) and itype in (1, 2, 3, 9, 10, 11) and (itype in (1, 9)) == (cmap == 1) and w > 0 and hh > 0 and bpp in (8, 15, 16, 24, 32)
 
 
 def image_size(p):
