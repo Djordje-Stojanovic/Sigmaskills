@@ -32,7 +32,7 @@ test('packs: the registry lists the bundled Sigma pack and the five outside pack
     assert.equal(findPack(packs, 'THREE').id, 'threejs');
     assert.ok(findPack(packs, 'mattpocock').skills.some((skill) => skill.id === 'tdd'));
     assert.equal(findPack(packs, 'threejs').skills.length, 13);
-    assert.ok(findPack(packs, 'hyperframes').skills.some((skill) => skill.id === 'hyperframes-core'));
+    assert.ok(findPack(packs, 'hyperframes').skills.some((skill) => skill.id === 'hyperframes'));
     assert.ok(findPack(packs, 'hyperframes').skills.some((skill) => skill.id === 'cut-silences'), 'the student kit is part of the HyperFrames pack');
     assert.equal(findPack(packs, 'nope'), null);
   } finally {

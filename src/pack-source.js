@@ -91,12 +91,13 @@ function describeSource(source) {
  * One fetcher per command. It fetches each source once, however many skills come from it, and
  * removes every temporary clone in close().
  *
- * A source is `{ type: 'git', repo, path }` or `{ type: 'dir', path | env, prefix }`.
+ * A source is `{ type: 'git', repo, path, ref? }` or `{ type: 'dir', path | env, prefix }`. A git
+ * source with a `ref` (a release tag) is fetched at that tag, so a moved head cannot change it.
  * `fetch(source)` returns `{ root, revision, label }`, where `root` holds the skill folders.
  *
  * @param {object} [options]
  * @param {NodeJS.ProcessEnv} [options.env]
- * @param {(url: string, dest: string) => string} [options.clone] swap the git adapter in tests
+ * @param {(url: string, dest: string, ref?: string) => string} [options.clone] swap the git adapter in tests
  * @returns {{ fetch: Function, close: Function }}
  */
 export function createSourceFetcher({ env = process.env, clone = defaultClone } = {}) {
@@ -118,7 +119,7 @@ export function createSourceFetcher({ env = process.env, clone = defaultClone } 
         temps.push(temp);
         let revision;
         try {
-          revision = clone(gitUrl(source, env), temp);
+          revision = clone(gitUrl(source, env), temp, source.ref);
         } catch (err) {
           throw new Error(`could not fetch ${describeSource(source)}: ${String(err.message || err).split('\n')[0]}`);
         }
@@ -133,8 +134,9 @@ export function createSourceFetcher({ env = process.env, clone = defaultClone } 
   };
 }
 
-function defaultClone(url, dest) {
+function defaultClone(url, dest, ref) {
   const opts = { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', windowsHide: true };
-  execFileSync('git', ['clone', '--depth', '1', '--quiet', url, dest], opts);
+  const branch = ref ? ['--branch', ref] : [];
+  execFileSync('git', ['-c', 'advice.detachedHead=false', 'clone', '--depth', '1', '--quiet', ...branch, url, dest], opts);
   return execFileSync('git', ['-C', dest, 'rev-parse', 'HEAD'], opts).trim();
 }

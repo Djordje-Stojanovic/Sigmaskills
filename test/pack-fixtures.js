@@ -60,6 +60,17 @@ export function commitAll(dir, message = 'change') {
   git(dir, 'commit', '-q', '-m', message);
 }
 
+/** Tag the current commit of a remote made by createRemote(). */
+export function tagRemote(dir, name) {
+  git(dir, 'tag', name);
+}
+
+/** Remove a skill folder from a remote and commit, like an upstream that moved a skill. */
+export function removeSkillFromRemote(dir, id, skillsPath = 'skills') {
+  fs.rmSync(path.join(dir, skillsPath, id), { recursive: true, force: true });
+  commitAll(dir, `remove ${id}`);
+}
+
 /** Write the owner's config with a git pack called `acme` and a folder pack called `local`. */
 export function writeUserConfig(home, config) {
   const dir = path.join(home, '.sigmaskills');

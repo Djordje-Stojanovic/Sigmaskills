@@ -124,7 +124,7 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `sigma` | `sigmaskills` | the skills bundled in this package |
 | `mattpocock` | `matt`, `pocock` | the skills in [mattpocock/skills](https://github.com/mattpocock/skills) |
 | `threejs` | `three` | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) |
-| `hyperframes` | `hf` | the HyperFrames skills and the student kit |
+| `hyperframes` | `hf` | the HyperFrames skills (pinned to one upstream release tag) and the student kit |
 | `minimax-h3` | `minimax`, `h3` | the MiniMax H3 prompt and recipe skills |
 | `local` | `own` | a folder of your own skills; see [Your own packs](#your-own-packs) |
 | `all` | | every pack that is available on this machine |
@@ -140,6 +140,7 @@ You can also name a pack skill by its id, next to Sigma skills. `--all` keeps it
 How pack skills install:
 
 - The group list ships with the package in `registry/packs.json`, so the picker needs no network. Installing a pack skill downloads its repository once (a shallow `git clone` into a temporary folder that is deleted afterwards), so `git` must be on the path. `--dry-run` also downloads, to compare content.
+- One skill name has one owner. If two packs list the same name, the first pack in the table keeps it (Sigma comes first) and the later pack does not list or install it. A fresh folder therefore gets no "kept" skills from a second copy of a name.
 - Each skill is copied to `.agents/skills/<id>`. A host folder links to that copy, or holds its own copy with `--copy`, as for Sigma skills.
 - A private record, `packs.json` in the [state folder](#private-state-folder), says what the installer owns. It never touches a folder it does not own.
 - A folder that is in the way and not owned stays untouched, and the summary says so. A copy you edited stays during `update` and `uninstall`. `--force` replaces or removes either one after a backup in `pack-backups/` in the state folder.
@@ -175,7 +176,7 @@ Most hosts (Codex, Cursor, Gemini CLI, Antigravity CLI, Pi, OpenCode, GitHub Cop
 }
 ```
 
-A `git` source needs the skill ids in `skills`, so the picker can show them without a download. A `dir` source lists the skills it finds. `prefix` keeps only ids that start with it. The `local` pack is a `dir` source with no prefix; set its folder with `dirs` or with the `SIGMA_LOCAL_SKILLS_DIR` variable. `SIGMA_GIT_BASE` changes where `repo` names are cloned from (default `https://github.com/`), which tests and mirrors use.
+A `git` source can name a `ref` (a tag); the clone is then taken at that tag. The built-in HyperFrames source is pinned this way. A `git` source needs the skill ids in `skills`, so the picker can show them without a download. A `dir` source lists the skills it finds. `prefix` keeps only ids that start with it. The `local` pack is a `dir` source with no prefix; set its folder with `dirs` or with the `SIGMA_LOCAL_SKILLS_DIR` variable. `SIGMA_GIT_BASE` changes where `repo` names are cloned from (default `https://github.com/`), which tests and mirrors use.
 
 ## Existing copies
 
