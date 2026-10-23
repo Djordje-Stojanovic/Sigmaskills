@@ -87,6 +87,7 @@ export function loadPackCatalog({ catalog, packageRoot, homeDir, env = process.e
       bundled: Boolean(def.bundled),
       available: true,
       note: '',
+      limit: def.limit || null,
       sources: def.sources || [],
       skills: [],
     };
@@ -115,7 +116,7 @@ export function loadPackCatalog({ catalog, packageRoot, homeDir, env = process.e
           }
         } else {
           for (const skill of source.skills || []) {
-            own(pack, { id: skill.id, title: skill.id, description: skill.description || '', pack: pack.id, kind: 'external', source });
+            own(pack, { id: skill.id, title: skill.id, description: skill.description || '', group: skill.group || '', pack: pack.id, kind: 'external', source });
           }
         }
       }
@@ -139,13 +140,17 @@ export function findPack(packCatalog, name) {
  *
  * @param {{ packs: object[], skills: Map<string, object> }} packCatalog
  * @param {{ presets?: string[], skillIds?: string[] }} request
- * @returns {{ skills: object[], unknownPresets: string[], unavailable: object[], unknownSkills: string[] }}
+ * A pack with a `limit` (such as Design.md, 3 at a time) is never taken whole: `all` skips it, and
+ * a preset that names it is returned in `wholeLimited` for the caller to refuse. Pick its skills by id.
+ *
+ * @returns {{ skills: object[], unknownPresets: string[], unavailable: object[], unknownSkills: string[], wholeLimited: object[] }}
  */
 export function resolveSelection(packCatalog, { presets = [], skillIds = [] }) {
   const chosen = new Map();
   const unknownPresets = [];
   const unavailable = [];
   const unknownSkills = [];
+  const wholeLimited = [];
   const add = (skill) => {
     if (!chosen.has(skill.id)) chosen.set(skill.id, skill);
   };
@@ -154,13 +159,14 @@ export function resolveSelection(packCatalog, { presets = [], skillIds = [] }) {
     if (!name) continue;
     if (name === 'all') {
       for (const pack of packCatalog.packs) {
-        if (pack.available) pack.skills.forEach(add);
+        if (pack.available && !pack.limit) pack.skills.forEach(add);
       }
       continue;
     }
     const pack = findPack(packCatalog, name);
     if (!pack) unknownPresets.push(raw.trim());
     else if (!pack.available) unavailable.push(pack);
+    else if (pack.limit) wholeLimited.push(pack);
     else pack.skills.forEach(add);
   }
   for (const id of skillIds) {
@@ -168,5 +174,30 @@ export function resolveSelection(packCatalog, { presets = [], skillIds = [] }) {
     if (skill) add(skill);
     else unknownSkills.push(id);
   }
-  return { skills: [...chosen.values()], unknownPresets, unavailable, unknownSkills };
+  return { skills: [...chosen.values()], unknownPresets, unavailable, unknownSkills, wholeLimited };
+}
+
+/**
+ * Check the slot limit of every pack that has one. The limit counts what is installed after
+ * the run: the skills already installed, minus the dropped ones, plus the picks.
+ *
+ * @param {{ packs: object[] }} packCatalog
+ * @param {object[]} picks chosen skills
+ * @param {Iterable<string>} installedIds skill ids installed now (any pack)
+ * @param {Iterable<string>} [dropIds] installed skills to remove in the same run
+ * @returns {object[]} one `{ pack, max, kept, picked }` per pack that would go over its limit
+ */
+export function checkLimits(packCatalog, picks, installedIds, dropIds = []) {
+  const installed = new Set(installedIds);
+  const dropped = new Set(dropIds);
+  const over = [];
+  for (const pack of packCatalog.packs) {
+    if (!pack.limit) continue;
+    const own = new Set(pack.skills.map((skill) => skill.id));
+    const picked = picks.filter((skill) => own.has(skill.id)).map((skill) => skill.id);
+    if (picked.length === 0) continue;
+    const kept = [...installed].filter((id) => own.has(id) && !dropped.has(id) && !picked.includes(id));
+    if (kept.length + picked.length > pack.limit.max) over.push({ pack, max: pack.limit.max, kept, picked });
+  }
+  return over;
 }

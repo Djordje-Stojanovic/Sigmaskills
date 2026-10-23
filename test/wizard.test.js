@@ -10,6 +10,7 @@ import {
   ACME_PACK, createRemote, createSandbox, writeUserConfig,
 } from './pack-fixtures.js';
 
+const UP = '[A';
 const DOWN = '\x1b[B';
 const RIGHT = '\x1b[C';
 const ENTER = '\r';
@@ -123,7 +124,7 @@ test('wizard: a pack from outside installs, and the review names the download', 
   try {
     createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
     writeUserConfig(box.home, { packs: [ACME_PACK] });
-    const { code, io } = await wizard(box, `7${ENTER}${ENTER}${ENTER}`);
+    const { code, io } = await wizard(box, `${DOWN.repeat(10)} ${ENTER}${ENTER}${ENTER}`);
     assert.equal(code, 0, io.err());
     assert.ok(io.frames().some((frame) => /Downloads\s+acme\/skills/.test(frame)));
     assert.match(io.text(), /2 skills installed/);
@@ -140,8 +141,8 @@ test('wizard: open a pack, pick single skills, and filter', async () => {
   try {
     createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
     writeUserConfig(box.home, { packs: [ACME_PACK] });
-    // Filter for "beta", keep it, toggle the hit with space, then walk the three steps.
-    const { code, io } = await wizard(box, `/beta${ENTER} ${ENTER}${ENTER}${ENTER}`);
+    // Filter for "beta", keep it, go to the last hit (Acme) and toggle it with space, then walk the three steps.
+    const { code, io } = await wizard(box, `/beta${ENTER}${UP} ${ENTER}${ENTER}${ENTER}`);
     assert.equal(code, 0, io.err());
     assert.ok(io.frames().some((frame) => /Filter: beta/.test(frame)));
     assert.match(io.text(), /1 skill installed/);

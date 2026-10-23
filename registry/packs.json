@@ -232,7 +232,7 @@
             },
             {
               "id": "threejs-postprocessing",
-              "description": "Three.js post-processing: composer pass chains, built-in renderer effects, and the WebGPU/TSL node pipeline — bloom, depth of field, ambient occlus..."
+              "description": "Three.js post-processing: composer pass chains, built-in renderer effects, and the WebGPU/TSL node pipeline \u2014 bloom, depth of field, ambient occlus..."
             },
             {
               "id": "threejs-react-three-fiber",
@@ -396,6 +396,1082 @@
             {
               "id": "papercraft-stop-motion-explainer",
               "description": "For creators explaining science, education, or general knowledge through tactile handmade papercraft visuals."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anthropic",
+      "title": "Anthropic",
+      "blurb": "Anthropic's skills: document skills (docx, pdf, pptx, xlsx), Claude API reference, MCP builder, skill creator and more.",
+      "aliases": [
+        "anthropics"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "anthropics/skills",
+          "ref": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+          "path": "skills",
+          "skills": [
+            {
+              "id": "academy-guide",
+              "description": "Recommends Claude Academy courses when a user asks how to use Claude."
+            },
+            {
+              "id": "algorithmic-art",
+              "description": "Generative art with p5.js: seeded randomness, flow fields and particles."
+            },
+            {
+              "id": "brand-guidelines",
+              "description": "Applies Anthropic's brand colours and fonts to an artifact."
+            },
+            {
+              "id": "canvas-design",
+              "description": "Poster and art designs as PNG or PDF, built from a written design philosophy."
+            },
+            {
+              "id": "claude-api",
+              "description": "Claude API and SDK reference for Python, TypeScript, Go, Java, PHP, Ruby, C# and curl."
+            },
+            {
+              "id": "discernment-nudge",
+              "description": "Adds 2-3 follow-up questions after a substantive answer to check key facts."
+            },
+            {
+              "id": "doc-coauthoring",
+              "description": "Structured workflow for co-writing docs, specs and proposals."
+            },
+            {
+              "id": "docx",
+              "description": "Create, read and edit Word files: comments, tracked changes and templates."
+            },
+            {
+              "id": "frontend-design",
+              "description": "Distinctive UI design guidance that avoids template-looking output."
+            },
+            {
+              "id": "internal-comms",
+              "description": "Status reports, newsletters and FAQs in set formats."
+            },
+            {
+              "id": "mcp-builder",
+              "description": "Guide to building and testing MCP servers in Python or Node."
+            },
+            {
+              "id": "pdf",
+              "description": "Read, extract, merge, split, fill and create PDF files."
+            },
+            {
+              "id": "pptx",
+              "description": "Create, read and edit PowerPoint decks."
+            },
+            {
+              "id": "skill-creator",
+              "description": "Create, edit, test and benchmark skills, with eval scripts."
+            },
+            {
+              "id": "slack-gif-creator",
+              "description": "Animated GIFs that fit Slack's size and frame limits."
+            },
+            {
+              "id": "theme-factory",
+              "description": "Applies one of 10 preset themes, or a new one, to any artifact."
+            },
+            {
+              "id": "web-artifacts-builder",
+              "description": "Multi-file React, Tailwind and shadcn/ui artifacts, bundled to one HTML file."
+            },
+            {
+              "id": "webapp-testing",
+              "description": "Playwright tests for a local web app: screenshots and console logs."
+            },
+            {
+              "id": "xlsx",
+              "description": "Create, edit and recalculate Excel files with formulas."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design-md",
+      "title": "Design.md",
+      "blurb": "84 brand DESIGN.md files, each one a skill. Pick up to 3 at a time.",
+      "aliases": [
+        "design",
+        "awesome-design-md"
+      ],
+      "limit": {
+        "max": 3,
+        "counts": "installed",
+        "onFourth": "choose-drop"
+      },
+      "sources": [
+        {
+          "type": "git",
+          "repo": "VoltAgent/awesome-design-md",
+          "ref": "3b605329240ce735b510037cca322f1831fdd7f8",
+          "path": "design-md",
+          "transform": "design-md",
+          "skills": [
+            {
+              "id": "design-1win",
+              "description": "Use when building UI in the 1win look: Crypto casino and sportsbook. Near-black canvas, vivid green action color, dense game-tile rails.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-airbnb",
+              "description": "Use when building UI in the Airbnb look: Travel marketplace. Warm coral accent, photography-driven, rounded UI.",
+              "group": "E-commerce & Retail"
+            },
+            {
+              "id": "design-airtable",
+              "description": "Use when building UI in the Airtable look: Spreadsheet-database hybrid. Colorful, friendly, structured data aesthetic.",
+              "group": "Design & Creative Tools"
+            },
+            {
+              "id": "design-aljazeera",
+              "description": "Use when building UI in the Al Jazeera look: Global news network. Flat white paper, dense Roboto headlines, orange signature and live red.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-apple",
+              "description": "Use when building UI in the Apple look: Consumer electronics. Premium white space, SF Pro, cinematic imagery.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-binance",
+              "description": "Use when building UI in the Binance look: Crypto exchange. Bold Binance Yellow on monochrome, trading-floor urgency.",
+              "group": "Fintech & Crypto"
+            },
+            {
+              "id": "design-bmw",
+              "description": "Use when building UI in the BMW look: Luxury automotive. Dark premium surfaces, precise German engineering aesthetic.",
+              "group": "Automotive"
+            },
+            {
+              "id": "design-bmw-m",
+              "description": "Use when building UI in the BMW M look: Performance automotive. Motorsport-inspired contrast, M color accents, precision-driven layout.",
+              "group": "Automotive"
+            },
+            {
+              "id": "design-bugatti",
+              "description": "Use when building UI in the Bugatti look: Luxury hypercar. Cinema-black canvas, monochrome austerity, monumental display type.",
+              "group": "Automotive"
+            },
+            {
+              "id": "design-cal",
+              "description": "Use when building UI in the Cal.com look: Open-source scheduling. Clean neutral UI, developer-oriented simplicity.",
+              "group": "Productivity & SaaS"
+            },
+            {
+              "id": "design-claude",
+              "description": "Use when building UI in the Claude look: Anthropic's AI assistant. Warm terracotta accent, clean editorial layout.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-clay",
+              "description": "Use when building UI in the Clay look: Creative agency. Organic shapes, soft gradients, art-directed layout.",
+              "group": "Design & Creative Tools"
+            },
+            {
+              "id": "design-clickhouse",
+              "description": "Use when building UI in the ClickHouse look: Fast analytics database. Yellow-accented, technical documentation style.",
+              "group": "Backend, Database & DevOps"
+            },
+            {
+              "id": "design-cohere",
+              "description": "Use when building UI in the Cohere look: Enterprise AI platform. Vibrant gradients, data-rich dashboard aesthetic.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-coinbase",
+              "description": "Use when building UI in the Coinbase look: Crypto exchange. Clean blue identity, trust-focused, institutional feel.",
+              "group": "Fintech & Crypto"
+            },
+            {
+              "id": "design-composio",
+              "description": "Use when building UI in the Composio look: Tool integration platform. Modern dark with colorful integration icons.",
+              "group": "Backend, Database & DevOps"
+            },
+            {
+              "id": "design-cursor",
+              "description": "Use when building UI in the Cursor look: AI-first code editor. Sleek dark interface, gradient accents.",
+              "group": "Developer Tools & IDEs"
+            },
+            {
+              "id": "design-dell-1996",
+              "description": "Use when building UI in the Dell (1996) look: Catalog-era enterprise web. Literal black page frame, flat color-block \"ribbon cards\", chunky Helvetica-Black titles over Times Roman body.",
+              "group": "Retro Web"
+            },
+            {
+              "id": "design-dji",
+              "description": "Use when building UI in the DJI look: Drone and camera maker. Studio product tiles, engineering-blue pills, tight Open Sans.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-elevenlabs",
+              "description": "Use when building UI in the ElevenLabs look: AI voice platform. Dark cinematic UI, audio-waveform aesthetics.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-expo",
+              "description": "Use when building UI in the Expo look: React Native platform. Dark theme, tight letter-spacing, code-centric.",
+              "group": "Developer Tools & IDEs"
+            },
+            {
+              "id": "design-ferrari",
+              "description": "Use when building UI in the Ferrari look: Luxury automotive. Chiaroscuro black-white editorial, Ferrari Red with extreme sparseness.",
+              "group": "Automotive"
+            },
+            {
+              "id": "design-figma",
+              "description": "Use when building UI in the Figma look: Collaborative design tool. Vibrant multi-color, playful yet professional.",
+              "group": "Design & Creative Tools"
+            },
+            {
+              "id": "design-framer",
+              "description": "Use when building UI in the Framer look: Website builder. Bold black and blue, motion-first, design-forward.",
+              "group": "Design & Creative Tools"
+            },
+            {
+              "id": "design-hashicorp",
+              "description": "Use when building UI in the HashiCorp look: Infrastructure automation. Enterprise-clean, black and white.",
+              "group": "Backend, Database & DevOps"
+            },
+            {
+              "id": "design-hp",
+              "description": "Use when building UI in the HP look: PC and printer maker. Pure white canvas, HP Electric Blue signal CTA, geometric Forma DJR Micro, blue chevron decorations.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-ibm",
+              "description": "Use when building UI in the IBM look: Enterprise technology. Carbon design system, structured blue palette.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-intercom",
+              "description": "Use when building UI in the Intercom look: Customer messaging. Friendly blue palette, conversational UI patterns.",
+              "group": "Productivity & SaaS"
+            },
+            {
+              "id": "design-jobright",
+              "description": "Use when building UI in the Jobright look: AI job-hunting platform. Spring-mint green, black pill buttons, condensed Titillium headlines.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-kraken",
+              "description": "Use when building UI in the Kraken look: Crypto trading platform. Purple-accented dark UI, data-dense dashboards.",
+              "group": "Fintech & Crypto"
+            },
+            {
+              "id": "design-lamborghini",
+              "description": "Use when building UI in the Lamborghini look: Luxury automotive. True black cathedral, gold accent, LamboType custom Neo-Grotesk.",
+              "group": "Automotive"
+            },
+            {
+              "id": "design-linear-app",
+              "description": "Use when building UI in the Linear look: Project management for engineers. Ultra-minimal, precise, purple accent.",
+              "group": "Productivity & SaaS"
+            },
+            {
+              "id": "design-lovable",
+              "description": "Use when building UI in the Lovable look: AI full-stack builder. Playful gradients, friendly dev aesthetic.",
+              "group": "Developer Tools & IDEs"
+            },
+            {
+              "id": "design-mastercard",
+              "description": "Use when building UI in the Mastercard look: Global payments network. Warm cream canvas, orbital pill shapes, editorial warmth.",
+              "group": "Fintech & Crypto"
+            },
+            {
+              "id": "design-mercury",
+              "description": "Use when building UI in the Mercury look: Startup banking platform. Ink-violet night world, indigo action pill, light custom sans.",
+              "group": "Fintech & Crypto"
+            },
+            {
+              "id": "design-meta",
+              "description": "Use when building UI in the Meta look: Tech retail store. Photography-first, binary light/dark surfaces, Meta Blue CTAs.",
+              "group": "E-commerce & Retail"
+            },
+            {
+              "id": "design-minimax",
+              "description": "Use when building UI in the Minimax look: AI model provider. Bold dark interface with neon accents.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-mintlify",
+              "description": "Use when building UI in the Mintlify look: Documentation platform. Clean, green-accented, reading-optimized.",
+              "group": "Productivity & SaaS"
+            },
+            {
+              "id": "design-miro",
+              "description": "Use when building UI in the Miro look: Visual collaboration. Bright yellow accent, infinite canvas aesthetic.",
+              "group": "Design & Creative Tools"
+            },
+            {
+              "id": "design-mistral-ai",
+              "description": "Use when building UI in the Mistral AI look: Open-weight LLM provider. French-engineered minimalism, purple-toned.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-mongodb",
+              "description": "Use when building UI in the MongoDB look: Document database. Green leaf branding, developer documentation focus.",
+              "group": "Backend, Database & DevOps"
+            },
+            {
+              "id": "design-mydealz",
+              "description": "Use when building UI in the mydealz look: German deals community. Dense white-card feed, hot and cold voting pill, brand green.",
+              "group": "E-commerce & Retail"
+            },
+            {
+              "id": "design-nerdwallet",
+              "description": "Use when building UI in the NerdWallet look: Personal finance comparison platform. Deep spruce green, mint washes, near-square corners.",
+              "group": "Fintech & Crypto"
+            },
+            {
+              "id": "design-nike",
+              "description": "Use when building UI in the Nike look: Athletic retail. Monochrome UI, massive uppercase Futura, full-bleed photography.",
+              "group": "E-commerce & Retail"
+            },
+            {
+              "id": "design-nintendo-2001",
+              "description": "Use when building UI in the Nintendo.com (2001) look: Y2K \"console chrome\" web. Brushed-periwinkle beveled metal panels, a halftone-dotted carbon nav glowing amber.",
+              "group": "Retro Web"
+            },
+            {
+              "id": "design-notion",
+              "description": "Use when building UI in the Notion look: All-in-one workspace. Warm minimalism, serif headings, soft surfaces.",
+              "group": "Productivity & SaaS"
+            },
+            {
+              "id": "design-nvidia",
+              "description": "Use when building UI in the NVIDIA look: GPU computing. Green-black energy, technical power aesthetic.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-ollama",
+              "description": "Use when building UI in the Ollama look: Run LLMs locally. Terminal-first, monochrome simplicity.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-opencode-ai",
+              "description": "Use when building UI in the OpenCode AI look: AI coding platform. Developer-centric dark theme.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-oracle",
+              "description": "Use when building UI in the Oracle look: Enterprise cloud and database software. Warm neutral ladder, charcoal-only actions, red saved for the wordmark.",
+              "group": "Backend, Database & DevOps"
+            },
+            {
+              "id": "design-oura",
+              "description": "Use when building UI in the Oura look: Smart ring wellness brand. Warm paper cream, editorial serif, earth-tone accents.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-pinterest",
+              "description": "Use when building UI in the Pinterest look: Visual discovery platform. Red accent, masonry grid, image-first.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-playstation",
+              "description": "Use when building UI in the PlayStation look: Gaming console retail. Three-surface channel layout, cyan hover-scale interaction.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-posthog",
+              "description": "Use when building UI in the PostHog look: Product analytics. Playful hedgehog branding, developer-friendly dark UI.",
+              "group": "Backend, Database & DevOps"
+            },
+            {
+              "id": "design-raycast",
+              "description": "Use when building UI in the Raycast look: Productivity launcher. Sleek dark chrome, vibrant gradient accents.",
+              "group": "Developer Tools & IDEs"
+            },
+            {
+              "id": "design-renault",
+              "description": "Use when building UI in the Renault look: French automotive. Vivid aurora gradients, NouvelR proprietary typeface, zero-radius buttons.",
+              "group": "Automotive"
+            },
+            {
+              "id": "design-replicate",
+              "description": "Use when building UI in the Replicate look: Run ML models via API. Clean white canvas, code-forward.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-resend",
+              "description": "Use when building UI in the Resend look: Email API for developers. Minimal dark theme, monospace accents.",
+              "group": "Productivity & SaaS"
+            },
+            {
+              "id": "design-revolut",
+              "description": "Use when building UI in the Revolut look: Digital banking. Sleek dark interface, gradient cards, fintech precision.",
+              "group": "Fintech & Crypto"
+            },
+            {
+              "id": "design-runwayml",
+              "description": "Use when building UI in the Runway look: AI creative-tools platform with an editorial film-festival aesthetic - cinematic dark heroes, paper-white reading bands, single proprietary sans.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-sanity",
+              "description": "Use when building UI in the Sanity look: Headless content platform with a dark-first editorial marketing surface - 112px display type, IBM Plex Mono technical eyebrows.",
+              "group": "Backend, Database & DevOps"
+            },
+            {
+              "id": "design-sap",
+              "description": "Use when building UI in the SAP look: Enterprise business software. White canvas, flat blue bands, application-frame chrome.",
+              "group": "Productivity & SaaS"
+            },
+            {
+              "id": "design-sentry",
+              "description": "Use when building UI in the Sentry look: Error monitoring. Dark dashboard, data-dense, pink-purple accent.",
+              "group": "Backend, Database & DevOps"
+            },
+            {
+              "id": "design-shopify",
+              "description": "Use when building UI in the Shopify look: E-commerce platform. Dark-first cinematic, neon green accent, ultra-light display type.",
+              "group": "E-commerce & Retail"
+            },
+            {
+              "id": "design-slack",
+              "description": "Use when building UI in the Slack look: Workplace messaging. Deep aubergine primary, cream-lavender hero gradients, pill CTAs.",
+              "group": "Uncategorised"
+            },
+            {
+              "id": "design-spacex",
+              "description": "Use when building UI in the SpaceX look: Space technology. Stark black and white, full-bleed imagery, futuristic.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-spotify",
+              "description": "Use when building UI in the Spotify look: Music streaming. Vibrant green on dark, bold type, album-art-driven.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-starbucks",
+              "description": "Use when building UI in the Starbucks look: Coffee retail flagship. Four-tier earth-green system, warm cream canvas, proprietary SoDoSans typography.",
+              "group": "E-commerce & Retail"
+            },
+            {
+              "id": "design-stripe",
+              "description": "Use when building UI in the Stripe look: Payment infrastructure. Signature purple gradients, weight-300 elegance.",
+              "group": "Fintech & Crypto"
+            },
+            {
+              "id": "design-supabase",
+              "description": "Use when building UI in the Supabase look: Open-source Firebase alternative. Dark emerald theme, code-first.",
+              "group": "Backend, Database & DevOps"
+            },
+            {
+              "id": "design-superhuman",
+              "description": "Use when building UI in the Superhuman look: Fast email client. Premium dark UI, keyboard-first, purple glow.",
+              "group": "Developer Tools & IDEs"
+            },
+            {
+              "id": "design-tesla",
+              "description": "Use when building UI in the Tesla look: Electric vehicles. Radical subtraction, cinematic full-viewport photography, Universal Sans.",
+              "group": "Automotive"
+            },
+            {
+              "id": "design-theverge",
+              "description": "Use when building UI in the The Verge look: Tech editorial media. Acid-mint and ultraviolet accents, Manuka display type.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-together-ai",
+              "description": "Use when building UI in the Together AI look: Open-source AI infrastructure. Technical, blueprint-style design.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-uber",
+              "description": "Use when building UI in the Uber look: Mobility platform. Bold black and white, tight type, urban energy.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-vercel",
+              "description": "Use when building UI in the Vercel look: Frontend deployment platform. Black and white precision, Geist font.",
+              "group": "Developer Tools & IDEs"
+            },
+            {
+              "id": "design-vodafone",
+              "description": "Use when building UI in the Vodafone look: Global telecom brand. Monumental uppercase display, Vodafone Red chapter bands.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-voltagent",
+              "description": "Use when building UI in the VoltAgent look: AI agent framework. Void-black canvas, emerald accent, terminal-native.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-warp",
+              "description": "Use when building UI in the Warp look: Modern terminal. Dark IDE-like interface, block-based command UI.",
+              "group": "Developer Tools & IDEs"
+            },
+            {
+              "id": "design-webflow",
+              "description": "Use when building UI in the Webflow look: Visual web builder. Blue-accented, polished marketing site aesthetic.",
+              "group": "Design & Creative Tools"
+            },
+            {
+              "id": "design-wired",
+              "description": "Use when building UI in the WIRED look: Tech magazine. Paper-white broadsheet density, custom serif, ink-blue links.",
+              "group": "Media & Consumer Tech"
+            },
+            {
+              "id": "design-wise",
+              "description": "Use when building UI in the Wise look: International money transfer. Bright green accent, friendly and clear.",
+              "group": "Fintech & Crypto"
+            },
+            {
+              "id": "design-x-ai",
+              "description": "Use when building UI in the xAI look: Elon Musk's AI lab. Stark monochrome, futuristic minimalism.",
+              "group": "AI & LLM Platforms"
+            },
+            {
+              "id": "design-zapier",
+              "description": "Use when building UI in the Zapier look: Automation platform. Warm orange, friendly illustration-driven.",
+              "group": "Productivity & SaaS"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "last30days",
+      "title": "Last 30 Days",
+      "blurb": "Research what people say about any topic in the last 30 days, across Reddit, X, YouTube, Hacker News and more.",
+      "aliases": [
+        "last30"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "mvanhorn/last30days-skill",
+          "ref": "v3.30.0",
+          "path": "skills",
+          "skills": [
+            {
+              "id": "last30days",
+              "description": "Research what people say about any topic in the last 30 days across Reddit, X, YouTube, TikTok, Hacker News, Polymarket, GitHub and the web."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "financial-services",
+      "title": "Financial Services",
+      "blurb": "Anthropic finance plugins as skills: DCF, LBO, comps, pitch decks, earnings, fund admin, KYC.",
+      "aliases": [
+        "fsi",
+        "finance"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "anthropics/financial-services",
+          "ref": "574ed3624aebd0418c7e96cd101262f30210ab26",
+          "path": "plugins",
+          "transform": "financial-services",
+          "skills": [
+            {
+              "id": "3-statement-model",
+              "description": "Complete, populate and fill out 3-statement financial model templates (Income Statement, Balance Sheet, Cash Flow Statement) .",
+              "group": "model-builder"
+            },
+            {
+              "id": "accrual-schedule",
+              "description": "Build the period-end accrual schedule \u2014 for each accrual, compute the entry, cite the support, and draft the JE.",
+              "group": "month-end-closer"
+            },
+            {
+              "id": "ai-readiness",
+              "description": "Scan the portfolio for the highest-leverage AI opportunities and rank where to deploy operating-partner time.",
+              "group": "private-equity"
+            },
+            {
+              "id": "analyze-bond-basis",
+              "description": "Analyze the bond futures basis with CTD identification, implied repo rate, and basis trade assessment",
+              "group": "lseg (command)"
+            },
+            {
+              "id": "analyze-bond-rv",
+              "description": "Analyze a bond's relative value vs yield curves and credit spreads with scenario stress testing",
+              "group": "lseg (command)"
+            },
+            {
+              "id": "analyze-fx-carry",
+              "description": "Evaluate FX carry trade opportunities with spot, forwards, vol surface, and historical context",
+              "group": "lseg (command)"
+            },
+            {
+              "id": "analyze-option-vol",
+              "description": "Analyze option volatility with vol surface, Greeks, and implied vs realized vol comparison",
+              "group": "lseg (command)"
+            },
+            {
+              "id": "analyze-swap-curve",
+              "description": "Analyze the swap curve with government and inflation overlays to identify curve trade opportunities",
+              "group": "lseg (command)"
+            },
+            {
+              "id": "audit-xls",
+              "description": "Audit a spreadsheet for formula accuracy, errors, and common mistakes.",
+              "group": "earnings-reviewer"
+            },
+            {
+              "id": "bond-futures-basis",
+              "description": "Analyze the bond futures basis by pricing futures, identifying the cheapest-to-deliver, and comparing with yield curves to assess delivery option v...",
+              "group": "lseg"
+            },
+            {
+              "id": "bond-relative-value",
+              "description": "Perform relative value analysis on bonds by combining pricing, yield curve context, credit spreads, and scenario stress testing.",
+              "group": "lseg"
+            },
+            {
+              "id": "break-trace",
+              "description": "Root-cause a reconciliation break to its source transaction or posting \u2014 follow the audit trail from the break row back to the originating entry on...",
+              "group": "gl-reconciler"
+            },
+            {
+              "id": "buyer-list",
+              "description": "Build and organize a universe of potential acquirers for sell-side M&A processes.",
+              "group": "investment-banking"
+            },
+            {
+              "id": "catalyst-calendar",
+              "description": "Build and maintain a calendar of upcoming catalysts across a coverage universe \u2014 earnings dates, conferences, product launches, regulatory decision...",
+              "group": "equity-research"
+            },
+            {
+              "id": "catalysts",
+              "description": "View or update the catalyst calendar",
+              "group": "equity-research (command)"
+            },
+            {
+              "id": "cim",
+              "description": "Draft a Confidential Information Memorandum",
+              "group": "investment-banking (command)"
+            },
+            {
+              "id": "cim-builder",
+              "description": "Structure and draft a Confidential Information Memorandum for sell-side M&A processes.",
+              "group": "investment-banking"
+            },
+            {
+              "id": "clean-data-xls",
+              "description": "Clean up messy spreadsheet data \u2014 trim whitespace, fix inconsistent casing, convert numbers-stored-as-text, standardize dates, remove duplicates, a...",
+              "group": "financial-analysis"
+            },
+            {
+              "id": "client-report",
+              "description": "Generate professional client-facing performance reports with portfolio returns, allocation breakdowns, and market commentary.",
+              "group": "meeting-prep-agent"
+            },
+            {
+              "id": "client-review",
+              "description": "Prepare for client review meetings with portfolio performance summary, allocation analysis, talking points, and action items.",
+              "group": "meeting-prep-agent"
+            },
+            {
+              "id": "competitive-analysis",
+              "description": "Framework for building competitive landscape decks \u2014 market positioning, competitor deep-dives, comparative analysis, strategic synthesis.",
+              "group": "market-researcher"
+            },
+            {
+              "id": "comps",
+              "description": "Build a comparable company analysis with trading multiples",
+              "group": "financial-analysis (command)"
+            },
+            {
+              "id": "comps-analysis",
+              "description": "Build institutional-grade comparable company analyses with operating metrics, valuation multiples, and statistical benchmarking in Excel/spreadshee...",
+              "group": "market-researcher"
+            },
+            {
+              "id": "datapack-builder",
+              "description": "Build professional financial services data packs from various sources including CIMs, offering memorandums, SEC filings, web search, or MCP servers.",
+              "group": "investment-banking"
+            },
+            {
+              "id": "dcf",
+              "description": "Build a DCF valuation model with comps-informed terminal multiples",
+              "group": "financial-analysis (command)"
+            },
+            {
+              "id": "dcf-model",
+              "description": "Real DCF (Discounted Cash Flow) model creation for equity valuation.",
+              "group": "model-builder"
+            },
+            {
+              "id": "dd-checklist",
+              "description": "Generate and track comprehensive due diligence checklists tailored to the target company's sector, deal type, and complexity.",
+              "group": "private-equity"
+            },
+            {
+              "id": "dd-meeting-prep",
+              "description": "Prepare for due diligence meetings \u2014 management presentations, expert network calls, customer references, and advisor sessions.",
+              "group": "private-equity"
+            },
+            {
+              "id": "dd-prep",
+              "description": "Prep for a diligence meeting or expert call",
+              "group": "private-equity (command)"
+            },
+            {
+              "id": "deal-screening",
+              "description": "Quickly screen inbound deal flow \u2014 CIMs, teasers, and broker materials \u2014 against the fund's investment criteria.",
+              "group": "private-equity"
+            },
+            {
+              "id": "deal-sourcing",
+              "description": "PE deal sourcing workflow \u2014 discover target companies, check CRM for existing relationships, and draft personalized founder outreach emails.",
+              "group": "private-equity"
+            },
+            {
+              "id": "deal-tracker",
+              "description": "Track multiple live deals with milestones, deadlines, action items, and status updates.",
+              "group": "investment-banking"
+            },
+            {
+              "id": "debug-model",
+              "description": "Debug and audit a financial model for errors",
+              "group": "financial-analysis (command)"
+            },
+            {
+              "id": "deck-refresh",
+              "description": "Updates a presentation with new numbers \u2014 quarterly refreshes, earnings updates, comp rolls, rebased market data.",
+              "group": "pitch-agent"
+            },
+            {
+              "id": "earnings",
+              "description": "Analyze quarterly earnings and create an earnings update report",
+              "group": "equity-research (command)"
+            },
+            {
+              "id": "earnings-analysis",
+              "description": "Create professional equity research earnings update reports (8-12 pages, 3,000-5,000 words) analyzing quarterly results for companies already under...",
+              "group": "earnings-reviewer"
+            },
+            {
+              "id": "earnings-preview",
+              "description": "Build pre-earnings analysis with estimate models, scenario frameworks, and key metrics to watch.",
+              "group": "earnings-reviewer"
+            },
+            {
+              "id": "earnings-preview-beta",
+              "description": "Generate a concise 4-5 page equity research earnings preview for a single company.",
+              "group": "spglobal"
+            },
+            {
+              "id": "earnings-reviewer",
+              "description": "Processes an earnings event end to end \u2014 reads the call transcript and filings, updates the coverage model, and drafts the post-earnings note.",
+              "group": "earnings-reviewer (agent)"
+            },
+            {
+              "id": "equity-research",
+              "description": "Generate comprehensive equity research snapshots combining analyst consensus estimates, company fundamentals, historical prices, and macroeconomic...",
+              "group": "lseg"
+            },
+            {
+              "id": "fixed-income-portfolio",
+              "description": "Review fixed income portfolios by pricing multiple bonds, retrieving reference data, analyzing cashflows, and running scenario analysis.",
+              "group": "lseg"
+            },
+            {
+              "id": "funding-digest",
+              "description": "Generate a polished one-page PowerPoint slide summarizing key takeaways from recent funding rounds and notable capital markets activity across a us...",
+              "group": "spglobal"
+            },
+            {
+              "id": "fx-carry-trade",
+              "description": "Evaluate FX carry trade opportunities by combining spot rates, forward points, interest rate differentials, volatility surface analysis, and histor...",
+              "group": "lseg"
+            },
+            {
+              "id": "gl-recon",
+              "description": "Reconcile general ledger to subledger for a trade date or period \u2014 match at the position or transaction level, surface breaks, and classify each br...",
+              "group": "gl-reconciler"
+            },
+            {
+              "id": "gl-reconciler",
+              "description": "Reconciles general ledger to subledger across asset classes for a trade date \u2014 finds breaks, traces root cause, and routes the exception report for...",
+              "group": "gl-reconciler (agent)"
+            },
+            {
+              "id": "ib-check-deck",
+              "description": "Investment banking presentation quality checker.",
+              "group": "pitch-agent"
+            },
+            {
+              "id": "ic-memo",
+              "description": "Draft a structured investment committee memo for PE deal approval.",
+              "group": "valuation-reviewer"
+            },
+            {
+              "id": "idea-generation",
+              "description": "Systematic stock screening and investment idea sourcing.",
+              "group": "market-researcher"
+            },
+            {
+              "id": "initiate",
+              "description": "Create an initiating coverage report",
+              "group": "equity-research (command)"
+            },
+            {
+              "id": "initiating-coverage",
+              "description": "Create institutional-quality equity research initiation reports through a 5-task workflow.",
+              "group": "equity-research"
+            },
+            {
+              "id": "investment-proposal",
+              "description": "Create professional investment proposals for prospective clients.",
+              "group": "meeting-prep-agent"
+            },
+            {
+              "id": "kyc-doc-parse",
+              "description": "Parse an investor or client onboarding packet into structured KYC fields \u2014 identity, ownership, control, source of funds, and document inventory.",
+              "group": "kyc-screener"
+            },
+            {
+              "id": "kyc-rules",
+              "description": "Apply the firm's KYC/AML rules grid to a parsed onboarding record \u2014 assign a risk rating, list every rule outcome with the rule cited, and flag wha...",
+              "group": "kyc-screener"
+            },
+            {
+              "id": "kyc-screener",
+              "description": "Parses an onboarding document packet, runs the firm's KYC/AML rules engine, screens against sanctions and PEP lists, and flags gaps for escalation.",
+              "group": "kyc-screener (agent)"
+            },
+            {
+              "id": "lbo",
+              "description": "Build an LBO model for a PE acquisition",
+              "group": "financial-analysis (command)"
+            },
+            {
+              "id": "lbo-model",
+              "description": "This skill should be used when completing LBO (Leveraged Buyout) model templates in Excel for private equity transactions, deal materials, or inves...",
+              "group": "model-builder"
+            },
+            {
+              "id": "macro-rates",
+              "description": "Build a macro and rates dashboard with economic indicators, yield curves, inflation, and swap spreads",
+              "group": "lseg (command)"
+            },
+            {
+              "id": "macro-rates-monitor",
+              "description": "Build macroeconomic and rates dashboards combining macro indicators, yield curves, inflation breakevens, and swap rates.",
+              "group": "lseg"
+            },
+            {
+              "id": "market-researcher",
+              "description": "Produces sector or thematic market research \u2014 industry overview, competitive landscape, trading-comps spread of the peer set, and a thematic ideas...",
+              "group": "market-researcher (agent)"
+            },
+            {
+              "id": "meeting-prep-agent",
+              "description": "Builds a briefing pack before a client or prospect meeting \u2014 relationship history from CRM, holdings and recent activity, market context, and a sug...",
+              "group": "meeting-prep-agent (agent)"
+            },
+            {
+              "id": "merger-model",
+              "description": "Build accretion/dilution analysis for M&A transactions.",
+              "group": "investment-banking"
+            },
+            {
+              "id": "model-builder",
+              "description": "Builds DCF, LBO, three-statement, and trading-comps models live in Excel from a ticker and assumption set.",
+              "group": "model-builder (agent)"
+            },
+            {
+              "id": "model-update",
+              "description": "Update financial models with new data \u2014 quarterly earnings, management guidance, macro changes, or revised assumptions.",
+              "group": "earnings-reviewer"
+            },
+            {
+              "id": "month-end-closer",
+              "description": "Runs the month-end close for an entity \u2014 accruals, roll-forwards, and variance commentary \u2014 and stages the close package for controller sign-off.",
+              "group": "month-end-closer (agent)"
+            },
+            {
+              "id": "morning-note",
+              "description": "Draft concise morning meeting notes summarizing overnight developments, trade ideas, and key events for coverage stocks.",
+              "group": "earnings-reviewer"
+            },
+            {
+              "id": "nav-tieout",
+              "description": "Tie an LP statement to the fund's NAV pack \u2014 recompute the LP's capital account from the NAV components and flag any line that doesn't agree.",
+              "group": "statement-auditor"
+            },
+            {
+              "id": "one-pager",
+              "description": "Create a one-page company strip profile using branded PPT template",
+              "group": "investment-banking (command)"
+            },
+            {
+              "id": "option-vol-analysis",
+              "description": "Analyze option volatility by combining vol surface data, option pricing with Greeks, and historical price data to assess implied vs realized volati...",
+              "group": "lseg"
+            },
+            {
+              "id": "pitch-agent",
+              "description": "End-to-end investment banking pitch agent.",
+              "group": "pitch-agent (agent)"
+            },
+            {
+              "id": "pitch-deck",
+              "description": "Populates investment banking pitch deck templates with data from source files.",
+              "group": "pitch-agent"
+            },
+            {
+              "id": "portfolio",
+              "description": "Review portfolio company performance",
+              "group": "private-equity (command)"
+            },
+            {
+              "id": "portfolio-monitoring",
+              "description": "Track and analyze portfolio company performance against plan.",
+              "group": "valuation-reviewer"
+            },
+            {
+              "id": "ppt-template",
+              "description": "Create a reusable PPT template skill from a PowerPoint template file",
+              "group": "financial-analysis (command)"
+            },
+            {
+              "id": "ppt-template-creator",
+              "description": "Creates self-contained PPT template SKILLS (not presentations) from user-provided PowerPoint templates.",
+              "group": "financial-analysis"
+            },
+            {
+              "id": "pptx-author",
+              "description": "Produce a .pptx file on disk (headless) instead of driving a live PowerPoint document \u2014 for managed-agent sessions with no open Office app.",
+              "group": "market-researcher"
+            },
+            {
+              "id": "process-letter",
+              "description": "Draft process letters and bid instructions for sell-side M&A processes.",
+              "group": "investment-banking"
+            },
+            {
+              "id": "research-equity",
+              "description": "Generate a comprehensive equity research snapshot with consensus estimates, fundamentals, and price performance",
+              "group": "lseg (command)"
+            },
+            {
+              "id": "returns",
+              "description": "Build IRR/MOIC sensitivity tables",
+              "group": "private-equity (command)"
+            },
+            {
+              "id": "returns-analysis",
+              "description": "Build quick IRR/MOIC sensitivity tables for PE deal evaluation.",
+              "group": "valuation-reviewer"
+            },
+            {
+              "id": "review-fi-portfolio",
+              "description": "Review a fixed income portfolio with pricing, reference data, cashflows, and scenario analysis",
+              "group": "lseg (command)"
+            },
+            {
+              "id": "roll-forward",
+              "description": "Build a roll-forward schedule for a balance-sheet account \u2014 beginning balance plus activity less reversals equals ending balance, with each compone...",
+              "group": "month-end-closer"
+            },
+            {
+              "id": "screen",
+              "description": "Run a stock screen or generate investment ideas",
+              "group": "equity-research (command)"
+            },
+            {
+              "id": "screen-deal",
+              "description": "Screen an inbound deal (CIM or teaser)",
+              "group": "private-equity (command)"
+            },
+            {
+              "id": "sector",
+              "description": "Create a sector overview report",
+              "group": "equity-research (command)"
+            },
+            {
+              "id": "sector-overview",
+              "description": "Create comprehensive industry and sector landscape reports covering market dynamics, competitive positioning, key players, and thematic trends.",
+              "group": "market-researcher"
+            },
+            {
+              "id": "source",
+              "description": "Source deals \u2014 discover companies and draft founder outreach",
+              "group": "private-equity (command)"
+            },
+            {
+              "id": "statement-auditor",
+              "description": "Audits a batch of pre-generated LP capital-account statements against the fund NAV pack before distribution \u2014 ties out balances, allocations, and f...",
+              "group": "statement-auditor (agent)"
+            },
+            {
+              "id": "strip-profile",
+              "description": "Creates professional investment banking strip profiles (company profiles) for pitch books, deal materials, and client presentations.",
+              "group": "investment-banking"
+            },
+            {
+              "id": "swap-curve-strategy",
+              "description": "Analyze the interest rate swap curve by pricing swaps at multiple tenors, overlaying government and inflation curves, and identifying curve trade o...",
+              "group": "lseg"
+            },
+            {
+              "id": "tear-sheet",
+              "description": "Generate professional company tear sheets using S&P Capital IQ data via the Kensho LLM-ready API MCP server.",
+              "group": "spglobal"
+            },
+            {
+              "id": "teaser",
+              "description": "Draft anonymous one-page company teasers for sell-side M&A processes.",
+              "group": "investment-banking"
+            },
+            {
+              "id": "thesis",
+              "description": "Create or update an investment thesis",
+              "group": "equity-research (command)"
+            },
+            {
+              "id": "thesis-tracker",
+              "description": "Maintain and update investment theses for portfolio positions and watchlist names.",
+              "group": "equity-research"
+            },
+            {
+              "id": "unit-economics",
+              "description": "Analyze unit economics for PE targets \u2014 ARR cohorts, LTV/CAC, net retention, payback periods, revenue quality, and margin waterfall.",
+              "group": "private-equity"
+            },
+            {
+              "id": "valuation-reviewer",
+              "description": "Ingests GP valuation packages for a fund, runs them through the valuation template, and stages LP reporting.",
+              "group": "valuation-reviewer (agent)"
+            },
+            {
+              "id": "value-creation",
+              "description": "Build a post-acquisition value creation plan",
+              "group": "private-equity (command)"
+            },
+            {
+              "id": "value-creation-plan",
+              "description": "Structure post-acquisition value creation plans with revenue, cost, and operational levers mapped to an EBITDA bridge.",
+              "group": "private-equity"
+            },
+            {
+              "id": "variance-commentary",
+              "description": "Write flux commentary for every P&L and balance-sheet line over threshold \u2014 current vs prior period and vs budget, with the driver explained from u...",
+              "group": "month-end-closer"
+            },
+            {
+              "id": "xlsx-author",
+              "description": "Produce a .xlsx file on disk (headless) instead of driving a live Excel workbook \u2014 for managed-agent sessions with no open Office app.",
+              "group": "earnings-reviewer"
             }
           ]
         }

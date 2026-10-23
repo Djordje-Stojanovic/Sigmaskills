@@ -38,6 +38,7 @@ const FLAG_CASES = {
   '--classic': [['--classic'], { classic: true }],
   '--packs': [['list', '--packs'], { packs: true }],
   '--preset': [['--preset', 'sigma,mattpocock', '--preset=threejs'], { presets: ['sigma,mattpocock', 'threejs'] }],
+  '--drop': [['install', '--drop', 'design-a', '--drop=design-b'], { drops: ['design-a', 'design-b'] }],
   '-a': [['-a', 'claude'], { agents: ['claude'] }],
   '--agent': [['--agent', 'codex', '--agent=pi'], { agents: ['codex', 'pi'] }],
 };

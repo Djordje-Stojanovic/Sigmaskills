@@ -8,6 +8,7 @@
  * (skills, threejs-skills, hyperframes, hyperframes-student-kit, MiniMax-H3). The hyperframes
  * clone must be at the tag named in HYPERFRAMES_RELEASE: `git clone --branch <tag> --depth 1`.
  * The snapshot lets the installer show every group at once, without cloning.
+ * Packs this script does not list are kept as they are.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -120,5 +121,13 @@ for (const pack of PACKS) {
   }
   out.packs.push(entry);
 }
-fs.writeFileSync(path.join(ROOT, 'registry', 'packs.json'), `${JSON.stringify(out, null, 2)}\n`);
+// Four packs are curated by hand and pinned by commit or tag: Anthropic, Design.md, last30days and
+// Financial Services (their skill lists come from scripts/pack-list.js). Keep them as they are, in place.
+const file = path.join(ROOT, 'registry', 'packs.json');
+const before = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')).packs : [];
+const fresh = new Map(out.packs.map((pack) => [pack.id, pack]));
+const merged = before.map((pack) => fresh.get(pack.id) || pack);
+for (const pack of out.packs) if (!merged.some((entry) => entry.id === pack.id)) merged.splice(Math.max(merged.length - 1, 0), 0, pack);
+out.packs = merged;
+fs.writeFileSync(file, `${JSON.stringify(out, null, 2)}\n`);
 console.log(out.packs.map((pack) => `${pack.id}: ${(pack.sources || []).reduce((n, s) => n + (s.skills?.length || 0), 0)}`).join('\n'));

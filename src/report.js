@@ -153,6 +153,8 @@ export function formatSummary({
   return lines;
 }
 
+const LIST_ROWS = 8;
+
 /** The pack list for `list --packs`. */
 export function formatPackList(styler, packCatalog) {
   const s = styler.style;
@@ -162,8 +164,11 @@ export function formatPackList(styler, packCatalog) {
     lines.push(`${s(pack.title, C.primary, true)} ${s(`${pack.skills.length} skills`, C.mute)}${flag}`);
     lines.push(`  ${s('preset', C.mute)} ${s(`--preset ${pack.id}`, C.ink)}${pack.aliases.length ? s(`   aliases ${pack.aliases.join(', ')}`, C.mute) : ''}`);
     if (pack.blurb) lines.push(`  ${s(pack.blurb, C.mute)}`);
+    if (pack.limit) lines.push(`  ${s(`Installs at most ${pack.limit.max} at a time. Pick by name: sigmaskills install ${pack.skills[0]?.id || '<skill>'}`, C.warn)}`);
     if (pack.skills.length) {
-      for (const row of wrapWords(pack.skills.map((skill) => skill.id).join(' '), 96)) lines.push(`  ${s(row, C.text)}`);
+      const rows = wrapWords(pack.skills.map((skill) => skill.id).join(' '), 96);
+      for (const row of rows.slice(0, LIST_ROWS)) lines.push(`  ${s(row, C.text)}`);
+      if (rows.length > LIST_ROWS) lines.push(`  ${s(`... all ${pack.skills.length} names: sigmaskills list --packs --json`, C.mute)}`);
     }
     lines.push('');
   }

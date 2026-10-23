@@ -1,10 +1,13 @@
-import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { execFile, execFileSync } from 'node:child_process';
+import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { buildTransform } from './pack-transform.js';
 
 const SKIP_DIRS = new Set(['node_modules', '.git']);
+const FULL_SHA = /^[0-9a-f]{40}$/;
+const GIT_ENV = { ...process.env, GIT_TERMINAL_PROMPT: '0' };
 
 function isDirectory(target) {
   try {
@@ -88,55 +91,230 @@ function describeSource(source) {
 }
 
 /**
- * One fetcher per command. It fetches each source once, however many skills come from it, and
- * removes every temporary clone in close().
+ * The git steps that fetch one source into `dest`: a shallow fetch of exactly one commit (the
+ * `ref` tag or commit, else the head), with only `source.path` checked out and blobs fetched on
+ * demand. Small, fast, and safe on Windows (no deep fixture paths from the rest of the repo).
+ */
+function planFetch(url, dest, source) {
+  const ref = source.ref || 'HEAD';
+  const steps = [
+    { args: ['init', '-q', dest] },
+    { args: ['-C', dest, 'remote', 'add', 'origin', url] },
+  ];
+  if (source.path) steps.push({ args: ['-C', dest, 'sparse-checkout', 'set', '--cone', source.path] });
+  steps.push({
+    args: ['-C', dest, 'fetch', '-q', '--depth', '1', '--filter=blob:none', 'origin', ref],
+    fallback: ['-C', dest, 'fetch', '-q', '--depth', '1', 'origin', ref],
+  });
+  steps.push({ args: ['-c', 'advice.detachedHead=false', '-C', dest, 'checkout', '-q', '--detach', 'FETCH_HEAD'] });
+  steps.push({ args: ['-C', dest, 'rev-parse', 'HEAD'], capture: true });
+  return steps;
+}
+
+const GIT_OPTS = { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', windowsHide: true, env: GIT_ENV };
+
+function gitFailure(err) {
+  const lines = String(err.stderr || err.message || err).split('\n').map((line) => line.trim()).filter(Boolean);
+  return new Error(lines[lines.length - 1] || 'git failed');
+}
+
+function verifyRevision(source, revision) {
+  if (FULL_SHA.test(source.ref || '') && revision !== source.ref) {
+    throw new Error(`fetched ${revision.slice(0, 8)}, not the pinned commit ${source.ref.slice(0, 8)}`);
+  }
+  return revision;
+}
+
+function fetchGitSync(url, dest, source) {
+  let revision = '';
+  for (const step of planFetch(url, dest, source)) {
+    let out;
+    try {
+      out = execFileSync('git', step.args, GIT_OPTS);
+    } catch (err) {
+      if (!step.fallback) throw gitFailure(err);
+      try {
+        out = execFileSync('git', step.fallback, GIT_OPTS);
+      } catch (second) {
+        throw gitFailure(second);
+      }
+    }
+    if (step.capture) revision = String(out).trim();
+  }
+  return verifyRevision(source, revision);
+}
+
+function execGit(args) {
+  return new Promise((resolve, reject) => {
+    execFile('git', args, GIT_OPTS, (err, stdout) => (err ? reject(gitFailure(err)) : resolve(String(stdout))));
+  });
+}
+
+async function fetchGitAsync(url, dest, source) {
+  let revision = '';
+  for (const step of planFetch(url, dest, source)) {
+    let out;
+    try {
+      out = await execGit(step.args);
+    } catch (err) {
+      if (!step.fallback) throw err;
+      out = await execGit(step.fallback);
+    }
+    if (step.capture) revision = out.trim();
+  }
+  return verifyRevision(source, revision);
+}
+
+function cacheRoot(env) {
+  if (env.SIGMA_CACHE_DIR) return path.resolve(env.SIGMA_CACHE_DIR);
+  return path.join(path.resolve(env.HOME || env.USERPROFILE || os.homedir()), '.sigmaskills', 'cache', 'git');
+}
+
+function cacheKey(source) {
+  const name = String(source.repo || source.url).replace(/[^A-Za-z0-9._-]+/g, '_');
+  const part = String(source.path || '').replace(/[^A-Za-z0-9._-]+/g, '_');
+  return `${name}@${source.ref}${part ? `#${part}` : ''}`;
+}
+
+function headOf(dir) {
+  return execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], GIT_OPTS).trim();
+}
+
+/**
+ * One fetcher per command. It fetches each source once, however many skills come from it.
  *
- * A source is `{ type: 'git', repo, path, ref? }` or `{ type: 'dir', path | env, prefix }`. A git
- * source with a `ref` (a release tag) is fetched at that tag, so a moved head cannot change it.
- * `fetch(source)` returns `{ root, revision, label }`, where `root` holds the skill folders.
+ * A source is `{ type: 'git', repo, path, ref?, transform? }` or `{ type: 'dir', path | env, prefix }`.
+ * A git source with a `ref` (a release tag or a full commit) is pinned: it is fetched at that
+ * ref, checked, and kept in the cache folder (`~/.sigmaskills/cache/git`, or SIGMA_CACHE_DIR), so
+ * a later run makes no network call. A source without a `ref` follows the head and is never cached.
+ * A source with a `transform` is turned into skill folders after the fetch (see pack-transform.js).
+ *
+ * `await prefetch(sources)` fetches every distinct git source at once. `fetch(source)` returns
+ * `{ root, revision, label }`, where `root` holds the skill folders; it fetches on the spot when
+ * the source was not prefetched. `close()` removes the temporary folders.
  *
  * @param {object} [options]
  * @param {NodeJS.ProcessEnv} [options.env]
- * @param {(url: string, dest: string, ref?: string) => string} [options.clone] swap the git adapter in tests
- * @returns {{ fetch: Function, close: Function }}
+ * @returns {{ fetch: Function, prefetch: Function, close: Function }}
  */
-export function createSourceFetcher({ env = process.env, clone = defaultClone } = {}) {
-  const cache = new Map();
+export function createSourceFetcher({ env = process.env } = {}) {
+  const done = new Map();
   const temps = [];
+
+  const tempDir = (parent, prefix) => {
+    fs.mkdirSync(parent, { recursive: true });
+    return path.join(parent, `${prefix}${process.pid}-${randomBytes(4).toString('hex')}`);
+  };
+
+  /** Where a git source is fetched: the cache for a pinned source, a temporary folder otherwise. */
+  function gitTarget(source) {
+    if (!source.ref) {
+      const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'sigmaskills-src-'));
+      temps.push(temp);
+      return { temp, final: null };
+    }
+    const root = cacheRoot(env);
+    const final = path.join(root, cacheKey(source));
+    if (fs.existsSync(path.join(final, '.git'))) return { final, hit: true };
+    return { temp: tempDir(root, '.tmp-'), final };
+  }
+
+  function settle(source, checkout, revision) {
+    const label = source.repo || source.url;
+    let result = { root: path.join(checkout, source.path || ''), repoRoot: checkout, revision, label };
+    if (source.transform) {
+      const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigmaskills-gen-'));
+      temps.push(outDir);
+      buildTransform(source.transform, {
+        repoRoot: checkout, sourcePath: source.path || '', outDir, revision, repo: source.repo, skills: source.skills || [],
+      });
+      result = { ...result, root: outDir };
+    }
+    return result;
+  }
+
+  /** Move a finished temporary fetch into the cache. Another process may have won the race. */
+  function keep(target) {
+    if (!target.final || !target.temp) return target.temp || target.final;
+    try {
+      fs.renameSync(target.temp, target.final);
+    } catch {
+      fs.rmSync(target.temp, { recursive: true, force: true });
+    }
+    return target.final;
+  }
+
+  function discard(target) {
+    if (target.temp && target.final) fs.rmSync(target.temp, { recursive: true, force: true });
+  }
+
+  function failure(source, err) {
+    return new Error(`could not fetch ${describeSource(source)}: ${String(err.message || err).split('\n')[0]}`);
+  }
+
+  function fetchDir(source) {
+    const dir = source.path || (source.env ? env[source.env] : '');
+    if (!dir || !fs.existsSync(dir)) {
+      throw new Error(`source folder not found (${describeSource(source)}${source.env ? `; set ${source.env}` : ''})`);
+    }
+    return { root: path.resolve(dir), revision: 'local', label: path.resolve(dir) };
+  }
+
   return {
     fetch(source) {
       const key = JSON.stringify(source);
-      if (cache.has(key)) return cache.get(key);
-      let result;
-      if (source.type === 'dir') {
-        const dir = source.path || (source.env ? env[source.env] : '');
-        if (!dir || !fs.existsSync(dir)) {
-          throw new Error(`source folder not found (${describeSource(source)}${source.env ? `; set ${source.env}` : ''})`);
-        }
-        result = { root: path.resolve(dir), revision: 'local', label: path.resolve(dir) };
-      } else {
-        const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'sigmaskills-src-'));
-        temps.push(temp);
-        let revision;
+      if (!done.has(key)) {
         try {
-          revision = clone(gitUrl(source, env), temp, source.ref);
+          done.set(key, { value: source.type === 'dir' ? fetchDir(source) : fetchNow(source) });
         } catch (err) {
-          throw new Error(`could not fetch ${describeSource(source)}: ${String(err.message || err).split('\n')[0]}`);
+          done.set(key, { error: err });
         }
-        result = { root: path.join(temp, source.path || ''), revision, label: source.repo || source.url };
       }
-      cache.set(key, result);
-      return result;
+      const entry = done.get(key);
+      if (entry.error) throw entry.error;
+      return entry.value;
     },
+
+    async prefetch(sources) {
+      const queue = [];
+      const seen = new Set();
+      for (const source of sources) {
+        const key = JSON.stringify(source);
+        if (source.type === 'dir' || done.has(key) || seen.has(key)) continue;
+        seen.add(key);
+        queue.push([key, source]);
+      }
+      const worker = async () => {
+        while (queue.length > 0) {
+          const [key, source] = queue.shift();
+          const target = gitTarget(source);
+          try {
+            const revision = target.hit ? headOf(target.final) : await fetchGitAsync(gitUrl(source, env), target.temp, source);
+            const checkout = target.hit ? target.final : keep(target);
+            done.set(key, { value: settle(source, checkout, revision) });
+          } catch (err) {
+            discard(target);
+            done.set(key, { error: failure(source, err) });
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(4, queue.length) }, worker));
+    },
+
     close() {
       for (const temp of temps.splice(0)) fs.rmSync(temp, { recursive: true, force: true });
     },
   };
-}
 
-function defaultClone(url, dest, ref) {
-  const opts = { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', windowsHide: true };
-  const branch = ref ? ['--branch', ref] : [];
-  execFileSync('git', ['-c', 'advice.detachedHead=false', 'clone', '--depth', '1', '--quiet', ...branch, url, dest], opts);
-  return execFileSync('git', ['-C', dest, 'rev-parse', 'HEAD'], opts).trim();
+  function fetchNow(source) {
+    const target = gitTarget(source);
+    let revision;
+    try {
+      revision = target.hit ? headOf(target.final) : fetchGitSync(gitUrl(source, env), target.temp, source);
+    } catch (err) {
+      discard(target);
+      throw failure(source, err);
+    }
+    return settle(source, target.hit ? target.final : keep(target), revision);
+  }
 }

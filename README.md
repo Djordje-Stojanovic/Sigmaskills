@@ -49,6 +49,10 @@ The wizard has three steps: **What**, **Where**, **Review**. It writes nothing u
 | `threejs` | 13 Three.js skills | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) |
 | `hyperframes` | HyperFrames and the student kit | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes), [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit) |
 | `minimax-h3` | MiniMax H3 prompt and recipe skills | [MiniMax-AI/MiniMax-H3](https://github.com/MiniMax-AI/MiniMax-H3) |
+| `anthropic` | 19 Anthropic skills: docx, pdf, pptx, xlsx, Claude API, MCP builder, skill creator | [anthropics/skills](https://github.com/anthropics/skills) |
+| `design-md` | 84 brand looks, each a `DESIGN.md` skill. **Up to 3 at a time.** | [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) |
+| `last30days` | research any topic across the last 30 days (needs Python 3.12+ and Node 22+) | [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill) |
+| `financial-services` | 99 finance skills: DCF, LBO, comps, pitch decks, earnings, KYC (plugins, agents and commands as skills) | [anthropics/financial-services](https://github.com/anthropics/financial-services) |
 | `local` | a folder of your own skills | `SIGMA_LOCAL_SKILLS_DIR` or `~/.sigmaskills/packs.json` |
 | `all` | every pack that is available | |
 
@@ -61,6 +65,8 @@ npx @djordje-stojanovic/sigmaskills install sigmawrite --project .
 npx @djordje-stojanovic/sigmaskills install --preset sigma --preset mattpocock --agent claude --project .
 npx @djordje-stojanovic/sigmaskills install --preset all --global --yes
 npx @djordje-stojanovic/sigmaskills list --packs
+npx @djordje-stojanovic/sigmaskills install design-stripe design-linear-app --project .
+npx @djordje-stojanovic/sigmaskills install design-vercel --drop design-stripe --project .
 npx @djordje-stojanovic/sigmaskills update --global --yes
 npx @djordje-stojanovic/sigmaskills uninstall --skill tdd --yes
 ```

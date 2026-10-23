@@ -40,6 +40,7 @@ export function createRemote(remotes, repo, skills, skillsPath = 'skills') {
   const dir = path.join(remotes, ...repo.split('/'));
   fs.mkdirSync(dir, { recursive: true });
   git(dir, 'init', '-q');
+  git(dir, 'config', 'uploadpack.allowAnySHA1InWant', 'true');
   writeSkills(dir, skills, skillsPath);
   git(dir, 'add', '-A');
   git(dir, 'commit', '-q', '-m', 'init');
@@ -58,6 +59,30 @@ export function writeSkills(dir, skills, skillsPath = 'skills') {
 export function commitAll(dir, message = 'change') {
   git(dir, 'add', '-A');
   git(dir, 'commit', '-q', '-m', message);
+}
+
+/** Write files (relative path to text) into a remote and commit them. Returns the new commit SHA. */
+export function commitFiles(dir, files, message = 'files') {
+  for (const [rel, text] of Object.entries(files)) {
+    const target = path.join(dir, ...rel.split('/'));
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, text);
+  }
+  commitAll(dir, message);
+  return headSha(dir);
+}
+
+export function headSha(dir) {
+  return git(dir, 'rev-parse', 'HEAD');
+}
+
+/** An empty remote at <remotes>/<owner>/<name> that accepts a fetch of any commit. */
+export function createEmptyRemote(remotes, repo) {
+  const dir = path.join(remotes, ...repo.split('/'));
+  fs.mkdirSync(dir, { recursive: true });
+  git(dir, 'init', '-q');
+  git(dir, 'config', 'uploadpack.allowAnySHA1InWant', 'true');
+  return dir;
 }
 
 /** Tag the current commit of a remote made by createRemote(). */

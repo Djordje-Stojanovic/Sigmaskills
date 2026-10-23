@@ -44,7 +44,7 @@ npx @djordje-stojanovic/sigmaskills
 
 In a color terminal it opens the full-screen wizard, drawn in the [DESIGN.md](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/DESIGN.md) palette (near-black canvas, one emerald accent). Three steps, one screen each:
 
-1. **What.** One row per pack, with a count (`13/13`). Space on a pack row picks or clears the whole pack; the number keys `1`-`9` do the same. Right arrow opens a pack so you can pick single skills; left arrow closes it. `/` filters every skill by name, description, or pack. `a` picks everything that is available. A pack that cannot be reached on this machine (for example the Local pack without a folder) is marked `[!]` and says why.
+1. **What.** One row per pack, with a count (`13/13`). Space on a pack row picks or clears the whole pack; the number keys `1`-`9` and `0` (the tenth pack) do the same. A pack with a limit (Design.md) shows `held/3` and opens instead of picking all. Right arrow opens a pack so you can pick single skills; left arrow closes it. `/` filters every skill by name, description, or pack. `a` picks everything that is available. A pack that cannot be reached on this machine (for example the Local pack without a folder) is marked `[!]` and says why.
 2. **Where.** The scope (`s` switches between Project and Global), then the Agent Hosts. Hosts that read `.agents/skills` show as covered and cannot be unchecked. A host with its own folder, such as Claude Code, is a row you can toggle; a host whose folder exists in your home folder is marked `found here` and starts checked. `/` searches every host in the registry. `m` switches Link and Copy.
 3. **Review.** The skill count per pack, the destinations, the sources that will be downloaded, and a warning for Global Installation (it needs an explicit `y`; Enter alone does not install globally). If a Sigma skill already exists with different content, you choose `r` replace (after a private backup), `s` skip, or `e` export before you can continue.
 
@@ -126,6 +126,10 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `threejs` | `three` | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) |
 | `hyperframes` | `hf` | the HyperFrames skills (pinned to one upstream release tag) and the student kit |
 | `minimax-h3` | `minimax`, `h3` | the MiniMax H3 prompt and recipe skills |
+| `anthropic` | `anthropics` | 19 skills from [anthropics/skills](https://github.com/anthropics/skills), pinned to one commit |
+| `design-md` | `design`, `awesome-design-md` | 84 brand looks from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), one `design-<brand>` skill each (SKILL.md, DESIGN.md, LICENSE). At most 3 installed at a time |
+| `last30days` | `last30` | [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill) at tag `v3.30.0` (a 17.5 MB copy; the skill runs on Python 3.12+ and Node 22+, and yt-dlp is optional) |
+| `financial-services` | `fsi`, `finance` | [anthropics/financial-services](https://github.com/anthropics/financial-services), pinned: its 62 skills, 10 agents and 27 commands, each as a skill |
 | `local` | `own` | a folder of your own skills; see [Your own packs](#your-own-packs) |
 | `all` | | every pack that is available on this machine |
 
@@ -139,7 +143,11 @@ You can also name a pack skill by its id, next to Sigma skills. `--all` keeps it
 
 How pack skills install:
 
-- The group list ships with the package in `registry/packs.json`, so the picker needs no network. Installing a pack skill downloads its repository once (a shallow `git clone` into a temporary folder that is deleted afterwards), so `git` must be on the path. `--dry-run` also downloads, to compare content.
+- The group list ships with the package in `registry/packs.json`, so the picker needs no network. Installing a pack skill downloads only the folder it needs (a shallow, sparse `git` fetch), so `git` must be on the path. `--dry-run` also downloads, to compare content.
+- Sources are fetched in parallel, up to four at once. A source with a `ref` is pinned: a tag or a full 40-character commit. It is cached in `~/.sigmaskills/cache/git` (`SIGMA_CACHE_DIR` moves it), so a second install, an update and a dry run need no network. A commit pin that does not match what was fetched fails the install. A source without a `ref` follows the default branch and is not cached.
+- You can pick the whole pack or one or several of its skills: `--preset anthropic`, or `install pdf docx`.
+- Some packs convert their source. `design-md` writes one skill per brand folder. `financial-services` turns plugin skills, agents and commands into skills: an agent keeps its instructions and gains a "Tools this skill expects" section that names the MCP connectors it needs (the connectors themselves are not installed); a command that matches a skill by name is folded into that skill as "When called as /name". A plugin file that does not parse is skipped.
+- A pack can set a limit. Design.md installs at most 3 skills at a time, counted over what is installed plus what you pick. `--preset design-md` is refused and `--preset all` skips it. A 4th pick stops with the installed names and the fix: `install design-vercel --drop design-stripe`. `--drop <id>` can repeat, removes only installed skills of that pack, and runs before the install. The wizard opens a list on the 4th pick: Enter drops the highlighted skill and adds the new one, Esc keeps all.
 - One skill name has one owner. If two packs list the same name, the first pack in the table keeps it (Sigma comes first) and the later pack does not list or install it. A fresh folder therefore gets no "kept" skills from a second copy of a name.
 - Each skill is copied to `.agents/skills/<id>`. A host folder links to that copy, or holds its own copy with `--copy`, as for Sigma skills.
 - A private record, `packs.json` in the [state folder](#private-state-folder), says what the installer owns. It never touches a folder it does not own.
@@ -176,7 +184,7 @@ Most hosts (Codex, Cursor, Gemini CLI, Antigravity CLI, Pi, OpenCode, GitHub Cop
 }
 ```
 
-A `git` source can name a `ref` (a tag); the clone is then taken at that tag. The built-in HyperFrames source is pinned this way. A `git` source needs the skill ids in `skills`, so the picker can show them without a download. A `dir` source lists the skills it finds. `prefix` keeps only ids that start with it. The `local` pack is a `dir` source with no prefix; set its folder with `dirs` or with the `SIGMA_LOCAL_SKILLS_DIR` variable. `SIGMA_GIT_BASE` changes where `repo` names are cloned from (default `https://github.com/`), which tests and mirrors use.
+A `git` source can name a `ref` (a tag or a full commit SHA); it is then fetched at that point and cached. The built-in HyperFrames, Anthropic, Design.md, last30days and Financial Services sources are pinned this way. A source can also set `transform` (`design-md` or `financial-services`), and a pack can set `limit` (`{ "max": 3, "counts": "installed", "onFourth": "choose-drop" }`). A `git` source needs the skill ids in `skills`, so the picker can show them without a download. A `dir` source lists the skills it finds. `prefix` keeps only ids that start with it. The `local` pack is a `dir` source with no prefix; set its folder with `dirs` or with the `SIGMA_LOCAL_SKILLS_DIR` variable. `SIGMA_GIT_BASE` changes where `repo` names are cloned from (default `https://github.com/`), which tests and mirrors use.
 
 ## Existing copies
 
@@ -378,7 +386,7 @@ Safety:
 - `list` prints every skill in the Skill Pack with its Skill Revision and short description. `list --json` gives the full description and the file list.
 - `verify` checks the manifest and every skill's files and prints each Skill Revision.
 
-`list --packs` prints every pack with its preset name, aliases, and skills. With `--json` it prints the same data.
+`list --packs` prints every pack with its preset name, aliases, and skills (long lists stop after eight rows). With `--json` it prints the same data, with each pack's `limit` and each skill's `group`.
 
 ## Other install methods
 

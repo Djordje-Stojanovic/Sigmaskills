@@ -15,7 +15,7 @@ import {
 } from './purge.js';
 import { executeProjectInstall, executeProjectInstallBatch } from './transaction.js';
 import { listGlobalDestinationGroups, listProjectDestinationGroups, loadHostRegistry, resolveHomeDir } from './destinations.js';
-import { loadPackCatalog, resolveSelection } from './packs.js';
+import { checkLimits, loadPackCatalog, resolveSelection } from './packs.js';
 import { createSourceFetcher } from './pack-source.js';
 import { packStatus, uninstallPackSkills, updatePackSkills } from './pack-install.js';
 import { COPY_ONLY_ROOTS, resolveAgentRoots, suggestAgents } from './agents.js';
@@ -59,8 +59,10 @@ Options:
   -h, --help        Show help
   --skill <name>    Skill identifier to install, update, restore, or uninstall (repeatable)
   --all             Install every shipped Sigma skill, or uninstall every recorded skill in the chosen scope
-  --preset <pack>   Install a whole pack: sigma, mattpocock, threejs, hyperframes, minimax-h3, local, or all
+  --preset <pack>   Install a whole pack: sigma, mattpocock, threejs, hyperframes, minimax-h3, anthropic,
+                    last30days, financial-services, local, or all (design-md is picked by skill: 3 at a time)
                     (repeatable, or comma-separated; 'list --packs' shows each pack)
+  --drop <skill>    With install: remove an installed skill of a limited pack (design-md) to make room
   -a, --agent <host> Agent Host to install for, such as claude, codex, gemini, agy, pi, cursor
                     (repeatable, or comma-separated; '*' for every host; .agents/skills is always included)
   --force           Replace pack skills that have local edits or a folder in the way, after a private backup
@@ -140,6 +142,7 @@ const FLAGS = [
   { name: '--preset', alias: '--pack', key: 'presets', value: true, repeatable: true },
   { name: '--agent', alias: '-a', key: 'agents', value: true, repeatable: true },
   { name: '--skill', key: 'skillIds', value: true, repeatable: true },
+  { name: '--drop', key: 'drops', value: true, repeatable: true },
   { name: '--destination', key: 'destinations', value: true, repeatable: true },
   { name: '--project', alias: '--cwd', key: 'projectRoot', value: true },
   { name: '--state-dir', key: 'stateDir', value: true },
@@ -182,6 +185,7 @@ export function parseCliArgs(args) {
   const parsed = {
     command: null,
     skillIds: [],
+    drops: [],
     destinations: [],
     presets: [],
     agents: [],
@@ -393,6 +397,8 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       if (onlyExternal || (opts.skillIds.length === 0 && recorded.length > 0)) {
         const fetcher = createSourceFetcher({ env });
         try {
+          const wanted = externalIds.length > 0 ? externalIds : recorded.map((row) => row.id);
+          await fetcher.prefetch(wanted.map((id) => getPacks().skills.get(id)?.source).filter(Boolean));
           packEntries = updatePackSkills({
             ...stateParams(), packCatalog: getPacks(), skillIds: externalIds, fetcher, dryRun: opts.dryRun, force: opts.force, version: catalog.manifest.version,
           }).results;
@@ -540,8 +546,8 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeOut(JSON.stringify({
           schemaVersion: 1,
           packs: packs.packs.map((pack) => ({
-            id: pack.id, title: pack.title, aliases: pack.aliases, available: pack.available, note: pack.note,
-            skills: pack.skills.map((skill) => ({ id: skill.id, description: skill.description })),
+            id: pack.id, title: pack.title, aliases: pack.aliases, available: pack.available, note: pack.note, limit: pack.limit,
+            skills: pack.skills.map((skill) => ({ id: skill.id, description: skill.description, ...(skill.group ? { group: skill.group } : {}) })),
           })),
         }, null, 2));
       } else {
@@ -610,6 +616,13 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeErr(`sigmaskills error: pack '${picked.unavailable[0].id}' is not available on this machine: ${picked.unavailable[0].note}`);
         return 1;
       }
+      if (picked.wholeLimited.length > 0) {
+        const pack = picked.wholeLimited[0];
+        const sample = pack.skills.slice(0, pack.limit.max).map((skill) => skill.id).join(' ');
+        writeErr(`sigmaskills error: ${pack.title} has ${pack.skills.length} skills and installs at most ${pack.limit.max} at a time. Pick up to ${pack.limit.max} by name.`);
+        writeErr(`Example: sigmaskills install ${sample}   (see them with 'sigmaskills list --packs')`);
+        return 1;
+      }
       const skills = [...picked.skills];
       if (opts.all) {
         for (const skill of catalog.skills) {
@@ -632,11 +645,35 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         agentRoots.roots.forEach((root) => hostRoots.add(root));
       }
       hostRoots.delete('.agents/skills');
+      const installedNow = packStatus(stateParams()).map((row) => row.id);
+      const limited = packs.packs.filter((pack) => pack.limit);
+      for (const id of opts.drops) {
+        if (!installedNow.includes(id) || !limited.some((pack) => pack.skills.some((skill) => skill.id === id))) {
+          writeErr(`sigmaskills error: cannot drop '${id}': it is not an installed skill of a limited pack`);
+          return 1;
+        }
+      }
+      for (const full of checkLimits(packs, skills, installedNow, opts.drops)) {
+        const names = (ids) => ids.join(', ');
+        writeErr(`sigmaskills error: ${full.pack.title} installs at most ${full.max} skills at a time. Installed now: ${full.kept.length ? names(full.kept) : 'none'}. You asked for: ${names(full.picked)}.`);
+        if (full.kept.length > 0) {
+          writeErr(`Drop one to make room: sigmaskills install ${full.picked.join(' ')} --drop ${full.kept[0]}   (--drop <id> can repeat)`);
+        } else {
+          writeErr(`Name up to ${full.max}.`);
+        }
+        return 1;
+      }
       const method = opts.method || ([...hostRoots].some((root) => COPY_ONLY_ROOTS.has(root)) ? 'copy' : 'link');
       const fetcher = createSourceFetcher({ env });
       const started = Date.now();
       let run;
+      let dropped = [];
       try {
+        await fetcher.prefetch(skills.filter((skill) => skill.kind === 'external').map((skill) => skill.source));
+        if (opts.drops.length > 0) {
+          dropped = uninstallPackSkills({ ...stateParams(), skillIds: opts.drops, dryRun: opts.dryRun }).results
+            .filter((entry) => entry.status === 'removed').map((entry) => entry.id);
+        }
         run = runInstall({
           catalog,
           skills,
@@ -665,8 +702,9 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         fetcher.close();
       }
       if (opts.json) {
-        writeOut(JSON.stringify({ schemaVersion: 1, scope: scopeName, dryRun: Boolean(opts.dryRun), entries: run.entries }, null, 2));
+        writeOut(JSON.stringify({ schemaVersion: 1, scope: scopeName, dryRun: Boolean(opts.dryRun), dropped, entries: run.entries }, null, 2));
       } else {
+        if (dropped.length > 0) writeOut(`${opts.dryRun ? 'Would drop' : 'Dropped'} ${dropped.join(', ')} to stay within the limit.`);
         writeOut(formatSummary({
           styler: createStyler(io.stdout, env, { noColor: opts.noColor }),
           dryRun: opts.dryRun,
