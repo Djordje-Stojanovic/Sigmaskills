@@ -168,6 +168,22 @@ class Sav:
         return tuple(out)
 
 
+def ask_source(path):
+    """What --ask reads from a .sav file: -> (variable names, cases declared or None, iterator of (case number, values)), or None when the cases
+    cannot be decoded (ZLIB). The same dictionary and case reader as the look; the iterator is lazy, so a lookup need not hold 700,000 cases."""
+    size = path.stat().st_size
+    raw = path.read_bytes() if size <= (512 << 20) else path.read_bytes()[:128 << 20]
+    s = Sav(raw).parse()
+    if s.compression == 2:
+        return None
+    seen = {}
+    names = []
+    for k, v in enumerate(s.vars):
+        names.append(v["long"] if v["long"] not in seen else f"{v['long']}_{k}")
+        seen[v["long"]] = 1
+    return names, (s.ncases if s.ncases >= 0 else None), enumerate(s.cases(), 1)
+
+
 def look_sav(look):
     raw = look.path.read_bytes() if look.size <= (512 << 20) else look.path.read_bytes()[:128 << 20]
     try:

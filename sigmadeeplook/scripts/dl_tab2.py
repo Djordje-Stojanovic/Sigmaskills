@@ -223,6 +223,31 @@ def sas_header_line(look):
             f"header {h['header']:,} bytes, page size {h['page']:,} bytes, {h['pages']:,} pages.")
 
 
+def read_sas_frame(path):
+    """A SAS file (sas7bdat or XPORT) as a pandas frame, text decoded: what the look profiles and what --ask re-reads."""
+    import pandas as pd
+    try:
+        df = pd.read_sas(str(path), encoding="infer")   # without an encoding pandas returns every text value as bytes
+    except (TypeError, ValueError, LookupError):
+        df = pd.read_sas(str(path))
+    for c in df.columns:   # a file with no usable encoding name: decode what is left as bytes (the code page is a guess, said so)
+        if df[c].dtype == object and len(df) and isinstance(df[c].iloc[0], (bytes, bytearray)):
+            df[c] = df[c].map(lambda b: b.decode("utf-8", "replace").rstrip() if isinstance(b, (bytes, bytearray)) else b)
+    return df
+
+
+def ask_frame(path, kind):
+    """The frame --ask reads for a SAS (sas7bdat, XPORT) or Stata file: the same reader and arguments as the look. None when pandas is missing."""
+    try:
+        import pandas as pd
+    except ImportError:
+        return None
+    if kind == "stata":
+        with pd.io.stata.StataReader(str(path)) as r:
+            return r.read(convert_categoricals=False)
+    return read_sas_frame(path)
+
+
 def look_sas7bdat(look):
     head = sas_header_line(look) if getattr(look, "subtype", "") == "sas7bdat" else None
     if head:
@@ -230,18 +255,11 @@ def look_sas7bdat(look):
     if not look.need_mod("pandas", "SAS file"):
         look.line("SAS data file; reading it needs pandas.")
         return
-    import pandas as pd
     try:
-        try:
-            df = pd.read_sas(str(look.path), encoding="infer")   # without an encoding pandas returns every text value as bytes
-        except (TypeError, ValueError, LookupError):
-            df = pd.read_sas(str(look.path))
+        df = read_sas_frame(look.path)
     except Exception as e:   # a damaged or cut-off file: the header above is what can be read
         look.flag("CORRUPT", "SAS rows", f"{type(e).__name__}: {str(e)[:120]}", "the rows could not be read; the header facts come from the file's first bytes")
         return
-    for c in df.columns:   # a file with no usable encoding name: decode what is left as bytes (the code page is a guess, said so)
-        if df[c].dtype == object and len(df) and isinstance(df[c].iloc[0], (bytes, bytearray)):
-            df[c] = df[c].map(lambda b: b.decode("utf-8", "replace").rstrip() if isinstance(b, (bytes, bytearray)) else b)
     _frame_look(look, "SAS", df)
     look.step("SAS rows", "pandas")
 

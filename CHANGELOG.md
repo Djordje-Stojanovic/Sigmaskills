@@ -6,6 +6,12 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Fixed
 
+- `sigmadeeplook` fix round 11, lane F1 (single-record lookups):
+  - New `Find one record:` line in step 1. It names the table, the row count, the unique key column with its first and last key, and the route (`--ask` or `--sql`). It prints only when a unique key exists. Covered: delimited text, `.po`/`.mo`, `.properties`, `.sbv`/`.srt`/`.vtt`, SAS, SPSS, Stata, netCDF (the dimension names), sqlite/gpkg, xlsx/xlsb/ods, jsonl and Parquet.
+  - `--ask` returns one record by its key: `Answer: <column> = <value> (where <key column> = <key>; <unit> <position>)`, then the record in full. Keys match across case, accents, Cyrillic or Latin letters and hyphens. A bare number matches exactly. A number after a column name (`visit_id 5650000`, `cue number 840`) is a filter.
+  - `--ask` now reads `.sav` (not ZLIB-compressed), SAS and Stata files, `.po`/`.mo` messages, subtitle cues and `.properties` keys as tables. A table over 1,000,000 cells that is asked a pure lookup is read in one pass and only the rows that hold a value of the question are kept (`SIGMADEEPLOOK_ASK_STREAM_CAP`).
+  - `--ask` reads one netCDF cell by index or coordinate value (`last time index and station index 17`, 2 decimals), unpacks `scale_factor`/`add_offset` and names fill values.
+  - A comparison (`Petal_Length greater than 5.0`) now uses the column whose whole name stands before it. A table inside a text keeps original file line numbers.
 - `sigmadeeplook` fix round 11, lane F3 (set 10 miss causes: structure and counts):
   - The identity line shows the file's first 8 bytes in hex, in file order (`magic 950412de 00000000`), for every kind found by its magic bytes.
   - Key/value, YAML and TOML files print a `Comment lines` fact: how many comment lines, at which line numbers, and the first comment block as written. A file version stated in a comment is now in step 1.

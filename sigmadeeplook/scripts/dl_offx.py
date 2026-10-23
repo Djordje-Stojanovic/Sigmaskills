@@ -198,6 +198,7 @@ def sheet_aggregates(look, name, cells, formulas, header_hint=True):
                 except OSError as e:
                     look.fail("table for --ask", "stdlib", e)
                 look.line(f"Sheet {name} as a table (header row {hdr_row + 1}, {prof.n:,} data rows; positions are sheet row numbers):\n" + "\n".join("  " + x for x in prof.field_lines()[:40]), 86, "profile")
+                P.find_line(look, [prof.find_part(f"sheet {name}")], "--ask", 84)
                 if prof.last_line():   # the end of every sheet, hidden ones too: a question about the last row needs no CSV
                     look.line(f"{name}: {prof.last_line()}", 85, "last")
                 for x in prof.stats_lines() + sp.lines():

@@ -513,6 +513,9 @@ def stamp(t):
     return f"{ms // 3600000}:{ms // 60000 % 60:02d}:{ms // 1000 % 60:02d}.{ms % 1000:03d}"
 
 
+ASK_CUES = 300_000   # cues kept as a table for --ask
+
+
 def look_subtitle(look):
     raw = look.path.read_bytes()[:20_000_000]
     text, enc = core.decode_text(raw)
@@ -585,6 +588,19 @@ def look_subtitle(look):
 
     def crow(i):
         return f"#{nums[i]} {stamp(cues[i][0])}-{stamp(cues[i][1])} ({durs[i]:.3f} s): {P.short(' / '.join(x for x in plain[i].splitlines() if x.strip()), 70)}"
+    uniq = len(set(nums)) == len(nums)
+    P.find_line(look, [f"{len(cues):,} cues, cue numbers {nums[0]} .. {nums[-1]}{' (unique)' if uniq else ''}, {stamp(start)} to {stamp(end)}"],
+                ask='ask "first line of cue number N", "start of cue N" or "text of cue N" with --ask', pri=93)
+    lines_of = [[x.strip() for x in p.splitlines() if x.strip()] for p in plain]
+    names = ("first line", "second line", "third line", "fourth line")
+    wide = min(len(names), max((len(x) for x in lines_of), default=1))
+    try:   # one row per cue for --ask: "cue number 840" selects that cue, "first line of cue 840" is its first text line
+        import dl_ask
+        dl_ask.store_table(look, "subtitle cues", ["cue", "start", "end", "text"] + list(names[:wide]),
+                           [[nums[i], [nums[i], stamp(c[0]), stamp(c[1]), " / ".join(lines_of[i])] + [(lines_of[i][k] if k < len(lines_of[i]) else "") for k in range(wide)]]
+                            for i, c in enumerate(cues[:ASK_CUES])], "the subtitle file", "cue", total=len(cues) if len(cues) > ASK_CUES else None)
+    except OSError as e:
+        look.fail("table for --ask", "stdlib", e)
     look.line(f"First cue: {crow(0)}. Last cue: {crow(len(cues) - 1)}. Cue numbers run {nums[0]} to {nums[-1]}.", 84, "tail")
     if len(cues) > 3:
         look.line("Last 3 cues: " + "; ".join(crow(i) for i in range(len(cues) - 3, len(cues))), 83, "tail")

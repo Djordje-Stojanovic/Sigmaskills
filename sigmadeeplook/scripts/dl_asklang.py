@@ -12,6 +12,7 @@ import re
 import unicodedata
 
 _CYR = dict(zip("абвгдђежзијклљмнњопрстћуфхцчџш", "a b v g d dj e z z i j k l lj m n nj o p r s t c u f h c c dz s".split()))
+_CYR.update({"є": "e", "ї": "i", "ґ": "g", "ё": "e", "ы": "y", "э": "e", "ю": "ju", "я": "ja", "щ": "s", "ь": "", "ъ": ""})   # Ukrainian and Russian letters the Serbian table lacks
 _SPECIAL = {"ß": "ss", "đ": "dj", "ø": "o", "ł": "l", "ı": "i", "æ": "ae", "œ": "oe"}
 
 
