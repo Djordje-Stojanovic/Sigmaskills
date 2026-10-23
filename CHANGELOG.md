@@ -4,6 +4,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.16.4] — 2026-10-23
+
 ### Fixed
 
 - `sigmadeeplook`: a small zip-based document can no longer eat gigabytes. A 600 KB `.docx` with a 600 MB `docProps/core.xml` took 7.1 GB in the properties reader; a part over 256 MB, or over 16 MB and more than 200 times its packed size, now reads as empty and is flagged `TRUNCATED` (peak 409 MB on the same file). The same limit covers EPUB, OpenDocument and the `--page` pptx reader.
@@ -436,7 +438,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.3...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.4...HEAD
+[0.16.4]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.3...v0.16.4
 [0.16.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.2...v0.16.3
 [0.16.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.1...v0.16.2
 [0.16.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.0...v0.16.1
