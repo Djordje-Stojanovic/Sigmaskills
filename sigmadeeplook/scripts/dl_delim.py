@@ -21,6 +21,7 @@ THOUSANDS_DOT_RE = re.compile(r"^[-+]?\d{1,3}(\.\d{3})+$")          # 1.234 (a w
 PLAIN_INT_RE = re.compile(r"^[-+]?\d+$")
 DOT_DEC_RE = re.compile(r"^[-+]?\d*\.\d+$")
 SAMPLE_LINES = 400
+NUMBERISH_RE = re.compile(r"^[-+]?[0-9.,]*$")
 
 
 def sniff_encoding(raw):
@@ -94,6 +95,8 @@ def _latin_score(text, table):
                 v = table.get(c, 0.15)
                 if c.isupper() and i and w[i - 1].islower():
                     v -= 1.0   # an upper-case letter inside a word
+                if c.islower() and i + 1 < len(w) and w[i + 1].isascii() and w[i + 1].isupper():
+                    v -= 1.0   # a lower-case accented letter glued to an upper-case one ('żDesea' is '¿Desea' read with the wrong page; fix round 10)
                 total += v - (1.2 if crowded else 0)
             elif c in "‘’“”„–—…€•«»¿¡°":
                 total += 0.8
@@ -314,3 +317,39 @@ def describe(enc, delim, ncols, share, dec_cols, header):
     if names:
         s += f", decimal comma in {', '.join(names[:12])} (converted to numbers before every sum and range)"
     return s + "."
+
+
+def table_region(text, delim, ncols, ahead=5):
+    """A table inside a text (fix round 10): a weighing protocol, a bank export or a report has a title block, then the table with its
+    own header line, then totals and notes. When the first record does not have the table's field count, the header is the first record
+    that has it and is followed by records that have it too; the table ends at the last record that has it.
+    -> None, or (lines, head, end): `lines` are the physical lines (endings kept), lines[head:end] hold the header and the table."""
+    if ncols < 2:
+        return None
+    try:
+        first = next(csv.reader(io.StringIO(text[:200000], newline=""), delimiter=delim), [])
+        if len(first) == ncols:
+            return None
+        lines = list(io.StringIO(text, newline=""))
+        rd = csv.reader(iter(lines), delimiter=delim)
+        early, prev, last_end, head = [], 0, None, None
+        for rec in rd:
+            start, prev = prev, rd.line_num
+            if len(rec) == ncols:
+                last_end = prev
+            if len(early) < 4000:
+                early.append((start, len(rec), rec if len(rec) == ncols else None))
+    except csv.Error:
+        return None
+    for k, (start, n, rec) in enumerate(early):
+        if n != ncols:
+            continue
+        nxt = [m for _, m, _ in early[k + 1:k + 1 + ahead]]
+        if nxt and sum(1 for m in nxt if m == ncols) >= max(1, (len(nxt) + 1) // 2):
+            head = start
+            if all(NUMBERISH_RE.match(c.strip()) for c in rec):   # a data row, not a header: the file's first line is a short header, not a title
+                return None
+            break
+    if head is None or last_end is None or last_end <= head + 1:
+        return None
+    return lines, head, last_end

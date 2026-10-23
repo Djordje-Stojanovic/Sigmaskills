@@ -7,6 +7,7 @@ decoded is named, never guessed.
 """
 import re
 import struct
+from collections import Counter
 
 import dl_core as core
 import dl_prof as P
@@ -120,6 +121,15 @@ def po_facts(look, text):
     P.counts(look, [("entries", len(body)), ("translated", len(tr)), ("untranslated", len(un)), ("fuzzy", len(fz)), ("plural entries", len(pl)), ("with context", len(cx)),
                     ("obsolete", obsolete), ("source references", refs or None)], 96, "Gettext catalogue counts")
     look.fact("gettext_entries", len(body))
+    flags, flag_lines = Counter(), 0   # '#, fuzzy, python-format': every flag line, counted per flag (obsolete '#~' entries left out)
+    for ln in text.splitlines():
+        s = ln.strip()
+        if s.startswith("#,"):
+            flag_lines += 1
+            flags.update({f.strip() for f in s[2:].split(",") if f.strip()})
+    if flag_lines:
+        look.line(f"Flag lines ('#,'): {flag_lines:,}; lines that carry each flag: " + "; ".join(f"{k} {v:,}" for k, v in flags.most_common(20)), 93, "counts")
+        look.fact("gettext_flags", dict(flags))
     if hdr:
         h = _header_fields(hdr["strs"].get(0, ""))
         if h:

@@ -291,7 +291,9 @@ def odf_tables(body):
         rows_all += nr
         cells_all += sum(n * len(t) for n, t in rows)
         paras += sum(1 for _ in tb.iter(q("text", "p")))
-        out.append({"name": tb.get(q("table", "name")) or "?", "rows": nr, "cols": nc, "first": rows[0][1] if rows else [], "last": rows[-1][1] if rows else []})
+        flat = [t for n, t in rows for _ in range(min(n, P.TABLE_ROWS_MAX + 1))][:P.TABLE_ROWS_MAX + 1]
+        out.append({"name": tb.get(q("table", "name")) or "?", "rows": nr, "cols": nc, "first": rows[0][1] if rows else [], "last": rows[-1][1] if rows else [],
+                    "all": flat, "el": tb})
     return {"tables": out, "rows": rows_all, "cells": cells_all, "paras": paras}
 
 
@@ -335,25 +337,34 @@ def look_odt(look, z, names):
         for tb in body.iter(tag):
             for x in tb.iter():
                 in_table.add(id(x))
+    tinfo = odf_tables(body)
+    by_el = {id(t["el"]): t for t in tinfo["tables"]}
+    inner = {id(x) for tb in body.iter(q("table", "table")) for x in tb.iter(q("table", "table")) if x is not tb}
+    md = []   # text.md: the paragraphs and headings of `lines`, and each table in place as | rows
     for el in body.iter():
-        if el.tag == q("text", "h"):
+        if el.tag == q("table", "table") and id(el) in by_el and id(el) not in inner:
+            t = by_el[id(el)]
+            md.append("\n".join("| " + " | ".join(c.replace("|", "/") for c in r) + " |" for r in t["all"][:P.TABLE_ROWS_MAX])
+                      + (f"\n... {t['rows'] - P.TABLE_ROWS_MAX} more rows" if t["rows"] > P.TABLE_ROWS_MAX else ""))
+        elif el.tag == q("text", "h"):
             lvl = int(el.get(q("text", "outline-level")) or 1)
             txt = text_of(el).strip()
             heads.append((lvl, txt))
             words_under.append(0)
             lines.append("#" * min(6, lvl) + " " + txt)
+            md.append(lines[-1])
         elif el.tag == q("text", "p") and id(el) not in in_table:
             txt = text_of(el).strip()
             if txt:
                 paras += 1
                 lines.append(txt)
+                md.append(txt)
                 if words_under:
                     words_under[-1] += len(txt.split())
     lvls = Counter(l for l, _ in heads)
     h1 = [t for l, t in heads if l == 1]
     body_h1 = [t for t in h1 if not FRONT_RE.match(t) and not BACK_RE.match(t)]
     words = sum(len(x.split()) for x in lines if not x.startswith("#"))
-    tinfo = odf_tables(body)
     items = sum(1 for _ in body.iter(q("text", "list-item")))
     look.headline = f"OpenDocument text: {len(heads)} headings ({len(h1)} top level), {paras} paragraphs, {words:,} words"
     P.counts(look, [("headings", len(heads))] + [(f"heading {k}", lvls[k]) for k in sorted(lvls)] + [("top-level sections without front/back matter", len(body_h1) if len(body_h1) != len(h1) else None),
@@ -365,6 +376,19 @@ def look_odt(look, z, names):
     for k, t in enumerate(tinfo["tables"][:30], 1):
         look.line(f"Table {k} '{t['name']}': {t['rows']} rows x {t['cols']} columns; first row: " + " | ".join(P.short(x, 30) for x in t["first"])
                   + f"; last row: " + " | ".join(P.short(x, 30) for x in t["last"]), 90 - min(k, 20) // 2, "tables")
+        full = P.table_rows(f"Table {k} '{t['name']}' rows", t["all"]) if t["rows"] <= P.TABLE_ROWS_MAX else ""
+        if full:
+            look.line(full, 88 - min(20, 2 * k), "tables")
+    notes_txt = []   # footnotes and endnotes: their text is left out of the paragraphs, so it is printed here and at the end of text.md
+    for el in body.iter(q("text", "note")):
+        cite = el.find(q("text", "note-citation"))
+        nb = el.find(q("text", "note-body"))
+        txt = " ".join(" ".join(text_of(x).split()) for x in nb.iter(q("text", "p"))).strip() if nb is not None else ""
+        mark = (cite.text or "").strip() if cite is not None else ""
+        notes_txt.append(f"{el.get(q('text', 'note-class')) or 'note'} {mark}".strip() + f": {txt}")
+    if notes_txt:
+        look.line(f"Notes ({len(notes_txt)}, every footnote and endnote with its mark and text): " + "; ".join(P.short(x, 400) for x in notes_txt[:40])
+                  + (f"; +{len(notes_txt) - 40} more in text.md" if len(notes_txt) > 40 else ""), 89, "structure")
     if heads:
         look.line("Outline (level, heading, words under it):\n" + "\n".join(f"  {'  ' * (l - 1)}{l}. {P.short(t, 70)} ({w} words)" for (l, t), w in zip(heads[:80], words_under[:80]))
                   + (f"\n  ... {len(heads) - 80} more" if len(heads) > 80 else ""), 94, "outline")
@@ -379,7 +403,9 @@ def look_odt(look, z, names):
     look.fact("headings", [t for _, t in heads][:60])
     look.fact("comments", comments[:100])
     look.fact("paragraphs", paras)
-    look.write_text("text.md", "\n\n".join(lines), "document text with # headings (comments and deleted text left out; see the facts)")
+    if notes_txt:
+        md += ["## Notes"] + notes_txt
+    look.write_text("text.md", "\n\n".join(md), "document text with # headings, tables as | rows, notes at the end (comments and deleted text left out; see the facts)")
 
 
 def odf_cells(table):
