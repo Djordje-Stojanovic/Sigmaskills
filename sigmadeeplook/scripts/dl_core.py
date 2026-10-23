@@ -15,6 +15,7 @@ import socket
 import struct
 import subprocess
 import sys
+import threading
 import time
 import zipfile
 from pathlib import Path
@@ -158,10 +159,14 @@ def find_tool(name):
     return shutil.which(name)
 
 
+_QUIET = threading.RLock()
+
+
 def quiet_import(name):
-    """Import a package with its stdout and stderr silenced (PyMuPDF prints a layout notice on import; that must never reach a print)."""
+    """Import a package with its stdout and stderr silenced (PyMuPDF prints a layout notice on import; that must never reach a print).
+    One import at a time: two threads swapping sys.stdout at once left it pointing at the closed null device, and the look printed nothing."""
     import contextlib
-    with open(os.devnull, "w") as dn, contextlib.redirect_stdout(dn), contextlib.redirect_stderr(dn):
+    with _QUIET, open(os.devnull, "w") as dn, contextlib.redirect_stdout(dn), contextlib.redirect_stderr(dn):
         return importlib.import_module(name)
 
 

@@ -13,6 +13,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
   - A last-record or fixed-position value with no blank in it (a URL, path or key) is no longer cut. A cut feed URL had given a confident wrong answer.
   - New counts: `.po` flag lines per flag; `.properties` and INI keys per prefix; items under each node of a self-nesting XML tree (OPML); each distinct `.sbv`/subtitle line with its cue count when the text repeats.
   - `.properties` values are read as Java reads them: escapes decoded, continued lines joined, escaped separators kept in the key. Latin-1 Spanish (`¿`, `ñ`) is no longer read as Windows-1250.
+- `sigmadeeplook` fix round 10, lane F2 (set 9 miss causes):
+  - SAS `.sas7bdat` files print their header: dataset name, type, dates, SAS release and host. The header is read without pandas, so a cut-off file still names itself, and its unreadable rows are flagged `CORRUPT`.
+  - Every worksheet table (`.xlsx`, `.xlsb`, `.ods`) prints its last row, hidden sheets too. A CSV inside an archive, nested ones too, prints its first and last row.
+  - netCDF: a packed variable prints its unpacked values (value x `scale_factor` + `add_offset`) and a grid of the last time step at round indexes, with the coordinate values. Char variables print every entry. A lone record variable is read without padding, and a damaged record count stops at the end of the file.
+  - Pictures print every palette entry, the box each frequent colour fills, and a colour gradient as a formula when one fits (for example `R = 255·x/1599, rounded down`). This works with or without numpy.
+  - Sound prints tones: stretches where one frequency holds most of the power, with their count, frequency and start times per frequency. A 40 MB file takes under a second.
+  - Video prints its key frames from the packet flags: count, first and last time, spacing.
+  - A video look with `--quick` printed nothing. Two threads swapped the standard output at once while they imported packages. Imports now take turns.
 
 ## [0.16.4] — 2026-10-23
 

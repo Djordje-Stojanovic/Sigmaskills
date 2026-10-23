@@ -277,17 +277,30 @@ def pcx_plausible(h, size):
     return bool(i and i["planes"] in (1, 3, 4) and i["bpl"] >= (i["w"] * i["bpp"] + 7) // 8 and i["bpl"] <= i["w"] * 2 + 16)
 
 
+def bmp_palette(raw, i):
+    """The colour table of a bitmap of 8 bits per pixel or fewer -> [(r, g, b)], empty for true-colour bitmaps."""
+    if i["bpp"] > 8:
+        return []
+    n = min(i["used"] or (1 << i["bpp"]), 1 << i["bpp"])
+    at = 14 + i["header"]
+    step = 3 if i["header"] == 12 else 4
+    return [(raw[at + k * step + 2], raw[at + k * step + 1], raw[at + k * step]) for k in range(n) if at + k * step + 2 < len(raw)]
+
+
+def pcx_palette(raw, i):
+    """The 256-colour VGA palette at the end of a PCX file -> [(r, g, b)], or empty when the file has none."""
+    if not i["has_vga_palette"]:
+        return []
+    q = len(raw) - 768
+    return [(raw[q + 3 * k], raw[q + 3 * k + 1], raw[q + 3 * k + 2]) for k in range(256)]
+
+
 def decode_bmp(raw, i):
     """-> (w, h, rgb bytes, alpha bytes or None) for uncompressed 1/4/8/24/32-bit bitmaps (top row first); None for other variants."""
     w, h, bpp = i["w"], i["h"], i["bpp"]
     if i["comp"] not in (0, 3) or i["planes"] != 1 or w <= 0 or h <= 0 or w * h > 40_000_000:
         return None
-    pal = []
-    if bpp <= 8:
-        n = i["used"] or (1 << bpp)
-        at = 14 + i["header"]
-        step = 3 if i["header"] == 12 else 4
-        pal = [(raw[at + k * step + 2], raw[at + k * step + 1], raw[at + k * step]) for k in range(n) if at + k * step + 2 < len(raw)]
+    pal = bmp_palette(raw, i)
     stride = ((w * bpp + 31) // 32) * 4
     body = raw[i["offset"]:]
     if len(body) < stride * h:
@@ -335,11 +348,7 @@ def decode_pcx(raw, i):
         return None
     pal = []
     if bpp == 8 and planes == 1:
-        if not i["has_vga_palette"]:
-            pal = [(k, k, k) for k in range(256)]
-        else:
-            q = len(raw) - 768
-            pal = [(raw[q + 3 * k], raw[q + 3 * k + 1], raw[q + 3 * k + 2]) for k in range(256)]
+        pal = pcx_palette(raw, i) or [(k, k, k) for k in range(256)]
     rgb = bytearray()
     for y in range(h):
         row = data[y * bpl * planes:(y + 1) * bpl * planes]
@@ -388,6 +397,7 @@ def picture_header(look, native_pixels=False):
     if dec:
         w, h, rgb, alpha = dec
         dl_sig.pixel_facts(look, w, h, rgb, alpha, source="decoded with the standard library")
+        dl_sig.palette_line(look, bmp_palette(raw, i) if st == "bmp" else pcx_palette(raw, i))
     elif native_pixels:
         look.skip("pixel facts of this variant", f"the {st} variant is not decoded without Pillow", "PIL")
 

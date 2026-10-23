@@ -5,6 +5,7 @@ sends every row through the shared exact profiler (dl_data.table_profile), so a 
 answered from the print. A missing library is a "Not looked at" row with its install line, never a crash.
 """
 import json
+import struct
 import time
 
 import dl_core as core
@@ -176,15 +177,68 @@ def look_stata(look):
     look.step("Stata header, labels and rows", "pandas")
 
 
+SAS_MAGIC = bytes.fromhex("000000000000000000000000c2ea8160b31411cfbd92080009c7318c181f1011")
+SAS_ENC = {0: "default", 20: "utf-8", 28: "us-ascii", 29: "latin1", 30: "latin2", 33: "cyrillic", 60: "wlatin2", 61: "wcyrillic", 62: "wlatin1"}
+
+
+def sas_header(head):
+    """The fixed header of a sas7bdat file (bytes 0-287), standard library only: -> dict, or None when the magic number is not there.
+    Offsets after byte 164 move by 4 when byte 35 is 0x33, and those after 204 by 4 more when byte 32 is 0x33 (the 64-bit layout)."""
+    import datetime
+    if len(head) < 288 or head[:32] != SAS_MAGIC:
+        return None
+    a1, a2 = 4 if head[35] == 0x33 else 0, 4 if head[32] == 0x33 else 0
+    if len(head) < 288 + a1 + a2:
+        return None
+    e = "<" if head[37] == 1 else ">"
+
+    def text(at, n):
+        return head[at:at + n].split(b"\0")[0].decode("latin-1").strip()
+
+    def stamp(at):
+        v = struct.unpack_from(e + "d", head, at)[0]
+        try:
+            return (datetime.datetime(1960, 1, 1) + datetime.timedelta(seconds=round(v))).strftime("%Y-%m-%d %H:%M:%S") if v == v else None
+        except (OverflowError, ValueError):
+            return None
+    return {"name": text(92, 64), "type": text(156, 8), "created": stamp(164 + a1), "modified": stamp(172 + a1),
+            "header": struct.unpack_from(e + "i", head, 196 + a1)[0], "page": struct.unpack_from(e + "i", head, 200 + a1)[0],
+            "pages": struct.unpack_from(e + ("q" if a2 else "i"), head, 204 + a1)[0], "release": text(216 + a1 + a2, 8), "host": text(224 + a1 + a2, 16),
+            "bits": 64 if a2 else 32, "endian": "little" if e == "<" else "big", "os": {ord("1"): "unix", ord("2"): "windows"}.get(head[39], "?"),
+            "encoding": SAS_ENC.get(head[70], f"code {head[70]}")}
+
+
+def sas_header_line(look):
+    """'SAS file header: dataset name ...' from the file's own bytes, before (and without) pandas: a file whose pages are damaged still names itself."""
+    try:
+        with open(look.path, "rb") as f:
+            h = sas_header(f.read(1024))
+    except OSError:
+        return None
+    if not h:
+        return None
+    look.fact("sas_dataset", h["name"])
+    return (f"SAS file header: dataset name '{h['name']}', type {h['type'] or '?'}, created {h['created'] or '?'}, modified {h['modified'] or '?'}, "
+            f"SAS release {h['release'] or '?'}, host {h['host'] or '?'}, {h['os']} {h['bits']}-bit {h['endian']}-endian, encoding {h['encoding']}, "
+            f"header {h['header']:,} bytes, page size {h['page']:,} bytes, {h['pages']:,} pages.")
+
+
 def look_sas7bdat(look):
+    head = sas_header_line(look) if getattr(look, "subtype", "") == "sas7bdat" else None
+    if head:
+        look.line(head, 95, "structure")
     if not look.need_mod("pandas", "SAS file"):
         look.line("SAS data file; reading it needs pandas.")
         return
     import pandas as pd
     try:
-        df = pd.read_sas(str(look.path), encoding="infer")   # without an encoding pandas returns every text value as bytes
-    except (TypeError, ValueError, LookupError):
-        df = pd.read_sas(str(look.path))
+        try:
+            df = pd.read_sas(str(look.path), encoding="infer")   # without an encoding pandas returns every text value as bytes
+        except (TypeError, ValueError, LookupError):
+            df = pd.read_sas(str(look.path))
+    except Exception as e:   # a damaged or cut-off file: the header above is what can be read
+        look.flag("CORRUPT", "SAS rows", f"{type(e).__name__}: {str(e)[:120]}", "the rows could not be read; the header facts come from the file's first bytes")
+        return
     for c in df.columns:   # a file with no usable encoding name: decode what is left as bytes (the code page is a guess, said so)
         if df[c].dtype == object and len(df) and isinstance(df[c].iloc[0], (bytes, bytearray)):
             df[c] = df[c].map(lambda b: b.decode("utf-8", "replace").rstrip() if isinstance(b, (bytes, bytearray)) else b)
