@@ -4,6 +4,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook`: three stray scratch files (`scripts/o9.bin`, `o12.bin`, `o12b.bin`, left in by fix round 11 lane F3 and published in 0.16.6) are removed.
+
 ## [0.16.6] — 2026-10-23
 
 ### Fixed
