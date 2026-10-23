@@ -62,26 +62,26 @@ FLOWS = {"revenue", "cogs", "gross_profit", "rnd", "sga", "ebit", "interest", "p
          "da", "sbc", "cfo", "capex", "dividends", "buybacks"}
 
 
-def _get(url, headers, ttl=86400, binary=False):
+def _get(url, headers, ttl=86400, binary=False, timeout=40, tries=3):
     """GET with a 24 h file cache. Returns text (or bytes)."""
     CACHE.mkdir(parents=True, exist_ok=True)
     f = CACHE / (hashlib.sha1(url.encode()).hexdigest() + (".bin" if binary else ".txt"))
     if f.exists() and time.time() - f.stat().st_mtime < ttl:
         return f.read_bytes() if binary else f.read_text(encoding="utf-8")
     req = urllib.request.Request(url, headers={**headers, "Accept-Encoding": "gzip"})
-    for attempt in range(3):
+    for attempt in range(tries):
         try:
-            with urllib.request.urlopen(req, timeout=40) as r:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
                 body = r.read()
                 if r.headers.get("Content-Encoding") == "gzip":
                     body = gzip.decompress(body)
             break
         except urllib.error.HTTPError as e:   # SEC answers 429 when a client goes over 10 requests a second
-            if e.code not in (429, 503) or attempt == 2:
+            if e.code not in (429, 503) or attempt == tries - 1:
                 raise
             time.sleep(2 + 3 * attempt)
         except OSError:                       # a reset connection (FRED does this now and then): try again
-            if attempt == 2:
+            if attempt == tries - 1:
                 raise
             time.sleep(2 + 3 * attempt)
     f.write_bytes(body)
@@ -247,11 +247,22 @@ def market(ticker):
 
 
 def risk_free():
-    """The latest US 10-year Treasury yield (FRED DGS10), as a fraction."""
+    """The latest US 10-year Treasury yield, as a fraction: FRED DGS10, else the Yahoo ^TNX chart.
+
+    FRED does not answer some Linux clients at all (every read times out), so it gets one short try.
+    """
     url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10&cosd=" + (dt.date.today() - dt.timedelta(days=30)).isoformat()
-    rows = [r.split(",") for r in _get(url, {"User-Agent": "sigmafinanceman/0.1"}, ttl=6 * 3600).strip().splitlines()[1:]]
-    rows = [r for r in rows if len(r) == 2 and r[1] not in (".", "")]
-    return float(rows[-1][1]) / 100, rows[-1][0], url
+    try:
+        rows = [r.split(",") for r in _get(url, {"User-Agent": "sigmafinanceman/0.1"}, ttl=6 * 3600, timeout=15, tries=1).strip().splitlines()[1:]]
+        rows = [r for r in rows if len(r) == 2 and r[1] not in (".", "")]
+        if rows:
+            return float(rows[-1][1]) / 100, rows[-1][0], url
+    except OSError:
+        pass
+    url = "https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?range=5d&interval=1d"
+    meta = json.loads(_get(url, {"User-Agent": WEB_UA}, ttl=6 * 3600))["chart"]["result"][0]["meta"]
+    day = dt.datetime.fromtimestamp(meta["regularMarketTime"], dt.timezone.utc).strftime("%Y-%m-%d")
+    return meta["regularMarketPrice"] / 100, day, url
 
 
 def company(ticker, years=5, with_market=True):

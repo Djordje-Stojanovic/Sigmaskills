@@ -4,6 +4,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmafinanceman` company models run on hosts where FRED does not answer. FRED timed out on every read from three Linux hosts, so every DCF, LBO and comps run failed after two minutes of retries. The 10-year rate now gets one 15-second FRED try, then comes from the Yahoo ^TNX chart (the source column names which one). A test fakes the FRED timeout.
+- `sigmafinanceman` `references/masters.md`: the Musk solar quote now stops where the source sentence goes on (no added full stop), and the two Horowitz "calculus" quotes cite the opening of chapter 4, not the section "The Struggle". `references/strategy.md`: the private equity playbook adds buyout lines (debt against EBITDA, the three sources of gain, the exit multiple, fees), next to the venture lines.
+
 ## [0.16.3] — 2026-10-23
 
 ### Changed
