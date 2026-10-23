@@ -814,7 +814,7 @@ def look_gitbundle(look):
 # ================================================================= EPUB
 def epub_extras(look):
     try:
-        z = zipfile.ZipFile(look.path)
+        z = core.CappedZip(look.path, look=look)
     except zipfile.BadZipFile:
         return
     names = z.namelist()
