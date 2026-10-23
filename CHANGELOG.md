@@ -4,6 +4,17 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook` fix round 11, lane F3 (set 10 miss causes: structure and counts):
+  - The identity line shows the file's first 8 bytes in hex, in file order (`magic 950412de 00000000`), for every kind found by its magic bytes.
+  - Key/value, YAML and TOML files print a `Comment lines` fact: how many comment lines, at which line numbers, and the first comment block as written. A file version stated in a comment is now in step 1.
+  - `--ask "how many times does the word 'X' appear"` and `"in how many paragraphs ..."` count whole words over the full text of a Word, OpenDocument, PDF, PowerPoint or RTF file, case-sensitive when the quoted word has a capital, and name the text they counted. Before, the agent counted over a clipped print and was off by 1 to 4. A document look also lists its ten most frequent capitalised words.
+  - Office packages (`.docx`, `.xlsx`, `.pptx`, `.odt`, `.ods`, `.odp`) print their hyperlinks with targets, the pictures and media files with path and size, and footnote, endnote and comment counts.
+  - Container headers are read from the file's own bytes, with or without 7-Zip: a cabinet's folders (compression groups), files, data blocks and files per folder; the zip end record; the 7z start header; RAR version and flags; the ISO volume; the OLE sector layout.
+  - New: `.rtf` files are read (text, paragraphs, properties, table rows, picture and footnote counts).
+  - A `.docx` with a damaged part is flagged `CORRUPT` instead of `INTERNAL-ERROR`.
+
 ## [0.16.5] — 2026-10-23
 
 ### Fixed

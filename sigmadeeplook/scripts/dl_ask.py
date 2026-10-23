@@ -613,6 +613,10 @@ def run(o, path, out, lj):
     pq = parse(q)
     lines = [f"--ask {q!r}", f"Read as: operation {', '.join(pq['ops']) or 'lookup'}; words {', '.join(pq['words']) or '(none)'}"
              + (f"; group by {', '.join(pq['group'])}" if pq["group"] else "") + (f"; comparisons {', '.join(f'{a} {P.fmt(b)}' for a, b, _ in pq['cmps'])}" if pq["cmps"] else "") + f"; language {pq['lang']}"]
+    import dl_wordcount   # fix round 11: "how many times does the word X appear" is counted over the whole text, not over a table
+    wc = dl_wordcount.answer(q, lj)
+    if wc:
+        return dl_drill.done("\n".join(lines[:1] + wc))
     notes = []
     tables = load_tables(path, out, lj, notes)
     ranked = sorted(((score(t, pq, q), t) for t in tables), key=lambda x: (-x[0][0], -len(x[1].rows)))

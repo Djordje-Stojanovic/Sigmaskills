@@ -539,6 +539,8 @@ def detect(path):
         t, st, mg = "binary", "dex", "Dalvik dex"
     elif is_(b"%PDF"):
         t, st, mg = "pdf", "pdf", "%PDF"
+    elif is_(b"{\\rtf"):
+        t, st, mg = "office", "rtf", "RTF header"
     elif is_(b"PK\x03\x04", b"PK\x05\x06"):
         t, st, mg = zip_kind(p)
     elif is_(b"\x1f\x8b"):
@@ -703,9 +705,11 @@ def detect(path):
         t, st, mg = "data", "dbf", "dBASE / FoxPro table header (field descriptors end in 0x0D)"
     elif size >= 134 and not h.lstrip().startswith(b"solid") and struct.unpack_from("<I", h, 80)[0] * 50 + 84 == size and _stl_triangles_ok(p, size):
         t, st, mg = "3d", "stl", "binary STL (size matches the triangle count)"
+    by_magic = t is not None and "extension" not in (mg or "") and st not in ("tar", "iso") and any(h[:4])   # found by its first bytes, not by a text sniff, the name or a later offset
     if t is None:
         t, st, mg = text_sniff(p, h, ext, size)
     d = dict(type=t, subtype=st, magic=mg, ext=ext, mismatch=None)
+    d["hex"] = " ".join(h[i:i + 4].hex() for i in (0, 4) if h[i:i + 4]) if by_magic else ""   # fix round 11: the first 8 bytes, in file order, for the identity line
     d["mismatch"] = ext_mismatch(d, ext)
     return d
 
