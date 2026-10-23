@@ -6,6 +6,9 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Fixed
 
+- `sigmadeeplook`: a small zip-based document can no longer eat gigabytes. A 600 KB `.docx` with a 600 MB `docProps/core.xml` took 7.1 GB in the properties reader; a part over 256 MB, or over 16 MB and more than 200 times its packed size, now reads as empty and is flagged `TRUNCATED` (peak 409 MB on the same file). The same limit covers EPUB, OpenDocument and the `--page` pptx reader.
+- `sigmadeeplook`: the XML entity guards looked only at the first 200 KB (`parse_xml`) and 1 MB (`xml_entity_danger`) of a file, so a long comment before the DOCTYPE hid a billion-laughs declaration. They now read the whole part. Property parts of office, EPUB and OpenDocument files refuse a declared entity too.
+- `sigmadeeplook`: a tool's timeout now ends the whole tool, not only the first process. On Windows a tool behind a `.cmd` shim (diec on a truncated `.exe`) kept running at 100 % CPU and held the output pipe, so the look never returned. `dl_core.run_tree` kills the process tree (`taskkill /T`, a process group elsewhere); the look returns at the limit with a `TIMEOUT` flag.
 - `sigmafinanceman` company models run on hosts where FRED does not answer. FRED timed out on every read from three Linux hosts, so every DCF, LBO and comps run failed after two minutes of retries. The 10-year rate now gets one 15-second FRED try, then comes from the Yahoo ^TNX chart (the source column names which one). A test fakes the FRED timeout.
 - `sigmafinanceman` `references/masters.md`: the Musk solar quote now stops where the source sentence goes on (no added full stop), and the two Horowitz "calculus" quotes cite the opening of chapter 4, not the section "The Struggle". `references/strategy.md`: the private equity playbook adds buyout lines (debt against EBITDA, the three sources of gain, the exit multiple, fees), next to the venture lines.
 

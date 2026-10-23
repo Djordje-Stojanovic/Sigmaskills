@@ -14,7 +14,6 @@ import os
 import re
 import shutil
 import struct
-import subprocess
 import tarfile
 import time
 import zipfile
@@ -856,7 +855,7 @@ def member_reader(look, fmt):
     sz = look.tool("7z")
     if sz:
         def read(name, cap):   # streamed to memory: `7z e -so` writes nothing to disk
-            r = subprocess.run([sz, "e", "-so", "-y", str(look.path), name], capture_output=True, timeout=40)
+            r = core.run_tree([sz, "e", "-so", "-y", str(look.path), name], 40)
             return r.stdout[:cap + 1] if r.returncode == 0 else None
         return read, (lambda: None)
     return None, (lambda: None)
