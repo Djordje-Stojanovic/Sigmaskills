@@ -20,6 +20,7 @@ from pathlib import Path
 import dl_core as core
 import dl_prof as P
 import dl_mediax
+import dl_pixel
 
 ASR_CAP_S = 900          # non-deep speech-to-text stops after 15 minutes of audio
 SLOT_CANDIDATES = 5
@@ -520,9 +521,10 @@ def look_video(look):
         if cut:
             look.flag("TRUNCATED", "container", f"atom {cut} runs past the end of the file", "the file is cut short; playback stops early or breaks (the header is intact, so ffprobe still reports the full length)")
     look.write_text("probe.json", json.dumps(ffp, indent=1), "ffprobe facts (streams, codecs, sizes)", "json")
+    mj = None
     try:
         import dl_mmeta
-        dl_mmeta.media_meta(look)
+        mj = dl_mmeta.media_meta(look)
     except Exception as e:
         look.fail("container and stream metadata", "ffprobe", e)
     def checks():
@@ -549,6 +551,10 @@ def look_video(look):
             f_scenes.result()
     if au:
         dl_mediax.bed_line(look, getattr(look, "speech_found", bool(words)))
+        try:
+            dl_mediax.stream_tones(look, mj or ffp)
+        except Exception as e:
+            look.fail("pitch per audio stream", "ffmpeg", e)
     dl_mediax.chapters_line(look, ffp)
     if look.mod("PIL"):
         try:
@@ -581,11 +587,14 @@ def video_bare(look, facts=None):
         look.fact("height", vids[0]["h"])
     look.fact("audio_streams", sum(1 for s in facts.get("streams", []) if s.get("kind") == "audio"))
     look.fact("subtitle_streams", sum(1 for s in facts.get("streams", []) if s.get("kind") == "subtitle"))
+    if look.subtype in ("ts", "mts", "m2ts", "mpg", "mpeg", "m2t"):
+        import dl_ts
+        dl_ts.stream_table_line(look)
     if facts.get("duration") or facts.get("streams"):
         look.line(f"Video container (read from the file's own atoms, brand {facts.get('brand', '?')}): " +
                   (f"{facts.get('duration', 0):.1f} s, " if facts.get("duration") else "") +
                   ", ".join(f"{s.get('kind', '?')} {s.get('codec', '')} {str(s['w']) + 'x' + str(s['h']) if s.get('w') else ''}".strip() for s in facts.get("streams", [])))
-    else:
+    elif "ts_pids" not in look.facts:
         look.line("Video file; the container could not be read without ffmpeg.")
     if facts.get("truncated_atom"):
         look.flag("TRUNCATED", "container", f"atom {facts['truncated_atom']} runs past the end of the file", "the file is cut short; playback stops early")
@@ -883,9 +892,10 @@ def look_audio(look, ffp=None):
     look.dims = f"{core.mmss(dur)}"
     look.line(f"Audio: {core.mmss(dur)} ({dur:.1f} s), {a.get('codec_name')}, {a.get('sample_rate')} Hz, {a.get('channels')} channel(s).", 35)
     look.write_text("probe.json", json.dumps(ffp, indent=1), "ffprobe facts", "json")
+    mj = None
     try:
         import dl_mmeta
-        dl_mmeta.media_meta(look)
+        mj = dl_mmeta.media_meta(look)
     except Exception as e:
         look.fail("container and stream metadata", "ffprobe", e)
     res = one_pass_checks(look, False, True, dur)
@@ -897,6 +907,10 @@ def look_audio(look, ffp=None):
             dl_sig.bursts_of_file(look, dur)
         except Exception as e:
             look.fail("sound bursts", "ffmpeg", e)
+    try:
+        dl_mediax.stream_tones(look, mj or ffp)
+    except Exception as e:
+        look.fail("pitch per audio stream", "ffmpeg", e)
     ff = look.tool("ffmpeg")
     w = look.path_for("waveform.png")
     r = look.run([ff, "-y", "-v", "error", "-i", str(look.path), "-filter_complex", "showwavespic=s=2000x400:colors=#2a9d8f", "-frames:v", "1", str(w)])
@@ -971,6 +985,8 @@ def audio_bare(look):
                 if sw == 2 and n < 60 * sr * 10:
                     data = array("h")
                     data.frombytes(w.readframes(n))
+                    import dl_sig
+                    chans = dl_sig.pcm16_channels(look, data, ch)
                     if ch > 1:
                         data = data[::ch]
                     pil = look.mod("PIL")
@@ -980,8 +996,7 @@ def audio_bare(look):
                     look.fact("silence", [[round(a, 2), round(b, 2)] for a, b in silent])
                     for a, b in silent:
                         look.flag("SILENCE", f"{core.mmss(a)} ({a:.1f}s)", f"{b - a:.1f}s near zero", "pause, dropout or missing audio")
-                    import dl_sig
-                    dl_sig.sound_events(look, dl_sig.pcm16_to_floats(data.tobytes()), sr)
+                    dl_sig.sound_events_channels(look, chans, sr)
         except (wave.Error, OSError, EOFError) as e:
             look.flag("WAV-ERROR", "header", str(e)[:100], "")
     elif look.subtype == "flac":
@@ -1060,6 +1075,8 @@ def look_image(look):
         try:
             import dl_legacy
             dl_legacy.picture_header(look, native_pixels=True)
+            if st in ("bmp", "pcx") and wh:
+                dl_pixel.route_line(look, wh[0], wh[1], 1, False)
         except Exception as e:
             look.fail("picture header and pixels", "stdlib", e)
         why = "disabled by --no-tools" if look.no_tools else "Pillow not importable"
@@ -1086,6 +1103,7 @@ def look_image(look):
             look.fact("frames", frames)
             exif = im.getexif()
             look.line(f"Image {fmt}: {size[0]}x{size[1]} px, mode {mode}, {frames} frame(s).")
+            dl_pixel.route_line(look, size[0], size[1], exif.get(274, 1), mode == "P")
             try:
                 import dl_legacy
                 import dl_sig
