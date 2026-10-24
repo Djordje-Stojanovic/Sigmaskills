@@ -1136,7 +1136,9 @@ def run(o, path, out, lj):
     if got_px:
         return dl_drill.done(got_px)
     import dl_r14f2   # fix round 14: a declared code page, the spatial reference system of a GeoPackage, a line of a small text member of an archive
-    for route in (lambda: dl_r14f2.try_ask_encoding(q, lj), lambda: dl_r14f2.try_ask_srs(q, path, lj), lambda: dl_r14f2.archive_ask(q, path, lj)):
+    import dl_varmeta   # fix round 15: the dataset label, and the label, format or value labels of a variable (SAS, SPSS, Stata)
+    for route in (lambda: dl_r14f2.try_ask_encoding(q, lj), lambda: dl_r14f2.try_ask_srs(q, path, lj), lambda: dl_r14f2.archive_ask(q, path, lj),
+                  lambda: dl_varmeta.try_ask(q, lj)):
         got_r14 = route()
         if got_r14:
             return dl_drill.done(got_r14)
@@ -1204,3 +1206,13 @@ def run(o, path, out, lj):
         for h in hits:
             lines.append(f"  {h[1]}{f' p{h[2]}' if h[2] else ''}:{h[3]}: {h[4]}")
     return dl_drill.done("\n".join(lines))
+
+
+_run_table_engine = run
+
+
+def run(o, path, out, lj):
+    """--ask with a guard (fix round 15): a clause of the question the engine did not apply is named under the answer, never dropped silently."""
+    import dl_r15f2
+    text, code = _run_table_engine(o, path, out, lj)
+    return (dl_r15f2.guard(o.ask.strip(), text) if code == 0 else text), code

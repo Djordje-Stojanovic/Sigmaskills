@@ -275,6 +275,8 @@ def look_sav(look):
             if v["slot"] in s.labels:
                 parts.append(f"{v['long']}: " + "; ".join(f"{a} = {short(b, 60)}" for a, b in s.decoded_labels(k)))
         look.line(f"Value labels ({labelled} variables, {nlab} labels): " + " | ".join(parts), 92, "structure")
+    import dl_varmeta   # fix round 15: print formats and value labels kept for --ask "format of variable X" / "value labels of X"
+    dl_varmeta.attach(look, dl_varmeta.sav_meta(s), labels=False)
     if s.docs:
         look.line("Documents: " + " | ".join(short(d, 100) for d in s.docs[:10]), 60, "structure")
     declared = [(k, v) for k, v in enumerate(s.vars) if v.get("miss_spec")]

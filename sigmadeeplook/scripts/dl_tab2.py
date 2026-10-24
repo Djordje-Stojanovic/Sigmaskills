@@ -174,6 +174,8 @@ def look_stata(look):
     if val:
         ex.append("Value labels: " + "; ".join(f"{k}: " + ", ".join(f"{a}={b}" for a, b in list(m.items())[:8]) for k, m in list(val.items())[:12]) + ".")
     _frame_look(look, "Stata", df, ex)
+    import dl_varmeta   # fix round 15: formats and value labels for --ask "format of variable X"
+    dl_varmeta.attach(look, dl_varmeta.stata_meta(r, vl, val, dl), labels=False)
     look.step("Stata header, labels and rows", "pandas")
 
 
@@ -251,10 +253,28 @@ def ask_frame(path, kind):
     return read_sas_frame(path)
 
 
+def sas_var_meta(look):
+    """Fix round 15: the dataset label and each variable's label, format and informat, read from the file's own bytes: printed small, kept in look.json for --ask.
+    -> the dataset label ('' when none)."""
+    import dl_varmeta
+    try:
+        meta = dl_varmeta.sas_meta(look.path) if getattr(look, "subtype", "") == "sas7bdat" else dl_varmeta.xpt_meta(look.path)
+    except Exception as e:   # a damaged file: named in the steps, the header line and the rows are what can be read
+        look.fail("SAS variable labels and formats", "stdlib", e)
+        meta = None
+    if not meta:
+        return ""
+    dl_varmeta.attach(look, meta)
+    return meta.get("label") or ""
+
+
 def look_sas7bdat(look):
+    label = sas_var_meta(look)
     head = sas_header_line(look) if getattr(look, "subtype", "") == "sas7bdat" else None
     if head:
-        look.line(head, 95, "structure")
+        look.line(head + (f" Dataset label: '{label}'." if label else ""), 95, "structure")
+    elif label:
+        look.line(f"SAS transport file. Dataset label: '{label}'.", 95, "structure")
     if not look.need_mod("pandas", "SAS file"):
         look.line("SAS data file; reading it needs pandas.")
         return
