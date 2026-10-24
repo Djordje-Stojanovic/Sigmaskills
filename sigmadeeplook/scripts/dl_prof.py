@@ -627,6 +627,10 @@ def ask_forms(look, entries, pri):
     forms = ([f'"how many {what} have {num.name} over N"'] if num else []) + ([f"\"how many {what} have {txt.name} = '<value>'\"", f'"{what} per {txt.name}"'] if txt else [])
     if big:   # fix round 14: the record with the extreme value, in the form --ask answers exactly
         forms.append(f'"which {big[0].name} has the largest {big[1].name}" (or smallest)')
+    cols0 = [f for f in entries[0][1].ordered() if "[]" not in f.name]
+    longf = next((f for f in cols0 if not f.numeric() and (f.len_hi or 0) >= 40 and entries[0][1].n >= 10 and f.distinct() > 0.5 * entries[0][1].n and SAFE_NAME.match(f.name)), None)
+    if longf and len(entries) == 1 and len(" or ".join(forms)) < 220:   # a free-text column: `--ask` counts by length too (fix round 14)
+        forms.append(f'"how many {what} have {longf.name} longer than 60 characters"')
     cols = tabs[0][4] if len(tabs) == 1 else " | ".join(f"{t[0]}: {t[4]}" for t in tabs)
     look.line("Ask a count: --ask " + (" or ".join(forms) if forms else f'"how many {what} have <column> over N"') + ("; name the table in the question" if len(tabs) > 1 else "")
               + f". Columns: {cols}.", pri, "locate")

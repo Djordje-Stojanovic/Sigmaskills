@@ -865,6 +865,10 @@ def text_sniff(p, h, ext, size):
     if cfg:
         return "data", "ini", cfg
     if ext not in (".md", ".rst", ".adoc", ".py", ".js", ".ts", ".sh", ".ps1", ".html", ".htm"):
+        import dl_r14   # fix round 14: a paged report in fixed-width columns (a rule line of dashes, or aligned lines) is a table
+        fw = dl_r14.fixed_table(text)
+        if fw:
+            return "data", "tsv", f"fixed-width text table ({fw.ncols} columns, {'rule line' if fw.kind == 'rule' else 'aligned lines'})"
         import dl_delim   # the same field count on almost every line, with a header: a delimited table, whatever the extension says
         lines = [x for x in s.splitlines()[:200] if x.strip()]
         if len(lines) >= 3:

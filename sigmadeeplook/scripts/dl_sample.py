@@ -52,7 +52,7 @@ def fetch(text, delim, n_cols, line_targets, idx_targets, line_off=0):
         if len(rec) != n_cols:
             continue
         i += 1
-        ln = rd.line_num + line_off
+        ln = line_off[rd.line_num - 1] if isinstance(line_off, list) and rd.line_num <= len(line_off) else rd.line_num + (0 if isinstance(line_off, list) else line_off)
         if ln in need_l:
             got[("line", ln)] = rec
             need_l.discard(ln)

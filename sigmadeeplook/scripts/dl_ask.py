@@ -80,6 +80,7 @@ class Table:
         self.ownw = [set(words(c.rsplit(".", 1)[-1])) for c in self.cols]   # the column's own name, without its ancestors' prefix
         self.namew = set(words(re.sub(r"\[\]", "", name).rsplit(".", 1)[-1]))   # a record set is named by its last path step
         self._num = {}
+        self.blen = {}   # column index -> [(bytes, characters)] per row, when the file stores the text differently from the cell (a .mo original keeps context and plural)
 
     def numeric(self, i):
         if i not in self._num:
@@ -261,9 +262,13 @@ def load_tables(path, out, lj, notes=None, hint=None):
         if facts.get("table_copy") and Path(facts["table_copy"]).exists():
             cols, rows, pos, _, tot = read_delimited(facts["table_copy"], ",", budget)
             tl = facts.get("table_lines")
-            if tl and tl[0] > 1:   # a table inside a text: the copy starts at the header row, so a copy line + (header line - 1) is the line of the original file
+            lm = None
+            if facts.get("table_linemap") and Path(facts["table_linemap"]).exists():   # a fixed-width table: the file's line of every table line
+                lm = json.loads(Path(facts["table_linemap"]).read_text(encoding="utf-8"))
+                pos = [lm[k - 1] if 0 < k <= len(lm) else k for k in pos]
+            elif tl and tl[0] > 1:   # a table inside a text: the copy starts at the header row, so a copy line + (header line - 1) is the line of the original file
                 pos = [k + tl[0] - 1 for k in pos]
-            tables.append(Table("the table", cols, rows, pos, "the table (normalised UTF-8 copy: decimal comma converted; line = line of the original file)" if tl else "the table (normalised UTF-8 copy: decimal comma converted)", "line", tot))
+            tables.append(Table("the table", cols, rows, pos, "the table (normalised UTF-8 copy: decimal comma converted; line = line of the original file)" if (tl or lm) else "the table (normalised UTF-8 copy: decimal comma converted)", "line", tot))
         elif inner in ("csv", "tsv", "psv", "delimited", "semicolon", "pipe") or (tp == "data" and inner in ("txt",)):
             cols, rows, pos, enc, tot = read_delimited(src, facts.get("delimiter"), budget)
             tables.append(Table("the table", cols, rows, pos, f"the file ({enc})", "line", tot))
@@ -333,7 +338,9 @@ def load_tables(path, out, lj, notes=None, hint=None):
         try:
             if p.name.startswith("asktable-") and p.suffix == ".json":
                 t = json.loads(p.read_text(encoding="utf-8"))
-                tables.append(Table(t["name"], t["cols"], [r[1] for r in t["rows"]], [r[0] for r in t["rows"]], t.get("where", "the file"), t.get("unit", "row"), t.get("total")))
+                tb = Table(t["name"], t["cols"], [r[1] for r in t["rows"]], [r[0] for r in t["rows"]], t.get("where", "the file"), t.get("unit", "row"), t.get("total"))
+                tb.blen = {int(k): v for k, v in (t.get("blen") or {}).items()}
+                tables.append(tb)
             elif p.suffix == ".csv" and p.name != "table.utf8.csv":
                 cols, rows, pos, _, tot = read_delimited(p, ",", budget)
                 tables.append(Table(p.stem, cols, rows, [k - 1 for k in pos], f"{p.name} (written by the look)", f"{p.stem[:-1] if p.stem.endswith('s') else p.stem} row", tot))
@@ -382,12 +389,12 @@ def ini_table(p):
     return Table("the settings", ["section", "key", "value"], rows, pos, "the file (line = where the key starts)", "line")
 
 
-def store_table(look, name, cols, rows, where="the file", unit="row", total=None):
+def store_table(look, name, cols, rows, where="the file", unit="row", total=None, blen=None):
     """Analysis side: keep one table for --ask (internal artifact, never printed). rows: [(position, [values])]. `total`: the rows the file
     holds when only the first `rows` were kept (the answer then says PARTIAL)."""
     k = len([a for a in look.artifacts if Path(a["path"]).name.startswith("asktable-")]) if hasattr(look, "artifacts") else 0
     p = look.path_for(f"asktable-{k + 1}.json")
-    p.write_text(json.dumps({"name": name, "cols": cols, "rows": rows, "where": where, "unit": unit, "total": total}, default=str), encoding="utf-8")
+    p.write_text(json.dumps({"name": name, "cols": cols, "rows": rows, "where": where, "unit": unit, "total": total, **({"blen": blen} if blen else {})}, default=str), encoding="utf-8")
     look.add(p, "internal", f"{name} as rows for --ask")
 
 
@@ -475,12 +482,23 @@ def key_candidates(q):
     return list(dict.fromkeys(x for x in out if x))
 
 
+ASIDE_LONG = re.compile(r"[(\[](?:[^()\[\]]*\s){3,}[^()\[\]]*[)\]]")   # a bracketed aside of four words or more
+UNIT_NOUNS = {"row", "record", "entry", "message", "case", "observation", "cue", "line", "item", "event", "packet", "slide", "page", "paragraph", "sentence", "string", "sample", "response", "respondent"}
+
+
+def unit_words(t):
+    """The words that name what the rows are (the table's unit and name, and the usual row nouns). A question that says 'how many messages' counts them; the word is no value."""
+    return {stem(w) for w in words(t.unit)} | t.namew | UNIT_NOUNS
+
+
 def match_values(t, q, blank=None):
     """(column, value) pairs whose value appears in the question as a whole word or phrase (text columns, 1..300 distinct values), and
     (column, value) pairs for the key-like strings of the question (quoted text, words with a digit; `blank` = the question with its
     comparisons cut out) that equal a cell of a text column: a record id, a code, a name, written with or without hyphens and in either script."""
-    ql = " " + re.sub(r"[^\w.@-]+", " ", q.lower()) + " "
+    ql = " " + re.sub(r"[^\w.@-]+", " ", ASIDE_LONG.sub(" ", q).lower()) + " "   # a long bracketed explanation ("(In the file, the context sits in front of the original text ...)") names no value
     out, keys, plain = [], None, None
+    unit_w = unit_words(t)
+    quoted = {m.group(2).strip().lower() for m in QUOTED_RE.finditer(q)}
     for i in range(len(t.cols)):
         if t.numeric(i):
             continue
@@ -502,6 +520,8 @@ def match_values(t, q, blank=None):
         for v in sorted(vals, key=len, reverse=True):
             vl = " " + re.sub(r"[^\w.@-]+", " ", v.lower()).strip() + " "
             if len(vl.strip()) >= 2 and vl in ql and v.lower() not in STOP and (i, v) not in out:
+                if set(words(v)) <= unit_w and v.lower() not in quoted:   # 'how many messages': the row noun, not the value 'Messages' of a text column
+                    continue
                 out.append((i, v))
     best = {}
     for i, v in out:   # one value may sit in several columns: keep the column whose name is also in the question, else all
@@ -697,6 +717,92 @@ def text_columns(t, pq):
     return named or text
 
 
+LEN_CMP = {"longer than": ">", "shorter than": "<", "more than": ">", "less than": "<", "fewer than": "<", "over": ">", "above": ">", "exceeding": ">", "under": "<", "below": "<",
+           "at least": ">=", "at most": "<=", "not more than": "<=", "not longer than": "<=", "up to": "<=", "no more than": "<=", "no longer than": "<=", "no fewer than": ">=", "no less than": ">="}
+LEN_UNIT = r"(?P<u>bytes?|characters?|chars?|letters?|symbols?)"
+LEN_A = re.compile(r"(?i)(?:\bof\s+)?\b(?P<c>" + "|".join(sorted((re.escape(k).replace(r"\ ", r"\s+") for k in LEN_CMP), key=len, reverse=True)) + r")\s+(?P<n>\d[\d,]*)\s*" + LEN_UNIT + r"\b(?:\s+(?:long|in\s+length|in\s+size))?")
+LEN_B = re.compile(r"(?i)\b(?P<n>\d[\d,]*)\s*" + LEN_UNIT + r"\s+(?:or\s+)?(?P<c>more|longer|fewer|less|shorter)\b|\b(?P<n2>\d[\d,]*)\s*\+\s*" + LEN_UNIT.replace("<u>", "<u2>"))
+
+
+def len_split(q):
+    """'... longer than 80 bytes ...' -> (the question without the clause, [(operator, N, 'bytes' or 'characters')]). A comparison with bytes counts as a text length only
+    when it says 'longer than' or 'shorter than': 'over 80 bytes' may name a size column. Characters, chars and letters are always a length."""
+    out = []
+
+    def one(m):
+        d = m.groupdict()
+        word = re.sub(r"\s+", " ", (d.get("c") or "").lower())
+        op = LEN_CMP.get(word) or {"more": ">=", "longer": ">=", "fewer": "<=", "less": "<=", "shorter": "<="}.get(word) or ">="
+        unit = (d.get("u") or d.get("u2") or "").lower()
+        n = d.get("n") or d.get("n2")
+        kind = "bytes" if unit.startswith("byte") else "characters"
+        if kind == "bytes" and op in (">", "<") and word not in ("longer than", "shorter than"):
+            return m.group(0)
+        out.append((op, int(n.replace(",", "")), kind))
+        return " "
+    q2 = LEN_B.sub(one, LEN_A.sub(one, q))
+    return q2, out
+
+
+HAVE_RE = re.compile(r"(?i)\b(?:have|has|having|with|carry|carries|contain|contains|containing|show|shows|include|includes|got|list|lists)\s+((?:an?|the|some|any|non[- ]empty|their|its)\s+)*([^?.;!]+)")
+HAVE_NOISE = {"form", "forms", "value", "values", "field", "entry", "entries", "text", "info", "information", "data", "content", "set", "defined", "given", "filled", "non", "empty",
+              "any", "some", "one", "least", "number", "kind", "type", "attached", "stored", "recorded", "listed"}
+ARE_RE = re.compile(r"(?i)\b(?:are|is|were|be)\s+(?:also\s+|currently\s+|marked\s+as\s+|flagged\s+as\s+|set\s+as\s+|labell?ed\s+)?([a-z][a-z-]*)\s*[?.!]?\s*$")
+BOOL_VALUES = {"yes", "no", "true", "false", "y", "n", "0", "1", "t", "f", "ja", "nein", "da", "ne"}
+
+
+def have_columns(t, pq, skip):
+    """'How many messages have a context (msgctxt)?' -> the text column(s) the phrase after have / has / with names, or []: the rows whose cell there is not empty.
+    Only when every content word of the phrase names a column (a '5 star rating' is no 'rating'), the column is not already a filter, and its values are not yes / no."""
+    m = HAVE_RE.search(pq["fq"])
+    arm = None if m else ARE_RE.search(pq["fq"])   # "how many messages are obsolete": a column of that name that is filled
+    if not m and not arm:
+        return []
+    raw = re.findall(r"[a-z0-9]+", AL.fold(m.group(2) if m else arm.group(1)))
+    if any(len(w) == 1 for w in raw[1:]):   # 'grade A', 'vitamin C': a letter names a value, not a column
+        return []
+    phrase = [stem(w) for w in raw]
+    stop = STOP | AL.compiled(pq["lang"])["stop"]
+    cont = [w for w in phrase if w not in stop and w not in HAVE_NOISE and w not in unit_words(t) and w not in FILLER]
+    if not cont or any(w.isdigit() for w in cont):
+        return []
+    best = None
+    for i in range(len(t.cols)):
+        if i in skip or not t.colw[i]:
+            continue
+        hit = t.colw[i] & set(cont)
+        if hit:
+            vals = {str(v).strip().lower() for v in t.values(i)[:2000] if str(v).strip()}
+            if vals and vals <= BOOL_VALUES:
+                continue
+            sc = (len(hit), -len(t.colw[i]), -i)
+            if best is None or sc > best[0]:
+                best = (sc, i)
+    if best is None:
+        return []
+    named = set().union(*[t.colw[best[1]]])
+    if any(w not in named and not any(w in t.colw[i] for i in range(len(t.cols))) for w in cont):
+        return []   # a word of the phrase names no column: a condition this table cannot apply
+    return [best[1]]
+
+
+def length_column(t, pq, rest_words):
+    """(column index, how it was chosen) for a length question: the text column the question names, else the text column with the longest cells."""
+    text = [i for i in range(len(t.cols)) if not t.numeric(i)]
+    if not text:
+        return None, ""
+    uw = unit_words(t)
+    ws = {w for w in rest_words if w not in uw}
+    scored = [(len(t.colw[i] & ws), -len(t.colw[i]), -i, i) for i in text if t.colw[i] & ws]
+    if scored:
+        return max(scored)[3], "the column the question names"
+
+    def mean_len(i):
+        v = [len(str(x)) for x in t.values(i)[:500] if str(x).strip()]
+        return sum(v) / len(v) if v else 0
+    return max(text, key=lambda i: (mean_len(i), -i)), "the text column with the longest cells (the question names none)"
+
+
 def refusal(t, head, left):
     """A count that matched no filter: say so, list what `--ask` can do on this table, and give no figure."""
     cols = ", ".join(t.cols[:12]) + (f", ... ({len(t.cols)} columns)" if len(t.cols) > 12 else "")
@@ -755,6 +861,27 @@ def answer(t, pq, q, vals, keys=None):
                         + (f"column {t.cols[cols[0]]}" if len(cols) == 1 else f"any of the {len(cols)} text columns"))
         else:
             unmatched.append(f"the word {tf['needle']!r} (this table has no text column)")
+    for op, n, kind in pq.get("lens") or []:
+        ci, why = length_column(t, pq, {w for w in words(re.sub(r"\([^()]*\)", " ", pq["fq"])) if w not in STOP})
+        if ci is None:
+            unmatched.append(f"a length condition ({op} {n} {kind}; this table has no text column)")
+            continue
+        sizes = t.blen.get(ci) if kind == "bytes" else None
+        stored = sizes is not None
+        f = {">": lambda a: a > n, ">=": lambda a: a >= n, "<": lambda a: a < n, "<=": lambda a: a <= n}[op]
+        alone = ""
+        if stored:
+            n_alone = sum(1 for k in keep if f(len(str(t.rows[k][ci]).encode("utf-8"))))   # the text alone, for the reader who meant that
+            keep = [k for k in keep if k < len(sizes) and f(sizes[k][0])]
+            alone = f"; counting the text alone (no context, no plural) it would be {n_alone:,}" if n_alone != len(keep) else ""
+        else:
+            keep = [k for k in keep if f(len(str(t.rows[k][ci]).encode("utf-8")) if kind == "bytes" else len(str(t.rows[k][ci])))]
+        filt.append(f"length of {t.cols[ci]} in {kind} {op} {n} (" + ("as the file stores it: context, original text and plural original, one byte for each separator; " if stored else "UTF-8 bytes of the text; " if kind == "bytes" else "")
+                    + f"column chosen: {why}{alone})")
+    if not unmatched and not filt and not pq["cmps"] and not (pq.get("lens") or []) and not tf:
+        for ci in have_columns(t, pq, fcols):
+            keep = [k for k in keep if ci < len(t.rows[k]) and str(t.rows[k][ci]).strip() != ""]
+            filt.append(f"{t.cols[ci]} is not empty")
     measure = pick_measure(t, pq, exclude={group})
     for op, val, at in pq["cmps"]:
         before = re.findall(r"[^\W_]+", pq["fq"][:at])
@@ -971,8 +1098,10 @@ def run(o, path, out, lj):
             return dl_drill.done(got_r14)
     tf = contains_filter(q)
     qe = tf["rest"] if tf else q   # a "contain the word X" clause is a filter of its own: its words are not table or column words
+    qe, lens = len_split(qe)       # "longer than 80 bytes": a length filter of its own (fix round 14)
     pq = parse(qe)
     pq["contains"] = tf
+    pq["lens"] = lens
     lines = [f"--ask {q!r}", f"Read as: operation {', '.join(pq['ops']) or 'lookup'}; words {', '.join(pq['words']) or '(none)'}"
              + (f"; group by {', '.join(pq['group'])}" if pq["group"] else "") + (f"; comparisons {', '.join(f'{a} {P.fmt(b)}' for a, b, _ in pq['cmps'])}" if pq["cmps"] else "") + f"; language {pq['lang']}"]
     import dl_wordcount   # fix round 11: "how many times does the word X appear" is counted over the whole text, not over a table
