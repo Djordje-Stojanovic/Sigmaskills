@@ -973,14 +973,14 @@ def archive_contents(look, members, fmt):
             tree.add(name, size, text)
     finally:
         close()
-    import dl_r14   # fix round 14: a text member up to 4 KB is quoted (a checksum list gets room for its hash lines); a short archive quotes every small member
+    import dl_r14f2   # fix round 14: a text member up to 4 KB is quoted (a checksum list gets room for its hash lines); a short archive quotes every small member
     quoted = 0
     for n, t in list(small.items())[:60]:
         if not t.strip():
             continue
-        if len(t) > SMALL_NOTE and not dl_r14.is_checksum_member(n, t) and (len(files) > 30 or quoted >= dl_r14.SMALL_MEMBERS):
+        if len(t) > SMALL_NOTE and not dl_r14f2.is_checksum_member(n, t) and (len(files) > 30 or quoted >= dl_r14f2.SMALL_MEMBERS):
             continue
-        text_line, check = dl_r14.quote_member(n, t, SMALL_NOTE)
+        text_line, check = dl_r14f2.quote_member(n, t, SMALL_NOTE)
         if len(t) > SMALL_NOTE:
             quoted += 1
         look.line(text_line, 75 if check else 64, "small")

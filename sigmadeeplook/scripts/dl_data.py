@@ -776,8 +776,8 @@ def data_sqlite(look):
                 orphans = None
         import dl_r13   # fix round 13: the rows of gpkg_contents (feature layers, attribute tables)
         gpkg = dl_r13.gpkg_rows(con) if "gpkg_contents" in tabs else None
-        import dl_r14   # fix round 14: the spatial reference system of the feature layers
-        gpkg_srs = dl_r14.gpkg_srs_line(dl_r14.gpkg_layers(con)) if gpkg and "gpkg_geometry_columns" in tabs else None
+        import dl_r14f2   # fix round 14: the spatial reference system of the feature layers
+        gpkg_srs = dl_r14f2.gpkg_srs_line(dl_r14f2.gpkg_layers(con)) if gpkg and "gpkg_geometry_columns" in tabs else None
         # freshness: the oldest and newest value of a time-like column in the biggest tables
         fresh = []
         deadline[0] = time.time() + 4.0

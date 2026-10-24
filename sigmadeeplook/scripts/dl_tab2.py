@@ -185,7 +185,7 @@ def sas_header(head):
     Offsets after byte 164 move by 4 when byte 35 is 0x33, and those after 204 by 4 more when byte 32 is 0x33 (the 64-bit layout)."""
     import datetime
 
-    import dl_r14
+    import dl_r14f2
     if len(head) < 288 or head[:32] != SAS_MAGIC:
         return None
     a1, a2 = 4 if head[35] == 0x33 else 0, 4 if head[32] == 0x33 else 0
@@ -206,7 +206,7 @@ def sas_header(head):
             "header": struct.unpack_from(e + "i", head, 196 + a1)[0], "page": struct.unpack_from(e + "i", head, 200 + a1)[0],
             "pages": struct.unpack_from(e + ("q" if a2 else "i"), head, 204 + a1)[0], "release": text(216 + a1 + a2, 8), "host": text(224 + a1 + a2, 16),
             "bits": 64 if a2 else 32, "endian": "little" if e == "<" else "big", "os": {ord("1"): "unix", ord("2"): "windows"}.get(head[39], "?"),
-            "encoding": dl_r14.sas_encoding(head[70])}
+            "encoding": dl_r14f2.sas_encoding(head[70])}
 
 
 def sas_header_line(look):
