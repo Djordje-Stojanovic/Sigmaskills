@@ -100,7 +100,7 @@ class TextRecords(R11Base):
         self.assertIn("МЗ-0001 .. МЗ-0070", ln)
         self.assertIn("--ask", ln)
         ans = self.ask(p, "What volume in litres (Об'єм, л) is recorded for the record МЗ-0038? One decimal.")
-        self.assertIn(f"{milk_volume(38):.1f}", ans)
+        self.assertIn(f"{milk_volume(38):.1f}".replace(".", ","), ans)   # the decimal comma comes back as the file writes it (fix round 15)
         self.assertNotIn("matching rows", ans.replace("1 matching row", ""), "one record, not a list")
 
     def test_the_record_id_without_a_hyphen_or_in_latin_letters_still_hits_one_row(self):
@@ -108,7 +108,7 @@ class TextRecords(R11Base):
         p.write_bytes(milk_txt(70))
         self.prints(p)
         ans = self.ask(p, "Об'єм, л of the record mz0007")
-        self.assertIn(f"{milk_volume(7):.1f}", ans)
+        self.assertIn(f"{milk_volume(7):.1f}".replace(".", ","), ans)   # the decimal comma comes back as the file writes it (fix round 15)
 
 
 # ------------------------------------------------------------------ gettext .mo and .po

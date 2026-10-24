@@ -80,11 +80,14 @@ class Table:
         self.ownw = [set(words(c.rsplit(".", 1)[-1])) for c in self.cols]   # the column's own name, without its ancestors' prefix
         self.namew = set(words(re.sub(r"\[\]", "", name).rsplit(".", 1)[-1]))   # a record set is named by its last path step
         self._num = {}
+        self.deccomma = set()   # column indexes written with a decimal comma in the file (the table holds them with a point)
+        self.miss = {}   # column index -> the codes the file declares missing (SPSS), with the count of cases that hold one
+        self.raw_missing = False
         self.blen = {}   # column index -> [(bytes, characters)] per row, when the file stores the text differently from the cell (a .mo original keeps context and plural)
 
     def numeric(self, i):
         if i not in self._num:
-            vals = [r[i] for r in self.rows[:5000] if i < len(r) and str(r[i]).strip() != ""]
+            vals = [r[i] for r in self.rows[:5000] if i < len(r) and r[i] is not None and str(r[i]).strip() != ""]   # a missing value (None) is no evidence either way
             self._num[i] = bool(vals) and sum(1 for v in vals if num(v) is not None) >= 0.9 * len(vals)
         return self._num[i]
 
@@ -248,7 +251,7 @@ def read_rows(name, cols, rows, total, where, unit, budget, hint):
     return Table(name, cols, out, pos, where, unit, cut if cut and cut > len(out) else None)
 
 
-def load_tables(path, out, lj, notes=None, hint=None):
+def load_tables(path, out, lj, notes=None, hint=None, raw_missing=False):
     """Every table the look can re-read exactly. Anything that could not be read whole or at all is added to `notes` (printed with the answer).
     `hint`: the row test of a pure lookup (see `wanted`), which lets a very big source be searched instead of held."""
     notes = notes if notes is not None else []
@@ -268,7 +271,9 @@ def load_tables(path, out, lj, notes=None, hint=None):
                 pos = [lm[k - 1] if 0 < k <= len(lm) else k for k in pos]
             elif tl and tl[0] > 1:   # a table inside a text: the copy starts at the header row, so a copy line + (header line - 1) is the line of the original file
                 pos = [k + tl[0] - 1 for k in pos]
+            dcn = set(facts.get("decimal_comma_columns") or [])
             tables.append(Table("the table", cols, rows, pos, "the table (normalised UTF-8 copy: decimal comma converted; line = line of the original file)" if (tl or lm) else "the table (normalised UTF-8 copy: decimal comma converted)", "line", tot))
+            tables[-1].deccomma = {j for j, c in enumerate(cols) if c in dcn}
         elif inner in ("csv", "tsv", "psv", "delimited", "semicolon", "pipe") or (tp == "data" and inner in ("txt",)):
             cols, rows, pos, enc, tot = read_delimited(src, facts.get("delimiter"), budget)
             tables.append(Table("the table", cols, rows, pos, f"the file ({enc})", "line", tot))
@@ -282,10 +287,12 @@ def load_tables(path, out, lj, notes=None, hint=None):
                 tables += json_sets(json.loads(text))
         elif inner == "sav":
             import dl_sav
-            got = dl_sav.ask_source(src)
+            got = dl_sav.ask_source(src, raw_missing)
             if got:
-                names, n, it = got
+                names, n, it, declared = got
                 tables.append(read_rows("SPSS cases", names, it, n, "the file", "case", budget, hint))
+                tables[-1].miss = {names.index(nm): m for nm, m in declared.items()}   # fix round 15: the codes the file declares missing
+                tables[-1].raw_missing = raw_missing
             else:
                 notes.append("The cases of this .sav file are ZLIB-compressed and not decoded: no table was built (the dictionary is in the look).")
         elif inner in ("sas7bdat", "sasxpt", "stata"):
@@ -296,7 +303,7 @@ def load_tables(path, out, lj, notes=None, hint=None):
                 df = None
                 notes.append(f"A table of this file could not be read for --ask ({type(e).__name__}: {str(e)[:150]}).")
             if df is not None:
-                tables.append(read_rows(f"{inner} table", [str(c) for c in df.columns], enumerate(df.itertuples(index=False, name=None), 1), len(df), "the file", "row", budget, hint))
+                tables.append(read_rows(f"{inner} table", [str(c) for c in df.columns], enumerate((tuple(None if (x != x) else x for x in r) for r in df.itertuples(index=False, name=None)), 1), len(df), "the file", "row", budget, hint))   # fix round 15: a missing value (NaN: SAS special missing .A-.Z, Stata extended missing .a-.z) is None, not a value
         elif inner == "sqlite":
             con = sqlite3.connect(f"file:{src}?mode=ro", uri=True)
             for (name,) in con.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").fetchall()[:50]:
@@ -409,7 +416,8 @@ APPEARS_QUOTED = re.compile(rf"\b(?:(?:does|do|did|is|are)\s+)?{_ART}(?:{_NOUN}\
 HOW_MANY = re.compile(r"\bhow\s+many\b|\bnumber\s+of\b|\bcount\b", re.I)
 COUNT_OF_TIMES = re.compile(r"\bhow\s+(?:many|often)\s+(?:times|occurrences|instances|mentions|appearances)\b|\bhow\s+often\b|\bnumber\s+of\s+(?:times|occurrences|instances|mentions|appearances)\b", re.I)
 CONTAINS_BARE = re.compile(rf"\b{_VERB}\s+{_ART}{_NOUN}\s+([^\s{_Q}?!,;:()]+)", re.I)
-IGNORE_CASE = re.compile(r"\b(?:ignor\w*\s+(?:the\s+)?case|case[- ]?insensitiv\w*|any\s+case|regardless\s+of\s+(?:the\s+)?case|in\s+any\s+capitali[sz]ation|(?:upper|lower)\s*(?:case)?\s+or\s+(?:upper|lower)\s*case)\b", re.I)
+import dl_r15   # fix round 15: the wordings that ignore case, a quoted word inside an aside, a number written with a comma
+IGNORE_CASE = dl_r15.IGNORE_CASE
 CASE_NOTE = re.compile(r"\(?\b(?:in\s+)?(?:lower|upper)\s*case\b\)?|\bcase[- ]?sensitiv\w*|\bas\s+written\b|\bexact(?:ly)?\s+as\s+(?:written|spelled)\b", re.I)
 
 
@@ -427,7 +435,7 @@ def contains_filter(q):
     if not m or not needle:
         return None
     nocase = bool(IGNORE_CASE.search(q))
-    rest = q[:m.start()] + " " + q[m.end():]
+    rest = dl_r15.drop_asideq(q[:m.start()] + " " + q[m.end():])   # "(forms such as 'latarni' do not count)": examples, never filters
     rest = CASE_NOTE.sub(" ", IGNORE_CASE.sub(" ", rest))
     return {"needle": needle, "nocase": nocase, "rest": rest}
 
@@ -446,10 +454,14 @@ def parse(q):
     lang = AL.detect(fq)
     L = AL.compiled(lang)
     cmps, blank = [], fq
+    cmp_read = {}   # comparison position -> (the number as the question wrote it with a comma, its other reading or None)
     for m in L["cmp"].finditer(fq):
         word, val = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
         op = L["cmpwords"].get(word) or {"=": "="}.get(word) or word
-        cmps.append((op, float(val.replace(",", "")), m.start()))
+        num_, alt_ = dl_r15.number_value(val)   # fix round 15: "22,50" is a decimal, "2,250" is thousands unless the table writes decimal commas
+        cmps.append((op, num_, m.start()))
+        if "," in val:
+            cmp_read[m.start()] = (val.strip().rstrip(","), alt_)
         blank = blank[:m.start()] + " " * (m.end() - m.start()) + blank[m.end():]   # "at most 5" is a comparison, not a request for the maximum
     ops = [name for name, rx in L["ops"] if rx.search(blank)]
     grp = L["group"].findall(blank)
@@ -458,7 +470,7 @@ def parse(q):
     ordn = re.search(r"\b(?:first|last|erste\w*|letzte\w*|prv\w+|poslednj\w+)\s+(\d+)\b", blank)
     onext = re.search(r"\b(?:first|last|erste\w*|letzte\w*|prv\w+|poslednj\w+)\s+([a-z]+)", blank)
     stop = STOP | L["stop"]
-    return {"blank": blank, "allw": set(words(blank)), "ops": ops, "group": [stem(g) for g in grp], "which": stem(which.group(1)) if which else None, "cmps": cmps, "lang": lang, "fq": fq,
+    return {"blank": blank, "allw": set(words(blank)), "ops": ops, "group": [stem(g) for g in grp], "which": stem(which.group(1)) if which else None, "cmps": cmps, "cmp_read": cmp_read, "lang": lang, "fq": fq,
             "order": order, "order_n": int(ordn.group(1)) if ordn else 1, "order_next": stem(onext.group(1)) if onext else None,
             "years": YEAR_RE.findall(q), "words": [w for w in words(q) if w not in stop and not w.isdigit()]}
 
@@ -686,17 +698,26 @@ def point_cols(t, pq, skip):
     return [i for sc, i in scored if sc == top][:3]
 
 
+def shown(t, ci, x):
+    """A cell as the file writes it: a number of a decimal-comma column keeps its comma (the table holds it with a point)."""
+    return str(x).replace(".", ",", 1) if ci in t.deccomma and re.fullmatch(r"-?\d+\.\d+", str(x)) else x
+
+
+def row_shown(t, k, width):
+    return "; ".join(f"{c} = {P.short(shown(t, i, x), width)}" for i, (c, x) in enumerate(zip(t.cols, t.rows[k])) if str(x).strip() != "")
+
+
 def point_answer(t, pq, keep, fcols, lines):
     """One record (or a few) asked for by its key: 'Answer: <column> = <value> (where <key column> = <key>; <unit> <position>)', then the record in full."""
     pc = point_cols(t, pq, fcols)
     if not pc:
         return None
-    said = "; ".join(f"{t.cols[c]} = {P.short(t.rows[k][c], 400)}" for k in keep for c in pc)
+    said = "; ".join(f"{t.cols[c]} = {P.short(shown(t, c, t.rows[k][c]), 400)}" for k in keep for c in pc)
     where = ", ".join(f"{t.cols[f]} = {P.short(t.rows[keep[0]][f], 40)}" for f in sorted(fcols))
     lines.insert(0, f"Answer: {said} (where {where}; {t.unit} {', '.join(str(t.pos[k]) for k in keep)})")
     lines.append(f"The {t.unit}(s) in full:")
     for k in keep:
-        lines.append(f"  {t.unit} {t.pos[k]}: " + "; ".join(f"{c} = {P.short(x, 400)}" for c, x in zip(t.cols, t.rows[k]) if str(x).strip() != ""))
+        lines.append(f"  {t.unit} {t.pos[k]}: " + row_shown(t, k, 400))
     return lines
 
 
@@ -851,12 +872,19 @@ def answer(t, pq, q, vals, keys=None):
             filt.append(f"{t.cols[ci]} = {lit} (the key column the look names)")
             fcols.add(ci)
     unmatched = []   # parts of the question that asked for a filter this table could not apply
+    case_note = None
     tf = pq.get("contains")
     if tf:
         cols = text_columns(t, pq)
         if cols:
             rx = needle_regex(tf["needle"], tf["nocase"])
+            before_text = keep
             keep = [k for k in keep if any(rx.search(str(t.rows[k][i])) for i in cols if i < len(t.rows[k]))]
+            if not tf["nocase"]:   # a case-sensitive reading never stands alone: the figure ignoring case is given too
+                rx_ic = needle_regex(tf["needle"], True)
+                n_ic = sum(1 for k in before_text if any(rx_ic.search(str(t.rows[k][i])) for i in cols if i < len(t.rows[k])))
+                if n_ic != len(keep):
+                    case_note = f"{len(keep):,} {t.unit}s contain it as written; {n_ic:,} ignoring case (the question did not say to ignore case)."
             filt.append(f"text contains the whole {'phrase' if len(tf['needle'].split()) > 1 else 'word'} {tf['needle']!r} ({'any case' if tf['nocase'] else 'case as written'}) in "
                         + (f"column {t.cols[cols[0]]}" if len(cols) == 1 else f"any of the {len(cols)} text columns"))
         else:
@@ -883,6 +911,7 @@ def answer(t, pq, q, vals, keys=None):
             keep = [k for k in keep if ci < len(t.rows[k]) and str(t.rows[k][ci]).strip() != ""]
             filt.append(f"{t.cols[ci]} is not empty")
     measure = pick_measure(t, pq, exclude={group})
+    cmp_cols = set()
     for op, val, at in pq["cmps"]:
         before = re.findall(r"[^\W_]+", pq["fq"][:at])
         ci = col_phrase(t, before)   # 'Petal_Length greater than 5': the column whose whole name stands before the comparison, not any column with 'length' in it
@@ -894,9 +923,17 @@ def answer(t, pq, q, vals, keys=None):
         if ci is None:
             unmatched.append(f"the comparison {op} {P.fmt(val)} (no column named)")
             continue
+        cmp_cols.add(ci)
+        said = pq.get("cmp_read", {}).get(at)
+        reading = ""
+        if said:   # a number written with a comma: the table's own way of writing decimals decides the ambiguous "2,250"
+            text, alt = said
+            if alt is not None and ci in t.deccomma:
+                val = alt
+            reading = f" (the question writes {text}: read as the {'decimal ' if (alt is not None and val == alt) or '.' in P.fmt(val) else 'number '}{P.fmt(val)}"                       + (f"; as thousands it would be {P.fmt(dl_r15.number_value(text)[0])}" if alt is not None and val == alt else f"; as a decimal it would be {P.fmt(alt)}" if alt is not None else "") + ")"
         f = {">": lambda a: a > val, ">=": lambda a: a >= val, "<": lambda a: a < val, "<=": lambda a: a <= val, "=": lambda a: a == val}[op]
         keep = [k for k in keep if (lambda x: x is not None and f(x))(num(t.rows[k][ci] if ci < len(t.rows[k]) else None))]
-        filt.append(f"{t.cols[ci]} {op} {P.fmt(val)}")
+        filt.append(f"{t.cols[ci]} {op} {P.fmt(val)}" + reading)
     for y in pq["years"]:
         dc = [i for i in range(len(t.cols)) if not t.numeric(i) and sum(1 for v in t.values(i)[:200] if DATE_VAL_RE.match(str(v))) >= 0.8 * min(200, len(t.rows))]
         if dc:
@@ -908,6 +945,13 @@ def answer(t, pq, q, vals, keys=None):
     head = f"Table: {t.name} ({len(t.rows):,} {t.unit}s, read from {t.where})"
     lines.append(head)
     lines.append("Filters: " + ("; ".join(filt) if filt else "none") + f" -> {len(keep):,} {t.unit}s")
+    if case_note:
+        lines.append(case_note)
+    if t.miss:   # fix round 15: what the answer did about the values the file declares missing
+        touched = set(cmp_cols) | ({measure} if measure is not None and set(ops) & {"sum", "mean", "max", "min", "distinct"} else set()) | ({group} if group is not None else set())
+        ml = dl_r15.missing_line(t, touched)
+        if ml:
+            lines.append(ml)
     if unmatched:   # the question asked for a filter this table cannot apply: no figure over the unfiltered rows may stand as the answer
         return refusal(t, head, unmatched)
 
@@ -1019,7 +1063,7 @@ def answer(t, pq, q, vals, keys=None):
         pick = keep[:n] if pq["order"] == "first" else keep[-n:]
         lines.insert(0, f"Answer: the {pq['order']} {n if n > 1 else ''}{' ' if n > 1 else ''}{t.unit}(s) in file order ({len(keep):,} after the filters), shown in full")
         for k in pick:
-            lines.append(f"  {t.unit} {t.pos[k]}: " + "; ".join(f"{c} = {P.short(x, 60)}" for c, x in zip(t.cols, t.rows[k]) if str(x).strip() != ""))
+            lines.append(f"  {t.unit} {t.pos[k]}: " + row_shown(t, k, 60))
         return lines
     # a lookup: the matching rows in full
     if not filt:
@@ -1030,7 +1074,7 @@ def answer(t, pq, q, vals, keys=None):
             return got
     lines.insert(0, f"Answer: {len(keep):,} matching {t.unit}(s)" + (", shown in full" if len(keep) <= 10 else ", the first 10 in full"))
     for k in keep[:10]:
-        lines.append(f"  {t.unit} {t.pos[k]}: " + "; ".join(f"{c} = {P.short(x, 60)}" for c, x in zip(t.cols, t.rows[k]) if str(x).strip() != ""))
+        lines.append(f"  {t.unit} {t.pos[k]}: " + row_shown(t, k, 60))
     return lines
 
 
@@ -1119,7 +1163,7 @@ def run(o, path, out, lj):
             cell = dl_netcdf.ask(src_, q)
         except (OSError, ValueError, struct.error, IndexError, KeyError) as e:   # a cut or damaged file: named, never a crash
             notes.append(f"The netCDF grid could not be read for --ask ({type(e).__name__}: {str(e)[:150]}).")
-    tables = [] if cell else load_tables(path, out, lj, notes, wanted(pq))
+    tables = [] if cell else load_tables(path, out, lj, notes, wanted(pq), dl_r15.wants_raw_missing(q))
     ranked = sorted(((score(t, pq, qe), t) for t in tables), key=lambda x: (-x[0][0], -len(x[1].rows)))
     got = cell or None
     lines += cell or []

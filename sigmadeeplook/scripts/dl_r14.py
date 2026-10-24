@@ -14,6 +14,7 @@ import re
 RULE = re.compile(r"^\s*(?:[-=_─━═]{2,}[ \t]+){2,}[-=_─━═]{2,}\s*$")
 PAGE_MARK = re.compile(r"(?i)^\s*(?:[-–—]\s*)?(?:(?:стр\w*|page|seite|str|strana|pagina|stranica|p)\.?\s*)?\d+\s*(?:из|of|von|/|od|z|av)\s*\d+\s*(?:[-–—])?\s*$"
                        r"|^\s*[-–—]\s*\d+\s*[-–—]\s*$|^\s*(?:стр\w*|page|seite|str|strana|pagina)\.?\s*\d+\s*$")
+PIPE_RULE = re.compile(r"^\s*[-=_─━═]{2,}(?:\s*[+|]\s*[-=_─━═]{2,}){2,}\s*$")   # fix round 15: '-------+--------+-----', columns between pipes
 MIN_ROWS = 5
 MIN_COLS = 3
 SHARE = 0.5            # the rows must be at least this share of the text's non-blank lines
@@ -25,6 +26,7 @@ class Fixed:
         self.header, self.rows, self.lines, self.spans = header, rows, lines, spans
         self.head_line, self.rule_line, self.pages, self.before, self.after, self.kind = head_line, rule_line, pages, before, after, kind
         self.ncols = len(header)
+        self.between, self.pipe = [], False   # section titles and subtotals between the blocks of rows; a table with pipes between the columns
 
     @property
     def tsv(self):
@@ -40,15 +42,28 @@ class Fixed:
         return [self.head_line] + self.lines
 
 
+def is_rule(line):
+    return bool(RULE.match(line) or PIPE_RULE.match(line))
+
+
 def rule_spans(line):
-    return [(m.start(), m.end()) for m in re.finditer(r"\S+", line)]
+    return [(m.start(), m.end()) for m in re.finditer(r"[-=_─━═]+" if PIPE_RULE.match(line) else r"\S+", line)]
 
 
-def fits(line, spans):
-    """The line has only spaces between the columns (the last column may run on)."""
+def fits(line, spans, pipe=False):
+    """The line has only spaces between the columns (the last column may run on). A pipe table: a pipe stands in every gap the line reaches, so a
+    subtotal line that runs through the columns is no row."""
+    reached = 0
     for (a, b), (c, d) in zip(spans, spans[1:]):
-        if line[b:c].strip():
+        gap = line[b:c]
+        if gap.strip(" |+"):
             return False
+        if pipe and len(line) > c:
+            if "|" not in gap:
+                return False
+            reached += 1
+    if pipe and reached < max(1, (len(spans) - 1) // 2):
+        return False
     return not line[:spans[0][0]].strip() if spans[0][0] else True
 
 
@@ -65,8 +80,8 @@ def blank(s):
 
 
 def ruled(lines):
-    """Tables whose columns a rule line of dashes marks. -> Fixed or None."""
-    rules = [i for i, ln in enumerate(lines) if RULE.match(ln.replace("\f", ""))]
+    """Tables whose columns a rule line of dashes marks (dashes split by spaces, or by '+' / '|' for a table with pipes between the columns). -> Fixed or None."""
+    rules = [i for i, ln in enumerate(lines) if is_rule(ln.replace("\f", ""))]
     if len(rules) < 1:
         return None
     sig = {}
@@ -76,10 +91,11 @@ def ruled(lines):
     spans = list(spans)
     if len(spans) < MIN_COLS:
         return None
+    pipe = bool(PIPE_RULE.match(lines[at[0]].replace("\f", "")))
     rows, rline, header, head_line, pages, first_rule = [], [], None, None, 0, at[0]
     for r in at:
         h = r - 1   # the header is the line right above the rule
-        if h < 0 or blank(lines[h]) or RULE.match(lines[h]):
+        if h < 0 or blank(lines[h]) or is_rule(lines[h]):
             continue
         names = cells(lines[h].replace("\f", ""), spans)
         if sum(1 for c in names if c) < max(2, len(spans) // 2):
@@ -90,7 +106,7 @@ def ruled(lines):
         k = r + 1
         while k < len(lines):
             ln = lines[k]
-            if blank(ln) or "\f" in ln or RULE.match(ln) or PAGE_MARK.match(ln) or not fits(ln, spans):
+            if blank(ln) or "\f" in ln or is_rule(ln) or PAGE_MARK.match(ln) or not fits(ln, spans, pipe):
                 break
             rows.append(cells(ln, spans))
             rline.append(k + 1)
@@ -105,7 +121,13 @@ def ruled(lines):
     last_row = rline[-1] - 1
     after = [(i + 1, lines[i].replace("\f", "").strip()) for i in range(last_row + 1, len(lines)) if not blank(lines[i]) and not PAGE_MARK.match(lines[i])]
     header = [h or f"column {i + 1}" for i, h in enumerate(header)]
-    return Fixed(header, rows, rline, spans, head_line, first_rule + 1, pages, before, after, "rule")
+    fw = Fixed(header, rows, rline, spans, head_line, first_rule + 1, pages, before, after, "rule")
+    if pipe:
+        skip = set(rline) | {r + 1 for r in at} | {r for r in at}   # 1-based file lines of the rows, the rule lines and the header lines above them
+        fw.between = [(i + 1, lines[i].replace("\f", "").strip()) for i in range(first_h + 1, last_row + 1)
+                      if not blank(lines[i]) and (i + 1) not in skip and not PAGE_MARK.match(lines[i])]   # section titles and subtotals between the blocks of rows
+        fw.pipe = True
+    return fw
 
 
 def aligned(lines):
@@ -174,15 +196,18 @@ def describe(fw, cap=60):
     """The lines that say how the table was read, and the lines around it (title block above, totals below), as (priority, section, text)."""
     nl = chr(10)
     out = []
-    pg = f"{fw.pages} pages (the title block, header and rule line repeat on each and are left out of the rows)" if fw.pages > 1 else "1 page"
+    unit = "sections" if fw.pipe else "pages"
+    pg = f"{fw.pages} {unit} (the title block, header and rule line repeat on each and are left out of the rows)" if fw.pages > 1 else "1 page"
     how = f"rule line {fw.rule_line} marks the columns" if fw.kind == "rule" else "the columns line up (no rule line)"
     out.append((95, "structure", f"Fixed-width table: header at line {fw.head_line}, {how}; {fw.ncols} columns, {len(fw.rows):,} rows over {pg}; page markers and form feeds left out. "
                                   f"Rows, columns and counts below are the table's; the lines around it are printed whole."))
 
-    def show(items):
+    def show(items, cap=cap):
         return nl.join(f"{i}: {t[:240]}" for i, t in items[:cap]) + (f"{nl}... {len(items) - cap} more lines" if len(items) > cap else "")
     if fw.after:
         out.append((94, "tail", f"Lines after the table ({len(fw.after)} non-blank; totals and notes as the file states them):{nl}" + show(fw.after)))
+    if fw.between:
+        out.append((91, "structure", f"Lines between the blocks of rows ({len(fw.between)} non-blank: section titles and subtotals as the file states them, left out of the rows):{nl}" + show(fw.between, 12)))
     if fw.before:
         out.append((92, "structure", f"Lines before the table ({len(fw.before)} non-blank; title block of the first page):{nl}" + show(fw.before)))
     return out
