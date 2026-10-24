@@ -28,6 +28,12 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook` fix round 15, lane F2 (two causes of held-out set 14):
+  - Labels and formats: a SAS file (sas7bdat or XPORT) now prints its dataset label and, for each variable, the label, the format (name, width, decimals) and the informat. The file's own bytes are read, so no extra package is needed. `--ask "dataset label"`, `"label of variable X"`, `"format of variable X"`, `"which variables have a date format"` and `"value labels of X"` answer exactly. SPSS and Stata files get the same format and value-label answers.
+  - A clause the engine cannot apply is no longer dropped silently. When a question holds "values declared missing do not count", "whole word, any capitalisation", "greater than 22,50", "between 3 and 7", "after 2024-05-01" or "excluding Berlin" and no filter shows it, the number is still given and a `Not applied:` line follows it.
+
 ## [0.16.11] — 2026-10-24
 
 ### Fixed
