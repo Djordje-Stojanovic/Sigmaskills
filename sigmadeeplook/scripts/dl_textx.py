@@ -269,6 +269,13 @@ GRID_RE = re.compile(r"^\s*\+[-=+]{3,}\+\s*$")
 SIMPLE_RE = re.compile(r"^\s*={2,}(\s+={2,})+\s*$")
 CODE_DIRECTIVES = {"code-block", "code", "sourcecode", "highlight-block", "doctest", "testcode", "ipython"}
 TABLE_DIRECTIVES = {"list-table", "csv-table", "table", "flat-table"}
+RST_TARGET_RE = re.compile(r"^\.\.\s+_(?!_)(?:`([^`]+)`|((?:\\.|[^:\\`])+)):(?:\s|$)")   # `.. _label:` and `.. _`a label`:`; `.. __:` is anonymous, it has no label
+
+
+def rst_target(s):
+    """The label of an explicit target line (`.. _label: url`), or None. s: the line, stripped."""
+    m = RST_TARGET_RE.match(s)
+    return (m.group(1) or m.group(2)).strip() if m else None
 
 
 def rst_structure(lines, heads):
@@ -316,7 +323,7 @@ def rst_structure(lines, heads):
             out["footnotes"] += 1
         elif re.match(r"^\.\.\s+\[[A-Za-z][\w.-]*\]", s):
             out["citations"] += 1
-        elif re.match(r"^\.\.\s+_[^:]+:", s):
+        elif rst_target(s):
             out["targets"] += 1
         elif re.match(r"^\.\.\s+\|[^|]+\|", s):
             out["substitutions"] += 1

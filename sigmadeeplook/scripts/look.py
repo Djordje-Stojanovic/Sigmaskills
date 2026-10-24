@@ -67,6 +67,10 @@ def analyse(path, out, opts, sha=None, depth=0):
         __import__("dl_wordcount").vocab_line(look)
     except Exception as e:
         look.fail("capitalised words", "stdlib", e)
+    try:   # fix round 13: where a reader learns that --ask counts a word in a document
+        __import__("dl_r13").word_pointer(look)
+    except Exception as e:
+        look.fail("word count pointer", "stdlib", e)
     try:   # fix round 11: the counts a container's own header declares (cabinet folders, zip end record, OLE layout)
         __import__("dl_cont").header_facts(look)
     except Exception as e:

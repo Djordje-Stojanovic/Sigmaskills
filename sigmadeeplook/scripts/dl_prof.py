@@ -796,6 +796,8 @@ def text_profile(look, text, pri=90, kind="Text"):
     if dates:
         look.line(f"Dates in the text: {len(dates)} distinct, earliest {dates[0]}, latest {dates[-1]}" + (f"; all: {', '.join(dates)}" if len(dates) <= 30 else ""), pri - 30)
     kv_numbers(look, lines, pri - 28)
+    import dl_r13   # fix round 13: count, first and last link definition / anchor / label
+    dl_r13.anchor_line(look, dl_textx.lines_of(text), pri - 5)
     return heads
 
 
@@ -988,10 +990,12 @@ def walk_stats(v):
     arrays = []
     leaves = []
     stack = [(v, "", 0)]
-    maxd = 0
+    maxd = nest = 0
     while stack:
         x, path, d = stack.pop()
         maxd = max(maxd, d)
+        if isinstance(x, (dict, list)):
+            nest = max(nest, d + 1)   # levels of objects and arrays: the top-level container is level 1
         if isinstance(x, dict):
             st["objects"] += 1
             st["keys"] += len(x)
@@ -1011,6 +1015,7 @@ def walk_stats(v):
             if len(leaves) < 20000:
                 leaves.append((path or "(value)", x))
     st["max depth"] = maxd
+    st["nest depth"] = nest
     return st, arrays, leaves
 
 
@@ -1053,7 +1058,7 @@ def doc_profile(look, v, what, pri=92):
     top = type(v).__name__
     pairs = [("top level", f"{'object' if top == 'dict' else 'array' if top == 'list' else top}" + (f" of {len(v)} {'keys' if isinstance(v, dict) else 'items'}" if isinstance(v, (dict, list)) else "")),
              ("objects", st["objects"]), ("arrays", st["arrays"]), ("array items", st["array items"]), ("keys", st["keys"]),
-             ("strings", st["strings"]), ("numbers", st["numbers"]), ("booleans", st["booleans"]), ("nulls", st["null"]), ("max depth", st["max depth"])]
+             ("strings", st["strings"]), ("numbers", st["numbers"]), ("booleans", st["booleans"]), ("nulls", st["null"]), ("max nesting depth (top level = 1)", st["nest depth"])]
     counts(look, pairs, pri + 2, f"{what} counts")
     if isinstance(v, dict):
         scal = [(k, x) for k, x in v.items() if not isinstance(x, (dict, list))]
