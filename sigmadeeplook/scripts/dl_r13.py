@@ -294,22 +294,18 @@ def answer(q, lj):
 
 # ---------------------------------------------------------------- the word-count pointer
 def word_pointer(look, pri=89):
-    """'Ask a word count: --ask "on how many <unit> does the word 'X' appear" ...': a reader of step 1 learns that `--ask` counts a word in a document."""
+    """'Ask a word count: --ask "on how many <unit> does the word 'X' appear" ...': a reader of step 1 learns that `--ask` counts a word in a document.
+    Subtitle files have it already, in their `Find one record` line ("how many cues contain the word 'X'")."""
     import dl_wordcount as W
     unit = None
     if look.type in W.DOC_TYPES:
         names = {Path(a["path"]).name for a in look.artifacts if a.get("kind") == "text"}
         unit = "slides" if "slides.md" in names else ("pages" if look.type == "pdf" else "paragraphs") if "text.md" in names else None
-    elif look.type == "subtitle":
-        unit = "cues"
     elif Path(look.path).suffix.lower() in W.PLAIN and look.type != "data" and not getattr(look, "ask_forms_done", False):
         unit = "paragraphs"
     if not unit:
         return
-    if unit == "cues":
-        look.line("Ask a word count: --ask \"how many cues contain the word 'X'\" (whole word, case as written; add \"ignoring case\" to ignore it).", pri, "locate")
-    else:
-        look.line(f"Ask a word count: --ask \"on how many {unit} does the word 'X' appear\" (whole word, capitals as written); \"how many times does the word 'X' appear\" counts occurrences.", pri, "locate")
+    look.line(f"Ask a word count: --ask \"on how many {unit} does the word 'X' appear\" (whole word, capitals as written); \"how many times does the word 'X' appear\" counts occurrences.", pri, "locate")
 
 
 # ---------------------------------------------------------------- GeoPackage

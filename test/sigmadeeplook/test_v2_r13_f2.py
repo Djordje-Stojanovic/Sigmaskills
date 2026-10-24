@@ -288,8 +288,10 @@ class WordCountPointer(Base):
             p = self.tmp / f"talk.{kind}"
             p.write_bytes(data)
             with self.subTest(kind=kind):
-                ln, q = fill(self.step1(p), "riego")
-                self.assertIn("cues", ln)
+                step1 = self.step1(p)       # the pointer sits in the Find one record line of a subtitle file
+                m = re.search(r"\"(how many cues contain the word 'X'[^\"]*)\"", step1)
+                self.assertIsNotNone(m, step1[:2500])
+                q = m.group(1).replace("X", "riego")
                 want = sum(1 for *_, ls, _ in cs if any(re.search(r"(?<!\w)riego(?!\w)", x) for x in ls))
                 self.assertGreater(want, 0)
                 self.assertRegex(self.raw(p, q), rf"Answer: {want} cue")
