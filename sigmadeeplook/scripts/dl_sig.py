@@ -53,6 +53,9 @@ def pixel_facts(look, w, h, rgb, alpha=None, pri=87, source=""):
     P.counts(look, [("pixels", n), ("distinct colours", int(distinct))], pri + 8, "Picture counts")
     tops = ", ".join(f"{_hex(v >> 16, (v >> 8) & 255, v & 255)} {100.0 * k / n:.1f} % ({k:,})" for v, k in top)
     look.line(f"Pixels (every one of the {w} x {h} = {n:,} read{'; ' + source if source else ''}): {distinct:,} distinct colours; most frequent: {tops}; mean colour {_hex(*(int(round(m)) for m in mean))}.", pri, "pixels")
+    if distinct <= 256 and top:   # fix round 14: a palette-like picture: the exact count of any colour is one --ask away
+        r0, g0, b0 = top[0][0] >> 16, (top[0][0] >> 8) & 255, top[0][0] & 255
+        look.line(f'Ask a colour count: --ask "how many pixels have colour RGB ({r0}, {g0}, {b0})" (also {_hex(r0, g0, b0)} or palette index N; "colour table" lists all {distinct} colours with counts).', pri + 1, "pixels")
     if alpha is not None:
         z = sum(1 for v in alpha if v == 0) if np is None else int((np.frombuffer(alpha, dtype=np.uint8) == 0).sum())
         look.line(f"Transparency: {z:,} of {n:,} pixels fully transparent ({100.0 * z / n:.1f} %).", pri - 1, "pixels")

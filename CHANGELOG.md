@@ -28,6 +28,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook` fix round 14, lane F2 (four causes of held-out set 13):
+  - SAS code page: the print of a `.sas7bdat` gives the encoding name and the Windows code page, not only the number (`text encoding windows-1254 (code page 1254, Turkish), SAS code 64`). `--ask "which code page"` or `"which encoding"` answers it. Codes that have no Windows page (latin1, utf-8) say so.
+  - Colour counts on palette pictures: `--ask "how many pixels have exactly the colour RGB (30, 170, 180)"` counts every pixel of the picture. It was read as pixel x=30, y=170 before. It also takes `#1eaab4` and `palette index 8`, answers with the count and the share of all pixels, and `--ask "colour table"` lists up to 256 colours with exact counts. Step 1 of a picture with up to 256 colours has an `Ask a colour count:` line. A PCX with 2 to 8 colour planes (the 16-colour EGA layout) is decoded without Pillow.
+  - GeoPackage: step 1 has a `Feature layers` line with the geometry type, the srs id, the authority code and name, and the extent of each layer. `--ask "which EPSG code do the feature layers use"` answers it. The `Ask a count:` line of a table with a unique key and a number column now shows `which <key> has the largest <number>` (or smallest), and `--ask` answers that form with the key value. Before, a key written with an underscore (`parcel_no`) did not name its column.
+  - Cabinets and zips: the print quotes small text members up to 4 KB, and a checksum list gets room for its hash lines. `--ask "line of <member> for <word>"`, `"what does <member> say about <word>"` and hash or checksum questions show the matching lines of the right member. A cabinet is read without 7-Zip when its folders are stored or MSZIP; an LZX or Quantum folder is named as not decoded, never guessed.
+
 ## [0.16.10] — 2026-10-24
 
 ### Fixed

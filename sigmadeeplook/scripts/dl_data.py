@@ -776,6 +776,8 @@ def data_sqlite(look):
                 orphans = None
         import dl_r13   # fix round 13: the rows of gpkg_contents (feature layers, attribute tables)
         gpkg = dl_r13.gpkg_rows(con) if "gpkg_contents" in tabs else None
+        import dl_r14   # fix round 14: the spatial reference system of the feature layers
+        gpkg_srs = dl_r14.gpkg_srs_line(dl_r14.gpkg_layers(con)) if gpkg and "gpkg_geometry_columns" in tabs else None
         # freshness: the oldest and newest value of a time-like column in the biggest tables
         fresh = []
         deadline[0] = time.time() + 4.0
@@ -806,6 +808,8 @@ def data_sqlite(look):
         look.line("Rows per table, the smaller ones: " + "; ".join(f"{t} {i['rows']:,}" if i["rows"] is not None else f"{t} ?" for t, i in ranked[14:]) + ".", 83)
     if gpkg:
         look.line(dl_r13.gpkg_line(gpkg), 89, "structure")
+    if gpkg_srs:
+        look.line(gpkg_srs, 89, "structure")
     look.line("Columns of the biggest: " + " | ".join(f"{t}: " + ", ".join(f"{c[0]} {c[1] or '?'}" + (" PK" if c[2] else "") for c in i["columns"][:6]) + (f" +{len(i['columns']) - 6}" if len(i["columns"]) > 6 else "") for t, i in top[:3]), 80)
     blobs = [f"{t}.{c[0]}" for t, i in info.items() for c in i["columns"] if (c[1] or "").upper() == "BLOB"]
     if blobs:

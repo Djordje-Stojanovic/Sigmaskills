@@ -564,6 +564,11 @@ def pick_measure(t, pq, exclude=()):
             sc = len(t.colw[i] & set(pq["words"])) / len(t.colw[i])
             if best is None or sc > best[0]:
                 best = (sc, i)
+    if best is None:   # a column named like an operation word (total, count, average): "which ticket_no has the largest total"
+        for w in words(pq["blank"]):
+            i = next((k for k in range(len(t.cols)) if t.colw[k] == {w} and t.numeric(k) and k not in exclude), None)
+            if i is not None:
+                return i   # the question writes the column's whole name: nothing else in it can name another measure
     return best[1] if best and measure_ok(t, pq, best[1]) else None
 
 
@@ -713,6 +718,9 @@ def answer(t, pq, q, vals, keys=None):
         gi = col_for(t, g, False) if g else None
         if gi is None and g:
             gi = col_for(t, g)
+        if gi is None and g and len(words(g)) > 1:   # "which parcel_no ...": a column written with a separator is one name of several words
+            gi = col_phrase(t, words(g), False)
+            gi = col_phrase(t, words(g), True) if gi is None else gi
         if gi is not None:
             group = gi
             break
@@ -948,10 +956,19 @@ def run(o, path, out, lj):
     q = o.ask.strip()
     if not q:
         return dl_drill.refuse("--ask needs a question.")
+    import dl_colour   # fix round 14: "how many pixels have the colour RGB (r, g, b)" is a colour count over the whole picture, not a pixel position
+    got_px = dl_colour.try_ask(q, path, lj, getattr(o, "no_tools", False))
+    if got_px:
+        return dl_drill.done(got_px)
     import dl_pixel   # a pixel of a still picture ("pixel x,y"): its own exact answer
     got_px = dl_pixel.try_ask(q, path, lj, getattr(o, "no_tools", False))
     if got_px:
         return dl_drill.done(got_px)
+    import dl_r14   # fix round 14: a declared code page, the spatial reference system of a GeoPackage, a line of a small text member of an archive
+    for route in (lambda: dl_r14.try_ask_encoding(q, lj), lambda: dl_r14.try_ask_srs(q, path, lj), lambda: dl_r14.archive_ask(q, path, lj)):
+        got_r14 = route()
+        if got_r14:
+            return dl_drill.done(got_r14)
     tf = contains_filter(q)
     qe = tf["rest"] if tf else q   # a "contain the word X" clause is a filter of its own: its words are not table or column words
     pq = parse(qe)
