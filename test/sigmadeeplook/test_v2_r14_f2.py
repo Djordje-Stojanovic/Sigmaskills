@@ -510,5 +510,25 @@ class ArchiveTextMembers(Base):
         self.assertNotIn("\x00\x01\x02", both)
 
 
+class StoredLookFromOlderScripts(Base):
+    """A look stored by other scripts is not served again: after an upgrade the same file gets the new print and the new answers (the real t10 file
+    was served its old `encoding code 64` line from a stored look)."""
+
+    def test_a_stored_look_of_another_engine_is_rebuilt(self):
+        import json
+        p = self.tmp / "stale.sas7bdat"
+        p.write_bytes(sas_file(64))
+        self.step1(p)
+        stored = self.out_of(p) / "look.json"
+        j = json.loads(stored.read_text(encoding="utf-8"))
+        self.assertTrue(j.get("engine"), "a stored look names the scripts that wrote it")
+        j["engine"] = "other-scripts"
+        stored.write_text(json.dumps(j), encoding="utf-8")
+        (self.out_of(p) / "LOOK.md").write_text("old print: encoding code 64\n", encoding="utf-8")
+        out = self.raw(p, "Which Windows code page does the file declare?")   # no --fresh
+        self.assertIn("1254", self.answer(out))
+        self.assertNotEqual(json.loads(stored.read_text(encoding="utf-8"))["engine"], "other-scripts")
+
+
 if __name__ == "__main__":
     unittest.main()
