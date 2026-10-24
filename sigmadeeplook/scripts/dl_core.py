@@ -1142,7 +1142,7 @@ class Look:
             "tier": self.tier(), "level": self.tier_name, "stream": self.stream,
             "elapsed_s": round(time.time() - self.t0, 2), "exit": self.exit_code,
             "network_attempts": network_attempts(), "exec_log": self.exec_log, "reader": self.reader["name"],
-            "opts_key": opts_key(self.opts), "mode": getattr(self.opts, "mode", "overview"),
+            "opts_key": opts_key(self.opts), "engine": engine_key(), "mode": getattr(self.opts, "mode", "overview"),
         }
 
     def finish(self):
@@ -1170,6 +1170,22 @@ def tier_of(o):
     if getattr(o, "quick", False):
         return "quick"
     return "deep" if getattr(o, "deep", False) else "standard"
+
+
+_ENGINE = []
+
+
+def engine_key():
+    """A fingerprint of the scripts that wrote a look (their bytes). A stored look from other scripts is not reused: an upgrade must not serve the old print."""
+    if not _ENGINE:
+        h = hashlib.sha1()
+        for f in sorted(Path(__file__).parent.glob("*.py")):
+            try:
+                h.update(f.name.encode() + b"\0" + f.read_bytes())
+            except OSError:
+                pass
+        _ENGINE.append(h.hexdigest()[:16])
+    return _ENGINE[0]
 
 
 def opts_key(o):

@@ -618,13 +618,15 @@ def ask_forms(look, entries, pri):
         txt = next((f for f in cols if not f.numeric() and not f.overflow and 2 <= f.distinct() <= 40 and f.distinct() < p.n), None)
         top = 10 if len(entries) == 1 else 6
         shown = ", ".join(short(f.name, 28) for f in cols[:top]) + (f", +{len(cols) - top} more" if len(cols) > top else "")
-        tabs.append((name[6:] if name and name.startswith("table ") else name, plural(p.label), num, txt, shown))
+        tabs.append((name[6:] if name and name.startswith("table ") else name, plural(p.label), num, txt, shown, extreme_form(p, numeric)))
     if not tabs:
         return
     look.ask_forms_done = True
-    name, noun, num, txt, _ = next((t for t in tabs if t[2] or t[3]), tabs[0])
+    name, noun, num, txt, _, big = next((t for t in tabs if t[2] or t[3]), tabs[0])
     what = name if len(tabs) > 1 and name else noun
     forms = ([f'"how many {what} have {num.name} over N"'] if num else []) + ([f"\"how many {what} have {txt.name} = '<value>'\"", f'"{what} per {txt.name}"'] if txt else [])
+    if big:   # fix round 14: the record with the extreme value, in the form --ask answers exactly
+        forms.append(f'"which {big[0].name} has the largest {big[1].name}" (or smallest)')
     cols0 = [f for f in entries[0][1].ordered() if "[]" not in f.name]
     longf = next((f for f in cols0 if not f.numeric() and (f.len_hi or 0) >= 40 and entries[0][1].n >= 10 and f.distinct() > 0.5 * entries[0][1].n and SAFE_NAME.match(f.name)), None)
     if longf and len(entries) == 1 and len(" or ".join(forms)) < 220:   # a free-text column: `--ask` counts by length too (fix round 14)
@@ -632,6 +634,15 @@ def ask_forms(look, entries, pri):
     cols = tabs[0][4] if len(tabs) == 1 else " | ".join(f"{t[0]}: {t[4]}" for t in tabs)
     look.line("Ask a count: --ask " + (" or ".join(forms) if forms else f'"how many {what} have <column> over N"') + ("; name the table in the question" if len(tabs) > 1 else "")
               + f". Columns: {cols}.", pri, "locate")
+
+
+def extreme_form(p, numeric):
+    """(key field, number field) for 'which <key> has the largest <number>': a unique key that can stand in a question without quotes, and a number column that
+    is not the key. None when the table has no such pair."""
+    keys = [f for f in p.key_fields(3, text_first=True) if SAFE_NAME.match(f.name)]
+    key = next((f for f in keys if f.dominant() == "text"), None) or next(iter(keys), None)
+    num = next((f for f in numeric if f is not key and f not in keys and SAFE_NAME.match(f.name)), None)
+    return (key, num) if key and num else None
 
 
 def ask_line(look, text, pri):

@@ -360,7 +360,8 @@ def decode_bmp(raw, i):
 
 def decode_pcx(raw, i):
     w, h, planes, bpl, bpp = i["w"], i["h"], i["planes"], i["bpl"], i["bpp"]
-    if w * h > 40_000_000 or not ((bpp == 8 and planes in (1, 3)) or (bpp == 1 and planes == 1)):
+    planar = planes > 1 and bpp in (1, 2, 4, 8) and bpp * planes <= 8   # fix round 14: 2 to 8 bit planes (the 16-colour EGA layout is 4 planes of 1 bit)
+    if w * h > 40_000_000 or not ((bpp == 8 and planes in (1, 3)) or (bpp == 1 and planes == 1) or planar):
         return None
     data, pos, end = bytearray(), 128, len(raw) - (769 if i["has_vga_palette"] else 0)
     need = bpl * planes * h
@@ -380,10 +381,20 @@ def decode_pcx(raw, i):
     pal = []
     if bpp == 8 and planes == 1:
         pal = pcx_palette(raw, i) or [(k, k, k) for k in range(256)]
+    elif planar:
+        pal = pcx_palette(raw, i) if bpp * planes > 4 else [tuple(raw[16 + 3 * k:19 + 3 * k]) for k in range(16)]
+        pal = pal or [(k, k, k) for k in range(1 << (bpp * planes))]
     rgb = bytearray()
     for y in range(h):
         row = data[y * bpl * planes:(y + 1) * bpl * planes]
-        if planes == 3:
+        if planar:
+            mask = (1 << bpp) - 1
+            for x in range(w):
+                v = 0
+                for pl in range(planes):
+                    v |= ((row[pl * bpl + (x * bpp) // 8] >> (8 - bpp - (x * bpp) % 8)) & mask) << (pl * bpp)
+                rgb += bytes(pal[v]) if v < len(pal) else b"\0\0\0"
+        elif planes == 3:
             r, g, b = row[0:w], row[bpl:bpl + w], row[2 * bpl:2 * bpl + w]
             for x in range(w):
                 rgb += bytes((r[x], g[x], b[x]))

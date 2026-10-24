@@ -239,7 +239,7 @@ def main(argv):
     if stored.exists():
         try:
             old = json.loads(stored.read_text(encoding="utf-8"))
-            if old.get("sha256") != sha or not (out / "LOOK.md").exists():
+            if old.get("sha256") != sha or old.get("engine") != core.engine_key() or not (out / "LOOK.md").exists():
                 old = None
         except (OSError, ValueError):
             old = None

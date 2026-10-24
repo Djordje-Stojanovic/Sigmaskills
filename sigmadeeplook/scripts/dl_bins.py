@@ -853,8 +853,15 @@ def member_reader(look, fmt):
             return t.extractfile(m).read(cap + 1)
         return read, t.close
     sz = look.tool("7z")
-    if sz:
+    own = None
+    if fmt == "cab":   # fix round 14: stored and MSZIP folders are read here with zlib (no 7-Zip needed); LZX and Quantum folders go to 7-Zip when it is installed
+        import dl_cab
+        own = dl_cab.reader(look.path)
+    if sz or own:
         def read(name, cap):   # streamed to memory: `7z e -so` writes nothing to disk
+            got = own(name, cap) if own else None
+            if got is not None or not sz:
+                return got
             r = core.run_tree([sz, "e", "-so", "-y", str(look.path), name], 40)
             return r.stdout[:cap + 1] if r.returncode == 0 else None
         return read, (lambda: None)
@@ -863,6 +870,7 @@ def member_reader(look, fmt):
 
 NEST_OPEN = (".zip", ".jar", ".war", ".whl", ".nupkg", ".tar", ".tgz", ".tar.gz", ".tar.xz", ".tar.bz2", ".txz", ".tbz2")
 SMALL_NOTE = 600              # a text member this short is quoted whole
+SMALL_MEMBER = 4096           # a text member up to this size is read for a quote (the first lines)
 SMALL_ANY = 65536             # a member this small is read whatever its name: a file with no extension is often text
 INNER_NEST_MAX = 48 << 20     # a nested archive up to this size is opened in memory
 
@@ -958,16 +966,24 @@ def archive_contents(look, members, fmt):
                     if name.lower().endswith((".xml", ".vml", ".xaml")) and xml_done < 10:   # parsed whatever its line layout: one-line XML is not a 60-character head
                         import dl_xmlvals
                         xml_done += 1 if dl_xmlvals.member_lines(look, name, b) else 0
-                    if text is not None and len(text) <= SMALL_NOTE and not P.is_manifest(name):
+                    if text is not None and len(text) <= SMALL_MEMBER and not P.is_manifest(name):
                         small[name] = text
                     if text is not None and (P.is_manifest(name) or name.lower().endswith((".csv", ".tsv", ".json", ".jsonl", ".ndjson", ".yaml", ".yml", ".toml", ".xml", ".properties", ".ini", ".cfg"))):
                         texts[name] = text
             tree.add(name, size, text)
     finally:
         close()
-    for n, t in list(small.items())[:20]:
-        if t.strip():
-            look.line(f"Small text member {n}: " + " | ".join(x.strip() for x in t.strip().splitlines()[:8])[:SMALL_NOTE], 64, "small")
+    import dl_r14f2   # fix round 14: a text member up to 4 KB is quoted (a checksum list gets room for its hash lines); a short archive quotes every small member
+    quoted = 0
+    for n, t in list(small.items())[:60]:
+        if not t.strip():
+            continue
+        if len(t) > SMALL_NOTE and not dl_r14f2.is_checksum_member(n, t) and (len(files) > 30 or quoted >= dl_r14f2.SMALL_MEMBERS):
+            continue
+        text_line, check = dl_r14f2.quote_member(n, t, SMALL_NOTE)
+        if len(t) > SMALL_NOTE:
+            quoted += 1
+        look.line(text_line, 75 if check else 64, "small")
     if opened:
         look.line("Archives inside this archive, opened in memory (nested names are written outer!/inner): " + "; ".join(opened[:10]) + ".", 91)
     tree.emit(look, "Contents", 90, [("members", len(members)), ("folders", sum(1 for m in members if m["kind"] == "dir") or None),
@@ -1116,6 +1132,23 @@ def parse_7z_slt(text):
     return members, extra
 
 
+def cab_listing(look):
+    """-> (members, extra) from the cabinet's own file table; a folder that is not stored or MSZIP is named as not decoded."""
+    import dl_cab
+    cab = dl_cab.open_cab(look.path)
+    if cab is None or not cab.files:
+        return [], {}
+    members = dl_cab.member_dicts(cab, look.size)
+    skipped = {}
+    for f in cab.files:
+        if not cab.readable(f):
+            skipped.setdefault(cab.method(f["folder"]), []).append(f["name"])
+    if skipped:
+        look.line("Cabinet folders not decoded without 7-Zip (listed, never guessed): " + "; ".join(f"{k} ({len(v)} files: {', '.join(v[:3])}{', ...' if len(v) > 3 else ''})" for k, v in skipped.items())
+                  + ". Text members of stored and MSZIP folders are read below.", 88, "structure")
+    return members, {"format": "cab"}
+
+
 def look_archive(look):
     p = look.path
     st = look.subtype
@@ -1132,6 +1165,8 @@ def look_archive(look):
             members, extra = list_archive(look)
     except (zipfile.BadZipFile, tarfile.TarError, OSError, EOFError, NotImplementedError) as e:
         look.flag("CORRUPT", "archive", str(e)[:120], "the archive could not be listed")
+    if not members and not extra and st == "cab" and not look.tool("7z"):   # fix round 14: the cabinet's own file table, read with the standard library
+        members, extra = cab_listing(look)
     if not members and not extra and st in ("7z", "rar", "iso", "cab", "zstd"):
         sz = look.tool("7z")
         if sz:

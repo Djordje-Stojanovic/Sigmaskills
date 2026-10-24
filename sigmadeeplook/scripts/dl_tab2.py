@@ -178,13 +178,14 @@ def look_stata(look):
 
 
 SAS_MAGIC = bytes.fromhex("000000000000000000000000c2ea8160b31411cfbd92080009c7318c181f1011")
-SAS_ENC = {0: "default", 20: "utf-8", 28: "us-ascii", 29: "latin1", 30: "latin2", 33: "cyrillic", 60: "wlatin2", 61: "wcyrillic", 62: "wlatin1"}
 
 
 def sas_header(head):
     """The fixed header of a sas7bdat file (bytes 0-287), standard library only: -> dict, or None when the magic number is not there.
     Offsets after byte 164 move by 4 when byte 35 is 0x33, and those after 204 by 4 more when byte 32 is 0x33 (the 64-bit layout)."""
     import datetime
+
+    import dl_r14f2
     if len(head) < 288 or head[:32] != SAS_MAGIC:
         return None
     a1, a2 = 4 if head[35] == 0x33 else 0, 4 if head[32] == 0x33 else 0
@@ -205,7 +206,7 @@ def sas_header(head):
             "header": struct.unpack_from(e + "i", head, 196 + a1)[0], "page": struct.unpack_from(e + "i", head, 200 + a1)[0],
             "pages": struct.unpack_from(e + ("q" if a2 else "i"), head, 204 + a1)[0], "release": text(216 + a1 + a2, 8), "host": text(224 + a1 + a2, 16),
             "bits": 64 if a2 else 32, "endian": "little" if e == "<" else "big", "os": {ord("1"): "unix", ord("2"): "windows"}.get(head[39], "?"),
-            "encoding": SAS_ENC.get(head[70], f"code {head[70]}")}
+            "encoding": dl_r14f2.sas_encoding(head[70])}
 
 
 def sas_header_line(look):
@@ -218,8 +219,10 @@ def sas_header_line(look):
     if not h:
         return None
     look.fact("sas_dataset", h["name"])
+    enc = h["encoding"]   # fix round 14: the encoding name and the Windows code page, not only the number the header stores
+    look.fact("declared_encoding", {"name": enc["name"], "page": enc["page"], "label": enc["label"], "code": enc["code"], "source": f"SAS encoding code {enc['code']} (header byte 70)"})
     return (f"SAS file header: dataset name '{h['name']}', type {h['type'] or '?'}, created {h['created'] or '?'}, modified {h['modified'] or '?'}, "
-            f"SAS release {h['release'] or '?'}, host {h['host'] or '?'}, {h['os']} {h['bits']}-bit {h['endian']}-endian, encoding {h['encoding']}, "
+            f"SAS release {h['release'] or '?'}, host {h['host'] or '?'}, {h['os']} {h['bits']}-bit {h['endian']}-endian, text encoding {enc['label']}, "
             f"header {h['header']:,} bytes, page size {h['page']:,} bytes, {h['pages']:,} pages.")
 
 
