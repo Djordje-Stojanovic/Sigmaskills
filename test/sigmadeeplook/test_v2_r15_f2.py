@@ -377,10 +377,12 @@ class NotAppliedGuard(Base):
         self.assertIn("Whole word", na)
         self.assertIn("any capitalisation", na)
 
-    def test_a_decimal_comma_number_the_filter_does_not_show_is_named(self):
+    def test_a_decimal_comma_number_the_engine_reads_is_not_flagged_and_one_it_misreads_is(self):
         na, out = self.na("How many rows have price greater than 12,50?")
-        self.assertIsNotNone(na, out)
-        self.assertIn("greater than 12,50", na)
+        self.assertIsNone(na, out)   # the engine reads 12,50 as 12.5 and says so in its Filters line
+        import dl_r15f2
+        misread = "--ask 'q'" + chr(10) + "Read as: operation count" + chr(10) + "Answer: 0 lines match" + chr(10) + "Filters: price > 1,250 -> 0 lines"
+        self.assertEqual(dl_r15f2.check("How many rows have price greater than 12,50?", misread), ["greater than 12,50"])
 
     def test_between_after_and_excluding_are_named_when_no_filter_shows_them(self):
         for q, clause in (("How many rows have qty between 3 and 7?", "between 3 and 7"), ("How many rows shipped after 2024-05-01?", "after 2024-05-01"),
