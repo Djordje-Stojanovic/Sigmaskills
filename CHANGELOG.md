@@ -28,6 +28,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook` fix round 15, lane F1 (three causes of held-out set 14):
+  - Values a file declares missing are not values. In an SPSS `.sav`, the user-defined missing codes (single codes, ranges, a range plus a code, string codes) and the system-missing cases drop out of every comparison, count, sum, mean, minimum, maximum and group count. The answer says how many cases it left out and which codes (`User-defined missing values excluded: 41,196 cases (commute_min: codes 999)`). Step 1 has a `Declared missing values` line with each variable's codes and case counts. A question that asks for the raw values ("including the missing codes", "the raw values") keeps them and says so. A Stata or SAS missing value (`.a-.z`, `.A-.Z`) reaches `--ask` as a missing value, not as text, so a column with many of them still counts, sums and averages.
+  - "Any capitalisation", "any case", "regardless of case", "irrespective of capitalisation", "whatever the case" and similar make a whole-word match ignore case, for cues, text columns and documents alike. A quoted word inside a bracketed aside ("forms such as 'latarni' do not count") is an example, never a filter. A count made as written now says how many more match ignoring case (`119 cues contain it as written; 187 ignoring case`).
+  - A report whose columns sit between pipes under a `-----+-----` rule, with a title line, a header and a subtotal line in every section, is one table: the subtotals and section titles stay out of the rows and are printed as they stand. A number written with a comma in a question is read as a decimal when it has one, two or four digits after the comma, and as the table writes decimals when it has three ("2,250" in a decimal-comma table is 2.25); the answer states the reading. A decimal comma comes back as the file writes it (`4127,385`).
+
 ## [0.16.11] — 2026-10-24
 
 ### Fixed

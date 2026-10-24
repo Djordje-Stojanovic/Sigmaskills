@@ -154,7 +154,7 @@ class FixedWidthReport(R14Base):
         line, out = self.answer_of(p, "How many rows have Amount over 50?")
         self.assertIn(f"Answer: {want} ", line, out)
         line, out = self.answer_of(p, "Amount of the invoice INV-007")
-        self.assertIn(rows[6][3].replace(",", "."), line, out)
+        self.assertIn(rows[6][3], line, out)   # the decimal comma comes back as the file writes it (fix round 15)
 
     def test_an_aligned_block_without_a_rule_line_is_read(self):
         names = ["Anders Holm", "Berit Nygaard", "Carl Dahl", "Dina Berg", "Erik Lund", "Frida Moe"]

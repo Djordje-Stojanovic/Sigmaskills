@@ -64,7 +64,8 @@ def parse(q):
     if not u and TABLE_WORDS.search(ASIDE.sub(" ", QUOTED.sub(" ", q))):   # "in how many paragraphs ... 'X'" is a text count even when the question also says table or cell
         return None
     sub = bool(re.search(r"(?i)\bsubstring\b|\banywhere in\b|\bpart of (?:a|any|another) word\b|\binside other words\b", q))
-    if re.search(r"(?i)\bcase[- ]insensitive\b|\bignor\w* (?:the )?case\b|\bany case\b", q):
+    import dl_r15   # fix round 15: every wording that ignores case, one list for the table and the document route
+    if dl_r15.IGNORE_CASE.search(q):
         cs = False
     else:
         cs = any(c.isupper() for c in t) or bool(re.search(r"(?i)\bcase[- ]sensitive\b|\bexact case\b", q))

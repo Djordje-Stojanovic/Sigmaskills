@@ -18,12 +18,56 @@ def _text(b):
     return b.decode("utf-8", "replace").rstrip("\0 ")
 
 
+LOW, HIGH = -1.7976931348623157e308, 1.7976931348623157e308
+
+
+def miss_spec(nmiss, miss):
+    """The user-defined missing values of one variable -> {'codes': [...], 'range': (lo, hi) or None} or None. nmiss 1..3: that many codes; -2: a range;
+    -3: a range and one more code (SPSS system file, variable record)."""
+    if not nmiss or not miss:
+        return None
+    if nmiss > 0:
+        return {"codes": list(miss), "range": None}
+    if nmiss == -2 and len(miss) >= 2:
+        return {"codes": [], "range": (miss[0], miss[1])}
+    if nmiss == -3 and len(miss) >= 3:
+        return {"codes": [miss[2]], "range": (miss[0], miss[1])}
+    return None
+
+
+def is_missing(spec, x):
+    """True when the value is one the file declares missing (never for the system-missing None: that is missing already)."""
+    if spec is None or x is None:
+        return False
+    if x in spec["codes"]:
+        return True
+    rg = spec["range"]
+    return rg is not None and isinstance(x, (int, float)) and rg[0] <= x <= rg[1]
+
+
+def _num(x):
+    return str(int(x)) if x == int(x) and abs(x) < 1e15 else f"{x:g}"
+
+
+def miss_text(spec):
+    """'998, 999', '-9 to -1 and 99999', "'UNK'": the declared codes as a reader writes them."""
+    parts = []
+    if spec["range"] is not None:
+        lo, hi = spec["range"]
+        parts.append(f"{'lowest' if lo <= LOW else _num(lo)} to {'highest' if hi >= HIGH else _num(hi)}")
+    for c in spec["codes"]:
+        parts.append(_num(c) if isinstance(c, (int, float)) else repr(c))
+    return (parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]) if spec["range"] is not None else ", ".join(parts)
+
+
 class Sav:
     def __init__(self, raw):
         self.raw = raw
         self.e = "<"
         self.vars, self.labels, self.docs, self.ext = [], {}, [], {}
         self.long_names, self.p = {}, 0
+        self.mask = False   # True: a value the file declares missing is read as None (fix round 15)
+        self.mcount = {}    # variable number -> cases that hold a declared missing value
 
     def i32(self, at=None):
         at = self.p if at is None else at
@@ -57,12 +101,16 @@ class Sav:
                     n = self.i32()
                     label = _text(r[self.p + 4:self.p + 4 + n])
                     self.p += 4 + ((n + 3) // 4) * 4
-                miss = [struct.unpack_from(self.e + "d", r, self.p + 8 * k)[0] for k in range(abs(nmiss))] if nmiss else []
+                miss = []
+                if nmiss:   # numeric: doubles; string: 8 bytes of text each
+                    for k in range(abs(nmiss)):
+                        raw8 = r[self.p + 8 * k:self.p + 8 * k + 8]
+                        miss.append(struct.unpack(self.e + "d", raw8)[0] if typ == 0 else _text(raw8))
                 self.p += 8 * abs(nmiss)
                 if typ == -1:
                     slot += 1
                     continue
-                self.vars.append({"name": name, "type": typ, "label": label, "print": pf, "write": wf, "missing": miss, "slot": slot, "nmiss": nmiss})
+                self.vars.append({"name": name, "type": typ, "label": label, "print": pf, "write": wf, "missing": miss, "slot": slot, "nmiss": nmiss, "miss_spec": miss_spec(nmiss, miss)})
                 slot += 1
             elif t == 3:
                 n = self.i32(self.p + 4)
@@ -122,7 +170,10 @@ class Sav:
         return out
 
     def cases(self):
-        """Yield one tuple of values per case (numbers as float, None for system-missing, strings stripped)."""
+        """Yield one tuple of values per case (numbers as float, None for system-missing, strings stripped). With `mask` set, a value the file declares
+        missing (user-defined) is None too; either way `mcount` counts the cases that hold one."""
+        self._decl = self._declared()
+        self.mcount = {}   # every pass over the cases counts afresh
         r, cs = self.raw, self.case_size
         if self.compression == 0:
             at = self.p
@@ -156,6 +207,9 @@ class Sav:
                     yield self._case(slots[:cs])
                     del slots[:cs]
 
+    def _declared(self):
+        return [(k, v["miss_spec"]) for k, v in enumerate(self.vars) if v.get("miss_spec")]
+
     def _case(self, slots):
         out = []
         for v in self.vars:
@@ -165,10 +219,15 @@ class Sav:
                 out.append(None if x <= -1.7976931348623157e308 else (int(x) if x == int(x) and abs(x) < 1e15 else x))
             else:
                 out.append(b"".join(blk)[:v["type"]].decode("utf-8", "replace").rstrip(" \0"))
+        for k, spec in self._decl:
+            if is_missing(spec, out[k]):
+                self.mcount[k] = self.mcount.get(k, 0) + 1
+                if self.mask:
+                    out[k] = None
         return tuple(out)
 
 
-def ask_source(path):
+def ask_source(path, keep_missing=False):
     """What --ask reads from a .sav file: -> (variable names, cases declared or None, iterator of (case number, values)), or None when the cases
     cannot be decoded (ZLIB). The same dictionary and case reader as the look; the iterator is lazy, so a lookup need not hold 700,000 cases."""
     size = path.stat().st_size
@@ -181,7 +240,12 @@ def ask_source(path):
     for k, v in enumerate(s.vars):
         names.append(v["long"] if v["long"] not in seen else f"{v['long']}_{k}")
         seen[v["long"]] = 1
-    return names, (s.ncases if s.ncases >= 0 else None), enumerate(s.cases(), 1)
+    s.mask = not keep_missing   # fix round 15: a declared missing value is not a value unless the question asks for the raw values
+    miss = {}
+    for k, v in enumerate(s.vars):
+        if v.get("miss_spec"):
+            miss[names[k]] = {"text": miss_text(v["miss_spec"]), "spec": v["miss_spec"], "k": k, "sav": s}
+    return names, (s.ncases if s.ncases >= 0 else None), enumerate(s.cases(), 1), miss
 
 
 def look_sav(look):
@@ -203,7 +267,7 @@ def look_sav(look):
     look.line(f"SPSS system file {s.magic}: product '{s.product}', {'little' if s.e == '<' else 'big'}-endian, layout {s.layout}, {s.case_size} slots per case, compression {ncomp}, "
               f"weight variable {(s.vars[s.weight - 1]['long'] if 0 < s.weight <= nv else 'none')}, {s.ncases if s.ncases >= 0 else 'unknown number of'} cases, created {s.date} {s.time}"
               + (f", file label '{s.label}'" if s.label else "") + ".", 95, "structure")
-    names = "; ".join(f"{v['long']} ({'numeric' if v['type'] == 0 else 'string ' + str(v['type'])}" + (f", label '{short(v['label'], 70)}'" if v["label"] else "") + (f", {len(v['missing'])} missing-value codes" if v["missing"] else "") + ")" for v in s.vars)
+    names = "; ".join(f"{v['long']} ({'numeric' if v['type'] == 0 else 'string ' + str(v['type'])}" + (f", label '{short(v['label'], 70)}'" if v["label"] else "") + (f", declared missing: {miss_text(v['miss_spec'])}" if v.get("miss_spec") else "") + ")" for v in s.vars)
     look.line("Variables (in file order): " + names, 93, "structure")
     if s.labels:
         parts = []
@@ -213,15 +277,25 @@ def look_sav(look):
         look.line(f"Value labels ({labelled} variables, {nlab} labels): " + " | ".join(parts), 92, "structure")
     if s.docs:
         look.line("Documents: " + " | ".join(short(d, 100) for d in s.docs[:10]), 60, "structure")
+    declared = [(k, v) for k, v in enumerate(s.vars) if v.get("miss_spec")]
+
+    def declared_line(counts):
+        return ("Declared missing values (user-defined; --ask and the profile below leave them out, like system-missing values; --ask keeps them when the question asks for the raw values): "
+                + "; ".join(f"{v['long']}: {miss_text(v['miss_spec'])}" + (f" ({counts.get(k, 0):,} cases)" if counts is not None else "") for k, v in declared) + ".")
     if look.quick:
+        if declared:
+            look.line(declared_line(None), 94, "structure")
         return
     if s.compression == 2:
+        if declared:
+            look.line(declared_line(None), 94, "structure")
         look.skip("the cases (ZLIB-compressed .sav)", "compression 2 is not decoded by the standard library", "pyreadstat")
         return
     names = [v["long"] if v["long"] not in {w["long"] for w in s.vars[:k]} else f"{v['long']}_{k}" for k, v in enumerate(s.vars)]
     import dl_data as D
     t0 = time.time()
     state = {"n": 0}
+    s.mask = True   # a value the file declares missing is not a value: the profile leaves it out
 
     def rows():
         for i, c in enumerate(s.cases(), 1):
@@ -232,6 +306,8 @@ def look_sav(look):
     except ValueError as e:
         look.flag("CORRUPT", "sav", str(e)[:120], "the cases could not be decoded")
     n = state["n"]
+    if declared:
+        look.line(declared_line(s.mcount), 94, "structure")
     if s.ncases >= 0 and n != s.ncases:
         look.flag("COUNT-MISMATCH", "sav", f"header says {s.ncases:,} cases, {n:,} were decoded", "a damaged file, or a case layout this reader does not follow (very long strings)")
     look.fact("rows", n)
