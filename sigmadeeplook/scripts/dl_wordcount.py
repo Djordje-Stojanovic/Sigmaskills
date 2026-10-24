@@ -25,9 +25,12 @@ LEAD = re.compile(r"(?i)\b(?:word|term|phrase|name|string|text|expression)s?\s*$
 OCC = re.compile(r"(?i)\bhow many (?:times|occurrences|instances|mentions|appearances)\b|\bhow often\b|\bnumber of (?:times|occurrences|instances|mentions|appearances)\b"
                  r"|\b(?:count|tally|total)(?: of)? (?:the )?(?:times|occurrences|instances|mentions|appearances)\b")
 UNIT = re.compile(r"(?i)\bhow many (paragraph|line|page|slide)s?\b|\bnumber of (paragraph|line|page|slide)s?\b")
+ASIDE = re.compile(r"\([^()]*\)|\[[^\[\]]*\]")   # a bracketed aside ("(Each table cell counts as its own paragraph.)") explains the counting; it does not ask about a table
 TABLE_WORDS = re.compile(r"(?i)\b(?:column|field|row|table|sheet|cell|record)s?\b")   # a question about a table's cells is the table path's
 PAGE_RE = re.compile(r"^<!--\s*page\s+(\d+)\b[^>]*-->$", re.I)
 SLIDE_RE = re.compile(r"^##\s+Slide\s+(\d+)\b", re.I)
+TABLE_ROW = re.compile(r"^\|(.*)\|$")   # a table row of the extracted text
+CELL_RULE = re.compile(r"^(?::?-{2,}:?|\.\.\. \d+ more rows? ?\(?s?\)? like the one above)$")   # the rule line under a table header, and the look's own "more rows like the one above" note
 WORD = re.compile(r"(?<!\w)[^\W\d_]{3,}(?!\w)")   # a word of letters, not joined to a digit or an underscore: the same rule as pattern() with whole=True
 PLAIN = (".txt", ".text", ".md", ".markdown", ".rst", ".rest", ".mdx")
 READ_CAP = 2 << 20
@@ -53,10 +56,12 @@ def target_of(q):
 def parse(q):
     """-> (target, unit or None, case_sensitive, whole_word) or None when this is not a word-count question."""
     t = target_of(q)
-    if not t or not 1 <= len(t) <= 80 or TABLE_WORDS.search(QUOTED.sub(" ", q)):
+    if not t or not 1 <= len(t) <= 80:
         return None
     u = UNIT.search(q)
     if not u and not OCC.search(q):
+        return None
+    if not u and TABLE_WORDS.search(ASIDE.sub(" ", QUOTED.sub(" ", q))):   # "in how many paragraphs ... 'X'" is a text count even when the question also says table or cell
         return None
     sub = bool(re.search(r"(?i)\bsubstring\b|\banywhere in\b|\bpart of (?:a|any|another) word\b|\binside other words\b", q))
     if re.search(r"(?i)\bcase[- ]insensitive\b|\bignor\w* (?:the )?case\b|\bany case\b", q):
@@ -102,7 +107,12 @@ def paragraphs(text):
         if m:
             unit = int(m.group(1))
             continue
-        if s:
+        row = TABLE_ROW.match(s)
+        if row:   # a table row of the extracted text ("| a | b |"): each cell is a paragraph of its own, as in a Word file
+            for cell in (c.strip() for c in row.group(1).split("|")):
+                if cell and not CELL_RULE.match(cell):
+                    out.append((len(out) + 1, cell, unit))
+        elif s:
             out.append((len(out) + 1, s, unit))
     return out
 
@@ -182,7 +192,7 @@ def answer(q, lj):
         lines.append(f"Ignoring case: {sum(len(pattern(target, False, True).findall(p)) for _, p, _ in paras):,} occurrences. Inside longer words too (case-sensitive): "
                      f"{sum(len(pattern(target, True, False).findall(p)) for _, p, _ in paras):,}.")
     what = "the full extracted text of the document" if not plain else "the whole file"
-    lines.append(f"Counted over {name}, {what} ({words:,} words, {len(paras):,} {noun_all}); a table row is one paragraph."
+    lines.append(f"Counted over {name}, {what} ({words:,} words, {len(paras):,} {noun_all}); a table cell is one paragraph."
                  if not plain else f"Counted over {name}, {what} ({words:,} words, {len(paras):,} {noun_all}).")
     if capped:
         lines[-1] += " PARTIAL: that file is capped at 2 MB, the text has more."

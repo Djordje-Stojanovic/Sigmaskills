@@ -111,7 +111,8 @@ def gettext_table(look, rows):
     a, b = rows[0][1], rows[-1][1]
     P.find_line(look, [f"{len(rows):,} messages, key column msgid (first '{short(a, 30)}', last '{short(b, 30)}'; with msgctxt when one is set)"],
                 ask="ask \"translation of the original text '<msgid>'\" with --ask (the row has plural forms, fuzzy flag, context)", pri=93)
-    P.ask_line(look, "\"how many messages have flags = 'fuzzy'\" or \"how many messages contain the word 'X'\". Columns: original text (msgid), translation (msgstr), plural original (msgid_plural), flags, context (msgctxt).", 92)
+    fuzzy = "\"how many messages have flags = 'fuzzy'\" or " if any(r[4] for r in rows) else ""   # a .mo file keeps no fuzzy flag: the form is only shown when a message has one
+    P.ask_line(look, fuzzy + "\"how many messages contain the word 'X'\". Columns: original text (msgid), translation (msgstr), plural original (msgid_plural), flags, context (msgctxt).", 92)
     try:
         import dl_ask
         dl_ask.store_table(look, "gettext messages", ["original text (msgid)", "translation (msgstr)", "plural original (msgid_plural)", "flags", "context (msgctxt)"],

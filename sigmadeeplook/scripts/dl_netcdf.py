@@ -375,7 +375,7 @@ def find_cells(look, raw, nc, recsize):
     look.fact("netcdf_grids", [v["name"] for v in data])
     P.find_line(look, [", ".join(f"{v['name']}[" + ", ".join(f"{dims[d][0]}={n:,}" for d, n in zip(v["dimids"], v["shape"])) + "]" for v in data)
                        + "; indexes count from 0" + ("; coordinates " + ", ".join(coords) if coords else "")],
-                ask="ask \"<variable> at <dim> index N and <dim> index M\" (or \"last <dim> index\", or a coordinate value) with --ask", pri=93)
+                ask="ask \"<variable> at <dim> index N and <dim> index M\" (or \"<variable> at the last <dim> index and <dim> index M\", or a coordinate value) with --ask", pri=93)
 
 
 def ask(path, question):

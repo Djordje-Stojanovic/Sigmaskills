@@ -398,6 +398,9 @@ _VERB_WITH = r"(?:with|having|has|have|hat|haben|ima|imaju)"
 _NOUN = r"(?:words?|terms?|phrases?|texts?|strings?|wort|wörter|begriff\w*|re[cč]i?|izraz\w*|tekst\w*)"
 _ART = r"(?:the\s+|das\s+|die\s+|den\s+|ove\s+|tu\s+)?"
 CONTAINS_QUOTED = re.compile(rf"\b(?:{_VERB}\s+{_ART}(?:{_NOUN}\s+)?|{_VERB_WITH}\s+{_ART}{_NOUN}\s+)([{_Q}])(.+?)[{_Q}](?!\w)", re.I)
+APPEARS_QUOTED = re.compile(rf"\b(?:(?:does|do|did|is|are)\s+)?{_ART}(?:{_NOUN}\s+)?([{_Q}])(.+?)[{_Q}](?!\w)\s*(?:appears?|occurs?|shows?\s+up|comes?\s+up|exists?|is\s+(?:used|found|present|written|mentioned))\b", re.I)   # "does the word 'X' appear" (fix round 13)
+HOW_MANY = re.compile(r"\bhow\s+many\b|\bnumber\s+of\b|\bcount\b", re.I)
+COUNT_OF_TIMES = re.compile(r"\bhow\s+(?:many|often)\s+(?:times|occurrences|instances|mentions|appearances)\b|\bhow\s+often\b|\bnumber\s+of\s+(?:times|occurrences|instances|mentions|appearances)\b", re.I)
 CONTAINS_BARE = re.compile(rf"\b{_VERB}\s+{_ART}{_NOUN}\s+([^\s{_Q}?!,;:()]+)", re.I)
 IGNORE_CASE = re.compile(r"\b(?:ignor\w*\s+(?:the\s+)?case|case[- ]?insensitiv\w*|any\s+case|regardless\s+of\s+(?:the\s+)?case|in\s+any\s+capitali[sz]ation|(?:upper|lower)\s*(?:case)?\s+or\s+(?:upper|lower)\s*case)\b", re.I)
 CASE_NOTE = re.compile(r"\(?\b(?:in\s+)?(?:lower|upper)\s*case\b\)?|\bcase[- ]?sensitiv\w*|\bas\s+written\b|\bexact(?:ly)?\s+as\s+(?:written|spelled)\b", re.I)
@@ -408,6 +411,9 @@ def contains_filter(q):
     The word is matched whole and as written (case counts) unless the question says to ignore case."""
     m = CONTAINS_QUOTED.search(q)
     needle = m.group(2).strip() if m else None
+    if not m and HOW_MANY.search(q) and not COUNT_OF_TIMES.search(q):   # "how many times does the word 'X' appear" counts occurrences, not rows
+        m = APPEARS_QUOTED.search(q)
+        needle = m.group(2).strip() if m else None
     if not m:
         m = CONTAINS_BARE.search(q)
         needle = m.group(1).strip(".") if m else None
@@ -511,6 +517,8 @@ def match_values(t, q, blank=None):
 
 def score(t, pq, q):
     fw = sum(1 for w in set(pq["words"]) if col_for(t, w) is not None)
+    if not fw:   # an operation or filler word can be a column's whole name ("total of 8031" for a column called total)
+        fw = sum(1 for w in pq["allw"] if any(t.ownw[i] == {w} for i in range(len(t.cols))))
     vals = match_values(t, q, pq["blank"])
     named = sum(3 for w in set(pq["words"]) if w in t.namew)
     if t.ident and re.search(r"(?<!\w)" + re.escape(t.ident) + r"(?!\w)", q, re.I):   # the question writes the table's own name (gpkg_contents): that table, not a look-alike
@@ -564,6 +572,7 @@ EQ_SKIP = {"number", "no", "nr", "num", "nummer", "broj", "index", "idx", "is", 
 
 EQ_ORDINAL = {"first", "last", "top", "bottom", "next", "previous", "erste", "letzte", "prvi", "poslednji", "zadnji"}
 EQ_TAIL = {"id", "no", "nr", "num", "number", "code", "key"}
+EQ_OF = {"of", "for", "von", "fuer", "für", "za", "od"}
 
 
 def eq_filters(t, pq):
@@ -575,9 +584,10 @@ def eq_filters(t, pq):
         s = raw.strip(PUNCT)
         if not re.fullmatch(r"\d+(?:\.\d+)?", s):
             continue
-        ws = []
+        ws, of = [], False
         for j in range(k - 1, max(-1, k - 4), -1):
             ws = [w for w in words(toks[j].strip(PUNCT)) if w not in EQ_SKIP]
+            of = of or toks[j].strip(PUNCT).lower() in EQ_OF
             if ws:
                 break
         sw = set(ws)
@@ -591,8 +601,54 @@ def eq_filters(t, pq):
             if len(part) != 1:
                 continue
             ci = part[0]
+        if of and not t.colw[ci] & EQ_TAIL:   # 'cost_eur of 7512345': the column is what is asked for, the number names the record
+            continue
         out.append((ci, s))
     return out
+
+
+BARE_NUM = re.compile(r"(?<![\w.])\d+(?:\.\d+)?(?![\w])")
+
+
+def bare_key(t, pq, keys):
+    """(column, number text) for a pure lookup whose one bare number names a record by its key, without the key column's name ('cost_eur of 7512345', fix round 13):
+    the number lies in the range of a unique key column the look advertised for this table (`keys`: facts.find_keys), or, when the look
+    kept none, it is the value of exactly one numeric column the question does not name. A column the question names is the measure, not the key.
+    The table's own rows decide between two keys that both fit: the one that holds the number. -> [(column index, number text)] or []."""
+    if set(pq["ops"]) - {"sum", "mean", "max", "min"} or pq["group"] or (pq["which"] and col_for(t, pq["which"]) is not None) or pq["cmps"] or pq["years"] or not t.rows:   # "total of 8031": the sum of one record is its value
+        return []
+    lits = list(dict.fromkeys(BARE_NUM.findall(NOT_A_KEY.sub(" ", pq["blank"]))))
+    if len(lits) != 1:
+        return []
+    lit = lits[0]
+    want = float(lit)
+    if lit in {x for _, x in eq_filters(t, pq)}:   # "PETALLEN 22" puts the number right after a column: a value of that column, not a key
+        return []
+    named = {i for i in range(len(t.cols)) if t.colw[i] and t.colw[i] <= pq["allw"]}
+    if not named:   # a key lookup asks for something of the record: a column of the table is named
+        return []
+    whole = t.total is None and "one pass" not in t.where   # every row is held: a column can be tested for being unique
+
+    def holds(i):
+        return any(num(r[i] if i < len(r) else None) == want for r in t.rows)
+
+    adv = []
+    for k in keys or []:
+        try:
+            lo, hi = float(k["lo"]), float(k["hi"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        ident = k.get("table") or ""
+        for i, c in enumerate(t.cols):
+            if c == k.get("column") and i not in named and lo <= want <= hi and t.numeric(i) and (not ident or not t.ident or ident == t.ident or ident == t.name or t.name.endswith(ident)):
+                adv.append(i)
+    if adv:
+        return [(next((i for i in adv if holds(i)), adv[0]), lit)]
+    if keys:   # the look named the key columns and the number is in none of their ranges: it is no key
+        return []
+    found = [i for i in range(len(t.cols)) if i not in named and t.numeric(i) and holds(i)
+             and (not whole or len({str(r[i]).strip() for r in t.rows}) == len(t.rows))]
+    return [(found[0], lit)] if len(found) == 1 else []
 
 
 def point_cols(t, pq, skip):
@@ -645,7 +701,7 @@ def refusal(t, head, left):
             f"where a text column contains a whole word (\"contain the word 'X'\"), or per column (\"{t.unit}s per <column>\"). Columns: {cols}."]
 
 
-def answer(t, pq, q, vals):
+def answer(t, pq, q, vals, keys=None):
     lines = []
     keep = list(range(len(t.rows)))
     filt = []
@@ -674,6 +730,12 @@ def answer(t, pq, q, vals):
         keep = hit
         filt.append(f"{t.cols[ci]} = {lit}")
         fcols.add(ci)
+    if not fcols:   # "cost_eur of 7512345": a bare number that is a key of this table names the record
+        for ci, lit in bare_key(t, pq, keys):
+            want = float(lit)
+            keep = [k for k in keep if num(t.rows[k][ci] if ci < len(t.rows[k]) else None) == want]
+            filt.append(f"{t.cols[ci]} = {lit} (the key column the look names)")
+            fcols.add(ci)
     unmatched = []   # parts of the question that asked for a filter this table could not apply
     tf = pq.get("contains")
     if tf:
@@ -915,7 +977,7 @@ def run(o, path, out, lj):
     lines += cell or []
     if ranked and ranked[0][0][0] > 0:
         (_, vals), t = ranked[0]
-        got = answer(t, pq, qe, vals)
+        got = answer(t, pq, qe, vals, (lj.get("facts") or {}).get("find_keys"))
         if got and t.total:   # only part of the table is in memory: no figure may read as a total
             note = t.partial or f"PARTIAL: {len(t.rows):,} of {t.total:,} {t.unit}s were read (row and memory budget); this answer covers those {t.unit}s only"
             got = [x.replace("Answer:", f"Answer ({note}):", 1) if x.startswith("Answer:") else x for x in got]

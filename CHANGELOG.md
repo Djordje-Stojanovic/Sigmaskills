@@ -30,6 +30,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Fixed
 
+- `sigmadeeplook --ask` (fix round 13, lane F1, from held-out set 12):
+  - A bare number that lies in the range of a unique key column is a lookup on that column: `cost_eur of 7512345` now answers like `cost_eur of the patient with pt_id 7512345`. The look keeps its key columns in `look.json` (`facts.find_keys`). `X of N` no longer reads as "X equals N" when X is a measure. A column called `total` or `value` is a measure in `total of 8031`.
+  - The `Find one record:` example is built from the file's own columns, for example `ask "age of pt_id 7000001"`. It runs as printed.
+  - "In how many paragraphs does the word 'X' appear? (Each table cell counts as its own paragraph.)" is a text count. Words inside brackets no longer send it to the table route. Table cells of an OpenDocument or PDF text count as one paragraph each, as in a Word file.
+  - "In how many cues does the word 'X' appear?" counts subtitle cues. The `.mo` file no longer shows the `flags = 'fuzzy'` form (it keeps no flags), and the netCDF line shows a full "last index" question.
 - `sigmadeeplook` fix round 13, lane F2 (facts that held-out set 12 showed only in the 10k print; the first print now carries them or points to the `--ask` that answers them):
   - Link and anchor definitions: step 1 of a reST, Markdown, AsciiDoc, org or LaTeX file gives the count and the first and last one with line numbers (`Explicit targets (.. _label:): 19; first 'a' (line 1), last 'b' (line 1099).`). `--ask "the last explicit target"` (or first, or how many; also link definition, anchor, label) answers it. An anonymous reST target (`.. __:`) is no longer counted as a target.
   - Tree depth: step 1 of an XML file gives the elements per level (root = level 0) and, for an element that nests in itself (OPML `<outline>`), its levels with the outermost as level 1. The JSON, YAML and TOML count line says `max nesting depth (top level = 1)`. `--ask "deepest nesting level"` answers it for all four.
