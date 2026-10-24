@@ -28,6 +28,16 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook` fix round 14, lane F1 (from held-out set 13):
+  - A paged report in fixed-width columns is a table. A rule line of dashes marks the columns, also when it repeats on every page. Title blocks, repeated headers, page markers, form feeds and the totals block stay out of the rows; the totals are printed whole. Comma decimals are numbers. Step 1 gets `Find one record:` and `Ask a count:` with the real column names, and `--ask` counts over a threshold and finds a record by its code. Eight aligned lines without a rule line are read too, but only when they make up most of the text.
+  - A word that only names the rows ("messages", "cases", "rows") is never a value filter. "How many messages have a context (msgctxt)?" counts the messages whose context is not empty. This works for any column of any table ("have a plural", "have an assignee").
+  - "Longer than N bytes", "shorter than N characters" and "at least N characters" count rows by the length of a text column. The question names the column; otherwise the longest text column is used, and the answer says which. A `.mo` counts the original as the file stores it (context, `0x04`, msgid, `0x00`, plural).
+  - A scope word is honoured. "Speaker notes" counts notes only, "slide text" counts slide text only, "title" counts titles only. A file that cannot give the scope is refused, not answered over all text. OpenDocument presentations (`.odp`) now have per-slide text and notes like PowerPoint files.
+  - Step 1 of a presentation names the last and first slide. `--ask "title of the last slide"` and `"title of slide N"` answer exactly.
+  - `--ask "how many entries of <char variable> are the letter 'S'"` counts the letter over a netCDF char variable and says the unit ("counted per character over 2,400 x 48 = 115,200 characters"). A longer value counts entries. Step 1 shows the form.
+
 ## [0.16.10] — 2026-10-24
 
 ### Fixed

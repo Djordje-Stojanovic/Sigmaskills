@@ -1056,6 +1056,14 @@ def pptx_outline(recs):
     return lines, bad
 
 
+def slide_titles(look, titles):
+    """The title of every slide as a fact (`--ask "title of the last slide"` reads it), and the `Last slide:` line of step 1 (fix round 14)."""
+    titles = [" ".join(t.split())[:300] for t in titles[:5000]]
+    look.fact("slide_titles", titles)
+    if titles:
+        look.line(f"Last slide: {len(titles)} '{titles[-1][:90] or '(no text)'}'; first slide: 1 '{titles[0][:90] or '(no text)'}' (--ask \"title of slide N\").", 91, "structure")
+
+
 def office_pptx(look, z, names):
     try:
         import dl_offx
@@ -1075,6 +1083,7 @@ def office_pptx(look, z, names):
         order = sorted((n for n in names if re.fullmatch(r"ppt/slides/slide\d+\.xml", n)), key=lambda n: int(re.search(r"(\d+)\.xml$", n).group(1)))
     md, hidden, notes_n, pics = [], [], 0, 0
     recs = []   # (number, paragraphs, note, hidden)
+    titles = {}   # slide number -> its title: the title placeholder, else its first text
     for i, sp in enumerate(order, 1):
         if sp not in names:
             continue
@@ -1087,6 +1096,9 @@ def office_pptx(look, z, names):
                 t = "".join((x.text or "") for x in p.iter() if strip(x.tag) == "t").strip()
                 if t:
                     paras.append(t)
+        ttl = [" ".join("".join((x.text or "") for x in p.iter() if strip(x.tag) == "t").strip() for p in sh.iter() if strip(p.tag) == "p").strip()
+               for sh in s.iter() if strip(sh.tag) == "sp" and any(strip(e.tag) == "ph" and attr(e, "type") in ("title", "ctrTitle") for e in sh.iter())]
+        titles[i] = (" ".join(t for t in ttl if t) or (paras[0] if paras else "")).strip()
         alts = [attr(e, "descr") for e in s.iter() if strip(e.tag) == "cNvPr" and attr(e, "descr")]
         pics += len(alts)
         is_hidden = attr(s, "show") == "0"
@@ -1114,6 +1126,7 @@ def office_pptx(look, z, names):
     look.fact("hidden_slides", hidden)
     look.fact("slides_with_notes", notes_n)
     look.fact("slide_text", "\n".join(md)[:3000])
+    slide_titles(look, [titles.get(i, "") for i in range(1, len(order) + 1)])
     look.headline = (f"Presentation, {len(order)} slides; hidden: {hidden or 'none'}; {notes_n} with speaker notes; {pics} pictures with alt text; "
                      f"{len([n for n in names if n.startswith('ppt/charts/') and n.endswith('.xml')])} charts")
     look.dims = f"{len(order)} slides"
@@ -1128,7 +1141,60 @@ def office_pptx(look, z, names):
     look.ask_human("Are speaker notes in scope?", "Should charts be read as pictures or as data?", "Are hidden slides in scope?")
 
 
+def office_odp(look, z, names):
+    """An OpenDocument presentation: one record per slide (title, text, speaker notes), written like a PowerPoint look: slides.md, titles, the outline."""
+    x = parse_xml(look, z.read("content.xml")) if "content.xml" in names else None
+    if x is None:
+        return False
+    pages = [el for el in x.iter() if strip(el.tag) == "page" and el.tag.startswith("{urn:oasis:names:tc:opendocument:xmlns:drawing")]
+    if not pages:
+        return False
+
+    def texts(root, skip=()):
+        out = []
+
+        def walk(el):
+            if strip(el.tag) in skip:
+                return
+            if strip(el.tag) in ("p", "h"):
+                t = " ".join("".join(el.itertext()).split())
+                if t:
+                    out.append(t)
+                return
+            for c in el:
+                walk(c)
+        walk(root)
+        return out
+    md, recs, titles, hidden, notes_n = [], [], [], [], 0
+    for i, pg in enumerate(pages, 1):
+        paras = texts(pg, skip=("notes",))
+        note = " ".join(t for n in pg.iter() if strip(n.tag) == "notes" for t in texts(n))
+        ttl = [t for fr in pg.iter() if strip(fr.tag) == "frame" and attr(fr, "class") == "title" for t in texts(fr)]
+        titles.append((" ".join(ttl) or (paras[0] if paras else "")).strip())
+        if note:
+            notes_n += 1
+        recs.append((i, paras, note, False))
+        md.append(f"## Slide {i}\n\n" + "\n".join(f"- {t}" for t in paras) + (f"\n\nNOTES: {note}" if note else ""))
+    look.fact("slides", len(pages))
+    look.fact("slides_with_notes", notes_n)
+    look.fact("slide_text", "\n".join(md)[:3000])
+    look.headline = f"Presentation, {len(pages)} slides; {notes_n} with speaker notes"
+    look.dims = f"{len(pages)} slides"
+    look.write_text("slides.md", "\n\n".join(md), "text per slide in order, with speaker notes", value=5)
+    slide_titles(look, titles)
+    for ln in pptx_outline(recs)[0]:
+        look.line(ln, 72)
+    look.ask_human("Are speaker notes in scope?", "Are hidden slides in scope?")
+    return True
+
+
 def office_odf(look, z, names):
+    if look.subtype == "odp":
+        try:
+            if office_odp(look, z, names):
+                return
+        except Exception as e:
+            look.fail("OpenDocument presentation reader", "stdlib", e)
     if look.subtype in ("odt", "ods"):   # text and spreadsheets: structure, comments, changes, sheets (fix round 5)
         import dl_books
         try:

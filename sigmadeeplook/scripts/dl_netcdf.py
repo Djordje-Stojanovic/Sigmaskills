@@ -7,6 +7,7 @@ a range or the last time step is answered from the first print. netCDF-4 (HDF5) 
 """
 import array
 import math
+import re
 import struct
 import sys
 
@@ -226,6 +227,13 @@ def look_netcdf(look):
     if len(vs) > 60:
         look.line(f"{len(vs) - 60} more variables: " + ", ".join(v["name"] for v in vs[60:200]), 40, "structure")
     find_cells(look, raw, nc, recsize)
+    if not look.quick:
+        try:
+            cf = char_forms_line(raw, nc, recsize)
+            if cf:
+                look.line(cf, 93, "locate")
+        except Exception as e:
+            look.fail("char variable count forms", "stdlib", e)
     look.fact("netcdf_variables", [v["name"] for v in vs][:200])
     look.step("netCDF header and values", "stdlib")
 
@@ -392,6 +400,12 @@ def ask(path, question):
         except (ValueError, OSError):
             raw = fh.read()
         try:
+            nc0 = parse(raw)
+            if nc0:   # a char variable is counted per character (fix round 14)
+                layout(nc0)
+                got = char_ask(raw, nc0, question)
+                if got:
+                    return got
             return _ask_cell(raw, fold(question), re, fold)
         finally:
             if hasattr(raw, "close"):
@@ -481,3 +495,102 @@ def _ask_cell(raw, ql, re, fold):
         shown = str(val)
     how = f" (stored {x!r} x scale_factor {pk[0]:g} + add_offset {pk[1]:g})" if pk else (f" (stored as {x:.9g}, a single-precision number)" if single and not dec else "")
     return [f"Answer: {cell} = {shown}" + (f" {unit}" if unit else "") + (f" ({dec.group(1)} decimals)" if dec else "") + how + tail]
+
+
+# ---------------------------------------------------------------- counting a letter or a value over a char variable (fix round 14)
+CHAR_Q = re.compile(r"[\"'`‘’“”«»]")
+COUNT_Q = re.compile(r"(?i)\bhow\s+(?:many|often)\b|\bnumber\s+of\b|\bcount\b|\btally\b|\boccurrences?\b|\btimes\b")
+TARGET_RES = [re.compile(p, re.I) for p in (
+    r"[\"'`‘“«]([^\"'`’”»\n]{1,40})[\"'`’”»]",
+    r"\b(?:letters?|characters?|chars?|symbols?|values?|flags?|codes?)\s+([^\s\"'?!,;()]{1,40})(?=\s|[?.!,;)]|$)",
+    r"\b(?:count|number|tally|occurrences?|instances?)\s+of\s+(?:the\s+)?([^\s\"'?!,;()]{1,40})\s+(?:in|within|over|across|among|inside)\b",
+    r"\b(?:equals?|equal\s+to|matches?|is|are|=)\s+([^\s\"'?!,;()]{1,40})\s*[?.!]?\s*$",
+    r"\bhow\s+often\s+(?:does|do|is|are)\s+(?:the\s+)?([^\s\"'?!,;()]{1,40})\s+(?:appear|occur|show|come|used|found|listed)")]
+
+
+def char_target(q, names):
+    """The letter or value a question counts: the first quoted text that is no variable name, else the word after 'letter', 'character' or 'count of'. -> str or None.
+    The case is as written."""
+    for rx in TARGET_RES:
+        for m in rx.finditer(q):
+            t = m.group(1).strip()
+            if t and t.lower() not in names and t.lower() not in ("the", "a", "an", "variable", "of", "in"):
+                return t
+    return None
+
+
+def char_ask(raw, nc, q):
+    """'How many entries of the variable quality_flag are the letter 'S'?' -> answer lines, or None when the question names no char variable or no target.
+    A single character is counted per character over the whole variable; a longer value is counted over the entries (the strings along the last dimension)."""
+    from dl_asklang import fold
+    vs = [v for v in nc["vars"] if v["type"] == 2 and v.get("shape") is not None]
+    toks = set(re.findall(r"[a-z0-9_]+", fold(q)))
+    named = [v for v in vs if fold(v["name"]) in toks]
+    if not named or not COUNT_Q.search(q):
+        return None
+    v = named[0]
+    target = char_target(q, {fold(x["name"]) for x in nc["vars"]})
+    if not target:
+        return None
+    unlimited, rec_vars, recsize = layout(nc)
+    data = _var_bytes(raw, nc, v, recsize)
+    text = data.decode("utf-8", "replace")
+    dims = [nc["dims"][d][0] for d in v["dimids"]]
+    shape = v["shape"]
+    total = _prod(shape)
+    size = " x ".join(f"{n:,}" for n in shape) + (f" = {total:,}" if len(shape) > 1 else "") if shape else "1"
+    w = shape[-1] if len(shape) >= 2 else len(data)
+    rows = [text[i:i + w] for i in range(0, len(text), w)] if w else []
+    contains = bool(re.search(r"(?i)\bcontain\w*|\binclud\w*|\bhold\w*|\bhas\b|\bhave\b", q)) and len(target) == 1
+    lines = []
+    if len(target) == 1 and not contains:
+        n = text.count(target)
+        lines.append(f"Answer: {n:,} (the character '{target}' occurs {n:,} times in {v['name']}: counted per character over {size} characters, case as written)")
+        hit = sum(1 for r in rows if target in r)
+        if len(shape) >= 2:
+            lines.append(f"Of the {len(rows):,} entries along {dims[0]} ({w:,} characters each, along {dims[-1]}), {hit:,} hold at least one '{target}'.")
+    elif len(target) == 1:
+        hit = sum(1 for r in rows if target in r)
+        lines.append(f"Answer: {hit:,} of the {len(rows):,} entries of {v['name']} contain '{target}' (an entry = one string of {w:,} characters along {dims[-1] if dims else 'the variable'}; case as written)")
+        lines.append(f"The character itself occurs {text.count(target):,} times (counted per character over {size} characters).")
+    else:
+        ents = [r.split("\0")[0].rstrip() for r in rows] if len(shape) >= 2 else [text.split("\0")[0].rstrip()]
+        eq = sum(1 for e in ents if e == target)
+        inn = sum(1 for e in ents if target in e)
+        if contains:
+            lines.append(f"Answer: {inn:,} of the {len(ents):,} entries of {v['name']} contain '{target}' (case as written)")
+        else:
+            lines.append(f"Answer: {eq:,} of the {len(ents):,} entries of {v['name']} equal '{target}' (an entry = one string of {w:,} characters, trailing blanks and NULs dropped; case as written)")
+            if inn != eq:
+                lines.append(f"{inn:,} entries contain '{target}' as part of a longer value.")
+    return lines
+
+
+def char_forms_line(raw, nc, recsize):
+    """The `Ask a count` line of step 1 for the char variables of a file: a variable of flags (a small alphabet) counts per character, a variable of names counts entries."""
+    flags, names = None, None
+    for v in nc["vars"]:
+        if v["type"] != 2 or not v.get("shape") or _prod(v["shape"]) == 0:
+            continue
+        total = _prod(v["shape"])
+        data = _var_bytes(raw, nc, v, recsize)[:200000]
+        alpha = collections_counter(data)
+        letters = [chr(b) for b, _ in alpha.most_common() if 33 <= b < 127]
+        if letters and len(alpha) <= 6:   # a variable of flags: a few letters, many characters
+            if flags is None or total > flags[2]:
+                flags = (v["name"], letters, total)
+        elif names is None and len(v["shape"]) >= 2:
+            first = char_entries(raw, nc, v, recsize)[:1]
+            if first and first[0] and "'" not in first[0]:
+                names = (v["name"], first[0])
+    parts = []
+    if flags:
+        parts.append(f"\"how many entries of {flags[0]} are the letter '{flags[1][0]}'\" (counted per character; letters present: {', '.join(flags[1][:6])})")
+    if names:
+        parts.append(f"\"how many entries of {names[0]} are '{names[1]}'\" (counts entries)")
+    return "Ask a count: --ask " + " or ".join(parts) if parts else None
+
+
+def collections_counter(data):
+    import collections
+    return collections.Counter(b for b in data if b not in (0, 32))

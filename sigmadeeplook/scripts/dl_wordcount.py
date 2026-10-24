@@ -157,6 +157,21 @@ def answer(q, lj):
     target, unit, cs, whole = pq
     name, text, capped, plain = src
     paras = plain_units(text, unit) if plain else paragraphs(text)
+    import dl_r14   # fix round 14: a scope word is honoured or the question is refused, never answered over the wrong scope
+    scope = dl_r14.scope_of(q) if name == "slides.md" else None
+    if scope == "titles":
+        titles = (lj.get("facts") or {}).get("slide_titles")
+        if not titles:
+            return [f"Answer: not answered: the question counts the word in slide titles, and this look kept no list of titles; nothing was counted over the wrong scope."]
+        paras = [(i, t, i) for i, t in enumerate(titles, 1) if t]
+    elif scope == "notes":
+        paras = [(n, p[len("NOTES:"):].strip(), u) for n, p, u in paras if p.startswith("NOTES:")]
+        if not paras:
+            return [f"Answer: 0 {(unit or 'paragraph') + 's'} contain '{target}'; this presentation has no speaker notes at all, so nothing was counted over the slide text instead."]
+    elif scope == "slides":
+        paras = [x for x in paras if not x[1].startswith("NOTES:")]
+    elif name != "slides.md" and dl_r14.wants_speaker_notes(q):
+        return [f"Answer: not answered: the question asks about speaker notes, and {name} has no separate notes text (only a PowerPoint or OpenDocument presentation look keeps them). Nothing was counted over the whole text."]
     noun_all = "non-empty lines" if plain and unit != "paragraph" else "non-empty paragraphs" if not plain else "paragraphs (blocks between blank lines)"
     rx = pattern(target, cs, whole)
     hits = [(n, p, u) for n, p, u in paras if rx.search(p)]
@@ -192,6 +207,9 @@ def answer(q, lj):
         lines.append(f"Ignoring case: {sum(len(pattern(target, False, True).findall(p)) for _, p, _ in paras):,} occurrences. Inside longer words too (case-sensitive): "
                      f"{sum(len(pattern(target, True, False).findall(p)) for _, p, _ in paras):,}.")
     what = "the full extracted text of the document" if not plain else "the whole file"
+    if scope:
+        what = {"notes": "the speaker notes only (the NOTES lines of slides.md)", "slides": "the slide text only (the notes left out)", "titles": "the slide titles only"}[scope]
+
     lines.append(f"Counted over {name}, {what} ({words:,} words, {len(paras):,} {noun_all}); a table cell is one paragraph."
                  if not plain else f"Counted over {name}, {what} ({words:,} words, {len(paras):,} {noun_all}).")
     if capped:
