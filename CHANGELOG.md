@@ -28,6 +28,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmadeeplook --ask` (fix round 13, lane F1, from held-out set 12):
+  - A bare number that lies in the range of a unique key column is a lookup on that column: `cost_eur of 7512345` now answers like `cost_eur of the patient with pt_id 7512345`. The look keeps its key columns in `look.json` (`facts.find_keys`). `X of N` no longer reads as "X equals N" when X is a measure. A column called `total` or `value` is a measure in `total of 8031`.
+  - The `Find one record:` example is built from the file's own columns, for example `ask "age of pt_id 7000001"`. It runs as printed.
+  - "In how many paragraphs does the word 'X' appear? (Each table cell counts as its own paragraph.)" is a text count. Words inside brackets no longer send it to the table route. Table cells of an OpenDocument or PDF text count as one paragraph each, as in a Word file.
+  - "In how many cues does the word 'X' appear?" counts subtitle cues. The `.mo` file no longer shows the `flags = 'fuzzy'` form (it keeps no flags), and the netCDF line shows a full "last index" question.
+
 ## [0.16.9] — 2026-10-24
 
 ### Fixed

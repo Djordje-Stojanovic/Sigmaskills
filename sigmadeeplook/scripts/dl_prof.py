@@ -596,7 +596,6 @@ def profile(records, coerce=False, label="record", second=True):
     return p, extra
 
 
-FIND_ASK = 'ask "<measure> of <key value>" with '
 ASKABLE = []   # (table name or None, Profiler) of each find_part call; the next find_line turns them into one 'Ask a count' line
 
 
@@ -638,15 +637,56 @@ def ask_line(look, text, pri):
         look.line("Ask a count: --ask " + text, pri, "locate")
 
 
+SAFE_NAME = re.compile(r"^[\w.]+$", re.U)   # a column name that can stand in a question without quotes
+
+
+def key_value(p, f):
+    """A real value of the key field `f`: the first number, or the smallest text; None when none is at hand."""
+    if f.dominant() in ("int", "float") and f.lo is not None:
+        return str(int(f.lo)) if float(f.lo).is_integer() else str(f.lo)
+    if f.counts and not f.overflow:
+        return str(min(str(k) for k in f.counts))
+    v = p._edge("first", f.name)
+    return None if v is None else str(v)
+
+
+def key_example(entries):
+    """'cost_eur of pt_id 7000001': the file's own measure column, key column and a real key value, for the first table that has a key. '' when none."""
+    db = any((name or "").startswith("table ") for name, _ in entries)   # a database line names one key per table, the text one first
+    for _, p in entries:
+        keys = p.key_fields(3, text_first=db)
+        if not keys:
+            continue
+        cols = [f for f in p.ordered() if f not in keys and "[]" not in f.name and not f.name.endswith(LEN) and SAFE_NAME.match(f.name)]
+        measure = next((f for f in cols if f.numeric() and not ASK_SKIP_RE.search(f.name)), None) or next((f for f in cols if f.numeric()), None) or next(iter(cols), None)
+        key = next((f for f in keys if SAFE_NAME.match(f.name)), None)
+        val = key_value(p, key) if key else None
+        if measure and key and val and "'" not in val and '"' not in val:
+            numeric = key.dominant() in ("int", "float")
+            return f"{measure.name} of {key.name} " + (val if numeric else f"'{val}'")
+    return ""
+
+
+def add_find_keys(look, keys):
+    """Keep the unique whole-number key columns in look.json (facts.find_keys: table, column, lo, hi), so that `--ask "<measure> of <number>"` knows
+    which column a bare number names. keys: [(table name or '', column name, lo, hi)]."""
+    if keys:
+        whole = lambda x: int(x) if float(x).is_integer() else float(x)   # a plain number in look.json, never a numpy one
+        look.facts.setdefault("find_keys", []).extend({"table": t, "column": c, "lo": whole(lo), "hi": whole(hi)} for t, c, lo, hi in keys)
+
+
 def find_line(look, parts, route="--ask", pri=91, ask=None):
-    """'Find one record: <table, rows, key column and range> | <next table ...>; ask "<measure> of <key value>" with --ask': where a single
-    record lives, in step 1. parts: the find_part texts (empty ones are dropped). `ask`: the family's own wording of the last clause.
-    The tables whose find_part ran since the last call also get one 'Ask a count' line."""
+    """'Find one record: <table, rows, key column and range> | <next table ...>; ask "cost_eur of pt_id 7000001" with --ask': where a single
+    record lives, in step 1, with an example question built from the file's own columns. parts: the find_part texts (empty ones are dropped).
+    `ask`: the family's own wording of the last clause. The tables whose find_part ran since the last call also get one 'Ask a count' line."""
     entries = list(ASKABLE)
     ASKABLE.clear()
     parts = [x for x in parts if x]
+    add_find_keys(look, [((name or "").removeprefix("table "), f.name, f.lo, f.hi) for name, p in entries for f in p.key_fields(3)
+                         if f.dominant() in ("int", "float") and f.lo is not None and f.hi is not None])
     if parts:
-        look.line("Find one record: " + " | ".join(parts) + "; " + (ask or FIND_ASK + route), pri, "locate")
+        ex = key_example(entries) if ask is None else ""
+        look.line("Find one record: " + " | ".join(parts) + "; " + (ask or (f'ask "{ex}"' if ex else 'ask "<measure> of <key value>"') + " with " + route), pri, "locate")
     ask_forms(look, entries, pri)
 
 
