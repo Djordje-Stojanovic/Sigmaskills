@@ -861,12 +861,15 @@ def answer(t, pq, q, vals, keys=None):
         sizes = t.blen.get(ci) if kind == "bytes" else None
         stored = sizes is not None
         f = {">": lambda a: a > n, ">=": lambda a: a >= n, "<": lambda a: a < n, "<=": lambda a: a <= n}[op]
+        alone = ""
         if stored:
+            n_alone = sum(1 for k in keep if f(len(str(t.rows[k][ci]).encode("utf-8"))))   # the text alone, for the reader who meant that
             keep = [k for k in keep if k < len(sizes) and f(sizes[k][0])]
+            alone = f"; counting the text alone (no context, no plural) it would be {n_alone:,}" if n_alone != len(keep) else ""
         else:
             keep = [k for k in keep if f(len(str(t.rows[k][ci]).encode("utf-8")) if kind == "bytes" else len(str(t.rows[k][ci])))]
         filt.append(f"length of {t.cols[ci]} in {kind} {op} {n} (" + ("as the file stores it: context, original text and plural original, one byte for each separator; " if stored else "UTF-8 bytes of the text; " if kind == "bytes" else "")
-                    + f"column chosen: {why})")
+                    + f"column chosen: {why}{alone})")
     if not unmatched and not filt and not pq["cmps"] and not (pq.get("lens") or []) and not tf:
         for ci in have_columns(t, pq, fcols):
             keep = [k for k in keep if ci < len(t.rows[k]) and str(t.rows[k][ci]).strip() != ""]

@@ -233,6 +233,9 @@ class Gettext(R14Base):
         line, out = self.answer_of(mo, "How many original strings are longer than 80 bytes? (Use the lengths in the table of original strings; context and plural parts count.)")
         self.assertIn(f"Answer: {by_bytes} ", line, out)
         self.assertIn("byte", out)
+        alone = sum(1 for r in rows if len(r[0].encode()) > 80)
+        if alone != by_bytes:   # the text alone gives another number: the answer says both
+            self.assertIn(f"counting the text alone (no context, no plural) it would be {alone}", out)
 
     def test_length_in_characters_and_the_other_direction(self):
         rows, mo, po = self.files()
