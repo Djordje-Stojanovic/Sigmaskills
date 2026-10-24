@@ -295,18 +295,34 @@ def data_csv(look):
         look.flag("ENCODING", "file", f"UTF-8 with {text.count(chr(0xfffd))} undecodable byte(s), shown as U+FFFD", "the rest of the file is read as UTF-8")
     if raw.startswith(b"\xef\xbb\xbf"):
         look.flag("BOM", "file", "UTF-8 byte-order mark", "some tools keep it in the first column name")
-    delim, mode_n, share = D.sniff_dialect(text, "\t" if look.subtype == "tsv" else ",")
+    fw = None
+    if str(look.detector.get("magic", "")).startswith("fixed-width") and not prefix_cut:   # fix round 14: a paged report in fixed-width columns, read as tab-separated text
+        import dl_r14
+        fw = dl_r14.fixed_table(text)
+    if fw:
+        delim, mode_n, share = "\t", fw.ncols, 1.0
+        text = fw.tsv
+    else:
+        delim, mode_n, share = D.sniff_dialect(text, "\t" if look.subtype == "tsv" else ",")
     if look.subtype in ("csv", "tsv"):
         look.subtype = "tsv" if delim == "\t" else "csv"
-    off = 0   # physical lines before the table (a title block above the header row); every line number below adds it
-    region = None if prefix_cut else D.table_region(text, delim, mode_n)
+    off = fw.linemap if fw else 0   # physical lines before the table (a title block above the header row); every line number below adds it. A fixed-width table has the line of the file for every row
+    at = (lambda k: off[k - 1] if 0 < k <= len(off) else k) if fw else (lambda k: k + off)
+    region = None if (prefix_cut or fw) else D.table_region(text, delim, mode_n)
     if region:
         text, off = region_facts(look, region, delim)
+        at = lambda k: k + off
+    if fw:
+        for pri, sec, line in dl_r14.describe(fw):
+            look.line(line, pri, sec)
     first_rec = next(csv.reader(io.StringIO(text[:200000], newline=""), delimiter=delim), [])
     dec_cols = D.decimal_comma_columns(text, delim, len(first_rec))
     norm = D.normalizer(dec_cols)
     look.fact("decimal_comma_columns", [first_rec[i] for i in sorted(dec_cols) if i < len(first_rec)])
-    look.line(D.describe(enc, delim, mode_n, share, dec_cols, first_rec), 93, "dialect")
+    if not fw:
+        look.line(D.describe(enc, delim, mode_n, share, dec_cols, first_rec), 93, "dialect")
+    elif dec_cols:
+        look.line("Decimal comma in " + ", ".join(first_rec[i] for i in sorted(dec_cols) if i < len(first_rec))[:300] + " (converted to numbers before every sum and range).", 93, "dialect")
     rd = csv.reader(io.StringIO(text, newline=""), delimiter=delim)
     t0 = time.time()
     header, rows, rejects, n, tail, prof, repeats = None, [], [], 0, [], [], []
@@ -326,16 +342,16 @@ def data_csv(look):
         if len(rec) != ncols:
             n += 1
             if len(rejects) < 100:
-                rejects.append((rd.line_num + off, len(rec), rec))
+                rejects.append((at(rd.line_num), len(rec), rec))
             continue
         if rec == header:
-            repeats.append(rd.line_num + off)
+            repeats.append(at(rd.line_num))
             continue
         orig = rec
         if norm:
             rec = norm(rec)
         n += 1
-        ln = rd.line_num + off
+        ln = at(rd.line_num)
         for i in range(ncols):
             prof[i].add(rec[i], ln)
         gp.add_row(gcols, rec, ln)
@@ -405,8 +421,13 @@ def data_csv(look):
             look.line(ln_, 32, "aggregates")
         for ln_ in gp.enum_lines():
             look.line(ln_, 30, "values")
-    if (enc not in ("utf-8", "utf-8-sig") or norm or delim not in (",", "\t") or region or look.facts.get("unpacked_from")) and not prefix_cut and len(text) <= 200 << 20:
+    if (enc not in ("utf-8", "utf-8-sig") or norm or delim not in (",", "\t") or region or fw or look.facts.get("unpacked_from")) and not prefix_cut and len(text) <= 200 << 20:
         write_table_copy(look, text, delim, ncols, norm)
+        if fw:   # the file's line of every table line, so `--ask` names the line of a row as the file has it
+            lp = look.path_for("table.lines.json")
+            lp.write_text(json.dumps(off), encoding="utf-8")
+            look.add(lp, "internal", "the file's line number of each line of the table copy")
+            look.fact("table_linemap", str(lp))
     import dl_sample
     if len(tail) > 1 and not prefix_cut:   # the content shows the head of the file; its end is shown here, as the file has it
         look.line(f"Last {len(tail)} rows (lines {tail[0][0]}-{tail[-1][0]} of {n:,} rows; as the file has them, after the header row):" + chr(10)
@@ -473,6 +494,11 @@ def complete_rows(text, delim, ncols):
     return sum(1 for r in rd if len(r) == ncols and all(c.strip() for c in r))
 
 
+def at_line(line_off, k):
+    """The line of the file for line k of the table text: `line_off` is a count of lines before the table, or (a fixed-width table) the file's line of every table line."""
+    return line_off[k - 1] if isinstance(line_off, list) and 0 < k <= len(line_off) else k + (0 if isinstance(line_off, list) else line_off)
+
+
 def csv_second_pass(look, text, delim, header, gp, cap_s=40.0, norm=None, line_off=0):
     """Group-by counts and sums and the top / bottom rows by each number (one more pass over the rows, time-capped).
     `line_off`: physical lines of the file before `text` (a title block above the table)."""
@@ -485,9 +511,9 @@ def csv_second_pass(look, text, delim, header, gp, cap_s=40.0, norm=None, line_o
     for k, rec in enumerate(rd):
         if len(rec) != len(header) or rec == header:
             continue
-        sp.add_row(names, norm(rec) if norm else rec, rd.line_num + line_off)
+        sp.add_row(names, norm(rec) if norm else rec, at_line(line_off, rd.line_num))
         if k % 5000 == 0 and time.time() - t0 > cap_s:
-            look.flag("PARTIAL", "group-by and top rows", f"stopped at line {rd.line_num + line_off}", "time cap: the group sums cover the rows up to that line only")
+            look.flag("PARTIAL", "group-by and top rows", f"stopped at line {at_line(line_off, rd.line_num)}", "time cap: the group sums cover the rows up to that line only")
             break
     return sp.lines()
 
