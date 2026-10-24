@@ -28,6 +28,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.16.10] — 2026-10-24
+
 ### Fixed
 
 - `sigmadeeplook --ask` (fix round 13, lane F1, from held-out set 12):
@@ -557,7 +559,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.9...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.10...HEAD
+[0.16.10]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.9...v0.16.10
 [0.16.9]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.8...v0.16.9
 [0.16.8]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.7...v0.16.8
 [0.16.7]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.6...v0.16.7
