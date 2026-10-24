@@ -37,6 +37,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
   - `contain the word 'X'` is a real filter over cue text and text columns: whole word, case as written, `ignoring case` to ignore it.
   - A count whose condition matches no filter now says `no filter matched` and lists what it can do. It no longer answers with the row total (the sbv "1,240 cues" answer). An id or code column is never summed for "how many".
   - A question that writes a table's own name (`gpkg_contents`) is answered from that table, not from a look-alike (`gpkg_ogr_contents`).
+- `sigmadeeplook` fix round 12, lane F2 (set 11 wrong answers and print gaps):
+  - A frequent-word count now counts what `--ask` counts. The capitalised-word list counted a word joined to a digit or an underscore (`Table11`, `AB1234Capsules`) as the word, so it said 20 where the whole-word count is 19. The line now says it is a case-sensitive count of whole words.
+  - `--ask` no longer reads a quoted word as a table question just because the word is `Table`. A question on a paragraph count gives two figures when the letters also sit inside a longer word: `21 paragraphs contain 'Capsules'; 22 paragraphs hold the letters 'Capsules' (1 only inside a longer word, e.g. 'AB1234Capsules')`. An occurrence count adds the same clause. Plain `.txt`, `.md` and `.rst` files are counted too, with their own line numbers (a paragraph is a block between blank lines).
+  - Video: a new `Clock:` line gives the container start, every stream start and the first video frame. Black and frozen spans are told from the first video frame, with the container time beside them (`black from 0.0 s to 4.8 s after the first video frame (container time 1.44 s to 6.24 s)`), and the first non-black frame is named. Before, a span "at 0:00" counted from the container start, which is 1.4 s in front of the first frame of a transport stream.
+  - New `Heading styles` line for reST and Markdown: headings per underline character (`'-' underline x17`), over-and-under titles, and `#` marks. `--ask "how many headings are underlined with hyphens"` and `"... start with '##'"` answer it.
+  - A value that names the file is no longer cut: a path with one value in an XML file (the head title of an OPML file), the last record's fields, document properties, container tags and the first and last row of a table print whole up to 200 characters. A longer value says `(cut, N chars)` and the print says how to get the rest.
+  - BMP, PCX and TGA headers state the stored bytes per row with padding, and `--ask "how many bytes does one stored pixel row occupy"` answers it (BMP rows are padded to a multiple of 4 bytes). TGA now has a header line.
 
 ## [0.16.8] — 2026-10-23
 

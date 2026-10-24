@@ -9,7 +9,7 @@ Photos, screenshots, diagrams, charts. A model does not receive metadata, resize
 - A diagram: look for the source first (`.dot`, `.mmd`, `.drawio`, `.svg` are text). Only pixels: transcribe to DOT or Mermaid, render it, compare with the original.
 - Counting and positions are approximate. Do not identify people.
 
-Pixel facts come from every pixel, not a guess: the exact count of distinct colours, the most frequent colours with their share, named pixels (corners, centre, thirds), a full grid for a picture of 256 pixels or fewer, transparent pixels, palette size. BMP and PCX headers (bits per pixel, planes, palette, compression, resolution) are read without Pillow, and both are decoded without it.
+Pixel facts come from every pixel, not a guess: the exact count of distinct colours, the most frequent colours with their share, named pixels (corners, centre, thirds), a full grid for a picture of 256 pixels or fewer, transparent pixels, palette size. BMP, PCX and TGA headers (bits per pixel, planes, palette, compression, resolution, and the stored bytes per row with padding: `--ask "how many bytes does one stored pixel row occupy"`) are read without Pillow, and both are decoded without it.
 
 One pixel: the print says `Ask a pixel: --ask "pixel X,Y"` with the size. Ask `--ask "RGB colour at pixel x=520, y=600"` (also `pixel 520,600`). x counts from the left and y from the top of the picture as displayed, both from 0. The answer is R,G,B, the hex colour, the alpha if any, and the palette index of an indexed picture. A pixel outside the picture is answered with the size. Pillow reads every format (PNG, GIF, JPEG, TGA, TIFF, WebP, RLE BMP); without it, uncompressed BMP and PCX are read with the standard library.
 

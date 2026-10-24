@@ -56,14 +56,55 @@ def runs(events, gap=1.5):
     return [tuple(r) for r in out]
 
 
-def flag_runs(look, kind, events, gap, what, hint):
-    """One flag per run of events. A run of 3 or more is called out as a flicker or a stutter, with its span and count."""
+def _secs(x):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None
+
+
+def video_clock(probe):
+    """The clocks of a video file from the full ffprobe JSON -> {"container": start of the container, "first_frame": start of the first video stream, both in
+    container seconds; "offset": first_frame - container; "streams": [(index, kind, start)]}. ffmpeg's own times (black, frozen and silent spans) count from the
+    container start, so a span at 0.0 s there starts `offset` seconds before the first video frame. A start that ffprobe does not give is 0."""
+    fmt = (probe or {}).get("format") or {}
+    streams = (probe or {}).get("streams") or []
+    starts = [(s.get("index"), s.get("codec_type"), _secs(s.get("start_time"))) for s in streams]
+    cs = _secs(fmt.get("start_time"))
+    if cs is None:
+        cs = min([t for _, _, t in starts if t is not None] or [0.0])
+    v = next((s for s in streams if s.get("codec_type") == "video" and not (s.get("disposition") or {}).get("attached_pic")), None)
+    vs = _secs(v.get("start_time")) if v else None
+    ff = vs if vs is not None else cs
+    return {"container": cs, "first_frame": ff, "offset": ff - cs, "streams": [(i, k, t if t is not None else 0.0) for i, k, t in starts]}
+
+
+def span_text(a, b, clock):
+    """A span from ffmpeg's clock (seconds from the container start) in the words of the first video frame and the container."""
+    off, ff = clock["offset"], clock["first_frame"]
+    ra, rb = max(0.0, a - off), max(0.0, b - off)
+    return f"from {ra:.1f} s to {rb:.1f} s after the first video frame (container time {ra + ff:.2f} s to {rb + ff:.2f} s)"
+
+
+def clock_line(clock):
+    """The key-facts line that says which clock every time of the video checks uses."""
+    names = {"video": "video", "audio": "audio", "subtitle": "subtitle"}
+    starts = ", ".join(f"{names.get(k, k)} #{i} {t:.3f} s" for i, k, t in clock["streams"] if k in names)
+    return (f"Clock: first video frame at container time {clock['first_frame']:.3f} s (container start {clock['container']:.3f} s; stream starts: {starts or 'none given'}). "
+            f"Black and frozen spans count from the first video frame (0.0 s = container time {clock['first_frame']:.3f} s); silence spans count from the container start.")
+
+
+def flag_runs(look, kind, events, gap, what, hint, clock=None):
+    """One flag per run of events. A run of 3 or more is called out as a flicker or a stutter, with its span and count.
+    With `clock` (video_clock) the times count from the first video frame and the flag also names the container time."""
+    off = clock["offset"] if clock else 0.0
     for a, b, n in runs(events, gap)[:40]:
-        where = f"{core.mmss(a)} ({a:.1f}s)"
+        where = f"{core.mmss(max(0.0, a - off))} ({max(0.0, a - off):.1f}s)"
+        tail = f" {span_text(a, b, clock)}" if clock else ""
         if n >= 3:
-            look.flag(kind, where, f"{n} events within {b - a:.1f}s ({what})", "a burst, not one event: " + hint)
+            look.flag(kind, where, f"{n} events within {b - a:.1f}s ({what}){tail}", "a burst, not one event: " + hint)
         else:
-            look.flag(kind, where, f"{b - a:.1f}s {what}", hint)
+            look.flag(kind, where, f"{b - a:.1f}s {what}{tail}", hint)
 
 
 # ----------------------------------------------------------------------------- scene cuts

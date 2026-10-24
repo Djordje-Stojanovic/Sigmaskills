@@ -181,7 +181,7 @@ def look_netcdf(look):
         at = {n: val for n, _t, val in v["attrs"]}
         head = f"Variable {v['name']} ({tn}, {shp}, {total:,} values)"
         if v["attrs"]:
-            head += ": " + "; ".join(f"{n} = {P.short(val, 50)}" for n, _t, val in v["attrs"][:10])
+            head += ": " + "; ".join(f"{n} = {P.short_meta(val)}" for n, _t, val in v["attrs"][:10])
         body = ""
         if not look.quick and code and total:
             try:

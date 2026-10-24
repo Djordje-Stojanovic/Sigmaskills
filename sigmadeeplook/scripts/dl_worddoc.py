@@ -482,7 +482,7 @@ def look_doc(look):
                              f"Paragraphs at fixed positions ({len(ne):,} non-empty paragraphs outside tables; #k = the k-th)")
     for i, t in enumerate(tables[:12], 1):
         ncol = max(len(x) for x in t)
-        look.line(f"Table {i}: {len(t)} rows x {ncol} columns; first row: " + " | ".join(short(x, 30) for x in t[0]) + "; last row: " + " | ".join(short(x, 30) for x in t[-1]),
+        look.line(f"Table {i}: {len(t)} rows x {ncol} columns; first row: " + P.cells_text(t[0]) + "; last row: " + P.cells_text(t[-1]),
                   90 - min(20, i), "tables")
         full = P.table_rows(f"Table {i} rows", t)
         if full:

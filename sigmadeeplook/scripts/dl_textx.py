@@ -24,9 +24,9 @@ MARK_STEPS = (1, 2, 2.5, 3, 4, 5, 7.5)   # x 10^k: the positions a reader asks a
 MARK_MAJOR = (1, 5)                      # x 10^k: printed first, in their own line
 
 
-def rst_headings(lines):
-    """-> [[level, title, line_number]] for underlined and over-and-underlined titles of any punctuation character, or None when the text
-    holds no style beyond the `=` and `-` underlines that the markdown reader already handles. Level = order of first use of a style."""
+def rst_scan(lines):
+    """-> ([[level, title, line_number, character, over_and_under]], beyond): the underlined and the over-and-underlined titles of a reST text,
+    levels by order of first use of a style; `beyond` is True when the styles go past the plain `=` and `-` underlines."""
     styles, heads, i, n = {}, [], 0, len(lines)
     beyond = False
 
@@ -41,17 +41,91 @@ def rst_headings(lines):
         if RULE_RE.match(a) and i + 2 < n:
             t, b = lines[i + 1].rstrip(), lines[i + 2].rstrip()
             if t.strip() and not RULE_RE.match(t) and RULE_RE.match(b) and b[0] == a[0] and len(a) >= len(t.strip()) and len(t) <= 100:
-                heads.append([level(a[0], True), t.strip(), i + 2])
+                heads.append([level(a[0], True), t.strip(), i + 2, a[0], True])
                 i += 3
                 continue
         if a.strip() and not RULE_RE.match(a) and not a[0].isspace() and len(a) <= 100 and i + 1 < n and RULE_RE.match(lines[i + 1].rstrip()):
             u = lines[i + 1].rstrip()
             if (len(u) >= len(a) or len(a) < 4) and (i == 0 or not lines[i - 1].strip()):
-                heads.append([level(u[0], False), a.strip(), i + 1])
+                heads.append([level(u[0], False), a.strip(), i + 1, u[0], False])
                 i += 2
                 continue
         i += 1
-    return heads if heads and beyond else None
+    return heads, beyond
+
+
+def rst_headings(lines):
+    """-> [[level, title, line_number]] for underlined and over-and-underlined titles of any punctuation character, or None when the text
+    holds no style beyond the `=` and `-` underlines that the markdown reader already handles. Level = order of first use of a style."""
+    heads, beyond = rst_scan(lines)
+    return [h[:3] for h in heads] if heads and beyond else None
+
+
+ATX_RE = re.compile(r"^(#{1,6})\s+\S")
+SETEXT_RE = re.compile(r"^(=+|-+)\s*$")
+LISTITEM_RE = re.compile(r"^\s*([-*+]|\d+[.)])\s+\S")
+
+
+def lines_of(text):
+    """The lines of a text as a file's own line numbers count them: a line ends at LF, CR LF or (alone) CR, not at a form feed or U+2028."""
+    if "\n" not in text and "\r" in text:
+        return text.split("\r")
+    return text.replace("\r\n", "\n").split("\n")
+
+
+def front_matter_end(lines):
+    """Index of the line that closes a YAML front matter block (`---` first line, then `---` or `...`), else -1."""
+    if lines and lines[0].strip() == "---":
+        for i in range(1, min(len(lines), 200)):
+            if lines[i].strip() in ("---", "..."):
+                return i
+    return -1
+
+
+def heading_styles(lines, rst=False):
+    """-> [(kind, character, count)] in order of first use: kind 'mark' (hashes before the title), 'underline' or 'both' (a line above and below).
+    A reST text (`rst`: a .rst file, or directives in it) reads every punctuation character; other text reads `#` marks outside code fences and the
+    `=` and `-` underlines of a title, and reads reST underlines only when it has no `#` heading."""
+    heads, beyond = rst_scan(lines)
+    out = {}
+
+    def from_rst():
+        for h in heads:
+            k = ("both" if h[4] else "underline", h[3])
+            out[k] = out.get(k, 0) + 1
+        return [(k, c, n) for (k, c), n in out.items()]
+    if heads and rst:
+        return from_rst()
+    in_code = False
+    start = front_matter_end(lines) + 1
+    for i, ln in enumerate(lines, 1):
+        if i <= start:
+            continue
+        s = ln.strip()
+        if s.startswith("```") or s.startswith("~~~"):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        m = ATX_RE.match(ln)
+        if m:
+            k = ("mark", m.group(1))
+        elif i > 1 and SETEXT_RE.match(ln) and len(s) >= 3 and lines[i - 2].strip() and not ATX_RE.match(lines[i - 2]) and not LISTITEM_RE.match(lines[i - 2]):
+            k = ("underline", s[0])
+        else:
+            continue
+        out[k] = out.get(k, 0) + 1
+    if heads and beyond and not any(k[0] == "mark" for k in out):   # no # heading: a text that uses ~ ^ " underlines is reST whatever its name
+        out = {}
+        return from_rst()
+    return [(k, c, n) for (k, c), n in out.items()]
+
+
+def styles_text(styles):
+    """The print line for heading_styles()."""
+    word = {"mark": "", "underline": " underline", "both": " over and under"}
+    return ("Heading styles (the character of the line under a title, or the # marks before it; one count per style): "
+            + ", ".join(f"'{c}'{word[k]} x{n}" for k, c, n in styles) + ".")
 
 
 def blocks(lines):

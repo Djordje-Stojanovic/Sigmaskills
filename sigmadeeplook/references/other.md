@@ -9,7 +9,7 @@ One reference for the families that are not big enough for their own page. Same 
 - Model files: it never loads them. Quality, licence and behaviour of a model are out of scope.
 - Disk and VM images: listed from the header only. It never mounts them; contents need 7-Zip or the hypervisor.
 
-Plain text without a format of its own (notes, catalogues, reST, configs) still gets its structure in step 1: headings of any underline style, paragraphs (blank-line blocks), which first words open lines (`msgid 121`, `msgstr 121`), `.. name::` directives, the most frequent words, and the last six lines with their numbers. A head view of a long file says `PARTIAL: the first 200 of N lines`; never read it as the whole file.
+Plain text without a format of its own (notes, catalogues, reST, configs) still gets its structure in step 1: headings of any underline style (a `Heading styles` line counts them per underline character; `--ask "how many headings are underlined with hyphens"` answers), paragraphs (blank-line blocks), which first words open lines (`msgid 121`, `msgstr 121`), `.. name::` directives, the most frequent words, and the last six lines with their numbers. A head view of a long file says `PARTIAL: the first 200 of N lines`; never read it as the whole file.
 
 ## Pipeline and traps
 

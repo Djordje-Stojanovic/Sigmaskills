@@ -134,7 +134,7 @@ def docx_counts(look, z, names, doc):
         first = [("".join(t.text or "" for t in c.iter() if strip(t.tag) == "t")).strip() for c in trs[0] if strip(c.tag) == "tc"] if trs else []
         ncol = max((sum(1 for c in r if strip(c.tag) == "tc") for r in trs), default=0)
         last = [("".join(t.text or "" for t in c.iter() if strip(t.tag) == "t")).strip() for c in trs[-1] if strip(c.tag) == "tc"] if trs else []
-        look.line(f"Table {i}: {len(trs)} rows x {ncol} columns; first row: " + " | ".join(P.short(x, 30) for x in first) + "; last row: " + " | ".join(P.short(x, 30) for x in last), 90 - min(20, i), "tables")
+        look.line(f"Table {i}: {len(trs)} rows x {ncol} columns; first row: " + P.cells_text(first) + "; last row: " + P.cells_text(last), 90 - min(20, i), "tables")
 
 
 def sheet_aggregates(look, name, cells, formulas, header_hint=True):
@@ -300,6 +300,6 @@ def pptx_counts(look, z, names):
                     ("tables", tot["tables"]), ("charts", charts), ("media files", media), ("words on slides", tot["words"]), ("text paragraphs", tot["paragraphs"]),
                     ("layouts", layouts), ("masters", masters)], 95, "Slide counts")
     for sl, ti, nr, nc, first, last in tabs[:30]:
-        look.line(f"Slide {sl} table {ti}: {nr} rows x {nc} columns; first row: " + " | ".join(P.short(x, 30) for x in first) + "; last row: " + " | ".join(P.short(x, 30) for x in last), 88, "tables")
+        look.line(f"Slide {sl} table {ti}: {nr} rows x {nc} columns; first row: " + P.cells_text(first) + "; last row: " + P.cells_text(last), 88, "tables")
     if per:
         look.line("Words per slide: " + ", ".join(f"{i}: {w}" for i, w, _ in per) + ". Most words: slide " + str(max(per, key=lambda t: t[1])[0]) + ".", 60)

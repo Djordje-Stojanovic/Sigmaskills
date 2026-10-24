@@ -70,6 +70,25 @@ def short_id(v, n=40, keep=200):
     return s if len(s) <= n or (" " not in s and len(s) <= keep) else s[:n - 1] + "…"
 
 
+def short_meta(v, n=200):
+    """A value that names the file or a record (title, author, head field, last-record field) stays whole up to `n` characters; a longer one is cut
+    and says its exact length, so a cut is never read as the whole value."""
+    s = " ".join(str(v).split())
+    return s if len(s) <= n else s[:n - 1] + f"…(cut, {len(s):,} chars)"
+
+
+def cells_text(cells, per=30, whole=200, budget=900, sep=" | "):
+    """The cells of one table row joined: each stays whole up to `whole` characters while the row's budget lasts, then up to `per`; a cut says its length."""
+    out = []
+    for c in cells:
+        s = " ".join(str(c).split())
+        keep = whole if budget > 0 else per
+        t = s if len(s) <= keep else s[:keep - 1] + f"…(cut, {len(s):,} chars)"
+        budget -= len(t)
+        out.append(t)
+    return sep.join(out)
+
+
 def keyof(v):
     """The value as counted and grouped: stripped text, lower-case booleans, whole floats as ints."""
     if isinstance(v, str):
@@ -363,7 +382,12 @@ class Profiler:
         else:
             pairs = list(self.last[1].items()) if isinstance(self.last[1], dict) else list(self.last[1])
         noun = "row" if self.label in ("line", "row", "sheet row") else self.label
-        body = "; ".join(f"{k}={short_id(v, width)}" for k, v in pairs[:fields]) + (f"; +{len(pairs) - fields} more fields" if len(pairs) > fields else "")
+        budget, parts = 1600, []   # the final record names the file's end: its fields stay whole (up to 200 characters) while the line is under ~1,600 characters
+        for k, v in pairs[:fields]:
+            t = short_meta(v, 200) if budget > 0 else short_id(v, width)
+            budget -= len(t)
+            parts.append(f"{k}={t}")
+        body = "; ".join(parts) + (f"; +{len(pairs) - fields} more fields" if len(pairs) > fields else "")
         return f"Last {noun} ({self.label} {idx}; {fmt(self.n)} in all): {body}"
 
     def ordered(self):
@@ -761,6 +785,9 @@ def text_profile(look, text, pri=90, kind="Text"):
         tops = [h for h in heads if h[0] == top_level]
         look.line(f"Sections: {len(heads)} headings; first '{short(first[1], 60)}' (line {first[2]}), last '{short(last[1], 60)}' (line {last[2]}, level {last[0]}); "
                   f"{len(tops)} at the top level (#{'#' * (top_level - 1)}), last top-level '{short(tops[-1][1], 60)}' (line {tops[-1][2]}).", pri)
+        styles = dl_textx.heading_styles(lines, str(getattr(look, "path", "")).lower().endswith((".rst", ".rest")) or len(dl_textx.directives(lines)) >= 2)
+        if styles:
+            look.line(dl_textx.styles_text(styles), pri - 1)
         body = [f"{'  ' * (h[0] - 1)}{'#' * h[0]} {short(h[1], 70)}  (line {h[2]}, {h[3]} lines)" for h in heads]
         look.line(f"Outline ({len(heads)} headings, line number and section size):\n" + "\n".join(body[:30]) + (f"\n... {len(body) - 30} more in the outline below" if len(body) > 30 else ""), pri - 22, "outline")
         if len(body) > 30:
