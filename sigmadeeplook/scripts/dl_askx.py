@@ -116,4 +116,5 @@ def row_answer(q, lj):
 
 
 def answer(q, lj):
-    return heading_answer(q, lj) or row_answer(q, lj)
+    import dl_r13   # fix round 13: first or last link definition / anchor / label, the deepest nesting level
+    return heading_answer(q, lj) or row_answer(q, lj) or dl_r13.answer(q, lj)
