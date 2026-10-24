@@ -774,6 +774,8 @@ def data_sqlite(look):
                 orphans = [(c, p, n) for (c, p), n in cnt.most_common(6)]
             except sqlite3.Error:
                 orphans = None
+        import dl_r13   # fix round 13: the rows of gpkg_contents (feature layers, attribute tables)
+        gpkg = dl_r13.gpkg_rows(con) if "gpkg_contents" in tabs else None
         # freshness: the oldest and newest value of a time-like column in the biggest tables
         fresh = []
         deadline[0] = time.time() + 4.0
@@ -800,6 +802,10 @@ def data_sqlite(look):
     ranked = sorted(info.items(), key=lambda kv: -(kv[1]["rows"] or 0))
     top = ranked[:8]
     look.line("Rows per table, biggest first: " + "; ".join(f"{t} {rows_fmt(i['rows'])}" for t, i in ranked[:14]) + (f"; +{ntab - 14} smaller" if ntab > 14 else "") + ".", 88)
+    if 14 < ntab <= 60:   # fix round 13: every table of a database of up to 60 tables is listed with its exact row count
+        look.line("Rows per table, the smaller ones: " + "; ".join(f"{t} {i['rows']:,}" if i["rows"] is not None else f"{t} ?" for t, i in ranked[14:]) + ".", 83)
+    if gpkg:
+        look.line(dl_r13.gpkg_line(gpkg), 89, "structure")
     look.line("Columns of the biggest: " + " | ".join(f"{t}: " + ", ".join(f"{c[0]} {c[1] or '?'}" + (" PK" if c[2] else "") for c in i["columns"][:6]) + (f" +{len(i['columns']) - 6}" if len(i["columns"]) > 6 else "") for t, i in top[:3]), 80)
     blobs = [f"{t}.{c[0]}" for t, i in info.items() for c in i["columns"] if (c[1] or "").upper() == "BLOB"]
     if blobs:
@@ -1197,6 +1203,8 @@ def data_xml(look):
     look.line(f"XML: root <{root_tag}>, {'at least ' if cut else ''}{sum(counts.values()):,} elements of {len(counts)} kinds, depth {depth}. Elements: " + ", ".join(f"{k} ({v:,})" for k, v in counts.most_common(30)), 90 + base)
     P.counts(look, [("elements", sum(counts.values())), ("element kinds", len(counts)), ("attributes", sum(attrs.values())), ("elements with text", texts),
                     ("max depth", depth), ("root children", len(list(root)))], 94 + base, "XML counts")
+    import dl_r13   # fix round 13: elements per level, and the levels of an element that nests in itself
+    dl_r13.tree_lines(look, root, local, sum(counts.values()), 90 + base)
     import dl_xmlvals
     dl_xmlvals.emit(look, root, "XML", 88 + base)   # the values, by element path, over the whole document: a late element's text is in the first print too
     if attrs:

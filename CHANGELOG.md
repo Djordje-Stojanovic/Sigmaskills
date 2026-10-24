@@ -35,6 +35,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
   - The `Find one record:` example is built from the file's own columns, for example `ask "age of pt_id 7000001"`. It runs as printed.
   - "In how many paragraphs does the word 'X' appear? (Each table cell counts as its own paragraph.)" is a text count. Words inside brackets no longer send it to the table route. Table cells of an OpenDocument or PDF text count as one paragraph each, as in a Word file.
   - "In how many cues does the word 'X' appear?" counts subtitle cues. The `.mo` file no longer shows the `flags = 'fuzzy'` form (it keeps no flags), and the netCDF line shows a full "last index" question.
+- `sigmadeeplook` fix round 13, lane F2 (facts that held-out set 12 showed only in the 10k print; the first print now carries them or points to the `--ask` that answers them):
+  - Link and anchor definitions: step 1 of a reST, Markdown, AsciiDoc, org or LaTeX file gives the count and the first and last one with line numbers (`Explicit targets (.. _label:): 19; first 'a' (line 1), last 'b' (line 1099).`). `--ask "the last explicit target"` (or first, or how many; also link definition, anchor, label) answers it. An anonymous reST target (`.. __:`) is no longer counted as a target.
+  - Tree depth: step 1 of an XML file gives the elements per level (root = level 0) and, for an element that nests in itself (OPML `<outline>`), its levels with the outermost as level 1. The JSON, YAML and TOML count line says `max nesting depth (top level = 1)`. `--ask "deepest nesting level"` answers it for all four.
+  - New step 1 line `Ask a word count:` for Word, OpenDocument, RTF, PowerPoint, PDF, plain text, Markdown and reST files: the `--ask` form with the right unit (slides, pages, paragraphs) and the rule (whole word, capitals as written). A subtitle file already says it in its `Find one record` line (`how many cues contain the word 'X'`).
+  - GeoPackage: step 1 lists `gpkg_contents` (table, data type) with a count per data type, so the feature layers and attribute tables are known at once; a long table gets the counts only. A SQLite file of up to 60 tables lists every table with its exact row count in the first two prints.
 
 ## [0.16.9] — 2026-10-24
 
