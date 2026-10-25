@@ -2,9 +2,9 @@
 
 All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigmaskills) are documented here.
 
-## Ticket 83 (2026-10-19 to 2026-10-23)
+## Ticket 83 (2026-10-19 to 2026-10-25)
 
-66 merged pull requests and 68 commits on `main`, shipped as releases 0.10.0 to 0.16.8 (each has its own section in this file). The picture across all four repos: the [ticket 83 changelog page](https://claude.ai/artifact/U1Z7U3z1BMFVu3rUPXAdMJ).
+79 merged pull requests and 81 commits on `main`, shipped as the releases below (each has its own section in this file); the last is 0.16.12 on 10-25, after four more sigmadeeplook fix rounds (#187 to #198). The picture across all four repos: the [ticket 83 changelog page](https://claude.ai/artifact/U1Z7U3z1BMFVu3rUPXAdMJ).
 
 | Release PR | Merged (Vienna) | Title |
 |---|---|---|
@@ -25,10 +25,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 | [#179](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/179) | 10-23 17:32 | release: identities for 0.16.6 (sigmadeeplook fix round 11) |
 | [#182](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/182) | 10-23 19:54 | release: identities for 0.16.7 (installer pack fix) |
 | [#185](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/185) | 10-23 21:07 | release: identities for 0.16.8 (four new packs) |
+| [#189](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/189) | 10-24 02:25 | release: identities for 0.16.9 (sigmadeeplook fix round 12) |
+| [#192](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/192) | 10-24 19:54 | release: identities for 0.16.10 (sigmadeeplook fix round 13) |
+| [#195](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/195) | 10-24 23:53 | release: identities for 0.16.11 (sigmadeeplook fix round 14) |
+| [#198](https://github.com/Djordje-Stojanovic/Sigmaskills/pull/198) | 10-25 02:10 | release: identities for 0.16.12 (sigmadeeplook fix round 15) |
 
 ## [Unreleased]
 
-## [0.16.12] — 2026-10-24
+## [0.16.12] — 2026-10-25
 
 ### Fixed
 
