@@ -1,6 +1,6 @@
 ---
 name: sigmacreatearena
-description: Ranks many options by taste in a blind-pairs arena, Elo per metric (models, voices, thumbnails). Use to rank, compare or pick the best of many options. Do not use for 2-3 options or measurable checks.
+description: Use when asked for sigmacreatearena or to rank, compare or pick the best of many options. Blind-pairs arena, Elo per metric (models, voices, thumbnails). Do not use for 2-3 options or measured checks.
 ---
 
 # SigmaCreateArena

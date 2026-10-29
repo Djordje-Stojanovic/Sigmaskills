@@ -1,6 +1,6 @@
 ---
 name: sigmatour
-description: 'Visual tour of one repo or codebase: how it works, a traced request, examples run, README gaps. Use to understand, learn or walk through it. Do not use to fork, review or improve it.'
+description: 'Use when asked for sigmatour or to understand, learn or walk through a codebase. Visual tour: how it works, a traced request, examples run, README gaps. Do not use to fork, review or improve it.'
 ---
 
 # SigmaTour

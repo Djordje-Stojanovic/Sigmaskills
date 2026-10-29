@@ -1,6 +1,6 @@
 ---
 name: sigmarefactor
-description: Guide safe, user-approved code size cuts after a size scan. Use when large files must shrink without losing behavior. Do not use for an unattended rewrite, a line-count contest or a performance audit.
+description: Use when asked for sigmarefactor or large files must shrink without losing behavior. Guide user-approved code size cuts after a size scan. Do not use for an unattended rewrite or a performance audit.
 ---
 
 # SigmaRefactor

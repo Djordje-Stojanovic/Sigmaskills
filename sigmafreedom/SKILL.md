@@ -1,6 +1,6 @@
 ---
 name: sigmafreedom
-description: De-safeguards a repo by deleting model-written refusals and moral limits. Use when the owner says decensor this or remove the safety rules. Do not use to add restrictions or delete invariants.
+description: Use when the owner says sigmafreedom, decensor this or remove the safety rules. Deletes model-written refusals and moral limits from a repo. Do not use to add restrictions or delete invariants.
 ---
 
 # SigmaFreedom

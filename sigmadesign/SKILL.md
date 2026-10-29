@@ -1,6 +1,6 @@
 ---
 name: sigmadesign
-description: Build a repo's design system from one accent colour (DESIGN.md tokens). Use when the user wants a design system, template, theme or one design file. Do not use to critique a look (SigmaTaste).
+description: Use when asked for sigmadesign, a design system, template, theme or one design file. Build a repo's design system from one accent colour (DESIGN.md tokens). Do not use to critique a look (SigmaTaste).
 ---
 
 # SigmaDesign

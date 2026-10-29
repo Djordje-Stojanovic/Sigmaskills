@@ -32,6 +32,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- Every skill description now starts with the words that trigger it ("Use when asked for sigmaship, ship #123 or ship this ready ticket"), and the summary follows. An agent reads only the description when it decides to load a skill.
+- sigmaship: `sigmaship stop` (or `no merge`) does the same work and stops at a green, reviewed PR for the owner to merge. The merge step now states the owner's standing permission to merge, so models that hesitate to merge go ahead.
+
 ## [0.16.12] — 2026-10-25
 
 ### Fixed

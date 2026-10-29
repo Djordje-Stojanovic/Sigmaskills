@@ -1,6 +1,6 @@
 ---
 name: sigmabrief
-description: Write copy-pastable agent briefs in safe parallel waves from issues or plans. Use only when the user asks for briefs, handoffs or spawn prompts. Do not use to implement work or on ordinary chat.
+description: Use when asked for sigmabrief, briefs, handoffs or spawn prompts. Write copy-pastable agent briefs in safe parallel waves from issues or plans. Do not use to implement work or on ordinary chat.
 ---
 
 # SigmaBrief

@@ -1,6 +1,6 @@
 ---
 name: sigmataste
-description: Taste pass on a page, app, deck, doc, image or film. Asks one round, then writes a ranked plan of big visible changes from 14 lenses. Do not use to build them or hunt bugs.
+description: Use when asked for sigmataste or a taste pass on a page, app, deck, doc, image or film. Asks one round, then writes a ranked plan of visible changes (14 lenses). Do not use to build them or hunt bugs.
 ---
 
 # SigmaTaste
