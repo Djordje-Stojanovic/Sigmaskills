@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.18.0] — 2026-10-29
+
 ### Added
 
 - `sigmasetup` (SigmaSetup): run it once per repo after the installer. It finds the installed packs, reads `references/packs/<pack>.md` for what each one needs in a repo (tracker files, labels, tools, keys by name), asks one round of questions, sets up only what the owner says yes to, and reports every change with its undo. Nothing goes into user-level config. It ships a per-repo git guard for Claude Code (`scripts/git-guard.mjs install|remove|status`): it blocks force push, `reset --hard`, `clean -f`, `stash clear` or `drop`, and every command that throws away uncommitted changes (`checkout .`, `checkout -f`, `switch --discard-changes`, `restore .`), also behind `git -C`, and allows `git branch -D` for cleanup after a squash merge. `test/sigmasetup.test.js` fails when an installer pack has no setup guide or a Sigma skill has no section, so every new pack or skill lands with its setup.
@@ -619,7 +621,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.12...v0.17.0
 [0.16.12]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.11...v0.16.12
 [0.16.11]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.10...v0.16.11
