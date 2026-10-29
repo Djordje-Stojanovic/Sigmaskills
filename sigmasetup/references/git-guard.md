@@ -19,7 +19,7 @@ Run from the repo root. `<sigmasetup>` is the folder this skill is installed in.
 - Off: `node .claude/hooks/sigma-git-guard.mjs remove .` takes the entry and the file out again. When `.claude/settings.json` held only the guard, the file goes too.
 - Check: `node .claude/hooks/sigma-git-guard.mjs status .`
 
-`install` refuses the home folder, so the guard can never end up in `~/.claude/settings.json`. Commit `.claude/settings.json` and the hook file when the whole team should have the guard; leave them uncommitted for one machine.
+Claude Code treats a hook that crashes (no Node, a moved file) as "allow", so check with `status` after moving the repo or changing machines. `install` refuses the home folder, so the guard can never end up in `~/.claude/settings.json`. Commit `.claude/settings.json` and the hook file when the whole team should have the guard; leave them uncommitted for one machine.
 
 ## Matt Pocock's version
 

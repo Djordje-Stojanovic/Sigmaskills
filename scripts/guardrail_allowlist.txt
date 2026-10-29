@@ -68,4 +68,3 @@ Do not use for training or code review.
 forbidden changes (more quantization, precision cuts, other weights, lossy
 running anything heavy there was forbidden.
 description: 'Use when asked for sigmasetup or to set up installed skills in a repo after the Sigma installer.
-- **Per project, never global.** Every write goes into the current repo. Never edit `~/.claude/settings.json`

@@ -37,6 +37,7 @@ test('git guard allows normal work and branch cleanup after a squash merge', () 
     'git restore --staged .',
     'git checkout main',
     'git worktree remove ../wt',
+    'git commit -m "docs; git reset --hard is blocked"',
   ]) assert.equal(blockReason(cmd), null, `should allow: ${cmd}`);
 });
 
@@ -66,6 +67,10 @@ test('git guard install and remove touch only their own entry and refuse the hom
   assert.equal(status(dir), 'git guard off');
 
   assert.throws(() => install(os.homedir()), /never global/);
+  if (process.platform === 'win32') assert.throws(() => install(os.homedir().toLowerCase()), /never global/);
+
+  const typo = spawnSync(process.execPath, [hook, 'uninstall', dir], { encoding: 'utf8', timeout: 5000 });
+  assert.equal(typo.status, 1, 'an unknown mode fails fast instead of waiting on stdin');
 
   const bare = fs.mkdtempSync(join(os.tmpdir(), 'sigmasetup-'));
   install(bare);

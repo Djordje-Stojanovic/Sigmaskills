@@ -17,7 +17,9 @@ const GLOBAL_WITH_VALUE = new Set(['-C', '-c', '--git-dir', '--work-tree', '--na
 
 function gitCalls(command) {
   const calls = [];
-  for (const segment of command.split(/&&|\|\||[;|\n]/)) {
+  // Separators inside quotes (a commit message) do not start a new command.
+  const unquoted = command.replace(/"[^"]*"|'[^']*'/g, (q) => q.replace(/[;|&\n]/g, ' '));
+  for (const segment of unquoted.split(/&&|\|\||[;|\n]/)) {
     const words = segment.trim().match(/"[^"]*"|'[^']*'|\S+/g) || [];
     const at = words.findIndex((w) => /(^|[\\/])git(\.exe)?$/i.test(w.replace(/^["']|["']$/g, '')));
     if (at < 0) continue;
@@ -59,9 +61,16 @@ function isOurs(entry) {
   return (entry.hooks || []).some((h) => (h.command || '').includes(HOOK_FILE));
 }
 
+// Real path, compared without case on Windows, so a junction or other spelling of a path still matches.
+function samePath(a, b) {
+  const real = (p) => (fs.existsSync(p) ? fs.realpathSync(p) : path.resolve(p));
+  const [x, y] = [real(a), real(b)];
+  return process.platform === 'win32' ? x.toLowerCase() === y.toLowerCase() : x === y;
+}
+
 function projectDir(arg) {
   const dir = path.resolve(arg || '.');
-  if (path.resolve(dir) === path.resolve(os.homedir())) {
+  if (samePath(dir, os.homedir())) {
     throw new Error('refusing to install into your home folder: the guard is per project, never global');
   }
   return dir;
@@ -73,6 +82,7 @@ export function install(arg) {
   const settings = readSettings(file);
   settings.hooks ??= {};
   settings.hooks.PreToolUse ??= [];
+  if (!Array.isArray(settings.hooks.PreToolUse)) throw new Error(`${file}: hooks.PreToolUse is not a list; fix it by hand first`);
   if (!settings.hooks.PreToolUse.some(isOurs)) {
     settings.hooks.PreToolUse.push({ matcher: MATCHER, hooks: [{ type: 'command', command: COMMAND }] });
   }
@@ -123,13 +133,14 @@ function runHook() {
   });
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && samePath(process.argv[1], fileURLToPath(import.meta.url))) {
   const [mode, dir] = process.argv.slice(2);
   try {
-    if (mode === 'install') console.log(install(dir));
+    if (mode === undefined) runHook();
+    else if (mode === 'install') console.log(install(dir));
     else if (mode === 'remove') console.log(remove(dir));
     else if (mode === 'status') console.log(status(dir));
-    else runHook();
+    else throw new Error(`unknown mode "${mode}"; use install, remove or status, followed by the repo folder`);
   } catch (err) {
     console.error(`git guard: ${err.message}`);
     process.exit(1);
