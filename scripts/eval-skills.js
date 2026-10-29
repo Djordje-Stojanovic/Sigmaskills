@@ -88,7 +88,7 @@ function runSkill(skill, budget) {
     '--max-budget-usd', budget.toFixed(2),
   ];
   const started = Date.now();
-  const run = spawnSync('claude', args, { cwd: repo, encoding: 'utf8', timeout: 45 * 60_000, maxBuffer: 64 * 1024 * 1024 });
+  const run = spawnSync('claude', args, { cwd: repo, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', timeout: 45 * 60_000, maxBuffer: 64 * 1024 * 1024 });
   const seconds = Math.round((Date.now() - started) / 1000);
   fs.writeFileSync(path.join(work, 'claude-output.json'), run.stdout || '');
 

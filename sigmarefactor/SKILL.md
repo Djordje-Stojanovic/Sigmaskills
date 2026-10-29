@@ -49,7 +49,7 @@ Completion criterion: the agreed refactoring is present and has the planned veri
 
 ### 5. Verify and deliver
 
-- Run focused tests after each change, then the full repository checks. Re-run the same line-count method and show physical lines removed, lines moved to new files, and the final top-five list.
+- Run the full repository checks once, after the last cut. Re-run the same line-count method and show physical lines removed, lines moved to new files, and the final top-five list.
 - Inspect the complete diff for lost files, accidental interface changes, formatting-only compression, and unrelated edits.
 - Follow the user's chosen Git workflow. Commit and push only when requested or when the surrounding task already authorizes it; prepare a reviewable PR when requested.
 - Report test commands, results, known limits, and the exact command the user can run to repeat the scan.

@@ -126,11 +126,11 @@ Compares the product with the best one to three products in its field and with p
 
 ### SigmaBrief
 
-Turns issues, features, bugs or plain work into short, copy-pastable briefs for other agents, grouped into safe parallel waves. Each brief tells the agent to plan, build, check and open a PR, and not to merge. It never does the work itself. It runs only when you ask for it by name.
+Turns issues, features, bugs or plain work into short, copy-pastable briefs for other agents, grouped into safe parallel waves. Each brief tells the agent to build in big steps, check once at the end and open a PR, and not to merge. It never does the work itself. It runs only when you ask for it by name.
 
 ### SigmaShip
 
-Ships one issue that has checkable acceptance criteria: a worktree, a draft PR that tracks the criteria, test-first slices, and review rounds by fresh agents until a round finds nothing serious. Then it merges, closes the ticket and cleans up. A ticket without criteria gets the name of the skill to run first.
+Ships one issue that has checkable acceptance criteria: a worktree, a draft PR that tracks the criteria, test-first slices, and at most two review rounds by an agent one model up, until a round finds nothing serious. Then it merges, closes the ticket and cleans up. A ticket without criteria gets the name of the skill to run first.
 
 ### SigmaFreedom
 
@@ -162,7 +162,7 @@ Reads what an agent cannot: video frames, speech, scanned PDFs and images, binar
 
 ### SigmaLoop
 
-Reads a repo's open work, asks one round of questions, then writes a paste-ready prompt for your host's unattended mode (Claude Code, Codex, pi, T3 Code or a plain instruction) and a loop file the agent re-reads at every wake. It never starts the loop.
+Reads a repo's open work, asks one round of questions, then writes a paste-ready prompt for your host's unattended mode (Claude Code, Codex, pi, T3 Code or a plain instruction) and a loop file the agent re-reads at every wake. The loop file sets big steps, checks once at the end, no idle agent slots and a model per difficulty. It never starts the loop.
 
 ### SigmaTaste
 

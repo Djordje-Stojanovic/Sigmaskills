@@ -5,7 +5,7 @@ Adapted from a real overnight run on a repo with one big ticket and many sub-tas
 The host prompt that went with it was one line plus the wake rule:
 
 ```text
-/loop Overnight ticket T-12 until 11:00 Vienna. You are the orchestrator. Re-read .scratch/loops/overnight-T-12.md at every wake: edits apply on the next wake. Always end every turn with ScheduleWakeup (60-120 s after an agent ends or a merge needs a check, else 900-1200 s); a turn without it ends the loop. At 11:00 do the Finish block, then ScheduleWakeup with stop: true.
+/loop Overnight ticket T-12 until 11:00 Vienna. You are the orchestrator. Re-read .scratch/loops/overnight-T-12.md at every wake: edits apply on the next wake. Always end every turn with ScheduleWakeup 1800-3600 s, a fallback only (agent notifications wake you sooner); a turn without it ends the loop. At 11:00 do the Finish block, then ScheduleWakeup with stop: true.
 ```
 
 The loop file:
@@ -23,15 +23,15 @@ The owner pre-authorises for this whole loop: commit, push, PR, squash merge, de
 At 11:00 every open item in .scratch/T-12/issues/T-12-main.md is done with dated evidence, or has a dated log line: what was done, what is left, why, next step. The overview file is current.
 
 ## Crew
-Max 4 sub-agents at once: 2 Haiku (xhigh), 1 Sonnet (high), 1 Opus (medium). Never max effort. Opus = hardest items. Sonnet = big kit or skill items. Haiku = measurement, backfills, doc landings, installs, verification, cleanup. When one ends, start the next item in the same turn. Running agents count toward the 4.
+Max 4 sub-agents at once: 2 Haiku (xhigh), 1 Sonnet (high), 1 Opus (medium). Never max effort. Opus = hardest items. Sonnet = big kit or skill items. Haiku = measurement, backfills, doc landings, installs, cleanup. Reviews run one model up, at most 2 rounds. When one ends, its slot gets the next item in the same turn; a fix round goes to the same agent by SendMessage. Running agents count toward the 4.
 
 ## Each wake
 1. `date` (Vienna). At or after 11:00: Finish.
 2. Re-read the ticket's "How to work", the Handoff, and every open line; run the overview script.
-3. For each finished agent: one quick check (its key test or output). Fix wrong ticks, add dated evidence, merge or deploy what it left.
-4. Fill every free slot from Priority. Skip items that share files with a running agent.
+3. For each finished agent: give its slot the next item, then one quick check (its key test or output). Fix wrong ticks, add dated evidence, merge or deploy what it left.
+4. Fill every other free slot from Priority. Skip items that share files with a running agent.
 5. Update the Handoff: time, running agents and items, done since the last wake, queue.
-6. ScheduleWakeup: 60-120 s right after an agent ends or a merge/deploy needs a check; else 900-1200 s (agent notifications wake you sooner).
+6. ScheduleWakeup 1800-3600 s, a fallback only: agent notifications wake you sooner, so never wake to poll.
 
 ## Priority
 The ticket section "Overnight order" is the order; follow it top down. A second agent (the pi agent) works in the same ticket in parallel: its rows (T1-T12, the publishing rows) and the publishing files are NOT ours. Re-read the ticket right before every write. Rows marked "needs the owner live" wait for him: write their facts, never decide them.
@@ -42,12 +42,12 @@ Never: items marked owner-only, screenshots of the hypervisor UI, restarting the
 - Also lands in: docs, the local skills, the glossary, the user guide, the catalog, one dated learning line per lesson.
 - Second repo: worktree from origin/main outside the main checkout (never check out or reset the main checkout), docs and tests, PR, own check, squash merge, delete branch and worktree, then fast-forward the main checkout when it is clean and run the sync command.
 - Website docs: run the sync script, the site tests, push, and check the health endpoint shows the new commit. If another session's pre-push hook blocks, log it and move on (never --no-verify).
-- Checks: the full test suite in the kit (~90 s, safe in parallel), the repo check script, the doc coverage script; name failures that are not yours. A live proof after every deploy.
+- Checks, once per item at its end: the full test suite in the kit (~90 s, safe in parallel), the repo check script, the doc coverage script; name failures that are not yours. A live proof after every deploy.
 - Commits say what, why, and how verified; end with the trailer. PR bodies end with the generated-with line.
 
 ## Sub-agent prompt (every one carries)
 - The item file or line, the owner's words verbatim, and a checkable "done when".
-- "Read what the item touches, then do the work. No plan documents, no scaffolding, no menus. Code first, docs support it. Never cut corners. Hill-climb to completion; a loss still gets its numbers written."
+- "Do the whole item in 10-20 tool calls: read each input whole (paths listed), write each output in one Write. No plan documents, no scaffolding, no menus. Code first, docs support it. Checks once, at the end. Commit each finished file. Hill-climb to completion; a loss still gets its numbers written."
 - The skills to load first. The Landing list. The no-touch list (files running agents own).
 - "New problem found: one file in .scratch/T-12/issues/ + one pointer line in the ticket."
 - "End: tick with dated evidence (numbers, paths, PRs, deploy versions), run the overview script, report short and plain."

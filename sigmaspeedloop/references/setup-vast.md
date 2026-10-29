@@ -62,7 +62,7 @@ Rent rules:
   `destroy -y` and take the next offer.
 - The instance image IS the serving image (no Docker inside). If it cannot boot with SSH, rent a CUDA base
   image and install the engine build inside. Log the ruling.
-- Poll with `show instances --raw`. An 18 GB image pulls in about 4 minutes.
+- Wait for boot with a background waiter on `show instances --raw`, not a poll loop in the turn. An 18 GB image pulls in about 4 minutes.
 - Do a 5-minute test rental first on a cheap image: SSH, `nvidia-smi`, io_uring probe, HF speed, destroy.
 - Security options (`seccomp=unconfined`, privileged) may be refused by the safety classifier. Use code fallbacks.
 

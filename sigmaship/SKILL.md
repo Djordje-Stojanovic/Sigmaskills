@@ -34,7 +34,7 @@ If those skills are not installed, write the acceptance criteria into the issue 
 
 1. Sync: `git fetch origin`, and confirm the base branch (usually `main`) from the repository. Then search open PRs and issues for the same change before you write code: `gh pr list --state open --search "<words>"` and `gh issue list --state open --search "<words>"`. If an open PR already does the job, build on that PR instead and name it in the PR body, which is the ledger.
 2. Create the branch `ship/<issue>-<slug>` in a fresh worktree cut from `origin/<base>`, outside the main checkout: the host's worktree tool, or `git worktree add <path> -b <branch> origin/<base>`. If you are already in a linked worktree, use it. Another agent may have uncommitted work in the main checkout: never check out, reset, commit, or force there.
-3. Install and run the baseline checks (tests, type check, lint, build). A red in this ticket's area stops the run: report it. A red that belongs to another lane (prove it: it is also red on `origin/<base>`) is named under *Known reds* in the ledger, not fixed here.
+3. Install the dependencies. The full checks run once, at step 4's done line. A red there that is also red on `origin/<base>` belongs to another lane: name it under *Known reds* in the ledger, do not fix it here.
 
 ## 3. Open the draft PR first
 
@@ -52,21 +52,20 @@ Work in vertical slices. Each slice is one thin, complete path that makes one cr
 
 1. Write the test at the public seam and watch it go **red** for the right reason (use `/tdd` when it is installed).
 2. Write the least code that turns it **green**.
-3. Run the focused tests and the type check.
-4. Commit with a conventional message that names the issue (`feat(#42): …`) and the attribution line the user or repository asks for, then push. Never skip hooks (`--no-verify`); if one fails, fix the cause.
-5. Tick the criterion in the ledger with its evidence: the test name or command.
+3. Commit with a conventional message that names the issue (`feat(#42): …`) and the attribution line the user or repository asks for, then push. Never skip hooks (`--no-verify`); if one fails, fix the cause.
+4. Tick the criterion in the ledger with its evidence: the test name or command.
 
 Keep the change inside the ticket. Put anything else you notice under *Follow-ups*, unbuilt. Match the repository's style. Refactor only what the slice touches, while the tests are green.
 
 Decide ambiguities yourself and record each as `Ruling: <decision> — <reason> — <cost if wrong>`. Stop and ask only for irreversible or destructive actions, security-sensitive choices, side effects outside this branch, or a spec that contradicts itself.
 
-**Done when:** every criterion is ticked with evidence, the full suite and the type check pass locally (no red except the named known reds), CI is green on the latest push, and you have read your own full diff (`git diff origin/<base>...HEAD`) once, as a reviewer would. Update docs or changelog if the repository expects it. Then mark the PR ready.
+**Done when:** every criterion is ticked with evidence, the full suite and the type check pass locally, run once now (no red except the named known reds), and you have read your own full diff (`git diff origin/<base>...HEAD`) once, as a reviewer would. Update docs or changelog if the repository expects it. Then mark the PR ready.
 
 ## 5. Review rounds
 
 Each round, a fresh agent with no memory of this work checks the branch against the spec and the SigmaReview lenses, fixes what it finds, and reports back.
 
-**Who reviews.** By default, start the reviewer as a sub-agent of the harness you run in (Claude Code, Codex, Cursor, Muse Code, T3 Code, pi or any other), on that harness's default sub-agent model. Do not ask first; this works the same in every harness.
+**Who reviews.** By default, start the reviewer as a sub-agent of the harness you run in (Claude Code, Codex, Cursor, Muse Code, T3 Code, pi or any other), one model up from the builder when the harness has a stronger one, else its default sub-agent model. Do not ask first; this works the same in every harness. Round 2 goes to the same reviewer by SendMessage when the harness has it, so its context stays.
 
 If the user names a reviewer ("SigmaShip reviewer: GPT-6.1 Sol", "review with Grok 4.7"), every round uses that model:
 
@@ -76,7 +75,7 @@ If the user names a reviewer ("SigmaShip reviewer: GPT-6.1 Sol", "review with Gr
 
 A standing rule of the user or repository about reviewers wins. If it forbids sub-agents, your own full-diff read against the handoff checklist is the round.
 
-**Done when:** a round reports zero P0–P2 findings and CI is green. After three rounds that still find P0–P2 problems, stop and ask the user: the ticket or the design may need rethinking.
+**Done when:** a round reports zero P0–P2 findings. CI is checked once, at land. At most 2 rounds: when round 2 still finds P0–P2 problems, stop and ask the user, because the ticket or the design may need rethinking.
 
 ## 6. Land and clean up
 
