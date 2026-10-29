@@ -466,7 +466,7 @@ function sigmaspeedloop({ files, result }) {
   const dir = goalName.slice(0, -'GOAL.md'.length);
   const goal = files[goalName];
   if (!/Stop line:/.test(goal)) problems.push(`${goalName}: no stop line`);
-  const left = goal.match(/<[A-Z][A-Z0-9_ -]*>/g);
+  const left = goal.match(/<[A-Za-z][^<>:\n]{0,80}>/g); // any template placeholder; links (<https:...>) have a colon
   if (left) problems.push(`${goalName}: template placeholders left: ${[...new Set(left)].join(', ')}`);
   const spec = files[`${dir}SPEC_DRAFT.md`];
   if (!spec) problems.push(`missing ${dir}SPEC_DRAFT.md`);

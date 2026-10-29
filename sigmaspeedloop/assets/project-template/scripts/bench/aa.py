@@ -23,7 +23,8 @@ def main(runs, tool_runs=None):
     med["replay_version"] = max((x.get("replay_version") or 0) for x in rows)
     rows = [dict(x, replay_version=x.get("replay_version") or 0) for x in rows]
     rats = [ratios(x, med) for x in rows]
-    spread = {k: max(abs(r[k] - 1) for r in rats) for k in rats[0]}
+    keys = sorted({k for r in rats for k in r})  # runs may lack a component (no c2, no hit rate)
+    spread = {k: max(abs(r[k] - 1) for r in rats if k in r) for k in keys}
     score_spread = max(abs(score(r) - 1) for r in rats)
     gates = [x["gate"] for x in rows]
     # v4 runs (full 74-scenario ToolEvalBench, 4 needles) set the reliability/tool bands; all runs share the

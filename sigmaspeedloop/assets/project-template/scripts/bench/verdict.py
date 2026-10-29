@@ -41,9 +41,12 @@ def extract(run):
             prefill_64k=s["prefill"]["64k"]["prefill_tps"],
             ttft_128k=s["prefill"]["128k"]["ttft_s"], replay_ttft_p50=s["replay"]["ttft_p50_s"],
             mtp_accept=s.get("mtp_accept_decode_probe"), replay_version=s["replay"].get("version"),
-            warm_miss=1 - (s["replay"].get("warm_hit_rate") or 0),
-            warm_ttft_sum=sum(x["ttft_s"] for rs in s["replay"]["turns"] for x in rs[1:] if x.get("ttft_s")))
+            warm_miss=None if s["replay"].get("warm_hit_rate") is None else 1 - s["replay"]["warm_hit_rate"],
+            warm_ttft_sum=sum(x["ttft_s"] for rs in s["replay"]["turns"] for x in rs[1:] if x.get("ttft_s")) or None)
     return out
+
+
+MISS_FLOOR = 0.001  # a 100 % warm hit rate scores as a 0.1 % miss, so the miss ratio stays finite
 
 
 def ratios(cand, champ):
@@ -52,10 +55,11 @@ def ratios(cand, champ):
         # replay wall time compares only between runs of the same replay version (v8 = fixed-length turns)
         **({"replay": champ["replay_wall_s"] / cand["replay_wall_s"]}
            if cand.get("replay_version") == champ.get("replay_version") else {}),
-        "warm": champ["warm_ttft_sum"] / cand["warm_ttft_sum"],
+        **({"warm": champ["warm_ttft_sum"] / cand["warm_ttft_sum"]} if cand.get("warm_ttft_sum") and champ.get("warm_ttft_sum") else {}),
         "short": cand["decode_greedy"] / champ["decode_greedy"],
         "long": cand["decode_sampled"] / champ["decode_sampled"],
-        **({"miss": champ["warm_miss"] / cand["warm_miss"]} if cand.get("warm_miss") and champ.get("warm_miss") else {}),
+        **({"miss": max(champ["warm_miss"], MISS_FLOOR) / max(cand["warm_miss"], MISS_FLOOR)}
+           if cand.get("warm_miss") is not None and champ.get("warm_miss") is not None else {}),
         "prefill": cand["prefill_geo"] / champ["prefill_geo"],
         "c3": cand["c3_tps"] / champ["c3_tps"],
         **({"c2": cand["c2_tps"] / champ["c2_tps"]} if cand.get("c2_tps") and champ.get("c2_tps") else {}),
@@ -67,8 +71,9 @@ def single_probe_win(cand, champ, t):
     even when the weighted score dilutes it (e.g. long thinking +14%, rest flat)."""
     win, other = t.get("single_win", 0.10), t.get("single_other_min", 0.95)
     p = {"short": cand["decode_greedy"] / champ["decode_greedy"], "long": cand["decode_sampled"] / champ["decode_sampled"],
-         "warm": champ["warm_ttft_sum"] / cand["warm_ttft_sum"], "prefill": cand["prefill_geo"] / champ["prefill_geo"],
-         "c3": cand["c3_tps"] / champ["c3_tps"]}
+         "prefill": cand["prefill_geo"] / champ["prefill_geo"], "c3": cand["c3_tps"] / champ["c3_tps"]}
+    if cand.get("warm_ttft_sum") and champ.get("warm_ttft_sum"):
+        p["warm"] = champ["warm_ttft_sum"] / cand["warm_ttft_sum"]
     if cand.get("replay_version") == champ.get("replay_version"):
         p["replay"] = champ["replay_wall_s"] / cand["replay_wall_s"]
     if cand.get("c2_tps") and champ.get("c2_tps"):
@@ -91,7 +96,8 @@ def champion():
     keys = ("replay_wall_s", "decode_greedy", "decode_sampled", "prefill_geo", "c3_tps", "c2_tps", "warm_ttft_sum", "warm_miss")
     out = {"replay_version": max((x.get("replay_version") or 0) for x in rows)}
     for k in keys:
-        vals = [x[k] for x in rows if x.get(k) is not None]
+        same = [x for x in rows if k != "replay_wall_s" or (x.get("replay_version") or 0) == out["replay_version"]]
+        vals = [x[k] for x in same if x.get(k) is not None]
         out[k] = statistics.median(vals) if vals else None
     return out, runs
 

@@ -125,7 +125,7 @@ def replay_probe():
     return {"version": 8, "wall_s": wall, "warm_ttft_sum_s": sum(warm), "turns": results, "efforts": REPLAY_EFFORTS,
             "ttft_p50_s": statistics.median(ttfts), "ttft_p90_s": sorted(ttfts)[int(0.9 * (len(ttfts) - 1))],
             "cold_ttft_p50_s": statistics.median([rs[0]["ttft_s"] for rs in results if rs[0]["ttft_s"]]),
-            "warm_ttft_p50_s": statistics.median(warm), "warm_ttft_max_s": max(warm),
+            "warm_ttft_p50_s": statistics.median(warm) if warm else None, "warm_ttft_max_s": max(warm) if warm else None,
             "decode_tps_median": statistics.median([x["decode_tps"] for rs in results for x in rs if x["decode_tps"]]),
             "prefix_hit_rate": rate(before, after), "warm_hit_rate": rate(mid, after)}
 
