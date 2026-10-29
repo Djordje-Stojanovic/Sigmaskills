@@ -28,7 +28,7 @@ Checks: <commands and results>
 
 ## Round rules
 
-- **Clean** means the round found zero P0–P2 findings. A round that found and fixed P0–P2 findings is not clean: round 2 reviews the fix commits, sent to the same reviewer by SendMessage when the harness has it.
+- **Clean** means the round found zero P0–P2 findings. A round that found and fixed P0–P2 findings is not clean: round 2 reviews the fix commits, sent to the same reviewer by a follow-up message (`SendMessage`, `send_input`) when the harness has one.
 - Record each round in the ledger's *Review rounds* table: round, status, counts, commits.
 - A round 2 that still finds P0–P2 problems means the ticket or design is wrong. Stop and ask the user.
 - `BLOCKED`: read the reason, fix what you can, ask the user about the rest.

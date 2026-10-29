@@ -65,7 +65,7 @@ Decide ambiguities yourself and record each as `Ruling: <decision> — <reason> 
 
 Each round, a fresh agent with no memory of this work checks the branch against the spec and the SigmaReview lenses, fixes what it finds, and reports back.
 
-**Who reviews.** By default, start the reviewer as a sub-agent of the harness you run in (Claude Code, Codex, Cursor, Muse Code, T3 Code, pi or any other), one model up from the builder when the harness has a stronger one, else its default sub-agent model. Do not ask first; this works the same in every harness. Round 2 goes to the same reviewer by SendMessage when the harness has it, so its context stays.
+**Who reviews.** By default, start the reviewer as a sub-agent of the harness you run in (Claude Code, Codex, Cursor, Muse Code, T3 Code, pi or any other), one model up from the builder when the harness has a stronger one, else its default sub-agent model. Do not ask first; this works the same in every harness. Round 2 goes to the same reviewer by a follow-up message (Claude Code `SendMessage`, Codex `send_input`) when the harness has one, so its context stays.
 
 If the user names a reviewer ("SigmaShip reviewer: GPT-6.1 Sol", "review with Grok 4.7"), every round uses that model:
 

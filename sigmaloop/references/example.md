@@ -23,7 +23,7 @@ The owner pre-authorises for this whole loop: commit, push, PR, squash merge, de
 At 11:00 every open item in .scratch/T-12/issues/T-12-main.md is done with dated evidence, or has a dated log line: what was done, what is left, why, next step. The overview file is current.
 
 ## Crew
-Max 4 sub-agents at once: 2 Haiku (xhigh), 1 Sonnet (high), 1 Opus (medium). Never max effort. Opus = hardest items. Sonnet = big kit or skill items. Haiku = measurement, backfills, doc landings, installs, cleanup. Reviews run one model up, at most 2 rounds. When one ends, its slot gets the next item in the same turn; a fix round goes to the same agent by SendMessage. Running agents count toward the 4.
+Max 4 sub-agents at once: 2 Haiku (xhigh), 1 Sonnet (high), 1 Opus (medium). Never max effort. Opus = hardest items. Sonnet = big kit or skill items. Haiku = measurement, backfills, doc landings, installs, cleanup. Reviews run one model up, at most 2 rounds. When one ends, its slot takes the most valuable eligible item for its model in the same turn (no fixed lane per slot); a fix round goes to the same agent by SendMessage. Running agents count toward the 4.
 
 ## Each wake
 1. `date` (Vienna). At or after 11:00: Finish.
