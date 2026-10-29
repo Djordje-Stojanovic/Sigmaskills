@@ -4,7 +4,7 @@ export const RELEASE_ENVIRONMENT = 'release';
 export const RELEASE_DIST_TAG = 'latest';
 export const RELEASE_PACKAGE_NAME = '@djordje-stojanovic/sigmaskills';
 export const CHECKOUT_ACTION_PIN = '3d3c42e5aac5ba805825da76410c181273ba90b1';
-export const SETUP_NODE_ACTION_PIN = '820762786026740c76f36085b0efc47a31fe5020';
+export const SETUP_NODE_ACTION_PIN = '949feb2413d6458794dcd2491c4babbbce0c15c1';
 
 export const TRUSTED_PUBLISHER_SETUP =
   'Configure an npm trusted publisher for this GitHub repository, workflow filename `release.yml`, and environment `release`. Publication cannot start until that one-time setup exists.';

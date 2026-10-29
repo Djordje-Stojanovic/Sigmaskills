@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-10-29
+
 ### Changed
 
 - Every skill description now starts with the words that trigger it ("Use when asked for sigmaship, ship #123 or ship this ready ticket"), and the summary follows. An agent reads only the description when it decides to load a skill.
@@ -604,7 +606,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.12...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.12...v0.17.0
 [0.16.12]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.11...v0.16.12
 [0.16.11]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.10...v0.16.11
 [0.16.10]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.9...v0.16.10
