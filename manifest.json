@@ -98,6 +98,11 @@
       "id": "sigmaspeedloop",
       "title": "SigmaSpeedLoop",
       "needsReferences": true
+    },
+    {
+      "id": "sigmasetup",
+      "title": "SigmaSetup",
+      "needsReferences": true
     }
   ],
   "retired": [

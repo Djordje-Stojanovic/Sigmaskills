@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmasetup` (SigmaSetup): run it once per repo after the installer. It finds the installed packs, reads `references/packs/<pack>.md` for what each one needs in a repo (tracker files, labels, tools, keys by name), asks one round of questions, sets up only what the owner says yes to, and reports every change with its undo. Nothing goes into user-level config. It ships a per-repo git guard for Claude Code (`scripts/git-guard.mjs install|remove|status`): it blocks force push, `reset --hard`, `clean -f`, `stash clear` or `drop`, and every command that throws away uncommitted changes (`checkout .`, `checkout -f`, `switch --discard-changes`, `restore .`), also behind `git -C`, and allows `git branch -D` for cleanup after a squash merge. `test/sigmasetup.test.js` fails when an installer pack has no setup guide or a Sigma skill has no section, so every new pack or skill lands with its setup.
+
 ### Changed
 
 - Agent work runs faster in every skill that briefs, spawns or loops agents, on Claude Code and Codex alike. Small steps, repeated checks, shell waits and idle slots cost more agent time than the model's own thinking; each new rule replaces the slower line.
@@ -39,6 +43,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
   - `sigmabrief`: `approval: auto` is the default, so the executing agent no longer waits for plan approval (`approval: plan` on request). The next free agent takes the most valuable ready brief. Briefs drop the baseline run, work in big steps, commit as they go and validate once at the end. The worktree cleanup sits once at the end of a brief instead of in three places.
   - `sigmaship`: no baseline run and no per-slice type check; the full checks run once before review, and CI once at land. The reviewer runs one model up, at most 2 rounds, round 2 by a follow-up message to the same reviewer; a review fix runs the full suite once after the last fix. Land drops the second full-diff read.
   - `sigmarefactor`: the full checks run once after the last cut, not after each change. `sigmaspeedloop`: background waiters replace the last two polling lines. `scripts/eval-skills.js` starts `claude -p` with closed stdin.
+- AGENTS.md: merges are squash only, with the PR title as the commit title; after a merge the linked issue is closed and the branch and worktree are removed. The repository now allows only squash merges and deletes the remote branch on merge.
 
 ## [0.17.0] — 2026-10-29
 

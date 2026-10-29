@@ -1,0 +1,1 @@
+Set up the git guard and fixed the wall bug while I was there.

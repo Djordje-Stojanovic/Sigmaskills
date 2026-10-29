@@ -30,6 +30,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
   Σ  tour         a visual tour of any repo in one page
   Σ  financeman   DCF, LBO, comps and budgets from SEC filings
   Σ  speedloop    make a model serve faster on a rented GPU, no quality loss
+  Σ  setup        set up each installed pack in a repo, with you
   Σ  freedom      remove model-written refusals from a repo's agent docs
 ```
 
@@ -44,6 +45,8 @@ npx @djordje-stojanovic/sigmaskills
 ```
 
 The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm.
+
+Then run `/sigmasetup` (Codex: `$sigmasetup`) once in each repo. Installed skills often need a little per-repo setup (a tracker file, labels, a tool, a key, a git guard); SigmaSetup finds what is missing and sets up what you say yes to.
 
 ![The What step: packs with counts, one pack opened to pick single skills](https://raw.githubusercontent.com/Djordje-Stojanovic/Sigmaskills/main/docs/images/installer-what.svg)
 
@@ -103,6 +106,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaTour** | `sigmatour` | A 15-60 minute visual tour of any repo: map, one request traced, examples run | One `<repo>-tour.html` page |
 | **SigmaFinanceMan** | `sigmafinanceman` | DCF, LBO, comps, three-statement models and budgets from SEC filings or your numbers | Excel with live formulas, a deck, charts, an HTML page |
 | **SigmaSpeedLoop** | `sigmaspeedloop` | Faster serving on a rented GPU, one judged change per pass | A project folder, a champion recipe, a report |
+| **SigmaSetup** | `sigmasetup` | Per-repo setup for every installed pack, after one question round | Set-up files and a table with the undo for each change |
 
 ### Which one do I need?
 
@@ -192,6 +196,10 @@ Builds DCF, LBO, comps, three-statement models and budgets from SEC filings or y
 
 Makes a model serve faster on a rented GPU with no quality loss. It asks what faster and no loss mean to you, locks a script evaluator, then tries one change per pass, keeping only what the script confirms, until you destroy the box.
 
+### SigmaSetup
+
+Runs after the installer, once per repo. It finds the installed packs, reads what each one needs, asks you one round of questions, then sets up only what you say yes to: tracker files, labels, a per-repo git guard. Every change comes with its undo, and nothing goes into your global config.
+
 ---
 
 ## Install
@@ -240,6 +248,7 @@ $sigmadesign Make a design system from #e8a33d and put it in this repo
 $sigmatour Give me a 30 minute tour of this repo
 $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 $sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
+$sigmasetup
 ```
 
 </td>
@@ -268,6 +277,7 @@ $sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
 /skill:sigmatour Give me a 30 minute tour of owner/repo
 /skill:sigmafinanceman Build a three-statement model of MSFT
 /skill:sigmaspeedloop Make my ComfyUI image workflow faster on a Vast.ai GPU
+/skill:sigmasetup Set up the Matt Pocock skills in this repo
 ```
 
 </td>
@@ -297,6 +307,7 @@ $sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
 | `sigmatour` | a repo path or URL · a length | One question round; reads the repo only; runs its examples |
 | `sigmafinanceman` | a ticker and peers, or a budget file | One question round; reads public data; writes files only to the output folder |
 | `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
+| `sigmasetup` | (no input) · or the packs to set up | One question round; writes only in this repo; every change has an undo |
 
 ### Requirements
 
@@ -321,6 +332,7 @@ $sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
 | SigmaTour | Python 3 (standard library) · `git` · a browser for the page |
 | SigmaFinanceMan | Python 3.10 or newer with `openpyxl` and `python-pptx` · LibreOffice is optional (`audit`, `render`) |
 | SigmaSpeedLoop | Python 3 · SSH · a GPU host account (`vastai`) · a long-run agent host |
+| SigmaSetup | Node.js (for the git guard) · `gh` to check or create labels |
 | SigmaFreedom | Python 3 (standard library) for `guardrail_lint.py` |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 
