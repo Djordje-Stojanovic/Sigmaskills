@@ -43,7 +43,17 @@ def test_slash_form_counts_as_naming_the_skill():
 
 
 def test_none_invoked_does_not_name_code_review():
-    assert check.missing_skills(body("none invoked."), ["tests/test_x.js"]) == ["code-review"]
+    assert check.missing_skills(body("none invoked."), ["tools/x.js"]) == ["code-review"]
+
+
+@pytest.mark.parametrize("paths", [["tests/test_x.py"], ["test/sigmadeeplook/test_v2.py", "README.md"],
+                                   ["lib/__tests__/x.test.mjs"], ["src/a.spec.ts", "pkg/b_test.go"]])
+def test_test_only_pr_needs_no_code_review(paths):
+    assert check.missing_skills(body("pr"), paths) == []
+
+
+def test_a_test_beside_product_code_still_needs_code_review():
+    assert check.missing_skills(body("pr"), ["test/x.test.js", "src/x.js"]) == ["code-review"]
 
 
 def test_docs_only_pr_needs_no_code_review():

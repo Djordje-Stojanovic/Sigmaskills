@@ -6,7 +6,8 @@ Ticket 83 PRBODY (2026-10-21; skill rule 2026-10-22). CI calls it with the event
 The pull request body comes from the payload. The changed files come from the git history of the
 checkout (fetch-depth 0): the base and head commits in the payload. No secrets, no network.
 HTML comments (the hints in .github/pull_request_template.md) do not count as text.
-A code pull request must name code-review. A pull request that changes SKILL.md, CLAUDE.md or
+A code pull request must name code-review; a pull request whose code files are all tests does not (owner
+2026-10-29: test-only changes skip the review bot). A pull request that changes SKILL.md, CLAUDE.md or
 AGENTS.md must name writing-for-agents. A skill counts when it is named, with or without the slash.
 """
 import json
@@ -36,7 +37,7 @@ def missing_lines(body):
 
 def required_skills(paths):
     needed = []
-    if any(is_code_file(path) for path in paths):
+    if any(is_code_file(path) and not is_test_file(path) for path in paths):
         needed.append("code-review")
     if any(path.rsplit("/", 1)[-1].lower() in SKILL_FILES for path in paths):
         needed.append("writing-for-agents")
@@ -46,6 +47,13 @@ def required_skills(paths):
 def is_code_file(path):
     name = path.rsplit("/", 1)[-1]
     return "." in name and name.rsplit(".", 1)[-1].lower() in CODE_EXTENSIONS
+
+
+def is_test_file(path):
+    parts = path.lower().split("/")
+    name = parts[-1]
+    return (any(part in {"test", "tests", "__tests__"} for part in parts[:-1])
+            or name.startswith("test_") or re.search(r"(_test|\.test|\.spec)\.[^.]+$", name) is not None)
 
 
 def skills_text(body):
