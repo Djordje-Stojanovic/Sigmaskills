@@ -13,8 +13,10 @@ Verified 2026-10-22 to 10-26 with vastai CLI 1.9.0 on Windows 11 and PowerShell.
 | Vast docs copy | `<project>/reference/vast_docs/llms-full.txt` | Grep it. Source: `https://docs.vast.ai/llms-full.txt` (~1.5 MB) |
 | Instance record | `<project>/state.tmp/instance.json`, later `state/instance.json` | id, dph, image, ssh_host, ssh_port, rented_utc |
 
-In a multi-project workspace each project has its own `secrets/`. Copy the key file from another project only
-when the owner says so. Never put a key into this skill's folder.
+Reuse one key. A Vast API key does not expire, so the owner creates it once and keeps it in one key store (a
+password manager or a git-ignored keys file, as `VAST_API_KEY`). Each new project copies it from there into
+`secrets/vast_api_key`, and each machine runs `vastai set api-key` once. Ask the owner where the store is; never
+create a new key for a new project. Never put a key into this skill's folder.
 
 ## 2. Login and the 2FA flow
 

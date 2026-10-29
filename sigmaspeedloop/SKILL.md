@@ -66,7 +66,8 @@ Ask in numbered rounds. Give every question a recommended answer the owner can a
 
 ## Phase 2: scaffold
 
-Copy `assets/project-template/` into `<workspace>/Projects/<Model-Engine>/`. Then adapt, in this order:
+Copy `assets/project-template/` into `<workspace>/Projects/<Model-Engine>/` and rename `_gitignore` to `.gitignore`
+(package managers drop dot-files). Then adapt, in this order:
 `project.json` (weights, floors, offer filters), `box/serve_base.sh` (the owner's recipe, flag for flag),
 `scripts/bench/invariants.py`, the probes in `scripts/bench/` (rewrite them for a non-LLM model),
 `scripts/bench/build_replay.py` (the owner's real agent logs as traces), then `GOAL.md` and the TSV files. Seed
