@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-10-29
+
 ### Changed
 
 - README: one short paragraph per skill in the same shape, every skill in the hero list (`writegui` and `arena` were unmarked, `speedloop` was missing), shorter table rows, four install-without-the-wizard examples instead of eight, and the retired SigmaPerformance note removed. The prose cap in `test/repo-invariants.test.js` rises from 1,500 to 2,000 words (owner, 2026-10-29).
@@ -602,7 +604,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.12...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.12...v0.17.0
 [0.16.12]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.11...v0.16.12
 [0.16.11]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.10...v0.16.11
 [0.16.10]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.9...v0.16.10
