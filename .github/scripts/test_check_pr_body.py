@@ -52,6 +52,11 @@ def test_test_only_pr_needs_no_code_review(paths):
     assert check.missing_skills(body("pr"), paths) == []
 
 
+@pytest.mark.parametrize("paths", [["scripts/run-tests.js"], ["test/helpers.js"]])
+def test_a_runner_or_helper_in_the_test_folder_needs_code_review(paths):
+    assert check.missing_skills(body("pr"), paths) == ["code-review"]
+
+
 def test_a_test_beside_product_code_still_needs_code_review():
     assert check.missing_skills(body("pr"), ["test/x.test.js", "src/x.js"]) == ["code-review"]
 
