@@ -32,6 +32,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- README: one short paragraph per skill in the same shape, every skill in the hero list (`writegui` and `arena` were unmarked, `speedloop` was missing), shorter table rows, four install-without-the-wizard examples instead of eight, and the retired SigmaPerformance note removed. The prose cap in `test/repo-invariants.test.js` rises from 1,500 to 2,000 words (owner, 2026-10-29).
+
+### Added
+
+- `sigmaspeedloop` (SigmaSpeedLoop): makes any model serve faster on a rented GPU with no quality loss. It grills the owner on what faster and no loss mean, scaffolds one project from `assets/project-template/` (scripts, TSVs, `project.json`), brings up one box with verified weights, locks a script evaluator (invariants, fidelity gate, speed probes with fixed-length replay turns, A/A bands, verdict), then runs one change per pass with a confirmation run for every keep, until the owner destroys the box. Host-neutral; built from the la125 project (Qwen3.8-Flash-Next on a Vast.ai DGX Spark: prefill +32 %, warm agent turns 58 % faster). `references/lessons.md` lists every mistake and its fix.
+
 ## [0.16.12] — 2026-10-25
 
 ### Fixed

@@ -1,0 +1,17 @@
+{
+  "name": "Qwen3-8B-vLLM",
+  "served_model_name": "qwen",
+  "engine": "vllm",
+  "modality": "llm",
+  "weights": {
+    "short": 0.3,
+    "warm": 0.2,
+    "miss": 0.1,
+    "long": 0.15,
+    "prefill": 0.1,
+    "c2": 0.08,
+    "replay": 0.04,
+    "c3": 0.03
+  },
+  "keep_floor": 0.05
+}

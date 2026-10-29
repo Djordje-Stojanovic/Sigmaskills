@@ -12,24 +12,25 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 | **Spec** | [agentskills.io](https://agentskills.io/) |
 
 ```text
-  Σ  review     →  find and prove what is wrong, one PR an LLM can fix from
-  Σ  improve    →  ideas versus the world's best, one living issue per category
-  Σ  refactor   →  user-guided, behavior-preserving code reduction
-  Σ  brief      →  paste-ready agent briefs, chat only
-  Σ  ship       →  one planned ticket to a merged, cleaned-up PR
-  Σ  write      →  clear STE-inspired technical English
-     sigmawritegui   →  plain chat and interactive status or question boards
-     arena      →  blind pairs that rank any options by Elo
-  Σ  research   →  read public sources, record evidence and access gaps
-  Σ  deeplook   →  helper for what agents cannot read: video, speech, scans, binaries
-  Σ  loop       →  an unattended-run prompt and a loop file from open work
-  Σ  taste      →  one ranked plan of big visible changes from 14 lenses
-  Σ  human      →  text that reads like a person wrote it, every fact kept
-  Σ  fork       →  an isolated copy of any repo and a course on it
-  Σ  design     →  a design system from one accent colour
-  Σ  tour       →  a visual tour of any repo in one page
-  Σ  financeman →  DCF, LBO, comps and budgets from SEC filings
-  Σ  freedom    →  deletes model-written refusals from a repo's agent docs
+  Σ  review       find and prove what is wrong, in one PR an LLM can fix from
+  Σ  improve      ideas measured against the world's best, one issue per category
+  Σ  refactor     smaller code, same behavior, with your approval
+  Σ  brief        paste-ready briefs for other agents
+  Σ  ship         one planned ticket to a merged, cleaned-up PR
+  Σ  write        clear, plain technical English
+  Σ  writegui     short chat with status and question boards
+  Σ  arena        rank any options blind, by Elo
+  Σ  research     read public sources, with evidence and access gaps
+  Σ  deeplook     read what agents cannot: video, speech, scans, binaries
+  Σ  loop         an unattended-run prompt and a loop file
+  Σ  taste        one ranked plan of big visible changes
+  Σ  human        text that reads like a person wrote it
+  Σ  fork         an isolated copy of any repo, with a course
+  Σ  design       a design system from one accent colour
+  Σ  tour         a visual tour of any repo in one page
+  Σ  financeman   DCF, LBO, comps and budgets from SEC filings
+  Σ  speedloop    make a model serve faster on a rented GPU, no quality loss
+  Σ  freedom      remove model-written refusals from a repo's agent docs
 ```
 
 ---
@@ -70,13 +71,9 @@ Every choice has a flag, so scripts and CI skip the wizard. Name skills, presets
 
 ```bash
 npx @djordje-stojanovic/sigmaskills install sigmawrite --project .
-npx @djordje-stojanovic/sigmaskills install --preset sigma --preset mattpocock --agent claude --project .
+npx @djordje-stojanovic/sigmaskills install --preset sigma --agent claude --project .
 npx @djordje-stojanovic/sigmaskills install --preset all --global --yes
-npx @djordje-stojanovic/sigmaskills list --packs
-npx @djordje-stojanovic/sigmaskills install design-stripe design-linear-app --project .
-npx @djordje-stojanovic/sigmaskills install design-vercel --drop design-stripe --project .
 npx @djordje-stojanovic/sigmaskills update --global --yes
-npx @djordje-stojanovic/sigmaskills uninstall --skill tdd --yes
 ```
 
 The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/installer.md) explains presets, host folders, Global Installation, `status`, `update`, `restore`, `uninstall`, and `purge`.
@@ -91,20 +88,21 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaImprove** | `sigmaimprove` | Find what would make it clearly better, measured against the world's best | One living issue per category (1–20), updated on every run |
 | **SigmaBrief** | `sigmabrief` | Prompt factory for parallel / single agents | Chat briefs only |
 | **SigmaShip** | `sigmaship` | Ship one planned ticket: build, review rounds, merge, clean up | One merged PR, closed ticket, main in sync |
-| **SigmaFreedom** | `sigmafreedom` | De-safeguard a repo: delete model-written refusals and moral limits from agent docs, keep a lint so they never return | A was/now change log and a keep-list for the owner's veto |
+| **SigmaFreedom** | `sigmafreedom` | Remove model-written refusals from agent docs, with a lint that keeps them out | A was/now change log and a keep-list you can veto |
 | **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
 | **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
 | **SigmaWriteGUI** | `sigmawritegui` | Plain chat with status and question boards | Interactive HTML board and copied replies |
 | **SigmaCreateArena** | `sigmacreatearena` | Blind-pairs arena that ranks any options by Elo per metric | Local arena page, Elo board with ranges and costs |
-| **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub, Hugging Face, video sites and non-English pages; counts sources read in full | Answer with source links, dates, read scope and access gaps |
-| **SigmaDeepLook** | `sigmadeeplook` | Helper for files an agent cannot read: video, speech, scanned PDF or image, binary, odd container. Plain text and data are read directly | Evidence with file paths, limits, and a side-by-side `view.html` |
+| **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub, video sites and other-language pages; count sources read in full | An answer with links, dates, read scope and access gaps |
+| **SigmaDeepLook** | `sigmadeeplook` | Read files an agent cannot: video, speech, scans, binaries, odd containers | Evidence with file paths, limits and a side-by-side `view.html` |
 | **SigmaLoop** | `sigmaloop` | Turn a repo's open work into an unattended-run prompt for Claude Code, Codex, pi or T3 Code | One loop prompt in chat and one loop file |
 | **SigmaTaste** | `sigmataste` | Taste pass through 14 lenses on a page, app, deck, doc, image or film | One ranked plan of big visible changes |
-| **SigmaHuman** | `sigmahuman` | Text that reads like a person wrote it: rewrite any text or write from a brief, in lanes (script, book, song, chat, docs, posts), every fact kept | The rewritten or new text, and a fact check |
+| **SigmaHuman** | `sigmahuman` | Rewrite any text, or write from a brief, so it reads like a person wrote it; every fact kept | The new text and a fact check |
 | **SigmaFork** | `sigmafork` | Fork or copy any repo, isolated from the original | A working copy and `ONBOARDING.html` |
-| **SigmaDesign** | `sigmadesign` | A design system from one accent colour (DESIGN.md, tokens, packs, sample page), applied across a repo | `DESIGN.md`, CSS, a sample page |
-| **SigmaTour** | `sigmatour` | A visual 15-60 minute tour of any repo: map, architecture, one request traced, examples run, README next to what the repo shows | One `<repo>-tour.html` page |
-| **SigmaFinanceMan** | `sigmafinanceman` | DCF, LBO, comps, three-statement models, ratios, red flags, a value scorecard, earnings reviews and budgets from SEC filings or your numbers | Excel with live formulas, a deck, SVG charts, an HTML page |
+| **SigmaDesign** | `sigmadesign` | A design system from one accent colour, applied across a repo | `DESIGN.md`, CSS, a sample page |
+| **SigmaTour** | `sigmatour` | A 15-60 minute visual tour of any repo: map, one request traced, examples run | One `<repo>-tour.html` page |
+| **SigmaFinanceMan** | `sigmafinanceman` | DCF, LBO, comps, three-statement models and budgets from SEC filings or your numbers | Excel with live formulas, a deck, charts, an HTML page |
+| **SigmaSpeedLoop** | `sigmaspeedloop` | Faster serving on a rented GPU, one judged change per pass | A project folder, a champion recipe, a report |
 
 ### Which one do I need?
 
@@ -120,66 +118,63 @@ The skills chain into two loops. **Fix:** SigmaReview → review PR → SigmaBri
 
 ### SigmaReview
 
-Finds everything that breaks the system's own promises: bugs, security holes, slow paths, broken rendering, and weak tests. It measures performance and runs security probes only when you allow it, and only on a local instance. Each finding has a location, a mechanism, an impact, evidence, a fix, and a proof test, so an LLM can fix it from that finding alone. All findings go into `SIGMAREVIEW-YYYY-MM-DD.md` on one pull request. It never changes your code.
-
-SigmaPerformance is retired into SigmaReview.
+Finds what breaks the system's own promises: bugs, security holes, slow paths, broken pages and weak tests. Each finding has a location, the cause, the impact, evidence, a fix and a proof test, so an LLM can fix it from that finding alone. All findings land in one review file on one PR. It never changes your code, and it measures or probes only a local instance you allow.
 
 ### SigmaImprove
 
-Compares the product with the world's top one to three products and with published bars such as WCAG 2.2. It uses the product like a new user and keeps at least ten entries. An *idea* has three to five weighed options with sketches. A *signal* flags a gap that a person must think about first. Each category gets one living issue, so a run makes 1–20 issues, and later runs update them. It never edits the system.
+Compares the product with the best one to three products in its field and with published bars such as WCAG 2.2. It writes ideas (three to five weighed options each) and signals (gaps a person must think about first) into one living issue per category. Later runs update those issues. It never edits the product.
 
 ### SigmaBrief
 
-Turns GitHub issues, features, bugs, or plain work statements into short, copy-pastable briefs for other agents. It does light research, writes a dispatch list and fenced briefs, and then stops. It never implements the work. Each brief tells the agent to plan, build, check, and open a PR for review, and not to merge. Run it only when you ask for it by name.
+Turns issues, features, bugs or plain work into short, copy-pastable briefs for other agents, grouped into safe parallel waves. Each brief tells the agent to plan, build, check and open a PR, and not to merge. It never does the work itself. It runs only when you ask for it by name.
 
 ### SigmaShip
 
-Ships one GitHub issue that has acceptance criteria. It opens a worktree, a branch, and a draft PR that tracks the criteria and review rounds. It builds test-first and pushes each slice. Fresh agents then review the branch in rounds until one round finds nothing at P0–P2. Then it merges, closes the ticket, removes the branches and worktree, and checks that local `main` equals `origin/main`. It refuses a ticket without checkable criteria and names the skill to run first.
+Ships one issue that has checkable acceptance criteria: a worktree, a draft PR that tracks the criteria, test-first slices, and review rounds by fresh agents until a round finds nothing serious. Then it merges, closes the ticket and cleans up. A ticket without criteria gets the name of the skill to run first.
 
 ### SigmaFreedom
 
-De-safeguards and decensors a repository. It deletes model-authored refusals, bans and moral limits from agent-facing docs and skill sources, writes the owner's freedom doctrine, installs `guardrail_lint` with an owner-vetoable keep-list so the lines never come back, and reports every keep for the owner's veto. Every deletion lands in a was/now change log for a clean revert. Mechanical invariants (one post per run, no file overwrites, secrets never printed) stay.
+Deletes model-written refusals and moral limits from a repo's agent docs and skill sources. A lint with a keep-list stops them coming back, and every deletion is in a was/now log for a clean revert. Mechanical rules, such as never printing secrets, stay.
 
 ### SigmaWrite
 
-A writing voice inspired by **ASD-STE100 Simplified Technical English**. It gives soft steers, not numbered rules, and bans gibberish and invented words. A sharp outsider can follow the result, and it stays technical. It stays on until you turn it off. To keep the voice on everywhere, copy the **Paste as system prompt** block from [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md) into your host's instructions. It is not certified STE.
+A writing voice inspired by ASD-STE100 Simplified Technical English: short sentences, common words, still technical. It stays on until you turn it off. To use it everywhere, paste the **Paste as system prompt** block from [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md) into your host's instructions.
 
 ### SigmaRefactor
 
-Counts lines (with `laloc` if you have it, or by itself), reads the five largest maintained files, and explains safe refactoring choices. It waits for your approval before it edits. It keeps behavior, tests, interfaces, and your own changes intact. At the end it reports lines removed apart from lines moved into new modules.
+Counts lines (with `laloc` if you have it), reads the five largest files and explains safe ways to shrink them. It edits only after your approval, keeps behavior, tests and interfaces, and reports the lines removed.
 
 ### SigmaWriteGUI
 
-Keeps replies short and puts status reports or question batches on one interactive board. Read ticks, recommended options, task statuses, and free text feed a **Copy my answers** reply that names every unread card. Open it with an HTML preview tool or as a local browser file. Say “easy talk off” to stop.
+Keeps replies short and puts status reports or question batches on one interactive board. Your ticks and answers come back through **Copy my answers**. Say "easy talk off" to stop.
 
 ### SigmaCreateArena
 
-Ranks many options by your taste. After a short grilling round it builds an **arena**: two options side by side, names hidden, sides random. You pick per metric. A Bradley-Terry fit turns the picks into an Elo board with 95 % ranges, so overlapping bars read as a tie. The kit is a standard-library Python server and one HTML page: local only, no install.
+Ranks many options by your taste: two at a time, names hidden, sides random, one pick per metric. The picks become an Elo board with 95 % ranges, so overlapping bars read as a tie. Local only, no install.
 
 ### SigmaResearch
 
-Reads Reddit, X, Hacker News, GitHub, Stack Overflow and YouTube comments. Reddit never stops at a block: JSON, the Arctic Shift archive, the feed, a browser. X posts read without a login.
+Reads Reddit, X, Hacker News, GitHub, Stack Overflow, YouTube and pages in other languages, and counts only sources it read in full. When a site blocks, it takes the next route. The answer lists every source, every contradiction and every gap.
 
 ### SigmaDeepLook
 
-The helper for content an agent cannot read with its own tools: video frames, speech, scanned PDFs and images, binaries and odd containers. Plain text, CSV, JSON and code stay with the agent. A one-line gate decides; `--ask` gives one exact answer. It never runs the input, uses no network, and lists each step it could not do.
+Reads what an agent cannot: video frames, speech, scanned PDFs and images, binaries and odd containers. Plain text and data stay with the agent. It never runs the input, uses no network and lists every step it could not do.
 
 ### SigmaLoop
 
-Reads a repo's open work (a ticket, the issue tracker, a TRACKER file), asks one numbered round of questions with a recommended answer each, then writes a paste-ready prompt for your host (Claude Code `/loop`, Codex `/goal`, pi plan mode, T3 Code or a plain instruction) and a loop file the prompt tells the agent to re-read at every wake. It carries the task order, crew, wake rules, landing rules and stop line. It never starts the loop.
+Reads a repo's open work, asks one round of questions, then writes a paste-ready prompt for your host's unattended mode (Claude Code, Codex, pi, T3 Code or a plain instruction) and a loop file the agent re-reads at every wake. It never starts the loop.
 
 ### SigmaTaste
 
-Looks at one target (a page, app, dashboard, deck, doc, image or film) and asks one round of questions: which of 14 taste lenses to use, what you expect, scope, brand and constraints. Then it writes `sigmataste-plan-DD-MM-YYYY.md`: the changes that make a big visible difference, ranked, each with how to verify it. The target's own brand wins over every lens default. It plans; it does not build.
+Looks at one page, app, deck, doc, image or film through 14 taste lenses, asks one round of questions, then writes one ranked plan of the changes that make a big visible difference, each with how to check it. It plans; it does not build.
 
 ### SigmaHuman
 
-Rewrites any text so it reads like a person wrote it, or writes new text from a brief. It finds the 26 AI-writing patterns of [blader/humanizer](https://github.com/blader/humanizer) (MIT) and fixes them in the lane for the text: a script for the ear, a book, song lyrics, a chat or email, docs, or a post. It keeps every fact and can match your writing sample.
-
+Rewrites any text so it reads like a person wrote it, or writes new text from a brief, in the right lane: a script, a book, a song, a chat, docs or a post. It keeps every fact and can match your writing sample. It builds on [blader/humanizer](https://github.com/blader/humanizer) (MIT).
 
 ### SigmaFork
 
-Copies any repository after 8 questions, cuts every path, link and git remote to the original, installs your skills, writes a 15-minute course.
+Copies any repository after 8 questions, cuts every path, link and git remote back to the original, installs your skills and writes a 15-minute course.
 
 ### SigmaDesign
 
@@ -187,11 +182,15 @@ Turns one accent colour into `DESIGN.md`, colour packs and CSS, then moves a rep
 
 ### SigmaTour
 
-A 15-60 minute tour of any repo in one page: a clickable map, one request traced, real runs, the README against the repo.
+A 15-60 minute tour of any repo in one page: a clickable map, one request traced, real runs, and the README held against the code.
 
 ### SigmaFinanceMan
 
-Finance models from SEC filings, checked before they ship.
+Builds DCF, LBO, comps, three-statement models and budgets from SEC filings or your numbers, as Excel with live formulas, a deck and charts. Every workbook is audited before it ships.
+
+### SigmaSpeedLoop
+
+Makes a model serve faster on a rented GPU with no quality loss. It asks what faster and no loss mean to you, locks a script evaluator, then tries one change per pass, keeping only what the script confirms, until you destroy the box.
 
 ---
 
@@ -240,6 +239,7 @@ $sigmafork Copy this repo to D:\work\my-copy and teach me how it works
 $sigmadesign Make a design system from #e8a33d and put it in this repo
 $sigmatour Give me a 30 minute tour of this repo
 $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
+$sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
 ```
 
 </td>
@@ -267,6 +267,7 @@ $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 /skill:sigmadesign Make a design system from #e8a33d and put it in this repo
 /skill:sigmatour Give me a 30 minute tour of owner/repo
 /skill:sigmafinanceman Build a three-statement model of MSFT
+/skill:sigmaspeedloop Make my ComfyUI image workflow faster on a Vast.ai GPU
 ```
 
 </td>
@@ -295,6 +296,7 @@ $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 | `sigmadesign` | an accent colour · a repo | One question round; writes `DESIGN.md`; changes repo files only with `--write` |
 | `sigmatour` | a repo path or URL · a length | One question round; reads the repo only; runs its examples |
 | `sigmafinanceman` | a ticker and peers, or a budget file | One question round; reads public data; writes files only to the output folder |
+| `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
 
 ### Requirements
 
@@ -318,6 +320,7 @@ $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 | SigmaDesign | Python 3 (standard library) · a browser to look at the sample page |
 | SigmaTour | Python 3 (standard library) · `git` · a browser for the page |
 | SigmaFinanceMan | Python 3.10 or newer with `openpyxl` and `python-pptx` · LibreOffice is optional (`audit`, `render`) |
+| SigmaSpeedLoop | Python 3 · SSH · a GPU host account (`vastai`) · a long-run agent host |
 | SigmaFreedom | Python 3 (standard library) for `guardrail_lint.py` |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 

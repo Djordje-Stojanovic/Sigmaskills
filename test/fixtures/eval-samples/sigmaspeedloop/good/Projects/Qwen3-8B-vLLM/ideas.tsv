@@ -1,0 +1,4 @@
+id	status	idea	category	work_type	expected_effect	evidence	notes
+mtp-n3	pending	speculative decoding with 3 draft tokens	spec	CONTENT	decode +10-20 %	vLLM docs	lossless | p=35%
+prefix-cache-on	pending	--enable-prefix-caching if the recipe lacks it	cache	CONTENT	warm turns faster	recipe	check default first | p=30%
+mbt-4096	pending	--max-num-batched-tokens 4096	scheduler	CONTENT	prefill +5-15 %	la125 case study	needs memory headroom | p=25%

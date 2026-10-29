@@ -452,7 +452,53 @@ function sigmafinanceman({ files, result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmaspeedloop scaffolds one project under Projects/<name>/ (signed spec, run file, queue, results header, weights),
+// rents nothing in an offline run, and changes no other file.
+function sigmaspeedloop({ files, result }) {
+  const problems = [];
+  for (const [name, text] of Object.entries(files)) {
+    if (name.startsWith('Projects/')) continue;
+    const original = path.join(FIXTURE, ...name.split('/'));
+    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed a file outside Projects/: ${name}`);
+  }
+  const goalName = Object.keys(files).find((name) => /^Projects\/[^/]+\/GOAL\.md$/.test(name));
+  if (!goalName) return [...problems, 'missing Projects/<name>/GOAL.md'];
+  const dir = goalName.slice(0, -'GOAL.md'.length);
+  const goal = files[goalName];
+  if (!/Stop line:/.test(goal)) problems.push(`${goalName}: no stop line`);
+  const left = goal.match(/<[A-Za-z][^<>:\n]{0,80}>/g); // any template placeholder; links (<https:...>) have a colon
+  if (left) problems.push(`${goalName}: template placeholders left: ${[...new Set(left)].join(', ')}`);
+  const spec = files[`${dir}SPEC_DRAFT.md`];
+  if (!spec) problems.push(`missing ${dir}SPEC_DRAFT.md`);
+  else problems.push(...requireText(spec, [/faster/i, /quality/i, /Ruling:/], `${dir}SPEC_DRAFT.md`));
+  const ideas = files[`${dir}ideas.tsv`];
+  if (!ideas) problems.push(`missing ${dir}ideas.tsv`);
+  else {
+    const [head, ...rows] = ideas.trim().split(/\r?\n/);
+    if (!head.startsWith('id\tstatus\tidea')) problems.push(`${dir}ideas.tsv: the header is not the template header`);
+    const pending = rows.filter((row) => row.split('\t')[1] === 'pending');
+    if (pending.length < 3) problems.push(`${dir}ideas.tsv: fewer than 3 pending ideas`);
+    if (pending.some((row) => !/p=\d{1,3}%\s*$/.test(row))) problems.push(`${dir}ideas.tsv: a pending idea has no p=NN% at the end`);
+  }
+  const results = files[`${dir}results.tsv`];
+  if (!results || !/\tverdict\t/.test(results.split(/\r?\n/)[0])) problems.push(`${dir}results.tsv: missing or no verdict column`);
+  const projectName = `${dir}project.json`;
+  if (!files[projectName]) problems.push(`missing ${projectName}`);
+  else {
+    try {
+      const weights = JSON.parse(files[projectName]).weights || {};
+      const sum = Object.values(weights).reduce((a, b) => a + b, 0);
+      if (Math.abs(sum - 1) > 0.011) problems.push(`${projectName}: score weights add up to ${sum}, not 1`);
+    } catch {
+      problems.push(`${projectName}: not JSON`);
+    }
+  }
+  if (!/Ruling:/.test(result)) problems.push('reply does not list the defaults it took');
+  if (!/no (box|instance) (was )?rented|rented nothing|nothing (was )?rented/i.test(result)) problems.push('reply does not say that nothing was rented');
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

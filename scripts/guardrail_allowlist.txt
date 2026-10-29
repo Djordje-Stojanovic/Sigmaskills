@@ -64,3 +64,6 @@ Do not use for feature ideas (SigmaImprove).
 Do not use without acceptance criteria.
 Do not use to rewrite code, paths or APIs, or override an output contract.
 Do not use for a product dashboard.
+Do not use for training or code review.
+forbidden changes (more quantization, precision cuts, other weights, lossy
+running anything heavy there was forbidden.
