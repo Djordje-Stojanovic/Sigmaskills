@@ -41,6 +41,11 @@ export function blockReason(command) {
     if (sub === 'clean' && (args.includes('--force') || shortFlag(args, 'f'))) return 'clean -f deletes untracked files for good';
     const wholeTree = args.includes('.') || args.includes(':/');
     if (sub === 'checkout' && wholeTree) return 'checkout . throws away every uncommitted change';
+    const forced = args.includes('--force') || shortFlag(args, 'f');
+    if ((sub === 'checkout' || sub === 'switch') && (forced || args.includes('--discard-changes'))) {
+      return `${sub} --force throws away every uncommitted change`;
+    }
+    if (sub === 'stash' && (args[0] === 'clear' || args[0] === 'drop')) return `stash ${args[0]} deletes stashed work for good`;
     // `restore --staged .` only unstages; any other whole-tree restore rewrites the working files.
     const stagedOnly = (args.includes('--staged') || args.includes('-S')) && !(args.includes('--worktree') || args.includes('-W'));
     if (sub === 'restore' && wholeTree && !stagedOnly) return 'restore . throws away every uncommitted change';

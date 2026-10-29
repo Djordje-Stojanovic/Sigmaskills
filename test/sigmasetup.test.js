@@ -23,6 +23,10 @@ test('git guard blocks commands that destroy work, also behind git global option
     'git restore .',
     'cd repo && git reset --hard',
     'git.exe push -uf origin x',
+    'git checkout -f main',
+    'git switch --discard-changes main',
+    'git stash clear',
+    'git stash drop',
   ]) assert.ok(blockReason(cmd), `should block: ${cmd}`);
 });
 
@@ -36,6 +40,10 @@ test('git guard allows normal work and branch cleanup after a squash merge', () 
     'git reset --soft HEAD~1',
     'git restore --staged .',
     'git checkout main',
+    'git checkout -b feat/x',
+    'git switch -c feat/x',
+    'git stash',
+    'git stash pop',
     'git worktree remove ../wt',
     'git commit -m "docs; git reset --hard is blocked"',
   ]) assert.equal(blockReason(cmd), null, `should allow: ${cmd}`);

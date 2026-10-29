@@ -7,7 +7,8 @@ A Claude Code hook for one repo. It stops the agent from running git commands th
 | `git push --force`, `-f`, `--force-with-lease`, `--mirror`, `+<ref>` | rewrites history on the remote |
 | `git reset --hard` | throws away uncommitted work |
 | `git clean -f` | deletes untracked files for good |
-| `git checkout .`, `git restore .` (not `restore --staged .`) | throws away every uncommitted change |
+| `git checkout .`, `git restore .` (not `restore --staged .`), `checkout -f`, `switch --discard-changes` | throws away every uncommitted change |
+| `git stash clear`, `git stash drop` | deletes stashed work for good |
 
 Allowed on purpose: a normal push, `git push origin --delete <branch>`, `git branch -D`. After a squash merge, Git sees the branch as not merged, so `-D` is normal cleanup once the PR shows merged. The guard also reads past git's global options, so `git -C <dir> push --force` is blocked too.
 

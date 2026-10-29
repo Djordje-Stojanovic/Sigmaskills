@@ -25,7 +25,7 @@ The installer puts skills on the machine. Most packs still need a little per-pro
 
 ## Git guard
 
-An optional Claude Code hook for this repo only: it blocks force push, `reset --hard`, `clean -f` and whole-tree `checkout .` or `restore .`, and allows branch deletes. Offer it with the Matt Pocock pack or when the owner asks for git safety. On, off and check: `references/git-guard.md`.
+An optional Claude Code hook for this repo only: it blocks force push, `reset --hard`, `clean -f`, `stash clear` and anything that throws away uncommitted changes (`checkout .`, `checkout -f`, `restore .`), and allows branch deletes. Offer it with the Matt Pocock pack or when the owner asks for git safety. On, off and check: `references/git-guard.md`.
 
 ## Personal instructions
 
