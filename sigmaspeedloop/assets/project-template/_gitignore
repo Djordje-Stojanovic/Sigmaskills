@@ -1,0 +1,17 @@
+# secrets — never in git
+.env*
+*.key
+vast/credentials*
+**/api_key*
+
+# runtime noise (Goal Architect §3.5.1)
+STOP
+PAUSE
+run-loop.log
+*.tmp
+state.tmp/
+.runtime/
+__pycache__/
+
+# large raw outputs stay local
+runs/**/raw/

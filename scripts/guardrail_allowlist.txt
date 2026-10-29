@@ -43,24 +43,27 @@ Do not use to post, reply
 description: 'Builds a fast blind-pairs arena so the user ranks any options by Elo per metric: models, settings, voices, captions, thumbnails, outfits. Grills f
 allowed / we will not" line carries no weight; `scripts/guardrail_lint.py` holds the short list of rules that stay.
 description: 'SigmaWrite plus a GUI: plain, short English in interactive status and question boards the user reads and types into. Use when the user says "easy
-description: Write a paste-ready unattended-run prompt (Claude Code /lo
-description: Taste pass on a page, app, deck, doc, image or film. Asks
 # 2026-10-19: sigmaship's own safety behaviour in its changelog (a property of the ship flow, not a rule on the owner)
 never checks out, resets or commits in a shared main checkout
 description: 'Makes any text read like a person wrote it. Takes text in
 description: 'Fork or copy any repository, from GitHub or a local folder, end to end
 description: 'Make a design system end to end from one accent colour
-description: 'Visual tour of one repo or codebase: how it works, a traced request, examples run, README gaps. Use to understand, learn or walk through it. Do not use to fork, review or improve it.'
-description: 'Finance models from SEC filings or your numbers: DCF, LBO, comps, three-statement, budget, Excel. Use to value a company, model a deal, read a 10-K or plan a budget. Do not use to trade or file taxes.'
 # keep (ticket 83 M18, 2026-10-23): the 'Do not use' line of each skill description (200-character rule); skill scope routing
+Do not use for 2-3 options or measured checks.
+Do not use to cut jargon.
+Do not use to start the run.
+Do not use for an unattended rewrite or a performance audit.
+Do not use to build them or hunt bugs.
+Do not use to fork, review or improve it.
+Do not use to trade or file taxes.
 Do not use to implement work or on ordinary chat.
-Do not use for 2-3 options or measurable checks.
 Do not use to critique a look (SigmaTaste).
-Do not use to cut jargon (sigmawrite).
 Do not use for bugs (SigmaReview).
-Do not use for an unattended rewrite, a line-count contest or a performance audit.
 Do not use to post or reply.
 Do not use for feature ideas (SigmaImprove).
 Do not use without acceptance criteria.
 Do not use to rewrite code, paths or APIs, or override an output contract.
 Do not use for a product dashboard.
+Do not use for training or code review.
+forbidden changes (more quantization, precision cuts, other weights, lossy
+running anything heavy there was forbidden.

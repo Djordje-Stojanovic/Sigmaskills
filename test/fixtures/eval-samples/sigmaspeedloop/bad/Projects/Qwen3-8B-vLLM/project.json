@@ -1,0 +1,7 @@
+{
+  "name": "Qwen3-8B-vLLM",
+  "weights": {
+    "replay": 0.5,
+    "decode": 0.3
+  }
+}

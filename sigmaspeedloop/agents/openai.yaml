@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaSpeedLoop
+  short_description: Make a model serve faster on a rented GPU, one judged change at a time
+  default_prompt: Use $sigmaspeedloop to set up a speed loop for this model on a rented GPU,
+    with a locked evaluator and no quality loss.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

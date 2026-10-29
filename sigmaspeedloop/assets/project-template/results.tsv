@@ -1,0 +1,1 @@
+pass	utc	parent	idea_id	category	work_type	image	verdict	score	decode_tps	decode_long_tps	prefill_tps_64k	ttft_128k_s	replay_wall_s	replay_ttft_p50_s	c3_tps	mtp_accept	kv_tokens	start_s	low_mem_gib	gate_top1	gate_dlogp	gate_reliability	minutes	cost_usd	description

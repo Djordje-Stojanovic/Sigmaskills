@@ -268,5 +268,15 @@
   "prompt": "Help me plan a monthly budget from my income and spending",
   "skill": "sigmafinanceman",
   "near": "sigmahuman"
+ },
+ {
+  "prompt": "Make my vLLM model serve faster on a rented GPU without losing quality",
+  "skill": "sigmaspeedloop",
+  "near": "sigmareview"
+ },
+ {
+  "prompt": "Run speed loops to tune inference and the KV cache of my model",
+  "skill": "sigmaspeedloop",
+  "near": "sigmaloop"
  }
 ]

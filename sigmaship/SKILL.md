@@ -64,7 +64,17 @@ Decide ambiguities yourself and record each as `Ruling: <decision> — <reason> 
 
 ## 5. Review rounds
 
-Each round, a fresh agent with no memory of this work checks the branch against the spec and the SigmaReview lenses, fixes what it finds, and reports back. Ask the user once how to run them: they paste the handoff to a new agent, or you start a sub-agent. A standing rule of the user or repository replaces the question. If it forbids sub-agents, your own full-diff read against the handoff checklist is the round.
+Each round, a fresh agent with no memory of this work checks the branch against the spec and the SigmaReview lenses, fixes what it finds, and reports back.
+
+**Who reviews.** By default, start the reviewer as a sub-agent of the harness you run in (Claude Code, Codex, Cursor, Muse Code, T3 Code, pi or any other), on that harness's default sub-agent model. Do not ask first; this works the same in every harness.
+
+If the user names a reviewer ("SigmaShip reviewer: GPT-6.1 Sol", "review with Grok 4.7"), every round uses that model:
+
+1. Pass the model to the sub-agent when the harness can run it.
+2. If it cannot, start the round through T3 Code when it is installed, which runs Claude, Codex, Cursor, Gemini, Grok, pi and other providers from one place: `t3 thread start . - --provider <instance id> --model <model slug> --worktree <branch> --wait`, with the handoff on stdin. The provider instance ids are the keys under `providerInstances` in `~/.t3/userdata/settings.json`; the model slugs are the names in the T3 Code model picker.
+3. If neither route reaches the model, say so in one line and use the default reviewer.
+
+A standing rule of the user or repository about reviewers wins. If it forbids sub-agents, your own full-diff read against the handoff checklist is the round.
 
 **Done when:** a round reports zero P0–P2 findings and CI is green. After three rounds that still find P0–P2 problems, stop and ask the user: the ticket or the design may need rethinking.
 
