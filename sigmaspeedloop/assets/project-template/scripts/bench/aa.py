@@ -10,12 +10,18 @@ import hashlib, json, os, statistics, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from verdict import ROOT, extract, ratios, score  # noqa: E402
 
-COMPONENT_KEYS = ("replay_wall_s", "decode_greedy", "decode_sampled", "prefill_geo", "c3_tps")
+COMPONENT_KEYS = ("replay_wall_s", "decode_greedy", "decode_sampled", "prefill_geo", "c3_tps",
+                  "c2_tps", "warm_ttft_sum", "warm_miss")  # the keys ratios() reads from the champion
 
 
 def main(runs, tool_runs=None):
     rows = [extract(r) for r in runs]
-    med = {k: statistics.median(x[k] for x in rows) for k in COMPONENT_KEYS}
+    med = {}
+    for k in COMPONENT_KEYS:  # a key that no run has stays None, and ratios() skips that component
+        vals = [x[k] for x in rows if x.get(k) is not None]
+        med[k] = statistics.median(vals) if vals else None
+    med["replay_version"] = max((x.get("replay_version") or 0) for x in rows)
+    rows = [dict(x, replay_version=x.get("replay_version") or 0) for x in rows]
     rats = [ratios(x, med) for x in rows]
     spread = {k: max(abs(r[k] - 1) for r in rats) for k in rats[0]}
     score_spread = max(abs(score(r) - 1) for r in rats)

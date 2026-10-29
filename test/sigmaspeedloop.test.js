@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -54,4 +55,45 @@ test('sigmaspeedloop template weights add up to 1 and match the verdict componen
   assert.ok(Math.abs(sum - 1) < 1e-9, `weights add up to ${sum}`);
   const verdict = fs.readFileSync(join(template, 'scripts', 'bench', 'verdict.py'), 'utf8');
   for (const name of Object.keys(project.weights)) assert.match(verdict, new RegExp(`"${name}"`), `verdict.py has no "${name}" component`);
+});
+
+// The lock step must run on baseline runs, and the verdict must read the bands it wrote.
+test('sigmaspeedloop aa.py locks the evaluator and verdict.py reads the lock', (t) => {
+  const python = findPython();
+  if (!python) {
+    t.skip('python 3.8+ not found');
+    return;
+  }
+  const dir = fs.mkdtempSync(join(os.tmpdir(), 'speedloop-'));
+  try {
+    fs.cpSync(template, dir, { recursive: true });
+    const write = (rel, data) => {
+      fs.mkdirSync(dirname(join(dir, rel)), { recursive: true });
+      fs.writeFileSync(join(dir, rel), JSON.stringify(data));
+    };
+    const runs = ['runs/0001', 'runs/0002', 'runs/0003', 'runs/0004'];
+    runs.forEach((run, i) => {
+      const k = 1 + 0.01 * (i % 3);
+      const turns = [0, 1, 2].map(() => [{ ttft_s: 5 * k }, { ttft_s: k }, { ttft_s: k }]);
+      write(`${run}/raw/meta.json`, { status: 'OK' });
+      write(`${run}/raw/gate.json`, { tf_top1: 0.99, tf_dlp: 0.01, dec_dlp: 0.01, dec_prefix: 0.9, reliability_ok: 5, reliability_total: 5, empty_outputs: 0, looping_outputs: 0 });
+      write(`${run}/raw/bw_before.json`, { copy_gbps: 200 });
+      write(`${run}/raw/bw_after.json`, { copy_gbps: 200 });
+      write(`${run}/raw/speed.json`, {
+        short: { decode_tps_geo: 50 * k }, long: { decode_tps: 40 * k },
+        prefill: { prefill_tps_geo: 3000 * k, '64k': { prefill_tps: 1 }, '128k': { ttft_s: 1 } },
+        parallel: { aggregate_tps: 90 * k }, parallel2: { aggregate_tps: 70 * k },
+        replay: { wall_s: 100 * k, ttft_p50_s: 1, version: 8, warm_hit_rate: 0.9, turns },
+      });
+    });
+    write('runs/0004/invariants.json', { ok: true, problems: [] });
+    write('state/champion.json', { runs: runs.slice(0, 3) });
+    const lock = spawnSync(python, ['scripts/bench/aa.py', ...runs.slice(0, 3)], { cwd: dir, encoding: 'utf8' });
+    assert.equal(lock.status, 0, lock.stderr);
+    const verdict = spawnSync(python, ['scripts/bench/verdict.py', runs[3]], { cwd: dir, encoding: 'utf8' });
+    assert.equal(verdict.status, 0, verdict.stderr);
+    assert.match(verdict.stdout, /^VERDICT (KEEP|REJECT|ARCHIVE)/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

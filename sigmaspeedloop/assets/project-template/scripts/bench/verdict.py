@@ -172,8 +172,8 @@ def decide(run):
         r = ratios(cand, champ)
         sc = score(r)
         floor = t.get("keep_floor", max(0.02, 2 * t["score_spread"]))  # owner set 0.05 on 2026-10-24
-        drops = {k: r[k] for k in r if r[k] < 1 - max(0.02, 2 * t["spread"].get({"short": "decode", "long": "decode"}.get(k, k), t["spread"].get("c3", 0.02)))}
-        clear_wins = {k: r[k] for k in r if r[k] > 1 + max(0.05, 3 * t["spread"].get({"short": "decode", "long": "decode"}.get(k, k), t["spread"].get("c3", 0.02)))}
+        drops = {k: r[k] for k in r if r[k] < 1 - max(0.02, 2 * t["spread"].get(k, 0.02))}
+        clear_wins = {k: r[k] for k in r if r[k] > 1 + max(0.05, 3 * t["spread"].get(k, 0.02))}
         out.update(ratios=r, score=sc, floor=floor, champion_runs=champ_runs, gate_fails=fails)
         if not gok:
             out.update(verdict="REJECT", why="quality gate: " + "; ".join(fails))
