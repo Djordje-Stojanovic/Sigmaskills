@@ -1,0 +1,6 @@
+Scaffolded Projects/Qwen3-8B-vLLM/ from the template: GOAL.md, SPEC_DRAFT.md, project.json, ideas.tsv, results.tsv.
+Ruling: the recommended answers for every question (offline eval) - cost if wrong: a second grill round.
+Ruling: score weights short .30, warm .20, miss .10, long .15, prefill .10, 2 agents .08, replay .04, 3 agents .03.
+No box was rented: phase 3 starts after the owner says yes to the spec.
+Next: phase 3, bring up one box (references/setup-vast.md).
+LOOP RUNNING: no instance rented yet.

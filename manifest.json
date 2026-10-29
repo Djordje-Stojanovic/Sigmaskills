@@ -93,6 +93,11 @@
       "id": "sigmafinanceman",
       "title": "SigmaFinanceMan",
       "needsReferences": true
+    },
+    {
+      "id": "sigmaspeedloop",
+      "title": "SigmaSpeedLoop",
+      "needsReferences": true
     }
   ],
   "retired": [

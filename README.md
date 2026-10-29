@@ -105,6 +105,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaDesign** | `sigmadesign` | A design system from one accent colour (DESIGN.md, tokens, packs, sample page), applied across a repo | `DESIGN.md`, CSS, a sample page |
 | **SigmaTour** | `sigmatour` | A visual 15-60 minute tour of any repo: map, architecture, one request traced, examples run, README next to what the repo shows | One `<repo>-tour.html` page |
 | **SigmaFinanceMan** | `sigmafinanceman` | DCF, LBO, comps, three-statement models, ratios, red flags, a value scorecard, earnings reviews and budgets from SEC filings or your numbers | Excel with live formulas, a deck, SVG charts, an HTML page |
+| **SigmaSpeedLoop** | `sigmaspeedloop` | Faster serving on a rented GPU, one judged change per pass | A project folder, a champion recipe, a report |
 
 ### Which one do I need?
 
@@ -193,6 +194,10 @@ A 15-60 minute tour of any repo in one page: a clickable map, one request traced
 
 Finance models from SEC filings, checked before they ship.
 
+### SigmaSpeedLoop
+
+Lossless GPU speedups, scripted.
+
 ---
 
 ## Install
@@ -240,6 +245,7 @@ $sigmafork Copy this repo to D:\work\my-copy and teach me how it works
 $sigmadesign Make a design system from #e8a33d and put it in this repo
 $sigmatour Give me a 30 minute tour of this repo
 $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
+$sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
 ```
 
 </td>
@@ -267,6 +273,7 @@ $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 /skill:sigmadesign Make a design system from #e8a33d and put it in this repo
 /skill:sigmatour Give me a 30 minute tour of owner/repo
 /skill:sigmafinanceman Build a three-statement model of MSFT
+/skill:sigmaspeedloop Make my ComfyUI image workflow faster on a Vast.ai GPU
 ```
 
 </td>
@@ -295,6 +302,7 @@ $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 | `sigmadesign` | an accent colour · a repo | One question round; writes `DESIGN.md`; changes repo files only with `--write` |
 | `sigmatour` | a repo path or URL · a length | One question round; reads the repo only; runs its examples |
 | `sigmafinanceman` | a ticker and peers, or a budget file | One question round; reads public data; writes files only to the output folder |
+| `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
 
 ### Requirements
 
@@ -318,6 +326,7 @@ $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 | SigmaDesign | Python 3 (standard library) · a browser to look at the sample page |
 | SigmaTour | Python 3 (standard library) · `git` · a browser for the page |
 | SigmaFinanceMan | Python 3.10 or newer with `openpyxl` and `python-pptx` · LibreOffice is optional (`audit`, `render`) |
+| SigmaSpeedLoop | Python 3 · SSH · a GPU host account (`vastai`) · a long-run agent host |
 | SigmaFreedom | Python 3 (standard library) for `guardrail_lint.py` |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 

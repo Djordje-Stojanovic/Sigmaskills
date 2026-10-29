@@ -18,6 +18,7 @@ const KNOWN_SKILLS = [
   { id: 'sigmadesign', title: 'SigmaDesign', needsReferences: true },
   { id: 'sigmatour', title: 'SigmaTour', needsReferences: true },
   { id: 'sigmafinanceman', title: 'SigmaFinanceMan', needsReferences: true },
+  { id: 'sigmaspeedloop', title: 'SigmaSpeedLoop', needsReferences: true },
   { id: 'sigmawritegui', title: 'SigmaWriteGUI', needsReferences: false },
   { id: 'sigmacreatearena', title: 'SigmaCreateArena', needsReferences: true },
   {
