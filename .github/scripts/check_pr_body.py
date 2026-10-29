@@ -49,11 +49,9 @@ def is_code_file(path):
     return "." in name and name.rsplit(".", 1)[-1].lower() in CODE_EXTENSIONS
 
 
-def is_test_file(path):
-    parts = path.lower().split("/")
-    name = parts[-1]
-    return (any(part in {"test", "tests", "__tests__"} for part in parts[:-1])
-            or name.startswith("test_") or re.search(r"(_test|\.test|\.spec)\.[^.]+$", name) is not None)
+def is_test_file(path):   # by its name: test_x.py, test-x.sh, x_test.go, x.test.mjs, x.spec.ts. A runner or helper in tests/ is code.
+    name = path.rsplit("/", 1)[-1].lower()
+    return name.startswith(("test_", "test-")) or re.search(r"(_test|\.test|\.spec)\.[^.]+$", name) is not None
 
 
 def skills_text(body):
