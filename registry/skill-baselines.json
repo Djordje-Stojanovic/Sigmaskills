@@ -331,6 +331,16 @@
           "references/brief-method.md": "46db0feeccbf8a87d8cd99475bc1c4f22ee23cf2e0625955603645c512d8b8d5",
           "references/prompt-contract.md": "d3f62dc7d5664af420c50bae344b1570830947a1beff4de0af0f8d855eeec43c"
         }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "924b52d59f89d92663e0c69203f3b78028807506eb85619ff002a8fcf6210310",
+        "files": {
+          "SKILL.md": "46053697c30e95a8734196fdfbdb11d3b727abb98c380ad31f7d516edfb297c2",
+          "agents/openai.yaml": "69c0219b0f8ab7974527ca9f6fb06b67b21683a42ac1de63ef6014cdef1dde85",
+          "references/brief-method.md": "46db0feeccbf8a87d8cd99475bc1c4f22ee23cf2e0625955603645c512d8b8d5",
+          "references/prompt-contract.md": "d3f62dc7d5664af420c50bae344b1570830947a1beff4de0af0f8d855eeec43c"
+        }
       }
     ],
     "sigmaperformance": [
@@ -738,6 +748,17 @@
           "references/method.md": "659848b0d8a7e2dbcbde3fa88de09d07f20b68bb91ea808e766d526b137adc03",
           "references/report.md": "ebabc522ac35dcfd7538abe4657d4933bf795d5ea20242a968592e0c569e7b41"
         }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "479c100b5763593b705dd639e45067933c1a734e908c145fbad9c1cd19ddcc40",
+        "files": {
+          "SKILL.md": "cc1c16212709082b13a5746d7d18946ddc46b17ab7c1298c1904bb532a00d768",
+          "agents/openai.yaml": "fc9f585d84b751aa9978d3b275a9f8b0383a1d57cb49fec27e905e794fa14d5a",
+          "references/measure.md": "efd083364caedfce9c5e69a2267209d3317cfa218029b48455e49cdc2f9affe0",
+          "references/method.md": "659848b0d8a7e2dbcbde3fa88de09d07f20b68bb91ea808e766d526b137adc03",
+          "references/report.md": "ebabc522ac35dcfd7538abe4657d4933bf795d5ea20242a968592e0c569e7b41"
+        }
       }
     ],
     "sigmawrite": [
@@ -1002,6 +1023,14 @@
         "revision": "0fa3bbe8498f85a95562d854e7b3fb184b99846c484291b5fd4fa50a39d5df67",
         "files": {
           "SKILL.md": "d2871c2b936e549ce36447cc28251abeb347d7a26cb5a5f83d7756546a2e9118",
+          "agents/openai.yaml": "19b53dc100195c2d8cfd03720028f577ce8e3ba95829551c6d31d96a23021144"
+        }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "c5888ed17b31f28ef7ca0774c1c5373d0e21a62dcba713ae4d0acef08d11c983",
+        "files": {
+          "SKILL.md": "84778766ba8815f591eb2d3a4e441cf49fbae80f1f3f1d0f8eb9bd2a870fbe2b",
           "agents/openai.yaml": "19b53dc100195c2d8cfd03720028f577ce8e3ba95829551c6d31d96a23021144"
         }
       }
@@ -1273,6 +1302,15 @@
         "revision": "ae43d4a4ccecad189cb4d71c11578ee745d05fccc59d9e827115dcc565b61259",
         "files": {
           "SKILL.md": "1ae0b7b807209a0239b231731834bbea0b02efec7a0e937d3efa3410e981ba3e",
+          "agents/openai.yaml": "baaa351482edffe072ae708968dcc1c70842caebf38a8aa7fd667b8da7a01c70",
+          "references/scan.md": "049715a6948138109b64994e969a1ed5541cab8151b8c8d9070d5eae379d45c5"
+        }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "f50a318806dc6eb141dcb97c76369f51fbaf412ff993d7b6d8d33d3b2495cfc9",
+        "files": {
+          "SKILL.md": "7c0537d9558b1608e190ba21752d8d1bcf53b035ccdeee3eba413b05253f3217",
           "agents/openai.yaml": "baaa351482edffe072ae708968dcc1c70842caebf38a8aa7fd667b8da7a01c70",
           "references/scan.md": "049715a6948138109b64994e969a1ed5541cab8151b8c8d9070d5eae379d45c5"
         }
@@ -1597,6 +1635,17 @@
           "references/issue.md": "59300698c9a1d32e1d868173b22dea5fcc7ea7b7ca97198faf688256e5638300",
           "references/lenses.md": "c5f2982ed1f4330035895dabacef550a5c1b241e0e1a370547b8715f89f3f8b3"
         }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "99d2fd867da796140ad9fb69f2f994f44b4c426bc45ff6735eb2f15221834b70",
+        "files": {
+          "SKILL.md": "bfa77c1a0bbf86e7d5a61fcd76d78f002af0f2bb5291861527023b022b54c770",
+          "agents/openai.yaml": "ba80d59887cef951c006ad52ddd42fa1999d12b464dff17b6bb0b711f7eb505f",
+          "references/categories.md": "58ad43e0da22b5a67f0bec01abc13760ffa835dec9efc07343b07e8326cba7bd",
+          "references/issue.md": "59300698c9a1d32e1d868173b22dea5fcc7ea7b7ca97198faf688256e5638300",
+          "references/lenses.md": "c5f2982ed1f4330035895dabacef550a5c1b241e0e1a370547b8715f89f3f8b3"
+        }
       }
     ],
     "sigmaship": [
@@ -1889,6 +1938,16 @@
           "references/land.md": "9b2a264abdc4c011ca43e6b49ef50f0e17ebd523d898c00ae5c38c204d152dd1",
           "references/review-round.md": "9a4ff45aa7961142bfd9230e98beae53b5b0f4efcd723a20f50ed0415c538af8"
         }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "6d6ac833001316980f11c09cce009867e2faf0d0b9a6df110c21c6a6cc839f55",
+        "files": {
+          "SKILL.md": "7c801e590dd8a48f9ee6c128941033a7e3b1303cd420b615f0e5e3e7f7442388",
+          "agents/openai.yaml": "29f73f7ef65b71dfd4efa27dfef26a961dae98eee2882c63084528b7abef3b96",
+          "references/land.md": "9b2a264abdc4c011ca43e6b49ef50f0e17ebd523d898c00ae5c38c204d152dd1",
+          "references/review-round.md": "9a4ff45aa7961142bfd9230e98beae53b5b0f4efcd723a20f50ed0415c538af8"
+        }
       }
     ],
     "sigmawritegui": [
@@ -2113,6 +2172,15 @@
         "revision": "b8a1cd93fb4c6bd1c5bed05b8b9217aa7b80d2725c90c0791dc07ef5c66cb8b1",
         "files": {
           "SKILL.md": "4babfc9a734322ff54119ac604f264a6c8f9556d0f8e574121e749c7eebe76fe",
+          "agents/openai.yaml": "33215ab50d5d81d54397ac3bfa4a3d6b47ae334a30e5dd262b19f6c45b126323",
+          "template.html": "25669e5f711da8b314b745b6aa99e7734eafad5f0dfd75e10cabb298270b2f92"
+        }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "0dc79dabc789acf01a4633638a122201d7b9d448ee008f97b43f9279d20399e0",
+        "files": {
+          "SKILL.md": "6875471af23e7e154f61c4788a20a5c8900a2cdfa9568f2583f9450f4016755c",
           "agents/openai.yaml": "33215ab50d5d81d54397ac3bfa4a3d6b47ae334a30e5dd262b19f6c45b126323",
           "template.html": "25669e5f711da8b314b745b6aa99e7734eafad5f0dfd75e10cabb298270b2f92"
         }
@@ -2582,6 +2650,24 @@
           "scripts/sr_core.py": "b0e73b1f826577deae986de7c9afb9f3c3b6e6fc5ae5f4a65f453e12212ff3d4",
           "scripts/sr_readers.py": "ebed1201837f211ee34be420dcc912237b7fc61dcf362139e5157a2282d35c2c"
         }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "badb40dfa3e1174fa9557744df9fc46fe3d12df8ca034adaaa7fa2f05f3cdccc",
+        "files": {
+          "SKILL.md": "5f247c4b6b2436f2c4ac6859420827e39778312cb978fab511cdb48addda81ab",
+          "agents/openai.yaml": "147b99833f77e6d12c4d72424c8b4f06248de7b0ad3f260357429c6a2bce4b68",
+          "references/access-ladder.md": "5c30c7691d7788e1c4da576f604a131d3b484d1e594575b3070126922ab9c711",
+          "references/counting.md": "3213da1b93d383c4855a4fdfb8bce2593c6254f8a67736835ce8cd91279c921c",
+          "references/deep-routes.md": "1b21ad16f6cc58a6e88b33963ba8a09b33d95c85ce10f018b539557c0299d9c4",
+          "references/public-sources.md": "9d847996482e8fd48dc24826a4d7effa2edb831ea1523aa8b203101937e7b48e",
+          "references/reddit.md": "c60e8eadabe26fa636acf1946645071ab994303869726926696710d13f52b475",
+          "references/x.md": "1d6a91dde24057df77e934fd0a9f47398d914b4292451967b214f5ff9d5d9152",
+          "scripts/read.py": "ed2959813c1a4a2f8631d11c4acb905cf5137190da1c5590001d250a133dca95",
+          "scripts/source_log.py": "21fa54180b67b5a66ba4377fe3c209ae6f87d0ae40047a91856cf2bc483d0e09",
+          "scripts/sr_core.py": "b0e73b1f826577deae986de7c9afb9f3c3b6e6fc5ae5f4a65f453e12212ff3d4",
+          "scripts/sr_readers.py": "ebed1201837f211ee34be420dcc912237b7fc61dcf362139e5157a2282d35c2c"
+        }
       }
     ],
     "sigmacreatearena": [
@@ -3008,6 +3094,25 @@
         "revision": "d9e6970229cda31ee3c10d21abcf5b30cfa1e4b3a681b075a7805fbcfd769f96",
         "files": {
           "SKILL.md": "bc64e102dd9e34b5e1f1b93e00e828bd2452049064d245c7012b01691b958f18",
+          "agents/openai.yaml": "42b371e61bdef29ea71fbc46153580cafad6de5df10229c0f10dbbcb24eca4ab",
+          "kit/README.md": "9bce3ff2230c9633578a372815626d06ab520e8cff30e283d1dbd52c47e74987",
+          "kit/screenshots/caption-rank.png": "3a02d0bf0c5d9047649271bf4fc052cc2f8da8dee1fb17f031fcd79cea7f31c4",
+          "kit/screenshots/image-board.png": "3aa55effa50652f62991b316df1e151f4c576d6e9ae9adeda9c0e06451271b51",
+          "kit/screenshots/image-rank.png": "b0dc05828fc706c93e38a9561f4f1b4ba8565f9fbe4339c0a8b9376b8bbfff5c",
+          "kit/template/arena.json": "fc21175edf3efec826c8506a21b79c202e3603c3c4daac1d6a331d9c967a4c12",
+          "kit/template/arena.py": "b086db96a7e11471a25ec0fb7eaf23d12260b391a557db7775e189dab893e5a6",
+          "kit/template/index.html": "19b37dbe299c89d3fa5a1936504fe9b20b54dc1eae06cfb983a1f915954f1194",
+          "kit/template/make_items.py": "bbacc3ad78bd503063fc0f53d92383c761021237badfe6331f98e6fdd1567b54",
+          "kit/template/selftest.py": "72d9697ea380614032fde91b996f880ff46f94896de6efb3960bf8ed439b3a86",
+          "kit/template/server.py": "34d00183f3ec333fee4ea365749fe1e30987c4cf775e03316cc702b16ca43b2c",
+          "references/arena-guide.md": "887677f41a75b8064d9bac9653b4ce12ed3855ef176e44e4261fa1ec690c9649"
+        }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "74f36a48100ce1a9839db3c1385d50106bc08b3b0b37dffcbccd11ae05d62ea4",
+        "files": {
+          "SKILL.md": "f0cb07c179d63e84756aa2b402f62ba934cb07c2f91019b51bc3d498bb200f73",
           "agents/openai.yaml": "42b371e61bdef29ea71fbc46153580cafad6de5df10229c0f10dbbcb24eca4ab",
           "kit/README.md": "9bce3ff2230c9633578a372815626d06ab520e8cff30e283d1dbd52c47e74987",
           "kit/screenshots/caption-rank.png": "3a02d0bf0c5d9047649271bf4fc052cc2f8da8dee1fb17f031fcd79cea7f31c4",
@@ -4936,6 +5041,105 @@
           "scripts/dl_xmlvals.py": "e6018c4fd9ec6469c48fea895ed216b2ae2a3d2b663e5005db42dee286574117",
           "scripts/look.py": "d19833a2cb5c368089ed6d0c60b44123a4ba81ff0aad62b79f05bccea7b3a6e7"
         }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "d7d960dad661b10f8407256ed3d14c16e96603b8635f413f6a6daa6e327f0a59",
+        "files": {
+          "SKILL.md": "7517a5805183ec18783dcd2f73dd7770789209ff4a1258cc71f0ea022ad84005",
+          "agents/openai.yaml": "019b5763cdb1af585ec74d4abe36e25b27841491cf434bc0bcf593ab7ab2403b",
+          "references/3d.md": "f8e2fcd679ab67010aef0ce261d09764e3c08e53aea82942ee2cbe14e77c3931",
+          "references/archive.md": "63dacf635e50f5cd12aaa6c7a5eb5df25128ec969e15da638933c7059239a9c7",
+          "references/audio.md": "bbd17a9e1fc8b1c93e210a11b5bbcb4b4e85aa57591981a5ab8d102492adbc51",
+          "references/binary.md": "546a67975b38e7fe499404b838eb2eeee7a3709a1d09a8c40518b0a79aae45ac",
+          "references/code.md": "0ecb8899f876a795f92d488c74d694888a4c3abe6e027b800b70ec45c878e233",
+          "references/data.md": "05c21501e34236fe98b2102abcc4bce3bb3baed79c594f18a6272b0129ac1738",
+          "references/email.md": "2c9a4167e645a718922d991b6ca95b2eccedabdbd6274a279589a5bc4fcb52a2",
+          "references/font.md": "e59dafd6a9b2ed472dedaf1568cc154ca2b29f2ddb0922efbdeee74210a87acc",
+          "references/image.md": "099750e5e365d3d05f5ccf7eddd6432dd14420068f220ee41d8fbc3cc139fdc2",
+          "references/installs.md": "eb2ed8f11aa41c87642b07945d0194906c4114e2d444bd3546437cfd6d35dbd7",
+          "references/notebook.md": "a457145e357fcdfbe2cf6ee8accbad7e5d044c39116405b4017b2a5f40d0ab0e",
+          "references/office.md": "2c9d45ac6f670f44607363ea654a4277edc32831375f990a03ff703d32407e14",
+          "references/other.md": "f00a1ac630c69372e55d576582d2635ecd1a41d1c548020187c9a32ea6bcaf84",
+          "references/output.md": "25b3db7cb85faacd112763b366c05a55904812984ecb96ad7e238c166075484e",
+          "references/pdf.md": "fc25c90c78175dcd897c7c5b32d8eb6f9f0787cd0d02c51d03739f835a5eee97",
+          "references/video.md": "a412abda6b54176f1851ecd66fd041071dbe26addd04a3ec4e646a5d0840ea89",
+          "references/web.md": "93a099a3a2b07d105c84c91cf04b771d8e8e06db37b2a3d622d57fa3437c6fc4",
+          "scripts/dl_3d.py": "647a41815661d35b9616bfd341fb8986c3831f1cf5a2a5da777e5525e1783e7e",
+          "scripts/dl_adapt.py": "5a38163deda37df45fb8f05ca1744e52eb785cdd2b68afe3a7391c8ea13096fd",
+          "scripts/dl_ask.py": "51a32ec344579682011dc2fb8a50e29735514f779457968a95045e96fa057264",
+          "scripts/dl_asklang.py": "10acc9782a80a0d3711ccb792780f0c1c973899768b4d2f5b46f31e966afe21d",
+          "scripts/dl_askx.py": "21f1a2993f024848ff0e908b9f99e21dffd0aae004d8cf9ff7033e72a5a70c83",
+          "scripts/dl_asr.py": "ed5387f16c47c9a3150484e2d900519e5d78da3e53fe49bdc62e373b3d55e346",
+          "scripts/dl_bins.py": "5b1857814215f6f985b1023f9bdcace31c9118ff8effcad8e58d7bbf430912f1",
+          "scripts/dl_binx.py": "cbde32b08c572e59578c3c649c569d0bd7248d80fd4ebd4c2b9eb69b0fc168ff",
+          "scripts/dl_books.py": "efbae6128cc60383daadff7e544c2fabf7172e92d4841e0239dbb927769aada4",
+          "scripts/dl_cab.py": "6da1ca141ac8702e03df071d70934c0aee3fe2d7bed0adf77394cf836bc23887",
+          "scripts/dl_cal.py": "2a8025e58f3df548d86955144b5bd44062160c1e60002705167eca2ea40d5af4",
+          "scripts/dl_cls.py": "1b6f29590c18fb564fb0de9915ec0154b9f470af52b0d7e9a498b81210b1af6b",
+          "scripts/dl_colmeta.py": "cc481f811e1e6eb7bf44e09ceb314efa2a6ff026c00b755c47dfc4016eb49c4f",
+          "scripts/dl_colour.py": "7aeb8b0313a47176956a3bc256441fb66cc033f0bbfa74f8494647b181e7d436",
+          "scripts/dl_conf.py": "09a7029c77445b5ed8d89a33974022cdc6b5bdb9d86a80e69ebfe8ad199ee9dc",
+          "scripts/dl_cont.py": "2016ebf48c4ebdbab9ae549e98fa4943dc5125deefd4f8f928fd846cb3a3eeb4",
+          "scripts/dl_core.py": "cb8c683d54cf05f9badcb826dcc9a468ff6e2169ea2c813b97f823a623068941",
+          "scripts/dl_ctr.py": "6f795f37be98c5d88b0d5fbca94223e3ab858a5a7408ead9e8d8f41464ba4fd8",
+          "scripts/dl_data.py": "9f328d0b7e03a95c2f4efe485550f7b4e2e9626bbb84da9dd899ebfdad7b68fe",
+          "scripts/dl_dbf.py": "4221926f451ff886a52570486000724dced08c63ca3bd1884c8b654e77760f08",
+          "scripts/dl_delim.py": "b8bfac9b35d1681a76c7d8a20e62dea782c008dfcbf35723d7731c93b703993d",
+          "scripts/dl_docs.py": "c7eba6dbf41e4429e53ab890571dbf51c3a271826d44c8687b023f9caf269af8",
+          "scripts/dl_drill.py": "bc2e290cd5f96115675b67d18c8c13fb910ee326a50facd2e98a178d7e84bc49",
+          "scripts/dl_drill_ext.py": "115adca1f512082bcfd033bebebacf8608a6558ab389092d9a8260aeb7fc25a4",
+          "scripts/dl_extra.py": "18e168e15222e4199f1dd2f5acd6a63f1555813725a833e78b7781a047c9bdde",
+          "scripts/dl_gate.py": "c2aa890798109de0e2accf8103146f1a0e6e5a13cc27ff7931f19b3ac9a87458",
+          "scripts/dl_geo.py": "bbba45f57594d99697367f42dfb2f536228bb6bd9e778c8ca124d2a769d80989",
+          "scripts/dl_legacy.py": "5f9c07f5bf6c99726931c58f875ef5faa93bd9123a3463ff33136a4b7f339dc4",
+          "scripts/dl_lex.py": "c9f35951ae26199da30bfbf36af74fdc49abbddd62a23d8cbc19240b77745b23",
+          "scripts/dl_listcol.py": "8adc32776b29fd96865ff555ed81f52b62c7841bbb690b747e7f200b3ca52ebf",
+          "scripts/dl_logs.py": "b5d12a630f92e68993cb2d77626294ce4ce9a041f4104caf05d8ad6de689a055",
+          "scripts/dl_media.py": "8a9233d0a1f92e0e80c52ea9c3de87dafe024bd88b9c2080e5d5605860fc2e51",
+          "scripts/dl_mediax.py": "9b55c6fa98909f396b0fd71974235d461c3d86b801a2636dd0febaa58247a1d6",
+          "scripts/dl_misc.py": "0811c51d37d80200b649a3c203a0f7f19aab57766ab28c794a734710c40a5851",
+          "scripts/dl_mmeta.py": "dc71c9a5d01cbc6ef8671f386f59b2284c80ceb1a7f2c858b514b19de8e7ab64",
+          "scripts/dl_models.py": "861278163b38d37ae67542f03e69c6f327f2a48ad6f19be2e9fae0fe0d8ea612",
+          "scripts/dl_more.py": "f3efd68a3cefa4a7f8c843a0bf2494f832c5ab5dc2c8423c7ebccf620c78c3ad",
+          "scripts/dl_netcdf.py": "624da1180c80a55d4a2462792fd7b0fa7080a6e648290ec16cf2ea65b858ed32",
+          "scripts/dl_offx.py": "8d64493e4ef7d7ec473619bc17012bb3f414b0158eaf4abb5fc6c3c7392f858f",
+          "scripts/dl_pcap.py": "0014bc068049df7514ef48236922756ec8218c4a664a1e7c07cfacc659ee5ace",
+          "scripts/dl_pdffacts.py": "365bee7c1e0af832c45ed26f02e5244505bbd0466397e83a6dbed8bbaccdfd98",
+          "scripts/dl_pe.py": "764fc73d41415cfb10b77e3ed27794abfd9a02dbbdaec31618a0458b3a1e8261",
+          "scripts/dl_pick.py": "d15aaf8ffb272553d5e1be49554d0a702eda45203f75d109c491117e26c72e64",
+          "scripts/dl_pixel.py": "12e6ffe91f65e84227b124572576323ba4ad08b46fdaaaa3a963f2563dadc56d",
+          "scripts/dl_pkgfacts.py": "8adea38802a5aadb34e26609c79739c0363cb7d72000b5b0d3ae596c4896b699",
+          "scripts/dl_prof.py": "e0d56b1a0c1eef5e0197232abfc30a3591ad35efd19f0307784aa45e7d31e94c",
+          "scripts/dl_r13.py": "3831192596eda27a7378c58277b879eac3733e1e0a3d780d3c99422a3617ffac",
+          "scripts/dl_r14.py": "a804f7f7be8840312523735f55758d07228b9b5a4acca7878d9396db552a2ac6",
+          "scripts/dl_r14f2.py": "bdb058f024000b9cef28eb5d2e721ff8ef9bf41b8466ec765d98b44563fdd808",
+          "scripts/dl_r15.py": "5dfd5c344b418620f3973ca81b455ecee07fb06582c94c1669b40dde46d7f3cd",
+          "scripts/dl_r15f2.py": "543e213d7e66b777180e57177f77c2c9b0e7dc6f83ab3cc7b8ec2a18a2268fa4",
+          "scripts/dl_reg.py": "1d94cbfc1de1519797d0d5a8d43015833915cf84fa3b32003c222a880c6ebc4f",
+          "scripts/dl_rtf.py": "747bce28202e6ec82615aa57e8d90ed2946c2e8fdd327edd98b32a9cf71357a1",
+          "scripts/dl_sample.py": "b2ca9c16fcb746095f419a2ad9419a9f1ba5316164e38a92c5ae5854c760f7b3",
+          "scripts/dl_sav.py": "40adcc5d546c0b20c791fc7297af793ea8f151e6baa725d17ff037da2f3e6423",
+          "scripts/dl_selftest.py": "c4573d674307d3cea617a786c547ded20b676ca9dc18e9b881b17648ec6ec6b9",
+          "scripts/dl_sig.py": "865f4f17039e5d9729a775960160d5836ac49d6493521f78f2cf695849e0f063",
+          "scripts/dl_skel.py": "d1eedbd48a591d01b4f28f454af226f2d0075e50ffd077d1e80c7a70edcef161",
+          "scripts/dl_svg.py": "0e09a161ffd207dd8ed69528acdd398b65e4f9c44221c07db114664e6b29599a",
+          "scripts/dl_tab2.py": "678f56c4bc15d9b0dd35224439fa9e8efb6b57097df54c00a104a41e564dbf8a",
+          "scripts/dl_textx.py": "44b38eae840c1cf86c29c8501d70a3ce678e3969b9a92739d68e8f8f105c79ec",
+          "scripts/dl_ts.py": "a579d991a6cf272c81da45fcd64350be122e6c2e22dc47ce15a7a2898b3958cc",
+          "scripts/dl_util.py": "cfd2ea34492521200f8ec0b616006e8825bc1dc64bd757afc5d60653ace1fdb1",
+          "scripts/dl_varmeta.py": "afd88de18a5432f92c368dc8f33c0dad1379573a7e50679e9668fdaab999cd10",
+          "scripts/dl_vba.py": "391490ba454464b80f5b4db96180056280b1cc68f480e9c99def18ca89ba7872",
+          "scripts/dl_view.py": "2712bf74110c87c3cd283c5a9ad6924aad6115d3bd938b8eacd27c23cc7366f5",
+          "scripts/dl_wordcount.py": "bae16959a016005d21de1f99275fbba10eefdcc6df2bdd788eb621eadcb3e36e",
+          "scripts/dl_worddoc.py": "e06d1b8060b366007be578303064953ea4747a59498eea508cf9e65bb26daa93",
+          "scripts/dl_write.py": "bea4e9f1ba6f8960c7dc2e11851535065126c97e887ddf090579a0f0ab90e0d5",
+          "scripts/dl_xl.py": "f94cfe3b79906e08649497d0114cfa0fc7267ba992cd481caf3d159d7949a9d2",
+          "scripts/dl_xlcalc.py": "9b811d6c0dc49429f6fca560a9b819e62c467a6a87be21abf9f6fec19f308a89",
+          "scripts/dl_xlsb.py": "20d037310069a43e16aad7ad80cda873464bc6003ca7eac40ef3ae91a94ecfa8",
+          "scripts/dl_xmlvals.py": "e6018c4fd9ec6469c48fea895ed216b2ae2a3d2b663e5005db42dee286574117",
+          "scripts/look.py": "d19833a2cb5c368089ed6d0c60b44123a4ba81ff0aad62b79f05bccea7b3a6e7"
+        }
       }
     ],
     "storgestudio-arena-create": [
@@ -5196,6 +5400,17 @@
         "revision": "4440f73733eeb3298c763b9a62f6b6d420ae173dcc4aa2315617ee74193a0d0d",
         "files": {
           "SKILL.md": "a0e99c2de5c9f1329d4591270e03e17d010d9c402eccf24e21e72fa519745fe5",
+          "agents/openai.yaml": "202d5e64c27f08cb942b175f3ee6dd25be76e33456fe3ecb182bc6a697e97406",
+          "references/doctrine.md": "70feb8fa346aa727397275f7fbb20256ebd86148aa7b694cb8c1f9f1563e4e12",
+          "scripts/guardrail_allowlist.txt": "2de31b8a96c5754fbc10014f8f7ae5519b9a3981ce236d2f0be32be8d690f502",
+          "scripts/guardrail_lint.py": "daa5e093a0d2ca47031638d2015c13ab91cd3af14933d9792b43414495e8bef3"
+        }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "c4a4fb7284253016b98c06337883a4c95c18d94418bbc2c528c52f892aa6ea4f",
+        "files": {
+          "SKILL.md": "3e8bd26076e3313fc47004093c6562a6e9dad084a32d3633bdaf64176ebc6d86",
           "agents/openai.yaml": "202d5e64c27f08cb942b175f3ee6dd25be76e33456fe3ecb182bc6a697e97406",
           "references/doctrine.md": "70feb8fa346aa727397275f7fbb20256ebd86148aa7b694cb8c1f9f1563e4e12",
           "scripts/guardrail_allowlist.txt": "2de31b8a96c5754fbc10014f8f7ae5519b9a3981ce236d2f0be32be8d690f502",
@@ -5544,6 +5759,23 @@
         "revision": "35bb8945bcdeb162a8ae3f6e178089ed11bbf87470273b302871120e4ac44c34",
         "files": {
           "SKILL.md": "46b474442670c317f9d4b0362585f4252e7d683ea02d3c00ee475971955d3a0c",
+          "agents/openai.yaml": "e594017139e56805ecebdfafd1ae157ae36a37969ed9bdef9b3b3d3f0ffbe36f",
+          "references/example.md": "2d105291a0310a2ef1e625b49635df10be9bd6c25e6e6b134f834b5134685964",
+          "references/host-antigravity.md": "f76c54450f0f8c120e474bf64f03f4cebd05e7e40522fb8d969d72ef9d913272",
+          "references/host-claude-code.md": "70d83ccf066791cb081863a83d02d237db1de0f8841dc750f46bd18e2c4789f0",
+          "references/host-codex.md": "8d8091952ac4bee4c5ffeb87ecd39586162c6157d3bc574fd9823b246203d1b3",
+          "references/host-pi.md": "e93bb7a0239f7da95a816fa0ebcfaa857b2b410501152065496ebd14e9856744",
+          "references/host-t3-code.md": "0516a24479232f66af7334c269a5f70432f0e949ef2ba772f8bcf550b4c6d683",
+          "references/hosts.md": "f118e7559083d1b08545c334f237d12d9044b9b4f3b29403b2a981704af9a74a",
+          "references/loop-file.md": "4ae538b040adf6e6b802b62f68aab8736894a206f3133b2a5dd24d2344683af5",
+          "references/questions.md": "98a1e52317a5b6f2b8a630fee8624b695e697e8dc9e8823cb9cc69479e5ce422"
+        }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "ea4062bfc623832e8cbd3adfbe1cf0dc973a0a074f686b747abd1db9393020c4",
+        "files": {
+          "SKILL.md": "4cfd9998157f475f77288744c0cf71240cae5780281ec941704945bc09ffd6bb",
           "agents/openai.yaml": "e594017139e56805ecebdfafd1ae157ae36a37969ed9bdef9b3b3d3f0ffbe36f",
           "references/example.md": "2d105291a0310a2ef1e625b49635df10be9bd6c25e6e6b134f834b5134685964",
           "references/host-antigravity.md": "f76c54450f0f8c120e474bf64f03f4cebd05e7e40522fb8d969d72ef9d913272",
@@ -6102,6 +6334,32 @@
           "references/sources.md": "2361e0ad0a1a8688203064627899bc91920ddf5302d2aa5c515a26b60067203f",
           "references/wait-what.md": "c5ffc8f9c87f81757b345178a7b7d7e9c74908341143b4702c0c5c62663c6a00"
         }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "794ef6bc8a51ad8bb353906d4423af408d60e4b5dcdd1277e8908c97456ae9c6",
+        "files": {
+          "SKILL.md": "89038a6b1c42f6b9e1f0a8ea1bff267e5901061938064f11c91c437278e7c5a1",
+          "agents/openai.yaml": "048119bc327a16d9d9c98b2f71fb695b911e22850eeea5135481ed38a3a10237",
+          "references/lenses/charts.md": "562696b6bee3e95884ff2fd6be4a1331c15839a36d522bdb9d47a997d758f3a2",
+          "references/lenses/colour.md": "1396cdbbd93351a17f995f1c8ad3351a93be73722a0dc46ba14f9fd40d8727ac",
+          "references/lenses/everyone.md": "38d57b3687aeb7cfdca267956f9cb99d4e158fd5477f2cbeeefe3f2303bcf9a3",
+          "references/lenses/feel.md": "41fb18cdf8a69d6e86197f6dfe901639885d236c180b873c230cef149482dc86",
+          "references/lenses/first-glance.md": "44d2cb01c21866c1ce84f747e0ae0ef6271aaf221faa1be62919d79337bd6b98",
+          "references/lenses/interface-words.md": "0dc1f0b4bf974b732c2be78c65554739a12ddc87733223442acb74db831f886d",
+          "references/lenses/motion.md": "05d6094411f9207a9b527cae08d7e485f4404d669eec06e82d8c760ba4abd598",
+          "references/lenses/one-bold-place.md": "eee40942a7153003d54d5f47a716fbaea179a2774fb355e24310811d30c72711",
+          "references/lenses/only-this-one.md": "29a2c88a85d6a868b7e00deeeb8f6821fceb27dd437e611851f30ba249f170fc",
+          "references/lenses/prose.md": "fc547447fd7d8022036977029e9067e7f74caa82e439145b3da4c5cde7048e8d",
+          "references/lenses/rhythm.md": "d860ba187addae6e1f28dee36ecb343644829db7274ea8c43f867c15a97987ce",
+          "references/lenses/spent-defaults.md": "ec76a9d33184fe365cb5bb1fda4f59a2107a7d70957147fde321f669344f398c",
+          "references/lenses/the-pitch.md": "7167de0fabaa751fe06e501acaf83f66cb4b8ffc58a51de477d38bd7537f996c",
+          "references/lenses/type.md": "1796a2c8ebf6038d6fe921264ff6d74cae30245b7502519e6439125d592d3024",
+          "references/plan.md": "7dce96ee72cc39dd95b813cc611e49e092501d2eec03ea66c4e718593836a224",
+          "references/questions.md": "0916780c3b873b8e70ba7d58156db64902f43aa3b4cce4e971e795066fa0b84b",
+          "references/sources.md": "2361e0ad0a1a8688203064627899bc91920ddf5302d2aa5c515a26b60067203f",
+          "references/wait-what.md": "c5ffc8f9c87f81757b345178a7b7d7e9c74908341143b4702c0c5c62663c6a00"
+        }
       }
     ],
     "sigmahuman": [
@@ -6415,6 +6673,22 @@
           "upstream/UPSTREAM.json": "932a28e8f23a2272138bbaa6b4e5829f045b791142aee3858248b5bef86f9e61",
           "upstream/humanizer-SKILL.md": "0612f1dfb1672b0ea9b97e139bf1f06cabe98d8b27424fe8ff01e1fb4cc99cad"
         }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "4a397d80feaa5aae8cc4894ae325e759f887ba1fb09fcfd5d480c734296cec58",
+        "files": {
+          "SKILL.md": "4ed415e06a36441689773201d9eeea5f394ae2fe20e64ba3d2feddfe812144e9",
+          "agents/openai.yaml": "a0a399732ca02b27d58fd79d85e5618c4387ba0a76c7ae7f403e57f91c4629fd",
+          "references/LICENSE-humanizer.txt": "4ac4810254ab36d45419141aeb8e69bf50652cfafe5b2dab947d06d44e5cbf96",
+          "references/lanes.md": "785fcab631418fc9efac8684bd66fceddff2c5d4ccc599c19c575bb38f6a0129",
+          "references/patterns.md": "cbb25d3e8d12f2ab6001405f3a5c70c272c9bfa890db1bc4d5fa0d943b2b2076",
+          "references/sources.md": "6b4a23c7ac9f2c6a2ffea0938646dbb12e8268fdf45c2eb1508897a91aff221c",
+          "scripts/factcheck.py": "6ab632df24d9b2105fae50ffb75b60e598fbac58abc2192c92d3d7cc7af0dbc7",
+          "scripts/upstream.py": "276d113a5edac9980557a27fb2a886d6c97ee8bb960f95f0f9fed254aba867e1",
+          "upstream/UPSTREAM.json": "932a28e8f23a2272138bbaa6b4e5829f045b791142aee3858248b5bef86f9e61",
+          "upstream/humanizer-SKILL.md": "0612f1dfb1672b0ea9b97e139bf1f06cabe98d8b27424fe8ff01e1fb4cc99cad"
+        }
       }
     ],
     "sigmadesign": [
@@ -6639,6 +6913,18 @@
         "revision": "53ab454630820faa2692c9de63add16fd386eda72659357ae41b6e174ef49061",
         "files": {
           "SKILL.md": "13f50bd1dc089cf901f56e828e54edfffc13d705a0ba7148b02349881a059772",
+          "agents/openai.yaml": "a2d95e9ee78aebba4d0f71ffa867ee449224c6f13c96c91a86b7665dc1ac919e",
+          "references/format.md": "dc97a3d10d1636f65144b5c8caa5ffaef81d8cc078cb5a9aa7096f10eceb2420",
+          "references/integrate.md": "45018c8df8ea137fae57d74d9f701d92a29514a785dace0c642952c83ef752ac",
+          "references/quality.md": "e8d0078e1bc88cb5e4e34745311bb16551506acddebacf490b64e9333ee41ac1",
+          "scripts/sigmadesign.py": "8494a049e433744304dbc15a93765f11fda0544d42949b1533969ca7d623fabe"
+        }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "8efbf051c907ad73a21df7de75fda3868286fd732a2fbaf827c4f3d0fa4ec928",
+        "files": {
+          "SKILL.md": "5bf43dd4811239938e58bf9c1d7afa0f31c35ea7ace6a2769836d8fe0a41b637",
           "agents/openai.yaml": "a2d95e9ee78aebba4d0f71ffa867ee449224c6f13c96c91a86b7665dc1ac919e",
           "references/format.md": "dc97a3d10d1636f65144b5c8caa5ffaef81d8cc078cb5a9aa7096f10eceb2420",
           "references/integrate.md": "45018c8df8ea137fae57d74d9f701d92a29514a785dace0c642952c83ef752ac",
@@ -6913,6 +7199,20 @@
           "references/questions.md": "14f94d47838c59a9a12ddd430697d8687ebc43bce1c84e4986b3bd6222164cea",
           "scripts/sigmafork.py": "1d8e34d77cf1933ffa069cd5fbdbc60284289825e2ab10e92c1d3696729b9e73"
         }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "61e6bccc46952dca9088d5d5b2c1023fe4e19b1c926110b7ff6b5bb3890d7b11",
+        "files": {
+          "SKILL.md": "1d87b013589da4511f39a5385857bcfea7d78090607fe09d110c2b27ff3f7045",
+          "agents/openai.yaml": "5e2709ab8e6d37b883f103f993ac23574a55c02f7f03499bded8e6ab1926133d",
+          "assets/guide-template.html": "727c373416bf5f3feb3125595bb3e7720e92f5d830804144b4bd38989d7b9eb2",
+          "references/bundles.md": "8fadea377a9948d7aa6f2ce6af43108efbe6a776493c72b2a617c5a26630e3db",
+          "references/copy.md": "c50cae1cf9258ab4f5918b12b35c8ce3f115cd8af1e6879dc50d3b51346f0a78",
+          "references/guide.md": "f21911883ab2d791e11c158559d6e175d2e984078ee0b72ae7c7738166bd5e88",
+          "references/questions.md": "14f94d47838c59a9a12ddd430697d8687ebc43bce1c84e4986b3bd6222164cea",
+          "scripts/sigmafork.py": "1d8e34d77cf1933ffa069cd5fbdbc60284289825e2ab10e92c1d3696729b9e73"
+        }
       }
     ],
     "sigmatour": [
@@ -7097,6 +7397,17 @@
         "revision": "1ba839957fa6cd99dc998e6e3ed04f314450e6c463f29dd4ae863faeddd383e9",
         "files": {
           "SKILL.md": "50f82c85d0295c3d2758e454c63ed687944bf5783bcfe0bec552d50c6b9a9104",
+          "agents/openai.yaml": "d4814d7dd985573a3b546bcedeb30a0b4c2f7a8c4fef63736719ef366024d8f9",
+          "assets/tour-template.html": "35335ff36fc7edf358ecf6369e738dda05b7f791a0c5ce6e928be72a9647d40c",
+          "references/tour.md": "9aa9523bcb5e5db2de279d9c56395f338824d7991782f4040c84f68a3107a48e",
+          "scripts/sigmatour.py": "93d32221941648a925d9878e0029ed85e21c1835518ab441dafea7c125ccf788"
+        }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "39e42f470a169ae4b2001b57894ef6b649fb2c930c780bbf6950a6eefcfccf8c",
+        "files": {
+          "SKILL.md": "635dbf03642958296f2888d259a644c46744bd8b797bbbe40458028567f98b0e",
           "agents/openai.yaml": "d4814d7dd985573a3b546bcedeb30a0b4c2f7a8c4fef63736719ef366024d8f9",
           "assets/tour-template.html": "35335ff36fc7edf358ecf6369e738dda05b7f791a0c5ce6e928be72a9647d40c",
           "references/tour.md": "9aa9523bcb5e5db2de279d9c56395f338824d7991782f4040c84f68a3107a48e",
@@ -7475,6 +7786,79 @@
           "scripts/fin_svg.py": "b4c825bc60b85c6397050ebdf8bc0a6e99465e027a34364bec654df88b821d22",
           "scripts/fin_xlsx.py": "5d9bb88df904f38e9ee6aa8bf1996f826adce22482f7c25e0f3500836b0090e7",
           "scripts/finman.py": "90a44f3702e66429b547f2836d2cc1f18863e0c853828b9c01a53b821a516ab4"
+        }
+      },
+      {
+        "release": "0.17.0",
+        "revision": "9d430d0d6a59ceb2c6bb69169a5557005bec6ed8b5e8e1700fc0eded43dcc88b",
+        "files": {
+          "SKILL.md": "006defb25c062703deda486d47ad0f8fc7c05a8da065f3dcc0cba941138a4f69",
+          "agents/openai.yaml": "4a21cfdab71dd2142aeceeaaa6e91b19e0c0aa574bd268746ca8b61f7cd6a466",
+          "assets/household-example.json": "a0ed673e5e3c98132833cff0a55dac0347f0a3b31a09714aa56085fa2cf2c55c",
+          "references/budget.md": "8120bc872e5b99bd5dd6dfa3ec2b7e1820baad8bd6e4b8fa705be622f3030adc",
+          "references/grill.md": "ede38b08b19de7b003224223815ea3157aa92c409e7339c265765cd7c26e7cd3",
+          "references/masters.md": "7c15c63236a2dde8b2dfd4d55ce9f30236865d3934686a8e93c52f32478765c0",
+          "references/methods.md": "33155eb546e2c7e98932a368f811e87540a49db18a1eb52bab53fbeed485010b",
+          "references/outputs.md": "deb94ac52610d4150e329d1a543ed61f95bcc51c69ffdad2e7d085283667dc09",
+          "references/sources.md": "3b41484b40746edcee0a10ac78c3ab79731e170f59f2f32683134c7912b69562",
+          "references/strategy.md": "31ccc7846c67841fe471afbe56e3c900c727a9259c6084a439e01734d3d34700",
+          "scripts/fin_data.py": "d016c6add670b669df4472e44b85e3ea9ce51b34fa6508a9bcc85ce3231c11ba",
+          "scripts/fin_models.py": "db399b95c4d20b471ce059b1fee76ab01784d460d8fe19540a826d29bc4b83bb",
+          "scripts/fin_pptx.py": "2c1d258f61c6c27a05dff82bdffac2ec21a7a9596a4b32cc9938c8a6f2be3bbd",
+          "scripts/fin_report.py": "84b2598bc899df2901e0d5798712e092004330401475f5ebe6492a4f539feb18",
+          "scripts/fin_selftest.py": "15b6650edccd4de71fb5a10e1a02a95ba124515cf3def7b681a59f490fcba629",
+          "scripts/fin_svg.py": "b4c825bc60b85c6397050ebdf8bc0a6e99465e027a34364bec654df88b821d22",
+          "scripts/fin_xlsx.py": "5d9bb88df904f38e9ee6aa8bf1996f826adce22482f7c25e0f3500836b0090e7",
+          "scripts/finman.py": "90a44f3702e66429b547f2836d2cc1f18863e0c853828b9c01a53b821a516ab4"
+        }
+      }
+    ],
+    "sigmaspeedloop": [
+      {
+        "release": "0.17.0",
+        "revision": "0a01704a825b508d1218927faa99fb8423e013ef0ff26ee6e1956d9e566f06fe",
+        "files": {
+          "SKILL.md": "d2e115b5deb1cd577334ccb51f6be38a940e0caf709d655c054604328d40cf75",
+          "agents/openai.yaml": "958929a8d2747e608ddc2e9c63a54a1039ae1ed7f9d39219b83075291e33f8b5",
+          "assets/project-template/GOAL.md": "450d322a89e5f5fd5bbf2b46b00416201a66009467186ca914d7a7c5c69a4bd5",
+          "assets/project-template/PROGRESS.md": "18973a5c69c5f182872e472bbc3744fec3f61e177416a98f48bce1c8498c5548",
+          "assets/project-template/README.md": "f10f13ae3f7fade9f61c7562fdb3e240a2d3e3dd4e9e507761eae61511ebf0ae",
+          "assets/project-template/_gitignore": "9d2ce1e44033c9300d9eeaeb9c43187c1d5ef293629724fe4245d761d2dd978e",
+          "assets/project-template/box/build_check.py": "1bbd0a37f9ecb66570370e935385e269ddce6a9e281ad6d8f7c057a75cdc174b",
+          "assets/project-template/box/cfgcheck.py": "0046257781bf44b4213522d99a35ae0cb8610b3419f42e665f0a7d2bcb84e1bd",
+          "assets/project-template/box/download.sh": "8bd930ca051704b7bceecf079f4b33b6566dc8d8c2fb32f467262b2302a1790f",
+          "assets/project-template/box/pull_image_pkgs.py": "bc026c9b47f14ff22f542f0a3837032b231b9e377f8d1534aa5caf1b681a601c",
+          "assets/project-template/box/serve_base.sh": "505fe9bd80de0f9be8f38653782edf9c33fe77349ed331326c3ef44648ac62fd",
+          "assets/project-template/box/smoke.py": "cfde36f3f3a7b2b98cd9763195ac06844b19d0f8b3025fa0e3e3abc5197c5e4b",
+          "assets/project-template/box/verify_weights.py": "2b1e4decaaf0651a731ae3e4536e75ac61da061c7cdab82233e5919e4e38a1ae",
+          "assets/project-template/check_state.py": "8890d3146f95bd7c852dc0094bd83279c0a456b1b69f8bf5e6ed38a0e4bd381e",
+          "assets/project-template/docs/03_ANTI_GAMING.md": "2114044231576d7c8bfc07bfd5540b76d7cf5474c92e13dfbd99e2fd5abef593",
+          "assets/project-template/ideas.tsv": "230a32fc714692eb1f5d8219b7462fe0c4b8217fc686f362b125f8199a2d65ff",
+          "assets/project-template/insights.md": "fce4de857801a646443afa60e15698d17af9268daaac2fb742bb60eba5ec9120",
+          "assets/project-template/plot_progress.py": "4f2123e70d11548ba0a2085618d5bb15737897776954419c78a90d1c40d84fea",
+          "assets/project-template/project.json": "ecfad797cf9246d8ab07b924b5ef2d5eb67520453ce097d1529773a29f0b459b",
+          "assets/project-template/results.tsv": "9781b6a067d500ddb9a01088cb48fca0b0b9d0937159f16c60609ad320b8f0b0",
+          "assets/project-template/ruled_out.tsv": "451c837669dd4d603440abbbaab7835a3171bd3426c0ad389f3e8b4eb045e26c",
+          "assets/project-template/scripts/bench/aa.py": "a710f1111204d17f22102659eccc030fad3947ad233987184b217c240c9977a1",
+          "assets/project-template/scripts/bench/build_replay.py": "c3f2934494e61b215f6a8692fd153f2cb9076feda43803291dc38a0f36116075",
+          "assets/project-template/scripts/bench/bw.py": "25c141e8384e277dabdf01a577b2a7edc490be017e0194fe2dce6edf95a3e59a",
+          "assets/project-template/scripts/bench/common.py": "00d6d091af0e3b80e8083a853fcc6e72dfc833ef89312dd695c75f7aca918686",
+          "assets/project-template/scripts/bench/gate.py": "9e17f17dc77777ec323df9308f3d95ed8ca3821a0a93a069c85f2a91c625e486",
+          "assets/project-template/scripts/bench/invariants.py": "05073575a8856c81a62d3daf3b3ca79f13ea898ed3a271055d8a5370a030cace",
+          "assets/project-template/scripts/bench/run_experiment.sh": "71a6608665fc1c80ff7782f4d5416c833881adfd0d6ee14eddb42b3c3b7d5b83",
+          "assets/project-template/scripts/bench/speed.py": "9daca747fe9daa6f4955a3ae9a6b87a07980c15dd669802ce853e8ee8c550efd",
+          "assets/project-template/scripts/bench/verdict.py": "88440f3dee8c41652b1db6c4620a70f34f60ce5c2956badd5dc9071af2e50bf1",
+          "assets/project-template/scripts/box.ps1": "e81f39fe49a80e56209c6a86f685ee03745024600598c0bda0a7a3ea9658829b",
+          "assets/project-template/scripts/launch.ps1": "35ee79a1d9eef50dcf41438671632ab9cf3b14a1119b4822ecd8cdc62a9784d8",
+          "assets/project-template/scripts/record.py": "f93d23bc0add311c64061e01ffa945eab88909a3f1b734684e1f10f192574575",
+          "assets/project-template/scripts/status.py": "8005432fcda19b491282e2ab17c8214bad602f3c47cf1fa874b8620d4dfe942b",
+          "assets/project-template/scripts/wait.ps1": "f249a3b1cd766c1e3670272bfbf778ca0628ea7cd24b1cf708c5bb69e84229cf",
+          "assets/project-template/secrets/README.md": "b778d03847a7c53d19b6ca063d91b593e30501a2b1040d47120f12f9e1db0c56",
+          "references/case-study-la125.md": "70e05ef13d8046baa1d43d7ff1289a033539b2fc7acec18736aab46e1ef1a9a2",
+          "references/evaluator.md": "b10710dfa3717c1d8c94b0c299cd140ecba1e330b7f3b851783e518887b8f74b",
+          "references/lessons.md": "f711270228b2f58ee5ec41d24fb194b8d1b4b17b8d2e9a6a5859ad4c34ac2367",
+          "references/loop.md": "d5f9596ad11e556dac1dad9c1c3bac3aee280b484fc23e81480a822bd35ba201",
+          "references/setup-vast.md": "2826b05d8dbf4bdf8bb6afe361838ec8aff7279de1946f97ce490108d8304556"
         }
       }
     ]
