@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaSetup
+  short_description: Per-project setup for every installed skill pack, with the owner
+  default_prompt: Use $sigmasetup to find the skill packs installed for this repo, ask one round
+    of questions, and set up what each pack needs here, with an undo for every change.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

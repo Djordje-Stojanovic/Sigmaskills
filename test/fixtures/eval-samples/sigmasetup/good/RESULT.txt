@@ -1,0 +1,9 @@
+Installed packs found: sigma (sigmaship, sigmaloop), mattpocock (tdd, triage, setup-matt-pocock-skills).
+
+| Pack | Set up | Checked | Undo |
+|---|---|---|---|
+| mattpocock | `docs/agents/issue-tracker.md` (local markdown, issues in `docs/issues/`) | file exists, names `docs/issues/` | delete `docs/agents/issue-tracker.md` |
+| mattpocock | git guard for Claude Code, this repo only | `git push --force` blocked, `git branch -D x` allowed | `node .claude/hooks/sigma-git-guard.mjs remove .` |
+| sigma | sigmaloop reads the same tracker file | `docs/agents/issue-tracker.md` present | as above |
+
+Left for you: no GitHub remote, so no labels were created.

@@ -498,7 +498,25 @@ function sigmaspeedloop({ files, result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmasetup writes only setup files in the repo, keeps the git guard's two parts together,
+// and reports every change with its undo.
+function sigmasetup({ files, result }) {
+  const problems = [];
+  const setupFile = (name) => /^(\.claude\/|docs\/agents\/)/.test(name) || name === 'AGENTS.md' || name === 'CLAUDE.md';
+  for (const [name, text] of Object.entries(files)) {
+    if (setupFile(name)) continue;
+    const original = path.join(FIXTURE, ...name.split('/'));
+    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed a file that is not setup: ${name}`);
+  }
+  const settings = files['.claude/settings.json'];
+  if (settings?.includes('sigma-git-guard.mjs') && !files['.claude/hooks/sigma-git-guard.mjs']) {
+    problems.push('.claude/settings.json runs the git guard but .claude/hooks/sigma-git-guard.mjs is missing');
+  }
+  problems.push(...requireText(result, [/\|\s*Pack\s*\|/i, /\|\s*Undo\s*\|/i], 'reply'));
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

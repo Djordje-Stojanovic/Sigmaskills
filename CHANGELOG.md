@@ -32,6 +32,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmasetup` (SigmaSetup): run it once per repo after the installer. It finds the installed packs, reads `references/packs/<pack>.md` for what each one needs in a repo (tracker files, labels, tools, keys by name), asks one round of questions, sets up only what the owner says yes to, and reports every change with its undo. Nothing goes into user-level config. It ships a per-repo git guard for Claude Code (`scripts/git-guard.mjs install|remove|status`): it blocks force push, `reset --hard`, `clean -f` and whole-tree `checkout .` or `restore .`, also behind `git -C`, and allows `git branch -D` for cleanup after a squash merge. `test/sigmasetup.test.js` fails when an installer pack has no setup guide or a Sigma skill has no section, so every new pack or skill lands with its setup.
+
+### Changed
+
+- AGENTS.md: merges are squash only, with the PR title as the commit title; after a merge the linked issue is closed and the branch and worktree are removed. The repository now allows only squash merges and deletes the remote branch on merge.
+
 ## [0.17.0] — 2026-10-29
 
 ### Changed

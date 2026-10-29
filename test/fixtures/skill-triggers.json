@@ -278,5 +278,15 @@
   "prompt": "Run speed loops to tune inference and the KV cache of my model",
   "skill": "sigmaspeedloop",
   "near": "sigmaloop"
+ },
+ {
+  "prompt": "Set up the installed skill packs for this repo after the installer ran",
+  "skill": "sigmasetup",
+  "near": "sigmafork"
+ },
+ {
+  "prompt": "After the installer ran, set up the installed packs in this repo",
+  "skill": "sigmasetup",
+  "near": "sigmaship"
  }
 ]

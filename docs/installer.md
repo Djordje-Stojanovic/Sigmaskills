@@ -416,6 +416,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadesign -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmatour -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmafinanceman -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaspeedloop -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmasetup -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmarefactor -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawritegui -g
@@ -449,6 +450,7 @@ $skill-installer install sigmadesign from https://github.com/Djordje-Stojanovic/
 $skill-installer install sigmatour from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmafinanceman from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaspeedloop from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmasetup from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmarefactor from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawritegui from https://github.com/Djordje-Stojanovic/Sigmaskills
@@ -479,6 +481,7 @@ cp -R Sigmaskills/sigmadesign ~/.agents/skills/sigmadesign
 cp -R Sigmaskills/sigmatour ~/.agents/skills/sigmatour
 cp -R Sigmaskills/sigmafinanceman ~/.agents/skills/sigmafinanceman
 cp -R Sigmaskills/sigmaspeedloop ~/.agents/skills/sigmaspeedloop
+cp -R Sigmaskills/sigmasetup ~/.agents/skills/sigmasetup
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
 cp -R Sigmaskills/sigmarefactor ~/.agents/skills/sigmarefactor
 cp -R Sigmaskills/sigmawritegui ~/.agents/skills/sigmawritegui
@@ -505,6 +508,7 @@ Copy-Item -Recurse Sigmaskills\sigmadesign   "$HOME\.agents\skills\sigmadesign"
 Copy-Item -Recurse Sigmaskills\sigmatour     "$HOME\.agents\skills\sigmatour"
 Copy-Item -Recurse Sigmaskills\sigmafinanceman "$HOME\.agents\skills\sigmafinanceman"
 Copy-Item -Recurse Sigmaskills\sigmaspeedloop "$HOME\.agents\skills\sigmaspeedloop"
+Copy-Item -Recurse Sigmaskills\sigmasetup "$HOME\.agents\skills\sigmasetup"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
 Copy-Item -Recurse Sigmaskills\sigmarefactor "$HOME\.agents\skills\sigmarefactor"
 Copy-Item -Recurse Sigmaskills\sigmawritegui      "$HOME\.agents\skills\sigmawritegui"
