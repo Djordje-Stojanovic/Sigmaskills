@@ -5,10 +5,10 @@ A review round gives the finished branch to an agent that has never seen the wor
 ## Handoff template
 
 ```text
-Review and fix PR <pr-url> (branch <branch>) for issue <issue-url>. Round <n> of at most 3.
+Review and fix PR <pr-url> (branch <branch>) for issue <issue-url>. Round <n> of at most 2.
 
 Setup:
-1. Check out the branch in a new worktree, or use the existing one at <path>. Install and run: <test / type check / lint commands>.
+1. Check out the branch in a new worktree, or use the existing one at <path>. Install the dependencies. Read the whole diff and each touched file in one go.
 
 Review, in this order:
 2. Spec: read <issue-url> and <spec link>. For each acceptance criterion, confirm that the code meets it and that a test proves it. List every gap.
@@ -16,7 +16,7 @@ Review, in this order:
 4. Rate each finding P0 (exploitable now, data loss, or the system is unusable), P1 (a primary journey is broken, insecure, or breaks its budget), P2 (material but bounded), or P3 (small, with a demonstrated cost). A failed acceptance criterion is at least P2. Keep only findings with a concrete location and trigger.
 
 Fix:
-5. For each P0–P2 finding: write a test that fails, fix it, run the full suite, commit as fix(#<issue>): <what>, and push. Keep the fix inside the ticket.
+5. For each P0–P2 finding: write a test that fails, fix it, and commit as fix(#<issue>): <what>. Keep the fix inside the ticket. After the last fix, run the full checks once (<test / type check / lint commands>) and push.
 6. List P3 findings in your report only. Do not change unrelated code.
 
 Report back in exactly this form:
@@ -28,9 +28,8 @@ Checks: <commands and results>
 
 ## Round rules
 
-- **Clean** means the round found zero P0–P2 findings. A round that found and fixed P0–P2 findings is not clean: run another round, because every fix can hide a new problem.
+- **Clean** means the round found zero P0–P2 findings. A round that found and fixed P0–P2 findings is not clean: round 2 reviews the fix commits, sent to the same reviewer by a follow-up message (`SendMessage`, `send_input`) when the harness has one.
 - Record each round in the ledger's *Review rounds* table: round, status, counts, commits.
-- Before the next round, check CI on the new head. A red CI is the builder's to fix first.
-- Three rounds that still find P0–P2 problems mean the ticket or design is wrong. Stop and ask the user.
+- A round 2 that still finds P0–P2 problems means the ticket or design is wrong. Stop and ask the user.
 - `BLOCKED`: read the reason, fix what you can, ask the user about the rest.
 - When you run the round yourself (no sub-agents), do steps 2–4 of the template on your own diff, fix, and record it the same way.

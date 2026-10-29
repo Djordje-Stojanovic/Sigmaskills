@@ -19,13 +19,13 @@ The user pre-authorises for this whole loop: <list from question 7>. Do not stop
 At the stop line every open item in <ticket or tracker> is ticked with dated evidence, or carries a dated log line: what was done, what is left, why, next step. <Overview or index file> is current.
 
 ## Crew
-Max <N> sub-agents at once: <mix by model and effort>. <Which job goes to which model>. When one ends, start the next item in the same turn. Running agents count toward the cap. <Rules from the repo: effort limits, banned models, background-shell limits.>
+Max <N> sub-agents at once: <mix by model and effort>. Model by difficulty: <small model> for research, sources, harvests and transcripts; <mid model> for code and drafts; <top model> for reviews and the hardest items. A review runs one model up; at most 2 review rounds per item. Jobs are given out dynamically: when an agent ends, its slot takes the most valuable eligible item for its model in the same turn; no slot owns a fixed lane. A fix round goes to the same agent at once by a follow-up message (Claude Code `SendMessage`, Codex `send_input`), so its context stays. Running agents count toward the cap. A headless agent called again and again (a persona, a judge) keeps one session (`claude -p --resume <id>`, `codex exec resume <id>`, or the repo's wrapper), so later calls read the prompt cache. Every headless call (`claude -p`, `codex exec`) gets closed input (`< /dev/null`, `ssh -n`, `stdin=DEVNULL`); with an open, empty stdin `claude -p` waits 3 s. <Rules from the repo: effort limits, banned models, background-shell limits.>
 
 ## Each wake
 1. Read the clock (<zone>). At or after the stop line: Finish.
 2. Re-read the tracker's how-to-work notes, the handoff, and every open line; run <the repo's overview or status command>.
-3. For each finished agent, one quick check (its key test or output). Fix wrong ticks, add dated evidence, merge or deploy what it left.
-4. Fill every free slot from Priority. Skip items that share files with a running agent.
+3. For each finished agent: give its slot the most valuable eligible item first, then one quick check of its result (its key test or output). Fix wrong ticks, add dated evidence, merge or deploy what it left.
+4. Fill every other free slot from Priority. Skip items that share files with a running agent.
 5. Update the handoff (<path>): time, running agents and items, done since the last wake, queue. Rewrite it in full before each long wait and before the context fills.
 6. <Host wake call and delay rule, from the host file.>
 
@@ -45,14 +45,14 @@ Max <N> sub-agents at once: <mix by model and effort>. <Which job goes to which 
 
 ## Sub-agent prompt (every one carries)
 - The item file or line, the user's words verbatim, and a checkable "done when".
-- "Read what the item touches, then do the work. No plan documents, no scaffolding. Code first, docs support it. Hill-climb to completion; a loss still gets its numbers written."
+- Every input by path, never pasted. "Do the whole job in 10-20 tool calls: read each input whole, write each output file in one Write, split a huge input into parts by script first. No plan documents, no scaffolding. Code first, docs support it. Run the checks once, at the end. Long commands run in the background; no sleep or poll loops. Commit each finished file on your branch, so a usage limit loses nothing. Hill-climb to completion; a loss still gets its numbers written."
 - The skills or notes to load first.
 - The Landing list above and the no-touch list (files running agents own).
 - "New problem found: write one file under <issues folder> and one pointer line in the tracker."
 - "End: tick with dated evidence (numbers, paths, PRs), run <status command>, report short and plain."
 
 ## Only work that moves us forward
-<The goal in the user's terms, for example: better product, faster, a real bug fixed.> No new scaffolding, no extra gates, no double-checking, no over-testing (one test that proves the change), no reports for their own sake. A change that adds a step must remove a bigger one.
+<The goal in the user's terms, for example: better product, faster, a real bug fixed.> No new scaffolding, no extra gates, no double-checking, no over-testing (one test that proves the change), no reports for their own sake. A check that never caught anything is cut. A change that adds a step must remove a bigger one.
 
 ## When fewer than 3 items are workable
 Search <repos and machines in scope> for the next improvement that moves us forward: a bug, a speed gain, a quality gain, a reliability fix. Write it as a new item (one file, one tracker line) and start it. Repeat until the stop line.

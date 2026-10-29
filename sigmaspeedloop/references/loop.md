@@ -70,7 +70,7 @@ Why it is built this way:
   with a default the owner can accept with "yes". Keep the box busy with the next lossless idea meanwhile.
 - Every idea carries a **chance of success** (`p=NN%`) and the queue is sorted by it. The owner may say "sort by
   chance", "run X first", "drop low-value ideas", "run it all". Log each as `Owner <time>: ...` in `insights.md`.
-- **Never idle.** Each turn starts, polls, measures, records or researches. If the box is waiting, build the next
+- **Never idle.** Each turn starts, measures, records or researches; the background waiter wakes you. If the box is waiting, build the next
   overlay or run a research round. If the queue is empty and no lossless idea is left, say so, recommend
   wrapping up, and write `REPORT.md` drafts.
 - When no rule decides: take the safer option and log `Ruling: <what> - <why> - <cost if wrong>`.

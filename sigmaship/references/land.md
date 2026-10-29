@@ -35,7 +35,6 @@ Check in order; fix any failure and check again:
 1. The last review round is clean, and the ledger shows it.
 2. The branch is current with the base: `git fetch origin && git merge-base --is-ancestor origin/<base> HEAD`. If behind, merge the base in (never rebase a pushed branch), run the full checks, and push.
 3. CI is green on the head commit, and no review thread is open.
-4. You have read the full diff again after the last push.
 
 Merge with the repository's convention: squash when it has none (one short-lived branch, one logical change). Use the host's merge so branch protection applies: `gh pr merge <n> --squash --match-head-commit <sha>` (the flag refuses the merge if someone pushed after your check; add `--auto` while required checks still run). The squash subject is the PR title with `(#<n>)`. Never force-push, merge red, or use `--admin` to skip a rule. Never delete a branch you did not create.
 

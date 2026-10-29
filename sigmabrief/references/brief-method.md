@@ -13,7 +13,7 @@
 | Actor | May ask |
 |-------|---------|
 | **SigmaBrief** | At most one question if the work target is missing (`Which issue URL(s), work statement, or repo for all open?`). Full `/grilling` only if the user explicitly asks SigmaBrief to grill them. |
-| **Executing agent** (in the brief) | Plan first; `/grilling` or focused questions when trade-offs exist — including whether to create an isolated git worktree. |
+| **Executing agent** (in the brief) | Nothing under `approval: auto` (default): it decides and logs rulings. Under `approval: plan`, its plan and focused questions. |
 
 SigmaBrief itself stays thin: research enough to write good simple briefs, then emit.
 
@@ -67,7 +67,7 @@ Assign one prompt type:
 
 Then group items into **waves**. Two items are independent only when they touch different files and no shared state (schema, config, lockfile, generated output, the same test fixtures). Independent items share a wave and run in parallel. Dependent or overlapping items go in later waves or run one after another in one lane. When in doubt, sequence: a merge conflict costs more than a wait.
 
-Recommend isolation defaults for the *executing* agent’s plan question:
+Isolation defaults:
 
 - parallel / multi-writer → worktree on;
 - single sequential → main checkout OK.
