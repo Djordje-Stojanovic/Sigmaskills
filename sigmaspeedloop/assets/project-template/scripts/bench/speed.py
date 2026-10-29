@@ -90,29 +90,41 @@ def replay_probe():
     cold_done = threading.Barrier(len(traces) + 1)
     warm_go = threading.Barrier(len(traces) + 1)
 
+    errors = []
+
     def run(i, tr):
-        msgs = [dict(m) for m in tr["messages"]]
-        msgs[0]["content"] = rid + msgs[0]["content"]
-        for t_i, cut in enumerate(tr["warm_cuts"]):
-            if t_i == 1:
-                cold_done.wait()
-                warm_go.wait()
-            # v8: fixed work per turn (min_tokens = max_tokens), so wall time no longer follows the sampled answer length
-            r = chat_stream(msgs[:cut], tools=tr["tools"], effort=REPLAY_EFFORTS[i], max_tokens=REPLAY_TOKENS,
-                            extra={"min_tokens": REPLAY_TOKENS, "ignore_eos": True},
-                            seed=1000 + 10 * i + t_i)
-            results[i].append({k: r[k] for k in ("ttft_s", "wall_s", "prompt_tokens", "completion_tokens", "decode_tps")})
+        try:
+            msgs = [dict(m) for m in tr["messages"]]
+            msgs[0]["content"] = rid + msgs[0]["content"]
+            for t_i, cut in enumerate(tr["warm_cuts"]):
+                if t_i == 1:
+                    cold_done.wait()
+                    warm_go.wait()
+                # v8: fixed work per turn (min_tokens = max_tokens), so wall time no longer follows the sampled answer length
+                r = chat_stream(msgs[:cut], tools=tr["tools"], effort=REPLAY_EFFORTS[i], max_tokens=REPLAY_TOKENS,
+                                extra={"min_tokens": REPLAY_TOKENS, "ignore_eos": True},
+                                seed=1000 + 10 * i + t_i)
+                results[i].append({k: r[k] for k in ("ttft_s", "wall_s", "prompt_tokens", "completion_tokens", "decode_tps")})
+        except BaseException as e:  # a failed request must not leave the other threads at a barrier for ever
+            errors.append(e)
+            cold_done.abort()
+            warm_go.abort()
 
     before = metrics_snapshot()
     t0 = time.perf_counter()
     threads = [threading.Thread(target=run, args=(i, t)) for i, t in enumerate(traces)]
     for t in threads:
         t.start()
-    cold_done.wait()
-    mid = metrics_snapshot()
-    warm_go.wait()
+    try:
+        cold_done.wait()
+        mid = metrics_snapshot()
+        warm_go.wait()
+    except threading.BrokenBarrierError:
+        pass
     for t in threads:
         t.join()
+    if errors:
+        raise errors[0]
     wall = time.perf_counter() - t0
     after = metrics_snapshot()
 

@@ -145,3 +145,98 @@ test('sigmaspeedloop aa.py and verdict.py survive missing or perfect cache numbe
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// Builds a project copy with a locked baseline and returns helpers to add a candidate run.
+function lockedProject(python, { baselineHit = 0.9 } = {}) {
+  const dir = fs.mkdtempSync(join(os.tmpdir(), 'speedloop-rule-'));
+  fs.cpSync(template, dir, { recursive: true });
+  const write = (rel, data) => {
+    fs.mkdirSync(dirname(join(dir, rel)), { recursive: true });
+    fs.writeFileSync(join(dir, rel), JSON.stringify(data));
+  };
+  const run = (name, { k = 1, short = 1, hit = baselineHit } = {}) => {
+    const turns = [0, 1, 2].map(() => [{ ttft_s: 5 }, { ttft_s: 1 / k }, { ttft_s: 1 / k }]);
+    write(`${name}/raw/meta.json`, { status: 'OK' });
+    write(`${name}/raw/gate.json`, { tf_top1: 0.99, tf_dlp: 0.01, dec_dlp: 0.01, dec_prefix: 0.9, reliability_ok: 5, reliability_total: 5, empty_outputs: 0, looping_outputs: 0 });
+    write(`${name}/raw/bw_before.json`, { copy_gbps: 200 });
+    write(`${name}/raw/bw_after.json`, { copy_gbps: 200 });
+    write(`${name}/raw/speed.json`, {
+      short: { decode_tps_geo: 50 * k * short }, long: { decode_tps: 40 * k },
+      prefill: { prefill_tps_geo: 3000 * k, '64k': { prefill_tps: 1 }, '128k': { ttft_s: 1 } },
+      parallel: { aggregate_tps: 90 * k }, parallel2: { aggregate_tps: 70 * k },
+      replay: { wall_s: 100 / k, ttft_p50_s: 1, version: 8, warm_hit_rate: hit, turns },
+    });
+    write(`${name}/invariants.json`, { ok: true, problems: [] });
+  };
+  ['runs/0001', 'runs/0002', 'runs/0003'].forEach((n) => run(n));
+  const lock = spawnSync(python, ['scripts/bench/aa.py', 'runs/0001', 'runs/0002', 'runs/0003'], { cwd: dir, encoding: 'utf8' });
+  assert.equal(lock.status, 0, lock.stderr);
+  write('state/champion.json', { runs: ['runs/0001', 'runs/0002', 'runs/0003'] });
+  const verdict = (name) => {
+    const r = spawnSync(python, ['scripts/bench/verdict.py', name], { cwd: dir, encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    return JSON.parse(fs.readFileSync(join(dir, name, 'verdict.json'), 'utf8'));
+  };
+  return { dir, run, verdict, write };
+}
+
+// project.json says the keep floor is 5 %; a noise-free baseline must not shrink it to the 2 % formula default.
+test('sigmaspeedloop verdict.py uses the keep floor and single-probe numbers from project.json', (t) => {
+  const python = findPython();
+  if (!python) return t.skip('python 3.8+ not found');
+  const p = lockedProject(python);
+  try {
+    p.run('runs/0004', { k: 1.03 });
+    const out = p.verdict('runs/0004');
+    assert.equal(out.floor, 0.05);
+    assert.equal(out.verdict, 'REJECT', out.why);
+  } finally {
+    fs.rmSync(p.dir, { recursive: true, force: true });
+  }
+});
+
+// A big cache-hit loss is a probe too: one fast probe must not hide it.
+test('sigmaspeedloop single-probe win does not hide a worse warm hit rate', (t) => {
+  const python = findPython();
+  if (!python) return t.skip('python 3.8+ not found');
+  const p = lockedProject(python);
+  try {
+    p.run('runs/0004', { short: 1.12, hit: 0.5 });
+    const out = p.verdict('runs/0004');
+    assert.notEqual(out.verdict, 'KEEP', out.why);
+  } finally {
+    fs.rmSync(p.dir, { recursive: true, force: true });
+  }
+});
+
+// One failed replay request must stop the run, not leave the other threads waiting at the barrier for ever.
+test('sigmaspeedloop speed.py replay stops when a request fails', (t) => {
+  const python = findPython();
+  if (!python) return t.skip('python 3.8+ not found');
+  const dir = fs.mkdtempSync(join(os.tmpdir(), 'speedloop-replay-'));
+  try {
+    const bench = join(dir, 'bench');
+    fs.mkdirSync(join(bench, 'replay'), { recursive: true });
+    fs.copyFileSync(join(template, 'scripts', 'bench', 'speed.py'), join(bench, 'speed.py'));
+    fs.writeFileSync(join(bench, 'common.py'), [
+      'import os',
+      'HERE = os.path.dirname(os.path.abspath(__file__))',
+      'def salt(): return "x"',
+      'def long_document(n): return "d"',
+      'def metrics_snapshot(): return {}',
+      'def write_json(p, o): pass',
+      'def chat_stream(messages, **kw):',
+      '    if kw.get("seed") == 1000: raise RuntimeError("server error")',
+      '    return {"ttft_s": 1.0, "wall_s": 2.0, "prompt_tokens": 1, "completion_tokens": 1, "decode_tps": 1.0}',
+    ].join('\n'));
+    for (let i = 1; i <= 3; i++) {
+      fs.writeFileSync(join(bench, 'replay', `trace${i}.json`), JSON.stringify({ messages: [{ role: 'user', content: 'a' }, { role: 'user', content: 'b' }, { role: 'user', content: 'c' }], warm_cuts: [1, 2, 3], tools: [] }));
+    }
+    const r = spawnSync(python, ['-c', 'import speed; speed.replay_probe()'], { cwd: bench, encoding: 'utf8', timeout: 20000 });
+    assert.ok(!r.error, 'replay_probe hung after a failed request');
+    assert.notEqual(r.status, 0);
+    assert.match(r.stderr, /server error/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

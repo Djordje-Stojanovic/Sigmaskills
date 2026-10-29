@@ -9,15 +9,18 @@ import hashlib, json, math, os, statistics, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Score weights live in project.json ("weights"). Components a run lacks are dropped and the rest renormalized.
 # Defaults = the la125 owner mix (v7): 1-stream decode and agent turns first, then 2 agents, prefill, 3 agents.
-def _weights():
+def _project():
     p = os.path.join(ROOT, "project.json")
-    w = {"short": 0.30, "warm": 0.20, "miss": 0.10, "long": 0.15, "prefill": 0.10, "c2": 0.08, "replay": 0.04, "c3": 0.03}  # v8.2 default
-    if os.path.exists(p):
-        w = json.load(open(p, encoding="utf-8")).get("weights", w)
-    return w
+    return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {}
 
 
-WEIGHTS = _weights()
+PROJECT = _project()
+WEIGHTS = PROJECT.get("weights") or {"short": 0.30, "warm": 0.20, "miss": 0.10, "long": 0.15, "prefill": 0.10,
+                                     "c2": 0.08, "replay": 0.04, "c3": 0.03}  # v8.2 default
+# project.json also sets the keep floor and the single-probe rule. If it is silent, the A/A bands decide the floor.
+KEEP_FLOOR = PROJECT.get("keep_floor")
+SINGLE_WIN = PROJECT.get("single_probe_win", 0.10)
+SINGLE_OTHER_MIN = PROJECT.get("single_probe_others_min", 0.95)
 
 
 def load(run, name):
@@ -69,9 +72,11 @@ def ratios(cand, champ):
 def single_probe_win(cand, champ, t):
     """Owner rule 2026-10-24: one probe >= +10% while every other probe stays >= -5% is a KEEP,
     even when the weighted score dilutes it (e.g. long thinking +14%, rest flat)."""
-    win, other = t.get("single_win", 0.10), t.get("single_other_min", 0.95)
+    win, other = t.get("single_win", SINGLE_WIN), t.get("single_other_min", SINGLE_OTHER_MIN)
     p = {"short": cand["decode_greedy"] / champ["decode_greedy"], "long": cand["decode_sampled"] / champ["decode_sampled"],
          "prefill": cand["prefill_geo"] / champ["prefill_geo"], "c3": cand["c3_tps"] / champ["c3_tps"]}
+    if cand.get("warm_miss") is not None and champ.get("warm_miss") is not None:
+        p["miss"] = max(champ["warm_miss"], MISS_FLOOR) / max(cand["warm_miss"], MISS_FLOOR)
     if cand.get("warm_ttft_sum") and champ.get("warm_ttft_sum"):
         p["warm"] = champ["warm_ttft_sum"] / cand["warm_ttft_sum"]
     if cand.get("replay_version") == champ.get("replay_version"):
@@ -177,7 +182,7 @@ def decide(run):
         champ, champ_runs = champion()
         r = ratios(cand, champ)
         sc = score(r)
-        floor = t.get("keep_floor", max(0.02, 2 * t["score_spread"]))  # owner set 0.05 on 2026-10-24
+        floor = KEEP_FLOOR if KEEP_FLOOR is not None else t.get("keep_floor", max(0.02, 2 * t["score_spread"]))  # owner set 0.05 on 2026-10-24
         drops = {k: r[k] for k in r if r[k] < 1 - max(0.02, 2 * t["spread"].get(k, 0.02))}
         clear_wins = {k: r[k] for k in r if r[k] > 1 + max(0.05, 3 * t["spread"].get(k, 0.02))}
         out.update(ratios=r, score=sc, floor=floor, champion_runs=champ_runs, gate_fails=fails)

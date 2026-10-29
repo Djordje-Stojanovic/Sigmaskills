@@ -7,9 +7,8 @@
   "keep_floor": 0.05,
   "single_probe_win": 0.10,
   "single_probe_others_min": 0.95,
-  "tooleval_floor": 155,
   "image_label": "<engine-image-tag>",
   "vast": {"filters": "cpu_arch=arm64 rentable=true reliability>=0.98 disk_space>=350 inet_down>=500", "disk_gb": 350, "image": "<image:tag>"},
   "paths_on_box": {"bench": "/root/work/bench", "ref": "/root/work/ref", "runs": "/root/runs"},
-  "notes": "Per-project constants. verdict.py reads weights from here; the other thresholds come from evaluator.lock. Non-LLM models: rename the components in weights to your probes (see references/evaluator.md section 9)."
+  "notes": "Per-project constants. verdict.py and aa.py read the weights, keep_floor and the single-probe numbers from here; the A/A bands come from evaluator.lock. Non-LLM models: rename the components in weights to your probes (see references/evaluator.md section 9)."
 }

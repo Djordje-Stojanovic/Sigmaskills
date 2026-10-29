@@ -8,7 +8,7 @@ baseline run showed against the references. Every file in scripts/bench/ is hash
 import hashlib, json, os, statistics, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from verdict import ROOT, extract, ratios, score  # noqa: E402
+from verdict import KEEP_FLOOR, ROOT, extract, ratios, score  # noqa: E402
 
 COMPONENT_KEYS = ("replay_wall_s", "decode_greedy", "decode_sampled", "prefill_geo", "c3_tps",
                   "c2_tps", "warm_ttft_sum", "warm_miss")  # the keys ratios() reads from the champion
@@ -51,7 +51,7 @@ def main(runs, tool_runs=None):
     lock = {"created_utc": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()),
             "thresholds": thresholds, "files": files}
     json.dump(lock, open(os.path.join(ROOT, "evaluator.lock"), "w", encoding="utf-8"), indent=1)
-    print(json.dumps({"spread": spread, "score_spread": score_spread, "keep_floor": max(0.02, 2 * score_spread),
+    print(json.dumps({"spread": spread, "score_spread": score_spread, "keep_floor": KEEP_FLOOR if KEEP_FLOOR is not None else max(0.02, 2 * score_spread),
                       "gate": {k: v for k, v in thresholds.items() if k.startswith(("tf_", "dec_", "rel", "loop"))},
                       "bw_median": thresholds["bw_median"]}, indent=1))
 
