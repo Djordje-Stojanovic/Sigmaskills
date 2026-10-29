@@ -1,11 +1,13 @@
 ---
 name: sigmaship
-description: Ship one planned GitHub issue end to end (test-first PR, review rounds, merge, cleanup). Use when the user asks for SigmaShip by name or to ship a ready ticket. Do not use without acceptance criteria.
+description: 'Use when asked for sigmaship, ship #123 or ship this ready ticket; sigmaship stop ends at a ready PR. Ships a GitHub issue: test-first PR, review rounds, merge. Do not use without acceptance criteria.'
 ---
 
 # SigmaShip
 
 Take one measurable ticket and ship it: built, reviewed, merged, deployed, and cleaned up. The ticket is the contract. Every step ends on a check you can observe.
+
+**Two endings.** By default SigmaShip merges (step 6). When the user says `sigmaship stop`, `no merge` or `stop before merge`, run steps 1 to 5 the same way, then stop at a green, reviewed PR marked ready: skip step 6, keep the branch and the worktree, and report what the owner should check before merging.
 
 Read [review-round.md](references/review-round.md) at step 5, and [land.md](references/land.md) at step 6.
 
@@ -78,7 +80,9 @@ A standing rule of the user or repository about reviewers wins. If it forbids su
 
 ## 6. Land and clean up
 
-After a clean round, merge and clean up as [land.md](references/land.md) describes.
+Under `sigmaship stop`, end here: the PR is ready, and the merge is the owner's.
+
+Otherwise you have the owner's standing permission to merge once the land checks pass: do not ask again. After a clean round, merge and clean up as [land.md](references/land.md) describes.
 
 After the merge, finish the repository's own follow-through with proof: its deploy step (`<deploy command>`) and one live result, the tracker tick (date, PR number, evidence), and the docs sync when guides changed.
 
@@ -88,7 +92,7 @@ Under a Claude Code `/goal`, the goal line names the printed proof: the verify c
 
 ## Final response
 
-Five lines at most: PR link, criteria met, review rounds and findings fixed, follow-ups and known reds, and cleanup and deploy verified.
+Five lines at most: PR link, criteria met, review rounds and findings fixed, follow-ups and known reds, and cleanup and deploy verified. Under `sigmaship stop`, the last line says the PR is ready and what to check before merging.
 
 ## Personal instructions
 

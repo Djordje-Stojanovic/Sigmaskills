@@ -1,6 +1,6 @@
 ---
 name: sigmareview
-description: Find and prove what is wrong in a repo (bugs, security, slow paths) and publish one review PR. Use when the user asks for SigmaReview or a full review. Do not use for feature ideas (SigmaImprove).
+description: Use when the user asks for SigmaReview or a full review. Find and prove what is wrong in a repo (bugs, security, slow paths) and publish one review PR. Do not use for feature ideas (SigmaImprove).
 ---
 
 # SigmaReview

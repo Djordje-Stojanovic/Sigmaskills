@@ -1,6 +1,6 @@
 ---
 name: sigmaresearch
-description: Read public sources (Reddit, X, Hacker News, GitHub, YouTube, non-English pages) and count sources read in full. Use when researching a topic or asked for N sources. Do not use to post or reply.
+description: Use when asked for sigmaresearch, research on a topic or N sources. Read and count public sources (Reddit, X, Hacker News, GitHub, YouTube, non-English pages). Do not use to post or reply.
 ---
 
 # SigmaResearch

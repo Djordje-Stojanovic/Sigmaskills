@@ -1,6 +1,6 @@
 ---
 name: sigmafork
-description: Fork or copy a repo or folder, isolated from the original, then onboard the owner with an HTML course. Use when the user wants to fork or copy a project and learn it. Do not use for a plain git clone.
+description: Use when asked for sigmafork or to fork or copy a project and learn it. Copy a repo or folder, isolated from the original, then onboard the owner with an HTML course. Do not use for a plain git clone.
 ---
 
 # SigmaFork

@@ -1,6 +1,6 @@
 ---
 name: sigmaimprove
-description: Find what would make a product better than the world's top 1-3, one living issue per category. Use when asked for SigmaImprove, feature ideas or what to improve. Do not use for bugs (SigmaReview).
+description: Use when asked for SigmaImprove, feature ideas or what to improve. Find what would make a product better than the world's top 1-3, one living issue per category. Do not use for bugs (SigmaReview).
 ---
 
 # SigmaImprove

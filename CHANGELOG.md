@@ -34,6 +34,9 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
+- Every skill description now starts with the words that trigger it ("Use when asked for sigmaship, ship #123 or ship this ready ticket"), and the summary follows. An agent reads only the description when it decides to load a skill.
+- sigmaship: `sigmaship stop` (or `no merge`) does the same work and stops at a green, reviewed PR for the owner to merge. The merge step now states the owner's standing permission to merge, so models that hesitate to merge go ahead.
+- `sigmaship`: the review round starts a sub-agent reviewer by default, on the harness's default sub-agent model, without asking first, so it works the same in Claude Code, Codex, Cursor, Muse Code, T3 Code and pi. A reviewer the user names ("SigmaShip reviewer: GPT-6.1 Sol") runs every round; when the harness cannot run that model, the round goes through T3 Code (`t3 thread start --provider --model`), else the default reviewer with a one-line note.
 - README: one short paragraph per skill in the same shape, every skill in the hero list (`writegui` and `arena` were unmarked, `speedloop` was missing), shorter table rows, four install-without-the-wizard examples instead of eight, and the retired SigmaPerformance note removed. The prose cap in `test/repo-invariants.test.js` rises from 1,500 to 2,000 words (owner, 2026-10-29).
 
 ### Added
@@ -108,7 +111,6 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
-- `sigmaship`: the review round starts a sub-agent reviewer by default, on the harness's default sub-agent model, without asking first, so it works the same in Claude Code, Codex, Cursor, Muse Code, T3 Code and pi. A reviewer the user names ("SigmaShip reviewer: GPT-6.1 Sol") runs every round; when the harness cannot run that model, the round goes through T3 Code (`t3 thread start --provider --model`), else the default reviewer with a one-line note.
 - Four new packs, each pinned to one commit or tag: `anthropic` (19 skills from anthropics/skills), `design-md` (84 brand looks from VoltAgent/awesome-design-md, one skill per brand), `last30days` (mvanhorn/last30days-skill v3.30.0) and `financial-services` (anthropics/financial-services: 62 skills, 10 agents and 27 commands as 99 skills; the MCP connectors an agent needs are named in the skill, not installed). Pick a whole pack or single skills; one owner per skill name still holds.
 - Design.md installs at most 3 skills at a time. A 4th pick stops with a choice: `--drop <id>` (repeatable), or in the wizard a list where Enter drops one and Esc keeps all. `--preset design-md` is refused and `--preset all` skips it.
 - Pack sources are fetched in parallel (up to four at once), sparse and shallow, and a pinned source is cached in `~/.sigmaskills/cache/git`. A pack source can set `transform` and a pack can set `limit`.

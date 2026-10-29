@@ -1,6 +1,6 @@
 ---
 name: sigmawritegui
-description: Plain, short English in interactive status and question boards. Use when the user says easy talk, asks for a SigmaWriteGUI board or pastes an EASYTALK REPLY. Do not use for a product dashboard.
+description: Use when the user says easy talk, asks for a SigmaWriteGUI board or pastes an EASYTALK REPLY. Plain, short English in interactive status and question boards. Do not use for a product dashboard.
 ---
 
 # SigmaWriteGUI

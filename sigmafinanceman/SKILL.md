@@ -1,6 +1,6 @@
 ---
 name: sigmafinanceman
-description: 'Finance models from SEC filings or your numbers: DCF, LBO, comps, three-statement, budget, Excel. Use to value a company, model a deal, read a 10-K or plan a budget. Do not use to trade or file taxes.'
+description: 'Use to value a company, model a deal, read a 10-K or plan a budget. Finance models from SEC filings or your numbers: DCF, LBO, comps, three-statement, budget, Excel. Do not use to trade or file taxes.'
 ---
 
 # SigmaFinanceMan

@@ -1,6 +1,6 @@
 ---
 name: sigmahuman
-description: Rewrites text to read like a person wrote it, keeping every fact, or writes new text from a brief. Use to humanize, de-AI or de-slop a draft or write a script. Do not use to cut jargon (sigmawrite).
+description: Use when asked for sigmahuman, to humanize, de-AI or de-slop a draft or write a script. Rewrites text to read human, every fact kept, or writes new text from a brief. Do not use to cut jargon.
 license: MIT
 metadata:
   upstream: "blader/humanizer v3.1.0 (MIT, Siqi Chen)"

@@ -1,6 +1,6 @@
 ---
 name: sigmawrite
-description: Write clear, STE-inspired technical English. Use when the user wants less jargon, gibberish or outsider-clear explanations. Do not use to rewrite code, paths or APIs, or override an output contract.
+description: Use when asked for sigmawrite, less jargon, gibberish or outsider-clear explanations. Write STE-inspired technical English. Do not use to rewrite code, paths or APIs, or override an output contract.
 ---
 
 # SigmaWrite
