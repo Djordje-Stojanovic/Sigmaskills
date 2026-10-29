@@ -180,8 +180,8 @@ class Func(unittest.TestCase):
         self.assertNotEqual(r.returncode, 0)
 
     def test_binary_needs_ghidra_row(self):
-        mz = b"MZ" + b"\0" * 58 + (64).to_bytes(4, "little") + b"PE\0\0" + b"\0" * 400
-        r, out = drill(make("a.exe", mz), "--func", "main")
+        # the real interpreter binary: Windows Defender locks a hand-made PE stub (Errno 22)
+        r, out = drill(Path(os.path.realpath(sys.executable)), "--func", "main")
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("Ghidra", r.stdout)
 
