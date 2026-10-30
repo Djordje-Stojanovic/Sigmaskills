@@ -1,0 +1,3 @@
+id	status	area	job	blocked_by	paths	done_when	notes
+Q-001	pending	research	source the base rate		research/	base rate has a source	
+L-001	pending	lessons	block 1 lessons 1-3	Q-001	content/block-01/	check.py passes for the 3 lessons	

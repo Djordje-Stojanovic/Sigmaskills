@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmacourse` (SigmaCourse): plans a course on any subject at any size, from a one-hour primer to a multi-thousand-hour program. A hard grill (one question at a time, recommended answer first) sets the scale, the learner, the goal next to its real base rate, the variety system (lesson shapes, task types, levels, media) and the crew. It writes the signed spec, a script-checked done list, a job queue, the steering file, a check command and a run file, then hands the queue to `sigmaloop` for one paste-ready goal prompt (Claude Code, Codex, Antigravity, pi, T3 Code). Each step names the Sigma skill to use and the options; the lessons of a real multi-week course build ship as `references/lessons.md`.
+
 ## [0.18.0] — 2026-10-29
 
 ### Added

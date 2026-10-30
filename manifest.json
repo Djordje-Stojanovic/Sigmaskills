@@ -103,6 +103,11 @@
       "id": "sigmasetup",
       "title": "SigmaSetup",
       "needsReferences": true
+    },
+    {
+      "id": "sigmacourse",
+      "title": "SigmaCourse",
+      "needsReferences": true
     }
   ],
   "retired": [

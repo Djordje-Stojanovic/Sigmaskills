@@ -1,0 +1,7 @@
+The course repo is set up: steering, spec, done list, queue, run file and check command.
+
+Base rate: an assumption for now (30-60 hours to unaided joins and window functions); Q-001 sources it.
+
+```text
+/goal SQL in 40 hours is built: `python checks/check.py` prints DONE. Every turn: re-read loop/run.md and follow it; print the check output at the end of each turn.
+```

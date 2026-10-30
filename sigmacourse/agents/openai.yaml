@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaCourse
+  short_description: Plan a course of any size and set up the repo that builds it
+  default_prompt: Use $sigmacourse to plan a course on my subject. Grill me one
+    question at a time, then set up the repo and write the goal prompt.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: true

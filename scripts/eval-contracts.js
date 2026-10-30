@@ -516,7 +516,26 @@ function sigmasetup({ files, result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmacourse sets up a course repo (steering, spec with a base rate, a done list, a queue,
+// a run file, one check command) and ends with one fenced goal prompt that runs that check.
+const COURSE_FILES = ['AGENTS.md', 'docs/course/spec.md', 'docs/course/done.md', 'loop/queue.tsv', 'loop/run.md', 'checks/check.py'];
+
+function sigmacourse({ files, result }) {
+  const problems = COURSE_FILES.filter((name) => !files[name]).map((name) => `missing ${name}`);
+  const spec = files['docs/course/spec.md'] ?? '';
+  if (!/BASE RATE[^\n]*\b(source|assum)/i.test(spec)) problems.push('docs/course/spec.md: the base rate needs a source or a stated assumption');
+  const done = files['docs/course/done.md'] ?? '';
+  if ((done.match(/^\s*-?\s*R-\d{3}\b/gm) || []).length < 3) problems.push('docs/course/done.md: fewer than 3 numbered requirements');
+  if (!/\bDONE\b/.test(done)) problems.push('docs/course/done.md: no completion ladder line (DONE)');
+  const rows = (files['loop/queue.tsv'] ?? '').split(/\r?\n/).filter(Boolean);
+  if (!/\tdone_when\b/.test(rows[0] ?? '') || rows.length < 2) problems.push('loop/queue.tsv: needs a done_when column and at least one row');
+  const prompt = [...result.matchAll(/^```text\r?\n([\s\S]*?)^```/gm)].map((m) => m[1]).find((b) => /checks\/check\.py/.test(b));
+  if (!prompt) problems.push('reply has no fenced ```text goal prompt that runs checks/check.py');
+  else problems.push(...requireText(prompt, [/loop\/run\.md/, /re-read|every turn/i], 'prompt'));
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmacourse, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];
