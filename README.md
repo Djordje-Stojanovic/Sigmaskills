@@ -107,6 +107,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaFinanceMan** | `sigmafinanceman` | DCF, LBO, comps, three-statement models and budgets from SEC filings or your numbers | Excel with live formulas, a deck, charts, an HTML page |
 | **SigmaSpeedLoop** | `sigmaspeedloop` | Faster serving on a rented GPU, one judged change per pass | A project folder, a champion recipe, a report |
 | **SigmaSetup** | `sigmasetup` | Per-repo setup for every installed pack, after one question round | Set-up files and a table with the undo for each change |
+| **SigmaCourse** | `sigmacourse` | A course on any subject at any size: hard grill, spec, done ladder, queue | A set-up course repo and one goal prompt that builds it |
 
 ### Which one do I need?
 
@@ -200,6 +201,10 @@ Makes a model serve faster on a rented GPU with no quality loss. It asks what fa
 
 Runs after the installer, once per repo. It finds the installed packs, reads what each one needs, asks you one round of questions, then sets up only what you say yes to: tracker files, labels, a per-repo git guard. Every change comes with its undo, and nothing goes into your global config.
 
+### SigmaCourse
+
+Plans a course on any subject, from a one-hour primer to a program of thousands of hours. It grills you one question at a time, then writes the spec, a done list a script can check, a job queue and the repo's steering file. It ends with one goal prompt for your agent host; the loop that prompt starts builds and reviews the course. Each step hands off to the matching Sigma skill.
+
 ---
 
 ## Install
@@ -249,6 +254,7 @@ $sigmatour Give me a 30 minute tour of this repo
 $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 $sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
 $sigmasetup
+$sigmacourse Plan a 40-hour course that makes me fluent in SQL
 ```
 
 </td>
@@ -278,6 +284,7 @@ $sigmasetup
 /skill:sigmafinanceman Build a three-statement model of MSFT
 /skill:sigmaspeedloop Make my ComfyUI image workflow faster on a Vast.ai GPU
 /skill:sigmasetup Set up the Matt Pocock skills in this repo
+/skill:sigmacourse Plan a piano course for an adult restarting after 20 years
 ```
 
 </td>
@@ -308,6 +315,7 @@ $sigmasetup
 | `sigmafinanceman` | a ticker and peers, or a budget file | One question round; reads public data; writes files only to the output folder |
 | `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
 | `sigmasetup` | (no input) · or the packs to set up | One question round; writes only in this repo; every change has an undo |
+| `sigmacourse` | a subject · the learner · a goal | Grills first; writes the course repo and the goal prompt; never starts the loop |
 
 ### Requirements
 

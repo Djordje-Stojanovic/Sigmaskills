@@ -288,5 +288,15 @@
   "prompt": "After the installer ran, set up the installed packs in this repo",
   "skill": "sigmasetup",
   "near": "sigmaship"
+ },
+ {
+  "prompt": "Plan a whole course on Rust for me, from curriculum to a goal prompt",
+  "skill": "sigmacourse",
+  "near": "sigmaloop"
+ },
+ {
+  "prompt": "Plan a curriculum and course that teaches adults piano at any size",
+  "skill": "sigmacourse",
+  "near": "sigmataste"
  }
 ]

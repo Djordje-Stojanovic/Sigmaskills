@@ -87,6 +87,10 @@ Needs: Python 3.10+ and `pip install openpyxl python-pptx`. Optional: LibreOffic
 
 Needs: `pip install vastai`, SSH with `~/.ssh/id_ed25519.pub`, a Vast.ai account with credit. Keys live in the project's `secrets/` folder, never in git. Setup: `vastai set api-key` once per machine.
 
+### sigmacourse
+
+Needs: nothing beyond the agent host. The goal prompt it ends with needs `sigmaloop`; research steps use `sigmaresearch` and `sigmadeeplook` when installed. Setup: none; it sets up the course repo it plans.
+
 ### sigmasetup
 
 Needs: Node (the installer already needs it). Setup: none; it is the setup.

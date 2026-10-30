@@ -68,3 +68,4 @@ Do not use for training or code review.
 forbidden changes (more quantization, precision cuts, other weights, lossy
 running anything heavy there was forbidden.
 description: 'Use when asked for sigmasetup or to set up installed skills in a repo after the Sigma installer.
+description: 'Use when asked for sigmacourse or to plan a whole course or curriculum at any size: grill, spec, done ladder, queue, course repo, goal prompt.

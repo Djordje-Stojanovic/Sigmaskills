@@ -1,0 +1,1 @@
+Here is your course plan. Start with SELECT, then joins, then window functions.
