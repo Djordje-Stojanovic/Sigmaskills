@@ -60,7 +60,7 @@ Options:
   --skill <name>    Skill identifier to install, update, restore, or uninstall (repeatable)
   --all             Install every shipped Sigma skill, or uninstall every recorded skill in the chosen scope
   --preset <pack>   Install a whole pack: sigma, mattpocock, threejs, hyperframes, minimax-h3, anthropic,
-                    last30days, financial-services, local, or all (design-md is picked by skill: 3 at a time)
+                    last30days, financial-services, tstack, local, or all (design-md is picked by skill: 3 at a time)
                     (repeatable, or comma-separated; 'list --packs' shows each pack)
   --drop <skill>    With install: remove an installed skill of a limited pack (design-md) to make room
   -a, --agent <host> Agent Host to install for, such as claude, codex, gemini, agy, pi, cursor

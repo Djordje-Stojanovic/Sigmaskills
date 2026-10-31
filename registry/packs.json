@@ -1478,6 +1478,60 @@
       ]
     },
     {
+      "id": "tstack",
+      "title": "tstack",
+      "blurb": "Theo Browne's agent skills for shipping PRs: full-send, council, babysit-pr, file-pr and more.",
+      "aliases": [
+        "theo"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "t3dotgg/tstack",
+          "path": "skills",
+          "ref": "1085050f3baed1ac724caa4a8166145fb2ac88af",
+          "skills": [
+            {
+              "id": "babysit-pr",
+              "description": "Monitor a pull request through review and CI."
+            },
+            {
+              "id": "council",
+              "description": "Trigger this if the user says 'council'."
+            },
+            {
+              "id": "file-pr",
+              "description": "File a concise pull request."
+            },
+            {
+              "id": "full-send",
+              "description": "Trigger this if the user says 'full send'."
+            },
+            {
+              "id": "full-stop",
+              "description": "Trigger this if the user says 'full stop', even as a closing \"Full stop.\" that reads like emphasis."
+            },
+            {
+              "id": "leaving-pr-comments",
+              "description": "Use whenever leaving comments on GitHub."
+            },
+            {
+              "id": "modernize",
+              "description": "For getting old prs up to date."
+            },
+            {
+              "id": "sol-loop",
+              "description": "Use when the user says \"sol loop\"."
+            },
+            {
+              "id": "takeover",
+              "description": "Take over existing work."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "local",
       "title": "Local",
       "blurb": "A folder of your own skills on this machine.",

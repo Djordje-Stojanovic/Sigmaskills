@@ -130,6 +130,7 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `design-md` | `design`, `awesome-design-md` | 84 brand looks from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), one `design-<brand>` skill each (SKILL.md, DESIGN.md, LICENSE). At most 3 installed at a time |
 | `last30days` | `last30` | [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill) at tag `v3.30.0` (a 17.5 MB copy; the skill runs on Python 3.12+ and Node 22+, and yt-dlp is optional) |
 | `financial-services` | `fsi`, `finance` | [anthropics/financial-services](https://github.com/anthropics/financial-services), pinned: its 62 skills, 10 agents and 27 commands, each as a skill |
+| `tstack` | `theo` | 9 agent skills from [t3dotgg/tstack](https://github.com/t3dotgg/tstack) by Theo Browne (MIT), pinned to one commit: `full-send`, `full-stop`, `council`, `sol-loop`, `file-pr`, `takeover`, `babysit-pr`, `modernize`, `leaving-pr-comments` |
 | `local` | `own` | a folder of your own skills; see [Your own packs](#your-own-packs) |
 | `all` | | every pack that is available on this machine |
 
