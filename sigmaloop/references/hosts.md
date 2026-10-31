@@ -15,7 +15,7 @@ A prompt that needs a tool the host lacks stalls the run. Pick the row for the h
 | Antigravity `agy` | `/goal`, `/schedule` | `schedule` tool: timers, max iterations | `agy -p "/goal …"` loops (ran) | `.agents/skills`, `~/.gemini/config/skills` |
 | pi with lapi | Plan file with a `lapi-workflow` box fence, then `/code` | None | Not run | `~/.agents/skills` (invoke `/skill:sigmaloop`) |
 | Stock pi | None: plain instruction | None | `pi -p`, RPC for a driver | same |
-| T3 Code | `schedule_task` tool, or Settings, Scheduled tasks | Interval, fixed time, webhook | The thread runs on the host provider | the provider's own folder |
+| T3 Code | `/goal` in a Claude or Codex thread (run to done, doc + source); `schedule_task` (clock, or run to done by a task that disables itself) | `schedule_task`: interval, fixed time, webhook. Crew: `delegate_task`, `t3_thread_launch` | Not run: start in a T3 thread, Full access. An agent outside a thread cannot bind a task (ran) | the provider's own folder |
 | Gemini CLI | None: plain instruction, `AfterAgent` hook | None | `gemini -p` | `.agents/skills`, `~/.gemini/skills` |
 
 Invoke SigmaLoop the host's way (`/sigmaloop` in Claude Code, `$sigmaloop` in Codex, `/skill:sigmaloop` in pi). Skill folders in the table come from the installer registry, except `agy`, whose global folder is proven by a run (the installer overrides the registry) and must be a real copy, not a junction (ran). Windows: in Git Bash a leading `/word` argument is rewritten to a path (ran, Claude Code and `agy`); use PowerShell or `MSYS_NO_PATHCONV=1` (ran: it fixed `/loop`).
