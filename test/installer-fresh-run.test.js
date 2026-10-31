@@ -14,6 +14,7 @@ const packageRoot = findPackageRoot();
 const catalog = getCatalog(packageRoot);
 const packsJson = JSON.parse(fs.readFileSync(path.join(packageRoot, 'registry', 'packs.json'), 'utf8'));
 const ENTER = '\r';
+const DOWN = '\x1b[B';
 
 async function run(box, args) {
   const io = createMockIo(box.env);
@@ -107,7 +108,12 @@ test('wizard: Sigma plus Local in a fresh folder installs each name once', async
     let out = '';
     stdout.setEncoding('utf8');
     stdout.on('data', (chunk) => { out += chunk; });
-    queueMicrotask(() => stdin.end(`10${ENTER}${ENTER}${ENTER}`));
+    // Sigma is key 1. Local is the 11th row (number keys stop at ten): move down ten rows, then Space picks it.
+    // Keys arrive one at a time.
+    const keys = ['1', ...Array(10).fill(DOWN), ' ', ENTER, ENTER, ENTER];
+    keys.forEach((chunk, index) => {
+      setTimeout(() => (index === keys.length - 1 ? stdin.end(chunk) : stdin.write(chunk)), 200 * (index + 1));
+    });
     const code = await runCli(['--project', box.project], { stdin, stdout, stderr, env: { ...box.env, TERM: 'xterm-256color' } });
     assert.equal(code, 0);
     const text = out.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');
