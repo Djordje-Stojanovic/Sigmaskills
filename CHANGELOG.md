@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.19.0] — 2026-11-01
+
 ### Changed
 
 - `sigmaloop` T3 Code host file rewritten: three modes (clock, run to done with a task that disables itself, native `/goal` in a Claude or Codex thread), the orchestrator tools by their real names (`delegate_task`, `t3_thread_launch`, `t3_worktree_handoff`, `t3_queue` and more), overlap and held-queue rules, permissions, restart and stop, and a paste-ready skeleton per mode. It fixes a wrong tool name: T3 has no `update_scheduled_task`; `schedule_task` with `scheduledTaskId` updates a task. Each fact is marked ran, doc or source.
@@ -631,7 +633,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.12...v0.17.0
 [0.16.12]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.11...v0.16.12
