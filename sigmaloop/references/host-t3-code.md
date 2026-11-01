@@ -59,8 +59,18 @@ A child may not run at wider permission modes than its parent (source). Start th
 
 The orchestrator thread runs the loop. Workers do the items.
 
+**Full-spec tasks.** Each worker gets one large task. The orchestrator writes its full spec with `to-spec` (goal, files, steps, acceptance tests, done line), saves it by path, and sends the worker the path. The worker builds the whole spec with `implement-spec` in one long run, checks its work against the acceptance tests, and reports once. No small-task ping-pong, no reviewer per small step, and the worker starts no helper agents: live sessions never exceed the slot count (for example 6 threads). One review per finished spec, by a different model family than the writer. Loop-file rules: [loop-file.md](loop-file.md).
+
+**Model chain by usage.** Write the chain into the loop file's Crew section, from `orchestrator_capabilities` (never guess a model id). A worker takes the first step with usage left. A step is out when a child ends on a usage or rate-limit error; the next wake starts again at step 1, because limits reset. If a step shares a pool with the orchestrator, give it a floor (a percent of weekly and of 5-hour limit left) below which new work skips it. The reviewer is the next step down the chain from a different family than the writer. Set the target on `delegate_task` (`target.providerInstanceId`, `target.model`, `target.options`) or `modelSelection` on `t3_thread_launch`; `t3_thread_configure` changes a live thread.
+
+**Wake hygiene.** `t3_queue` `list` this thread at the start of each wake and `cancel` piled-up wake messages. A closed queue (after Stop or a restart) waits for **Resume**. The interval counts from the send, so set `everyMs` above the longest normal turn.
+
+**Cost rules** (loop-file.md): read the loop and steer files once per session and after a compaction, not at each wake; a cheap clerk thread does merges and bookkeeping; no polling (`t3_thread_wait` or a completion wakes you); never idle to save calls, log a stuck step and skip it.
+
+**Pause and end.** `schedule_task` with `scheduledTaskId` and `enabled=false` pauses. `delete_scheduled_task` ends it.
+
 1. First turn: `orchestrator_capabilities` once. Write the provider, model and options you will use per role into the loop file's Crew section.
-2. Small, checkable item, parent only needs the result: `delegate_task` with `isolation:'worktree'`, `mode:'async'`, a `target` model for the role, and a task that carries the full brief (the child sees no parent history). End the turn; completion wakes the orchestrator (source). A fix round goes by `t3_thread_send` to the child thread; a send to a finished child starts a fresh task (source).
+2. Spec the worker builds, parent only needs the result: `delegate_task` with `isolation:'worktree'`, `mode:'async'`, a `target` model for the role, and a task that is the path of its full spec plus the done line (the child sees no parent history). End the turn; completion wakes the orchestrator (source). A fix round goes by `t3_thread_send` to the child thread; a send to a finished child starts a fresh task (source).
 3. Item the owner may want to watch, steer or keep: `t3_thread_launch` with its own worktree and `modelSelection`, then `t3_thread_wait` or the next wake. Mention it by its `link`.
 4. Several models on one question: one `delegate_task` per model, compare, refine (the way Theo reviews; timestamps here are from the auto-captioned transcript of his video "These 3 skills changed my life", https://www.youtube.com/watch?v=5Bmp9cz1JN8, 2026-10-26: 09:36 to 11:27).
 5. At most as many live workers as the Crew section allows. Write each worker's id and item into the handoff file before the turn ends.
@@ -72,7 +82,7 @@ The orchestrator thread runs the loop. Workers do the items.
 Work unattended until <time, zone>. You are the orchestrator in this thread. Rules and order live in <loop file path>: re-read it at every wake.
 FIRST TURN: call schedule_task {schedule:{type:'interval', everyMs:<900000>}, bindToCurrentThread:true, title:"<slug> wake", prompt:"WAKE. Read <loop file path> and <handoff path>. t3_queue list this thread and cancel any extra WAKE message. Read the clock (<zone>). Before <time, zone>: do 'Each wake'. At or after it: do 'Finish', then delete_scheduled_task with the id on the 'Wake task' line of the handoff."} Write the returned scheduledTaskId on a 'Wake task:' line in <handoff path>. Then start item 1.
 ORDER: <loop file> "Priority", top down. First: <items 1-3>.
-CREW: max <N> workers: <mix by role, model>. delegate_task with isolation 'worktree'; completion wakes you. Never start an item the handoff marks running.
+CREW: max <N> workers: <mix by role, model chain from the loop file>. One full spec per worker (to-spec, then implement-spec in one run, one report, no helper agents); delegate_task with isolation 'worktree' and the spec path; completion wakes you. One review per spec by a different model. A cheap clerk does merges and bookkeeping. Read the loop file once per session and after compaction. Never start an item the handoff marks running.
 LANDING: <one line>.
 AUTHORISED: <list>. Do not stop to ask; take the safer option and log it.
 ```
@@ -84,7 +94,7 @@ The check command is the stop line. The wake task re-wakes the thread until it p
 ```text
 Run until `<one command>` prints <exact text>, or <N> wakes pass. You are the orchestrator in this thread. Rules and order live in <loop file path>: re-read it at every wake.
 FIRST TURN: call schedule_task {schedule:{type:'interval', everyMs:<900000>}, bindToCurrentThread:true, title:"<slug> wake", prompt:"WAKE. Read <loop file path> and <handoff path>. t3_queue list this thread and cancel any extra WAKE message. Run `<one command>` and print its output. If it printed <exact text>, or the wake count in the handoff reached <N>: write 'State: DONE' in the handoff, call schedule_task with the id on the 'Wake task' line and enabled=false, then send the final report. Otherwise add 1 to the wake count and do the next item in Priority."} Write the returned scheduledTaskId on a 'Wake task:' line in <handoff path>, with 'Wakes: 0'. Then start item 1.
-ORDER, CREW, LANDING, AUTHORISED: as in the clock skeleton.
+ORDER, CREW (full-spec rule, model chain, clerk), LANDING, AUTHORISED: as in the clock skeleton.
 ```
 
 Put the scheduled prompt under 120,000 characters (it is far shorter). The id sits in the handoff file because the prompt cannot name a task that does not exist yet (and `list_scheduled_tasks` is not for finding your own task in a scheduled run, source).

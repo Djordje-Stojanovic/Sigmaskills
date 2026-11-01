@@ -15,7 +15,7 @@ Prompt skeleton:
 ```text
 Plan mode. Use the answers in <loop file path>; ask nothing new. Write the plan: Mission (outcome, stop line <time, zone>), Boundaries, Invariants, Order (<loop file> "Priority"), Landing (<one line>), Authorised (<list>). Put the loop in the dated file under .pi/plans/:
 <!-- lapi-workflow -->
-- [ ] Re-read <loop file path>. Do item <1> to its Landing; tick it in the tracker with evidence.
+- [ ] Read <loop file path>. Do item <1> to its Landing as one full spec (write the spec, build it whole, check its acceptance tests); tick it in the tracker with evidence.
 - [ ] (one box per ranked item, the first <N>)
 - [ ] Read the clock. Before <time, zone>: add the next items as new boxes above this one. At or after it: do the Finish block, then write [LAPI_PLAN_DONE].
 <!-- /lapi-workflow -->

@@ -35,6 +35,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Changed
 
 - `sigmaloop` T3 Code host file rewritten: three modes (clock, run to done with a task that disables itself, native `/goal` in a Claude or Codex thread), the orchestrator tools by their real names (`delegate_task`, `t3_thread_launch`, `t3_worktree_handoff`, `t3_queue` and more), overlap and held-queue rules, permissions, restart and stop, and a paste-ready skeleton per mode. It fixes a wrong tool name: T3 has no `update_scheduled_task`; `schedule_task` with `scheduledTaskId` updates a task. Each fact is marked ran, doc or source.
+- `sigmaloop` full-spec tasks (the main cost rule): each worker gets one large spec written with `to-spec` and builds it whole with `implement-spec` in one long run, checks its own acceptance tests and reports once. No helper agents, one review per spec by a different model. Added to the loop-file template and every host skeleton. New cost rules in the loop file (read loop and steer files once per session, cheap clerk for merges and bookkeeping, batch shell work, no polling, log and skip a stuck step, 5-minute prompt cache and no skills for one-shot headless calls). The T3 host file gains the model chain by usage, `t3_queue` wake hygiene and the Resume limit, and the question round settles host, model chain, slots, wake interval and stop line.
 
 ### Added
 
