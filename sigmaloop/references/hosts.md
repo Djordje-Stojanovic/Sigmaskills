@@ -2,7 +2,7 @@
 
 Checked 2026-10-20. Hosts change fast: when a fact matters, check the linked source. Each host file marks every fact **ran** (run by the author on Windows 11), **doc** (host documentation or its own bundled guide), or **source** (host source code); a step not run says "live run pending". A host not listed gets the plain instruction (last section).
 
-Every prompt carries the same five things: ranked order, crew and model mix, wake rules, landing rules, stop line. The loop file holds the long form; the prompt points to it and repeats only what the host needs to hold the loop.
+Every prompt carries the same five things (the crew line says: one full spec per worker, one report, no helper agents; cost rules are in the loop file): ranked order, crew and model mix, wake rules, landing rules, stop line. The loop file holds the long form; the prompt points to it and repeats only what the host needs to hold the loop.
 
 ## Pick the mechanism
 
@@ -15,7 +15,7 @@ A prompt that needs a tool the host lacks stalls the run. Pick the row for the h
 | Antigravity `agy` | `/goal`, `/schedule` | `schedule` tool: timers, max iterations | `agy -p "/goal …"` loops (ran) | `.agents/skills`, `~/.gemini/config/skills` |
 | pi with lapi | Plan file with a `lapi-workflow` box fence, then `/code` | None | Not run | `~/.agents/skills` (invoke `/skill:sigmaloop`) |
 | Stock pi | None: plain instruction | None | `pi -p`, RPC for a driver | same |
-| T3 Code | `schedule_task` tool, or Settings, Scheduled tasks | Interval, fixed time, webhook | The thread runs on the host provider | the provider's own folder |
+| T3 Code | `/goal` in a Claude or Codex thread (run to done, doc + source); `schedule_task` (clock, or run to done by a task that disables itself) | `schedule_task`: interval, fixed time, webhook. Crew: `delegate_task`, `t3_thread_launch` | Not run: start in a T3 thread, Full access. An agent outside a thread cannot bind a task (ran) | the provider's own folder |
 | Gemini CLI | None: plain instruction, `AfterAgent` hook | None | `gemini -p` | `.agents/skills`, `~/.gemini/skills` |
 
 Invoke SigmaLoop the host's way (`/sigmaloop` in Claude Code, `$sigmaloop` in Codex, `/skill:sigmaloop` in pi). Skill folders in the table come from the installer registry, except `agy`, whose global folder is proven by a run (the installer overrides the registry) and must be a real copy, not a junction (ran). Windows: in Git Bash a leading `/word` argument is rewritten to a path (ran, Claude Code and `agy`); use PowerShell or `MSYS_NO_PATHCONV=1` (ran: it fixed `/loop`).
@@ -30,7 +30,7 @@ For a host with no loop command, one long instruction. The agent is the loop; "w
 ```text
 Work unattended until <time, zone>. You are the orchestrator. Rules and order live in <loop file path>: read it now and re-read it at the start of every item; edits apply on the next re-read.
 ORDER: <loop file> "Priority", top down. First: <items 1-3>.
-CREW: <mix, or solo>.
+CREW: <mix, or solo>. One large spec per worker (to-spec, then implement-spec in one long run, one report, one review by a different model); no helper agents.
 LANDING: <one line>.
 AUTHORISED: <list>. Do not stop to ask; take the safer option when no rule decides, and log it.
 Never end your turn while an item is workable and the clock is before the stop line. At <time, zone> do the Finish block in the loop file and send the final report as your last message.
