@@ -17,10 +17,10 @@ Prompt skeleton:
 ```text
 /loop <Title> until <time, zone>. You are the orchestrator. Re-read <loop file path> at every wake: edits apply on the next wake.
 ORDER: <loop file> "Priority", top down. First: <items 1-3>.
-CREW: max <N> sub-agents: <mix>. Each gets one full spec (to-spec, then implement-spec in one run, one report, no helpers); one review per spec by another model. When one ends, its slot takes the most valuable eligible item for its model in the same turn; a fix round goes to the same agent by SendMessage.
+CREW: max <N> sub-agents: <mix>. Each gets one whole ticket (finish, prove, one reviewer for at most 3 rounds, PR, CI, merge); no helpers; only the orchestrator starts agents. When one ends, its slot takes the most valuable eligible item for its model in the same turn; a fix round goes to the same agent by SendMessage.
 LANDING: <one line: code + tests, docs, tracker tick with evidence, PR merged, branch + worktree gone, deploy proof>.
 AUTHORISED: <list>. Take the safer option when no rule decides; log it.
-WAKE: end every turn with ScheduleWakeup <1800-3600> s, a fallback only: agent and background-shell notifications wake you sooner, so never wake to poll. A turn without ScheduleWakeup ends the loop.
+WAKE: end every turn with ScheduleWakeup <1800-3600> s, a fallback only: agent and background-shell notifications wake you sooner, so never wake to poll. Only the thread that owns a PR watches it. A turn without ScheduleWakeup ends the loop.
 STOP: at <time, zone> do the Finish block in the loop file, then call ScheduleWakeup with stop: true.
 ```
 
