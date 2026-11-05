@@ -72,6 +72,12 @@ function stripCodexBlock(text, file) {
 export function ponytailOn(root) {
   const f = files(root);
 
+  const codex = readText(f.codex) ?? '';
+  const base = stripCodexBlock(codex, f.codex);
+  for (const table of [`[plugins."${PLUGIN}"]`, '[marketplaces.ponytail]', '[marketplaces."ponytail"]']) {
+    if (base.split(/\r?\n/).some((line) => line.trim() === table)) throw new Error(`${f.codex} already has a ${table} table; remove it, then run again`);
+  }
+
   const claude = readJson(f.claude);
   claude.extraKnownMarketplaces = {
     ...claude.extraKnownMarketplaces,
@@ -81,11 +87,6 @@ export function ponytailOn(root) {
   claude.env = { ...claude.env, ...ENV };
   write(f.claude, `${JSON.stringify(claude, null, 2)}\n`);
 
-  const codex = readText(f.codex) ?? '';
-  const base = stripCodexBlock(codex, f.codex);
-  for (const table of [`[plugins."${PLUGIN}"]`, '[marketplaces.ponytail]']) {
-    if (base.includes(table)) throw new Error(`${f.codex} already has a ${table} table; remove it, then run again`);
-  }
   write(f.codex, base === '' ? CODEX_BLOCK : `${base.replace(/\n*$/, '\n\n')}${CODEX_BLOCK}`);
 
   const pi = readJson(f.pi);

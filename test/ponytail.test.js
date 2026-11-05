@@ -73,6 +73,7 @@ test('ponytail on: refuses a Codex file it would break', () => {
     fs.writeFileSync(path.join(root, '.codex/config.toml'), text);
     assert.throws(() => ponytailOn(root), /config\.toml/);
     assert.equal(read(root, '.codex/config.toml'), text);
+    assert.equal(fs.existsSync(path.join(root, '.claude/settings.json')), false);
   }
 });
 
