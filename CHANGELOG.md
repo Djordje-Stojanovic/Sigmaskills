@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.20.0] — 2026-11-05
+
 ### Added
 
 - `sigmamusk` (SigmaMusk): runs Elon Musk's engineering review on a repo, plan or process. It measures the idiot index first (lines of process against product, CPU, wall time, work done twice), runs the five-step Algorithm with first principles and the Karpathy operating style, files one issue with a ranked delete list and checkable acceptance criteria, builds a report page in a new look each run, answers in Musk's voice with sourced quotes, and offers SigmaShip. `--demon` turns the voice up. (#242)
@@ -642,7 +644,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.19.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.16.12...v0.17.0
