@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaMusk
+  short_description: Musk's Algorithm on your work, one issue to ship
+  default_prompt: Use $sigmamusk to measure the waste in this repo, run the Algorithm,
+    file one issue with a delete list, and offer SigmaShip.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

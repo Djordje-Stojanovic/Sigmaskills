@@ -108,6 +108,11 @@
       "id": "sigmacourse",
       "title": "SigmaCourse",
       "needsReferences": true
+    },
+    {
+      "id": "sigmamusk",
+      "title": "SigmaMusk",
+      "needsReferences": true
     }
   ],
   "retired": [

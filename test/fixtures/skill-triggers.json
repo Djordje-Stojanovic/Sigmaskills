@@ -298,5 +298,15 @@
   "prompt": "Plan a curriculum and course that teaches adults piano at any size",
   "skill": "sigmacourse",
   "near": "sigmataste"
+ },
+ {
+  "prompt": "Run the Musk Algorithm on this repo and tell me what to delete first",
+  "skill": "sigmamusk",
+  "near": "sigmareview"
+ },
+ {
+  "prompt": "Elon review of our agent loop: idiot index, bottleneck, what to delete",
+  "skill": "sigmamusk",
+  "near": "sigmarefactor"
  }
 ]

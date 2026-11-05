@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmamusk` (SigmaMusk): runs Elon Musk's engineering review on a repo, plan or process. It measures the idiot index first (lines of process against product, CPU, wall time, work done twice), runs the five-step Algorithm with first principles and the Karpathy operating style, files one issue with a ranked delete list and checkable acceptance criteria, builds a report page in a new look each run, answers in Musk's voice with sourced quotes, and offers SigmaShip. `--demon` turns the voice up. (#242)
+
 ## [0.19.0] — 2026-11-01
 
 ### Changed
