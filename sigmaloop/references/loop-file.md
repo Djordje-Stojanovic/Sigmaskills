@@ -82,6 +82,7 @@ Start nothing new. Let running agents finish and write their state into their it
 ## Rules for the file
 
 - Every number comes from an answer or from the repo. Never invent a limit.
+- Crew rules 1-7, every Cost rules line and the Finish sync proof are defaults: copy each one whole. Drop a line only when an answer contradicts it. The PR line names the repo's real template checks, or "none" when it has no template.
 - Write rules as steps the agent can check, not as wishes. "Fill every free slot" can be checked; "be efficient" cannot.
 - Name each authority once. A pre-authorised action is listed; an unlisted one means ask (or take the safer option and log it, when the loop must not wait).
 - Point to the ranked order in the tracker; copy it only when no file holds it.
