@@ -1,4 +1,6 @@
-# Example: a filled loop file
+# Historical example: October 2026 loop file
+
+For a new run, fill [loop-file.md](loop-file.md). This historical transcript predates the current crew roles and usage lessons.
 
 Adapted from a real overnight run on a repo with one big ticket and many sub-tasks. Paths and names are generalised. Host: Claude Code `/loop`. It shows how the template reads once filled: the crew mix, the landing list, the sub-agent prompt, and the finish block did the work.
 

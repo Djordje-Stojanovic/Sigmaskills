@@ -7,7 +7,7 @@ description: Use when asked for sigmaloop or a paste-ready unattended-run prompt
 
 Turn a repo's open work into one loop prompt for the host the user names, plus a loop file the prompt tells the agent to re-read. SigmaLoop is a prompt factory: read, ask once, write two things, stop. It never starts the loop and never works the items.
 
-Read [questions.md](references/questions.md) before step 2, [loop-file.md](references/loop-file.md) before step 3, and [hosts.md](references/hosts.md) before step 4 (it names one host file to read). [example.md](references/example.md) is a filled loop file.
+Read [questions.md](references/questions.md) before step 2, [loop-file.md](references/loop-file.md) before step 3, and [hosts.md](references/hosts.md) before step 4 (it names one host file to read).
 
 ## Operating contract
 
