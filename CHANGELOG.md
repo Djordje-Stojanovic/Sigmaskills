@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaloop` asks crew shape and cost first, then writes one-ticket worker flows with the November usage lessons. T3 defaults to `/goal` with a printed done command; scheduler details load only for scheduled modes. Solo runs keep implementation in one session; crew merges belong to the orchestrator.
+
 ## [0.19.0] — 2026-11-01
 
 ### Changed

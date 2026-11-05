@@ -12,34 +12,34 @@ Save to the place the user chose (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md
 Host: <host>. Stop line: <date, time, zone>. Re-read this file at every <wake | item>: edits apply on the next one.
 
 ## Stance
-Be optimistic and aggressive: plan to finish every open item by the stop line, not just log it. A free slot or an idle wake is a bug: fill it from Priority (the orchestrator itself starts agents and merges, nothing else). <Host wake rule, one line, from the host file.>
-The user pre-authorises for this whole loop: <list from question 7>. Do not stop to ask; when no rule decides, take the safer option and log it as `Ruling: <what> - <why> - <cost if wrong>`.
+Fill free slots from Priority. <Host wake rule, one line, from the host file.>
+The user pre-authorises for this whole loop: <list from question 8>. Do not stop to ask; when no rule decides, take the safer option and log it as `Ruling: <what> - <why> - <cost if wrong>`.
 
 ## Goal
 At the stop line every open item in <ticket or tracker> is ticked with dated evidence, or carries a dated log line: what was done, what is left, why, next step. <Overview or index file> is current.
 
 ## Crew
-Shape: <solo | small crew: N workers, N reviewers, 1 clerk | large crew>, from question 1. Each role has one job that never changes during the run.
-1. **The orchestrator plans, starts agents and merges.** It makes none of a worker's tool calls (a 5-hour Opus loop spent 20% of a day's usage on its own Bash calls). Only the orchestrator starts agents: no nested trees, so every agent shows in one thread. A worker starts none.
+Shape: <solo | small crew: N workers, N reviewers, 1 clerk | large crew>, from question 1. Solo: this session builds, checks, self-reviews and lands each ticket; omit agent rules and model probes. Crew: each role keeps one job; apply the rules below.
+1. **The orchestrator plans, starts agents and merges.** Workers own implementation tool calls; the orchestrator alone starts agents, keeping the crew visible in one thread.
 2. **One whole ticket per worker** (Theo's tstack flow): finish, prove with the ticket's acceptance tests, review, PR, CI, merge. The orchestrator saves a full spec by path (`to-spec` if the repo has it) and sends the path. The worker reports once.
-3. **One reviewer per ticket, from another model family, at most 3 rounds, stop on nits.** The reviewer fixes small findings itself on the PR branch; only a large finding goes back to the writer (same agent, by follow-up message, so its context stays).
+3. **`sol-loop` review: one reviewer per ticket, from another model family, at most 3 rounds, stop on nits.** The reviewer fixes small findings itself on the PR branch; only a large finding goes back to the writer (same agent, by follow-up message, so its context stays).
 4. **First turn: one "say ok" task per model target** (from `orchestrator_capabilities`, never from memory). A target that fails moves to its fallback before any ticket starts.
-5. Models: <cheap model> for bulk, research and harvests; <mid model> for workers; <top model> for planning and review only. Never max effort. When a worker ends, its slot takes the most valuable eligible ticket in the same turn. Running agents count toward the cap. <Repo rules: banned models, background-shell limits.>
+5. Models: <cheap model> for bulk, research and harvests; <mid model> for workers; <top model> for planning and review only; Opus stays on planning. Never max effort. When a worker ends, its slot takes the most valuable eligible ticket in the same turn. Running agents count toward the cap. <Repo rules: banned models, background-shell limits.>
 6. Headless calls (`claude -p`, `codex exec`) get closed input (`< /dev/null`, `ssh -n`, `stdin=DEVNULL`). A judge or persona called again and again keeps one session (`--resume <id>`).
 7. Only the thread that owns a PR watches it. Children never watch.
 
 ## Cost rules
-- Read this file once per session and after a compaction, not every turn. Put shell work in one script, not many calls.
+- Batch shell work in one script.
 - **Never poll.** Wait for the completion notice (a finished agent or background job wakes you). A worker that commits nothing for 30 minutes is stopped, its work saved, and restarted. A stuck ticket is logged with its reason and skipped.
 - Claude: 1-hour prompt cache (`ENABLE_PROMPT_CACHING_1H=1`); compact window the owner sets (for example 400k); batch many short chats into one session so the cache is reused; one-shot headless calls use `CLAUDE_CODE_PROMPT_CACHE_TTL=5m` and `--disable-slash-commands`.
 - CLIProxyAPI pools: fill-first (burn the account that resets first); session affinity keeps a thread on one account, so its cache stays. The quota card is the usage floor: skip a model whose weekly limit is low.
 - Host facts: Claude Desktop ignores the hub address (host-managed) and cannot start T3 models (Muse Wonder, DeepSeek); run the orchestrator as a T3 thread.
-- A cheap clerk does merges and bookkeeping (ticks, handoff, status).
+- A cheap clerk does bookkeeping (ticks, handoff, status); merge ownership stays with the orchestrator.
 
 ## Each wake
 1. Read the clock (<zone>). At or after the stop line: Finish.
-2. Read the handoff and run <the repo's overview or status command>. Re-read this file and the tracker's notes only if the handoff says they changed.
-3. For each finished agent: give its slot the most valuable eligible ticket first. Send a finished ticket to a reviewer (another family). The clerk merges and ticks with dated evidence.
+2. Read the handoff and run <the repo's overview or status command>. Re-read this file at every wake or item; read changed tracker notes.
+3. For each finished agent: give its slot the most valuable eligible ticket first. Send a finished ticket to a reviewer (another family). The orchestrator merges; the clerk ticks with dated evidence.
 4. Fill every other free slot from Priority. Skip items that share files with a running agent.
 5. Update the handoff (<path>): time, running agents and items, done since the last wake, queue. Rewrite it in full before each long wait and before the context fills.
 6. <Host wake call and delay rule, from the host file.>
@@ -67,7 +67,7 @@ Shape: <solo | small crew: N workers, N reviewers, 1 clerk | large crew>, from q
 - "End: tick with dated evidence (numbers, paths, PRs), run <status command>, report short and plain."
 
 ## Only work that moves us forward
-<The goal in the user's terms, for example: better product, faster, a real bug fixed.> No new scaffolding, no extra gates, no double-checking, no over-testing (one test that proves the change), no reports for their own sake. A check that never caught anything is cut. A change that adds a step must remove a bigger one.
+<The goal in the user's terms: better product, faster, a real bug fixed.> Keep one test that proves the change. A change that adds a step must remove a bigger one.
 
 ## When fewer than 3 items are workable
 Search <repos and machines in scope> for the next improvement that moves us forward: a bug, a speed gain, a quality gain, a reliability fix. Write it as a new item (one file, one tracker line) and start it. Repeat until the stop line.
@@ -84,5 +84,5 @@ Start nothing new. Let running agents finish and write their state into their it
 - Every number comes from an answer or from the repo. Never invent a limit.
 - Write rules as steps the agent can check, not as wishes. "Fill every free slot" can be checked; "be efficient" cannot.
 - Name each authority once. A pre-authorised action is listed; an unlisted one means ask (or take the safer option and log it, when the loop must not wait).
-- The ranked order is a pointer when the tracker already holds it (a section name, a file). Copy it only when no file holds it.
+- Point to the ranked order in the tracker; copy it only when no file holds it.
 - Keep lab-specific words out unless they are the user's own tracker words.
