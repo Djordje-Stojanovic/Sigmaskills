@@ -36,8 +36,6 @@ Follow every rule below. They are mandatory for this repo.
 
 ---
 
-**Local docs (owner 11-05, #1539/#1546):** every tool we run has its docs saved as markdown in Thinkcenter_Setup (`C:\AI\Thinkcenter_Setup`, dev box `/work/Thinkcenter_Setup`); each folder's `README.md` is its index. Claude Code (Anthropic's coding CLI): `Claude_Code_docs/` (`lahelp ccdocs`). Codex (OpenAI's coding CLI): `Codex_docs/` (`lahelp codexdocs`). CLIProxyAPI (the hub on CT100 that pools our subscriptions): `CLIProxyAPI_docs/` (`lahelp cpadocs`). T3 Code (the app every agent thread runs in; pinned to the installed version): `T3_code_docs/` (`lahelp t3`). Pi (`lapi`): `Pi_agent_docs/`. Muse Code (Meta's coding CLI): `Meta_Muse_docs/` (`lahelp musedocs`). HyperFrames (the film renderer, matching the kit's CLI pin): `HyperFrames_docs/` (`lahelp hyperframes`). **Search order:** the local mirror first (`grep -ril <word> <folder>`), Context7 MCP only for what no mirror covers (it costs tokens per query and is not pinned to our versions; key from env `CONTEXT7_API_KEY`). Refresh: run `scripts/vendor_docs.py <vendor>` from the Thinkcenter_Setup checkout; lasynctoolkit and `lapi -update` do it daily and land it through a PR (`scripts/mirror_land.py`). **Expected splits, not bugs:** a store app (ChatGPT, Claude desktop or phone) shows its own account, not the pool limits (pool numbers live on the hub quota page and in T3); `/goal` and the other goal commands work in Claude Code and Codex sessions only and are plain text elsewhere. A T3 problem: `t3 triage --agent claude` gathers the machine facts itself and asks only for the symptom.
-
 ## How you work
 
 Bias toward caution over speed. For trivial tasks, use judgment.

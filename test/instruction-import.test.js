@@ -1,4 +1,4 @@
-// Thinkcenter_Setup #1538: the shared agent text lives once, in AGENTS.md; CLAUDE.md opens with the import line.
+// #1538: the shared agent text lives once, in AGENTS.md; CLAUDE.md opens with the import line.
 // An import, not a symlink: a symlink breaks on Windows clones.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
