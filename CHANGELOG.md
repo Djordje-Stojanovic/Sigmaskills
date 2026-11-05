@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmamusk` (SigmaMusk): runs Elon Musk's engineering review on a repo, plan or process. It measures the idiot index first (lines of process against product, CPU, wall time, work done twice), runs the five-step Algorithm with first principles and the Karpathy operating style, files one issue with a ranked delete list and checkable acceptance criteria, builds a report page in a new look each run, answers in Musk's voice with sourced quotes, and offers SigmaShip. `--demon` turns the voice up. (#242)
+
 ### Changed
 
 - `sigmaloop` asks crew shape and cost first, then writes one-ticket worker flows with the November usage lessons. T3 defaults to `/goal` with a printed done command; scheduler details load only for scheduled modes. Solo runs keep implementation in one session; crew merges belong to the orchestrator.

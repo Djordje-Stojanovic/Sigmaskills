@@ -535,7 +535,17 @@ function sigmacourse({ files, result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmacourse, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmamusk measures before it judges (numbers next to commands), files one issue with
+// checkable acceptance criteria (or prints its body), and ends by offering SigmaShip.
+function sigmamusk({ result }) {
+  const problems = requireText(result, [/verdict/i, /delete/i, /bottleneck/i, /smallest ship/i, /sigmaship/i], 'reply');
+  if ((result.match(/`[^`\n]+`/g) || []).filter((c) => /\s/.test(c)).length < 3) problems.push('reply: fewer than 3 measured numbers with their commands');
+  if (!/(issues\/\d+|#\d+)/.test(result) && !/^```markdown[\s\S]*?acceptance criteria[\s\S]*?^```/im.test(result)) problems.push('reply: no issue link and no printed issue body with acceptance criteria');
+  if (!/\?\s*$/.test(result.trim())) problems.push('reply: does not end with the SigmaShip question');
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmacourse, sigmamusk, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

@@ -91,6 +91,10 @@ Needs: `pip install vastai`, SSH with `~/.ssh/id_ed25519.pub`, a Vast.ai account
 
 Needs: nothing beyond the agent host. The goal prompt it ends with needs `sigmaloop`; research steps use `sigmaresearch` and `sigmadeeplook` when installed. Setup: none; it sets up the course repo it plans.
 
+### sigmamusk
+
+Needs: `gh` signed in to file the issue (without it, the issue body prints in chat). Hands off to `sigmaship` when installed. Setup: none.
+
 ### sigmasetup
 
 Needs: Node (the installer already needs it). Setup: none; it is the setup.

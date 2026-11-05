@@ -109,6 +109,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaSpeedLoop** | `sigmaspeedloop` | Faster serving on a rented GPU, one judged change per pass | A project folder, a champion recipe, a report |
 | **SigmaSetup** | `sigmasetup` | Per-repo setup for every installed pack, after one question round | Set-up files and a table with the undo for each change |
 | **SigmaCourse** | `sigmacourse` | A course on any subject at any size: hard grill, spec, done ladder, queue | A set-up course repo and one goal prompt that builds it |
+| **SigmaMusk** | `sigmamusk` | Musk's Algorithm on your repo, plan or process: measured waste, delete list, bottleneck | One issue SigmaShip can ship, a report page, one question |
 
 ### Which one do I need?
 
@@ -206,6 +207,10 @@ Runs after the installer, once per repo. It finds the installed packs, reads wha
 
 Plans a course on any subject, from a one-hour primer to a program of thousands of hours. It grills you one question at a time, then writes the spec, a done list a script can check, a job queue and the repo's steering file. It ends with one goal prompt for your agent host; the loop that prompt starts builds and reviews the course. Each step hands off to the matching Sigma skill.
 
+### SigmaMusk
+
+Runs Elon Musk's engineering review on your work. It measures the waste first (lines of process against product, CPU, wall time, work done twice), runs the five-step Algorithm, and files one issue with a ranked delete list and checkable acceptance criteria. A report page in a new look each run shows the numbers. It answers in Musk's voice and asks whether SigmaShip should ship the fix. `--demon` turns the voice up.
+
 ---
 
 ## Install
@@ -256,6 +261,7 @@ $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 $sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
 $sigmasetup
 $sigmacourse Plan a 40-hour course that makes me fluent in SQL
+$sigmamusk Why does our test suite take 20 minutes?
 ```
 
 </td>
@@ -286,6 +292,7 @@ $sigmacourse Plan a 40-hour course that makes me fluent in SQL
 /skill:sigmaspeedloop Make my ComfyUI image workflow faster on a Vast.ai GPU
 /skill:sigmasetup Set up the Matt Pocock skills in this repo
 /skill:sigmacourse Plan a piano course for an adult restarting after 20 years
+/skill:sigmamusk Run the Algorithm on this agent loop --demon
 ```
 
 </td>
@@ -317,6 +324,7 @@ $sigmacourse Plan a 40-hour course that makes me fluent in SQL
 | `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
 | `sigmasetup` | (no input) · or the packs to set up | One question round; writes only in this repo; every change has an undo |
 | `sigmacourse` | a subject · the learner · a goal | Grills first; writes the course repo and the goal prompt; never starts the loop |
+| `sigmamusk` | a repo, plan, issue or process · optional `--demon` | Measures before it judges; edits no code; files one issue; ships only after your yes |
 
 ### Requirements
 

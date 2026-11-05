@@ -1,0 +1,21 @@
+**Verdict.** 22,800 lines of checks guard 456 lesson files. The gate runs every 20 minutes to print one status line. That is not engineering, that is a tax.
+
+| Number | Value | Command |
+|---|---|---|
+| Check and test lines | 22,800 | `cat checks/*.py checks/tests/*.py | wc -l` |
+| Python processes at one wake | 60 | `Get-Process python | Measure-Object` |
+| Gate wall time | 9 min | `Measure-Command { python checks/run_gate.py }` |
+
+**Delete list.** 1. The gate at every wake (about 20 processes each time). 2. Re-running finished calc scripts. Keep the number-tracing check: it caught 14 real errors.
+
+**Dumb requirements.** "The gate runs in 10 minutes" (owner: Djordje) - ask: why run it at all when nothing changed?
+
+**Bottleneck.** CPU, from work done twice.
+
+**Smallest ship.** Run the wake without the gate.
+
+**Do not automate yet.** A new lock system.
+
+Issue: https://github.com/example/course/issues/12 - look: Mission control. "The best part is no part."
+
+Run SigmaShip end to end on #12?
