@@ -1,0 +1,19 @@
+{
+  "extraKnownMarketplaces": {
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail",
+        "ref": "v5.3.3"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "ponytail@ponytail": true
+  },
+  "env": {
+    "PONYTAIL_SUBAGENT_MATCHER": "^(general-purpose|claude|plan)$",
+    "PONYTAIL_HIDE_STATUS": "1",
+    "PONYTAIL_QUIET_STARTUP": "1"
+  }
+}

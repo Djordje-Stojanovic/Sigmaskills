@@ -59,10 +59,13 @@ function writeJsonOrDelete(file, data) {
   else write(file, `${JSON.stringify(data, null, 2)}\n`);
 }
 
-function stripCodexBlock(text) {
+function stripCodexBlock(text, file) {
   const start = text.indexOf(CODEX_BEGIN);
   const end = text.indexOf(CODEX_END);
-  if (start === -1 || end === -1) return text;
+  if (start === -1 && end === -1) return text;
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error(`${file} has only one of the "${CODEX_BEGIN}" / "${CODEX_END}" lines; fix the block by hand, then run again`);
+  }
   return (text.slice(0, start) + text.slice(end + CODEX_END.length).replace(/^\r?\n/, '')).replace(/\n+$/, '\n');
 }
 
@@ -79,10 +82,10 @@ export function ponytailOn(root) {
   write(f.claude, `${JSON.stringify(claude, null, 2)}\n`);
 
   const codex = readText(f.codex) ?? '';
-  if (!codex.includes(CODEX_BEGIN) && codex.includes(`[plugins."${PLUGIN}"]`)) {
-    throw new Error(`${f.codex} already has a [plugins."${PLUGIN}"] table; remove it, then run again`);
+  const base = stripCodexBlock(codex, f.codex);
+  for (const table of [`[plugins."${PLUGIN}"]`, '[marketplaces.ponytail]']) {
+    if (base.includes(table)) throw new Error(`${f.codex} already has a ${table} table; remove it, then run again`);
   }
-  const base = stripCodexBlock(codex);
   write(f.codex, base === '' ? CODEX_BLOCK : `${base.replace(/\n*$/, '\n\n')}${CODEX_BLOCK}`);
 
   const pi = readJson(f.pi);
@@ -111,7 +114,7 @@ export function ponytailOff(root) {
 
   const codex = readText(f.codex);
   if (codex !== null) {
-    const rest = stripCodexBlock(codex);
+    const rest = stripCodexBlock(codex, f.codex);
     if (rest.trim() === '') fs.rmSync(f.codex, { force: true });
     else write(f.codex, rest);
   }
@@ -121,6 +124,13 @@ export function ponytailOff(root) {
     pi.packages = (pi.packages ?? []).filter((p) => !String(p).startsWith(PI_PREFIX));
     if (pi.packages.length === 0) delete pi.packages;
     writeJsonOrDelete(f.pi, pi);
+  }
+
+  const ignore = readText(f.gitignore);
+  if (ignore !== null) {
+    const rest = ignore.split(/\r?\n/).filter((line) => line !== GITIGNORE_LINE).join('\n');
+    if (rest.trim() === '') fs.rmSync(f.gitignore, { force: true });
+    else write(f.gitignore, rest.endsWith('\n') ? rest : `${rest}\n`);
   }
 }
 

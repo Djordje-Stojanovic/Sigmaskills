@@ -62,7 +62,18 @@ test('ponytail off: removes only what on wrote', () => {
   assert.deepEqual(JSON.parse(read(root, '.claude/settings.json')), { env: { KEEP: 'x' } });
   assert.equal(fs.existsSync(path.join(root, '.codex/config.toml')), false);
   assert.equal(fs.existsSync(path.join(root, '.pi/settings.json')), false);
+  assert.equal(fs.existsSync(path.join(root, '.gitignore')), false);
   assert.deepEqual(ponytailCheck(root), { claude: 'off', codex: 'off', pi: 'off' });
+});
+
+test('ponytail on: refuses a Codex file it would break', () => {
+  for (const text of ['[marketplaces.ponytail]\nsource = "x"\n', '# sigmaskills ponytail begin\n[x]\n']) {
+    const root = tmpProject();
+    fs.mkdirSync(path.join(root, '.codex'));
+    fs.writeFileSync(path.join(root, '.codex/config.toml'), text);
+    assert.throws(() => ponytailOn(root), /config\.toml/);
+    assert.equal(read(root, '.codex/config.toml'), text);
+  }
 });
 
 test('ponytail check: an empty project is off everywhere', () => {
