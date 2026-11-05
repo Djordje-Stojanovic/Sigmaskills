@@ -23,6 +23,10 @@ The installer puts skills on the machine. Most packs still need a little per-pro
 4. **Do the yes items.** Run each step, then check it worked. Commit repo files on a branch when the repo uses PRs.
 5. **Report.** A table with the columns Pack, Set up, Checked and Undo, one row per change, then what is left for the owner.
 
+## Ponytail
+
+Offer it for every repo where agents write code: `npx @djordje-stojanovic/sigmaskills ponytail --project .` turns on [Ponytail](https://github.com/DietrichGebert/ponytail) (smallest code that works) for this project in Claude Code, Codex and Pi. Check: `ponytail --check --project .`. Undo: `ponytail --remove --project .`.
+
 ## Git guard
 
 An optional Claude Code hook for this repo only: it blocks force push, `reset --hard`, `clean -f`, `stash clear` and anything that throws away uncommitted changes (`checkout .`, `checkout -f`, `restore .`), and allows branch deletes. Offer it with the Matt Pocock pack or when the owner asks for git safety. On, off and check: `references/git-guard.md`.

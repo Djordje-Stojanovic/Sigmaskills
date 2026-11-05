@@ -36,6 +36,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
+- `sigmaskills ponytail --project .` turns [Ponytail](https://github.com/DietrichGebert/ponytail) (MIT; a rule that makes agents write the smallest code that works) on for one project, never machine-wide. It writes the project files Claude Code (`.claude/settings.json`), Codex (`.codex/config.toml`) and Pi (`.pi/settings.json`) read, pinned to v5.3.3; subagents that only search skip it, and the status band stays hidden. `--remove` takes out only what it wrote; `--check` prints on or off per agent and exits 1 when any is off. `sigmasetup` offers it. (Thinkcenter_Setup#1611)
 - `sigmamusk` (SigmaMusk): runs Elon Musk's engineering review on a repo, plan or process. It measures the idiot index first (lines of process against product, CPU, wall time, work done twice), runs the five-step Algorithm with first principles and the Karpathy operating style, files one issue with a ranked delete list and checkable acceptance criteria, builds a report page in a new look each run, answers in Musk's voice with sourced quotes, and offers SigmaShip. `--demon` turns the voice up. (#242)
 
 ### Changed

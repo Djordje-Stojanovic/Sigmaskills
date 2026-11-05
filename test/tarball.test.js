@@ -24,6 +24,7 @@ const USER_SRC_FILES = [
   'links.js',
   'paths.js',
   'plan.js',
+  'ponytail.js',
   'prepack.js',
   'project-lock.js',
   'purge.js',

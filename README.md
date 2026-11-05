@@ -359,6 +359,20 @@ SigmaShip and SigmaBrief work best with optional companion skills from [mattpoco
 
 ---
 
+## Ponytail per project
+
+[Ponytail](https://github.com/DietrichGebert/ponytail) (MIT) tells coding agents to write the smallest code that works. Turn it on for one project only; other projects on the machine stay as they are:
+
+```bash
+npx @djordje-stojanovic/sigmaskills ponytail --project .           # on
+npx @djordje-stojanovic/sigmaskills ponytail --check --project .   # on or off per agent
+npx @djordje-stojanovic/sigmaskills ponytail --remove --project .  # off
+```
+
+It writes three project files, pinned to Ponytail v5.3.3: `.claude/settings.json` (Claude Code), `.codex/config.toml` (Codex) and `.pi/settings.json` (Pi), and adds `.pi/git/` to `.gitignore`. Each agent loads them only in a folder you trust. T3 Code threads read the same files. Codex also needs `codex plugin marketplace add DietrichGebert/ponytail` once per machine.
+
+---
+
 ## Links
 
 - [Installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/installer.md): every command, flag, and install method

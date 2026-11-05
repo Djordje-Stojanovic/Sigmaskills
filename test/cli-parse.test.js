@@ -35,6 +35,8 @@ const FLAG_CASES = {
   '-y': [['-y'], { yes: true }],
   '--yes': [['--yes'], { yes: true }],
   '--force': [['--force'], { force: true }],
+  '--remove': [['ponytail', '--remove'], { remove: true }],
+  '--check': [['ponytail', '--check'], { check: true }],
   '--classic': [['--classic'], { classic: true }],
   '--packs': [['list', '--packs'], { packs: true }],
   '--preset': [['--preset', 'sigma,mattpocock', '--preset=threejs'], { presets: ['sigma,mattpocock', 'threejs'] }],

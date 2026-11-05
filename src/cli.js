@@ -24,6 +24,7 @@ import { describeRoots } from './agents.js';
 import { formatPackList, formatSummary } from './report.js';
 import { createStyler } from './terminal.js';
 import { runWizard, wizardAvailable } from './wizard.js';
+import { ponytailCheck, ponytailOff, ponytailOn } from './ponytail.js';
 
 /**
  * Format and print help message.
@@ -53,6 +54,7 @@ Commands:
   status            Report managed Project or Global Installation state and drift
   list              List all shipped skills and their Skill Revisions
   verify            Validate manifest, skill resources, and compute revisions
+  ponytail          Turn Ponytail on for one project (Claude Code, Codex, Pi); --remove, --check
 
 Options:
   -v, --version     Show version number
@@ -100,6 +102,8 @@ Options:
   --static          Use paged line prompts without screen repainting
   --narrow          Use the narrow-terminal layout
   -y, --yes         Skip interactive confirmations
+  --remove          With 'ponytail': turn it off in this project
+  --check           With 'ponytail': report on or off per agent; exit 1 when any is off
 
 Run without a command to start the interactive installer.
 
@@ -114,7 +118,7 @@ ${skillsList}
 `;
 }
 
-const COMMANDS = ['list', 'verify', 'check', 'install', 'add', 'status', 'update', 'restore', 'uninstall', 'purge'];
+const COMMANDS = ['list', 'verify', 'check', 'install', 'add', 'status', 'update', 'restore', 'uninstall', 'purge', 'ponytail'];
 const SKILL_COMMANDS = ['install', 'add', 'update', 'restore', 'uninstall'];
 const RESOLUTIONS = ['replace', 'skip', 'export'];
 
@@ -139,6 +143,8 @@ const FLAGS = [
   { name: '--force', key: 'force' },
   { name: '--classic', key: 'classic' },
   { name: '--packs', key: 'packs' },
+  { name: '--remove', key: 'remove' },
+  { name: '--check', key: 'check' },
   { name: '--preset', alias: '--pack', key: 'presets', value: true, repeatable: true },
   { name: '--agent', alias: '-a', key: 'agents', value: true, repeatable: true },
   { name: '--skill', key: 'skillIds', value: true, repeatable: true },
@@ -289,6 +295,19 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     if (opts.method === 'conflict') {
       writeErr('sigmaskills error: use either --link or --copy, not both');
       return 1;
+    }
+
+    if (opts.command === 'ponytail') {
+      const root = path.resolve(opts.projectRoot ?? process.cwd());
+      if (!opts.check) {
+        if (opts.remove) ponytailOff(root);
+        else ponytailOn(root);
+      }
+      const state = ponytailCheck(root);
+      if (opts.json) writeOut(JSON.stringify({ project: root, ponytail: state }, null, 2));
+      else for (const [agent, value] of Object.entries(state)) writeOut(`${agent.padEnd(7)} ${value}`);
+      const want = opts.check ? 'on' : opts.remove ? 'off' : 'on';
+      return Object.values(state).every((v) => v === want) ? 0 : 1;
     }
 
     const installing = opts.command === 'install' || opts.command === 'add'
