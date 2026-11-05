@@ -7,7 +7,7 @@ description: Use when asked for sigmaloop or a paste-ready unattended-run prompt
 
 Turn a repo's open work into one loop prompt for the host the user names, plus a loop file the prompt tells the agent to re-read. SigmaLoop is a prompt factory: read, ask once, write two things, stop. It never starts the loop and never works the items.
 
-Read [questions.md](references/questions.md) before step 2, [loop-file.md](references/loop-file.md) before step 3, and [hosts.md](references/hosts.md) before step 4 (it names one host file to read). [example.md](references/example.md) is a filled loop file.
+Read [questions.md](references/questions.md) before step 2, [loop-file.md](references/loop-file.md) before step 3, and [hosts.md](references/hosts.md) before step 4 (it names one host file to read).
 
 ## Operating contract
 
@@ -32,7 +32,7 @@ Note for each open item: id, one line, size (minutes or hours), what blocks it, 
 
 ## 2. Ask one dense round
 
-Send one numbered list, at most 10 questions. Each carries a recommended answer drawn from step 1, so the user can reply "all recommended". Cover: host, end time, scope and order, crew and model mix, where it runs and who else works, off-limits, pre-authorised actions, landing, the stop line, and extras. The list and how to pick each recommendation: [questions.md](references/questions.md).
+Send one numbered list, at most 10 questions. Each carries a recommended answer drawn from step 1, so the user can reply "all recommended". Cover, crew shape first (solo, small crew, large crew, each with its cost and one recommendation), then host, models and effort per role, end time, scope and order, where it runs and who else works, off-limits, pre-authorised actions, landing, the stop line, and extras. The list and how to pick each recommendation: [questions.md](references/questions.md).
 
 Wait for the reply. Do not ask a second round.
 
@@ -42,7 +42,7 @@ Fill the template in [loop-file.md](references/loop-file.md) with the answers an
 
 ## 4. Write the host prompt
 
-Use the skeleton in the host file that [hosts.md](references/hosts.md) names. The prompt is short and carries five things: the ranked task order (pointer plus the first items), the crew and model mix, the wake rules, the landing rules, and the stop line. It tells the agent to re-read the loop file. Use the mechanism the host file names for the way the run starts (a live session or headless), and only tools that host has: a prompt that needs `ScheduleWakeup` outside Claude Code stalls. If no host file fits, use the plain instruction. For a Claude Code run to done, write the `/goal` line the host file gives: one printed command, the loop file as the run file read every turn, one `CronCreate` per dated item, a handoff file. For a T3 Code run, pick one of the three modes in the host file (clock, run to done, native `/goal`) and give the crew through `delegate_task` or `t3_thread_launch`. Every crew line says the main cost rule: one full spec per worker (`to-spec`, then `implement-spec` in one long run, one report, no helper agents, one review per spec by a different model). For T3 Code also give the model chain by usage and the wake hygiene (`t3_queue` cancel, Resume). Match the host's limits and permission setup. Tell the user what the host will not do (for example, no restart after a closed session) and any fact the host file marks as not run.
+Use the skeleton in the host file that [hosts.md](references/hosts.md) names. The prompt is short and carries five things: the ranked task order (pointer plus the first items), the crew and model mix, the wake rules, the landing rules, and the stop line. It tells the agent to re-read the loop file. Use the mechanism the host file names for the way the run starts (a live session or headless), and only tools that host has: a prompt that needs `ScheduleWakeup` outside Claude Code stalls. If no host file fits, use the plain instruction. For a Claude Code run to done, write the `/goal` line the host file gives: one printed command, the loop file as the run file read every turn, one `CronCreate` per dated item, a handoff file. For a T3 Code run, use native `/goal` with one printed done command and no repeat timer; the host file names the two exceptions. Solo keeps the work in this session. For a crew, use `delegate_task`; use `t3_thread_launch` only when the owner asks for a new top-level thread. Every crew line says the main cost rule: one whole ticket per worker, then one reviewer (another family, at most 3 rounds), PR, CI, merge; the orchestrator plans, starts agents and merges, and does no worker's tool calls. For T3 Code also give the model chain by usage. Match the host's limits and permission setup. Tell the user what the host will not do (for example, no restart after a closed session) and any fact the host file marks as not run.
 
 ## 5. Stop
 

@@ -1,0 +1,23 @@
+# T3 scheduler reference
+
+Scheduler modes only. Marks and version evidence: [host-t3-code.md](host-t3-code.md).
+
+**Scheduler.** `schedule_task` makes work that runs when no turn is active (source). The schedule is an object, not text: `{type:'interval', everyMs}` (minimum 60000), `{type:'fixed_time', timeOfDay:'09:00', weekdays:[0-6]}` or `{type:'webhook'}`. `bindToCurrentThread` defaults to true inside a thread: each run posts the prompt into that thread. False starts a new thread per run, in a fresh worktree of `main` (source). Prompt limit 120,000 characters (source). There is **no** `update_scheduled_task` tool. To change or pause a task, call `schedule_task` again with `scheduledTaskId` (only the given fields change; `enabled=false` pauses). `delete_scheduled_task` stops it at once. `list_scheduled_tasks` lists. `run_scheduled_task_now` fires one run (source). The tool list of a live T3 server shows exactly these, and no update tool (ran: devbox `0.1.6-nightly.20261031.9003956`, 2026-10-31). The owner can also manage tasks in Settings, Scheduled tasks (doc).
+
+## Overlap: a run that fires while a turn is active
+
+- Each scheduled run sends its prompt with mode `queue` (source). Thread idle: a turn starts. Turn active: the prompt waits behind it. One thread runs one turn at a time.
+- The task counts a run as done when the prompt is sent, not when the turn ends. The next run is due `everyMs` after that send (source). A turn longer than `everyMs` leaves wake prompts piling up in the queue, and each one repeats the same work.
+- A task that is still being sent is not started again (source: "Schedule task is already running" for manual runs; a scheduled run is skipped).
+- After a missed interval (server down) the task fires once when the server is back. A missed `fixed_time` run is skipped if it is over 10 minutes late (source).
+- A queue that Stop or a restart held does **not** restart on a scheduled message. A message the owner sends from the app resumes it, or **Resume** in the composer (source; doc). Queued scheduled runs wait until then. A later fix (t3code #27221) releases held agent and scheduled messages once the thread completes a run, so expect a stall, not a loss.
+- Rule for the prompt: set `everyMs` at or above the longest normal turn, claim an item in the handoff file before starting it, and at the start of every wake run `t3_queue` `list` for this thread and `cancel` extra wake messages. Follow the running delegate's `next` and completion notice; keep its claimed item in the handoff.
+
+## Permissions, server, restart, stop
+
+- **Full access.** Only Full access runs without prompts. Any other mode waits for the owner, and a question to the owner pauses the run (doc: `permission-modes.md`). New threads default to Full access (doc). The task keeps the creator's modes, and the bound thread's current modes apply too (source).
+- **Server up.** The scheduler lives in the T3 server. On Linux and macOS `t3 service install` keeps it running after logout and at boot; on Linux lingering must be on (`t3 service status` shows it). Windows has no background service: keep the desktop app open (doc: `background-service.md`). A phone or browser only shows the thread; the host machine runs it (doc).
+- **Restart.** A run caught by a restart is marked failed ("interrupted by a server restart") and the next run is set from the restart time (source). Settings, Maintenance, **Continue threads after restarts** (on by default) resumes supported active threads after an update, crash or reboot, but not one waiting for approval, an answer, archived, snoozed or settled, and after three automatic resumes in a row it waits for your next message (doc). T3 must start again by itself; this setting does not do that. Queued messages are held after a restart (doc). A usage limit holds the thread: use **Resume at reset** (doc).
+- **Stop.** Pause: `schedule_task` with `scheduledTaskId` and `enabled=false`. End: `delete_scheduled_task`. Deleting the bound thread deletes its tasks too (doc). Stop the work: `t3_thread_interrupt` with `stop:true`, or the thread's Stop button; this does not delete the schedule (no code path ends the task on Stop), so a later run still queues. Clean up: delete the task, settle or archive the worker threads (`t3_thread_organize`), remove their worktrees, unwatch pull requests (`unwatch_pull_request`).
+- **Outside agents.** An agent in a terminal can drive T3 through its MCP URL (doc: `outside-agents.md`), but outside a thread `schedule_task` cannot bind: it needs a `projectId`, and a project with no default model fails with `invalid_request` ("has no default model") (ran, 2026-10-31). Run the loop from an agent inside a T3 thread.
+
