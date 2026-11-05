@@ -209,7 +209,7 @@ Plans a course on any subject, from a one-hour primer to a program of thousands 
 
 ### SigmaMusk
 
-Runs Elon Musk's engineering review on your work. It measures the waste first (lines of process against product, CPU, wall time, work done twice), runs the five-step Algorithm, and files one issue with a ranked delete list and checkable acceptance criteria. A report page in a new look each run shows the numbers. It answers in Musk's voice and asks whether SigmaShip should ship the fix. `--demon` turns the voice up.
+Runs Elon Musk's engineering review on your work. It measures the waste first, runs the five-step Algorithm, and files one issue with a ranked delete list and checkable acceptance criteria. A report page in a new look shows the numbers. It answers in Musk's voice and offers SigmaShip. Alone, it grills you with 3 to 5 questions first; `--fast "<problem>"` researches, decides and ships end to end when the request is clear. `--demon` turns the voice up.
 
 ---
 
@@ -293,6 +293,7 @@ $sigmamusk Why does our test suite take 20 minutes?
 /skill:sigmasetup Set up the Matt Pocock skills in this repo
 /skill:sigmacourse Plan a piano course for an adult restarting after 20 years
 /skill:sigmamusk Run the Algorithm on this agent loop --demon
+/skill:sigmamusk --fast "cache every calc script by a hash of its inputs"
 ```
 
 </td>
@@ -324,7 +325,7 @@ $sigmamusk Why does our test suite take 20 minutes?
 | `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
 | `sigmasetup` | (no input) · or the packs to set up | One question round; writes only in this repo; every change has an undo |
 | `sigmacourse` | a subject · the learner · a goal | Grills first; writes the course repo and the goal prompt; never starts the loop |
-| `sigmamusk` | a repo, plan, issue or process · optional `--demon` | Measures before it judges; edits no code; files one issue; ships only after your yes |
+| `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
 
 ### Requirements
 
