@@ -5,8 +5,9 @@
  *   node scripts/packs-snapshot.js <clones-dir>
  *
  * <clones-dir> holds one shallow clone per repo, named by the repo name
- * (skills, threejs-skills, hyperframes, hyperframes-student-kit, MiniMax-H3). The hyperframes
- * clone must be at the tag named in HYPERFRAMES_RELEASE: `git clone --branch <tag> --depth 1`.
+ * (skills, threejs-skills, hyperframes, hyperframes-student-kit, MiniMax-H3, tstack). The hyperframes
+ * clone must be at the tag named in HYPERFRAMES_RELEASE: `git clone --branch <tag> --depth 1`. The tstack
+ * clone must be at the commit named in TSTACK_COMMIT.
  * The snapshot lets the installer show every group at once, without cloning.
  * Packs this script does not list are kept as they are.
  */
@@ -21,6 +22,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // The HyperFrames skills change shape often (14 were folded into `hyperframes` at once). The pack
 // is pinned to one release tag; to move it, clone that tag, change this line, and re-run.
 const HYPERFRAMES_RELEASE = 'v0.8.188';
+
+// Theo Browne's tstack (MIT) is pinned to one commit. To move it, clone that commit, change this line, and re-run.
+const TSTACK_COMMIT = '1085050f3baed1ac724caa4a8166145fb2ac88af';
 
 const PACKS = [
   {
@@ -68,6 +72,13 @@ const PACKS = [
     sources: [{ repo: 'MiniMax-AI/MiniMax-H3', clone: 'MiniMax-H3', path: 'skills' }],
   },
   {
+    id: 'tstack',
+    title: 'tstack',
+    blurb: "Theo Browne's agent skills for shipping PRs: full-send, council, babysit-pr, file-pr and more.",
+    aliases: ['theo'],
+    sources: [{ repo: 't3dotgg/tstack', clone: 'tstack', path: 'skills', ref: TSTACK_COMMIT }],
+  },
+  {
     id: 'local',
     title: 'Local',
     blurb: 'A folder of your own skills on this machine.',
@@ -84,11 +95,13 @@ function shortDescription(text) {
 
 function readDescription(dir) {
   const md = fs.readFileSync(path.join(dir, 'SKILL.md'), 'utf8');
+  // parseSkillFrontmatter reads `description: >-` as the bare marker, so a folded or literal block is read here first.
+  const block = md.match(/^description:\s*[>|][-+]?\s*\r?\n((?:[ \t]+.*\r?\n?)+)/m);
+  if (block) return block[1];
   try {
     return parseSkillFrontmatter(md).description;
   } catch {
-    const folded = md.match(/^description:\s*[>|][-+]?\s*\r?\n((?:[ \t]+.*\r?\n?)+)/m);
-    return folded ? folded[1] : '';
+    return '';
   }
 }
 

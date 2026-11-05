@@ -65,6 +65,7 @@ Then run `/sigmasetup` (Codex: `$sigmasetup`) once in each repo. Installed skill
 | `design-md` | 84 brand looks, each a `DESIGN.md` skill. **Up to 3 at a time.** | [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) |
 | `last30days` | research any topic across the last 30 days (needs Python 3.12+ and Node 22+) | [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill) |
 | `financial-services` | 99 finance skills: DCF, LBO, comps, pitch decks, earnings, KYC (plugins, agents and commands as skills) | [anthropics/financial-services](https://github.com/anthropics/financial-services) |
+| `tstack` | 9 agent skills for shipping PRs: `full-send`, `council`, `babysit-pr` and more | [t3dotgg/tstack](https://github.com/t3dotgg/tstack) (MIT) |
 | `local` | a folder of your own skills | `SIGMA_LOCAL_SKILLS_DIR` or `~/.sigmaskills/packs.json` |
 | `all` | every pack that is available | |
 

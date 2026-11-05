@@ -326,7 +326,7 @@ const pack = (id) => registry.packs.find((entry) => entry.id === id);
 
 test('registry: the four new sets are pinned and listed, before Local', () => {
   const ids = registry.packs.map((entry) => entry.id);
-  assert.deepEqual(ids, ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'local']);
+  assert.deepEqual(ids, ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'local']);
   for (const id of ['anthropic', 'design-md', 'last30days', 'financial-services']) {
     for (const source of pack(id).sources) assert.match(source.ref, /^([0-9a-f]{40}|v\d+\.\d+\.\d+)$/, `${id} is pinned`);
   }
@@ -402,8 +402,8 @@ function terminal(box, keys) {
 
 const stateIds = (box) => Object.keys(JSON.parse(fs.readFileSync(path.join(box.project, '.agents', '.sigmaskills', 'packs.json'), 'utf8')).skills).sort();
 
-// The Looks pack is the 11th row: ten built-in packs come first. Down ten times, open it, then down to row one.
-const OPEN_LOOKS = `${DOWN.repeat(10)}${RIGHT}${DOWN}`;
+// The Looks pack is the 12th row: eleven built-in packs come first. Down eleven times, open it, then down to row one.
+const OPEN_LOOKS = `${DOWN.repeat(11)}${RIGHT}${DOWN}`;
 
 test('wizard: the 4th pick opens a drop list; the dropped pick leaves and three skills install', async () => {
   const box = looksBox();
