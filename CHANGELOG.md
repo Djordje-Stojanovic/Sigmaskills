@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmamusk` has three modes. Review (`/sigmamusk <target>`) works as before. Grill (`/sigmamusk` alone) asks 3 to 5 questions with recommended answers, then reviews and routes the result to SigmaShip, SigmaBrief, SigmaLoop, SigmaReview, SigmaImprove or SigmaRefactor. Fast (`--fast "<problem>"`) researches the problem, runs the Algorithm on what it touches, and, when a named sure check passes, files the issue and ships it end to end with SigmaShip; otherwise it falls back to Grill.
+
 ## [0.20.0] — 2026-11-05
 
 ### Added
