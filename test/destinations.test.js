@@ -207,5 +207,5 @@ test('agy global skills go to ~/.gemini/config/skills, the folder the CLI reads'
   assert.equal(agy.relativeRoot, '.gemini/config/skills');
   assert.equal(agy.absoluteRoot, path.join(home, '.gemini', 'config', 'skills'));
   const ide = groups.find((group) => group.hosts.some((host) => host.id === 'antigravity'));
-  assert.equal(ide.relativeRoot, '.gemini/antigravity/skills');
+  assert.equal(ide.relativeRoot, '.gemini/config/skills'); // upstream cad8cda moved the IDE here too
 });
