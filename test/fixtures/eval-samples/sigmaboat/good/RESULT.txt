@@ -1,0 +1,10 @@
+| Worker | Item | Gate exit | Minutes | Cost | Deleted |
+|---|---|---|---|---|---|
+| bx_k2f9q1aa | #42 | 0 | 14 | $0.01 | yes |
+| bx_p7d3m0zz | #43 | 1 | 9 | $0.01 | yes |
+
+Base: bx_base01xy, revision 1a2b3c4, disk 2.1 GB, stopped.
+
+Landed: https://github.com/example/app/pull/51 (#42). #43 did not finish: its gate failed on test_login; next step: rerun after the fix in #51.
+
+`boat list --all --json` shows only base-app.

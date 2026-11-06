@@ -545,7 +545,14 @@ function sigmamusk({ result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmacourse, sigmamusk, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmaboat reports every worker it started (id, gate exit code, cost) and proves each one is deleted.
+function sigmaboat({ result }) {
+  const problems = requireText(result, [/bx_[a-z0-9]+/, /deleted/i, /gate/i, /base/i, /stopped/i], 'reply');
+  if (!/\|\s*bx_[a-z0-9]+\s*\|[^\n]*\|\s*-?\d+\s*\|[^\n]*\|\s*yes\s*\|/i.test(result)) problems.push('reply: no worker row with id, gate exit code and deleted yes');
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmacourse, sigmamusk, sigmaboat, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

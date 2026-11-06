@@ -71,3 +71,4 @@ description: 'Use when asked for sigmasetup or to set up installed skills in a r
 description: 'Use when asked for sigmacourse or to plan a whole course or curriculum at any size: grill, spec, done ladder, queue, course repo, goal prompt.
 description: 'Use when asked for sigmamusk, Elon, Musk, the Algorithm or an idiot index. Measures waste, files one issue with a delete list and a report page, offers SigmaShip. Do not use for bugs (SigmaReview).'
 Do not use for bugs (SigmaReview).
+description: 'Use when asked for sigmaboat or to run authorized work (loop file, ship issue, spec) on boat.dev sandboxes: base once, fork per worker, delete. Do not use to plan work (SigmaLoop) or by default.'

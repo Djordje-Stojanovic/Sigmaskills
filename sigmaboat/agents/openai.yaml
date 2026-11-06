@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaBoat
+  short_description: Run authorized work on boat.dev sandboxes, then delete them
+  default_prompt: Use $sigmaboat to run this loop file on boat.dev sandboxes, one fork
+    per worker, and delete every worker at the end.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

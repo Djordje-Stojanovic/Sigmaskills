@@ -22,6 +22,7 @@ const KNOWN_SKILLS = [
   { id: 'sigmasetup', title: 'SigmaSetup', needsReferences: true },
   { id: 'sigmacourse', title: 'SigmaCourse', needsReferences: true },
   { id: 'sigmamusk', title: 'SigmaMusk', needsReferences: true },
+  { id: 'sigmaboat', title: 'SigmaBoat', needsReferences: false },
   { id: 'sigmawritegui', title: 'SigmaWriteGUI', needsReferences: false },
   { id: 'sigmacreatearena', title: 'SigmaCreateArena', needsReferences: true },
   {

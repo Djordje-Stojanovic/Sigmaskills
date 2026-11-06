@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmaboat` (SigmaBoat): runs work the user already authorized (a loop file, a ship issue, a speed-loop project, a spec) on boat.dev cloud sandboxes. It reads the live limits, builds one stopped base per repo with no identity on its disk, forks one sandbox per worker, runs each gate with no timeout, follows the work's own landing rules, saves usage and deletes every worker. It starts nothing unless the user names boat.
+
 ## [0.20.1] — 2026-11-06
 
 ### Added
