@@ -2,7 +2,7 @@
 
 Checked 2026-10-20. Hosts change fast: when a fact matters, check the linked source. Each host file marks every fact **ran** (run by the author on Windows 11), **doc** (host documentation or its own bundled guide), or **source** (host source code); a step not run says "live run pending". A host not listed gets the plain instruction (last section).
 
-Every prompt carries the same five things (the crew line says: one whole ticket per worker, one reviewer, no helper agents; cost rules are in the loop file): ranked order, crew and model mix, wake rules, landing rules, stop line. The loop file holds the long form; the prompt points to it and repeats only what the host needs to hold the loop.
+Every prompt carries the done command or stop line, the loop file path to re-read each turn, and the 2-3 limits that must hold. The loop file holds the rest (order, roles, failure and speed rules, landing). Default on every host that has it: native `/goal`, driven by completion notices, with no wake task and no cron.
 
 ## Pick the mechanism
 

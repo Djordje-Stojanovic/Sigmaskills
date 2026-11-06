@@ -38,6 +38,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
+- `sigmaloop` is general and faster. It names roles and tiers (planner, builder, reviewer, clerk; cheap, mid, top) instead of model ids, and drops fixed paths, models and counts. The default run is a native `/goal` driven by completion notices, with no wake task or cron; `/loop` is an option. The loop file adds failure rules (stuck by last commit or output time, WIP commit and restart, a provider that fails twice drops to last, a job that fails twice moves one tier up, cleanup by process id, no polling), speed rules (one closing review per job, changed units only, one full gate at the end, bulk compute, a parallel-process cap instead of short time caps), a "Do not" list from a real 2-week run, and an owner-triggered On stop step (sigmamusk, sigmarefactor, sigmareview, measured before and after). The question round asks for the speed metric, the stop line and what may be deleted. The historical `example.md` is gone.
 - `sigmaship` review rounds work by intent. The reviewer gets the ticket's goal and criteria, `git diff --stat`, and the builder's Skipped and Risk lines. It asks first "did the ticket ask for this?" and reads every line only of risky files (money, security, migrations, deploy config); other files get a hunk only when the stat, the Risk line or a doubt calls for it. (Thinkcenter_Setup#1611 R16)
 
 ## [0.21.0] — 2026-11-06
