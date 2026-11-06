@@ -1,6 +1,6 @@
-import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
+import { availableParallelism, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -28,13 +28,23 @@ if (tarball && spawnSync('tar', ['-xzf', tarball], { cwd: packDir }).status === 
   env.SIGMA_TEST_PACKAGE = join(packDir, 'package');
 }
 
-const result = spawnSync(process.execPath, ['--test', ...files], { cwd: root, stdio: 'inherit', env });
-rmSync(packDir, { recursive: true, force: true });
+env.SIGMA_TEST_TIMING = join(packDir, 'timing.json');
+// Most tests wait on child processes, so run more files at once than there are cores.
+const concurrency = String(Math.max(8, availableParallelism() * 2));
+const result = spawnSync(process.execPath, ['--test', '--test-concurrency', concurrency,
+  '--test-reporter', 'spec', '--test-reporter-destination', 'stdout',
+  '--test-reporter', join(root, 'scripts', 'test-timing.js'), '--test-reporter-destination', join(packDir, 'timing.log'),
+  ...files], { cwd: root, stdio: 'inherit', env });
+const timing = existsSync(env.SIGMA_TEST_TIMING) ? JSON.parse(readFileSync(env.SIGMA_TEST_TIMING, 'utf8')) : {};
 const seconds = (Date.now() - started) / 1000;
 const BUDGET = 180; // owner limit for the default run; slow sets go behind SIGMA_SLOW_TESTS=1
 console.log(`npm test took ${seconds.toFixed(0)} s (budget ${BUDGET} s)`);
 if (!process.env.SIGMA_SLOW_TESTS && seconds > BUDGET) {
+  const slowest = Object.entries(timing).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  for (const [file, secs] of slowest) console.error(`  ${secs.toFixed(0).padStart(4)} s  ${file.slice(root.length + 1)}`);
   console.error(`FAIL: npm test took ${seconds.toFixed(0)} s, over the ${BUDGET} s budget; move the slow test behind SIGMA_SLOW_TESTS=1 with a fast fixture test in its place`);
+  rmSync(packDir, { recursive: true, force: true });
   process.exit(1);
 }
+rmSync(packDir, { recursive: true, force: true });
 process.exit(result.status === null ? 1 : result.status);

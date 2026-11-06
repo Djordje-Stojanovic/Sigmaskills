@@ -1,6 +1,6 @@
 ---
 name: sigmawrite
-description: Use when asked for sigmawrite, easy talk, a SigmaWriteGUI board, an EASYTALK REPLY, less jargon, gibberish or outsider-clear text. Plain English and status boards. Do not use on code or APIs.
+description: Use when asked for sigmawrite, easy talk, a SigmaWriteGUI board, an EASYTALK REPLY, less jargon, gibberish or outsider-clear text. Plain English and status boards. Do not use to rewrite code or APIs.
 ---
 
 # SigmaWrite
