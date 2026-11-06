@@ -9,7 +9,7 @@ Give work the user already authorized extra machines: [boat.dev](https://boat.de
 
 ## Operating contract
 
-- **Explicit only.** Start a sandbox only when the user's message or the spec names boat. Never by default. No size has a GPU, so not for GPU work or renders.
+- **Explicit only.** Start a sandbox only when the user's message or the spec names boat. No size has a GPU, so not for GPU work or renders.
 - **Authorized work only.** The input is a loop file, an issue with acceptance criteria, a speed-loop project or a spec. SigmaBoat writes no plan: SigmaLoop writes prompts, SigmaShip ships tickets. The host runs that work with its own mechanism (subagents, threads, `/goal`); SigmaBoat only supplies and cleans up the machines.
 - **Cost.** boat's auto-stop (`--ttl` on every start) ends each sandbox; deleting it ends it sooner. Read the live limits; set no budget the user did not give.
 - **Secrets.** Read `BOAT_API_KEY` from the environment or a secrets file named by path. Sign in with `--key-stdin`. Send a token (for example `GH_TOKEN`) on stdin, never as a flag: `-e KEY=VALUE` shows the value on the command line, and a fork copies the base's environment. Never print a value.
@@ -20,6 +20,7 @@ Give work the user already authorized extra machines: [boat.dev](https://boat.de
 - `boat exec` stops a command after 30 s unless you pass `--timeout`; `0` means no limit.
 - Piped or captured, every command prints JSON (`--json` turns on by itself). Read ids from the `ready` event of `boat new --json`.
 - Auto-stop counts from start or resume. Only a running `boat prompt` extends it; `exec`, SSH and threads do not. Set `--ttl` on every `new` and `fork`.
+- boat sets its own `GITHUB_TOKEN` in every sandbox, and it cannot reach private repos: run git and gh there as `env -u GITHUB_TOKEN ...`.
 - A fork copies the whole disk of the source's newest snapshot. Fork only a stopped base (`boat info` says `stopped`), and never put a Tailscale, T3 or secret identity on a base.
 - Free trial: 2 sandboxes at once, `--ttl` at most 7200, sizes `small` and `default`, no saved snapshots. Read the real numbers with `boat limits --json`.
 
@@ -61,7 +62,7 @@ boat fork <base> --ttl 7200 --wait --json                        # id from the "
 printf '%s\n' "$GH_TOKEN" | boat ssh <id> -- sh -c 'unset GITHUB_TOKEN; gh auth login --with-token && gh auth setup-git'
 ```
 
-boat sets its own `GITHUB_TOKEN` in every sandbox; it cannot reach private repos, so run git and gh as `env -u GITHUB_TOKEN ...`. One fork per worker, at most the free slots. A failed fork is retried once with `--fail-fast`; then that item waits for a free slot.
+One fork per worker, at most the free slots. A failed fork is retried once with `--fail-fast`; then that item waits for a free slot.
 
 ## 4. Run each worker's item
 
