@@ -59,4 +59,4 @@ Prose in `.md` files and test files do not count by themselves. When in doubt, l
 - Record each round in the ledger's *Review rounds* table: round, status, counts, commits.
 - A round 2 that still finds P0–P2 problems means the ticket or design is wrong. Stop and ask the user.
 - `BLOCKED`: read the reason, fix what you can, ask the user about the rest.
-- When you run the round yourself (no sub-agents), do steps 2–4 of the template on your own diff, fix, and record it the same way.
+- When you run the round yourself (no sub-agents), do steps 2–6 of the template on your own diff, fix, and record it the same way.
