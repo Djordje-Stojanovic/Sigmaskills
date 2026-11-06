@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import test from 'node:test';
+import { describe, it as test } from 'node:test';
 import { runCli } from '../src/cli.js';
 import {
   ACME_PACK, commitAll, createMockIo, createRemote, createSandbox, writeSkills, writeUserConfig,
 } from './pack-fixtures.js';
+
+// Each test owns its sandbox and waits on child processes, so the file's tests run at once (the suite budget).
+describe('pack-install', { concurrency: true }, () => {
 
 function setup() {
   const box = createSandbox();
@@ -261,4 +264,5 @@ test('pack install: global scope needs --yes and writes under the home folder', 
   } finally {
     box.cleanup();
   }
+});
 });

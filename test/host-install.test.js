@@ -159,3 +159,43 @@ test('install: overlapping selected destinations fail before any write', () => {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });
+
+test('install: a skipped canonical copy leaves the host link and the recorded revision alone', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-host-skip-'));
+  try {
+    const catalog = getCatalog(ROOT);
+    const params = { catalog, skillId: 'sigmawrite', projectRoot, packageRoot: ROOT, selectedRoots: ['.agents/skills', '.claude/skills'], destinationGroups: hostGroups(projectRoot) };
+    executeProjectInstall(params);
+    const skillMd = path.join(projectRoot, '.agents', 'skills', 'sigmawrite', 'SKILL.md');
+    fs.writeFileSync(skillMd, `${fs.readFileSync(skillMd, 'utf8')}\nlocal edit\n`);
+    const statePath = path.join(projectRoot, '.agents', '.sigmaskills', 'state.json');
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    state.skills.sigmawrite.revision = 'older-revision';
+    fs.writeFileSync(statePath, JSON.stringify(state));
+    const before = fs.readFileSync(skillMd, 'utf8');
+
+    executeProjectInstall({ ...params, adoptChanged: 'skip', adoptLegacy: 'skip', adoptUnverified: 'skip' });
+
+    assert.equal(fs.readFileSync(skillMd, 'utf8'), before);
+    assert.equal(loadProjectState(projectRoot).skills.sigmawrite.revision, 'older-revision');
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('install: a skipped canonical copy still gets a newly selected host link', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-host-skip-new-'));
+  try {
+    const catalog = getCatalog(ROOT);
+    const params = { catalog, skillId: 'sigmawrite', projectRoot, packageRoot: ROOT, destinationGroups: hostGroups(projectRoot) };
+    executeProjectInstall({ ...params, selectedRoots: ['.agents/skills'] });
+    const skillMd = path.join(projectRoot, '.agents', 'skills', 'sigmawrite', 'SKILL.md');
+    fs.writeFileSync(skillMd, `${fs.readFileSync(skillMd, 'utf8')}\nlocal edit\n`);
+
+    executeProjectInstall({ ...params, selectedRoots: ['.agents/skills', '.claude/skills'], adoptChanged: 'skip' });
+
+    assert.ok(fs.existsSync(path.join(projectRoot, '.claude', 'skills', 'sigmawrite', 'SKILL.md')));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
