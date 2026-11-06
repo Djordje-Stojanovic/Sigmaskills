@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generatedFrom": {
     "repository": "vercel-labs/skills",
-    "pinnedRevision": "cc5fb50a1b3235bc30c330fa03471d5b2c69363b",
+    "pinnedRevision": "9442e5adfc63bd0369a4873e53f6b4e6f440bc8f",
     "upstreamFile": "src/agents.ts"
   },
   "hosts": [
@@ -34,7 +34,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 811
+        "upstreamLine": 812
       }
     },
     {
@@ -65,7 +65,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 82
+        "upstreamLine": 87
       }
     },
     {
@@ -96,7 +96,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 91
+        "upstreamLine": 96
       }
     },
     {
@@ -127,7 +127,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 100
+        "upstreamLine": 105
       }
     },
     {
@@ -158,7 +158,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 110
+        "upstreamLine": 115
       }
     },
     {
@@ -189,7 +189,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 120
+        "upstreamLine": 125
       }
     },
     {
@@ -220,7 +220,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 138
+        "upstreamLine": 143
       }
     },
     {
@@ -251,7 +251,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 129
+        "upstreamLine": 134
       }
     },
     {
@@ -282,7 +282,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 147
+        "upstreamLine": 152
       }
     },
     {
@@ -313,7 +313,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 156
+        "upstreamLine": 161
       }
     },
     {
@@ -345,7 +345,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 180
+        "upstreamLine": 185
       }
     },
     {
@@ -376,7 +376,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 189
+        "upstreamLine": 194
       }
     },
     {
@@ -407,7 +407,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 198
+        "upstreamLine": 203
       }
     },
     {
@@ -438,7 +438,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 207
+        "upstreamLine": 212
       }
     },
     {
@@ -469,7 +469,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 216
+        "upstreamLine": 221
       }
     },
     {
@@ -501,7 +501,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 225
+        "upstreamLine": 230
       }
     },
     {
@@ -532,7 +532,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 234
+        "upstreamLine": 239
       }
     },
     {
@@ -563,7 +563,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 243
+        "upstreamLine": 248
       }
     },
     {
@@ -594,7 +594,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 252
+        "upstreamLine": 257
       }
     },
     {
@@ -625,7 +625,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 261
+        "upstreamLine": 266
       }
     },
     {
@@ -656,7 +656,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 270
+        "upstreamLine": 275
       }
     },
     {
@@ -687,7 +687,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 279
+        "upstreamLine": 284
       }
     },
     {
@@ -718,7 +718,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 289
+        "upstreamLine": 294
       }
     },
     {
@@ -749,7 +749,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 298
+        "upstreamLine": 303
       }
     },
     {
@@ -780,7 +780,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 308
+        "upstreamLine": 313
       }
     },
     {
@@ -807,7 +807,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 321
+        "upstreamLine": 326
       }
     },
     {
@@ -838,7 +838,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 333
+        "upstreamLine": 337
       }
     },
     {
@@ -869,7 +869,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 343
+        "upstreamLine": 347
       }
     },
     {
@@ -900,7 +900,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 352
+        "upstreamLine": 356
       }
     },
     {
@@ -931,7 +931,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 362
+        "upstreamLine": 366
       }
     },
     {
@@ -962,7 +962,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 371
+        "upstreamLine": 375
       }
     },
     {
@@ -993,7 +993,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 380
+        "upstreamLine": 384
       }
     },
     {
@@ -1024,7 +1024,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 389
+        "upstreamLine": 393
       }
     },
     {
@@ -1055,7 +1055,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 398
+        "upstreamLine": 402
       }
     },
     {
@@ -1086,7 +1086,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 434
+        "upstreamLine": 438
       }
     },
     {
@@ -1117,7 +1117,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 407
+        "upstreamLine": 411
       }
     },
     {
@@ -1148,7 +1148,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 416
+        "upstreamLine": 420
       }
     },
     {
@@ -1179,7 +1179,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 425
+        "upstreamLine": 429
       }
     },
     {
@@ -1210,7 +1210,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 443
+        "upstreamLine": 447
       }
     },
     {
@@ -1244,7 +1244,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 454
+        "upstreamLine": 458
       }
     },
     {
@@ -1275,7 +1275,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 463
+        "upstreamLine": 467
       }
     },
     {
@@ -1306,7 +1306,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 472
+        "upstreamLine": 476
       }
     },
     {
@@ -1337,7 +1337,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 481
+        "upstreamLine": 485
       }
     },
     {
@@ -1368,7 +1368,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 490
+        "upstreamLine": 494
       }
     },
     {
@@ -1399,7 +1399,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 499
+        "upstreamLine": 503
       }
     },
     {
@@ -1430,7 +1430,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 509
+        "upstreamLine": 513
       }
     },
     {
@@ -1461,7 +1461,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 518
+        "upstreamLine": 522
       }
     },
     {
@@ -1492,7 +1492,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 527
+        "upstreamLine": 531
       }
     },
     {
@@ -1523,7 +1523,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 536
+        "upstreamLine": 540
       }
     },
     {
@@ -1554,7 +1554,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 545
+        "upstreamLine": 549
       }
     },
     {
@@ -1585,7 +1585,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 780
+        "upstreamLine": 784
       }
     },
     {
@@ -1616,7 +1616,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 572
+        "upstreamLine": 576
       }
     },
     {
@@ -1689,7 +1689,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 167
+        "upstreamLine": 172
       }
     },
     {
@@ -1720,7 +1720,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 554
+        "upstreamLine": 558
       }
     },
     {
@@ -1751,7 +1751,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 563
+        "upstreamLine": 567
       }
     },
     {
@@ -1782,7 +1782,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 581
+        "upstreamLine": 585
       }
     },
     {
@@ -1813,7 +1813,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 789
+        "upstreamLine": 793
       }
     },
     {
@@ -1844,7 +1844,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 593
+        "upstreamLine": 597
       }
     },
     {
@@ -1871,7 +1871,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 798
+        "upstreamLine": 802
       }
     },
     {
@@ -1902,7 +1902,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 602
+        "upstreamLine": 606
       }
     },
     {
@@ -1933,7 +1933,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 611
+        "upstreamLine": 615
       }
     },
     {
@@ -1964,7 +1964,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 620
+        "upstreamLine": 624
       }
     },
     {
@@ -1981,11 +1981,11 @@
         },
         "global": {
           "kind": "join",
-          "base": "home",
+          "base": "reasonixHome",
           "segments": [
-            ".reasonix/skills"
+            "skills"
           ],
-          "raw": "join(home, '.reasonix/skills')"
+          "raw": "join(reasonixHome, 'skills')"
         }
       },
       "aliases": [],
@@ -1995,7 +1995,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 639
+        "upstreamLine": 643
       }
     },
     {
@@ -2026,7 +2026,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 629
+        "upstreamLine": 633
       }
     },
     {
@@ -2057,7 +2057,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 657
+        "upstreamLine": 661
       }
     },
     {
@@ -2088,7 +2088,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 648
+        "upstreamLine": 652
       }
     },
     {
@@ -2119,7 +2119,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 666
+        "upstreamLine": 670
       }
     },
     {
@@ -2150,7 +2150,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 676
+        "upstreamLine": 680
       }
     },
     {
@@ -2181,7 +2181,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 685
+        "upstreamLine": 689
       }
     },
     {
@@ -2212,7 +2212,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 694
+        "upstreamLine": 698
       }
     },
     {
@@ -2243,7 +2243,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 703
+        "upstreamLine": 707
       }
     },
     {
@@ -2274,7 +2274,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 712
+        "upstreamLine": 716
       }
     },
     {
@@ -2305,7 +2305,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 820
+        "upstreamLine": 821
       }
     },
     {
@@ -2336,7 +2336,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 721
+        "upstreamLine": 725
       }
     },
     {
@@ -2367,7 +2367,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 730
+        "upstreamLine": 734
       }
     },
     {
@@ -2398,7 +2398,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 753
+        "upstreamLine": 757
       }
     },
     {
@@ -2429,7 +2429,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 739
+        "upstreamLine": 743
       }
     },
     {
@@ -2460,7 +2460,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 762
+        "upstreamLine": 766
       }
     },
     {
@@ -2491,7 +2491,7 @@
       },
       "attribution": {
         "upstreamFile": "src/agents.ts",
-        "upstreamLine": 771
+        "upstreamLine": 775
       }
     }
   ]
