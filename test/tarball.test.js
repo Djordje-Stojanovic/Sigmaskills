@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { extractRawCustomContent, injectRawCustomContent } from '../src/customization.js';
+import { packInto } from './packed.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
@@ -71,12 +72,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-tarball-test-'));
   try {
     // 1. Pack tarball into tmpDir
-    const packOutput = execSync(`npm pack --pack-destination "${tmpDir}"`, {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim();
-
-    const tarballFileName = packOutput.split(/\r?\n/).pop()?.trim();
+    const tarballFileName = packInto(tmpDir);
     assert.ok(tarballFileName, 'expected tarball filename from npm pack');
     const tarballPath = path.join(tmpDir, tarballFileName);
     assert.ok(fs.existsSync(tarballPath), `tarball does not exist at ${tarballPath}`);

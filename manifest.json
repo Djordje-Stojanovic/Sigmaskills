@@ -27,7 +27,7 @@
     {
       "id": "sigmawrite",
       "title": "SigmaWrite",
-      "needsReferences": false
+      "needsReferences": true
     },
     {
       "id": "sigmarefactor",
@@ -43,11 +43,6 @@
       "id": "sigmadeeplook",
       "title": "SigmaDeepLook",
       "needsReferences": true
-    },
-    {
-      "id": "sigmawritegui",
-      "title": "SigmaWriteGUI",
-      "needsReferences": false
     },
     {
       "id": "sigmacreatearena",
@@ -118,9 +113,15 @@
       "id": "sigmaboat",
       "title": "SigmaBoat",
       "needsReferences": false
+    },
+    {
+      "id": "sigmadebug",
+      "title": "SigmaDebug",
+      "needsReferences": false
     }
   ],
   "retired": [
-    "sigmaperformance"
+    "sigmaperformance",
+    "sigmawritegui"
   ]
 }

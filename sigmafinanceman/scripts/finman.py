@@ -121,6 +121,8 @@ def run_company(kind, f, args, peers=None, cache=None):
 
 
 def soffice():
+    if os.environ.get("FINMAN_NO_SOFFICE"):  # tests: skip the slow real LibreOffice recalculation
+        return None
     for c in (shutil.which("soffice"), shutil.which("libreoffice"), r"C:\Program Files\LibreOffice\program\soffice.exe",
               "/Applications/LibreOffice.app/Contents/MacOS/soffice"):
         if c and Path(c).exists():

@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { findPackageRoot } from '../src/catalog.js';
 import { inspectManagedPath, recommendedLinkMethod } from '../src/links.js';
 import { computeSkillRevision } from '../src/revision.js';
+import { packInto, installTarball } from './packed.js';
 
 const ROOT = findPackageRoot();
 const LINK_METHOD = recommendedLinkMethod();
@@ -93,11 +94,7 @@ function listTarball(tmpDir, tarballFileName) {
 test('packed Release candidate covers lifecycle, platforms, terminals, schemas, allowlist, identities, and offline use', async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-rc-'));
   try {
-    const packOutput = execSync(`npm pack --pack-destination "${tmpDir}"`, {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim();
-    const tarballFileName = packOutput.split(/\r?\n/).pop()?.trim();
+    const tarballFileName = packInto(tmpDir);
     assert.ok(tarballFileName, 'expected tarball filename from npm pack');
     const tarballPath = path.join(tmpDir, tarballFileName);
     const packedFiles = listTarball(tmpDir, tarballFileName);
@@ -134,8 +131,7 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
 
     const appDir = path.join(tmpDir, 'app');
     fs.mkdirSync(appDir, { recursive: true });
-    execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
+    installTarball(appDir, tarballPath);
     const packedRoot = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills');
     const bin = path.join(packedRoot, 'bin', 'sigmaskills.js');
     const offline = offlineEnv({ HOME: path.join(tmpDir, 'offline-home'), USERPROFILE: path.join(tmpDir, 'offline-home') });

@@ -28,9 +28,19 @@ export function readSkillTreeAtRef(rootDir, ref, skillId) {
   }
   // Read no blobs for folders that are not skills (src/, test/, ...).
   if (!entries.some((entry) => entry.rel === 'SKILL.md')) return null;
+  // One git process reads every blob, in the order asked.
+  const out = execFileSync('git', ['cat-file', '--batch'], {
+    cwd: rootDir,
+    input: entries.map((entry) => entry.object + '\n').join(''),
+    maxBuffer: 64 * 1024 * 1024,
+  });
   const tree = {};
-  for (const { rel, object } of entries) {
-    tree[rel] = git(rootDir, ['cat-file', 'blob', object], 'buffer');
+  let at = 0;
+  for (const { rel } of entries) {
+    const eol = out.indexOf(0x0a, at);
+    const size = Number(out.subarray(at, eol).toString('latin1').split(' ')[2]);
+    tree[rel] = Buffer.from(out.subarray(eol + 1, eol + 1 + size));
+    at = eol + 1 + size + 1;
   }
   return tree;
 }

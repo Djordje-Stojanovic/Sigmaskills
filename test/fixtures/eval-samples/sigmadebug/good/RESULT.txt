@@ -1,0 +1,14 @@
+I saved the topic list to C:\Users\me\Downloads\issues-snake-06-11-2026.txt and opened it. I wrote the plan file fix-issues-plan-temp-06-11-2026.md next to it.
+
+Topic T1: the snake survives one cell past two walls
+
+1. What I said: the wall check looks fine.
+2. What you answered: nothing yet.
+3. What this is about: the snake can touch the right and bottom walls and live.
+4. My answer: `src/logic.js` uses `head[0] > WIDTH`. It should be `>=`. I checked the test file and no test covers it.
+5. What you can do:
+   A. Fix the check and add one test. ★ recommended
+   B. Fix the check only.
+   C. Leave it for now.
+
+T1 is clear, so I handed its plan to a background worker. It runs /sigmaship with no questions to you. I am on T2 now.

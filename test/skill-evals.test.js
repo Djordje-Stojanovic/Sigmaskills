@@ -125,13 +125,15 @@ test('evals: sigmawrite contract counts list items and paragraphs as separate se
   assert.deepEqual(checkContract('sigmawrite', { files: { 'docs/NOTES.md': text } }), []);
 });
 
-test('evals: sigmawritegui rejects broken data and changed board controls', () => {
-  const sample = loadSample(path.join(SAMPLES, 'sigmawritegui', 'good'));
+test('evals: the sigmawrite GUI option rejects broken data and changed board controls', () => {
+  const sample = loadSample(path.join(SAMPLES, 'sigmawrite-gui', 'good'));
+  assert.deepEqual(checkContract('sigmawrite', sample), []);
+  assert.notDeepEqual(checkContract('sigmawrite', loadSample(path.join(SAMPLES, 'sigmawrite-gui', 'bad'))), []);
   const board = sample.files['status-board.html'];
-  const check = (html) => checkContract('sigmawritegui', { ...sample, files: { 'status-board.html': html } });
+  const check = (html) => checkContract('sigmawrite', { ...sample, files: { 'status-board.html': html } });
   assert.deepEqual(check(board.replace('Project status', 'Release progress')), []);
   assert.notDeepEqual(check(board.replace('const FYI=', 'const INFO=')), []);
   assert.notDeepEqual(check(board.replace('const DO=[', 'const DO=[;')), []);
   assert.notDeepEqual(check(board.replace('Copy my answers</button>', 'Continue</button>')), []);
-  assert.notDeepEqual(checkContract('sigmawritegui', { ...sample, result: 'Done.' }), []);
+  assert.notDeepEqual(checkContract('sigmawrite', { ...sample, result: 'Done.' }), []);
 });

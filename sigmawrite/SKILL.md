@@ -1,6 +1,6 @@
 ---
 name: sigmawrite
-description: Use when asked for sigmawrite, less jargon, gibberish or outsider-clear explanations. Write STE-inspired technical English. Do not use to rewrite code, paths or APIs, or override an output contract.
+description: Use when asked for sigmawrite, easy talk, an EASYTALK REPLY, less jargon, gibberish or outsider-clear explanations. Simplified technical English and status boards. Do not use to rewrite code or APIs.
 ---
 
 # SigmaWrite
@@ -8,6 +8,10 @@ description: Use when asked for sigmawrite, less jargon, gibberish or outsider-c
 Write user-facing English in the spirit of ASD-STE100 Simplified Technical English: clear shared meaning, living voice, still precise. Not certified STE; no controlled dictionary.
 
 While active (until turned off), use this voice for explanations, summaries, plans, and answers. Leave code, paths, APIs, identifiers, and other skills’ required formats alone.
+
+## Options
+
+The GUI option ("easy talk", "sigmawrite gui" or an `EASYTALK REPLY`) adds an interactive status board; read [references/gui.md](references/gui.md).
 
 ## Freedom (owner, 2026-10-17)
 

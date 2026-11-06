@@ -25,6 +25,7 @@ import {
 import { getProjectStateDir } from '../src/state.js';
 import { executeProjectInstall } from '../src/transaction.js';
 import { UNINSTALL_JOURNAL_FILENAME } from '../src/uninstall.js';
+import { packInto, installTarball } from './packed.js';
 
 const ROOT = findPackageRoot();
 const LINK_METHOD = recommendedLinkMethod();
@@ -377,16 +378,11 @@ test('purge: crash during quarantine restores live trees; crash after quarantine
 test('packed CLI covers cancellation, wrong phrase, crash retry, and complete purge', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-pack-purge-'));
   try {
-    const packOutput = execSync(`npm pack --pack-destination "${tmpDir}"`, {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim();
-    const tarballFileName = packOutput.split(/\r?\n/).pop()?.trim();
+    const tarballFileName = packInto(tmpDir);
     const tarballPath = path.join(tmpDir, tarballFileName);
     const appDir = path.join(tmpDir, 'test-app');
     fs.mkdirSync(appDir, { recursive: true });
-    execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
+    installTarball(appDir, tarballPath);
     const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
     const packedRoot = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills');
     const listed = execFileSync('tar', ['-tf', tarballFileName], { cwd: tmpDir, encoding: 'utf8' });
