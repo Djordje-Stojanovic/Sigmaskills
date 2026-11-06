@@ -18,7 +18,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
   Σ  brief        paste-ready briefs for other agents
   Σ  ship         one planned ticket to a merged, cleaned-up PR
   Σ  write        clear, plain technical English
-  Σ  writegui     short chat with status and question boards
+  Σ  debug        settle every open topic, one at a time; each fix ships in the background
   Σ  arena        rank any options blind, by Elo
   Σ  research     read public sources, with evidence and access gaps
   Σ  deeplook     read what agents cannot: video, speech, scans, binaries

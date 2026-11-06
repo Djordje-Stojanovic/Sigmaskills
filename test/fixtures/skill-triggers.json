@@ -90,6 +90,11 @@
   "near": "sigmabrief"
  },
  {
+  "prompt": "SigmaWriteGUI board: show the status in easy talk",
+  "skill": "sigmawrite",
+  "near": "sigmadebug"
+ },
+ {
   "prompt": "Build a blind arena to rank these voices and models by Elo",
   "skill": "sigmacreatearena",
   "near": "sigmaimprove"

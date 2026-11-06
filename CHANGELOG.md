@@ -39,6 +39,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Changed
 
 - `sigmawritegui` is now the GUI option of `sigmawrite`. "easy talk", "SigmaWriteGUI board" and `EASYTALK REPLY` still work and go to SigmaWrite; the board template moved to `sigmawrite/template.html`. `sigmawritegui` is listed as retired, so an installed copy is reported and left alone.
+- `npm test` runs in about 4.5 minutes instead of 58 on Windows, and fails when the default run goes over 180 s. It packs the tarball once for every test file, reads Release baselines with one git process, and runs the LibreOffice recalculation and the slow SigmaDeepLook files only with `SIGMA_SLOW_TESTS=1`. The default SigmaDeepLook set fails when it goes over 60 s.
 
 ### Fixed
 

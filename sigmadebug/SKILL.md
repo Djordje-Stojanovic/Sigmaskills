@@ -21,7 +21,7 @@ Write the list to `issues-<topic>-<dd-mm-yyyy>.txt`, a checklist at the top, one
 
 This file is the checklist. Never drop a topic. Add new topics the owner raises. Tick a topic only when its fix is merged, and write its PR number: `[x] T1 title (PR #12)`.
 
-**Board option.** If the owner asks for it ("sigmadebug gui"), use a SigmaWrite GUI board instead of the .txt and the .md plan: one `DO` card per topic with the 3 options. Replies come back as an `EASYTALK REPLY`. The rest is the same.
+**Board option.** If the owner asks for it ("sigmadebug gui"), use a SigmaWrite GUI board (SigmaWrite's `references/gui.md`) instead of the .txt: one `DO` card per topic with its 5 parts and 3 options, and a status per topic in place of the checklist ticks. Replies come back as an `EASYTALK REPLY`. The .md plan and the rest stay the same.
 
 ## 2. Talk, one topic at a time
 

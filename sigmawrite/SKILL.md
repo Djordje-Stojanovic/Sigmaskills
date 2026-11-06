@@ -1,6 +1,6 @@
 ---
 name: sigmawrite
-description: Use when asked for sigmawrite, easy talk, an EASYTALK REPLY, less jargon, gibberish or outsider-clear explanations. Simplified technical English and status boards. Do not use to rewrite code or APIs.
+description: Use when asked for sigmawrite, easy talk, a SigmaWriteGUI board, an EASYTALK REPLY, less jargon, gibberish or outsider-clear text. Plain English and status boards. Do not use on code or APIs.
 ---
 
 # SigmaWrite
@@ -11,7 +11,7 @@ While active (until turned off), use this voice for explanations, summaries, pla
 
 ## Options
 
-The GUI option ("easy talk", "sigmawrite gui" or an `EASYTALK REPLY`) adds an interactive status board; read [references/gui.md](references/gui.md).
+The GUI option ("easy talk", "sigmawrite gui", a "SigmaWriteGUI board" or an `EASYTALK REPLY`) adds an interactive status board; read [references/gui.md](references/gui.md).
 
 ## Freedom (owner, 2026-10-17)
 
