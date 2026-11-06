@@ -11,42 +11,33 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 | **License** | [MIT](LICENSE) |
 | **Spec** | [agentskills.io](https://agentskills.io/) |
 
-```text
-  Σ  review       find and prove what is wrong, in one PR an LLM can fix from
-  Σ  improve      ideas measured against the world's best, one issue per category
-  Σ  refactor     smaller code, same behavior, with your approval
-  Σ  brief        paste-ready briefs for other agents
-  Σ  ship         one planned ticket to a merged, cleaned-up PR
-  Σ  write        clear, plain technical English
-  Σ  debug        settle every open topic, one at a time; each fix ships in the background
-  Σ  arena        rank any options blind, by Elo
-  Σ  research     read public sources, with evidence and access gaps
-  Σ  deeplook     read what agents cannot: video, speech, scans, binaries
-  Σ  loop         an unattended-run prompt and a loop file
-  Σ  taste        one ranked plan of big visible changes
-  Σ  human        text that reads like a person wrote it
-  Σ  fork         an isolated copy of any repo, with a course
-  Σ  design       a design system from one accent colour
-  Σ  tour         a visual tour of any repo in one page
-  Σ  financeman   DCF, LBO, comps and budgets from SEC filings
-  Σ  speedloop    make a model serve faster on a rented GPU, no quality loss
-  Σ  setup        set up each installed pack in a repo, with you
-  Σ  freedom      remove model-written refusals from a repo's agent docs
-```
+## What it is
 
----
+SigmaSkills is a set of skills for coding agents. A skill is a folder with one `SKILL.md` that tells an agent how to do one job well. It can review a repo, ship a ticket, write a plan or read a video. You install the skills once. Then you call them by name in Codex, Claude Code, Cursor, Pi and any other host that reads `SKILL.md`.
 
-## Quick start
-
-Run the Sigma Installer in your project:
+## Install in one line
 
 ```bash
 npx @djordje-stojanovic/sigmaskills
 ```
 
-The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm.
+The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm. For a script, one line does it all: `npx @djordje-stojanovic/sigmaskills install --preset sigma --global --yes`.
 
-Then run `/sigmasetup` (Codex: `$sigmasetup`) once in each repo. Installed skills often need a little per-repo setup (a tracker file, labels, a tool, a key, a git guard); SigmaSetup finds what is missing and sets up what you say yes to.
+## Stay current
+
+Updates start with a release on npm. A merge to `main` never publishes. To move every skill on a machine to the newest release, run one line there:
+
+```bash
+npx @djordje-stojanovic/sigmaskills@latest update --global --yes
+```
+
+Use `--project .` in place of `--global` for a repo. Add `--dry-run` to preview. A skill you edited is never replaced without your say: `update` keeps your Skill Customization block and asks about other edits. `status` shows drift. To keep many machines current, run the same line on each one, from a scheduled task or a login script.
+
+---
+
+## After the install
+
+Run `/sigmasetup` (Codex: `$sigmasetup`) once in each repo. Installed skills often need a little per-repo setup (a tracker file, labels, a tool, a key, a git guard); SigmaSetup finds what is missing and sets up what you say yes to.
 
 ![The What step: packs with counts, one pack opened to pick single skills](https://raw.githubusercontent.com/Djordje-Stojanovic/Sigmaskills/main/docs/images/installer-what.svg)
 
@@ -86,31 +77,33 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 
 ## The skills
 
-| Skill | Id | Job | Output |
-|-------|-----|-----|--------|
-| **SigmaReview** | `sigmareview` | Find and prove what is wrong: bugs, security, performance, tests | One feature-branch PR with one review file |
-| **SigmaImprove** | `sigmaimprove` | Find what would make it clearly better, measured against the world's best | One living issue per category (1–20), updated on every run |
-| **SigmaBrief** | `sigmabrief` | Prompt factory for parallel / single agents | Chat briefs only |
-| **SigmaShip** | `sigmaship` | Ship one planned ticket: build, review rounds, merge, clean up | One merged PR, closed ticket, main in sync |
-| **SigmaFreedom** | `sigmafreedom` | Remove model-written refusals from agent docs, with a lint that keeps them out | A was/now change log and a keep-list you can veto |
-| **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English; "easy talk" adds status and question boards | Chat writing voice, or an interactive HTML board with copied replies |
-| **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
-| **SigmaDebug** | `sigmadebug` | Settle a pile of open topics one by one; each clear topic gets a fix plan and a background SigmaShip worker | A topic checklist (.txt), one plan file, merged PRs |
-| **SigmaCreateArena** | `sigmacreatearena` | Blind-pairs arena that ranks any options by Elo per metric | Local arena page, Elo board with ranges and costs |
-| **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub, video sites and other-language pages; count sources read in full | An answer with links, dates, read scope and access gaps |
-| **SigmaDeepLook** | `sigmadeeplook` | Read files an agent cannot: video, speech, scans, binaries, odd containers | Evidence with file paths, limits and a side-by-side `view.html` |
-| **SigmaLoop** | `sigmaloop` | Turn a repo's open work into an unattended-run prompt for Claude Code, Codex, pi or T3 Code | One loop prompt in chat and one loop file |
-| **SigmaTaste** | `sigmataste` | Taste pass through 14 lenses on a page, app, deck, doc, image or film | One ranked plan of big visible changes |
-| **SigmaHuman** | `sigmahuman` | Rewrite any text, or write from a brief, so it reads like a person wrote it; every fact kept | The new text and a fact check |
-| **SigmaFork** | `sigmafork` | Fork or copy any repo, isolated from the original | A working copy and `ONBOARDING.html` |
-| **SigmaDesign** | `sigmadesign` | A design system from one accent colour, applied across a repo | `DESIGN.md`, CSS, a sample page |
-| **SigmaTour** | `sigmatour` | A 15-60 minute visual tour of any repo: map, one request traced, examples run | One `<repo>-tour.html` page |
-| **SigmaFinanceMan** | `sigmafinanceman` | DCF, LBO, comps, three-statement models and budgets from SEC filings or your numbers | Excel with live formulas, a deck, charts, an HTML page |
-| **SigmaSpeedLoop** | `sigmaspeedloop` | Faster serving on a rented GPU, one judged change per pass | A project folder, a champion recipe, a report |
-| **SigmaSetup** | `sigmasetup` | Per-repo setup for every installed pack, after one question round | Set-up files and a table with the undo for each change |
-| **SigmaCourse** | `sigmacourse` | A course on any subject at any size: hard grill, spec, done ladder, queue | A set-up course repo and one goal prompt that builds it |
-| **SigmaMusk** | `sigmamusk` | Musk's Algorithm on your repo, plan or process: measured waste, delete list, bottleneck | One issue SigmaShip can ship, a report page, one question |
-| **SigmaBoat** | `sigmaboat` | Runs work you already authorized (a loop, a ship issue, a spec) on boat.dev cloud sandboxes | One stopped base, one fork per worker, gate results, every worker deleted |
+Each skill has one job. Say its name to start it.
+
+| Skill | Id | What it does |
+|-------|-----|--------------|
+| **SigmaReview** | `sigmareview` | Finds and proves what is wrong in a repo, in one PR |
+| **SigmaImprove** | `sigmaimprove` | Lists what would make a product better than the best in its field |
+| **SigmaBrief** | `sigmabrief` | Writes paste-ready briefs for other agents |
+| **SigmaShip** | `sigmaship` | Ships one planned ticket: build, review, merge, clean up |
+| **SigmaFreedom** | `sigmafreedom` | Removes model-written refusals from a repo's agent docs |
+| **SigmaWrite** | `sigmawrite` | Plain technical English, and status boards on request |
+| **SigmaRefactor** | `sigmarefactor` | Shrinks large files with your approval, same behavior |
+| **SigmaDebug** | `sigmadebug` | Settles open topics one at a time and ships each fix |
+| **SigmaCreateArena** | `sigmacreatearena` | Ranks any options blind, by Elo |
+| **SigmaResearch** | `sigmaresearch` | Reads public sources and counts those read in full |
+| **SigmaDeepLook** | `sigmadeeplook` | Reads what agents cannot: video, speech, scans, binaries |
+| **SigmaLoop** | `sigmaloop` | Writes the prompt and file for an unattended run |
+| **SigmaTaste** | `sigmataste` | Writes one ranked plan of big visible changes |
+| **SigmaHuman** | `sigmahuman` | Makes text read like a person wrote it |
+| **SigmaFork** | `sigmafork` | Copies a repo, isolated, and teaches it to you |
+| **SigmaDesign** | `sigmadesign` | Builds a design system from one accent colour |
+| **SigmaTour** | `sigmatour` | Shows how a repo works in one visual page |
+| **SigmaFinanceMan** | `sigmafinanceman` | Builds DCF, LBO, comps and budgets as live Excel |
+| **SigmaSpeedLoop** | `sigmaspeedloop` | Makes a model serve faster on a rented GPU |
+| **SigmaSetup** | `sigmasetup` | Sets up each installed pack in a repo, with you |
+| **SigmaCourse** | `sigmacourse` | Plans a course of any size and builds its repo |
+| **SigmaMusk** | `sigmamusk` | Runs Musk's Algorithm on your work and files the delete list |
+| **SigmaBoat** | `sigmaboat` | Runs authorized work on boat.dev cloud sandboxes |
 
 ### Which one do I need?
 

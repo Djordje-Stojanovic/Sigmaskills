@@ -1,6 +1,6 @@
 # Installer guide
 
-This guide covers the Sigma Installer (`npx @djordje-stojanovic/sigmaskills`) and the other ways to install SigmaSkills. For a first install, the [README quick start](../README.md#quick-start) is enough.
+This guide covers the Sigma Installer (`npx @djordje-stojanovic/sigmaskills`) and the other ways to install SigmaSkills. For a first install, the [README one-line install](../README.md#install-in-one-line) is enough.
 
 The Sigma Installer needs Node.js 22 or newer.
 
