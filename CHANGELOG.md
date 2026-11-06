@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.22.2] — 2026-11-06
+
 ### Fixed
 
 - An install that skips a changed or older canonical copy (`--adopt-changed skip`, `--adopt-legacy skip`) no longer moves the recorded revision, so a later `update` still sees the skill as stale. Before, the host link advanced the record while the files stayed old.
@@ -688,7 +690,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.1...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.2...HEAD
+[0.22.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.1...v0.22.2
 [0.22.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.0...v0.22.1
 [0.22.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.20.1...v0.21.0
