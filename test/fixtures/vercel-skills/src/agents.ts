@@ -105,7 +105,10 @@ export const agents: Record<AgentType, AgentConfig> = {
     name: 'antigravity',
     displayName: 'Antigravity',
     skillsDir: '.agents/skills',
-    globalSkillsDir: join(home, '.gemini/antigravity/skills'),
+    // agy, the IDE and Antigravity 2.0 read global skills from ~/.gemini/config/skills,
+    // and none of them reads ~/.agents/skills outside a workspace.
+    globalSkillsDir: join(home, '.gemini/config/skills'),
+    globalReadsCanonical: false,
     showInUniversalPrompt: false,
     detectInstalled: async () => {
       return existsSync(join(home, '.gemini/antigravity'));
@@ -115,7 +118,10 @@ export const agents: Record<AgentType, AgentConfig> = {
     name: 'antigravity-cli',
     displayName: 'Antigravity CLI',
     skillsDir: '.agents/skills',
-    globalSkillsDir: join(home, '.gemini/antigravity-cli/skills'),
+    // agy, the IDE and Antigravity 2.0 read global skills from ~/.gemini/config/skills,
+    // and none of them reads ~/.agents/skills outside a workspace.
+    globalSkillsDir: join(home, '.gemini/config/skills'),
+    globalReadsCanonical: false,
     showInUniversalPrompt: false,
     detectInstalled: async () => {
       return existsSync(join(home, '.gemini/antigravity-cli'));
@@ -827,6 +833,29 @@ export const agents: Record<AgentType, AgentConfig> = {
   },
 };
 
+// Project skill dirs from before these agents moved to the universal `.agents/skills`.
+// Existing skill repositories still publish skills there.
+const LEGACY_AGENT_PROJECT_SKILL_DIRS = [
+  '.cline/skills',
+  '.codex/skills',
+  '.factory/skills',
+  '.github/skills',
+  '.kilo/skills',
+  '.kilocode/skills',
+  '.opencode/skills',
+  '.pi/skills',
+];
+
+/** Agent project skill dirs searched during discovery. The root `skills/` dir is handled separately. */
+export const AGENT_PROJECT_SKILL_DIRS = [
+  ...new Set([
+    ...Object.values(agents).map((agent) => agent.skillsDir),
+    ...LEGACY_AGENT_PROJECT_SKILL_DIRS,
+  ]),
+]
+  .filter((dir) => dir !== 'skills')
+  .sort();
+
 export async function detectInstalledAgents(cwd: string = process.cwd()): Promise<AgentType[]> {
   const results = await Promise.all(
     Object.entries(agents).map(async ([type, config]) => ({
@@ -914,4 +943,12 @@ export function getNonUniversalAgents(): AgentType[] {
  */
 export function isUniversalAgent(type: AgentType): boolean {
   return agents[type].skillsDir === '.agents/skills';
+}
+
+/**
+ * Check if an agent reads the canonical ~/.agents/skills directory for global
+ * installs, so a global install needs nothing in its own globalSkillsDir.
+ */
+export function readsCanonicalGlobally(type: AgentType): boolean {
+  return isUniversalAgent(type) && agents[type].globalReadsCanonical !== false;
 }
