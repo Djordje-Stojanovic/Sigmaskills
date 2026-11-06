@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `sigmaboat`: a GitHub token now goes to a sandbox on stdin, never as `-e KEY=VALUE` (visible on the command line and copied into every fork of a base). The base clone uses a one-command git header; workers sign in with `gh auth login --with-token`. Clearer wording for cost, `--filter sr` and the base's commit. The unused, empty `package-lock.json` is gone. (#254)
+
 ## [0.21.0] — 2026-11-06
 
 ### Added
