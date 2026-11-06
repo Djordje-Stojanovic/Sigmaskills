@@ -5,14 +5,14 @@ description: 'Use when asked for sigmaboat or to run authorized work (loop file,
 
 # SigmaBoat
 
-Give work the user already authorized extra machines: [boat.dev](https://boat.dev) sandboxes (full Ubuntu VMs, no GPU). SigmaBoat builds one stopped base per repo, forks one sandbox per worker, runs each worker's gate there, lands the result by the work's own rules, and deletes every sandbox it started. The host runs the work with its own mechanism (subagents, threads, `/goal`); SigmaBoat only supplies and cleans up the machines.
+Give work the user already authorized extra machines: [boat.dev](https://boat.dev) sandboxes (full Ubuntu VMs, no GPU). SigmaBoat builds one stopped base per repo, forks one sandbox per worker, runs each worker's gate there, lands the result by the work's own rules, and deletes every sandbox it started.
 
 ## Operating contract
 
-- **Explicit only.** Start a sandbox only when the user's message or the spec names boat. Never by default, never for GPU work or renders.
-- **Authorized work only.** The input is a loop file, an issue with acceptance criteria, a speed-loop project or a spec. SigmaBoat writes no plan: SigmaLoop writes prompts, SigmaShip ships tickets. The host runs that work with its own mechanism; SigmaLoop stays a prompt writer.
-- **No cost guard of ours.** boat's auto-stop is the control. Read the live limits; do not invent a budget.
-- **Secrets.** Read `BOAT_API_KEY` from the environment or a secrets file named by path. Sign in with `--key-stdin`. Pass a worker's tokens (for example `GH_TOKEN`) with `-e KEY=VALUE` on its fork, never into the base. Never print a value.
+- **Explicit only.** Start a sandbox only when the user's message or the spec names boat. Never by default. No size has a GPU, so not for GPU work or renders.
+- **Authorized work only.** The input is a loop file, an issue with acceptance criteria, a speed-loop project or a spec. SigmaBoat writes no plan: SigmaLoop writes prompts, SigmaShip ships tickets. The host runs that work with its own mechanism (subagents, threads, `/goal`); SigmaBoat only supplies and cleans up the machines.
+- **Cost.** boat's auto-stop (`--ttl` on every start) ends each sandbox; deleting it ends it sooner. Read the live limits; set no budget the user did not give.
+- **Secrets.** Read `BOAT_API_KEY` from the environment or a secrets file named by path. Sign in with `--key-stdin`. Send a token (for example `GH_TOKEN`) on stdin, never as a flag: `-e KEY=VALUE` shows the value on the command line, and a fork copies the base's environment. Never print a value.
 - **Delete what you start.** At the end, and after any failure, every worker is gone. Keep only stopped bases.
 
 ## Facts that change commands
@@ -39,11 +39,12 @@ From the JSON take: the active-sandbox maximum minus the running ones (the worke
 
 ## 2. Build or reuse the base
 
-Look for `base-<repo>` in `boat list --filter sr --json`. Reuse it when it is stopped and its recorded revision is the one the work needs. Otherwise:
+Look for `base-<repo>` in `boat list --filter sr --json` (`s` stopped, `r` running). Reuse it when it is stopped and the commit it printed when built (`git rev-parse --short HEAD` below) is the one the work needs. Otherwise:
 
 ```sh
 boat new --ttl 7200 --name base-<repo> --json          # id from the "ready" event
-boat exec <base> --timeout 0 -- git clone <url> <repo>
+printf '%s' "$GH_TOKEN" | boat ssh <base> -- sh -c 'h="Authorization: Basic $(printf "x-access-token:%s" "$(cat)" | base64 -w0)"; GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraHeader GIT_CONFIG_VALUE_0="$h" git clone -q <url> <repo> </dev/null'
+boat exec <base> --cwd <repo> -- git rev-parse --short HEAD   # the base's commit
 boat exec <base> --cwd <repo> --timeout 0 -- <install command>
 boat exec <base> --cwd <repo> --timeout 0 -- <gate command>   # once, to prove the base is green
 boat exec <base> -- du -sh <repo>                             # report the disk use
@@ -51,15 +52,16 @@ boat stop <base>
 boat info <base> --json                                       # repeat until the state is stopped
 ```
 
-Clone public repos anonymously, or pass a token with `-e GH_TOKEN=...` on `new` and remove any credential file before `stop`. A base holds no secret on its disk.
+A public repo needs no token: `boat exec <base> --timeout 0 -- git clone <url> <repo>`. The token above lives only in that one command's environment, so the base holds no secret on its disk or in its environment.
 
 ## 3. Fork the workers
 
 ```sh
-boat fork <base> --ttl 7200 --wait --json -e GH_TOKEN=<value>   # id from the "ready" event
+boat fork <base> --ttl 7200 --wait --json                        # id from the "ready" event
+printf '%s\n' "$GH_TOKEN" | boat ssh <id> -- sh -c 'unset GITHUB_TOKEN; gh auth login --with-token && gh auth setup-git'
 ```
 
-One fork per worker, at most the free slots. A failed fork is retried once with `--fail-fast`; then that item waits for a free slot.
+boat sets its own `GITHUB_TOKEN` in every sandbox; it cannot reach private repos, so run git and gh as `env -u GITHUB_TOKEN ...`. One fork per worker, at most the free slots. A failed fork is retried once with `--fail-fast`; then that item waits for a free slot.
 
 ## 4. Run each worker's item
 
