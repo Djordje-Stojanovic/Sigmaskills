@@ -32,22 +32,21 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.22.0] — 2026-11-06
+
 ### Added
 
-- `sigmadebug` (SigmaDebug): turns a pile of open questions into merged fixes while you talk. It lists every topic in a .txt checklist and opens it, settles the topics one at a time in a 5-part format with 3 options (the likely pick first, marked ★) and grills until each is clear. Each clear topic gets a short fix plan in `fix-issues-plan-temp-<date>.md` and a background `/sigmaship` worker that never asks you anything. Optional proxy answerer subagent; optional SigmaWrite board instead of the files. Works in any host.
+- `sigmadebug` (SigmaDebug): turns a pile of open questions into merged fixes while you talk. It lists every topic in a .txt checklist and opens it, settles the topics one at a time in a 5-part format with 3 options (the likely pick first, marked ★) and grills until each is clear. Each clear topic gets a short fix plan in `fix-issues-plan-temp-<date>.md` and a background `/sigmaship` worker that never asks you anything. Optional proxy answerer on any model or host; optional SigmaWrite board instead of the .txt. Works in any host. (#256)
 
 ### Changed
 
-- `sigmawritegui` is now the GUI option of `sigmawrite`. "easy talk", "SigmaWriteGUI board" and `EASYTALK REPLY` still work and go to SigmaWrite; the board template moved to `sigmawrite/template.html`. `sigmawritegui` is listed as retired, so an installed copy is reported and left alone.
-- `npm test` runs in about 4.5 minutes instead of 58 on Windows, and fails when the default run goes over 180 s. It packs the tarball once for every test file, reads Release baselines with one git process, and runs the LibreOffice recalculation and the slow SigmaDeepLook files only with `SIGMA_SLOW_TESTS=1`. The default SigmaDeepLook set fails when it goes over 60 s.
+- `sigmawritegui` is now the GUI option of `sigmawrite`. "easy talk", "SigmaWriteGUI board" and `EASYTALK REPLY` still work and go to SigmaWrite; the board template moved to `sigmawrite/template.html`. `sigmawritegui` is listed as retired: `update` reports an installed copy and leaves it; remove it with `sigmaskills uninstall --skill sigmawritegui`. (#256)
+- `npm test` runs in about 3 minutes instead of 58 on a loaded Windows PC (under 2 minutes in CI), and fails when the default run goes over 180 s, naming the 5 slowest files. It packs the tarball once for every test file, reads Release baselines with one git process, and runs the LibreOffice recalculation and the slow SigmaDeepLook files only with `SIGMA_SLOW_TESTS=1`. The default SigmaDeepLook set fails when it goes over 60 s. (#256)
+- `sigmaship` review rounds work by intent. The reviewer gets the ticket's goal and criteria, `git diff --stat`, and the builder's Skipped and Risk lines. It asks first "did the ticket ask for this?" and reads every line only of risky files (money, security, migrations, deploy config); other files get a hunk only when the stat, the Risk line or a doubt calls for it. (#253, Thinkcenter_Setup#1611 R16)
 
 ### Fixed
 
-- `sigmaboat`: a GitHub token now goes to a sandbox on stdin, never as `-e KEY=VALUE` (visible on the command line and copied into every fork of a base). The base clone uses a one-command git header; workers sign in with `gh auth login --with-token`. Clearer wording for cost, `--filter sr` and the base's commit. The unused, empty `package-lock.json` is gone. (#254)
-
-### Changed
-
-- `sigmaship` review rounds work by intent. The reviewer gets the ticket's goal and criteria, `git diff --stat`, and the builder's Skipped and Risk lines. It asks first "did the ticket ask for this?" and reads every line only of risky files (money, security, migrations, deploy config); other files get a hunk only when the stat, the Risk line or a doubt calls for it. (Thinkcenter_Setup#1611 R16)
+- `sigmaboat`: a GitHub token now goes to a sandbox on stdin, never as `-e KEY=VALUE` (visible on the command line and copied into every fork of a base). The base clone uses a one-command git header; workers sign in with `gh auth login --with-token`. Clearer wording for cost, `--filter sr` and the base's commit. The unused, empty `package-lock.json` is gone. (#254, #255)
 
 ## [0.21.0] — 2026-11-06
 
@@ -677,7 +676,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.20.1...v0.21.0
 [0.20.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.19.0...v0.20.0
