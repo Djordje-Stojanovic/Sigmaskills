@@ -21,7 +21,7 @@ SigmaSkills is a set of skills for coding agents. A skill is a folder with one `
 npx @djordje-stojanovic/sigmaskills
 ```
 
-The wizard asks what, where and how, and writes nothing until you confirm. For a script, one line does it all: `npx @djordje-stojanovic/sigmaskills install --preset sigma --global --yes`.
+The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm. For a script, one line does it all: `npx @djordje-stojanovic/sigmaskills install --preset sigma --global --yes`.
 
 ## Stay current
 
@@ -37,9 +37,7 @@ Use `--project .` in place of `--global` for a repo. Add `--dry-run` to preview.
 
 ## After the install
 
-The Sigma Installer wizard has three steps: **What**, **Where**, **Review**.
-
-Then run `/sigmasetup` (Codex: `$sigmasetup`) once in each repo. Installed skills often need a little per-repo setup (a tracker file, labels, a tool, a key, a git guard); SigmaSetup finds what is missing and sets up what you say yes to.
+Run `/sigmasetup` (Codex: `$sigmasetup`) once in each repo. Installed skills often need a little per-repo setup (a tracker file, labels, a tool, a key, a git guard); SigmaSetup finds what is missing and sets up what you say yes to.
 
 ![The What step: packs with counts, one pack opened to pick single skills](https://raw.githubusercontent.com/Djordje-Stojanovic/Sigmaskills/main/docs/images/installer-what.svg)
 
