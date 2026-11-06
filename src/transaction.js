@@ -546,7 +546,9 @@ function finalizeInstall(tx, updatedState, record) {
 function runInstallTransaction(tx) {
   const { plan, batch } = tx;
 
-  if (isAlreadyInstalled(tx)) {
+  // A skipped canonical copy keeps its files, so its host links and recorded revision stay too.
+  const canonicalSkipped = plan.destinations.some((dest) => dest.kind === 'canonical' && dest.resolution === 'skip');
+  if (canonicalSkipped || isAlreadyInstalled(tx)) {
     cleanupStaging(tx);
     tx.releaseLock();
     return unchangedResult(tx);

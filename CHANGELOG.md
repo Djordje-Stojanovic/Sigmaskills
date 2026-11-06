@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- An install that skips a changed or older canonical copy (`--adopt-changed skip`, `--adopt-legacy skip`) no longer moves the recorded revision, so a later `update` still sees the skill as stale. Before, the host link advanced the record while the files stayed old.
+
 ## [0.22.1] — 2026-11-06
 
 ### Changed
