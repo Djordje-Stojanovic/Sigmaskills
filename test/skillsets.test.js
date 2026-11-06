@@ -388,12 +388,19 @@ function terminal(box, keys) {
   stdout.on('data', (chunk) => { out += chunk; });
   if (Array.isArray(keys)) {
     // Staged keys: a lone Esc must arrive on its own, or the terminal reads it as Alt+Enter.
-    // readline waits 500 ms after a lone Esc before it calls it a key, so the next chunk waits longer than that.
-    let at = 0;
-    keys.forEach((chunk, index) => {
-      at += index > 0 && keys[index - 1] === ESC ? 1500 : 60; // readline's 500 ms Esc timer drifts on a loaded PC
-      setTimeout(() => (index === keys.length - 1 ? stdin.end(chunk) : stdin.write(chunk)), at);
-    });
+    // readline waits 500 ms after a lone Esc before it calls it a key. The next chunk waits until the screen changes (the Esc was read),
+    // not a fixed time: on a loaded PC two timers can fire in one turn and the order flips.
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    (async () => {
+      for (const [index, chunk] of keys.entries()) {
+        await sleep(60);
+        if (index > 0 && keys[index - 1] === ESC) {
+          const seen = out.length;
+          for (let waited = 0; out.length === seen && waited < 15000; waited += 50) await sleep(50);
+        }
+        if (index === keys.length - 1) stdin.end(chunk); else stdin.write(chunk);
+      }
+    })();
   } else {
     queueMicrotask(() => stdin.end(keys));
   }
