@@ -34,8 +34,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
-- The README leads with what Sigmaskills is, the one-line install, how updates reach every machine and a one-line catalogue of all 23 skills. (#259)
-- `sigmaboat` installs the newest Sigmaskills in the base, and reuses a base only when it holds the newest release. (#259)
+- The README leads with what Sigmaskills is, the one-line install, how updates reach every machine and a one-line catalogue of all 23 skills. (#260)
+- `sigmaboat` installs the newest Sigmaskills in the base, and reuses a base only when it holds the newest release. (#260)
 - Agent Host registry sync (vercel-labs/skills cad8cda): Antigravity IDE and CLI both read global skills from `~/.gemini/config/skills`. (#257)
 
 ## [0.22.0] — 2026-11-06
