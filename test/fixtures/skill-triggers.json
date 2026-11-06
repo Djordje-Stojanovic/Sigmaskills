@@ -308,5 +308,15 @@
   "prompt": "Elon review of our agent loop: idiot index, bottleneck, what to delete",
   "skill": "sigmamusk",
   "near": "sigmarefactor"
+ },
+ {
+  "prompt": "Run this loop file on boat.dev sandboxes with two workers",
+  "skill": "sigmaboat",
+  "near": "sigmaloop"
+ },
+ {
+  "prompt": "Ship issue 42 on a boat cloud sandbox fork instead of this machine",
+  "skill": "sigmaboat",
+  "near": "sigmaship"
  }
 ]

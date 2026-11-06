@@ -110,6 +110,7 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaSetup** | `sigmasetup` | Per-repo setup for every installed pack, after one question round | Set-up files and a table with the undo for each change |
 | **SigmaCourse** | `sigmacourse` | A course on any subject at any size: hard grill, spec, done ladder, queue | A set-up course repo and one goal prompt that builds it |
 | **SigmaMusk** | `sigmamusk` | Musk's Algorithm on your repo, plan or process: measured waste, delete list, bottleneck | One issue SigmaShip can ship, a report page, one question |
+| **SigmaBoat** | `sigmaboat` | Runs work you already authorized (a loop, a ship issue, a spec) on boat.dev cloud sandboxes | One stopped base, one fork per worker, gate results, every worker deleted |
 
 ### Which one do I need?
 
@@ -211,6 +212,10 @@ Plans a course on any subject, from a one-hour primer to a program of thousands 
 
 Runs Elon Musk's engineering review on your work. It measures the waste first, runs the five-step Algorithm, and files one issue with a ranked delete list and checkable acceptance criteria. A report page in a new look shows the numbers. It answers in Musk's voice and offers SigmaShip. Alone, it grills you with 3 to 5 questions first; `--fast "<problem>"` researches, decides and ships end to end when the request is clear. `--demon` turns the voice up.
 
+### SigmaBoat
+
+Gives work you already authorized more machines: boat.dev cloud sandboxes (full Ubuntu VMs, no GPU). It builds one stopped base per repo, forks one sandbox per worker, runs each worker's gate there, lands the result by the work's own rules, and deletes every sandbox it started. It starts nothing unless you name boat.
+
 ---
 
 ## Install
@@ -262,6 +267,7 @@ $sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
 $sigmasetup
 $sigmacourse Plan a 40-hour course that makes me fluent in SQL
 $sigmamusk Why does our test suite take 20 minutes?
+$sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 ```
 
 </td>
@@ -294,6 +300,7 @@ $sigmamusk Why does our test suite take 20 minutes?
 /skill:sigmacourse Plan a piano course for an adult restarting after 20 years
 /skill:sigmamusk Run the Algorithm on this agent loop --demon
 /skill:sigmamusk --fast "cache every calc script by a hash of its inputs"
+/skill:sigmaboat Ship #42 on a boat fork of this repo
 ```
 
 </td>
@@ -326,6 +333,7 @@ $sigmamusk Why does our test suite take 20 minutes?
 | `sigmasetup` | (no input) · or the packs to set up | One question round; writes only in this repo; every change has an undo |
 | `sigmacourse` | a subject · the learner · a goal | Grills first; writes the course repo and the goal prompt; never starts the loop |
 | `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
+| `sigmaboat` | a loop file, ship issue, speed-loop project or spec · the repo | Starts sandboxes only when you name boat; no plan of its own; deletes every worker |
 
 ### Requirements
 

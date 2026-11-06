@@ -91,6 +91,10 @@ Needs: `pip install vastai`, SSH with `~/.ssh/id_ed25519.pub`, a Vast.ai account
 
 Needs: nothing beyond the agent host. The goal prompt it ends with needs `sigmaloop`; research steps use `sigmaresearch` and `sigmadeeplook` when installed. Setup: none; it sets up the course repo it plans.
 
+### sigmaboat
+
+Needs: the `boat` CLI (static download from boat.dev for Linux, macOS and Windows) and `BOAT_API_KEY` in the environment or a secrets file. Setup: `boat login --key-stdin` once per machine.
+
 ### sigmamusk
 
 Needs: `gh` signed in to file the issue (without it, the issue body prints in chat). Hands off to `sigmaship` when installed. Setup: none.

@@ -113,6 +113,11 @@
       "id": "sigmamusk",
       "title": "SigmaMusk",
       "needsReferences": true
+    },
+    {
+      "id": "sigmaboat",
+      "title": "SigmaBoat",
+      "needsReferences": false
     }
   ],
   "retired": [
