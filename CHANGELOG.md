@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.22.1] — 2026-11-06
+
 ### Changed
 
 - The README leads with what Sigmaskills is, the one-line install, how updates reach every machine and a one-line catalogue of all 23 skills. (#260)
@@ -682,7 +684,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.1...HEAD
+[0.22.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.0...v0.22.1
 [0.22.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.20.1...v0.21.0
 [0.20.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.20.0...v0.20.1
