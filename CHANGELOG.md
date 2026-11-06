@@ -36,6 +36,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 - `sigmaboat`: a GitHub token now goes to a sandbox on stdin, never as `-e KEY=VALUE` (visible on the command line and copied into every fork of a base). The base clone uses a one-command git header; workers sign in with `gh auth login --with-token`. Clearer wording for cost, `--filter sr` and the base's commit. The unused, empty `package-lock.json` is gone. (#254)
 
+### Changed
+
+- `sigmaship` review rounds work by intent. The reviewer gets the ticket's goal and criteria, `git diff --stat`, and the builder's Skipped and Risk lines. It asks first "did the ticket ask for this?" and reads every line only of risky files (money, security, migrations, deploy config); other files get a hunk only when the stat, the Risk line or a doubt calls for it. (Thinkcenter_Setup#1611 R16)
+
 ## [0.21.0] — 2026-11-06
 
 ### Added
