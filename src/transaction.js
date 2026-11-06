@@ -209,6 +209,17 @@ function isAlreadyInstalled(tx) {
   return Boolean(allAdopted && sameManagedLayout);
 }
 
+/**
+ * A skipped canonical copy keeps its old files, so the recorded revision must stay old too.
+ * Only when every other planned destination is already recorded is there nothing left to write.
+ */
+function canonicalSkippedWithNothingNew(tx) {
+  const { plan, skillId, originalState } = tx;
+  if (!plan.destinations.some((dest) => dest.kind === 'canonical' && dest.resolution === 'skip')) return false;
+  const recorded = new Set((originalState.skills?.[skillId]?.copies || []).map((copy) => String(copy.destination || '').replace(/\\/g, '/')));
+  return plan.destinations.every((dest) => dest.kind === 'canonical' || recorded.has(dest.relativeDestination));
+}
+
 /** Result for an install that changed nothing. */
 function unchangedResult(tx) {
   return {
@@ -546,9 +557,7 @@ function finalizeInstall(tx, updatedState, record) {
 function runInstallTransaction(tx) {
   const { plan, batch } = tx;
 
-  // A skipped canonical copy keeps its files, so its host links and recorded revision stay too.
-  const canonicalSkipped = plan.destinations.some((dest) => dest.kind === 'canonical' && dest.resolution === 'skip');
-  if (canonicalSkipped || isAlreadyInstalled(tx)) {
+  if (canonicalSkippedWithNothingNew(tx) || isAlreadyInstalled(tx)) {
     cleanupStaging(tx);
     tx.releaseLock();
     return unchangedResult(tx);

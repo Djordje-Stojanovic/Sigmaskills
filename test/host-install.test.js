@@ -182,3 +182,20 @@ test('install: a skipped canonical copy leaves the host link and the recorded re
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });
+
+test('install: a skipped canonical copy still gets a newly selected host link', () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-host-skip-new-'));
+  try {
+    const catalog = getCatalog(ROOT);
+    const params = { catalog, skillId: 'sigmawrite', projectRoot, packageRoot: ROOT, destinationGroups: hostGroups(projectRoot) };
+    executeProjectInstall({ ...params, selectedRoots: ['.agents/skills'] });
+    const skillMd = path.join(projectRoot, '.agents', 'skills', 'sigmawrite', 'SKILL.md');
+    fs.writeFileSync(skillMd, `${fs.readFileSync(skillMd, 'utf8')}\nlocal edit\n`);
+
+    executeProjectInstall({ ...params, selectedRoots: ['.agents/skills', '.claude/skills'], adoptChanged: 'skip' });
+
+    assert.ok(fs.existsSync(path.join(projectRoot, '.claude', 'skills', 'sigmawrite', 'SKILL.md')));
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
