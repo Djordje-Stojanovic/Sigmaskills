@@ -139,7 +139,7 @@ test('plan: dry run produces accurate preview without mutating files', () => {
     assert.equal(plan.scope, 'project');
     assert.equal(plan.method, 'copy');
     assert.equal(plan.unownedConflict, false);
-    assert.equal(plan.writes.length, 2); // SKILL.md, agents/openai.yaml
+    assert.equal(plan.writes.length, 4); // SKILL.md, agents/openai.yaml, template.html, references/gui.md
     assert.equal(plan.replacements.length, 0);
     assert.equal(plan.lockChanges.action, 'add');
 

@@ -423,7 +423,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmamusk -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaboat -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmarefactor -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawritegui -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadebug -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmacreatearena -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaresearch -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadeeplook -g
@@ -460,7 +460,7 @@ $skill-installer install sigmamusk from https://github.com/Djordje-Stojanovic/Si
 $skill-installer install sigmaboat from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmarefactor from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmawritegui from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmadebug from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmacreatearena from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaresearch from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmadeeplook from https://github.com/Djordje-Stojanovic/Sigmaskills
@@ -494,7 +494,7 @@ cp -R Sigmaskills/sigmamusk ~/.agents/skills/sigmamusk
 cp -R Sigmaskills/sigmaboat ~/.agents/skills/sigmaboat
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
 cp -R Sigmaskills/sigmarefactor ~/.agents/skills/sigmarefactor
-cp -R Sigmaskills/sigmawritegui ~/.agents/skills/sigmawritegui
+cp -R Sigmaskills/sigmadebug ~/.agents/skills/sigmadebug
 cp -R Sigmaskills/sigmacreatearena ~/.agents/skills/sigmacreatearena
 cp -R Sigmaskills/sigmaresearch ~/.agents/skills/sigmaresearch
 cp -R Sigmaskills/sigmadeeplook ~/.agents/skills/sigmadeeplook
@@ -524,7 +524,7 @@ Copy-Item -Recurse Sigmaskills\sigmamusk "$HOME\.agents\skills\sigmamusk"
 Copy-Item -Recurse Sigmaskills\sigmaboat "$HOME\.agents\skills\sigmaboat"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
 Copy-Item -Recurse Sigmaskills\sigmarefactor "$HOME\.agents\skills\sigmarefactor"
-Copy-Item -Recurse Sigmaskills\sigmawritegui      "$HOME\.agents\skills\sigmawritegui"
+Copy-Item -Recurse Sigmaskills\sigmadebug      "$HOME\.agents\skills\sigmadebug"
 Copy-Item -Recurse Sigmaskills\sigmacreatearena "$HOME\.agents\skills\sigmacreatearena"
 Copy-Item -Recurse Sigmaskills\sigmaresearch "$HOME\.agents\skills\sigmaresearch"
 Copy-Item -Recurse Sigmaskills\sigmadeeplook "$HOME\.agents\skills\sigmadeeplook"

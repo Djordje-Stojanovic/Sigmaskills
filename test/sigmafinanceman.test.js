@@ -15,7 +15,7 @@ function findPython() {
   return null;
 }
 
-// The offline self-test: a fictional company through every model and writer; with LibreOffice it also recalculates each workbook.
+// The offline self-test: a fictional company through every model and writer; with LibreOffice it also recalculates each workbook (slow: `npm test` skips that part; SIGMA_SLOW_TESTS=1 keeps it).
 test('sigmafinanceman selftest passes (every model, every writer, no network)', { timeout: 300000 }, (t) => {
   const python = findPython();
   if (!python) {

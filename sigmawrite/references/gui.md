@@ -1,13 +1,6 @@
----
-name: sigmawritegui
-description: Use when the user says easy talk, asks for a SigmaWriteGUI board or pastes an EASYTALK REPLY. Plain, short English in interactive status and question boards. Do not use for a product dashboard.
----
+# SigmaWrite GUI option
 
-# SigmaWriteGUI
-
-Use short, clear chat and one interactive board for status reports or batches of questions. The board lets the user read, choose, comment, and copy answers back to the agent.
-
-**On:** "easy talk" or an explicit invocation. **Off:** "easy talk off". Keep the mode on for this conversation until the user turns it off. A pasted `EASYTALK REPLY` activates reply handling.
+Read this when the GUI option is on: the user said "easy talk", "sigmawrite gui" or "SigmaWriteGUI", or pasted an `EASYTALK REPLY`. The board template is `../template.html`. It stays on for this conversation until the user says "easy talk off".
 
 ## Chat and replies
 
@@ -29,7 +22,7 @@ Make one board for a status report, the end of a substantial piece of work, thre
 
 ## Build and deliver
 
-Resolve [template.html](template.html) relative to this installed skill's directory, not the project root. Copy it to a writable scratch or output directory using the machine's native shell or file tool. Give the copy a descriptive name such as `status-board.html`. Keep the installed template untouched.
+Resolve [template.html](../template.html) relative to this installed skill's directory, not the project root. Copy it to a writable scratch or output directory using the machine's native shell or file tool. Give the copy a descriptive name such as `status-board.html`. Keep the installed template untouched.
 
 Read the copy's `DATA` block near the top and replace only `PAGE`, `DO`, `ANS`, and `FYI`. Preserve its style and script. Use generic project facts for the current task, not the sample content. Give each board a unique title; browser drafts are stored by title. Use a new title when reusing ids for different content. An update of the same board keeps its title and ids so the draft survives.
 
@@ -54,7 +47,7 @@ Each card has a read tick and free text. Typing or picking marks it read. With h
 
 Generate valid JavaScript strings when replacing DATA: escape quotes, backslashes, line breaks, and `<` as `\u003c` so pasted text cannot end a script block. HTML fields are for agent-authored markup; HTML-escape untrusted text embedded in `t`, `b`, or `tag`. Keep ids simple letters and digits, and `tc` within the listed classes.
 
-### Keyboard and reply
+## Keyboard and reply
 
 `j` / `k`: next / previous card. `x`: toggle read. `1`–`9`: choose an option or status. `e` or `Enter`: write a comment. `Esc`: return to the card. `c`: copy its prompt. `g`: General answers. `Ctrl+Enter` (or `Cmd+Enter`): Copy my answers.
 
@@ -71,8 +64,3 @@ General: Check the docs too.
 ```
 
 The ★ records that the user chose the recommendation. If clipboard access is unavailable, the board shows selected reply text for manual copying.
-
-## Personal instructions
-
-<sigmaskills-custom>
-</sigmaskills-custom>

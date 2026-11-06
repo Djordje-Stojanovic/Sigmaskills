@@ -13,6 +13,7 @@ import { createRestorePlan, executeRestore } from '../src/restore.js';
 import { getProjectStateDir } from '../src/state.js';
 import { executeProjectInstall } from '../src/transaction.js';
 import { executeUpdate } from '../src/update.js';
+import { packInto, installTarball } from './packed.js';
 
 const ROOT = findPackageRoot();
 
@@ -427,16 +428,11 @@ test('restore: a removed skill returns from portable ownership metadata without 
 test('packed CLI restores adoption and update backups', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-pack-restore-'));
   try {
-    const packOutput = execSync(`npm pack --pack-destination "${tmpDir}"`, {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim();
-    const tarballFileName = packOutput.split(/\r?\n/).pop()?.trim();
+    const tarballFileName = packInto(tmpDir);
     const tarballPath = path.join(tmpDir, tarballFileName);
     const appDir = path.join(tmpDir, 'test-app');
     fs.mkdirSync(appDir, { recursive: true });
-    execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
+    installTarball(appDir, tarballPath);
     const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
     const packedRoot = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills');
 

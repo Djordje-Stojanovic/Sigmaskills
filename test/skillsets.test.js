@@ -391,7 +391,7 @@ function terminal(box, keys) {
     // readline waits 500 ms after a lone Esc before it calls it a key, so the next chunk waits longer than that.
     let at = 0;
     keys.forEach((chunk, index) => {
-      at += index > 0 && keys[index - 1] === ESC ? 700 : 60;
+      at += index > 0 && keys[index - 1] === ESC ? 1500 : 60; // readline's 500 ms Esc timer drifts on a loaded PC
       setTimeout(() => (index === keys.length - 1 ? stdin.end(chunk) : stdin.write(chunk)), at);
     });
   } else {

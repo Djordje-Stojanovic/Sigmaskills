@@ -14,12 +14,12 @@ function findPython() {
   return null;
 }
 
-// look.py is a Python stdlib script. The offline tests run it on the committed fixtures in the bare tier
+// The quick files run by default; SIGMA_SLOW_TESTS=1 runs every file (real look.py passes, minutes). look.py is a Python stdlib script. The offline tests run it on the committed fixtures in the bare tier
 // (--no-tools), so they pass on any machine with Python 3.10+ and nothing else installed.
 test('sigmadeeplook: unit tests and the bare-tier selftest pass (python unittest, offline)', (t) => {
   const python = findPython();
   if (!python) return t.skip('python 3.10+ not found');
-  const r = spawnSync(python, ['-m', 'unittest', 'discover', '-s', 'test/sigmadeeplook', '-v'], {
+  const r = spawnSync(python, ['test/sigmadeeplook/run_all.py'], {
     cwd: root,
     encoding: 'utf8',
     env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },

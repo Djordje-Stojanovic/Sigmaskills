@@ -29,7 +29,7 @@ Needs: an issue with acceptance criteria, git worktrees, `gh` with merge rights,
 
 ### sigmawrite
 
-Needs: nothing. Setup: optional, paste its system-prompt block into the host's instructions.
+Needs: nothing for plain use; the GUI option ("easy talk") needs a browser. Setup: optional, paste its system-prompt block into the host's instructions.
 
 ### sigmarefactor
 
@@ -43,9 +43,9 @@ Needs: Python 3. Optional: `yt-dlp`, whisper, `GITHUB_TOKEN` or `GH_TOKEN`, an x
 
 Needs: Python. Many optional tools (ffmpeg, poppler, tesseract, LibreOffice, Ghidra and more). Setup: run `python sigmadeeplook/scripts/look.py doctor` and install only what the owner's files need.
 
-### sigmawritegui
+### sigmadebug
 
-Needs: a browser. Setup: none.
+Needs: a writable folder (Downloads by default) and a text editor. Hands each clear topic to `sigmaship` in a background agent, uses `sigmawrite` for its voice and `grilling` when installed. Setup: none.
 
 ### sigmacreatearena
 

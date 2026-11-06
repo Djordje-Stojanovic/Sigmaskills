@@ -32,6 +32,15 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmadebug` (SigmaDebug): turns a pile of open questions into merged fixes while you talk. It lists every topic in a .txt checklist and opens it, settles the topics one at a time in a 5-part format with 3 options (the likely pick first, marked ★) and grills until each is clear. Each clear topic gets a short fix plan in `fix-issues-plan-temp-<date>.md` and a background `/sigmaship` worker that never asks you anything. Optional proxy answerer subagent; optional SigmaWrite board instead of the files. Works in any host.
+
+### Changed
+
+- `sigmawritegui` is now the GUI option of `sigmawrite`. "easy talk", "SigmaWriteGUI board" and `EASYTALK REPLY` still work and go to SigmaWrite; the board template moved to `sigmawrite/template.html`. `sigmawritegui` is listed as retired, so an installed copy is reported and left alone.
+- `npm test` runs in about 4.5 minutes instead of 58 on Windows, and fails when the default run goes over 180 s. It packs the tarball once for every test file, reads Release baselines with one git process, and runs the LibreOffice recalculation and the slow SigmaDeepLook files only with `SIGMA_SLOW_TESTS=1`. The default SigmaDeepLook set fails when it goes over 60 s.
+
 ### Fixed
 
 - `sigmaboat`: a GitHub token now goes to a sandbox on stdin, never as `-e KEY=VALUE` (visible on the command line and copied into every fork of a base). The base clone uses a one-command git header; workers sign in with `gh auth login --with-token`. Clearer wording for cost, `--filter sr` and the base's commit. The unused, empty `package-lock.json` is gone. (#254)

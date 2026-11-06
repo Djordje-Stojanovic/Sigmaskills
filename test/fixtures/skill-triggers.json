@@ -81,13 +81,18 @@
  },
  {
   "prompt": "Easy talk: make an interactive status board with questions",
-  "skill": "sigmawritegui",
-  "near": "sigmawrite"
+  "skill": "sigmawrite",
+  "near": "sigmabrief"
  },
  {
   "prompt": "Handle my EASYTALK REPLY and bring unread cards to the next board",
-  "skill": "sigmawritegui",
+  "skill": "sigmawrite",
   "near": "sigmabrief"
+ },
+ {
+  "prompt": "SigmaWriteGUI board: show the status in easy talk",
+  "skill": "sigmawrite",
+  "near": "sigmadebug"
  },
  {
   "prompt": "Build a blind arena to rank these voices and models by Elo",
@@ -212,7 +217,7 @@
  {
   "prompt": "Write a song chorus from my brief in a human voice",
   "skill": "sigmahuman",
-  "near": "sigmawritegui"
+  "near": "sigmawrite"
  },
  {
   "prompt": "Rewrite my video script for the ear so it sounds human, matching my voice sample",
@@ -318,5 +323,15 @@
   "prompt": "Ship issue 42 on a boat cloud sandbox fork instead of this machine",
   "skill": "sigmaboat",
   "near": "sigmaship"
+ },
+ {
+  "prompt": "Debug these open topics one by one, plan each fix and ship each in the background",
+  "skill": "sigmadebug",
+  "near": "sigmaship"
+ },
+ {
+  "prompt": "Sigmadebug: list every open question and settle them one topic at a time",
+  "skill": "sigmadebug",
+  "near": "sigmabrief"
  }
 ]

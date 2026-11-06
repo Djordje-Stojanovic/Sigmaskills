@@ -8,20 +8,20 @@ import vm from 'node:vm';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
-test('sigmawritegui: installs its self-contained board in another project', () => {
-  const project = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-sigmawritegui-'));
+test('sigmawrite GUI: installs its self-contained board in another project', () => {
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-sigmawrite-gui-'));
   try {
-    execFileSync(process.execPath, [path.join(ROOT, 'bin/sigmaskills.js'), 'install', 'sigmawritegui', '--project', project, '--copy', '--yes']);
+    execFileSync(process.execPath, [path.join(ROOT, 'bin/sigmaskills.js'), 'install', 'sigmawrite', '--project', project, '--copy', '--yes']);
     for (const file of ['SKILL.md', 'template.html', 'agents/openai.yaml']) {
-      assert.equal(fs.readFileSync(path.join(project, '.agents/skills/sigmawritegui', file), 'utf8'), fs.readFileSync(path.join(ROOT, 'sigmawritegui', file), 'utf8'));
+      assert.equal(fs.readFileSync(path.join(project, '.agents/skills/sigmawrite', file), 'utf8'), fs.readFileSync(path.join(ROOT, 'sigmawrite', file), 'utf8'));
     }
   } finally {
     fs.rmSync(project, { recursive: true, force: true });
   }
 });
 
-test('sigmawritegui: board scripts compile and example data covers all card types without lab dependencies', () => {
-  const html = fs.readFileSync(path.join(ROOT, 'sigmawritegui/template.html'), 'utf8');
+test('sigmawrite GUI: board scripts compile and example data covers all card types without lab dependencies', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'sigmawrite/template.html'), 'utf8');
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
   assert.equal(scripts.length, 2);
   scripts.forEach((script) => new vm.Script(script));
@@ -37,8 +37,8 @@ test('sigmawritegui: board scripts compile and example data covers all card type
   assert.doesNotMatch(html, /storge|Postiz|YouTube|Design_Experiments|\.claude\/skills|https?:\/\/|src=["']/i);
 });
 
-test('sigmawritegui: prompts render and copy without an optional suffix', () => {
-  const html = fs.readFileSync(path.join(ROOT, 'sigmawritegui/template.html'), 'utf8');
+test('sigmawrite GUI: prompts render and copy without an optional suffix', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'sigmawrite/template.html'), 'utf8');
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
   const cards = [];
   const nodes = new Map();

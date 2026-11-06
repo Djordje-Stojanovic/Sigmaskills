@@ -72,3 +72,6 @@ description: 'Use when asked for sigmacourse or to plan a whole course or curric
 description: 'Use when asked for sigmamusk, Elon, Musk, the Algorithm or an idiot index. Measures waste, files one issue with a delete list and a report page, offers SigmaShip. Do not use for bugs (SigmaReview).'
 Do not use for bugs (SigmaReview).
 description: 'Use when asked for sigmaboat or to run authorized work (loop file, ship issue, spec) on boat.dev sandboxes: base once, fork per worker, delete. Do not use to plan work (SigmaLoop) or by default.'
+description: 'Use when asked for sigmadebug, or to list and settle every open question, one topic at a time. Grills each, plans each fix, ships each in a background agent. Do not use for one bug (SigmaReview).'
+Do not use for one bug (SigmaReview).
+description: Use when asked for sigmawrite, easy talk, a SigmaWriteGUI board, an EASYTALK REPLY, less jargon, gibberish or outsider-clear text. Plain English and status boards. Do not use to rewrite code or APIs.

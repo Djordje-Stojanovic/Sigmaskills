@@ -153,7 +153,8 @@ function sigmabrief({ files, result }) {
 
 const JARGON = /\b(orchestration|idempotently|hydrates?|ephemeral|synergistically|operationalize|leveraging|paradigm|facilitates|performant)\b/gi;
 
-function sigmawrite({ files }) {
+function sigmawrite({ files, result = '' }) {
+  if (files['status-board.html']) return writeBoard({ files, result });
   const text = files['docs/NOTES.md'];
   if (!text) return ['missing docs/NOTES.md'];
   const problems = requireText(text, [/`step`/, /`saveBest`/, /`src\/scores\.js`/], 'docs/NOTES.md (code names must survive)');
@@ -178,11 +179,12 @@ function sigmarefactor({ files }) {
   return problems;
 }
 
-function sigmawritegui({ files, result }) {
+// The SigmaWrite GUI option: a board built from the installed template.
+function writeBoard({ files, result }) {
   const board = files['status-board.html'];
   if (!board) return ['missing status-board.html'];
   const problems = [];
-  const template = fs.readFileSync(new URL('../sigmawritegui/template.html', import.meta.url), 'utf8');
+  const template = fs.readFileSync(new URL('../sigmawrite/template.html', import.meta.url), 'utf8');
   const dataBlock = /\/\* ===== DATA:[\s\S]*?\/\* ===== END DATA ===== \*\//;
   const normalize = (text) => text.replaceAll('\r\n', '\n').replace(dataBlock, 'DATA');
   if (!dataBlock.test(board)) problems.push('status-board.html: missing DATA block');
@@ -552,7 +554,19 @@ function sigmaboat({ result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmacourse, sigmamusk, sigmaboat, sigmawritegui, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmadebug: a topic file, 5 headed parts and 3 lettered options (one starred) per topic,
+// a plan file, and a /sigmaship hand-off to a background worker that never asks the owner.
+function sigmadebug({ result }) {
+  const problems = requireText(result, [/issues-[\w.-]+-\d{2}-\d{2}-\d{4}\.txt/, /fix-issues-plan-temp-\d{2}-\d{2}-\d{4}\.md/, /sigmaship/i, /background/i], 'reply');
+  for (const part of ['What I said', 'What you answered', 'What this is about', 'My answer', 'What you can do']) {
+    if (!new RegExp(part, 'i').test(result)) problems.push(`reply: missing the part "${part}"`);
+  }
+  if (!/^\s*(?:[-*]\s*)?\**A[.)]?\**.*★/m.test(result)) problems.push('reply: option A is not the starred recommendation');
+  if (!/^\s*(?:[-*]\s*)?\**B[.)]/m.test(result) || !/^\s*(?:[-*]\s*)?\**C[.)]/m.test(result)) problems.push('reply: fewer than 3 lettered options');
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmacourse, sigmamusk, sigmaboat, sigmadebug, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

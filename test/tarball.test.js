@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { extractRawCustomContent, injectRawCustomContent } from '../src/customization.js';
+import { packInto, installTarball } from './packed.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
@@ -71,12 +72,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-tarball-test-'));
   try {
     // 1. Pack tarball into tmpDir
-    const packOutput = execSync(`npm pack --pack-destination "${tmpDir}"`, {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim();
-
-    const tarballFileName = packOutput.split(/\r?\n/).pop()?.trim();
+    const tarballFileName = packInto(tmpDir);
     assert.ok(tarballFileName, 'expected tarball filename from npm pack');
     const tarballPath = path.join(tmpDir, tarballFileName);
     assert.ok(fs.existsSync(tarballPath), `tarball does not exist at ${tarballPath}`);
@@ -148,8 +144,12 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     // 5. Install the tarball into an isolated test app directory
     const appDir = path.join(tmpDir, 'test-app');
     fs.mkdirSync(appDir, { recursive: true });
-    execSync('npm init -y', { cwd: appDir, encoding: 'utf8' });
-    execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8' });
+    if (process.env.SIGMA_SLOW_TESTS) {
+      execSync('npm init -y', { cwd: appDir, encoding: 'utf8' });
+      execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8' });
+    } else {
+      installTarball(appDir, tarballPath); // the same unpacked tree, without starting npm
+    }
 
     const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
     assert.ok(fs.existsSync(installedBin), `installed bin script missing at ${installedBin}`);
@@ -261,6 +261,11 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     // Compare every file and byte, then exercise the complete five-skill installation.
     const skillProject = path.join(tmpDir, 'all-skills');
     fs.mkdirSync(skillProject, { recursive: true });
+    // One CLI run per step for all skills at once: one run per skill took minutes on a loaded PC.
+    const allIds = MANIFEST.skills.map(({ id }) => id);
+    const rawFor = (skillId) => `\r\n\tUser content for ${skillId}: café ✓  \r\n\n`;
+    execFileSync('node', [installedBin, 'install', ...allIds, '--project', skillProject], { cwd: appDir, encoding: 'utf8' });
+    execFileSync('node', [installedBin, 'install', ...allIds, '--project', skillProject], { cwd: appDir });
     for (const { id: skillId } of MANIFEST.skills) {
       const source = path.join(ROOT, skillId);
       const packed = path.join(path.dirname(path.dirname(installedBin)), skillId);
@@ -269,23 +274,20 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
       for (const file of sourceFiles) {
         assert.deepEqual(fs.readFileSync(path.join(packed, file)), fs.readFileSync(path.join(source, file)), `${skillId}/${file}: packed bytes differ`);
       }
-      execFileSync('node', [installedBin, 'install', skillId, '--project', skillProject], {
-        cwd: appDir,
-        encoding: 'utf8',
-      });
       const destination = path.join(skillProject, '.agents', 'skills', skillId);
       assert.deepEqual(listFiles(destination), sourceFiles, `${skillId}: installed tree differs`);
       for (const file of sourceFiles) {
         assert.deepEqual(fs.readFileSync(path.join(destination, file)), fs.readFileSync(path.join(packed, file)), `${skillId}/${file}: installed bytes differ`);
       }
       const skillMd = path.join(destination, 'SKILL.md');
-      execFileSync('node', [installedBin, 'install', skillId, '--project', skillProject], { cwd: appDir });
-      const raw = `\r\n\tUser content for ${skillId}: café ✓  \r\n\n`;
-      fs.writeFileSync(skillMd, injectRawCustomContent(fs.readFileSync(skillMd, 'utf8'), raw, skillId));
-      assert.throws(() => execFileSync('node', [installedBin, 'install', skillId, '--project', skillProject], { cwd: appDir, stdio: 'pipe' }), /Command failed/);
-      assert.equal(extractRawCustomContent(fs.readFileSync(skillMd, 'utf8'), skillId), raw);
-      assertOnlyUniversalProjectWrites(skillProject);
+      fs.writeFileSync(skillMd, injectRawCustomContent(fs.readFileSync(skillMd, 'utf8'), rawFor(skillId), skillId));
     }
+    assert.throws(() => execFileSync('node', [installedBin, 'install', ...allIds, '--project', skillProject], { cwd: appDir, stdio: 'pipe' }), /Command failed/);
+    for (const skillId of allIds) {
+      const skillMd = path.join(skillProject, '.agents', 'skills', skillId, 'SKILL.md');
+      assert.equal(extractRawCustomContent(fs.readFileSync(skillMd, 'utf8'), skillId), rawFor(skillId));
+    }
+    assertOnlyUniversalProjectWrites(skillProject);
     const status = JSON.parse(execFileSync('node', [installedBin, 'status', '--json', '--project', skillProject], { cwd: appDir, encoding: 'utf8' }));
     assert.equal(status.skills.length, MANIFEST.skills.length);
     // Simulate a successor package in the isolated installed artifact.

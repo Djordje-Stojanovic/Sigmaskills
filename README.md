@@ -18,7 +18,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
   Σ  brief        paste-ready briefs for other agents
   Σ  ship         one planned ticket to a merged, cleaned-up PR
   Σ  write        clear, plain technical English
-  Σ  writegui     short chat with status and question boards
+  Σ  debug        settle every open topic, one at a time; each fix ships in the background
   Σ  arena        rank any options blind, by Elo
   Σ  research     read public sources, with evidence and access gaps
   Σ  deeplook     read what agents cannot: video, speech, scans, binaries
@@ -93,9 +93,9 @@ The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/mai
 | **SigmaBrief** | `sigmabrief` | Prompt factory for parallel / single agents | Chat briefs only |
 | **SigmaShip** | `sigmaship` | Ship one planned ticket: build, review rounds, merge, clean up | One merged PR, closed ticket, main in sync |
 | **SigmaFreedom** | `sigmafreedom` | Remove model-written refusals from agent docs, with a lint that keeps them out | A was/now change log and a keep-list you can veto |
-| **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English | Chat writing voice |
+| **SigmaWrite** | `sigmawrite` | Clear STE-inspired technical English; "easy talk" adds status and question boards | Chat writing voice, or an interactive HTML board with copied replies |
 | **SigmaRefactor** | `sigmarefactor` | Safe, user-approved large-file refactoring | Discussion, changes, and verification |
-| **SigmaWriteGUI** | `sigmawritegui` | Plain chat with status and question boards | Interactive HTML board and copied replies |
+| **SigmaDebug** | `sigmadebug` | Settle a pile of open topics one by one; each clear topic gets a fix plan and a background SigmaShip worker | A topic checklist (.txt), one plan file, merged PRs |
 | **SigmaCreateArena** | `sigmacreatearena` | Blind-pairs arena that ranks any options by Elo per metric | Local arena page, Elo board with ranges and costs |
 | **SigmaResearch** | `sigmaresearch` | Read Reddit, X, HN, GitHub, video sites and other-language pages; count sources read in full | An answer with links, dates, read scope and access gaps |
 | **SigmaDeepLook** | `sigmadeeplook` | Read files an agent cannot: video, speech, scans, binaries, odd containers | Evidence with file paths, limits and a side-by-side `view.html` |
@@ -148,13 +148,15 @@ Deletes model-written refusals and moral limits from a repo's agent docs and ski
 
 A writing voice inspired by ASD-STE100 Simplified Technical English: short sentences, common words, still technical. It stays on until you turn it off. To use it everywhere, paste the **Paste as system prompt** block from [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md) into your host's instructions.
 
+The GUI option keeps replies short and puts status reports or question batches on one interactive board. Say "easy talk" (or "sigmawrite gui") to start it. Your ticks and answers come back through **Copy my answers**. Say "easy talk off" to stop. This replaces the old SigmaWriteGUI skill.
+
 ### SigmaRefactor
 
 Counts lines (with `laloc` if you have it), reads the five largest files and explains safe ways to shrink them. It edits only after your approval, keeps behavior, tests and interfaces, and reports the lines removed.
 
-### SigmaWriteGUI
+### SigmaDebug
 
-Keeps replies short and puts status reports or question batches on one interactive board. Your ticks and answers come back through **Copy my answers**. Say "easy talk off" to stop.
+Turns open questions into merged fixes while you talk. It lists every topic in a text file and opens it. It settles them one at a time in a fixed 5-part format with 3 options, the likely pick first, and grills until each is clear. Each clear topic gets a short plan and a background SigmaShip worker. You can name a subagent to answer for you.
 
 ### SigmaCreateArena
 
@@ -252,7 +254,7 @@ $sigmabrief all open
 $sigmaship https://github.com/owner/repo/issues/42
 $sigmawrite
 $sigmarefactor
-$sigmawritegui
+$sigmadebug
 $sigmacreatearena Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
 $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
@@ -284,7 +286,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 /skill:sigmaship https://github.com/owner/repo/issues/42
 /skill:sigmawrite
 /skill:sigmarefactor
-/skill:sigmawritegui
+/skill:sigmadebug
 /skill:sigmacreatearena Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
 /skill:sigmadeeplook What happens at 2:10 in ~/clips/demo.mp4?
@@ -316,9 +318,9 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmabrief` | issue URL · `#N` · `all open` · plain work | Only when you ask for it |
 | `sigmaship` | issue URL · `#N` | Refuses tickets without checkable acceptance criteria |
 | `sigmafreedom` | a repo path | Deletes refusals from agent docs and skill sources; every deletion is in a was/now log |
-| `sigmawrite` | (no input) | Session writing voice until you turn it off |
+| `sigmawrite` | (no input) · or "easy talk" for the GUI board · `EASYTALK REPLY` | Session writing voice until you turn it off; the GUI option makes a board |
 | `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
-| `sigmawritegui` | “easy talk” · status or question batch · `EASYTALK REPLY` | Conversation mode until “easy talk off” |
+| `sigmadebug` | (no input) · or a list of topics | Writes a topic .txt and a plan .md; one background SigmaShip worker per clear topic |
 | `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |
 | `sigmadeeplook` | a file or folder path · a question about it | Evidence with paths and a Limits list; never runs the file |
@@ -345,9 +347,9 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | SigmaImprove | Read access to the target · GitHub issue access only if tickets go to GitHub |
 | SigmaShip | Push rights and GitHub tooling (`gh` or connector) to open, merge, and close; the repository's test commands |
 | SigmaBrief | `gh` read access when briefing from issues or PRs · **no** push to the product repo |
-| SigmaWrite | Nothing beyond chat |
+| SigmaWrite | Nothing beyond chat; the GUI option needs a writable output folder and a browser or HTML preview (chat fallback when unavailable) |
 | SigmaRefactor | Read access to the target repository · `laloc` is optional; without it the skill counts lines itself |
-| SigmaWriteGUI | A writable output folder and a browser or HTML preview; chat fallback when unavailable |
+| SigmaDebug | A writable folder (Downloads by default); background agents if the host has them, else it ships the plans one after the other |
 | SigmaCreateArena | Python 3 (standard library only) and a browser; the server listens on 127.0.0.1 |
 | SigmaResearch | Python 3 for the bundled readers · `yt-dlp` for YouTube comments · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
 | SigmaLoop | Read access to the repo and its tracker · `gh` is optional · the host you name (Claude Code, Codex, pi or T3 Code) to run the loop |
