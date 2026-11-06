@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node
 import { spawnSync } from 'node:child_process';
 import { availableParallelism, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const testDir = join(root, 'test');
@@ -33,7 +33,7 @@ env.SIGMA_TEST_TIMING = join(packDir, 'timing.json');
 const concurrency = String(Math.max(8, availableParallelism() * 2));
 const result = spawnSync(process.execPath, ['--test', '--test-concurrency', concurrency,
   '--test-reporter', 'spec', '--test-reporter-destination', 'stdout',
-  '--test-reporter', join(root, 'scripts', 'test-timing.js'), '--test-reporter-destination', join(packDir, 'timing.log'),
+  '--test-reporter', pathToFileURL(join(root, 'scripts', 'test-timing.js')).href, '--test-reporter-destination', join(packDir, 'timing.log'),
   ...files], { cwd: root, stdio: 'inherit', env });
 const timing = existsSync(env.SIGMA_TEST_TIMING) ? JSON.parse(readFileSync(env.SIGMA_TEST_TIMING, 'utf8')) : {};
 const seconds = (Date.now() - started) / 1000;
