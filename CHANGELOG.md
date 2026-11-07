@@ -35,7 +35,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Changed
 
 - sigmadebug is shorter and clearer: one topic per message, one-line status pings that name the one open topic, workers that use free tools unless the owner names a paid one and check real exit codes, and one short block per landed PR. The letter-batch answers ("all A", "1A 2C") are gone.
-- `npm test` does less work: the baseline check reads each Release tag with two git calls instead of two per folder, the pack-set tests run at once, and the packed CLI's full lifecycle (and two repeat design-md picks) moved behind `SIGMA_SLOW_TESTS=1`.
+- `npm test` does less work: the baseline check reads each Release tag with two git calls instead of two per folder, the pack-set tests run at once, and the packed CLI's full lifecycle (and two repeat design-md picks) moved behind `SIGMA_SLOW_TESTS=1`; CI still runs that lifecycle as its own step.
 
 ## [0.22.2] — 2026-11-06
 

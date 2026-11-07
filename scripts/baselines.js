@@ -51,18 +51,6 @@ export function readSkillTreesAtRef(rootDir, ref) {
 }
 
 /**
- * Read one skill folder's regular files from a git ref.
- *
- * @param {string} rootDir
- * @param {string} ref
- * @param {string} skillId
- * @returns {Record<string, Buffer> | null} null when the skill has no SKILL.md at that ref
- */
-export function readSkillTreeAtRef(rootDir, ref, skillId) {
-  return readSkillTreesAtRef(rootDir, ref)[skillId] || null;
-}
-
-/**
  * Hash a file tree exactly like computeSkillRevisionAndHashes hashes a folder on disk.
  *
  * @param {Record<string, Buffer>} tree

@@ -51,7 +51,7 @@ The tests use Node.js only, with no dependencies:
 npm test
 ```
 
-A local `npm test` must finish in 180 s, or it fails and names the slowest files. Slow checks (the packed CLI's full lifecycle, LibreOffice, real media passes) run only with `SIGMA_SLOW_TESTS=1 npm test`. Run that once before a Release.
+A local `npm test` must finish in 180 s, or it fails and names the slowest files. Slow checks (the packed CLI's full lifecycle, LibreOffice, real media passes) run only with `SIGMA_SLOW_TESTS=1 npm test`. CI runs the packed CLI's lifecycle that way on every pull request.
 
 They cover the installer, the package contents, and the repository itself: the skill registry, `SKILL.md` frontmatter, `agents/openai.yaml`, README and installer-guide install lines, the README length, the CHANGELOG, issue templates, and agent docs.
 
