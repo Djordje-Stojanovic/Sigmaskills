@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.22.3] — 2026-11-07
+
 ### Changed
 
 - sigmadebug is shorter and clearer: one topic per message, one-line status pings that name the one open topic, workers that use free tools unless the owner names a paid one and check real exit codes, and one short block per landed PR. The letter-batch answers ("all A", "1A 2C") are gone.
@@ -695,7 +697,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.2...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.3...HEAD
+[0.22.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.2...v0.22.3
 [0.22.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.1...v0.22.2
 [0.22.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.0...v0.22.1
 [0.22.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.21.0...v0.22.0
