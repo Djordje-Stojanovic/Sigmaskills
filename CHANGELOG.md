@@ -32,6 +32,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- The `mattpocock` pack lists `software-factory`, the eighth skill in Matt Pocock's `skills/in-progress` folder. The other seven were already there. The pack follows the upstream head, so every install and update brings the latest text. (#268)
+
+### Fixed
+
+- `update` no longer fails with `EXDEV` on overlay file systems such as the spark-box container. When the old skill folder cannot be renamed aside, the installer copies it and deletes the original. (#269)
+
 ## [0.22.4] — 2026-11-07
 
 ### Changed

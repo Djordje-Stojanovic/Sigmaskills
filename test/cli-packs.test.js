@@ -39,7 +39,7 @@ test('list --packs: prints every pack, and --json prints the same data', async (
     writeUserConfig(box.home, { packs: [ACME_PACK] });
     const human = await run(box, ['list', '--packs']);
     assert.equal(human.code, 0, human.err);
-    assert.match(human.out, /Matt Pocock\s+38 skills/);
+    assert.match(human.out, /Matt Pocock\s+39 skills/);
     assert.match(human.out, /--preset threejs/);
     assert.match(human.out, /Acme\s+2 skills/);
     assert.match(human.out, /Local.*not available/);

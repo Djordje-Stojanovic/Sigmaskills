@@ -40,6 +40,20 @@ test('packs: the registry lists the bundled Sigma pack and the ten outside packs
   }
 });
 
+test('mattpocock pack: takes every skill in upstream skills/in-progress and follows the upstream head (#268)', () => {
+  const box = createSandbox();
+  try {
+    const matt = findPack(load(box), 'mattpocock');
+    const ids = matt.skills.map((skill) => skill.id);
+    for (const id of ['chief-of-staff', 'claude-handoff', 'loop-me', 'setup-ts-deep-modules', 'software-factory', 'writing-beats', 'writing-fragments', 'writing-shape']) {
+      assert.ok(ids.includes(id), `${id} is in the mattpocock pack`);
+    }
+    assert.equal(matt.sources[0].ref, undefined, 'no pin: install and update fetch the upstream head');
+  } finally {
+    box.cleanup();
+  }
+});
+
 test('tstack pack: pinned to one upstream commit, found by its alias, and lists the nine skills', () => {
   const box = createSandbox();
   try {
