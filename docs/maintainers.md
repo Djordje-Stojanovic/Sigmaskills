@@ -51,6 +51,8 @@ The tests use Node.js only, with no dependencies:
 npm test
 ```
 
+A local `npm test` must finish in 180 s, or it fails and names the slowest files. Slow checks (the packed CLI's full lifecycle, LibreOffice, real media passes) run only with `SIGMA_SLOW_TESTS=1 npm test`. Run that once before a Release.
+
 They cover the installer, the package contents, and the repository itself: the skill registry, `SKILL.md` frontmatter, `agents/openai.yaml`, README and installer-guide install lines, the README length, the CHANGELOG, issue templates, and agent docs.
 
 `npm test` also checks each skill's output contract against good and bad sample outputs, and checks that near-miss prompts reach the right skill. To run the skills themselves on a small fixture game, use `node scripts/eval-skills.js [skill...]`. It calls Claude Code, costs money, and stays out of CI. The [skill evals guide](evals.md) has the method and the latest results.

@@ -258,6 +258,10 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.ok(fs.existsSync(path.join(customStateProject, 'skills-lock.json')));
     assert.ok(fs.existsSync(path.join(customStateDir, 'state.json')));
 
+    // The every-skill lifecycle below (install twice, customize, update, fail closed) spawns the packed CLI six more times:
+    // SIGMA_SLOW_TESTS=1 runs it; the in-process tests (update, customization, uninstall) cover the same logic.
+    if (!process.env.SIGMA_SLOW_TESTS) return;
+
     // Compare every file and byte, then exercise the complete five-skill installation.
     const skillProject = path.join(tmpDir, 'all-skills');
     fs.mkdirSync(skillProject, { recursive: true });

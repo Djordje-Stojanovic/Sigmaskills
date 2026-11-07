@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
-import test from 'node:test';
+import test, { describe } from 'node:test';
 import { runCli } from '../src/cli.js';
 import { findPackageRoot, getCatalog } from '../src/catalog.js';
 import { createSourceFetcher } from '../src/pack-source.js';
@@ -33,6 +33,49 @@ async function run(box, args, project = box.project) {
 }
 
 const skillFile = (box, id, ...rest) => path.join(box.project, '.agents', 'skills', id, ...rest);
+
+// ---- the Looks pack, shared by the design-md tests and the picker ---------------------------
+
+const BRANDS = [
+  ['alpha', 'design-alpha', 'Alpha', 'Travel marketplace.'],
+  ['beta.co', 'design-beta-co', 'Beta', 'Project management.'],
+  ['gamma', 'design-gamma', 'Gamma', 'Payments.'],
+  ['delta', 'design-delta', 'Delta', 'Consumer electronics.'],
+  ['epsilon', 'design-epsilon', 'Epsilon', 'Athletic retail.'],
+];
+
+function designRemote(box) {
+  const dir = createEmptyRemote(box.remotes, 'acme/designs');
+  const files = { LICENSE: 'MIT License\nCopyright acme\n', 'README.md': 'list' };
+  for (const [slug, , brand] of BRANDS) files[`design-md/${slug}/DESIGN.md`] = `# ${brand}\n\nTokens.\n`;
+  return commitFiles(dir, files, 'designs');
+}
+
+const looksPack = (sha) => ({
+  id: 'looks',
+  title: 'Looks',
+  blurb: 'Brand looks.',
+  aliases: ['lk'],
+  limit: { max: 3, counts: 'installed', onFourth: 'choose-drop' },
+  sources: [{
+    type: 'git',
+    repo: 'acme/designs',
+    ref: sha,
+    path: 'design-md',
+    transform: 'design-md',
+    skills: BRANDS.map(([, id, brand, blurb]) => ({ id, description: `Use when building UI in the ${brand} look: ${blurb}`, group: 'Brands' })),
+  }],
+});
+
+function looksBox() {
+  const box = boxWithCache();
+  const sha = designRemote(box);
+  writeUserConfig(box.home, { packs: [looksPack(sha)] });
+  return box;
+}
+
+// Each test owns its sandbox and waits on git, so these run at once (the suite budget). The picker tests below stay serial: they time keys.
+describe('skillsets', { concurrency: true }, () => {
 
 // ---- pinned sources -------------------------------------------------------------------------
 
@@ -120,44 +163,6 @@ test('fetcher: warm gets every source in parallel and fetch() then needs no remo
 
 // ---- design-md: one skill per DESIGN.md, three at a time -----------------------------------
 
-const BRANDS = [
-  ['alpha', 'design-alpha', 'Alpha', 'Travel marketplace.'],
-  ['beta.co', 'design-beta-co', 'Beta', 'Project management.'],
-  ['gamma', 'design-gamma', 'Gamma', 'Payments.'],
-  ['delta', 'design-delta', 'Delta', 'Consumer electronics.'],
-  ['epsilon', 'design-epsilon', 'Epsilon', 'Athletic retail.'],
-];
-
-function designRemote(box) {
-  const dir = createEmptyRemote(box.remotes, 'acme/designs');
-  const files = { LICENSE: 'MIT License\nCopyright acme\n', 'README.md': 'list' };
-  for (const [slug, , brand] of BRANDS) files[`design-md/${slug}/DESIGN.md`] = `# ${brand}\n\nTokens.\n`;
-  return commitFiles(dir, files, 'designs');
-}
-
-const looksPack = (sha) => ({
-  id: 'looks',
-  title: 'Looks',
-  blurb: 'Brand looks.',
-  aliases: ['lk'],
-  limit: { max: 3, counts: 'installed', onFourth: 'choose-drop' },
-  sources: [{
-    type: 'git',
-    repo: 'acme/designs',
-    ref: sha,
-    path: 'design-md',
-    transform: 'design-md',
-    skills: BRANDS.map(([, id, brand, blurb]) => ({ id, description: `Use when building UI in the ${brand} look: ${blurb}`, group: 'Brands' })),
-  }],
-});
-
-function looksBox() {
-  const box = boxWithCache();
-  const sha = designRemote(box);
-  writeUserConfig(box.home, { packs: [looksPack(sha)] });
-  return box;
-}
-
 test('design-md: one pick becomes a skill with a generated SKILL.md, the DESIGN.md and the licence', async () => {
   const box = looksBox();
   try {
@@ -176,8 +181,10 @@ test('design-md: one pick becomes a skill with a generated SKILL.md, the DESIGN.
   }
 });
 
-test('design-md: a pick of 1, 2 and 3 installs with 0 failed', async () => {
-  for (const ids of [['design-alpha'], ['design-alpha', 'design-gamma'], ['design-alpha', 'design-gamma', 'design-delta']]) {
+// The one-pick test above covers 1; picks of 1 and 2 again run only with SIGMA_SLOW_TESTS=1 (suite budget).
+const PICKS = [['design-alpha'], ['design-alpha', 'design-gamma'], ['design-alpha', 'design-gamma', 'design-delta']];
+test('design-md: a pick of 3 (with SIGMA_SLOW_TESTS=1 also 1 and 2) installs with 0 failed', async () => {
+  for (const ids of process.env.SIGMA_SLOW_TESTS ? PICKS : PICKS.slice(2)) {
     const box = looksBox();
     try {
       const { code, out, err } = await run(box, ['install', ...ids]);
@@ -369,6 +376,8 @@ test('registry: every set in a fresh catalog keeps all its skills (N of N)', () 
   } finally {
     box.cleanup();
   }
+});
+
 });
 
 // ---- the picker -----------------------------------------------------------------------------

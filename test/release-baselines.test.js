@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { loadSkillBaselines } from '../src/adoption.js';
-import { hashSkillsAtRef, readSkillTreeAtRef } from '../scripts/baselines.js';
+import { hashSkillsAtRef, readSkillTreeAtRef, readSkillTreesAtRef } from '../scripts/baselines.js';
 import { getCatalog, findPackageRoot } from '../src/catalog.js';
 import { createInstallPlan } from '../src/plan.js';
 import { formatReleaseHuman, writeReleaseIdentities } from '../scripts/release.js';
@@ -40,8 +40,9 @@ test('baselines: the bundled file holds every earlier Release, rebuilt exactly f
 test('baselines: an untouched copy of each earlier Release is legacy, high provenance, and upgrades with no flag', () => {
   const catalog = getCatalog(ROOT);
   for (const release of EARLIER_RELEASES) {
+    const trees = readSkillTreesAtRef(ROOT, `v${release}`);
     for (const skill of catalog.skills) {
-      const tree = readSkillTreeAtRef(ROOT, `v${release}`, skill.id);
+      const tree = trees[skill.id];
       if (!tree) continue;
       const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-baseline-legacy-'));
       try {
