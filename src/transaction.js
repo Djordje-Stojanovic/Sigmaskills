@@ -3,7 +3,7 @@ import { acquireFileLock } from './concurrency-lock.js';
 import path from 'node:path';
 import { findPackageRoot, validateSkill } from './catalog.js';
 import { injectRawCustomContent, replaceDescriptionEntry } from './customization.js';
-import { commitSkillBackup, exportSkillTree, getBackupRoot, pruneOlderBackups } from './backup.js';
+import { commitSkillBackup, copySkillTree, exportSkillTree, getBackupRoot, pruneOlderBackups } from './backup.js';
 import { createInstallPlan } from './plan.js';
 import { isForeignProjectLock, loadProjectLock, saveProjectLock, updateProjectLockSkill, PROJECT_LOCK_FILENAME } from './project-lock.js';
 import { resolveHomeDir } from './destinations.js';
@@ -304,7 +304,14 @@ function prepareDestination(tx, destDir) {
       destParent,
       `.${tx.skillId}-backup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     );
-    fs.renameSync(destDir, backupDir);
+    try {
+      fs.renameSync(destDir, backupDir);
+    } catch (err) {
+      if (err.code !== 'EXDEV') throw err;
+      // Overlay file systems (containers) refuse to rename a folder from a lower layer: copy it, then delete it.
+      copySkillTree(destDir, backupDir);
+      removeManagedPath(destDir);
+    }
   }
   return backupDir;
 }

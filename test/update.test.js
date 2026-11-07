@@ -171,6 +171,33 @@ test('update: upstream-only change restores official files and reports older Rel
   }
 });
 
+test('update: succeeds when the file system refuses to rename the old skill folder (EXDEV, #269)', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-exdev-'));
+  const realRename = fs.renameSync;
+  const refuse = (code) => (from, to) => {
+    if (path.basename(String(to)).startsWith('.sigmawrite-backup-')) throw Object.assign(new Error(`${code}: rename`), { code });
+    return realRename(from, to);
+  };
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    ageOfficial(projectRoot, 'sigmawrite');
+
+    fs.renameSync = refuse('EACCES');
+    const denied = await runCli(['update', '--yes', '--project', projectRoot], createMockIo());
+    assert.notEqual(denied, 0, 'any rename error but EXDEV still fails');
+    assert.match(fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8'), /sigma-older/);
+
+    fs.renameSync = refuse('EXDEV');
+    const code = await runCli(['update', '--yes', '--project', projectRoot], createMockIo());
+    assert.equal(code, 0);
+    const md = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8');
+    assert.equal(md.includes('<!-- sigma-older -->'), false);
+  } finally {
+    fs.renameSync = realRename;
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
 test('update: customization-only is unchanged; selected skip leaves the other skill aged', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-skip-'));
   try {
