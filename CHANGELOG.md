@@ -32,7 +32,9 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
-### Added
+## [0.22.5] — 2026-11-07
+
+### Changed
 
 - The `mattpocock` pack lists `software-factory`, the eighth skill in Matt Pocock's `skills/in-progress` folder. The other seven were already there. The pack follows the upstream head, so every install and update brings the latest text. (#268)
 
@@ -711,7 +713,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.4...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.5...HEAD
+[0.22.5]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.4...v0.22.5
 [0.22.4]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.3...v0.22.4
 [0.22.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.2...v0.22.3
 [0.22.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.1...v0.22.2
