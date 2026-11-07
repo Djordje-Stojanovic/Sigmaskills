@@ -6,7 +6,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 
 | | |
 |---|---|
-| **Release** | [**v0.22.3**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.22.3) |
+| **Release** | [**v0.22.4**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.22.4) |
 | **Changelog** | [CHANGELOG.md](CHANGELOG.md) |
 | **License** | [MIT](LICENSE) |
 | **Spec** | [agentskills.io](https://agentskills.io/) |

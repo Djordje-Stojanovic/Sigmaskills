@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.22.4] — 2026-11-07
+
 ### Changed
 
 - sigmadebug's text file is now a numbered record: done and running topics on top as short blocks (`N. Title: DONE (PR #x)` or `AGENT RUNNING`), open topics below as `### N. Title` blocks with their 5 parts and options, the current one marked `(NOW)`. Topics move up and renumber as they finish. It replaces the `[ ] T1` checklist.
@@ -701,7 +703,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.3...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.4...HEAD
+[0.22.4]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.3...v0.22.4
 [0.22.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.2...v0.22.3
 [0.22.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.1...v0.22.2
 [0.22.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.0...v0.22.1
