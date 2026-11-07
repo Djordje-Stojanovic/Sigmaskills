@@ -33,6 +33,13 @@ jobs:
           TMP: ${{ runner.temp }}/sigma-test-fs
           TEMP: ${{ runner.temp }}/sigma-test-fs
         run: npm test
+      - name: Packed CLI lifecycle (the slow part of tarball and release-candidate)
+        env:
+          TMPDIR: ${{ runner.temp }}/sigma-test-fs
+          TMP: ${{ runner.temp }}/sigma-test-fs
+          TEMP: ${{ runner.temp }}/sigma-test-fs
+          SIGMA_SLOW_TESTS: '1'
+        run: node --test test/tarball.test.js test/release-candidate.test.js
 
   release-rehearsal:
     name: Release rehearsal

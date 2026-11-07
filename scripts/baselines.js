@@ -9,40 +9,45 @@ function git(rootDir, args, encoding = 'utf8') {
 }
 
 /**
- * Read one skill folder's regular files from a git ref, as the bytes a clone gives.
+ * Read every skill folder's regular files from a git ref, as the bytes a clone gives.
+ * Two git processes per ref, however many folders it holds.
  *
  * @param {string} rootDir
  * @param {string} ref
- * @param {string} skillId
- * @returns {Record<string, Buffer> | null} null when the skill has no SKILL.md at that ref
+ * @returns {Record<string, Record<string, Buffer>>} skill id to tree; folders without SKILL.md are left out
  */
-export function readSkillTreeAtRef(rootDir, ref, skillId) {
-  const listing = git(rootDir, ['ls-tree', '-r', '-z', ref, '--', `${skillId}/`]);
-  const entries = [];
+export function readSkillTreesAtRef(rootDir, ref) {
+  const listing = git(rootDir, ['ls-tree', '-r', '-z', ref]);
+  const byFolder = {};
   for (const line of listing.split('\0').filter(Boolean)) {
     const tab = line.indexOf('\t');
     const [mode, type, object] = line.slice(0, tab).split(' ');
+    const filePath = line.slice(tab + 1);
+    const slash = filePath.indexOf('/');
     // Symbolic links and submodules are not regular files; the revision hash skips them too.
-    if (type !== 'blob' || mode === '120000') continue;
-    entries.push({ rel: line.slice(tab + 1).slice(skillId.length + 1), object });
+    if (slash < 0 || type !== 'blob' || mode === '120000') continue;
+    (byFolder[filePath.slice(0, slash)] ||= []).push({ rel: filePath.slice(slash + 1), object });
   }
   // Read no blobs for folders that are not skills (src/, test/, ...).
-  if (!entries.some((entry) => entry.rel === 'SKILL.md')) return null;
+  const entries = Object.entries(byFolder)
+    .filter(([, files]) => files.some((entry) => entry.rel === 'SKILL.md'))
+    .flatMap(([skillId, files]) => files.map((entry) => ({ skillId, ...entry })));
+  const trees = {};
+  if (entries.length === 0) return trees;
   // One git process reads every blob, in the order asked.
   const out = execFileSync('git', ['cat-file', '--batch'], {
     cwd: rootDir,
     input: entries.map((entry) => entry.object + '\n').join(''),
-    maxBuffer: 64 * 1024 * 1024,
+    maxBuffer: 256 * 1024 * 1024,
   });
-  const tree = {};
   let at = 0;
-  for (const { rel } of entries) {
+  for (const { skillId, rel } of entries) {
     const eol = out.indexOf(0x0a, at);
     const size = Number(out.subarray(at, eol).toString('latin1').split(' ')[2]);
-    tree[rel] = Buffer.from(out.subarray(eol + 1, eol + 1 + size));
+    (trees[skillId] ||= {})[rel] = Buffer.from(out.subarray(eol + 1, eol + 1 + size));
     at = eol + 1 + size + 1;
   }
-  return tree;
+  return trees;
 }
 
 /**
@@ -72,11 +77,9 @@ function hashTree(tree) {
  * @returns {Record<string, { revision: string, files: Record<string, string> }>}
  */
 export function hashSkillsAtRef(rootDir, ref) {
-  const names = git(rootDir, ['ls-tree', '-d', '--name-only', ref]).split(/\r?\n/).filter(Boolean);
   const skills = {};
-  for (const name of names.sort()) {
-    const tree = readSkillTreeAtRef(rootDir, ref, name);
-    if (tree) skills[name] = hashTree(tree);
+  for (const [name, tree] of Object.entries(readSkillTreesAtRef(rootDir, ref)).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
+    skills[name] = hashTree(tree);
   }
   return skills;
 }

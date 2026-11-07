@@ -149,7 +149,7 @@ Counts lines (with `laloc` if you have it), reads the five largest files and exp
 
 ### SigmaDebug
 
-Turns open questions into merged fixes while you talk. It lists every topic in a text file and opens it. It settles them one at a time in a fixed 5-part format with 3 options, the likely pick first, and grills until each is clear. Each clear topic gets a short plan and a background SigmaShip worker. You can name a subagent to answer for you.
+Turns open questions into merged fixes while you talk. It writes every topic to a text file and opens it. In chat it shows one topic per message, in 5 parts with 3 options, the likely pick first, and grills until the topic is clear. Each clear topic gets a short plan and a background SigmaShip worker that merges and deploys without asking you. Another model can answer for you.
 
 ### SigmaCreateArena
 
