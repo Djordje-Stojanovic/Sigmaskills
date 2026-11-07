@@ -63,7 +63,7 @@ test('wizard: opens on the grouped picker in the DESIGN.md palette', async () =>
     for (const title of ['Sigma', 'Matt Pocock', 'Three.js', 'HyperFrames', 'MiniMax H3', 'Local']) {
       assert.ok(first.includes(title), `${title} row`);
     }
-    assert.match(first, /0\/38/);
+    assert.match(first, /0\/39/);
     assert.match(first, /n\/a/, 'an unavailable pack is shown but marked');
     assert.match(io.raw(), /\x1b\[48;2;9;9;11m/, 'canvas #09090b');
     assert.match(io.raw(), /\x1b\[1;38;2;52;211;153m/, 'emerald #34d399');
@@ -164,7 +164,7 @@ test('wizard: right opens a pack, space toggles one skill, left closes it', asyn
     const last = pickerFrames.at(-1);
     assert.match(last, /\[x\]\s+ask-matt/);
     assert.match(last, /1 skill selected from 1 pack/);
-    assert.match(last, /\[-\]\s+2 Matt Pocock\s+1\/38/, 'the pack shows a partial mark');
+    assert.match(last, /\[-\]\s+2 Matt Pocock\s+1\/39/, 'the pack shows a partial mark');
   } finally {
     box.cleanup();
   }
