@@ -11,18 +11,40 @@ Turn a pile of open questions into merged fixes while the owner is still talking
 
 ## 1. Collect
 
-Read the conversation, the issues the owner points at and any notes. Give every open question, doubt and unfinished topic a short id (`T1`, `T2`, …) and a one-line title.
+Read the conversation, the issues the owner points at and any notes. Give every open question, doubt and unfinished topic a number and a short title.
 
-Write `issues-<topic>-<dd-mm-yyyy>.txt` in the folder the owner names, else Downloads (`%USERPROFILE%\Downloads` on Windows, `~/Downloads` elsewhere):
+Write `issues-<topic>-<dd-mm-yyyy>.txt` in the folder the owner names, else Downloads (`%USERPROFILE%\Downloads` on Windows, `~/Downloads` elsewhere). It has two parts:
 
-- at the top, the checklist: one line per topic, `[ ] T1 title`;
-- below it, the full 5-part text (step 2) of every open topic, so the owner can read and quote it in the editor.
+```text
+SIGMADEBUG <dd-mm-yyyy>
+Done or running first (1-2). Open topics after that (3-4), in the order we go. Next: 3.
+
+1. Login timeout: DONE (PR #12). Sessions last 3 months. Passkeys on.
+
+2. Slow test suite: AGENT RUNNING (worker B). Cuts made, final tests running.
+
+====================================================================
+OPEN, ONE AT A TIME
+
+### 3. Disk almost full   (NOW)
+1. **I said:** ...
+2. **You said:** ...
+3. **Topic:** ...
+4. **Answer:** ...
+5. **Options:** A ★ ... / B ... / C ...
+
+### 4. Old backups
+...
+```
+
+- **Done or running**, at the top: one short numbered block per topic, `N. Title: DONE (PR #x).` or `AGENT RUNNING (worker name).`, then one or two lines of result.
+- **Open**, below the line: one `### N. Title` block per topic with the 5 parts of step 2 under short labels and options A ★, B, C, numbered on from the last done one. The topic in chat now carries `(NOW)`.
 
 Open it in the system editor: `notepad <file>` on Windows, `open -t <file>` on macOS, `xdg-open <file>` on Linux. If that fails, print the path and go on.
 
-The .txt is the single record; never drop a topic. Keep it current: add each new topic, update a topic's text when it changes, and tick a topic only when its fix is merged, with its PR: `[x] T1 title (PR #12)`.
+The .txt is the single record; never drop a topic. Keep it current: add each new topic at the end of the open list, update a topic's text when it changes, and update the header line. When a worker starts, the topic moves up as AGENT RUNNING; when its PR merges, it turns DONE with the PR. Each move renumbers every topic, top to bottom.
 
-**Board option.** On "sigmadebug gui", use a SigmaWrite GUI board (SigmaWrite's `references/gui.md`) in place of the .txt: one `DO` card per topic with its 5 parts and 3 options, a status in place of the tick. Replies come back as an `EASYTALK REPLY`.
+**Board option.** On "sigmadebug gui", use a SigmaWrite GUI board (SigmaWrite's `references/gui.md`) in place of the .txt: one `DO` card per topic with its 5 parts and 3 options, a status (DONE, AGENT RUNNING, open). Replies come back as an `EASYTALK REPLY`.
 
 ## 2. Talk: one topic per message
 
@@ -36,9 +58,9 @@ Each message carries exactly one topic. Check its facts again first if an hour h
 
 **Grill until clear.** A topic is clear when no branch is open and nothing is assumed in silence. Where an answer leaves a gap or reads two ways, ask a hard follow-up on the same topic and recompute the options (`/grilling` when installed).
 
-**Quoted replies.** The owner often answers by quoting fragments of your text, each followed by a comment, sometimes with markers such as `<!-- reply -->`. Each fragment plus its comment is one answer. Answer every fragment, each under its topic id, even when one reply touches several topics; then go on with the one current topic. A fragment that raises a new question becomes a new topic in the .txt, taken in its turn.
+**Quoted replies.** The owner often answers by quoting fragments of your text, each followed by a comment, sometimes with markers such as `<!-- reply -->`. Each fragment plus its comment is one answer. Answer every fragment, each under its topic number, even when one reply touches several topics; then go on with the one current topic. A fragment that raises a new question becomes a new topic in the .txt, taken in its turn.
 
-**Status pings.** Between topics, a status note is one line that names the one open topic, for example `T4 open: which port? (A ★ 8080)`. The full list lives in the .txt.
+**Status pings.** Between topics, a status note is one line that names the one open topic, for example `4 open: which port? (A ★ 8080)`. The full list lives in the .txt.
 
 ## 3. Plan each clear topic
 
@@ -58,7 +80,7 @@ Hand the plan to a background worker, then go straight to the next topic. Brief 
 - the model the owner names, else the host's mid-tier model at medium effort;
 - the worker rules: it never asks the owner; it uses free and local tools, and a paid service only when the owner named it; it reads each command's real exit code and treats non-zero as failure; on an irreversible or data-deleting step it stops and reports.
 
-When a PR lands, relay it in one short block: topic, PR, what changed, deploy proof. Tick it in the .txt. When the talk ends, merge any ready PRs left (never under `sigmaship stop`) and send one line per topic: `T1 done, PR #12` or `T3 blocked: reason`.
+When a PR lands, relay it in one short block: topic, PR, what changed, deploy proof. Mark it DONE in the .txt. When the talk ends, merge any ready PRs left (never under `sigmaship stop`) and send one line per topic: `1. Title: DONE (PR #12)` or `3. Title: BLOCKED: reason`.
 
 Without background agents, start each worker as a headless session of the host's CLI; failing that, ship the plans one after another when the talk ends.
 

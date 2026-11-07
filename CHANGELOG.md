@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- sigmadebug's text file is now a numbered record: done and running topics on top as short blocks (`N. Title: DONE (PR #x)` or `AGENT RUNNING`), open topics below as `### N. Title` blocks with their 5 parts and options, the current one marked `(NOW)`. Topics move up and renumber as they finish. It replaces the `[ ] T1` checklist.
+
 ## [0.22.3] — 2026-11-07
 
 ### Changed
