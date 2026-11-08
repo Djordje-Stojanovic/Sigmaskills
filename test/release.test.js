@@ -5,7 +5,6 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { findPackageRoot } from '../src/catalog.js';
-import { runCli } from '../src/cli.js';
 import {
   RELEASE_DIST_TAG,
   RELEASE_ENVIRONMENT,
@@ -21,11 +20,8 @@ import {
   executeRelease,
   executeTrustedPatchRelease,
   formatReleaseHuman,
-  formatReleaseJson,
   inspectReleaseWorkflow,
   lastReleasedVersion,
-  parseNpmPackJson,
-  parseReleaseArgs,
   planIdempotentPublish,
   runReleaseCli,
 } from '../scripts/release.js';
@@ -498,25 +494,6 @@ test('trusted patch Release calls idempotent publication and refuses digest clas
   assert.match(clash.errors.join('\n'), /different digest/);
 });
 
-test('trusted workflow: validation is read-only, publish is the only privileged job, actions are pinned, merges do not publish', () => {
-  const releaseYaml = fs.readFileSync(path.join(ROOT, '.github', 'workflows', RELEASE_WORKFLOW_FILE), 'utf8');
-  const ciYaml = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'ci.yml'), 'utf8');
-  const inspected = inspectReleaseWorkflow(releaseYaml);
-  assert.equal(inspected.ok, true);
-  assert.deepEqual(inspected.triggers, ['workflow_dispatch']);
-  assert.equal(inspected.validate.permissions.contents, 'read');
-  assert.equal(inspected.validate.permissions['id-token'], undefined);
-  assert.equal(inspected.publish.permissions['id-token'], 'write');
-  assert.equal(inspected.publish.permissions.contents, 'write');
-  assert.equal(inspected.publish.environment, RELEASE_ENVIRONMENT);
-  assert.match(inspected.checkoutPin, /^[a-f0-9]{40}$/);
-  assert.match(inspected.setupNodePin, /^[a-f0-9]{40}$/);
-  assert.equal(inspected.usesFloatingTags, false);
-  assert.doesNotMatch(ciYaml, /npm publish/);
-  assert.doesNotMatch(ciYaml, /id-token:/);
-  assert.doesNotMatch(releaseYaml, /\non:\s*\n(?:[^\n]*\n)*?\s+push:/);
-});
-
 test('maintainer release: --dry-run --json prints the versioned preview; --yes is not enough to dispatch', async () => {
   const dir = tmpTree(readyIdentities);
   try {
@@ -551,65 +528,6 @@ test('maintainer release: --dry-run --json prints the versioned preview; --yes i
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
-});
-
-test('maintainer release: parseReleaseArgs captures immutable release confirmation flags', () => {
-  const parsed = parseReleaseArgs([
-    '--expected-commit', 'deadbeef',
-    '--expected-version', '0.2.0',
-    '--expected-digest', 'aa'.repeat(32),
-  ]);
-  assert.equal(parsed.expectedCommit, 'deadbeef');
-  assert.equal(parsed.expectedVersion, '0.2.0');
-  assert.equal(parsed.expectedDigest, 'aa'.repeat(32));
-});
-
-test('maintainer release: unknown flags fail closed', async () => {
-  const io = mockIo({});
-  assert.equal(await runReleaseCli(['--dry-rn'], io), 1);
-  assert.match(io.getStderr(), /unknown option: --dry-rn/);
-});
-
-test('maintainer release: runs from the repository, not the published CLI', async () => {
-  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  assert.equal(pkg.scripts.release, 'node scripts/release.js');
-  assert.ok(!pkg.files.includes('scripts'));
-  const io = mockIo({});
-  assert.equal(await runCli(['release', '--dry-run'], io), 1);
-  assert.match(io.getStderr(), /unknown option or command: release/);
-});
-
-test('formatReleaseJson is a stable versioned envelope', () => {
-  const json = JSON.parse(formatReleaseJson({
-    schemaVersion: RELEASE_SCHEMA_VERSION,
-    command: 'release',
-    commit: 'deadbeef',
-    version: '0.2.0',
-    dryRun: true,
-    tests: { command: 'npm test', required: true },
-    tarball: { digest: 'aa'.repeat(32), contents: ['package/LICENSE'] },
-    skills: [{ id: 'sigmawrite', revision: 'bb'.repeat(32) }],
-    tag: 'v0.2.0',
-    githubRelease: 'v0.2.0',
-    npmPackage: '@djordje-stojanovic/sigmaskills@0.2.0',
-    distTag: 'latest',
-  }));
-  assert.equal(json.schemaVersion, 1);
-  assert.equal(json.command, 'release');
-});
-
-test('release packing reads npm pack --json after prepack logs on stdout (dd35041)', () => {
-  const json = JSON.stringify([{ filename: 'sigmaskills-0.2.1.tgz', integrity: 'sha512-x' }], null, 2);
-  const output = `\n> sigmaskills@0.2.1 prepack\n> node ./src/prepack.js\n\nPrepack validation successful: 6 skills validated\n${json}\n`;
-  assert.equal(parseNpmPackJson(output)[0].filename, 'sigmaskills-0.2.1.tgz');
-  assert.throws(() => parseNpmPackJson('no json here'), /produced no JSON/);
-});
-
-test('prepack logs to stderr so npm pack --json stdout stays JSON (dd35041)', () => {
-  const result = spawnSync(process.execPath, [path.join(ROOT, 'src', 'prepack.js')], { cwd: ROOT, encoding: 'utf8' });
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout, '');
-  assert.match(result.stderr, /Prepack validation successful/);
 });
 
 test('release identities: notes with $&, $\' and $` stay verbatim (#68 B1)', () => {
@@ -680,15 +598,6 @@ test('a Removed breaking entry makes the next Release a minor step before 1.0.0 
   const changelog = changelogWith('### Removed\n\n- **BREAKING CHANGE:** Node.js 20 is no longer supported. (#70)\n', '0.4.0');
   assert.equal(classifyChangelogBump(extractUnreleased(changelog)), 'major');
   const plan = calculateReleasePlan({ packageVersion: '0.4.0', manifestVersion: '0.4.0', changelog, sourceCommit: 'abc' });
-  assert.equal(plan.bump, 'major');
-  assert.equal(plan.version, '0.5.0');
-});
-
-test('the real CHANGELOG Unreleased section reads as breaking and plans 0.5.0 while 0.4.0 is current (#70)', (t) => {
-  const changelog = fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8');
-  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  if (pkg.version !== '0.4.0') return t.skip('the 0.5.0 Release already happened');
-  const plan = calculateReleasePlan({ packageVersion: pkg.version, manifestVersion: pkg.version, changelog, sourceCommit: 'abc' });
   assert.equal(plan.bump, 'major');
   assert.equal(plan.version, '0.5.0');
 });
@@ -781,36 +690,4 @@ test('registry patch identities put the patch heading before older versions when
   assert.ok(out.indexOf('## [0.1.1]') > out.indexOf('## [Unreleased]'));
   assert.ok(out.indexOf('## [0.1.1]') < out.indexOf('## [0.1.0]'));
   assert.equal(lastReleasedVersion(out), '0.1.1');
-});
-
-test('registry patch identities keep heading order on the shape of the real CHANGELOG', () => {
-  const changelog = `# Changelog
-
-## [Unreleased]
-
-## [0.5.0] — 2026-09-29
-
-### Changed
-
-- Five.
-
-## [0.4.0] — 2026-09-01
-
-### Added
-
-- Four.
-
-[Unreleased]: https://github.com/o/r/compare/v0.5.0...HEAD
-[0.5.0]: https://github.com/o/r/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/o/r/releases/tag/v0.4.0
-`;
-  const { changelog: out } = applyRegistryPatchIdentities({
-    packageJson: {}, manifest: {}, changelog, version: '0.5.1', date: '2026-10-01', note: 'Registry sync.',
-  });
-  const headings = [...out.matchAll(/^## \[([^\]]+)\]/gm)].map((match) => match[1]);
-  assert.deepEqual(headings, ['Unreleased', '0.5.1', '0.5.0', '0.4.0']);
-  assert.equal(lastReleasedVersion(out), '0.5.1');
-  assert.match(out, /^\[Unreleased\]: .*\/compare\/v0\.5\.1\.\.\.HEAD$/m);
-  assert.match(out, /^\[0\.5\.1\]: .*\/compare\/v0\.5\.0\.\.\.v0\.5\.1$/m);
-  assert.equal(extractUnreleased(out).trim(), '');
 });

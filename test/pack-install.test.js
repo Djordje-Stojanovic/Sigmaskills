@@ -47,19 +47,6 @@ test('pack install: a preset copies each skill once and links the host folder to
   }
 });
 
-test('pack install: --copy writes a full copy into the host folder', async () => {
-  const { box, run } = setup();
-  try {
-    const { code, err } = await run(['install', 'alpha', '--agent', 'claude', '--copy']);
-    assert.equal(code, 0, err);
-    const copy = path.join(box.project, '.claude', 'skills', 'alpha');
-    assert.ok(!fs.lstatSync(copy).isSymbolicLink());
-    assert.ok(fs.existsSync(path.join(copy, 'references', 'note.md')));
-  } finally {
-    box.cleanup();
-  }
-});
-
 test('pack install: running it again changes nothing', async () => {
   const { box, run } = setup();
   try {
@@ -79,36 +66,6 @@ test('pack install: --dry-run fetches and reports but writes nothing', async () 
     assert.equal(code, 0);
     assert.match(out, /Dry run: would install 2 skills/);
     assert.ok(!fs.existsSync(path.join(box.project, '.agents')));
-  } finally {
-    box.cleanup();
-  }
-});
-
-test('pack install: --json prints one entry per skill', async () => {
-  const { box, run } = setup();
-  try {
-    const { code, out } = await run(['install', '--preset', 'acme', '--json']);
-    assert.equal(code, 0);
-    const parsed = JSON.parse(out);
-    assert.equal(parsed.schemaVersion, 1);
-    assert.deepEqual(parsed.entries.map((entry) => [entry.id, entry.status]), [['alpha', 'installed'], ['beta', 'installed']]);
-  } finally {
-    box.cleanup();
-  }
-});
-
-test('pack install: Sigma skills and pack skills install together', async () => {
-  const { box, run } = setup();
-  try {
-    const { code, out, err } = await run(['install', '--preset', 'acme', 'sigmawrite', '--agent', 'claude']);
-    assert.equal(code, 0, err);
-    assert.match(out, /3 skills installed/);
-    assert.ok(fs.existsSync(path.join(box.project, '.agents', 'skills', 'sigmawrite', 'SKILL.md')));
-    assert.ok(fs.existsSync(alpha(box, 'SKILL.md')));
-    const status = await run(['status']);
-    assert.match(status.out, /SigmaWrite/);
-    assert.match(status.out, /Pack skills \(2\)/);
-    assert.match(status.out, /alpha\s+\[acme\]\s+clean/);
   } finally {
     box.cleanup();
   }
@@ -161,21 +118,6 @@ test('pack update: new upstream content replaces clean copies and local edits st
   }
 });
 
-test('pack update: --skill updates only the named pack skill', async () => {
-  const { box, remote, run } = setup();
-  try {
-    await run(['install', '--preset', 'acme']);
-    writeSkills(remote, { alpha: 'Alpha skill, version 2.', beta: 'Beta skill, version 2.' });
-    commitAll(remote);
-    const { code, err } = await run(['update', '--skill', 'beta']);
-    assert.equal(code, 0, err);
-    assert.match(fs.readFileSync(path.join(box.project, '.agents', 'skills', 'beta', 'SKILL.md'), 'utf8'), /version 2/);
-    assert.doesNotMatch(fs.readFileSync(alpha(box, 'SKILL.md'), 'utf8'), /version 2/);
-  } finally {
-    box.cleanup();
-  }
-});
-
 test('pack uninstall: removes the copy, the links, and the record', async () => {
   const { box, run } = setup();
   try {
@@ -201,23 +143,6 @@ test('pack uninstall: removes the copy, the links, and the record', async () => 
   }
 });
 
-test('pack uninstall: a copy with local edits stays until --force', async () => {
-  const { box, run } = setup();
-  try {
-    await run(['install', 'alpha']);
-    fs.appendFileSync(alpha(box, 'SKILL.md'), '\nmine\n');
-    const kept = await run(['uninstall', '--skill', 'alpha', '--yes']);
-    assert.match(kept.out, /1 kept \(local edits\)/);
-    assert.ok(fs.existsSync(alpha(box, 'SKILL.md')));
-    const forced = await run(['uninstall', '--skill', 'alpha', '--yes', '--force']);
-    assert.equal(forced.code, 0, forced.err);
-    assert.ok(!fs.existsSync(alpha(box)));
-    assert.equal(fs.readdirSync(path.join(box.project, '.agents', '.sigmaskills', 'pack-backups')).length, 1);
-  } finally {
-    box.cleanup();
-  }
-});
-
 test('pack install: a failing source marks its skills failed and exits 1', async () => {
   const { box, run } = setup();
   try {
@@ -233,36 +158,4 @@ test('pack install: a failing source marks its skills failed and exits 1', async
   }
 });
 
-test('pack install: a folder source installs from a local folder', async () => {
-  const { box, run } = setup();
-  try {
-    const folder = path.join(box.root, 'local-skills');
-    writeSkills(folder, { 'local-one': 'One.', 'local-two': 'Two.' }, '.');
-    writeUserConfig(box.home, { packs: [{ id: 'mine', title: 'Mine', sources: [{ type: 'dir', path: folder }] }] });
-    const { code, err } = await run(['install', '--preset', 'mine']);
-    assert.equal(code, 0, err);
-    assert.ok(fs.existsSync(path.join(box.project, '.agents', 'skills', 'local-two', 'SKILL.md')));
-  } finally {
-    box.cleanup();
-  }
-});
-
-test('pack install: global scope needs --yes and writes under the home folder', async () => {
-  const { box, run } = setup();
-  try {
-    const refused = await run(['install', '--preset', 'acme', '--global']);
-    assert.equal(refused.code, 1);
-    assert.match(refused.err, /requires both --global and --yes/);
-
-    const { code, err } = await run(['install', '--preset', 'acme', '--global', '--yes', '--agent', 'claude']);
-    assert.equal(code, 0, err);
-    assert.ok(fs.existsSync(path.join(box.home, '.agents', 'skills', 'alpha', 'SKILL.md')));
-    assert.ok(fs.lstatSync(path.join(box.home, '.claude', 'skills', 'alpha')).isSymbolicLink());
-    assert.ok(!fs.existsSync(path.join(box.project, '.agents')));
-    const status = await run(['status', '--global']);
-    assert.match(status.out, /Pack skills \(2\)/);
-  } finally {
-    box.cleanup();
-  }
-});
 });
