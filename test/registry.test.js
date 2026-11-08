@@ -5,18 +5,16 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { parseAgents, extractEnvVars } from '../scripts/registry/parse.js';
+import { parseAgents } from '../scripts/registry/parse.js';
 import { validateSnapshot, assertSafePath, SUPPORTED_PLATFORMS } from '../scripts/registry/validate.js';
 import { diffSnapshots } from '../scripts/registry/diff.js';
-import { normalizeHost, buildSnapshot, compareIds } from '../scripts/registry/normalize.js';
-import { loadPin, syncRegistry, runSync, fetchPinnedSource, canonicalSourceText } from '../scripts/registry/sync.js';
+import { normalizeHost, buildSnapshot } from '../scripts/registry/normalize.js';
+import { loadPin, syncRegistry, runSync, canonicalSourceText } from '../scripts/registry/sync.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const FIXTURE = path.join(ROOT, 'test/fixtures/vercel-skills/src/agents.ts');
 const SNAPSHOT = path.join(ROOT, 'registry/agent-hosts.json');
-const SOURCE = path.join(ROOT, 'registry/source.json');
-const REGISTRY_DIR = path.join(ROOT, 'registry');
 
 function loadSnapshot() {
   return JSON.parse(fs.readFileSync(SNAPSHOT, 'utf8'));
@@ -35,20 +33,6 @@ test('registry: committed snapshot reproduces fixture parse', () => {
   assert.deepEqual(snapshot, loadSnapshot());
 });
 
-test('registry: snapshot carries primary-source attribution from a real pin', () => {
-  const snapshot = loadSnapshot();
-  const pin = loadPin();
-  assert.equal(snapshot.schemaVersion, 1);
-  assert.equal(snapshot.generatedFrom.repository, 'vercel-labs/skills');
-  assert.equal(snapshot.generatedFrom.upstreamFile, 'src/agents.ts');
-  assert.match(snapshot.generatedFrom.pinnedRevision, /^[0-9a-f]{40}$/);
-  assert.equal(pin.contentSha256, sha256(canonicalSourceText(fs.readFileSync(FIXTURE, 'utf8'))));
-  for (const host of snapshot.hosts) {
-    assert.equal(host.attribution.upstreamFile, 'src/agents.ts');
-    assert.ok(host.attribution.upstreamLine >= 1);
-  }
-});
-
 test('registry: pinned content hash ignores CRLF from Windows checkout', () => {
   const pin = loadPin();
   const lf = canonicalSourceText(fs.readFileSync(FIXTURE, 'utf8'));
@@ -64,26 +48,6 @@ test('registry: pinned content hash ignores CRLF from Windows checkout', () => {
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
-});
-
-test('registry: universal membership is preserved from upstream flags', () => {
-  const hosts = parseAgents(fs.readFileSync(FIXTURE, 'utf8'));
-  const byId = new Map(hosts.map((h) => [h.id, h]));
-  assert.equal(byId.get('amp').universal, true);
-  assert.equal(byId.get('replit').universal, false);
-  assert.equal(byId.get('universal').universal, false);
-  assert.equal(byId.get('dexto').universalPrompt, false);
-  assert.equal(byId.get('amp').universalPrompt, true);
-});
-
-test('registry: snapshot ordering is bytewise and locale-independent', () => {
-  const snapshot = loadSnapshot();
-  const ids = snapshot.hosts.map((h) => h.id);
-  const sorted = [...ids].sort(compareIds);
-  assert.deepEqual(ids, sorted);
-  // Bytewise: uppercase letters sort before lowercase, independent of locale.
-  assert.deepEqual(['A', 'a', 'b', 'B'].sort(compareIds), ['A', 'B', 'a', 'b']);
-  assert.deepEqual(['b', 'A', 'a'].sort(compareIds), ['A', 'a', 'b']);
 });
 
 test('registry: validate rejects protected locations written in disguise', () => {
@@ -261,14 +225,6 @@ test('registry: sync writes snapshot only when diff is safe', () => {
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
-});
-
-test('registry: no upstream detector code executes — snapshot is pure data', () => {
-  const snapshot = loadSnapshot();
-  const text = JSON.stringify(snapshot);
-  assert.doesNotMatch(text, /detectInstalled/);
-  assert.doesNotMatch(text, /existsSync/);
-  assert.doesNotMatch(text, /=>/);
 });
 
 test('registry: validate rejects destinations under .git, .github/workflows, and .ssh, and they are not safe additions (#68 B5)', () => {

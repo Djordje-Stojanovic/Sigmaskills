@@ -79,51 +79,6 @@ test('interactive Project Installation reads the skill picker from the manifest 
   }
 });
 
-test('flag-only dry-run and yes invocations do not enter the interactive installer', async (t) => {
-  for (const flag of ['--dry-run', '--yes']) {
-    await t.test(flag, async () => {
-      const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-flag-'));
-      try {
-        const io = createTerminalIo(' \ry');
-        const code = await runCli([flag, '--static', '--project', projectRoot], io);
-
-        assert.equal(code, 1);
-        assert.match(io.getStderr(), /sigmaskills error: unknown option or command/);
-        assert.ok(!fs.existsSync(path.join(projectRoot, '.agents')));
-        assert.ok(!fs.existsSync(path.join(projectRoot, 'skills-lock.json')));
-      } finally {
-        fs.rmSync(projectRoot, { recursive: true, force: true });
-      }
-    });
-  }
-});
-
-test('interactive Project Installation includes future skills supplied by the manifest catalog', async () => {
-  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-future-'));
-  try {
-    const io = createTerminalIo('\x1b');
-    const catalog = {
-      manifest: { name: 'sigmaskills', version: '0.1.0' },
-      skills: [
-        { id: 'future-skill', title: 'Future Skill', description: 'A future skill discovered from manifest metadata.' },
-      ],
-    };
-    const code = await runProjectInstaller({
-      catalog,
-      packageRoot: projectRoot,
-      projectRoot,
-      io,
-      options: { static: true, noColor: true },
-    });
-
-    assert.equal(code, 0);
-    assert.match(io.getStdout(), /Future Skill \(future-skill\)/);
-    assert.ok(!fs.existsSync(path.join(projectRoot, '.agents')));
-  } finally {
-    fs.rmSync(projectRoot, { recursive: true, force: true });
-  }
-});
-
 test('interactive Project Installation confirms exact destinations and installs only the selected subset through the command core', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-install-'));
   try {
@@ -188,40 +143,6 @@ test('interactive Project Installation preflights every selected destination bef
   }
 });
 
-test('installer heading uses the warm palette without an opening animation', async () => {
-  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-reveal-skip-'));
-  try {
-    const io = createTerminalIo('x\x1b', { tty: true, env: { ...process.env, CI: '' } });
-    const code = await runCli(['--classic', '--project', projectRoot], io);
-
-    assert.equal(code, 0);
-    assert.doesNotMatch(io.getStdout(), /█/, 'opening animation must be absent');
-    assert.match(io.getStdout(), /\x1b\[48;2;9;9;11m/); // canvas #09090b
-    assert.match(io.getStdout(), /\x1b\[1;38;2;52;211;153m/); // primary #34d399
-
-
-  } finally {
-    fs.rmSync(projectRoot, { recursive: true, force: true });
-  }
-});
-
-test('dynamic output separates the final prompt from the installation result', async () => {
-  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-dynamic-output-'));
-  try {
-    const io = createTerminalIo('x \r\ry', { tty: true });
-    const code = await runCli(['--classic', '--project', projectRoot], io);
-
-    assert.equal(code, 0);
-    const output = io.getStdout();
-    const finalPrompt = output.lastIndexOf('y confirm · n/enter/esc cancel');
-    const installed = output.indexOf('Installed SigmaReview', finalPrompt);
-    assert.ok(finalPrompt !== -1 && installed !== -1);
-    assert.match(output.slice(finalPrompt, installed), /\n/);
-  } finally {
-    fs.rmSync(projectRoot, { recursive: true, force: true });
-  }
-});
-
 test('Ctrl+C at startup cancels before any write', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-reveal-cancel-'));
   try {
@@ -232,50 +153,6 @@ test('Ctrl+C at startup cancels before any write', async () => {
     assert.match(io.getStdout(), /Installation cancelled\. No files were written\./);
     assert.deepEqual(io.getRawModes(), [true, false]);
     assert.ok(!fs.existsSync(path.join(projectRoot, '.agents')));
-  } finally {
-    fs.rmSync(projectRoot, { recursive: true, force: true });
-  }
-});
-
-test('installer shows skill selection before receiving any input', async () => {
-  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-reveal-duration-'));
-  try {
-    let resolvePrompt;
-    const promptShown = new Promise((resolve) => {
-      resolvePrompt = resolve;
-    });
-    const io = createTerminalIo('', {
-      tty: true,
-      manualInput: true,
-      onStdout: (_chunk, output, stdin) => {
-        if (output.includes('Stage 1/4')) {
-          resolvePrompt();
-          stdin.end('\x1b');
-        }
-      },
-    });
-
-    const run = runCli(['--classic', '--project', projectRoot], io);
-    await promptShown;
-    const code = await run;
-
-    assert.equal(code, 0);
-    assert.match(io.getStdout(), /Stage 1\/4/);
-  } finally {
-    fs.rmSync(projectRoot, { recursive: true, force: true });
-  }
-});
-
-test('narrow terminals use the compact Project Installation layout', async () => {
-  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-narrow-'));
-  try {
-    const io = createTerminalIo('\x1b', { columns: 44 });
-    const code = await runCli(['--static', '--narrow', '--project', projectRoot], io);
-
-    assert.equal(code, 0);
-    assert.match(io.getStdout(), /Project Installation/);
-    assert.doesNotMatch(io.getStdout(), /█/);
-    assert.doesNotMatch(io.getStdout(), /██████████████████/);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }

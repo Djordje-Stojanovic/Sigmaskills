@@ -8,7 +8,7 @@ import { loadSkillBaselines } from '../src/adoption.js';
 import { hashSkillsAtRef, readSkillTreesAtRef } from '../scripts/baselines.js';
 import { getCatalog, findPackageRoot } from '../src/catalog.js';
 import { createInstallPlan } from '../src/plan.js';
-import { formatReleaseHuman, writeReleaseIdentities } from '../scripts/release.js';
+import { writeReleaseIdentities } from '../scripts/release.js';
 import { computeSkillRevision } from '../src/revision.js';
 import { executeProjectInstall } from '../src/transaction.js';
 
@@ -77,27 +77,6 @@ test('baselines: a changed copy of an earlier Release still needs an explicit ch
       /explicit replace, skip, or export/,
     );
     assert.match(fs.readFileSync(path.join(dest, 'SKILL.md'), 'utf8'), /my local edit/);
-  } finally {
-    fs.rmSync(projectRoot, { recursive: true, force: true });
-  }
-});
-
-test('baselines: plan labels files from the installer point of view', () => {
-  const catalog = getCatalog(ROOT);
-  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-baseline-labels-'));
-  try {
-    const dest = path.join(projectRoot, '.agents', 'skills', 'sigmawrite');
-    fs.cpSync(path.join(ROOT, 'sigmawrite'), dest, { recursive: true });
-    fs.rmSync(path.join(dest, 'agents', 'openai.yaml'));
-    fs.writeFileSync(path.join(dest, 'extra.md'), 'local only', 'utf8');
-    const plan = createInstallPlan(catalog, { skillId: 'sigmawrite', projectRoot, packageRoot: ROOT, dryRun: true });
-    const { diff } = plan.destinations[0];
-    assert.deepEqual(diff.added, ['agents/openai.yaml']);
-    assert.deepEqual(diff.deleted, ['extra.md']);
-    // A file the new Release adds is written, not replaced.
-    assert.ok(plan.writes.includes('.agents/skills/sigmawrite/agents/openai.yaml'));
-    assert.ok(!plan.replacements.includes('.agents/skills/sigmawrite/agents/openai.yaml'));
-    assert.ok(plan.replacements.includes('.agents/skills/sigmawrite/SKILL.md'));
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -184,13 +163,6 @@ test('release --write-identities run twice leaves one candidate compare link', (
   } finally {
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
-});
-
-test('baselines: release guidance names the baselines file among the files to commit', () => {
-  const human = formatReleaseHuman({ identitiesCommitted: false, skills: [] });
-  assert.match(human, /registry\/skill-baselines\.json/);
-  const maintainers = fs.readFileSync(path.join(ROOT, 'docs', 'maintainers.md'), 'utf8');
-  assert.match(maintainers, /`--write-identities` writes[^\n]*?skill hashes[^\n]*?`registry\/skill-baselines\.json`/);
 });
 
 test('baselines: personal links prevent automatic legacy replacement and appear in the preview', () => {

@@ -15,7 +15,7 @@ Sigmaskills/
 ├── docs/                     Guides, decision records, audits
 │   └── agents/               Issue tracker, triage, and domain notes for agents
 ├── test/                     npm test
-├── .github/                  Issue forms · PR template · CI
+├── .github/                  Issue forms · PR template · Release and Registry sync workflows
 ├── .agents/skills/           Vendored dev skills for people who work here (not shipped)
 ├── skills-lock.json          Pins those dev skills; see below
 ├── sigmareview/              SKILL.md · agents/ · references/
@@ -43,7 +43,7 @@ Each top-level folder with a `SKILL.md` is one installable skill. The folder nam
 
 `skills-lock.json` pins them. It also does a second job: `npx skills add Djordje-Stojanovic/Sigmaskills --all` (the `vercel-labs/skills` CLI) skips skills that the lock lists. Without the lock, that command would offer these 25 dev skills to users. Do not delete the lock or remove entries from it.
 
-## Tests and CI
+## Tests
 
 The tests use Node.js only, with no dependencies:
 
@@ -51,13 +51,13 @@ The tests use Node.js only, with no dependencies:
 npm test
 ```
 
-A local `npm test` must finish in 180 s, or it fails and names the slowest files. Slow checks (the packed CLI's full lifecycle, LibreOffice, real media passes) run only with `SIGMA_SLOW_TESTS=1 npm test`. CI runs the packed CLI's lifecycle that way on every pull request.
+A local `npm test` must finish in 180 s, or it fails and names the slowest files. Slow checks (the packed CLI's full lifecycle, LibreOffice, real media passes) run only with `SIGMA_SLOW_TESTS=1 npm test`. Run `node --test test/tarball.test.js test/release-candidate.test.js` with that variable before a Release.
 
-They cover the installer, the package contents, and the repository itself: the skill registry, `SKILL.md` frontmatter, `agents/openai.yaml`, README and installer-guide install lines, the README length, the CHANGELOG, issue templates, and agent docs.
+They cover the installer, the package contents, and the repository itself: the skill registry, `SKILL.md` frontmatter, `agents/openai.yaml`, README and installer-guide install lines, the package contents, and the manifest.
 
-`npm test` also checks each skill's output contract against good and bad sample outputs, and checks that near-miss prompts reach the right skill. To run the skills themselves on a small fixture game, use `node scripts/eval-skills.js [skill...]`. It calls Claude Code, costs money, and stays out of CI. The [skill evals guide](evals.md) has the method and the latest results.
+To run the skills themselves on a small fixture game, use `node scripts/eval-skills.js [skill...]`. It calls Claude Code, costs money, and stays out of `npm test`. The [skill evals guide](evals.md) has the method and the latest results.
 
-CI runs the same suite on Windows, macOS, and Linux with Node.js 22 and 24. `package.json` requires Node.js 22 or newer (`engines.node`), so CI has no older job. It runs on every pull request and every push to `main`. The jobs use real junctions and symbolic links, copy fallback, different shells, and an isolated temporary file system. CI runs with a read-only token and pins every action to a full commit SHA. No bot opens recurring pull requests: the action pins are checked at each Release (see below). The release, registry-sync, and rehearsal jobs run on the latest Node.js 24 LTS (`node-version: '24'`), so that pin never goes stale. The npm bundled with Node.js 24 supports trusted publishing, so no job installs npm on its own. If a new Node.js 24 release changes the `npm pack` output, the digest check in `release.yml` stops the Release; run the preview again and dispatch with the new digest. Keep the rehearsal on the same Node.js as `release.yml`.
+No GitHub workflow runs tests (owner 2026-11-08: the failure mails). Run `npm test` locally before every merge; `package.json` requires Node.js 22 or newer (`engines.node`). Only the Release and Registry sync workflows remain, both started by hand.
 
 ### Adding, renaming, or removing a skill
 
@@ -69,7 +69,7 @@ Change these together in one pull request:
 - the per-skill install lines in [installer.md](installer.md#other-install-methods);
 - the CHANGELOG.
 
-If one is missing, CI fails on purpose.
+If one is missing, `npm test` fails on purpose.
 
 ### Registry scripts
 
@@ -87,14 +87,14 @@ Releases run from a repository checkout, never from the published package. The n
 
 Before step 1, bring the inputs up to date. Nothing does this on a schedule, so no pull requests wait between Releases:
 
-- **Agent Host registry:** run `gh workflow run registry-sync.yml` (no inputs needed). If upstream changed the agent list, it opens a registry pull request. Review it, and merge it if CI is green.
+- **Agent Host registry:** run `gh workflow run registry-sync.yml` (no inputs needed). If upstream changed the agent list, it opens a registry pull request. Review it, and merge it once `npm test` is green.
 - **Action pins:** compare the `actions/checkout` and `actions/setup-node` SHAs in `.github/workflows/*.yml` with their latest releases (`gh api repos/actions/checkout/releases/latest`). To bump, change the SHA and the `# vX.Y.Z` comment in all three workflows and the matching `CHECKOUT_ACTION_PIN` or `SETUP_NODE_ACTION_PIN` in `scripts/release-publication.js`. The tests check that they agree.
 
 1. `npm run release -- --dry-run` previews the next Release.
 2. `npm run release -- --write-identities` writes the version identities. Commit them and merge.
 3. `npm run release -- --expected-commit <sha> --expected-version <version> --expected-digest <sha256>` dispatches `release.yml`.
 
-CI rehearses these steps on every pull request, together with the trusted `validate` and publish steps (`node scripts/release-rehearsal.js`). The rehearsal uses a real `npm pack` and stubs the network, dispatch, and publish.
+Rehearse these steps, together with the trusted `validate` and publish steps, with `node scripts/release-rehearsal.js` before a Release. The rehearsal uses a real `npm pack` and stubs the network, dispatch, and publish.
 
 ### Preview
 
@@ -114,7 +114,7 @@ Before 1.0.0, a breaking change raises the minor version, as SemVer allows for 0
 
 ### Dispatch and publish
 
-Ordinary merges never publish. `--yes`, CI, and informal text cannot dispatch a Release. Dispatch needs `--expected-commit`, `--expected-version`, and `--expected-digest`, and all three must match the rebuilt preview.
+Ordinary merges never publish. `--yes` and informal text cannot dispatch a Release. Dispatch needs `--expected-commit`, `--expected-version`, and `--expected-digest`, and all three must match the rebuilt preview.
 
 The trusted `release.yml` workflow then checks everything again on its own:
 

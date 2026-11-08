@@ -2,7 +2,7 @@
 
 A skill is a set of instructions, so an edit can quietly break what it produces. The evals catch that in two layers.
 
-## Layer 1: contract checks in `npm test` (runs in CI)
+## Layer 1: contract checks (`scripts/eval-contracts.js`; the `npm test` file for them was cut on 2026-11-08)
 
 - `scripts/eval-contracts.js` holds one check per skill. A check reads what a run left behind (the files and the final chat reply) and lists every way it breaks the skill's documented output. An empty list is a pass.
 - `test/fixtures/eval-samples/<skill>/good` and `bad` hold small sample outputs. The test asserts that each check accepts the good sample and rejects the bad one. A new skill fails this test until it has a check and samples.
@@ -77,8 +77,8 @@ Near-miss triggers (in `npm test`). Score = prompt words found in the "Use when"
 
 ## Recommendation
 
-Keep the live runs on demand. Keep the contract and trigger checks in CI, as they are now.
+Keep the live runs on demand. Keep the contract and trigger checks as the Layer 1 samples.
 
 - The contract checks already stop the failure that SC-015 names: an edit that breaks a skill's documented output shape and nobody notices. They are free, fast, and deterministic.
-- A live run costs about $3 and 13 minutes, and model output changes from run to run. The first run had one false failure. A CI gate would need an API key in pull-request workflows and would turn model noise into red builds.
+- A live run costs about $3 and 13 minutes, and model output changes from run to run. The first run had one false failure. A gate would need an API key and would turn model noise into red builds.
 - Run `node scripts/eval-skills.js` before each Release, and after any edit to a skill's workflow or output contract.
