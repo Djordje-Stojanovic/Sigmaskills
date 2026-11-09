@@ -34,7 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
-- `sigmamusk` is 43 % shorter (2,885 to about 1,650 words across SKILL.md and its references) and truer to Musk's own words from the Lex Fridman clip: the five steps carry his lines (the perfect answer to the wrong question, the 10 % add-back rule, optimising what should not exist, speed only after that, automate last), plus the house rules that ride on them (every addition deletes something, a lesson is one line or a deletion and never a new check, fix only the broken part, never trade speed, quality, beauty or error rate). The first-principles, Karpathy, heuristics and worked-moves lists fold into six lines; the modes table holds Grill and Fast; the quote list drops to the ten that get used. Behaviour, the three outputs, the SigmaShip question and `--demon` are unchanged.
+- `sigmamusk` is 28 % shorter (2,885 to 2,067 words across SKILL.md and its references) and truer to Musk's own words from the Lex Fridman clip: the five steps carry his lines (the perfect answer to the wrong question, the 10 % add-back rule, optimising what should not exist, speed only after that, automate last), plus the house rules that ride on them (every addition deletes something, a lesson is one line or a deletion and never a new check, fix only the broken part, never trade speed, quality, beauty or error rate). The first-principles, Karpathy, heuristics and worked-moves lists fold into six lines; the modes table holds Grill and Fast; the quote list drops to the ten that get used. Behaviour, the three outputs, the SigmaShip question and `--demon` are unchanged.
 
 ## [0.22.6] — 2026-11-09
 
