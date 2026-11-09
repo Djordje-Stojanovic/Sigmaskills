@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- sigmaship, sigmarefactor, sigmareview, sigmaloop, sigmabrief and sigmamusk now read the repo's `ENGINEERING.md` before they change code and follow it closely, the way sigmataste follows `DESIGN.md` for looks.
+
 ## [0.22.5] — 2026-11-07
 
 ### Changed

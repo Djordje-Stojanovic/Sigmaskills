@@ -13,7 +13,7 @@ Read [scan.md](references/scan.md) before the first scan. It defines the file in
 
 ### 1. Scan
 
-- Resolve the repository root. Read its `AGENTS.md`, `CLAUDE.md`, `README`, and relevant project instructions before touching code.
+- Resolve the repository root. Read its `AGENTS.md`, `CLAUDE.md`, `README`, and relevant project instructions before touching code. If the repo has `ENGINEERING.md`, read it before you change code and follow it closely: it is the owner's engineering standard (simplest change, delete before adding, a lesson becomes one line, never a new check). `DESIGN.md` for anything people see.
 - Record the working-tree status. Preserve existing user changes and do not treat them as refactoring targets without agreement.
 - Run `laloc -p <root> -m 0` when the command is available. Quote every exclusion. Use the reference fallback when it is unavailable.
 - Compare the result with the repository file inventory. `laloc` can skip maintained source directories. Count eligible files that its output missed.
