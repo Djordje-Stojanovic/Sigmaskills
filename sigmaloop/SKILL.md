@@ -25,7 +25,7 @@ No questions yet. Find, in this order, and stop when you have a ranked picture:
 
 1. A ticket or plan file the user named.
 2. The repo's tracker: `docs/agents/issue-tracker.md`, `TRACKER.md`, `TODO*`, `RELEASES.md`, `.scratch/**`, and `gh issue list` / `gh pr list` when `gh` and a remote exist.
-3. Steering files: `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`, the contribution rules. They give the landing rules, test commands, secrets rule, and no-touch areas.
+3. Steering files: `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`, the contribution rules. They give the landing rules, test commands, secrets rule, and no-touch areas. If the repo has `ENGINEERING.md`, read it before you change code and follow it closely: it is the owner's engineering standard (simplest change, delete before adding, a lesson becomes one line, never a new check). `DESIGN.md` for anything people see. Tell the run to follow it.
 4. Live state: `git status`, `git worktree list`, open PRs, running sessions or other agents that share the repo.
 
 Note for each open item: id, one line, size (minutes or hours), what blocks it, who owns it, files it touches. Mark items that need the user live, and items another agent owns.
