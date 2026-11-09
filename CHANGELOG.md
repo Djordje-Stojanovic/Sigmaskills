@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.22.6] — 2026-11-09
+
 ### Changed
 
 - sigmaship, sigmarefactor, sigmareview, sigmaloop, sigmabrief and sigmamusk now read the repo's `ENGINEERING.md` before they change code and follow it closely, the way sigmataste follows `DESIGN.md` for looks.
@@ -717,7 +719,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.5...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.6...HEAD
+[0.22.6]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.5...v0.22.6
 [0.22.5]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.4...v0.22.5
 [0.22.4]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.3...v0.22.4
 [0.22.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.2...v0.22.3
