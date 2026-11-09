@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.22.7] — 2026-11-09
+
 ### Changed
 
 - `sigmamusk` is 28 % shorter (2,885 to 2,067 words across SKILL.md and its references) and truer to Musk's own words from the Lex Fridman clip: the five steps carry his lines (the perfect answer to the wrong question, the 10 % add-back rule, optimising what should not exist, speed only after that, automate last), plus the house rules that ride on them (every addition deletes something, a lesson is one line or a deletion and never a new check, fix only the broken part, never trade speed, quality, beauty or error rate). The first-principles, Karpathy, heuristics and worked-moves lists fold into six lines; the modes table holds Grill and Fast; the quote list drops to the ten that get used. Behaviour, the three outputs, the SigmaShip question and `--demon` are unchanged.
@@ -723,7 +725,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.6...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.7...HEAD
+[0.22.7]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.6...v0.22.7
 [0.22.6]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.5...v0.22.6
 [0.22.5]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.4...v0.22.5
 [0.22.4]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.3...v0.22.4
