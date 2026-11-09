@@ -2,9 +2,7 @@
 
 ## The issue
 
-Title: `sigmamusk: <the one change that buys the most>`.
-
-Body, in this order:
+Title: `sigmamusk: <the one change that buys the most>`. Under about 600 words; the page carries the detail. Every acceptance criterion names a command and a target, so SigmaShip can check it.
 
 ```markdown
 ## Verdict
@@ -40,21 +38,8 @@ Body, in this order:
 Ship with: `sigmaship #<this issue>`
 ```
 
-Every acceptance criterion names a command and a target, so SigmaShip can check it. Keep the issue under about 600 words; the page carries the detail.
-
 ## The report page
 
-One self-contained HTML file: the verdict on top as a big statement, the measured numbers as large figures, the delete list as a ranked list with bars for the gain, then requirements, bottleneck, smallest ship and the issue link. It works on a phone and in dark mode.
+One self-contained HTML file: the verdict as a big statement, the numbers as large figures, the delete list ranked with bars for the gain, then requirements, bottleneck, smallest ship and the issue link. Phone and dark mode work. Publish it as a private artifact when the host can; otherwise save it in the OS temp folder as `sigmamusk-<repo>-<yyyy-mm-dd>.html` and open it. Never inside the target repo.
 
-**A different look every time.** Pick one look not used for this repo before (check earlier SigmaMusk issues for the look named in their footer), and name it in the page footer and the issue:
-
-1. Mission control: near-black, amber and green telemetry, monospace figures.
-2. Starship steel: brushed grey, one orange accent, condensed sans headings.
-3. Blueprint: deep blue, white line work, grid paper.
-4. Mars dawn: rust red to dust pink, large serif numbers.
-5. Tesla white: pure white, black type, one red line, lots of space.
-6. Swiss grid: strict grid, Helvetica-style type, red and black.
-7. Broadsheet: newspaper columns, serif headline, ruled lines.
-8. Terminal: green on black, a blinking cursor in the verdict.
-
-Publish it as a private artifact when the host can publish pages; otherwise save it in the OS temp folder as `sigmamusk-<repo>-<yyyy-mm-dd>.html` and open it. Keep it out of the target repo.
+A different look each run: pick one not used for this repo before (earlier SigmaMusk issues name theirs in the footer) and name it in the footer and the issue: mission control (near-black, amber telemetry, monospace figures) · starship steel (brushed grey, one orange accent) · blueprint (deep blue, white lines, grid paper) · Mars dawn (rust to dust pink, serif numbers) · Tesla white (white, black type, one red line) · Swiss grid (Helvetica-style, red and black) · broadsheet (newspaper columns, serif headline) · terminal (green on black, a blinking cursor).
