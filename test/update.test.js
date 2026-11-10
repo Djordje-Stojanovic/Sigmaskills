@@ -693,6 +693,29 @@ test('cli: update --dry-run groups skills and writes nothing; missing flags fail
   }
 });
 
+test('cli: update --check exits 0 when current, 1 with one line per stale skill, and writes nothing (#273)', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-check-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    const fresh = createMockIo();
+    assert.equal(await runCli(['update', '--check', '--project', projectRoot], fresh), 0);
+    assert.match(fresh.getStdout(), /Everything is up to date/);
+
+    ageOfficial(projectRoot, 'sigmawrite');
+    const before = snapshotTree(projectRoot);
+    const stale = createMockIo();
+    assert.equal(await runCli(['update', '--check', '--project', projectRoot], stale), 1);
+    assert.match(stale.getStdout(), /^sigmawrite \(sigma\): out of date/m);
+    assert.match(stale.getStdout(), /1 out of date\. Update with: sigmaskills update --yes/);
+    const jsonIo = createMockIo();
+    assert.equal(await runCli(['update', '--check', '--json', '--project', projectRoot], jsonIo), 1);
+    assert.deepEqual(JSON.parse(jsonIo.getStdout()).outOfDate.map((row) => row.id), ['sigmawrite']);
+    assert.deepEqual(snapshotTree(projectRoot), before);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
 test('packed CLI updates Project and Global Installation while preserving customization', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-pack-update-'));
   try {
