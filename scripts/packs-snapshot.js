@@ -23,7 +23,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // The HyperFrames skills change shape often (14 were folded into `hyperframes` at once). The pack
 // is pinned to one release tag; to move it, clone that tag, change this line, and re-run.
-const HYPERFRAMES_RELEASE = 'v0.8.188';
+const HYPERFRAMES_RELEASE = 'v0.9.30';
 
 // Theo Browne's tstack (MIT) is pinned to one commit. To move it, clone that commit, change this line, and re-run.
 const TSTACK_COMMIT = '1085050f3baed1ac724caa4a8166145fb2ac88af';
@@ -41,14 +41,22 @@ const PACKS = [
     title: 'Matt Pocock',
     blurb: 'Skills for real engineers: grill, spec, TDD, triage, deep modules.',
     aliases: ['matt', 'pocock'],
-    sources: [{ repo: 'mattpocock/skills', clone: 'matt', path: 'skills' }],
+    sources: [{ repo: 'mattpocock/skills', clone: 'matt', path: 'skills', ref: '4ae2317ddb22b046e26455e4f9c9b3aaaf62212d' }],
   },
   {
     id: 'threejs',
     title: 'Three.js',
     blurb: 'Geometry, materials, lighting, shaders, loaders, post-processing, R3F.',
     aliases: ['three'],
-    sources: [{ repo: 'CloudAI-X/threejs-skills', clone: 'threejs-skills', path: 'skills' }],
+    sources: [{ repo: 'CloudAI-X/threejs-skills', clone: 'threejs-skills', path: 'skills', ref: '0e181866f095b5f06d005133876e926515390d95' }],
+  },
+  // Blender: 94 specialist skills from arjun988, pinned to one commit (2026-11-10).
+  {
+    id: 'blender',
+    title: 'Blender',
+    blurb: 'Drive Blender 5 from code: modeling, rigging, shaders, physics, rendering, camera, lighting, VFX, styles and game export.',
+    aliases: ['blender3d'],
+    sources: [{ repo: 'arjun988/blender-skills', clone: 'blender-skills', path: '.claude/skills', ref: '904f095d8f36a6e72adaebb08d07f884a074743d' }],
   },
   {
     id: 'hyperframes',
@@ -61,6 +69,7 @@ const PACKS = [
         repo: 'nateherkai/hyperframes-student-kit',
         clone: 'hyperframes-student-kit',
         path: '.agents/skills',
+        ref: '10511e5af86fc47756ea89803b397422e2d89284',
         only: ['cut-mistakes', 'cut-silences', 'edit-video', 'gsap', 'hyperframes-video-beats', 'make-a-video',
           'motion-showreel', 'short-form-edit', 'style-library', 'video-storytelling', 'website-to-hyperframes'],
       },

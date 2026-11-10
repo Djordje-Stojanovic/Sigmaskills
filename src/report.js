@@ -155,6 +155,16 @@ export function formatSummary({
 
 const LIST_ROWS = 8;
 
+/** One short label per source: `owner/repo@abc1234` for a git source, `folder $ENV` for a folder source. */
+export function packSourceLabels(pack) {
+  if (pack.bundled) return ['this package'];
+  return pack.sources.map((source) => {
+    if (source.type === 'dir') return `folder ${source.path || (source.env ? `$${source.env}` : '~/.sigmaskills/packs.json')}`;
+    const ref = source.ref ? (/^[0-9a-f]{40}$/.test(source.ref) ? source.ref.slice(0, 7) : source.ref) : 'newest commit';
+    return `${source.repo}@${ref}`;
+  });
+}
+
 /** The pack list for `list --packs`. */
 export function formatPackList(styler, packCatalog) {
   const s = styler.style;
@@ -164,6 +174,7 @@ export function formatPackList(styler, packCatalog) {
     lines.push(`${s(pack.title, C.primary, true)} ${s(`${pack.skills.length} skills`, C.mute)}${flag}`);
     lines.push(`  ${s('preset', C.mute)} ${s(`--preset ${pack.id}`, C.ink)}${pack.aliases.length ? s(`   aliases ${pack.aliases.join(', ')}`, C.mute) : ''}`);
     if (pack.blurb) lines.push(`  ${s(pack.blurb, C.mute)}`);
+    lines.push(`  ${s('source', C.mute)} ${s(packSourceLabels(pack).join(' + '), C.ink)}`);
     if (pack.limit) lines.push(`  ${s(`Installs at most ${pack.limit.max} at a time. Pick by name: sigmaskills install ${pack.skills[0]?.id || '<skill>'}`, C.warn)}`);
     if (pack.skills.length) {
       const rows = wrapWords(pack.skills.map((skill) => skill.id).join(' '), 96);

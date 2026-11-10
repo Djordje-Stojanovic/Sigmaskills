@@ -117,13 +117,14 @@ The installer checks input before it plans anything:
 
 ## Packs and presets
 
-A **pack** is a named group of skills. `--preset <pack>` installs all of it, and you can repeat the flag or join names with commas. `list --packs` prints every pack, its aliases, and its skills.
+A **pack** is a named group of skills. `--preset <pack>` installs all of it, and you can repeat the flag or join names with commas. `--pack` is the same flag. `packs` (or `list --packs`) prints every pack with its skill count, source and skills. One pack into one repo: `install --pack blender --project .`.
 
 | Preset | Aliases |
 |--------|---------|
 | `sigma` | `sigmaskills` |
 | `mattpocock` | `matt`, `pocock` |
 | `threejs` | `three` |
+| `blender` | `blender3d` |
 | `hyperframes` | `hf` |
 | `minimax-h3` | `minimax`, `h3` |
 | `anthropic` | `anthropics` |
@@ -140,7 +141,7 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `hallmark` | `nutlope` |
 | `ponytail` | `lazy` |
 | `local` | `own` |
-| `core` | the default install: every Sigma skill plus `full-send` and `full-stop` from tstack |
+| `core` | the global default: every Sigma skill, the whole Matt Pocock pack and the whole tstack pack. `install --global --yes` with no pack, skill or `--all` installs it |
 | `all` | every pack that is available on this machine |
 
 What each pack does, its skills, source, licence and needs: [Packs in the README](../README.md#packs). `local` is a folder of your own skills; see [Your own packs](#your-own-packs).
