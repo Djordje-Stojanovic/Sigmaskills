@@ -25,7 +25,7 @@ Sigmaskills/
 ├── sigmaloop/                SKILL.md · agents/ · references/
 ├── sigmataste/               SKILL.md · agents/ · references/ (lenses/)
 ├── sigmahuman/               SKILL.md · agents/ · references/ (patterns, lanes, upstream MIT notice) · scripts/ (factcheck.py)
-├── sigmafork/                SKILL.md · agents/ · references/ · assets/ (guide template) · scripts/ (sigmafork.py)
+├── sigmatour/                SKILL.md · agents/ · references/ · assets/ (tour template) · scripts/ (sigmatour.py)
 ├── sigmawrite/               SKILL.md · agents/ · references/ · template.html
 ├── sigmaresearch/             SKILL.md · agents/ · references/ · scripts/ (readers, source-log counter)
 ├── sigmadeeplook/             SKILL.md · agents/ · references/ · scripts/ (look.py and its type modules)

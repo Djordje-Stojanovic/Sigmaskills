@@ -34,11 +34,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
+- `sigmatour` is the one skill for both jobs: tour a repo where it is, or copy it first and tour the copy. Copy mode keeps what `sigmafork` did — the 8 grill questions, the isolated copy (`copy`, `paths`, `fix`, `verify` in `sigmatour.py`; the page scan is `scan`, the path scan is `paths`), the skill bundles, and logs in `.sigmatour/` — and writes the one tour page (`<name>-tour.html` in the copy) from the one template and builder. The two skills were 3,478 lines; the merged skill is 2,268. Ask with `/sigmatour Copy the film repo for a new project, isolated, and walk me through it`. Asking for `sigmafork` by name still triggers `sigmatour`.
 - `sigmamusk` has three sizes of one method: one thing (the review that files one issue), one codebase (`/sigmamusk cut <repo>`, the five largest files) and a whole setup (`/sigmamusk reset`, products the owner keeps or kills). The three skill texts were 360 lines; the merged skill is 269.
 - Pack pins moved to the newest upstream point: Anthropic (`2c5958e`), last30days (`v3.33.1`), Financial Services (`6056506`). The skill lists are unchanged (19, 1, 99). Design.md stays on its pin: upstream changed its folder layout and the newest commit yields no skill. HyperFrames stays on `v0.8.188`.
 
 ### Removed
 
+- `sigmafork`: `sigmatour` copies first on request and tours the copy (above). Its own course template, guide reference and page builder go with it. An installed copy stays untouched; `update` lists it under *Retired skills* with the `uninstall` command. Old copies keep their `.sigmafork/` logs; new ones write `.sigmatour/`, and the tour scan skips both. The page in a new copy is `<name>-tour.html`, not `ONBOARDING.html`.
 - `sigmarefactor` and `sigmareset`: both are sizes of `sigmamusk` now (`cut` and `reset`). An installed copy stays untouched; `update` lists it under *Retired skills* with the `uninstall` command.
 - `sigmasetup`, `sigmadesign`, `sigmacourse` and `sigmafinanceman`: another skill or pack already does each job. Per-pack notes are in the README's *Packs* section; a design system comes from `frontend-design` and the Design.md pack, with `sigmataste` for the critique; a big build is planned with `grilling`, `to-spec` and `sigmaloop`; finance models come from the Financial Services pack (99 skills, with `dcf`, `comps`, `3-statement-model`). Installed copies stay untouched; `update` lists them under *Retired skills*.
 

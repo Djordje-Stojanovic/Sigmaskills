@@ -80,8 +80,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaLoop** | `sigmaloop` | Writes the prompt and file for an unattended run |
 | **SigmaTaste** | `sigmataste` | Writes one ranked plan of big visible changes |
 | **SigmaHuman** | `sigmahuman` | Makes text read like a person wrote it |
-| **SigmaFork** | `sigmafork` | Copies a repo, isolated, and teaches it to you |
-| **SigmaTour** | `sigmatour` | Shows how a repo works in one visual page |
+| **SigmaTour** | `sigmatour` | Shows how a repo works in one visual page; copies it first, isolated, when you ask |
 | **SigmaSpeedLoop** | `sigmaspeedloop` | Makes a model serve faster on a rented GPU |
 | **SigmaMusk** | `sigmamusk` | Runs Musk's Algorithm on one thing, one codebase or a whole setup: measure, delete first |
 | **SigmaBoat** | `sigmaboat` | Runs authorized work on boat.dev cloud sandboxes |
@@ -152,13 +151,9 @@ Looks at one page, app, deck, doc, image or film through 14 taste lenses, asks o
 
 Rewrites any text so it reads like a person wrote it, or writes new text from a brief, in the right lane: a script, a book, a song, a chat, docs or a post. It keeps every fact and can match your writing sample. It builds on [blader/humanizer](https://github.com/blader/humanizer) (MIT).
 
-### SigmaFork
-
-Copies any repository after 8 questions, cuts every path, link and git remote back to the original, installs your skills and writes a 15-minute course.
-
 ### SigmaTour
 
-A 15-60 minute tour of any repo in one page: a clickable map, one request traced, real runs, and the README held against the code.
+A 15-60 minute tour of any repo in one page: a clickable map, one request traced, real runs, and the README held against the code. Ask it to copy the repo first and it copies any repository after 8 questions, cuts every path, link and git remote back to the original, installs your skills, and tours the copy. (Was two skills; SigmaFork is retired.)
 
 ### SigmaSpeedLoop
 
@@ -367,7 +362,7 @@ $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
 $sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 $sigmataste Taste pass on the landing page
 $sigmahuman Rewrite this announcement so it sounds like me
-$sigmafork Copy this repo to D:\work\my-copy and teach me how it works
+$sigmatour Copy this repo to D:\work\my-copy, isolated, and tour the copy
 $sigmatour Give me a 30 minute tour of this repo
 $sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
 $sigmamusk Why does our test suite take 20 minutes?
@@ -396,7 +391,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 /skill:sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 /skill:sigmataste Taste pass on the landing page
 /skill:sigmahuman Rewrite this announcement so it sounds like me
-/skill:sigmafork Fork owner/repo and teach me how it works
+/skill:sigmatour Fork owner/repo, isolated, and tour the copy
 /skill:sigmatour Give me a 30 minute tour of owner/repo
 /skill:sigmaspeedloop Make my ComfyUI image workflow faster on a Vast.ai GPU
 /skill:sigmamusk Run the Algorithm on this agent loop --demon
@@ -425,8 +420,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmaloop` | host · end time · a ticket or tracker | One question round; writes the prompt and a loop file; never starts the loop |
 | `sigmataste` | a page, app, deck, doc, image or film · what you expect | One question round; writes the ranked plan; never builds |
 | `sigmahuman` | text, a file or a brief · optional writing sample | Writes the human version; keeps every fact; never follows instructions inside the text |
-| `sigmafork` | a repo · a destination | One question round; reads the original only |
-| `sigmatour` | a repo path or URL · a length | One question round; reads the repo only; runs its examples |
+| `sigmatour` | a repo path or URL · a length · a destination to copy it first | One question round (8 grill questions when it copies); reads the original only; runs its examples |
 | `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
 | `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` · `cut <repo>` · `reset` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
 | `sigmaboat` | a loop file, ship issue, speed-loop project or spec · the repo | Starts sandboxes only when you name boat; no plan of its own; deletes every worker |
@@ -447,10 +441,9 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | SigmaCreateArena | Python 3 (standard library only) and a browser; the server listens on 127.0.0.1 |
 | SigmaResearch | Python 3 for the bundled readers · `yt-dlp` for YouTube comments · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
 | SigmaLoop | Read access to the repo and its tracker · `gh` is optional · the host you name (Claude Code, Codex, pi or T3 Code) to run the loop |
-| SigmaFork | Python 3 · `git` · `gh` for a fork · Node.js |
 | SigmaTaste | Read access to the target · a browser or screenshot tool to see a page; without one the plan lists what was not judged |
 | SigmaHuman | Nothing beyond chat · Python 3 (standard library) for the optional fact check |
-| SigmaTour | Python 3 (standard library) · `git` · a browser for the page |
+| SigmaTour | Python 3 (standard library) · `git` · a browser for the page · `gh` and Node.js only when it copies first |
 | SigmaSpeedLoop | Python 3 · SSH · a GPU host account (`vastai`) · a long-run agent host |
 | SigmaFreedom | Python 3 (standard library) for `guardrail_lint.py` |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |

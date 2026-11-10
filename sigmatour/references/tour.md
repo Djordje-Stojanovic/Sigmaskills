@@ -33,6 +33,15 @@ A deep dive covers one part that matters: what it does, the file to open first, 
 
 Each stop ends with a check-yourself quiz (`.quiz`, `data-answer` = the number of the right option, 1-based) when the stop teaches a fact worth testing.
 
+## Touring a copy
+
+When the tour runs on a copy (copy mode), the same stops carry the copy facts; no second page exists:
+
+- **What it does** says why this copy exists (the grill's Q1 and Q2).
+- **Where things are** adds rows for each login and key by name (never a value), where it goes and whether it is set; the installed skill bundle; and the `verify` result (`ISOLATED`).
+- **Your questions** also holds the **Top 3 resources** from the research: title, link, length in minutes, and why each is in the top 3.
+- Name the original by its name, never by its absolute path: the page lives inside the copy, so `verify` reads it too.
+
 ## Hidden and missing
 
 The scan marks what a machine can prove. Reading adds the rest. Good findings:

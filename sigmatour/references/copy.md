@@ -1,10 +1,12 @@
-# Fork or copy, by source kind
+# Copy it first, by source kind
 
-`<src>` is the original, `<dest>` the new folder, `H` the helper `scripts/sigmafork.py` (run it with `python`). Record the original's state first:
+This is the copy half of sigmatour: it runs only when the user asked to copy or fork the repo before the tour. The tour then runs on the copy.
+
+`<src>` is the original, `<dest>` the new folder, `H` the helper `scripts/sigmatour.py` (run it with `python`). Record the original's state first:
 
 ```
 git -C <src> status --porcelain ; git -C <src> rev-parse HEAD      # a git repo
-python H scan <src> --source <src> --json > before.json             # any folder: read-only, lists its paths
+python H paths <src> --source <src> --json > before.json             # any folder: read-only, lists its paths
 ```
 
 ## GitHub: fork (to change it and open pull requests upstream)
@@ -58,23 +60,23 @@ python H copy <src> <dest> --exclude "animations/2*" --exclude "renders" --exclu
 - Installed dependencies and caches are skipped by default (`node_modules`, venvs, `__pycache__`, tool caches); the copy reinstalls them from its lock files. `--keep-heavy` copies them anyway (offline machine).
 - `--no-git` leaves out `.git` (a fresh history).
 - Links (symlinks, Windows junctions) that point inside `<src>` are made again inside `<dest>`, pointing at the same place in the copy. Links that point outside are copied as real files, so the copy never writes through them.
-- The log `<dest>/.sigmafork/copy.json` lists what was skipped, every link, and the ten biggest files.
+- The log `<dest>/.sigmatour/copy.json` lists what was skipped, every link, and the ten biggest files.
 
 ## Cut every path back to the original
 
 ```
-python H scan   <dest> --source <src>
+python H paths  <dest> --source <src>
 python H fix    <dest> --source <src> [--map "D:\out\Src=D:\out\Copy" ...]
 python H verify <dest> --source <src>
 ```
 
-- `scan` finds the source path in every spelling a file may use: `C:\x`, `C:/x`, `C:\\x` (escaped in JSON or code), `/c/x` (Git Bash), `/mnt/c/x` (WSL), `file:///C:/x`. It also lists git remotes and links into the source, other absolute paths outside the copy (grouped by their first folders, with counts), and relative paths that climb out of the copy (`../sibling-repo`).
+- `paths` finds the source path in every spelling a file may use: `C:\x`, `C:/x`, `C:\\x` (escaped in JSON or code), `/c/x` (Git Bash), `/mnt/c/x` (WSL), `file:///C:/x`. It also lists git remotes and links into the source, other absolute paths outside the copy (grouped by their first folders, with counts), and relative paths that climb out of the copy (`../sibling-repo`).
 - `fix` rewrites each hit to the same spelling of `<dest>`, byte for byte, so line endings and file encodings stay. `--map OLD=NEW` does the same for an outside folder the copy must own (Q3). It leaves `.git/config` to you: fix remotes with `git remote`.
 - `verify` exits 1 while anything still reaches the source. It does not block on the review lists; read them and decide each with the grill's answers:
   - an output folder, cache or database the copy writes to → `--map` it into the copy or to a new folder;
-  - shared read-only config (a keys file, a tool's global config) → leave it, and name it in the guide;
+  - shared read-only config (a keys file, a tool's global config) → leave it, and name it in the tour page;
   - a relative path to a sibling repo → copy that sibling too (ask), or point it at the original read-only and say so.
-- Config the scan cannot see: environment variables set outside the repo (shell profile, a service file) and paths built at run time from a home folder plus a name (`~/.<tool>/`). Grep the code for `HOME`, `USERPROFILE`, `expanduser`, `homedir` and `APPDATA`; when the copy would share state with the original there, give it its own name through the tool's config or an environment variable in the copy's `.env`.
+- Config the path scan cannot see: environment variables set outside the repo (shell profile, a service file) and paths built at run time from a home folder plus a name (`~/.<tool>/`). Grep the code for `HOME`, `USERPROFILE`, `expanduser`, `homedir` and `APPDATA`; when the copy would share state with the original there, give it its own name through the tool's config or an environment variable in the copy's `.env`.
 
 ## Owner-only inputs
 
@@ -82,10 +84,10 @@ Make one list from the study: each login, key or token, what needs it, and where
 
 ## Prove it runs
 
-Install from the copy's lock file (`npm ci`, `pnpm install --frozen-lockfile`, `uv sync`, `pip install -r requirements.txt`, `cargo build`), then run its own check (`npm test`, the repo's check script) or one real example from the grill (Q2). Note the command and its real output for the guide. A check that fails only because it reads a folder the grill left out (live tickets, past projects, a sibling repo) is expected: name each one and why in the guide's "Run it"; fix every other failure.
+Install from the copy's lock file (`npm ci`, `pnpm install --frozen-lockfile`, `uv sync`, `pip install -r requirements.txt`, `cargo build`), then run its own check (`npm test`, the repo's check script) or one real example from the grill (Q2). Note the command and its real output for the tour page. A check that fails only because it reads a folder the grill left out (live tickets, past projects, a sibling repo) is expected: name each one and why in the tour page's "Examples, run end to end"; fix every other failure.
 
 ## Before you leave this step
 
 - `verify` prints `ISOLATED`.
-- The original's state matches what you recorded (same `git status --porcelain` and HEAD, or the same scan).
-- `grill.md` and `study.md` are in `<dest>/.sigmafork/`.
+- The original's state matches what you recorded (same `git status --porcelain` and HEAD, or the same path scan).
+- `grill.md` and `study.md` are in `<dest>/.sigmatour/`.
