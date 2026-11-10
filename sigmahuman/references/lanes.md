@@ -73,3 +73,7 @@ The listener hears each sentence once, at the narrator's speed, and cannot re-re
 3. **Pick the lane** for the kind of text and the voice (a sample, or the lane's default).
 4. **Write the draft** in that voice from the start.
 5. **Run the SKILL.md steps on your own draft.** Mark the tells, fix them, check the facts against the brief, write the final version.
+
+## Working on a file
+
+Read the whole file from disk first, even a file you wrote earlier in the session. Read a long file in chunks until every section is covered. At the end, say how many sections you reviewed and name any you could not cover. A partial pass is reported as partial.

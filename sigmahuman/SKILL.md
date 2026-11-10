@@ -3,7 +3,7 @@ name: sigmahuman
 description: Use when asked for sigmahuman, to humanize, de-AI or de-slop a draft or write a script. Rewrites text to read human, every fact kept, or writes new text from a brief. Do not use to cut jargon.
 license: MIT
 metadata:
-  upstream: "blader/humanizer v3.1.0 (MIT, Siqi Chen)"
+  upstream: "blader/humanizer v4.0.0 (MIT, Siqi Chen)"
 ---
 
 # SigmaHuman
@@ -13,7 +13,7 @@ SigmaHuman makes text read like a person wrote it, for one reader and one purpos
 - **Rewrite:** text comes in, the same content goes out in a human voice.
 - **Write:** a brief comes in ("a birthday message for my boss", "chapter 3 from these notes", "a chorus about leaving Belgrade"), and new text goes out that sounds human from the first draft.
 
-The core is [blader/humanizer](https://github.com/blader/humanizer) v3.1.0 (MIT): 26 patterns from Wikipedia's "Signs of AI writing", strongest first. SigmaHuman adds lanes for each kind of text, a write-from-a-brief mode, voice matching, a fact check script, and a one-pass mode for pipelines.
+The core is [blader/humanizer](https://github.com/blader/humanizer) v4.0.0 (MIT): 26 patterns from Wikipedia's "Signs of AI writing", strongest first. SigmaHuman adds lanes for each kind of text, a write-from-a-brief mode, voice matching, a fact check script, and a one-pass mode for pipelines.
 
 ## Three rules that never bend
 
@@ -40,7 +40,7 @@ Every sentence you keep must add something the reader did not already have. A te
 2. **Find the voice.** With a writing sample, read it first (see Voice below). Without one, take the voice from the kind of text and the lane.
 3. **Mark the tells.** Read the whole text once and mark every pattern in [references/patterns.md](references/patterns.md), strongest first. Look at paragraph shape as well as sentences: a contrast split over two sentences, three parallel examples, or the same closer after every section is the same tell at a larger scale.
 4. **Draft the rewrite.** Keep every supported claim. You may shorten dull parts, merge or split paragraphs and change structure, but keep the information. In Write mode, draft from the brief, then mark and fix your own draft the same way.
-5. **Check the draft.** Read it aloud. Ask what still sounds AI-generated. Check that no fact was added or lost; with Python available, run `python scripts/factcheck.py before.txt after.txt` (numbers, dates, quotes, names). Treat an addition as an error, and a lost claim as an error unless a pattern calls for the cut. Then search again for the tells that most often survive a rewrite: §1 contrasts, §2 closers, §6 triads, §8 dashes, §19 bold labels.
+5. **Check the draft.** First check that no fact was added, lost or changed; with Python available, run `python scripts/factcheck.py before.txt after.txt` (numbers, dates, quotes, names). Treat an addition as an error, and a lost claim as an error unless a pattern calls for the cut. Then read it aloud and ask what still sounds AI-generated. Last, search again for the tells that most often survive a rewrite: §1 contrasts, §2 closers, §6 triads, §8 dashes, §19 bold labels.
 6. **Write the final version.** State each point naturally instead of patching flagged phrases one at a time. If a sentence stays awkward, rewrite the paragraph around its main point. Vary sentence length inside the lane's band: real writing alternates short and long.
 
 ## Voice
@@ -83,7 +83,7 @@ Keep the details that carry the writer's voice unless they hurt the meaning: a s
 
 ## Credits
 
-Patterns, the method and most examples: [blader/humanizer](https://github.com/blader/humanizer) v3.1.0, commit 8c307f3, MIT, copyright (c) 2025 Siqi Chen; licence text in [references/LICENSE-humanizer.txt](references/LICENSE-humanizer.txt). The patterns come from Wikipedia's ["Signs of AI writing"](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) (WikiProject AI Cleanup). What was merged from where: [references/sources.md](references/sources.md).
+Patterns, the method and most examples: [blader/humanizer](https://github.com/blader/humanizer) v4.0.0, commit b48c832, MIT, copyright (c) 2025 Siqi Chen; licence text in [references/LICENSE-humanizer.txt](references/LICENSE-humanizer.txt). The patterns come from Wikipedia's ["Signs of AI writing"](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) (WikiProject AI Cleanup). What was merged from where: [references/sources.md](references/sources.md).
 
 ## Personal instructions
 
