@@ -13,6 +13,8 @@
 
 You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaimprove`, `sigmabrief`, `sigmaship`, `sigmawrite`, `sigmarefactor`, `sigmaresearch`, `sigmadeeplook`, `sigmadebug`, `sigmacreatearena`, `sigmafreedom`, `sigmaloop`, `sigmataste`, `sigmahuman`, `sigmafork`, `sigmadesign`, `sigmatour`, `sigmafinanceman`, `sigmaspeedloop`, `sigmasetup`, `sigmacourse`, `sigmamusk`, `sigmaboat`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
 
+**Agent memory is off** (owner 2026-11-10, `autoMemoryEnabled` in `.claude/settings.json`): a lesson is one line in this file, not a private note on one machine.
+
 **Where to look**
 
 | Path | What |
