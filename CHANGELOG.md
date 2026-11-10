@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.23.0] — 2026-11-10
+
 ### Added
 
 - Eight packs from the fastest-growing skill repos of October 2026 (#273), each pinned: `superpowers` (obra/superpowers, 15 skills), `impeccable` (pbakaus/impeccable), `security-audit` (cloudflare/security-audit-skill), `anatomy` (wheresryan22/anatomy), `diagram-design` (cathrynlavery/diagram-design), `taste-skill` (Leonxlnx/taste-skill), `hallmark` (Nutlope/hallmark) and `ponytail` (DietrichGebert/ponytail at `v5.3.3`, 6 skills). The installer now has 18 packs. A source may name a `rootSkill`: a repo whose `SKILL.md` sits at its top installs as one skill folder, without its dot folders.
@@ -738,7 +740,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.7...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.7...v0.23.0
 [0.22.7]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.6...v0.22.7
 [0.22.6]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.5...v0.22.6
 [0.22.5]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.4...v0.22.5
