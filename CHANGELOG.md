@@ -32,6 +32,12 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.24.1] — 2026-11-10
+
+### Fixed
+
+- `update` no longer stops with "missing bundled Skill Revision" when a skill that 0.24.0 took out of the pack is still installed. `sigmarefactor`, `sigmareset`, `sigmasetup`, `sigmadesign`, `sigmacourse` and `sigmafinanceman` are on the retired list now: `update` leaves them untouched and lists them under *Retired skills*. A test fails when a skill leaves the pack without going on that list.
+
 ## [0.24.0] — 2026-11-10
 
 ### Changed
@@ -754,7 +760,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.1...HEAD
+[0.24.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.0...v0.24.1
 [0.24.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.7...v0.23.0
 [0.22.7]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.6...v0.22.7
