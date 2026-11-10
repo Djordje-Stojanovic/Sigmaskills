@@ -32,6 +32,19 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- Eight packs from the fastest-growing skill repos of October 2026 (#273), each pinned: `superpowers` (obra/superpowers, 15 skills), `impeccable` (pbakaus/impeccable), `security-audit` (cloudflare/security-audit-skill), `anatomy` (wheresryan22/anatomy), `diagram-design` (cathrynlavery/diagram-design), `taste-skill` (Leonxlnx/taste-skill), `hallmark` (Nutlope/hallmark) and `ponytail` (DietrichGebert/ponytail at `v5.3.3`, 6 skills). The installer now has 18 packs. A source may name a `rootSkill`: a repo whose `SKILL.md` sits at its top installs as one skill folder, without its dot folders.
+- The wizard shows a skill before you install it: `p` opens the full `SKILL.md` of the highlighted skill, the arrow keys and PgUp/PgDn scroll, Esc closes. A pack skill is fetched from its pinned source once and cached; when the source cannot be reached, the view says so.
+- The wizard uninstalls: an installed skill shows ticked, space unticks it, and the Review step lists installs, updates and removals apart. Nothing is removed before the confirm; an edited Sigma skill gets a private backup first.
+- `update --check`: one line per out-of-date skill, nothing written, exit code 1 when one exists (`--json` for scripts).
+- `sigmareset` (SigmaReset): brings a bloated repo, machine or whole setup back to what the owner uses. It lists every product with its cost and proven use, the owner says keep or kill, the agent deletes the rest and measures before and after.
+- README: one section per pack (what it does, its skills, source, licence, needs). A setup guide per new pack for SigmaSetup.
+
+### Changed
+
+- `docs/installer.md` keeps the preset and alias table and links to the README for the pack descriptions, which were written twice.
+
 ## [0.22.7] — 2026-11-09
 
 ### Changed

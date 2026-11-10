@@ -1536,6 +1536,262 @@
       ]
     },
     {
+      "id": "superpowers",
+      "title": "Superpowers",
+      "blurb": "Jesse Vincent's workflow skills: brainstorm, write a plan, execute it, TDD, debug, review, finish the branch.",
+      "aliases": [
+        "obra"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "obra/superpowers",
+          "path": "skills",
+          "ref": "22f0b463e7a5e579904dd6211a520321035526f7",
+          "skills": [
+            {
+              "id": "brainstorming",
+              "description": "You MUST use this before any creative work - creating features, building components, adding functionality, modifying behavior, or planning anything..."
+            },
+            {
+              "id": "diagnosing-superpowers",
+              "description": "Use when a superpowers session went wrong and your human partner wants to know why \u2014 repeated work, ignored plans, stumbles, poor results, a skill..."
+            },
+            {
+              "id": "dispatching-parallel-agents",
+              "description": "Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies"
+            },
+            {
+              "id": "executing-plans",
+              "description": "Use when executing an implementation plan in the current session as the implementer yourself \u2014 your human partner chose inline execution, or no sub..."
+            },
+            {
+              "id": "finishing-a-development-branch",
+              "description": "Use when implementation is complete, all tests pass, and you need to decide how to integrate the work"
+            },
+            {
+              "id": "receiving-code-review",
+              "description": "Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requir..."
+            },
+            {
+              "id": "requesting-code-review",
+              "description": "Use when completing tasks, implementing major features, or before merging to verify work meets requirements"
+            },
+            {
+              "id": "subagent-driven-development",
+              "description": "Use when executing implementation plans with independent tasks in the current session"
+            },
+            {
+              "id": "systematic-debugging",
+              "description": "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes"
+            },
+            {
+              "id": "test-driven-development",
+              "description": "Use when implementing any feature or bugfix, before writing implementation code"
+            },
+            {
+              "id": "using-git-worktrees",
+              "description": "Use when starting feature work that needs isolation from current workspace or before executing implementation plans - ensures an isolated workspace..."
+            },
+            {
+              "id": "using-superpowers",
+              "description": "Use when starting any conversation - establishes how to find and use skills, requiring skill invocation before ANY response including clarifying qu..."
+            },
+            {
+              "id": "verification-before-completion",
+              "description": "Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirm..."
+            },
+            {
+              "id": "writing-plans",
+              "description": "Use when you have a spec or requirements for a multi-step task, before touching code"
+            },
+            {
+              "id": "writing-skills",
+              "description": "Use when creating new skills, editing existing skills, or verifying skills work before deployment"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "impeccable",
+      "title": "Impeccable",
+      "blurb": "Paul Bakaus's design vocabulary for agents: one skill with commands to audit, polish, critique and restyle a frontend.",
+      "aliases": [
+        "pbakaus"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "pbakaus/impeccable",
+          "path": "plugin/skills",
+          "ref": "ec229b48547f24685ffb22aa51c462c5ae27908c",
+          "skills": [
+            {
+              "id": "impeccable",
+              "description": "Use to design, redesign, critique, audit, polish or animate a frontend: websites, landing pages, dashboards, app UI, components, native iOS/Android..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security-audit",
+      "title": "Security Audit",
+      "blurb": "Cloudflare's security audit skill: find vulnerabilities and verify each finding before it is reported.",
+      "aliases": [
+        "cloudflare",
+        "audit"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "cloudflare/security-audit-skill",
+          "path": "skills",
+          "ref": "c1c8a8c1471069fb0e188eeaff69b8e8db6564a8",
+          "skills": [
+            {
+              "id": "security-audit",
+              "description": "Security guidance and vulnerability review for codebases, APIs, services, CLI tools, libraries, and daemons."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anatomy",
+      "title": "Anatomy",
+      "blurb": "Detailed, interactive isometric illustrations of real machines and how they work.",
+      "aliases": [
+        "isometric"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "wheresryan22/anatomy",
+          "path": "",
+          "rootSkill": "anatomy",
+          "ref": "1482e8469b0a9e0d8cc18ea2740a01423d29ae80",
+          "skills": [
+            {
+              "id": "anatomy",
+              "description": "Build crafted, highly detailed, interactive isometric SVG figures that explain a technical idea as a real physical object (a test rig, a dial gauge..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "diagram-design",
+      "title": "Diagram Design",
+      "blurb": "Cathryn Lavery's editorial diagrams: architecture, flow, sequence and more as clean HTML and SVG.",
+      "aliases": [
+        "diagram",
+        "diagrams"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "cathrynlavery/diagram-design",
+          "path": "skills",
+          "ref": "f2496acbde9f45ccb55c24d4f75210c8a1355df8",
+          "skills": [
+            {
+              "id": "diagram-design",
+              "description": "Create branded architecture, architecture delta, IT current-state, flowchart, sequence, state machine, ER/data model, timeline, swimlane, quadrant,..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "taste-skill",
+      "title": "Taste",
+      "blurb": "Art direction for coding agents: reference images, a visual brief and a browser check, so a page does not look generated.",
+      "aliases": [
+        "taste",
+        "leonxlnx"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "Leonxlnx/taste-skill",
+          "path": "skills",
+          "ref": "f6b76575f949707b4e3c37cd86cb44b0b98643e8",
+          "skills": [
+            {
+              "id": "taste-skill",
+              "description": "tasteskill 2.5.1, the anti-slop frontend skill."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hallmark",
+      "title": "Hallmark",
+      "blurb": "A design skill that refuses the AI look: new pages, audits, redesigns and design extraction.",
+      "aliases": [
+        "nutlope"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "Nutlope/hallmark",
+          "path": "skills",
+          "ref": "407fa689f4a276f2fd389208d271d0fef08f5058",
+          "skills": [
+            {
+              "id": "hallmark",
+              "description": "Design skill for websites and new pages that look designed, not generated."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ponytail",
+      "title": "Ponytail",
+      "blurb": "The lazy senior developer: the smallest change that fully works, plus audit, review, debt and gain reports.",
+      "aliases": [
+        "lazy"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "DietrichGebert/ponytail",
+          "path": "skills",
+          "ref": "v5.3.3",
+          "skills": [
+            {
+              "id": "ponytail",
+              "description": "Lazy senior dev mode: the smallest change that fully solves the task, and a reply a busy human understands in one read."
+            },
+            {
+              "id": "ponytail-audit",
+              "description": "Quality audit of a whole repo: bugs, security holes, what breaks under real load, risky code without tests, slow paths, and what to delete, merge o..."
+            },
+            {
+              "id": "ponytail-debt",
+              "description": "List every `shortcut:` comment (and older `ponytail:` ones) as a debt ledger."
+            },
+            {
+              "id": "ponytail-gain",
+              "description": "Show ponytail's measured savings (code, cost, speed) from the benchmark."
+            },
+            {
+              "id": "ponytail-help",
+              "description": "Quick reference for ponytail levels, skills and commands."
+            },
+            {
+              "id": "ponytail-review",
+              "description": "Quality review of a change: is the logic right, is it safe, does it hold under real load, is risky code tested, is it fast enough, and is every lin..."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "local",
       "title": "Local",
       "blurb": "A folder of your own skills on this machine.",

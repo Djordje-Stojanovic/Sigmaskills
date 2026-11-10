@@ -104,6 +104,7 @@ Options:
   -y, --yes         Skip interactive confirmations
   --remove          With 'ponytail': turn it off in this project
   --check           With 'ponytail': report on or off per agent; exit 1 when any is off
+                    With 'update': list each out-of-date skill, write nothing; exit 1 when any is out of date
 
 Run without a command to start the interactive installer.
 
@@ -386,11 +387,13 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     }
 
     if (opts.command === 'update') {
-      if (opts.global && !opts.dryRun && !opts.yes) {
+      // --check is the dry run with a one-line answer per stale skill and exit code 1 when there is one (#273).
+      const dryRun = opts.dryRun || Boolean(opts.check);
+      if (opts.global && !dryRun && !opts.yes) {
         writeErr('sigmaskills error: Global Installation requires both --global and --yes; CI, TTY, JSON, and Agent Host detection never imply that authority');
         return 1;
       }
-      if (!opts.dryRun && !opts.yes && opts.skillIds.length === 0) {
+      if (!dryRun && !opts.yes && opts.skillIds.length === 0) {
         writeErr('sigmaskills error: update requires --yes to apply all changed skills, or --skill <id> to select complete skills; use --dry-run to preview');
         return 1;
       }
@@ -404,7 +407,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         scope: opts.global ? 'global' : 'project',
         customStateDir: opts.stateDir,
         packageRoot: rootDir,
-        dryRun: opts.dryRun,
+        dryRun: dryRun,
         env,
         skillIds: sigmaIds,
         outsideEdit: opts.outsideEdit || undefined,
@@ -419,7 +422,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
           const wanted = externalIds.length > 0 ? externalIds : recorded.map((row) => row.id);
           await fetcher.warm(wanted.map((id) => getPacks().skills.get(id)?.source).filter(Boolean));
           packEntries = updatePackSkills({
-            ...stateParams(), packCatalog: getPacks(), skillIds: externalIds, fetcher, dryRun: opts.dryRun, force: opts.force, version: catalog.manifest.version,
+            ...stateParams(), packCatalog: getPacks(), skillIds: externalIds, fetcher, dryRun: dryRun, force: opts.force, version: catalog.manifest.version,
           }).results;
         } finally {
           fetcher.close();
@@ -429,6 +432,26 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         const packTitles = new Map(getPacks().packs.map((pack) => [pack.id, pack.title]));
         packEntries = packEntries.map((entry) => ({ ...entry, packTitle: packTitles.get(entry.pack) || entry.pack }));
       }
+      if (opts.check) {
+        const stale = new Map();
+        for (const skill of result?.changed || []) stale.set(skill.id, { id: skill.id, pack: 'sigma', why: skill.comparison || 'changed' });
+        for (const skill of result?.skills || []) {
+          if (['upstream-only', 'concurrent'].includes(skill.changeKind) && !stale.has(skill.id)) stale.set(skill.id, { id: skill.id, pack: 'sigma', why: skill.changeKind });
+        }
+        for (const entry of packEntries) {
+          if (entry.status === 'updated') stale.set(entry.id, { id: entry.id, pack: entry.pack, why: 'new upstream content' });
+        }
+        const outOfDate = [...stale.values()];
+        if (opts.json) {
+          writeOut(JSON.stringify({ schemaVersion: 1, command: 'update', check: true, scope: scopeName, outOfDate }, null, 2));
+        } else if (outOfDate.length === 0) {
+          writeOut('Everything is up to date.');
+        } else {
+          for (const row of outOfDate) writeOut(`${row.id} (${row.pack}): out of date, ${row.why}`);
+          writeOut(`${outOfDate.length} out of date. Update with: sigmaskills update${opts.global ? ' --global' : ''} --yes`);
+        }
+        return outOfDate.length > 0 ? 1 : 0;
+      }
       if (opts.json) {
         const base = result ? JSON.parse(formatUpdateJson(result)) : {};
         writeOut(JSON.stringify(packEntries.length > 0 ? { ...base, packs: packEntries } : base, null, 2));
@@ -437,7 +460,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         if (packEntries.length > 0) {
           const styler = createStyler(io.stdout, env, { noColor: opts.noColor });
           writeOut(formatSummary({
-            styler, action: 'Update', dryRun: opts.dryRun, scope: scopeName, base: scopeName === 'global' ? homeDir : projectBase, entries: packEntries, version: catalog.manifest.version,
+            styler, action: 'Update', dryRun: dryRun, scope: scopeName, base: scopeName === 'global' ? homeDir : projectBase, entries: packEntries, version: catalog.manifest.version,
           }).join('\n'));
         }
       }

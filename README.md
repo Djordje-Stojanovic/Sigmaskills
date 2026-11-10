@@ -21,7 +21,7 @@ SigmaSkills is a set of skills for coding agents. A skill is a folder with one `
 npx @djordje-stojanovic/sigmaskills
 ```
 
-The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm. For a script, one line does it all: `npx @djordje-stojanovic/sigmaskills install --preset sigma --global --yes`.
+The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm. For a script, one line does it all: `npx @djordje-stojanovic/sigmaskills install --preset core --global --yes`. `core` is every Sigma skill plus Theo Browne's `full-send` and `full-stop` from the tstack pack; pick the other packs per project.
 
 ## Stay current
 
@@ -31,7 +31,7 @@ Updates start with a release on npm. A merge to `main` never publishes. To move 
 npx @djordje-stojanovic/sigmaskills@latest update --global --yes
 ```
 
-Use `--project .` in place of `--global` for a repo. Add `--dry-run` to preview. A skill you edited is never replaced without your say: `update` keeps your Skill Customization block and asks about other edits. `status` shows drift. To keep many machines current, run the same line on each one, from a scheduled task or a login script.
+Use `--project .` in place of `--global` for a repo. Add `--dry-run` to preview. `update --check` lists each skill that is out of date and writes nothing; it exits 1 when one exists. A skill you edited is never replaced without your say: `update` keeps your Skill Customization block and asks about other edits. `status` shows drift. To keep many machines current, run the same line on each one, from a scheduled task or a login script.
 
 ---
 
@@ -45,20 +45,7 @@ Run `/sigmasetup` (Codex: `$sigmasetup`) once in each repo. Installed skills oft
 
 ### Presets
 
-| Preset | Skills | Source |
-|--------|--------|--------|
-| `sigma` | the Sigma skills below | this package |
-| `mattpocock` | grill, spec, TDD, triage, deep modules | [mattpocock/skills](https://github.com/mattpocock/skills) |
-| `threejs` | 13 Three.js skills | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) |
-| `hyperframes` | HyperFrames and the student kit | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes), [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit) |
-| `minimax-h3` | MiniMax H3 prompt and recipe skills | [MiniMax-AI/MiniMax-H3](https://github.com/MiniMax-AI/MiniMax-H3) |
-| `anthropic` | 19 Anthropic skills: docx, pdf, pptx, xlsx, Claude API, MCP builder, skill creator | [anthropics/skills](https://github.com/anthropics/skills) |
-| `design-md` | 84 brand looks, each a `DESIGN.md` skill. **Up to 3 at a time.** | [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) |
-| `last30days` | research any topic across the last 30 days (needs Python 3.12+ and Node 22+) | [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill) |
-| `financial-services` | 99 finance skills: DCF, LBO, comps, pitch decks, earnings, KYC (plugins, agents and commands as skills) | [anthropics/financial-services](https://github.com/anthropics/financial-services) |
-| `tstack` | 9 agent skills for shipping PRs: `full-send`, `council`, `babysit-pr` and more | [t3dotgg/tstack](https://github.com/t3dotgg/tstack) (MIT) |
-| `local` | a folder of your own skills | `SIGMA_LOCAL_SKILLS_DIR` or `~/.sigmaskills/packs.json` |
-| `all` | every pack that is available | |
+`--preset <pack>` installs a whole pack, and the wizard lists every pack. The 18 packs, with their skills, source, licence and needs: [Packs](#packs).
 
 ### Without the wizard
 
@@ -104,6 +91,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaCourse** | `sigmacourse` | Plans a course of any size and builds its repo |
 | **SigmaMusk** | `sigmamusk` | Runs Musk's Algorithm on your work and files the delete list |
 | **SigmaBoat** | `sigmaboat` | Runs authorized work on boat.dev cloud sandboxes |
+| **SigmaReset** | `sigmareset` | Cuts a bloated repo, machine or setup back to what you use |
 
 ### Which one do I need?
 
@@ -211,8 +199,165 @@ Runs Elon Musk's engineering review on your work. It measures the waste first, r
 
 Gives work you already authorized more machines: boat.dev cloud sandboxes (full Ubuntu VMs, no GPU). It builds one stopped base per repo, forks one sandbox per worker, runs each worker's gate there, lands the result by the work's own rules, and deletes every sandbox it started. It starts nothing unless you name boat.
 
+### SigmaReset
+
+Brings a bloated repo, machine or whole setup back to what you use. It opens every thing before it judges it, groups what it finds into 15 to 30 products with their cost and proven use, and asks you keep or kill, at most 12 per round. It deletes the rest in every place it lives, measures before and after, and keeps one map file as the handoff.
+
 ---
 
+## Packs
+
+A pack is a named group of skills from one source. `--preset <id>` installs a whole pack, a skill id installs one skill, and `--preset all` installs every pack. A pack skill is downloaded from its source, at the pinned point, when you install it. In the wizard, `p` shows the full `SKILL.md` of the highlighted skill before you pick it. `list --packs` prints the same list in a terminal.
+
+### Sigma (`sigma`)
+
+Review, improve, ship, research and write. The first-party Sigma skills.
+
+- **Skills:** every skill under [The skills](#the-skills).
+- **Source:** this package. Licence: MIT. Also answers to: `sigmaskills`.
+- **Needs:** Python 3 for the skills that ship a script; see [Requirements](#requirements).
+
+### Matt Pocock (`mattpocock`)
+
+Skills for real engineers: grill, spec, TDD, triage, deep modules.
+
+- **Skills (39):** `ask-matt`, `chief-of-staff`, `claude-handoff`, `code-review`, `codebase-design`, `diagnosing-bugs`, `domain-modeling`, `git-guardrails-claude-code`, `grill-me`, `grill-with-docs`, `grilling`, `handoff`, `implement`, `implement-spec`, `improve-codebase-architecture`, `loop-me`, `migrate-to-shoehorn`, `pr`, `prototype`, `research`, `retro`, `scaffold-exercises`, `setup-matt-pocock-skills`, `setup-pre-commit`, `setup-ts-deep-modules`, `software-factory`, `tdd`, `teach`, `to-questionnaire`, `to-spec`, `to-tickets`, `triage`, `wait-what`, `wayfinder`, `wizard`, `writing-beats`, `writing-for-agents`, `writing-fragments`, `writing-shape`.
+- **Source:** [mattpocock/skills](https://github.com/mattpocock/skills). Licence: MIT. Also answers to: `matt`, `pocock`.
+- **Needs:** run `/setup-matt-pocock-skills` once per repo (it asks where issues live and writes `docs/agents/`); the issue skills use `gh` or `glab`.
+
+### Three.js (`threejs`)
+
+Geometry, materials, lighting, shaders, loaders, post-processing, R3F.
+
+- **Skills (13):** `threejs-animation`, `threejs-asset-pipeline`, `threejs-fundamentals`, `threejs-geometry`, `threejs-interaction`, `threejs-lighting`, `threejs-loaders`, `threejs-materials`, `threejs-performance`, `threejs-postprocessing`, `threejs-react-three-fiber`, `threejs-shaders`, `threejs-textures`.
+- **Source:** [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills). Licence: MIT. Also answers to: `three`.
+- **Needs:** the skills target `three@0.186`, React Three Fiber 9.8 and drei 10.7; `threejs-asset-pipeline` runs `npx @gltf-transform/cli`, so it needs Node.
+
+### HyperFrames (`hyperframes`)
+
+HTML to video: the HyperFrames skill, CLI, registry, media and slideshows, plus the student kit.
+
+- **Skills (18):** `figma`, `hyperframes`, `hyperframes-cli`, `hyperframes-registry`, `media-use`, `remotion-to-hyperframes`, `slideshow`, `cut-mistakes`, `cut-silences`, `edit-video`, `gsap`, `hyperframes-video-beats`, `make-a-video`, `motion-showreel`, `short-form-edit`, `style-library`, `video-storytelling`, `website-to-hyperframes`.
+- **Source:** [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes), pinned to tag `v0.8.188` and [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit). Licence: Apache-2.0 (HyperFrames); the student kit has its own licence file. Also answers to: `hf`.
+- **Needs:** Node.js 22+, FFmpeg and Chrome. Optional keys: `GEMINI_API_KEY`, `HEYGEN_API_KEY`, `FIGMA_TOKEN`.
+
+### MiniMax H3 (`minimax-h3`)
+
+Prompt writing and eight video recipes for the MiniMax H3 model.
+
+- **Skills (9):** `3d-animation-short-generator`, `brand-promo-video-generator`, `co-op-game-intro-generator`, `h3-prompt-writing`, `handdrawn-live-video-generator`, `minimalist-product-ad-generator`, `music-video-subtitle-generator`, `paper-collage-explainer-generator`, `papercraft-stop-motion-explainer`.
+- **Source:** [MiniMax-AI/MiniMax-H3](https://github.com/MiniMax-AI/MiniMax-H3). Licence: no licence that GitHub reports. Also answers to: `minimax`, `h3`.
+- **Needs:** `h3-prompt-writing` works in any agent; the other 8 skills need the MiniMax Hub agent and its image and video tools.
+
+### Anthropic (`anthropic`)
+
+Anthropic's skills: document skills (docx, pdf, pptx, xlsx), Claude API reference, MCP builder, skill creator and more.
+
+- **Skills (19):** `academy-guide`, `algorithmic-art`, `brand-guidelines`, `canvas-design`, `claude-api`, `discernment-nudge`, `doc-coauthoring`, `docx`, `frontend-design`, `internal-comms`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `slack-gif-creator`, `theme-factory`, `web-artifacts-builder`, `webapp-testing`, `xlsx`.
+- **Source:** [anthropics/skills](https://github.com/anthropics/skills), pinned to commit `dbd4588`. Licence: no repo-wide licence that GitHub reports; check each skill folder. Also answers to: `anthropics`.
+- **Needs:** `docx`, `pdf`, `pptx` and `xlsx` need Python or Node libraries and LibreOffice; `webapp-testing` needs Playwright; `mcp-builder` needs `ANTHROPIC_API_KEY` for evaluations. The rest need nothing.
+
+### Design.md (`design-md`)
+
+84 brand DESIGN.md files, each one a skill. Pick up to 3 at a time.
+
+- **Skills (84):** `design-1win`, `design-airbnb`, `design-airtable`, `design-aljazeera`, `design-apple`, `design-binance` and 78 more; `list --packs --json` prints all of them.
+- **Source:** [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), pinned to commit `3b60532`. Licence: MIT. Also answers to: `design`, `awesome-design-md`.
+- **Needs:** nothing to install. Put the chosen look in the project root as `DESIGN.md`. **At most 3 installed at a time**; the wizard asks which one to drop for a fourth.
+
+### Last 30 Days (`last30days`)
+
+Research what people say about any topic in the last 30 days, across Reddit, X, YouTube, Hacker News and more.
+
+- **Skills (1):** `last30days`.
+- **Source:** [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill), pinned to tag `v3.30.0`. Licence: MIT. Also answers to: `last30`.
+- **Needs:** Python 3.12+ and Node 22+. One-time `scripts/last30days.py setup`, run by you. Every key is optional.
+
+### Financial Services (`financial-services`)
+
+Anthropic finance plugins as skills: DCF, LBO, comps, pitch decks, earnings, fund admin, KYC.
+
+- **Skills (99):** `3-statement-model`, `accrual-schedule`, `ai-readiness`, `analyze-bond-basis`, `analyze-bond-rv`, `analyze-fx-carry` and 93 more; `list --packs --json` prints all of them.
+- **Source:** [anthropics/financial-services](https://github.com/anthropics/financial-services), pinned to commit `574ed36`. Licence: Apache-2.0. Also answers to: `fsi`, `finance`.
+- **Needs:** the data comes through MCP servers (Daloopa, Morningstar, S&P Global, FactSet and more); each may need a subscription. Without one, the skills work on numbers you give.
+
+### tstack (`tstack`)
+
+Theo Browne's agent skills for shipping PRs: full-send, council, babysit-pr, file-pr and more.
+
+- **Skills (9):** `babysit-pr`, `council`, `file-pr`, `full-send`, `full-stop`, `leaving-pr-comments`, `modernize`, `sol-loop`, `takeover`.
+- **Source:** [t3dotgg/tstack](https://github.com/t3dotgg/tstack), pinned to commit `1085050`. Licence: MIT. Also answers to: `theo`.
+- **Needs:** `gh`, signed in. `babysit-pr` needs `python3`. `council` and `sol-loop` ask reviewers on other providers' models, so they need a host that can run those.
+
+### Superpowers (`superpowers`)
+
+Jesse Vincent's workflow skills: brainstorm, write a plan, execute it, TDD, debug, review, finish the branch.
+
+- **Skills (15):** `brainstorming`, `diagnosing-superpowers`, `dispatching-parallel-agents`, `executing-plans`, `finishing-a-development-branch`, `receiving-code-review`, `requesting-code-review`, `subagent-driven-development`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `using-superpowers`, `verification-before-completion`, `writing-plans`, `writing-skills`.
+- **Source:** [obra/superpowers](https://github.com/obra/superpowers), pinned to commit `22f0b46`. Licence: MIT. Also answers to: `obra`.
+- **Needs:** nothing to install. Upstream loads `using-superpowers` at session start through its plugin hook; a plain skill install has no hook, so call the skills by name.
+
+### Impeccable (`impeccable`)
+
+Paul Bakaus's design vocabulary for agents: one skill with commands to audit, polish, critique and restyle a frontend.
+
+- **Skills (1):** `impeccable`.
+- **Source:** [pbakaus/impeccable](https://github.com/pbakaus/impeccable), pinned to commit `ec229b4`. Licence: Apache-2.0. Also answers to: `pbakaus`.
+- **Needs:** Node, for its `npx impeccable` detector. Run `/impeccable init` once per project; it writes `PRODUCT.md`. Scanning a rendered page uses your installed Chrome or Edge.
+
+### Security Audit (`security-audit`)
+
+Cloudflare's security audit skill: find vulnerabilities and verify each finding before it is reported.
+
+- **Skills (1):** `security-audit`.
+- **Source:** [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill), pinned to commit `c1c8a8c`. Licence: MIT. Also answers to: `cloudflare`, `audit`.
+- **Needs:** an agent with tool use and parallel sub-agents, and Node.js for the two validators (no dependencies).
+
+### Anatomy (`anatomy`)
+
+Detailed, interactive isometric illustrations of real machines and how they work.
+
+- **Skills (1):** `anatomy`.
+- **Source:** [wheresryan22/anatomy](https://github.com/wheresryan22/anatomy), pinned to commit `1482e84`. Licence: MIT. Also answers to: `isometric`.
+- **Needs:** Node 20.10 or later. No API keys and nothing to `npm install`.
+
+### Diagram Design (`diagram-design`)
+
+Cathryn Lavery's editorial diagrams: architecture, flow, sequence and more as clean HTML and SVG.
+
+- **Skills (1):** `diagram-design`.
+- **Source:** [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design), pinned to commit `f2496ac`. Licence: MIT. Also answers to: `diagram`, `diagrams`.
+- **Needs:** nothing to install: a diagram is plain HTML and SVG, with no build step.
+
+### Taste (`taste-skill`)
+
+Art direction for coding agents: reference images, a visual brief and a browser check, so a page does not look generated.
+
+- **Skills (1):** `taste-skill`.
+- **Source:** [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill), pinned to commit `f6b7657`. Licence: MIT. Also answers to: `taste`, `leonxlnx`.
+- **Needs:** Node 22+ and an installed Chrome, Edge or Chromium (`CHROME_PATH` for an unusual place). ffmpeg is optional. No API keys.
+
+### Hallmark (`hallmark`)
+
+A design skill that refuses the AI look: new pages, audits, redesigns and design extraction.
+
+- **Skills (1):** `hallmark`.
+- **Source:** [Nutlope/hallmark](https://github.com/Nutlope/hallmark), pinned to commit `407fa68`. Licence: MIT. Also answers to: `nutlope`.
+- **Needs:** Node 18 or later. The browser checks also need `npm i -g puppeteer-core` and Chrome; without them the static checks still run.
+
+### Ponytail (`ponytail`)
+
+The lazy senior developer: the smallest change that fully works, plus audit, review, debt and gain reports.
+
+- **Skills (6):** `ponytail`, `ponytail-audit`, `ponytail-debt`, `ponytail-gain`, `ponytail-help`, `ponytail-review`.
+- **Source:** [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail), pinned to tag `v5.3.3`. Licence: MIT. Also answers to: `lazy`.
+- **Needs:** nothing. The [per-project plugin command](#ponytail-per-project) stays as an extra for agents that load plugins.
+
+**`local`** is a folder of your own skills (`SIGMA_LOCAL_SKILLS_DIR` or `~/.sigmaskills/packs.json`). **`all`** is every pack that is available on this machine.
+
+**Graphify is not a pack:** its repo ships no `SKILL.md`. Its skill comes from its own tool: `uv tool install graphifyy && graphify install`.
+
+---
 ## Install
 
 Pick one method. The [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/installer.md#other-install-methods) has the full per-skill commands and host folders.
@@ -263,6 +408,7 @@ $sigmasetup
 $sigmacourse Plan a 40-hour course that makes me fluent in SQL
 $sigmamusk Why does our test suite take 20 minutes?
 $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
+$sigmareset My setup is bloated. List every product, I say keep or kill
 ```
 
 </td>
@@ -296,6 +442,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 /skill:sigmamusk Run the Algorithm on this agent loop --demon
 /skill:sigmamusk --fast "cache every calc script by a hash of its inputs"
 /skill:sigmaboat Ship #42 on a boat fork of this repo
+/skill:sigmareset List every product in this repo, I say keep or kill
 ```
 
 </td>
@@ -329,6 +476,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmacourse` | a subject · the learner · a goal | Grills first; writes the course repo and the goal prompt; never starts the loop |
 | `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
 | `sigmaboat` | a loop file, ship issue, speed-loop project or spec · the repo | Starts sandboxes only when you name boat; no plan of its own; deletes every worker |
+| `sigmareset` | what is in scope (a repo, a machine, a whole setup) | Asks keep or kill per product, at most 12 per round; deletes the rest; keeps one map file |
 
 ### Requirements
 

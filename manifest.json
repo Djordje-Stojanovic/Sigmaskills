@@ -115,6 +115,11 @@
       "needsReferences": false
     },
     {
+      "id": "sigmareset",
+      "title": "SigmaReset",
+      "needsReferences": false
+    },
+    {
       "id": "sigmadebug",
       "title": "SigmaDebug",
       "needsReferences": false
