@@ -15,5 +15,6 @@
     "PONYTAIL_SUBAGENT_MATCHER": "^(general-purpose|claude|plan)$",
     "PONYTAIL_HIDE_STATUS": "1",
     "PONYTAIL_QUIET_STARTUP": "1"
-  }
+  },
+  "autoMemoryEnabled": false
 }
