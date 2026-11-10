@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.24.0] — 2026-11-10
+
 ### Changed
 
 - `sigmatour` is the one skill for both jobs: tour a repo where it is, or copy it first and tour the copy. Copy mode keeps what `sigmafork` did — the 8 grill questions, the isolated copy (`copy`, `paths`, `fix`, `verify` in `sigmatour.py`; the page scan is `scan`, the path scan is `paths`), the skill bundles, and logs in `.sigmatour/` — and writes the one tour page (`<name>-tour.html` in the copy) from the one template and builder. The two skills were 3,478 lines; the merged skill is 2,268. Ask with `/sigmatour Copy the film repo for a new project, isolated, and walk me through it`. Asking for `sigmafork` by name still triggers `sigmatour`.
@@ -752,7 +754,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.23.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.7...v0.23.0
 [0.22.7]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.6...v0.22.7
 [0.22.6]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.5...v0.22.6
