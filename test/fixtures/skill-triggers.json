@@ -232,23 +232,23 @@
  },
  {
   "prompt": "Fork this GitHub repo to my account, copy it locally and teach me how it works with an onboarding course",
-  "skill": "sigmafork",
+  "skill": "sigmatour",
   "near": "sigmaship"
  },
  {
   "prompt": "Copy my project folder to a new place so the copy never writes into the original, then onboard me",
-  "skill": "sigmafork",
+  "skill": "sigmatour",
   "near": "sigmamusk"
  },
  {
   "prompt": "Duplicate this repository, install the skill bundle and give me a mini course to learn it",
-  "skill": "sigmafork",
+  "skill": "sigmatour",
   "near": "sigmaimprove"
  },
  {
   "prompt": "Give me a visual tour of this repository: what it does and how it works",
   "skill": "sigmatour",
-  "near": "sigmafork"
+  "near": "sigmareview"
  },
  {
   "prompt": "Walk me through this codebase end to end with a diagram so I understand it",

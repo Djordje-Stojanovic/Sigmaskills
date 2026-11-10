@@ -16,6 +16,6 @@ Any other GitHub skill repo works the same way: `npx skills add <owner>/<repo> -
 
 ## After the install
 
-- List what is installed (`npx skills list`, or the skill folders) and put the list in the guide's cheat sheet.
-- Skills copied with the source can carry hardcoded paths too: they are inside `<dest>`, so `scan` and `fix` already covered them. Run `verify` again after the install.
-- When the copy's agent instructions (`AGENTS.md`, `CLAUDE.md`) name skills that are now gone, mark those lines for the owner in the guide's "Where things are"; do not rewrite his instructions unasked.
+- List what is installed (`npx skills list`, or the skill folders) and put the list in the tour page's "Where things are".
+- Skills copied with the source can carry hardcoded paths too: they are inside `<dest>`, so `paths` and `fix` already covered them. Run `verify` again after the install.
+- When the copy's agent instructions (`AGENTS.md`, `CLAUDE.md`) name skills that are now gone, mark those lines for the owner in the tour page's "Where things are"; do not rewrite his instructions unasked.

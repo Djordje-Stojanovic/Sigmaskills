@@ -341,8 +341,9 @@ function sigmahuman({ files, result }) {
   return problems;
 }
 
-// sigmafork copies the repository to out/copy, leaves the original as it was, and writes the course into the copy.
-function sigmafork({ files, result }) {
+// sigmatour in copy mode copies the repository to out/copy, leaves the original as it was, and writes the one
+// tour page into the copy, with the scan's data block and a trace. A tour in place is the same run without the copy.
+function sigmatour({ files, result }) {
   const problems = [];
   for (const [name, text] of Object.entries(files)) {
     if (name.startsWith('copy/')) continue;
@@ -352,35 +353,17 @@ function sigmafork({ files, result }) {
   for (const name of ['copy/package.json', 'copy/src/logic.js']) {
     if (!(name in files)) problems.push(`the copy is missing ${name}`);
   }
-  const grill = files['copy/.sigmafork/grill.md'] ?? '';
-  if (!grill) problems.push('missing copy/.sigmafork/grill.md');
+  const grill = files['copy/.sigmatour/grill.md'] ?? '';
+  if (!grill) problems.push('missing copy/.sigmatour/grill.md');
   else if ((grill.match(/^(?:Q[1-8]|Ruling)\b/gm) || []).length < 8) problems.push('grill.md: expected an answer or Ruling line for each of the 8 questions');
-  const guide = files['copy/ONBOARDING.html'] ?? '';
-  if (!guide) return [...problems, 'missing copy/ONBOARDING.html'];
-  if (/\bFILL\b/.test(guide)) problems.push('ONBOARDING.html: FILL markers left from the template');
-  problems.push(...requireText(guide, [/<svg[\s>]/, /Part 2/, /<title>[^<]+<\/title>/], 'ONBOARDING.html'));
-  if (!/ONBOARDING\.html/.test(result)) problems.push('reply does not name the guide');
-  if (!/isolated/i.test(result)) problems.push('reply does not give the isolation result');
-  if (!/anything else/i.test(result)) problems.push('reply does not ask whether anything else is needed');
-  return problems;
-}
-
-
-// sigmatour reads the repository and writes one tour page under tour/, with the scan's data block and a trace.
-function sigmatour({ files, result }) {
-  const problems = [];
-  for (const [name, text] of Object.entries(files)) {
-    if (name.startsWith('tour/')) continue;
-    const original = path.join(FIXTURE, ...name.split('/'));
-    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed a file outside tour/: ${name}`);
-  }
-  const pageName = Object.keys(files).find((name) => /^tour\/[^/]+-tour\.html$/.test(name));
-  if (!pageName) return [...problems, 'missing tour/<name>-tour.html'];
+  const pageName = Object.keys(files).find((name) => /^copy\/[^/]+-tour\.html$/.test(name));
+  if (!pageName) return [...problems, 'missing copy/<name>-tour.html'];
   const page = files[pageName];
   if (/\bFILL\b/.test(page)) problems.push(`${pageName}: FILL markers left from the template`);
   problems.push(...requireText(page, [/id="sigmatour-data">\{/, /<svg[\s>]/, /<title>[^<]+<\/title>/, /What the README says/], pageName));
   if ((page.match(/<li[^>]*class="[^"]*\bstep\b/g) || []).length < 4) problems.push(`${pageName}: the trace has fewer than 4 steps`);
   if (!result.includes(pageName.split('/').pop())) problems.push('reply does not name the tour page');
+  if (!/isolated/i.test(result)) problems.push('reply does not give the isolation result');
   if (!/anything else/i.test(result)) problems.push('reply does not ask whether there is anything else to see');
   return problems;
 }
@@ -465,7 +448,7 @@ function sigmadebug({ result }) {
 }
 
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmatour, sigmaspeedloop, sigmamusk, sigmaboat, sigmadebug, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmaresearch, sigmadeeplook, sigmafreedom };
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmatour, sigmaspeedloop, sigmamusk, sigmaboat, sigmadebug, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

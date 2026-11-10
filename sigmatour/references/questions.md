@@ -1,4 +1,6 @@
-# The grill: 8 questions
+# The grill: 8 questions (copy mode)
+
+Copy mode asks these 8 instead of the tour's 4 questions; Q8 sets the tour length and mix.
 
 One numbered message, all 8 questions, each with a recommended answer the owner accepts with "yes". Word every question so "yes" takes the recommendation. Base each recommendation on what you saw in the source in step 1, not on a generic default, and give a few words of why. Facts you can look up are never questions: the source's size, its stack, its keys and its hardcoded paths are yours to find.
 
@@ -20,7 +22,7 @@ Recommend from the owner's words and the source: a tool he uses daily → adapt;
 
 ## Q2. Why, and what does done look like?
 
-The outcome in one sentence, and the first real thing the copy must do (one film rendered, one page deployed, one test green, one example running). This sets what the copy keeps and what the course stresses.
+The outcome in one sentence, and the first real thing the copy must do (one film rendered, one page deployed, one test green, one example running). This sets what the copy keeps and what the tour stresses.
 
 Recommend: the most valuable real example the study found, run end to end in the copy.
 
@@ -67,10 +69,10 @@ Recommend: point the copy at the keys file he already has (by path, values never
 
 ## Q8. How do you learn best?
 
-Options (pick any): **diagrams first** · **real worked examples** · **hands-on tasks** · **a short video-like walkthrough** (animated steps) · **a 3D map** (Three.js, for spatial or game repos) · **reference tables**. And the length: 10, 15 or 20 minutes.
+Options (pick any): **diagrams first** · **real worked examples** · **hands-on tasks** · **a short video-like walkthrough** (animated steps) · **a 3D map** (Three.js, for spatial or game repos) · **reference tables**. And the tour length: 15, 30, 45 or 60 minutes.
 
-Recommend: diagrams first, three real examples and three hands-on tasks, 15 minutes; a 3D map only when the repo itself is spatial (a game, a 3D tool, a scene graph).
+Recommend: diagrams first, three real examples and three hands-on tasks, the length the scan suggests; a 3D map only when the repo itself is spatial (a game, a 3D tool, a scene graph).
 
 ## After the reply
 
-Write every answer to `grill.md`, one line each: `Q<n>: <answer>`, and `Ruling: <answer>` for each you took on the owner's behalf. Branches that opened (a new key, a sibling repo, a second destination) get one short follow-up round; otherwise go straight to step 2.
+Write every answer to `grill.md`, one line each: `Q<n>: <answer>`, and `Ruling: <answer>` for each you took on the owner's behalf. Branches that opened (a new key, a sibling repo, a second destination) get one short follow-up round; otherwise go straight to the copy (step 2 of the skill).

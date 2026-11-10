@@ -13,7 +13,6 @@ const KNOWN_SKILLS = [
   { id: 'sigmaloop', title: 'SigmaLoop', needsReferences: true },
   { id: 'sigmataste', title: 'SigmaTaste', needsReferences: true },
   { id: 'sigmahuman', title: 'SigmaHuman', needsReferences: true },
-  { id: 'sigmafork', title: 'SigmaFork', needsReferences: true },
   { id: 'sigmatour', title: 'SigmaTour', needsReferences: true },
   { id: 'sigmaspeedloop', title: 'SigmaSpeedLoop', needsReferences: true },
   { id: 'sigmamusk', title: 'SigmaMusk', needsReferences: true },
