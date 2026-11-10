@@ -50,16 +50,13 @@ const PACKS = [
     aliases: ['three'],
     sources: [{ repo: 'CloudAI-X/threejs-skills', clone: 'threejs-skills', path: 'skills', ref: '0e181866f095b5f06d005133876e926515390d95' }],
   },
-  // Blender: 8 `blender-*` skills from ra100 and 94 specialist skills from arjun988, each pinned to one commit (#285 follow-up, 2026-11-10).
+  // Blender: 94 specialist skills from arjun988, pinned to one commit (2026-11-10).
   {
     id: 'blender',
     title: 'Blender',
     blurb: 'Drive Blender 5 from code: modeling, rigging, shaders, physics, rendering, camera, lighting, VFX, styles and game export.',
     aliases: ['blender3d'],
-    sources: [
-      { repo: 'ra100/blender-claude-plugin', clone: 'blender-claude-plugin', path: 'skills', ref: '78e9151fdc9e01ce37f1d16a9b677c3047411885' },
-      { repo: 'arjun988/blender-skills', clone: 'blender-skills', path: '.claude/skills', ref: '904f095d8f36a6e72adaebb08d07f884a074743d' },
-    ],
+    sources: [{ repo: 'arjun988/blender-skills', clone: 'blender-skills', path: '.claude/skills', ref: '904f095d8f36a6e72adaebb08d07f884a074743d' }],
   },
   {
     id: 'hyperframes',

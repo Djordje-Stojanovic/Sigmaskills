@@ -209,8 +209,8 @@ HTML to video: the HyperFrames skill, CLI, registry, media and slideshows, plus 
 
 Drive Blender 5 from code: modeling, rigging, shaders, physics, rendering, camera, lighting, VFX, art styles and game export.
 
-- **Skills (102):** the 8 `blender-*` skills (`blender-animation-rigging`, `blender-compositing-nodes`, `blender-geometry-nodes`, `blender-modeling-modifiers`, `blender-physics-simulation`, `blender-python-scripting`, `blender-scene-rendering`, `blender-shader-nodes`) and 94 specialists such as `lighting`, `camera-cinematography`, `rigging`, `vfx-fx`, `qa-review`, `unity-export` and `pixel-art-style`; `list --packs --json` prints all of them.
-- **Source:** [ra100/blender-claude-plugin](https://github.com/ra100/blender-claude-plugin), pinned to commit `78e9151`, and [arjun988/blender-skills](https://github.com/arjun988/blender-skills), pinned to commit `904f095`. Licence: MIT. Also answers to: `blender3d`.
+- **Skills (94):** specialists such as `lighting`, `camera-cinematography`, `rigging`, `vfx-fx`, `qa-review`, `unity-export` and `pixel-art-style`; `list --packs --json` prints all of them.
+- **Source:** [arjun988/blender-skills](https://github.com/arjun988/blender-skills), pinned to commit `904f095`. Licence: MIT. Also answers to: `blender3d`.
 - **Needs:** Blender 5. Some skills drive Blender through an MCP server.
 
 ### MiniMax H3 (`minimax-h3`)

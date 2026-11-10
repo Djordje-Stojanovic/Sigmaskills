@@ -192,8 +192,8 @@ test('packs: the command lists every pack with its skill count and source, like 
     writeUserConfig(box.home, { packs: [ACME_PACK] });
     const packs = await run(box, ['packs']);
     assert.equal(packs.code, 0, packs.err);
-    assert.match(packs.out, /Blender\s+10\d skills/);
-    assert.match(packs.out, /source ra100\/blender-claude-plugin@78e9151 \+ arjun988\/blender-skills@904f095/);
+    assert.match(packs.out, /Blender\s+94 skills/);
+    assert.match(packs.out, /source arjun988\/blender-skills@904f095/);
     assert.match(packs.out, /Three\.js\s+13 skills/);
     assert.match(packs.out, /source CloudAI-X\/threejs-skills@0e18186/);
     assert.match(packs.out, /source folder \$SIGMA_LOCAL_SKILLS_DIR/);

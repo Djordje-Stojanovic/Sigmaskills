@@ -199,7 +199,7 @@ test('packs: the per-project packs are registered and every outside source is pi
       assert.ok(pack.skills.length > 0, `${id} lists skills`);
       for (const source of pack.sources) assert.match(source.ref, /^([0-9a-f]{40}|v\d[\w.]*)$/, `${id} ${source.repo} is pinned`);
     }
-    assert.ok(findPack(packs, 'blender').skills.length >= 100, 'Blender holds the 8 ra100 and the 94 arjun988 skills');
+    assert.equal(findPack(packs, 'blender').skills.length, 94, 'Blender holds the 94 arjun988 skills');
   } finally {
     box.cleanup();
   }

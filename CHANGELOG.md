@@ -34,7 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
-- The `blender` pack (102 skills from `ra100/blender-claude-plugin` and `arjun988/blender-skills`). One command puts a pack into one repo: `install --pack blender --project .`. A pack that lives only on your machine goes into `~/.sigmaskills/packs.json`, with a `dir` source and a `prefix`.
+- The `blender` pack (94 skills from `arjun988/blender-skills`). One command puts a pack into one repo: `install --pack blender --project .`. A pack that lives only on your machine goes into `~/.sigmaskills/packs.json`, with a `dir` source and a `prefix`.
 - `sigmaskills packs` prints every pack with its skill count and source (`list --packs` does the same). `--pack` is a second name for `--preset`.
 
 ### Changed

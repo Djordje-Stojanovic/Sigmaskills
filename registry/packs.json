@@ -1812,46 +1812,6 @@
       "sources": [
         {
           "type": "git",
-          "repo": "ra100/blender-claude-plugin",
-          "path": "skills",
-          "ref": "78e9151fdc9e01ce37f1d16a9b677c3047411885",
-          "skills": [
-            {
-              "id": "blender-animation-rigging",
-              "description": "Blender 5.x animation and rigging \u2014 keyframes, FCurves, layered actions, drivers, constraints, armatures, IK/FK, shape keys, NLA editor, and bone c..."
-            },
-            {
-              "id": "blender-compositing-nodes",
-              "description": "Blender 5.x compositor nodes \u2014 post-processing, color grading, denoising, keying, glare, depth of field, render pass separation, multi-layer EXR ou..."
-            },
-            {
-              "id": "blender-geometry-nodes",
-              "description": "Blender 5.x geometry nodes \u2014 procedural modeling, scattering, mesh/curve/volume ops, simulation zones, repeat zones, Bone Info, Font socket, UV nod..."
-            },
-            {
-              "id": "blender-modeling-modifiers",
-              "description": "Blender 5.x modifiers, bmesh API, mesh editing operators, sculpting setup \u2014 SubSurf, Boolean, Array, Mirror, Bevel, bmesh procedural mesh creation,..."
-            },
-            {
-              "id": "blender-physics-simulation",
-              "description": "Blender 5.x physics simulations \u2014 rigid body, cloth, fluid/smoke/fire (Mantaflow), soft body, particles, force fields, collisions, and simulation b..."
-            },
-            {
-              "id": "blender-python-scripting",
-              "description": "Blender 5.x Python scripting (bpy) \u2014 custom operators, UI panels, add-on development, context management, handlers, timers, property system, batch..."
-            },
-            {
-              "id": "blender-scene-rendering",
-              "description": "Blender 5.x scene setup, render engines (Cycles/EEVEE), output formats, import/export (FBX/glTF/OBJ/USD/Alembic), linking/appending, color manageme..."
-            },
-            {
-              "id": "blender-shader-nodes",
-              "description": "Blender 5.x shader nodes \u2014 PBR materials, procedural textures, Principled BSDF, glass/metal/skin shaders, world/HDRI lighting, raycast shader node,..."
-            }
-          ]
-        },
-        {
-          "type": "git",
           "repo": "arjun988/blender-skills",
           "path": ".claude/skills",
           "ref": "904f095d8f36a6e72adaebb08d07f884a074743d",
