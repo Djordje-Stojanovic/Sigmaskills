@@ -101,11 +101,11 @@ Sequential briefs with isolation off: cleanup block is `N/A — no worktree`.
 
 Read the work item and the files it touches (gh issue/PR if applicable; web only if needed). Decide trade-offs yourself and log each as a Ruling in the PR body.
 
-If isolation is on: YOU create the worktree (git fetch; verify clean-enough main checkout, unique branch, free sibling path; then git worktree add -b <branch> <sibling-path> origin/<base>). Do all work there. Do not merge. Keep the worktree while the PR is open. Cleanup only after human merge or abandon.
+If isolation is on: YOU create the worktree (git fetch; verify clean-enough main checkout, unique branch, free sibling path; then git worktree add -b <branch> <sibling-path> origin/<base>). Do all work there.
 
 Solve the work. Follow repo standards and these required reads: <paths>.
 Work in big steps: the whole job in 10-20 tool calls, commit each finished part. Validate once at the end with: <tests/smoke>; a red also red on origin/<base> is named, not fixed. Update docs/LEARNINGS only when something non-obvious was learned.
-Self-review the diff: quality, docs, validation, low bug risk. Push, open a PR for review (Closes #<N> if an issue). Do NOT merge.
+Self-review the diff: quality, docs, validation, low bug risk. Push, open a PR for review (Closes #<N> if an issue). Do not merge.
 
 Out of scope: <boundaries>. Stay surgical. Prefer delete+simplify over new abstractions.
 
@@ -124,10 +124,10 @@ REPORT BACK: Status: DONE | DONE_WITH_CONCERNS | BLOCKED · PR URL · checks run
 <issue-url>
 Existing PR: <pr-url> (branch <name>)
 
-Read the issue and the existing PR. Do NOT start a second implementation.
+Read the issue and the existing PR. Do not start a second implementation.
 Continue the existing PR branch. Merge the latest origin/<base> into the branch (never rebase a pushed branch), resolve conflicts carefully, re-validate, push, confirm mergeable.
 Isolation: <on|off>. If on, create a worktree for this PR branch (same create/cleanup rules as greenfield). Otherwise stay on a normal checkout of the PR branch.
-Do NOT merge. Open/update the PR for review only after self-review for quality, docs, validation, and low bug risk.
+Do not merge. Open/update the PR for review only after self-review for quality, docs, validation, and low bug risk.
 Out of scope: unrelated issues.
 
 CLEANUP: N/A unless you created a worktree — then cleanup only after human merge or abandon (same checklist as greenfield).
@@ -170,7 +170,7 @@ https://github.com/owner/repo/issues/12
 Read the issue and the files it touches. Decide trade-offs; log Rulings in the PR body.
 Isolation: off (sequential). Cleanup: N/A — no worktree.
 Solve per issue. Required reads: AGENTS.md, docs/exports.md.
-Validate against those docs. Commit, push, PR with Closes #12. Do NOT merge.
+Validate against those docs. Commit, push, PR with Closes #12. Do not merge.
 Self-review before opening PR. Out of scope: other open issues.
 ```
 

@@ -24,7 +24,7 @@ Shape: <solo | small crew: N workers, N reviewers, 1 clerk | large crew>, from q
 2. **One whole ticket per worker** (Theo's tstack flow): finish, prove with the ticket's acceptance tests, review, PR, CI, merge. The orchestrator saves a full spec by path (`to-spec` if the repo has it) and sends the path. The worker reports once.
 3. **`sol-loop` review: one reviewer per ticket, from another model family, at most 3 rounds, stop on nits.** The reviewer fixes small findings itself on the PR branch; only a large finding goes back to the writer (same agent, by follow-up message, so its context stays).
 4. **First turn: one "say ok" task per model target** (from `orchestrator_capabilities`, never from memory). A target that fails moves to its fallback before any ticket starts.
-5. Models: <cheap model> for bulk, research and harvests; <mid model> for workers; <top model> for planning and review only; Opus stays on planning. Never max effort. When a worker ends, its slot takes the most valuable eligible ticket in the same turn. Running agents count toward the cap. <Repo rules: banned models, background-shell limits.>
+5. Models: <cheap model> for bulk, research and harvests; <mid model> for workers; <top model> for planning and review only. Effort per role comes from the repo's rule. When a worker ends, its slot takes the most valuable eligible ticket in the same turn. Running agents count toward the cap. <Repo rules: banned models, background-shell limits.>
 6. Headless calls (`claude -p`, `codex exec`) get closed input (`< /dev/null`, `ssh -n`, `stdin=DEVNULL`). A judge or persona called again and again keeps one session (`--resume <id>`).
 7. Only the thread that owns a PR watches it. Children never watch.
 
