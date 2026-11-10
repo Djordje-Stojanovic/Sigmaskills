@@ -112,7 +112,7 @@ Name the limiting resource and the evidence class. Label estimates as estimates 
 
 ## Pass 7 — Architecture that causes defects
 
-Report architecture only when it causes a defect or makes one likely: two sources of truth, a leaky contract that callers misuse, duplicated policy that has already drifted, a cycle that blocks a needed change, or a seam so poor that a critical path cannot be tested. Show the concrete cost. A cleaner design with no defect behind it is not a finding: it is an idea for SigmaImprove or a job for SigmaRefactor.
+Report architecture only when it causes a defect or makes one likely: two sources of truth, a leaky contract that callers misuse, duplicated policy that has already drifted, a cycle that blocks a needed change, or a seam so poor that a critical path cannot be tested. Show the concrete cost. A cleaner design with no defect behind it is not a finding: it is an idea for SigmaImprove or a job for SigmaMusk.
 
 ## Pass 8 — Tests and verification
 

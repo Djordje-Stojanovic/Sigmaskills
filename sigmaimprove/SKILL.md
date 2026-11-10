@@ -7,7 +7,7 @@ description: Use when asked for SigmaImprove, feature ideas or what to improve. 
 
 Find what would make this thing clearly better, and keep a living backlog of it. SigmaReview asks "does it keep its promises?". SigmaImprove asks "are these the right promises, and how far are we from the best in the world?". Nothing here is a defect. Every entry is a choice or a question that reasonable people could weigh differently.
 
-If you find something that breaks a stated goal, a doc, a budget, or a test, it is a SigmaReview finding: name it in one line in the final response, and do not file it here. Code that is merely large belongs to SigmaRefactor.
+If you find something that breaks a stated goal, a doc, a budget, or a test, it is a SigmaReview finding: name it in one line in the final response, and do not file it here. Code that is merely large belongs to SigmaMusk.
 
 Read [categories.md](references/categories.md) and [lenses.md](references/lenses.md) before exploring. The categories say *where* to look and which bars to measure against; the lenses say *how* to think. Read [issue.md](references/issue.md) before writing entries or issues.
 
