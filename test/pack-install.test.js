@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, it as test } from 'node:test';
 import { runCli } from '../src/cli.js';
 import {
-  ACME_PACK, commitAll, createMockIo, createRemote, createSandbox, writeSkills, writeUserConfig,
+  ACME_PACK, commitAll, commitFiles, createEmptyRemote, createMockIo, createRemote, createSandbox, writeSkills, writeUserConfig,
 } from './pack-fixtures.js';
 
 // Each test owns its sandbox and waits on child processes, so the file's tests run at once (the suite budget).
@@ -143,6 +143,40 @@ test('pack uninstall: removes the copy, the links, and the record', async () => 
   }
 });
 
+test('pack install: a skill at the repo root installs as one folder, without dot folders, and uninstalls (#273)', async () => {
+  const box = createSandbox();
+  try {
+    const remote = createEmptyRemote(box.remotes, 'acme/rooty');
+    commitFiles(remote, {
+      'SKILL.md': '---\nname: rooty\ndescription: Root skill.\n---\n\n# Rooty\n',
+      'references/note.md': 'note\n',
+      '.github/workflows/ci.yml': 'on: push\n',
+    });
+    writeUserConfig(box.home, {
+      packs: [{
+        id: 'rooty', title: 'Rooty', blurb: 'One skill at the repo root.', aliases: [],
+        sources: [{ type: 'git', repo: 'acme/rooty', path: '', rootSkill: 'rooty', skills: [{ id: 'rooty', description: 'Root skill.' }] }],
+      }],
+    });
+    const run = async (args) => {
+      const io = createMockIo(box.env);
+      const code = await runCli([...args, '--project', box.project, '--no-color'], io);
+      return { code, out: io.getStdout(), err: io.getStderr() };
+    };
+    const { code, out, err } = await run(['install', '--preset', 'rooty', '--agent', 'claude']);
+    assert.equal(code, 0, err + out);
+    const dir = path.join(box.project, '.agents', 'skills', 'rooty');
+    assert.ok(fs.existsSync(path.join(dir, 'SKILL.md')));
+    assert.ok(fs.existsSync(path.join(dir, 'references', 'note.md')), 'the whole root is the skill');
+    assert.ok(!fs.existsSync(path.join(dir, '.git')), 'the clone folder is not copied');
+    assert.ok(!fs.existsSync(path.join(dir, '.github')), 'dot folders stay out');
+    const gone = await run(['uninstall', '--skill', 'rooty', '--yes']);
+    assert.equal(gone.code, 0, gone.err);
+    assert.ok(!fs.existsSync(dir));
+  } finally {
+    box.cleanup();
+  }
+});
 test('pack install: a failing source marks its skills failed and exits 1', async () => {
   const { box, run } = setup();
   try {
