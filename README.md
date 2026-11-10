@@ -244,7 +244,7 @@ Prompt writing and eight video recipes for the MiniMax H3 model.
 Anthropic's skills: document skills (docx, pdf, pptx, xlsx), Claude API reference, MCP builder, skill creator and more.
 
 - **Skills (19):** `academy-guide`, `algorithmic-art`, `brand-guidelines`, `canvas-design`, `claude-api`, `discernment-nudge`, `doc-coauthoring`, `docx`, `frontend-design`, `internal-comms`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `slack-gif-creator`, `theme-factory`, `web-artifacts-builder`, `webapp-testing`, `xlsx`.
-- **Source:** [anthropics/skills](https://github.com/anthropics/skills), pinned to commit `dbd4588`. Licence: no repo-wide licence that GitHub reports; check each skill folder. Also answers to: `anthropics`.
+- **Source:** [anthropics/skills](https://github.com/anthropics/skills), pinned to commit `2c5958e`. Licence: no repo-wide licence that GitHub reports; check each skill folder. Also answers to: `anthropics`.
 - **Needs:** `docx`, `pdf`, `pptx` and `xlsx` need Python or Node libraries and LibreOffice; `webapp-testing` needs Playwright; `mcp-builder` needs `ANTHROPIC_API_KEY` for evaluations. The rest need nothing.
 
 ### Design.md (`design-md`)
@@ -260,7 +260,7 @@ Anthropic's skills: document skills (docx, pdf, pptx, xlsx), Claude API referenc
 Research what people say about any topic in the last 30 days, across Reddit, X, YouTube, Hacker News and more.
 
 - **Skills (1):** `last30days`.
-- **Source:** [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill), pinned to tag `v3.30.0`. Licence: MIT. Also answers to: `last30`.
+- **Source:** [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill), pinned to tag `v3.33.1`. Licence: MIT. Also answers to: `last30`.
 - **Needs:** Python 3.12+ and Node 22+. One-time `scripts/last30days.py setup`, run by you. Every key is optional.
 
 ### Financial Services (`financial-services`)
@@ -268,7 +268,7 @@ Research what people say about any topic in the last 30 days, across Reddit, X, 
 Anthropic finance plugins as skills: DCF, LBO, comps, pitch decks, earnings, fund admin, KYC.
 
 - **Skills (99):** `3-statement-model`, `accrual-schedule`, `ai-readiness`, `analyze-bond-basis`, `analyze-bond-rv`, `analyze-fx-carry` and 93 more; `list --packs --json` prints all of them.
-- **Source:** [anthropics/financial-services](https://github.com/anthropics/financial-services), pinned to commit `574ed36`. Licence: Apache-2.0. Also answers to: `fsi`, `finance`.
+- **Source:** [anthropics/financial-services](https://github.com/anthropics/financial-services), pinned to commit `6056506`. Licence: Apache-2.0. Also answers to: `fsi`, `finance`.
 - **Needs:** the data comes through MCP servers (Daloopa, Morningstar, S&P Global, FactSet and more); each may need a subscription. Without one, the skills work on numbers you give.
 
 ### tstack (`tstack`)

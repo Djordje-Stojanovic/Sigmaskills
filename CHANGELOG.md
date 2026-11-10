@@ -35,6 +35,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Changed
 
 - `sigmamusk` has three sizes of one method: one thing (the review that files one issue), one codebase (`/sigmamusk cut <repo>`, the five largest files) and a whole setup (`/sigmamusk reset`, products the owner keeps or kills). The three skill texts were 360 lines; the merged skill is 269.
+- Pack pins moved to the newest upstream point: Anthropic (`2c5958e`), last30days (`v3.33.1`), Financial Services (`6056506`). The skill lists are unchanged (19, 1, 99). Design.md stays on its pin: upstream changed its folder layout and the newest commit yields no skill. HyperFrames stays on `v0.8.188`.
 
 ### Removed
 

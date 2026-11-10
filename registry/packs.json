@@ -416,84 +416,84 @@
         {
           "type": "git",
           "repo": "anthropics/skills",
-          "ref": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+          "ref": "2c5958ecac7cee2b583967a2c4981d0f4a75c579",
           "path": "skills",
           "skills": [
             {
               "id": "academy-guide",
-              "description": "Recommends Claude Academy courses when a user asks how to use Claude."
+              "description": "Stop and check this skill before finishing any reply to a question about how to use Claude or a Claude product \u2014 it recommends matching courses, tu..."
             },
             {
               "id": "algorithmic-art",
-              "description": "Generative art with p5.js: seeded randomness, flow fields and particles."
+              "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration."
             },
             {
               "id": "brand-guidelines",
-              "description": "Applies Anthropic's brand colours and fonts to an artifact."
+              "description": "Applies Anthropic's official brand colors and typography to any sort of artifact that may benefit from having Anthropic's look-and-feel."
             },
             {
               "id": "canvas-design",
-              "description": "Poster and art designs as PNG or PDF, built from a written design philosophy."
+              "description": "Create beautiful visual art in .png and .pdf documents using design philosophy."
             },
             {
               "id": "claude-api",
-              "description": "Claude API and SDK reference for Python, TypeScript, Go, Java, PHP, Ruby, C# and curl."
+              "description": "Reference for the Claude API / Anthropic SDK \u2014 model ids, pricing, params, streaming, tool use, MCP, agents, caching, token counting, model migration."
             },
             {
               "id": "discernment-nudge",
-              "description": "Adds 2-3 follow-up questions after a substantive answer to check key facts."
+              "description": "After you give a substantive answer or draft that the user may act on \u2014 advice or recommendations, drafted artifacts such as goals, plans, pitches,..."
             },
             {
               "id": "doc-coauthoring",
-              "description": "Structured workflow for co-writing docs, specs and proposals."
+              "description": "Guide users through a structured workflow for co-authoring documentation."
             },
             {
               "id": "docx",
-              "description": "Create, read and edit Word files: comments, tracked changes and templates."
+              "description": "Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files) or Word templates (.dotx files)."
             },
             {
               "id": "frontend-design",
-              "description": "Distinctive UI design guidance that avoids template-looking output."
+              "description": "Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one."
             },
             {
               "id": "internal-comms",
-              "description": "Status reports, newsletters and FAQs in set formats."
+              "description": "A set of resources to help me write all kinds of internal communications, using the formats that my company likes to use."
             },
             {
               "id": "mcp-builder",
-              "description": "Guide to building and testing MCP servers in Python or Node."
+              "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools."
             },
             {
               "id": "pdf",
-              "description": "Read, extract, merge, split, fill and create PDF files."
+              "description": "Use this skill whenever the user wants to do anything with PDF files."
             },
             {
               "id": "pptx",
-              "description": "Create, read and edit PowerPoint decks."
+              "description": "Use this skill any time a .pptx or .potx file is involved in any way \u2014 as input, output, or both."
             },
             {
               "id": "skill-creator",
-              "description": "Create, edit, test and benchmark skills, with eval scripts."
+              "description": "Create new skills, modify and improve existing skills, and measure skill performance."
             },
             {
               "id": "slack-gif-creator",
-              "description": "Animated GIFs that fit Slack's size and frame limits."
+              "description": "Knowledge and utilities for creating animated GIFs optimized for Slack."
             },
             {
               "id": "theme-factory",
-              "description": "Applies one of 10 preset themes, or a new one, to any artifact."
+              "description": "Toolkit for styling artifacts with a theme."
             },
             {
               "id": "web-artifacts-builder",
-              "description": "Multi-file React, Tailwind and shadcn/ui artifacts, bundled to one HTML file."
+              "description": "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn..."
             },
             {
               "id": "webapp-testing",
-              "description": "Playwright tests for a local web app: screenshots and console logs."
+              "description": "Toolkit for interacting with and testing local web applications using Playwright."
             },
             {
               "id": "xlsx",
-              "description": "Create, edit and recalculate Excel files with formulas."
+              "description": "Use this skill any time a spreadsheet file is the primary input or output."
             }
           ]
         }
@@ -955,12 +955,12 @@
         {
           "type": "git",
           "repo": "mvanhorn/last30days-skill",
-          "ref": "v3.30.0",
+          "ref": "v3.33.1",
           "path": "skills",
           "skills": [
             {
               "id": "last30days",
-              "description": "Research what people say about any topic in the last 30 days across Reddit, X, YouTube, TikTok, Hacker News, Polymarket, GitHub and the web."
+              "description": "Research what people actually say about any topic in the last 30 days."
             }
           ]
         }
@@ -978,7 +978,7 @@
         {
           "type": "git",
           "repo": "anthropics/financial-services",
-          "ref": "574ed3624aebd0418c7e96cd101262f30210ab26",
+          "ref": "60565064557ca77b12f62aa7877f365d111c129d",
           "path": "plugins",
           "transform": "financial-services",
           "skills": [
