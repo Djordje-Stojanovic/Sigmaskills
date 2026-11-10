@@ -4,7 +4,7 @@ SigmaHuman is one skill made from every humanizer-like skill the Sigmaskills own
 
 | Source | Licence | What SigmaHuman takes |
 |---|---|---|
-| [blader/humanizer](https://github.com/blader/humanizer) v3.1.0, commit 8c307f3 (Siqi Chen) | MIT, text in [LICENSE-humanizer.txt](LICENSE-humanizer.txt) | The 26 patterns in [patterns.md](patterns.md), unchanged; the "why AI text sounds the way it does" section, the method (mark, draft, check, final), the voice rule, the return modes and "when not to act", lightly edited in SKILL.md |
+| [blader/humanizer](https://github.com/blader/humanizer) v4.0.0, commit b48c832 (Siqi Chen) | MIT, text in [LICENSE-humanizer.txt](LICENSE-humanizer.txt) | The 26 patterns in [patterns.md](patterns.md), unchanged; the "why AI text sounds the way it does" section, the method (mark, draft, check, final), the voice rule, the return modes and "when not to act", lightly edited in SKILL.md |
 | blader/humanizer v2.5.1, as kept in an Open WebUI skill copy | MIT (same author) | Section G of patterns.md (synonym cycling, false ranges, forced metaphors, a question answered at once, reassurance kickers and opener tics) and the voice-sample checklist in SKILL.md "Voice" |
 | Wikipedia, ["Signs of AI writing"](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing), WikiProject AI Cleanup | CC BY-SA 4.0 (the patterns paraphrase it; no text copied) | The source of the patterns |
 | SigmaTaste prose lens | MIT (this repo) | The prose lens still judges; SigmaHuman does the rewrite |
@@ -20,6 +20,7 @@ SigmaHuman is one skill made from every humanizer-like skill the Sigmaskills own
 ## Not taken
 
 - Getting past AI detectors. The upstream README says detectors still flag most of its output, and the 2026-10-19 test found the detectors failed their own control texts. SigmaHuman writes for human readers.
+- From v4.0.0: the step "where the text is generic, add a specific detail you know to be true". Facts come from the source or the brief only.
 - The upstream plugin manifests (`.claude-plugin/`, `.cursor-plugin/`): the Sigmaskills installer and `npx skills` install this skill on every agent host.
 
 ## Upstream updates
