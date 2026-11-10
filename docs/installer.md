@@ -141,7 +141,7 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `hallmark` | `nutlope` |
 | `ponytail` | `lazy` |
 | `local` | `own` |
-| `core` | the global default: every Sigma skill plus the whole Matt Pocock pack. `install --global --yes` with no pack, skill or `--all` installs it |
+| `core` | the global default: every Sigma skill, the whole Matt Pocock pack and the whole tstack pack. `install --global --yes` with no pack, skill or `--all` installs it |
 | `all` | every pack that is available on this machine |
 
 What each pack does, its skills, source, licence and needs: [Packs in the README](../README.md#packs). `local` is a folder of your own skills; see [Your own packs](#your-own-packs).

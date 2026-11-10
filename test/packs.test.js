@@ -144,7 +144,8 @@ test('packs: resolveSelection joins presets and skill ids and reports what it ca
     const core = resolveSelection(packs, { presets: ['core'] });
     const sigma = packs.packs.find((pack) => pack.id === 'sigma').skills.map((skill) => skill.id);
     const matt = packs.packs.find((pack) => pack.id === 'mattpocock').skills.map((skill) => skill.id);
-    assert.deepEqual(core.skills.map((skill) => skill.id), [...sigma, ...matt], 'core is every Sigma skill plus the whole Matt Pocock pack');
+    const tstack = packs.packs.find((pack) => pack.id === 'tstack').skills.map((skill) => skill.id);
+    assert.deepEqual(core.skills.map((skill) => skill.id), [...sigma, ...matt, ...tstack], 'core is every Sigma skill plus the whole Matt Pocock and tstack packs');
   } finally {
     box.cleanup();
   }

@@ -39,7 +39,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
-- `core`, the global default, is now every Sigma skill plus the whole Matt Pocock pack. It was the Sigma skills plus `full-send` and `full-stop`. `install --global --yes` with no pack, skill or `--all` installs `core` (it was an error). `tstack` stays a normal pack.
+- `core`, the global default, is now every Sigma skill, the whole Matt Pocock pack and the whole `tstack` pack (Theo Browne's 9 skills, including `full-send` and `full-stop`). It was the Sigma skills plus `full-send` and `full-stop`. `install --global --yes` with no pack, skill or `--all` installs `core` (it was an error). `tstack` is still a pack of its own for a single repo.
 - `mattpocock` and `threejs` are pinned to one upstream commit each, and the HyperFrames student kit too (before, they followed the upstream head). `hyperframes` moves from `v0.8.188` to `v0.9.30` (18 skills become 20).
 
 ## [0.24.1] — 2026-11-10

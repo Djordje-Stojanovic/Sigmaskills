@@ -220,7 +220,7 @@ test('install: --pack puts one pack into one project, and may repeat', async () 
   }
 });
 
-test('install: --global --yes with no pack picks the core pack (Sigma + Matt Pocock)', async () => {
+test('install: --global --yes with no pack picks the core pack (Sigma + Matt Pocock + tstack)', async () => {
   const box = createSandbox();
   try {
     // The sandbox has no network copy of Matt Pocock's repo, so the pack part fails; the run still shows which pack it chose.
