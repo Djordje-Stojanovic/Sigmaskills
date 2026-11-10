@@ -21,7 +21,7 @@ import { packStatus, uninstallPackSkills, updatePackSkills } from './pack-instal
 import { COPY_ONLY_ROOTS, resolveAgentRoots, suggestAgents } from './agents.js';
 import { runInstall } from './install-run.js';
 import { describeRoots } from './agents.js';
-import { formatPackList, formatSummary } from './report.js';
+import { formatPackList, formatSummary, packSourceLabels } from './report.js';
 import { createStyler } from './terminal.js';
 import { runWizard, wizardAvailable } from './wizard.js';
 import { ponytailCheck, ponytailOff, ponytailOn } from './ponytail.js';
@@ -53,6 +53,7 @@ Commands:
   purge             Remove all Sigma-owned content in one scope after the typed confirmation phrase
   status            Report managed Project or Global Installation state and drift
   list              List all shipped skills and their Skill Revisions
+  packs             List every pack with its skill count and source (same as 'list --packs')
   verify            Validate manifest, skill resources, and compute revisions
   ponytail          Turn Ponytail on for one project (Claude Code, Codex, Pi); --remove, --check
 
@@ -61,9 +62,9 @@ Options:
   -h, --help        Show help
   --skill <name>    Skill identifier to install, update, restore, or uninstall (repeatable)
   --all             Install every shipped Sigma skill, or uninstall every recorded skill in the chosen scope
-  --preset <pack>   Install a whole pack: sigma, mattpocock, threejs, hyperframes, minimax-h3, anthropic,
-                    last30days, financial-services, tstack, local, or all (design-md is picked by skill: 3 at a time)
-                    (repeatable, or comma-separated; 'list --packs' shows each pack)
+  --preset <pack>   Also --pack. Install a whole pack: core (Sigma + Matt Pocock), sigma, mattpocock, threejs, blender, hyperframes,
+                    minimax-h3, anthropic, last30days, financial-services, tstack, local, or all
+                    (design-md is picked by skill: 3 at a time; repeatable, or comma-separated; 'packs' shows each pack)
   --drop <skill>    With install: remove an installed skill of a limited pack (design-md) to make room
   -a, --agent <host> Agent Host to install for, such as claude, codex, gemini, agy, pi, cursor
                     (repeatable, or comma-separated; '*' for every host; .agents/skills is always included)
@@ -119,7 +120,7 @@ ${skillsList}
 `;
 }
 
-const COMMANDS = ['list', 'verify', 'check', 'install', 'add', 'status', 'update', 'restore', 'uninstall', 'purge', 'ponytail'];
+const COMMANDS = ['list', 'packs', 'verify', 'check', 'install', 'add', 'status', 'update', 'restore', 'uninstall', 'purge', 'ponytail'];
 const SKILL_COMMANDS = ['install', 'add', 'update', 'restore', 'uninstall'];
 const RESOLUTIONS = ['replace', 'skip', 'export'];
 
@@ -231,6 +232,7 @@ export function parseCliArgs(args) {
   }
 
   if (parsed.list) parsed.command = 'list';
+  if (parsed.command === 'packs') Object.assign(parsed, { command: 'list', packs: true });
   parsed.method = parsed.copy && parsed.link ? 'conflict' : parsed.copy ? 'copy' : parsed.link ? 'link' : null;
   return parsed;
 }
@@ -588,7 +590,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeOut(JSON.stringify({
           schemaVersion: 1,
           packs: packs.packs.map((pack) => ({
-            id: pack.id, title: pack.title, aliases: pack.aliases, available: pack.available, note: pack.note, limit: pack.limit,
+            id: pack.id, title: pack.title, aliases: pack.aliases, available: pack.available, note: pack.note, limit: pack.limit, sources: packSourceLabels(pack),
             skills: pack.skills.map((skill) => ({ id: skill.id, description: skill.description, ...(skill.group ? { group: skill.group } : {}) })),
           })),
         }, null, 2));
@@ -633,6 +635,9 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       writeOut(`\nAll ${catalog.skills.length} skills in Skill Pack validated successfully.`);
       return 0;
     }
+
+    // A Global Installation that names no pack, no skill and no --all gets the default pack.
+    if (installing && opts.global && !opts.all && opts.presets.length === 0 && opts.skillIds.length === 0 && (opts.yes || opts.dryRun)) opts.presets.push('core');
 
     if (installing && (opts.presets.length > 0 || opts.agents.length > 0 || externalIdsOf(opts.skillIds).length > 0)) {
       if (opts.all && opts.skillIds.length > 0) {

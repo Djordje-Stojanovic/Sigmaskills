@@ -32,6 +32,16 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- The `blender` pack (102 skills from `ra100/blender-claude-plugin` and `arjun988/blender-skills`). One command puts a pack into one repo: `install --pack blender --project .`. A pack that lives only on your machine goes into `~/.sigmaskills/packs.json`, with a `dir` source and a `prefix`.
+- `sigmaskills packs` prints every pack with its skill count and source (`list --packs` does the same). `--pack` is a second name for `--preset`.
+
+### Changed
+
+- `core`, the global default, is now every Sigma skill plus the whole Matt Pocock pack. It was the Sigma skills plus `full-send` and `full-stop`. `install --global --yes` with no pack, skill or `--all` installs `core` (it was an error). `tstack` stays a normal pack.
+- `mattpocock` and `threejs` are pinned to one upstream commit each, and the HyperFrames student kit too (before, they followed the upstream head). `hyperframes` moves from `v0.8.188` to `v0.9.30` (18 skills become 20).
+
 ## [0.24.1] — 2026-11-10
 
 ### Fixed

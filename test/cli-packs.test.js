@@ -4,7 +4,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { buildHelpText, parseCliArgs, runCli } from '../src/cli.js';
 import { getCatalog } from '../src/catalog.js';
-import { ACME_PACK, createMockIo, createSandbox, writeUserConfig } from './pack-fixtures.js';
+import { ACME_PACK, createMockIo, createRemote, createSandbox, writeUserConfig } from './pack-fixtures.js';
 
 async function run(box, args) {
   const io = createMockIo(box.env);
@@ -48,7 +48,7 @@ test('list --packs: prints every pack, and --json prints the same data', async (
     const json = await run(box, ['list', '--packs', '--json']);
     const parsed = JSON.parse(json.out);
     assert.equal(parsed.packs.find((pack) => pack.id === 'local').available, false);
-    assert.equal(parsed.packs.find((pack) => pack.id === 'hyperframes').skills.length, 18);
+    assert.equal(parsed.packs.find((pack) => pack.id === 'hyperframes').skills.length, 20);
   } finally {
     box.cleanup();
   }
@@ -181,6 +181,54 @@ test('uninstall and update: Sigma skills and an unknown id keep their old behavi
     assert.ok(!fs.existsSync(path.join(box.project, '.agents', 'skills', 'sigmawrite')));
     const update = await run(box, ['update', '--dry-run']);
     assert.equal(update.code, 0, update.err);
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('packs: the command lists every pack with its skill count and source, like list --packs', async () => {
+  const box = createSandbox();
+  try {
+    writeUserConfig(box.home, { packs: [ACME_PACK] });
+    const packs = await run(box, ['packs']);
+    assert.equal(packs.code, 0, packs.err);
+    assert.match(packs.out, /Blender\s+10\d skills/);
+    assert.match(packs.out, /source ra100\/blender-claude-plugin@78e9151 \+ arjun988\/blender-skills@904f095/);
+    assert.match(packs.out, /Three\.js\s+13 skills/);
+    assert.match(packs.out, /source CloudAI-X\/threejs-skills@0e18186/);
+    assert.match(packs.out, /source folder \$SIGMA_LOCAL_SKILLS_DIR/);
+    assert.match(packs.out, /source acme\/skills@newest commit/);
+    assert.equal(packs.out, (await run(box, ['list', '--packs'])).out);
+    const json = JSON.parse((await run(box, ['packs', '--json'])).out);
+    assert.deepEqual(json.packs.find((pack) => pack.id === 'threejs').sources, ['CloudAI-X/threejs-skills@0e18186']);
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('install: --pack puts one pack into one project, and may repeat', async () => {
+  const box = createSandbox();
+  try {
+    createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
+    writeUserConfig(box.home, { packs: [ACME_PACK] });
+    const { code, out, err } = await run(box, ['install', '--pack', 'acme', '--pack', 'sigma']);
+    assert.equal(code, 0, err);
+    assert.match(out, new RegExp(`${getCatalog().skills.length + 2} skills installed`));
+    for (const id of ['alpha', 'beta', 'sigmawrite']) assert.ok(fs.existsSync(path.join(box.project, '.agents', 'skills', id, 'SKILL.md')), id);
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('install: --global --yes with no pack picks the core pack (Sigma + Matt Pocock)', async () => {
+  const box = createSandbox();
+  try {
+    // The sandbox has no network copy of Matt Pocock's repo, so the pack part fails; the run still shows which pack it chose.
+    const { code, out, err } = await run(box, ['install', '--global', '--yes']);
+    assert.equal(code, 1);
+    assert.match(out + err, /mattpocock\/skills/);
+    assert.ok(fs.existsSync(path.join(box.home, '.agents', 'skills', 'sigmawrite', 'SKILL.md')), 'the Sigma skills install first');
+    assert.doesNotMatch(out + err, /missing required skill name/);
   } finally {
     box.cleanup();
   }

@@ -24,6 +24,7 @@
           "type": "git",
           "repo": "mattpocock/skills",
           "path": "skills",
+          "ref": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
           "skills": [
             {
               "id": "ask-matt",
@@ -197,6 +198,7 @@
           "type": "git",
           "repo": "CloudAI-X/threejs-skills",
           "path": "skills",
+          "ref": "0e181866f095b5f06d005133876e926515390d95",
           "skills": [
             {
               "id": "threejs-animation",
@@ -266,7 +268,7 @@
           "type": "git",
           "repo": "heygen-com/hyperframes",
           "path": "skills",
-          "ref": "v0.8.188",
+          "ref": "v0.9.30",
           "skills": [
             {
               "id": "figma",
@@ -293,8 +295,16 @@
               "description": "Bring existing video code or footage into HyperFrames and verify it frame by frame against the original - Remotion first, also Motion Canvas, Lotti..."
             },
             {
+              "id": "reverse-any-video",
+              "description": "Rebuild any video file as an editable HyperFrames project - motion graphics, talking heads, live action or AI-generated footage - checked against t..."
+            },
+            {
               "id": "slideshow",
               "description": "Build a HyperFrames slideshow to present live - slides, fragment reveals, branching hotspots and presenter mode with speaker notes, served by `hype..."
+            },
+            {
+              "id": "style-sampling",
+              "description": "Make a new episode in a proven video style - Collage Explainer, Finance Explainer, Animated Science Explainer, 3D Brand Explainer, 3D True Crime -..."
             }
           ]
         },
@@ -302,6 +312,7 @@
           "type": "git",
           "repo": "nateherkai/hyperframes-student-kit",
           "path": ".agents/skills",
+          "ref": "10511e5af86fc47756ea89803b397422e2d89284",
           "skills": [
             {
               "id": "cut-mistakes",
@@ -345,7 +356,7 @@
             },
             {
               "id": "website-to-hyperframes",
-              "description": "|"
+              "description": "Capture a website and create a HyperFrames video from it."
             }
           ]
         }
@@ -1786,6 +1797,440 @@
             {
               "id": "ponytail-review",
               "description": "Quality review of a change: is the logic right, is it safe, does it hold under real load, is risky code tested, is it fast enough, and is every lin..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "blender",
+      "title": "Blender",
+      "blurb": "Drive Blender 5 from code: modeling, rigging, shaders, physics, rendering, camera, lighting, VFX, styles and game export.",
+      "aliases": [
+        "blender3d"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "ra100/blender-claude-plugin",
+          "path": "skills",
+          "ref": "78e9151fdc9e01ce37f1d16a9b677c3047411885",
+          "skills": [
+            {
+              "id": "blender-animation-rigging",
+              "description": "Blender 5.x animation and rigging \u2014 keyframes, FCurves, layered actions, drivers, constraints, armatures, IK/FK, shape keys, NLA editor, and bone c..."
+            },
+            {
+              "id": "blender-compositing-nodes",
+              "description": "Blender 5.x compositor nodes \u2014 post-processing, color grading, denoising, keying, glare, depth of field, render pass separation, multi-layer EXR ou..."
+            },
+            {
+              "id": "blender-geometry-nodes",
+              "description": "Blender 5.x geometry nodes \u2014 procedural modeling, scattering, mesh/curve/volume ops, simulation zones, repeat zones, Bone Info, Font socket, UV nod..."
+            },
+            {
+              "id": "blender-modeling-modifiers",
+              "description": "Blender 5.x modifiers, bmesh API, mesh editing operators, sculpting setup \u2014 SubSurf, Boolean, Array, Mirror, Bevel, bmesh procedural mesh creation,..."
+            },
+            {
+              "id": "blender-physics-simulation",
+              "description": "Blender 5.x physics simulations \u2014 rigid body, cloth, fluid/smoke/fire (Mantaflow), soft body, particles, force fields, collisions, and simulation b..."
+            },
+            {
+              "id": "blender-python-scripting",
+              "description": "Blender 5.x Python scripting (bpy) \u2014 custom operators, UI panels, add-on development, context management, handlers, timers, property system, batch..."
+            },
+            {
+              "id": "blender-scene-rendering",
+              "description": "Blender 5.x scene setup, render engines (Cycles/EEVEE), output formats, import/export (FBX/glTF/OBJ/USD/Alembic), linking/appending, color manageme..."
+            },
+            {
+              "id": "blender-shader-nodes",
+              "description": "Blender 5.x shader nodes \u2014 PBR materials, procedural textures, Principled BSDF, glass/metal/skin shaders, world/HDRI lighting, raycast shader node,..."
+            }
+          ]
+        },
+        {
+          "type": "git",
+          "repo": "arjun988/blender-skills",
+          "path": ".claude/skills",
+          "ref": "904f095d8f36a6e72adaebb08d07f884a074743d",
+          "skills": [
+            {
+              "id": "analog-found-footage-horror",
+              "description": "Analog, VHS, CRT, and found-footage horror aesthetics for Blender shots including camera imperfections and documentary framing."
+            },
+            {
+              "id": "animation",
+              "description": "Game-ready animation in Blender including walk/run/idle cycles, combat, mechanical animation, camera animation, constraints, Graph Editor, and NLA..."
+            },
+            {
+              "id": "anime-style",
+              "description": "Anime and cel-shaded art direction for Blender with hard color breaks, toon shaders, clean silhouettes, and anime proportion language."
+            },
+            {
+              "id": "apocalypse-worlds",
+              "description": "Apocalyptic and dystopian world art direction for Blender including post-apocalyptic, zombie, alien invasion, post-human, dystopian, and utopian co..."
+            },
+            {
+              "id": "archviz",
+              "description": "Architectural visualization in Blender for interiors/exteriors with real-world scale, camera composition, PBR materials, and still/animation delive..."
+            },
+            {
+              "id": "asset-optimization",
+              "description": "Validates and optimizes Blender assets for polycount, topology, UV efficiency, material count, naming, collections, and game-ready performance."
+            },
+            {
+              "id": "biome-worlds",
+              "description": "Biome and setting art direction for Blender covering underwater, desert, arctic, jungle, underground, and floating-island environments."
+            },
+            {
+              "id": "blender-director",
+              "description": "Use when starting any Blender asset task, planning a production pipeline, coordinating multiple disciplines, or matching a reference photo/concept..."
+            },
+            {
+              "id": "blender-modeler",
+              "description": "Core Blender modeling specialist for Edit Mode, modifiers, collections, precision modeling, and scene organization."
+            },
+            {
+              "id": "body-horror-style",
+              "description": "Body horror art direction for Blender focusing on flesh wrongness, mutation, fusion, and visceral material storytelling."
+            },
+            {
+              "id": "brutalist-mood",
+              "description": "Brutalist and concrete-monument mood direction for Blender architecture and scenes with raw concrete, monumental scale, and austere composition."
+            },
+            {
+              "id": "camera-cinematography",
+              "description": "Cinematic camera work in Blender including framing, lenses, composition, camera animation, and shot language beyond basic rendering setup via MCP."
+            },
+            {
+              "id": "cartoon-style",
+              "description": "Cartoon art direction for Blender with squash-stretch readable shapes, bold colors, and graphic silhouettes for games and animation."
+            },
+            {
+              "id": "character-archetypes",
+              "description": "Character archetype art direction for Blender covering fantasy races, horror creatures, roles (knight, assassin, detective), and body types (mecha,..."
+            },
+            {
+              "id": "character-artist",
+              "description": "AAA character modeling for human anatomy, stylization, facial topology, clothing, hair, and animation-ready meshes."
+            },
+            {
+              "id": "chibi-style",
+              "description": "Chibi and SD proportion art direction for Blender characters with oversized heads, simplified anatomy, and cute silhouette rules."
+            },
+            {
+              "id": "cloth-sim",
+              "description": "Garment blockout, cloth simulation, pin groups, and bake to shape keys or caches for characters and props in Blender via MCP."
+            },
+            {
+              "id": "collision-proxy",
+              "description": "Collision proxy authoring for games including UCX/UHX naming, convex hulls, capsules, and simple collider meshes in Blender via MCP."
+            },
+            {
+              "id": "comic-book-style",
+              "description": "Comic book and graphic-novel art direction for Blender with ink-line emphasis, halftone cues, and high-contrast framing."
+            },
+            {
+              "id": "compositing",
+              "description": "Blender compositor workflows for beauty stacks, render passes, color grade, glare, and delivery outputs via MCP."
+            },
+            {
+              "id": "cosmic-eldritch-horror",
+              "description": "Cosmic, eldritch, and Lovecraftian horror art direction for Blender with non-Euclidean cues, impossible scale, and incomprehensible forms."
+            },
+            {
+              "id": "cozy-wholesome-mood",
+              "description": "Cozy, cute, wholesome, relaxing, and peaceful mood direction for Blender assets and scenes."
+            },
+            {
+              "id": "creature-artist",
+              "description": "AAA creature modeling for fantasy, aliens, monsters, and organic creature design with believable anatomy and movement."
+            },
+            {
+              "id": "dark-gritty-mood",
+              "description": "Dark, grim, gritty, rusty, abandoned, decayed, industrial, lonely, and melancholic mood direction for Blender."
+            },
+            {
+              "id": "dream-surreal-mood",
+              "description": "Dreamlike, surreal, mysterious, mystical, hopeful, and chaotic mood direction for Blender scenes."
+            },
+            {
+              "id": "dream-weirdcore-style",
+              "description": "Dreamcore, weirdcore, and traumacore-inspired art direction for Blender with nostalgic wrongness, liminal nostalgia, and surreal childhood spaces."
+            },
+            {
+              "id": "environment-artist",
+              "description": "AAA environment art for modular kits, buildings, terrain, vegetation, architecture, and scene composition."
+            },
+            {
+              "id": "export-pipeline",
+              "description": "Production export from Blender to FBX, GLTF, OBJ, USD, and Alembic with scale, pivot, rotation, normals, materials, animation, and collision verifi..."
+            },
+            {
+              "id": "fantasy-worlds",
+              "description": "Fantasy world-building art direction for Blender covering medieval, high fantasy, dark fantasy, and urban fantasy asset language."
+            },
+            {
+              "id": "folk-horror-style",
+              "description": "Folk horror art direction for Blender with rural ritual uncanny, pastoral daylight dread, and community-wrongness storytelling."
+            },
+            {
+              "id": "frutiger-aero-style",
+              "description": "Frutiger Aero art direction for Blender with glossy skeuomorphism, aqua UI cues, nature-tech optimism, and mid-2000s futurism."
+            },
+            {
+              "id": "genre-action-combat",
+              "description": "Art direction for action, hack-and-slash, beat 'em up, and fighting-game readable combat spaces and prop language in Blender."
+            },
+            {
+              "id": "genre-card-party-idle",
+              "description": "Art direction for card games, deck builders, party games, idle/incremental, educational, and rhythm game presentational spaces in Blender."
+            },
+            {
+              "id": "genre-metroidvania-roguelike",
+              "description": "Art direction for metroidvania, roguelike, and roguelite games in Blender with biome gates, room modules, and run-readable props."
+            },
+            {
+              "id": "genre-narrative-vn",
+              "description": "Art direction for visual novel, interactive movie, walking simulator, and story-driven presentation spaces in Blender."
+            },
+            {
+              "id": "genre-open-world-sandbox",
+              "description": "Art direction for open world and sandbox games in Blender with biome landmarks, traversable scale, and discovery props."
+            },
+            {
+              "id": "genre-puzzle-platformer",
+              "description": "Art direction for puzzle and platformer games in Blender with readable interactables, jump volumes, and clear hazard language."
+            },
+            {
+              "id": "genre-racing-sports",
+              "description": "Art direction for racing and sports games in Blender with track landmarks, stadium kits, and high-speed readability."
+            },
+            {
+              "id": "genre-rpg",
+              "description": "Art direction for RPG, JRPG, CRPG, ARPG, and MMORPG worlds in Blender including loot rarity reads and region identity."
+            },
+            {
+              "id": "genre-shooter",
+              "description": "Art direction for FPS, TPS, shooter, battle royale, and extraction-shooter maps and props in Blender with sightline and cover language."
+            },
+            {
+              "id": "genre-soulslike",
+              "description": "Art direction for soulslike games in Blender with monumental melancholy spaces, fog gates, bonfire landmarks, and lethal readability."
+            },
+            {
+              "id": "genre-stealth",
+              "description": "Art direction for stealth-game spaces in Blender with shadow volumes, patrol-friendly layouts, and concealment materials."
+            },
+            {
+              "id": "genre-strategy-sim",
+              "description": "Art direction for strategy, RTS, turn-based strategy, tower defense, MOBA, city builder, colony sim, and simulation games in Blender."
+            },
+            {
+              "id": "genre-survival",
+              "description": "Art direction for survival and survival-horror gameplay spaces in Blender emphasizing resource props, crafting readability, and tension routes."
+            },
+            {
+              "id": "geometry-nodes",
+              "description": "Blender Geometry Nodes for procedural modeling, scatter systems, vegetation, buildings, pipes, cables, and reusable node groups."
+            },
+            {
+              "id": "godot-export",
+              "description": "Godot-specific Blender export favoring GLTF/GLB with correct scale, materials, animation clips, and collision shapes via MCP."
+            },
+            {
+              "id": "hair-groom",
+              "description": "Hair and fur grooming in Blender using curves, particle hair, geometry nodes, and game hair-card workflows."
+            },
+            {
+              "id": "hand-painted-style",
+              "description": "Hand-painted texture art direction for Blender with brushwork albedo, soft value transitions, and stylized PBR restraint."
+            },
+            {
+              "id": "hard-surface",
+              "description": "AAA hard surface modeling for sci-fi, industrial, military, vehicles, weapons, robotics, and mechanical props."
+            },
+            {
+              "id": "hd-2d-style",
+              "description": "HD-2D art direction combining pixel characters/sprites with 3D environments, depth of field, and theatrical lighting."
+            },
+            {
+              "id": "historical-worlds",
+              "description": "Historical and period world art direction for Blender including Western, pirate, samurai/ninja, Viking, ancient Egypt/Greece/Rome, Victorian, moder..."
+            },
+            {
+              "id": "horror-style",
+              "description": "Psychological horror art direction for Blender assets inspired by Silent Hill, Resident Evil, Chilla's Art, Fear to Fathom, and Iron Lung."
+            },
+            {
+              "id": "indie-horror-aesthetics",
+              "description": "Indie horror aesthetic pack for Blender covering Silent Hill, Fear to Fathom, Puppet Combo, corporate horror, cabin/forest/hospital horror, and rel..."
+            },
+            {
+              "id": "isometric-style",
+              "description": "Isometric and strategy-game art direction for Blender including diorama framing, true-iso camera setup, readable silhouettes, and tile asset rules."
+            },
+            {
+              "id": "lighting",
+              "description": "Cinematic and game lighting in Blender including three-point lighting, HDRI, horror lighting, volumetrics, rim lighting, and mood-driven illumination."
+            },
+            {
+              "id": "liminal-space-style",
+              "description": "Liminal space and Backrooms art direction for Blender with empty transitional architecture, wrong familiarity, and endless repetition."
+            },
+            {
+              "id": "lod-pipeline",
+              "description": "Dedicated LOD generation, naming, screen-size targets, and validation for game meshes in Blender via MCP."
+            },
+            {
+              "id": "lookdev",
+              "description": "Look development loop for Blender assets combining materials, lighting, camera, and screenshot comparison until shading reads correctly via MCP."
+            },
+            {
+              "id": "lowpoly-style",
+              "description": "Low-poly art direction for Blender inspired by PS1/PS2, Lethal Company, Mouthwashing, and Fear to Fathom."
+            },
+            {
+              "id": "manga-style",
+              "description": "Manga-inspired art direction for Blender emphasizing monochrome value design, speed lines, screentone feel, and manga panel staging."
+            },
+            {
+              "id": "mascot-puppet-horror",
+              "description": "Mascot and puppet horror art direction for Blender with cheerful brand characters made wrong, felt/foam materials, and uncanny performance."
+            },
+            {
+              "id": "materials",
+              "description": "Blender PBR and stylized material creation for metal, wood, concrete, fabric, glass, dirt, rust, and procedural shaders."
+            },
+            {
+              "id": "minimalist-style",
+              "description": "Minimalist and abstract-leaning art direction for Blender with reduced forms, limited palettes, and negative space."
+            },
+            {
+              "id": "neon-retrofuturism",
+              "description": "Neon, vaporwave, synthwave, and retrofuturistic mood/art direction for Blender with grid horizons, chrome, and dusk palettes."
+            },
+            {
+              "id": "noir-style",
+              "description": "Noir art direction for Blender with high-contrast lighting, wet streets, silhouettes, and monochrome or limited-color grading."
+            },
+            {
+              "id": "painterly-style",
+              "description": "Painterly art direction spanning watercolor and oil-painting looks for Blender using soft edges, pigment texture, and illustrative lighting."
+            },
+            {
+              "id": "physics-sim",
+              "description": "Rigid body, soft body, and destruction setups in Blender including constraints, cell fracture debris, and baked caches via MCP."
+            },
+            {
+              "id": "pixel-art-style",
+              "description": "Pixel-art and texel-constrained art direction for Blender assets destined for pixel rendering, low-res textures, or HD-2D-adjacent pixel reads."
+            },
+            {
+              "id": "procedural-modeling",
+              "description": "Procedural asset creation for rocks, buildings, vegetation, roads, terrain, pipes, cables, and sci-fi panels using Geometry Nodes and modifier-base..."
+            },
+            {
+              "id": "prop-artist",
+              "description": "Everyday and hero prop modeling for furniture, tools, household objects, kitbash parts, and readable game props."
+            },
+            {
+              "id": "psx-horror-style",
+              "description": "PS1/PSX-era horror art direction combining low-poly affine textures, limited color depth, fog, and psychological horror staging for Blender assets."
+            },
+            {
+              "id": "qa-review",
+              "description": "Production QA gate for Blender assets using viewport screenshots, validation checklists, naming audits, and ship/no-ship verdicts via MCP."
+            },
+            {
+              "id": "realistic-style",
+              "description": "Photorealistic AAA art direction for Blender including photogrammetry cleanup, real-world scale, high-poly workflows, PBR accuracy, and scan optimi..."
+            },
+            {
+              "id": "rendering",
+              "description": "Blender rendering with Cycles and Eevee including sampling, denoising, camera setup, render passes, color management, and render optimization."
+            },
+            {
+              "id": "retopology",
+              "description": "Production retopology for animation-ready, low-poly, quad-dominant meshes with proper edge loops and efficient polygon flow."
+            },
+            {
+              "id": "retro-16bit-style",
+              "description": "Retro 16-bit art direction for Blender-assisted SNES/Genesis-era color richness, dither cues, and sprite-like clarity."
+            },
+            {
+              "id": "retro-8bit-style",
+              "description": "Retro 8-bit art direction for Blender-assisted pixel/low-res aesthetics inspired by NES-era constraints."
+            },
+            {
+              "id": "rigging",
+              "description": "Production rigging in Blender with armatures, IK/FK, constraints, weight painting, mechanical rigs, facial rigs, and drivers."
+            },
+            {
+              "id": "scene-assembly",
+              "description": "Large scene layout in Blender with collections, linking, overrides, streaming-friendly organization, and set assembly via MCP."
+            },
+            {
+              "id": "sci-fi-punk-worlds",
+              "description": "Sci-fi and punk world art direction for Blender including hard sci-fi, space, cyberpunk, steampunk, dieselpunk, atompunk, solarpunk, biopunk, and c..."
+            },
+            {
+              "id": "sculpting",
+              "description": "Blender sculpting for organic and hard surface detail using Dyntopo, multiresolution, brushes, alpha workflow, wrinkles, and damage."
+            },
+            {
+              "id": "set-dressing",
+              "description": "Set dressing and environmental storytelling placement for interiors and exteriors using prop density, narrative clusters, and readability rules via..."
+            },
+            {
+              "id": "stop-motion-craft-style",
+              "description": "Stop-motion and craft aesthetics for Blender including claymation, paper craft, and handmade physical-material cues."
+            },
+            {
+              "id": "stylized-style",
+              "description": "Stylized art direction for Blender with shape language, exaggeration, color harmony, NPR rendering, and hand-painted asset workflows."
+            },
+            {
+              "id": "texture-workflow",
+              "description": "Production texture workflow for atlases, baking AO/curvature/normal/roughness maps, decals, and texture memory optimization."
+            },
+            {
+              "id": "unity-export",
+              "description": "Unity-specific Blender export for scale, axis, materials, humanoid/generic rigs, LODs, and collision import via MCP."
+            },
+            {
+              "id": "unreal-export",
+              "description": "Unreal Engine-specific Blender export for FBX scale, LODs, UCX collision, sockets, materials, and skeletal mesh workflows via MCP."
+            },
+            {
+              "id": "uv-workflow",
+              "description": "Production UV unwrapping for seam placement, UV packing, texel density, UDIM, lightmap UVs, and modular UV layouts."
+            },
+            {
+              "id": "vector-style",
+              "description": "Vector-clean art direction for Blender with flat fills, sharp silhouettes, and UI-like graphic clarity."
+            },
+            {
+              "id": "vegetation-artist",
+              "description": "Vegetation and foliage authoring for Blender including trees, plants, grass cards, canopy LODs, and game-friendly leaf atlases via MCP."
+            },
+            {
+              "id": "vehicle-artist",
+              "description": "Dedicated vehicle modeling for cars, trucks, aircraft, ships, boats, mechs, and transit assets with proportion, panel flow, and game LOD awareness..."
+            },
+            {
+              "id": "vfx-fx",
+              "description": "Cinematic and game VFX in Blender including smoke, fire, particles, trails, and Geometry Nodes FX setups via MCP."
+            },
+            {
+              "id": "visual-console-eras",
+              "description": "Visual era art direction for Blender covering PS1\u2013PS5 stylistic cues, retro arcade, DOS, CRT, VHS, and film-grain presentation."
+            },
+            {
+              "id": "voxel-style",
+              "description": "Voxel and Minecraft-adjacent art direction for Blender with block grid modeling, limited palettes, and chunk-friendly assets."
             }
           ]
         }
