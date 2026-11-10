@@ -93,6 +93,12 @@
   "retired": [
     "sigmaperformance",
     "sigmawritegui",
-    "sigmafork"
+    "sigmafork",
+    "sigmarefactor",
+    "sigmareset",
+    "sigmasetup",
+    "sigmadesign",
+    "sigmacourse",
+    "sigmafinanceman"
   ]
 }

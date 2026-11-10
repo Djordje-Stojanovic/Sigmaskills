@@ -217,3 +217,13 @@ test('catalog: shortDescription falls back to the first sentence of the descript
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
+
+test('catalog: every skill a release ever shipped is in the pack or on the retired list', () => {
+  // `update` stops on an installed skill that is in neither list (0.24.0 shipped with six missing).
+  const rootDir = path.resolve(import.meta.dirname, '..');
+  const { manifest } = getCatalog(rootDir);
+  // sigma* only: two names from 0.8.0, before the rename, are older than the retired list.
+  const shipped = Object.keys(JSON.parse(fs.readFileSync(path.join(rootDir, 'registry', 'skill-baselines.json'), 'utf8')).skills).filter((id) => id.startsWith('sigma'));
+  const known = new Set([...manifest.skills.map((skill) => skill.id), ...manifest.retired]);
+  assert.deepEqual(shipped.filter((id) => !known.has(id)), []);
+});

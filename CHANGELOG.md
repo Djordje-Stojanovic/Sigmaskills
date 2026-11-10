@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Fixed
+
+- `update` no longer stops with "missing bundled Skill Revision" when a skill that 0.24.0 took out of the pack is still installed. `sigmarefactor`, `sigmareset`, `sigmasetup`, `sigmadesign`, `sigmacourse` and `sigmafinanceman` are on the retired list now: `update` leaves them untouched and lists them under *Retired skills*. A test fails when a skill leaves the pack without going on that list.
+
 ## [0.24.0] — 2026-11-10
 
 ### Changed
