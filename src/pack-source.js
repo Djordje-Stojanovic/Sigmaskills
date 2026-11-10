@@ -230,6 +230,15 @@ export function createSourceFetcher({ env = process.env } = {}) {
       });
       result = { ...result, root: outDir };
     }
+    if (source.rootSkill) {
+      // The skill is the repo root itself (a SKILL.md at the top). Stage it as one folder named by its id,
+      // without .git and the other dot folders, so the rest of the installer sees a normal skill folder.
+      const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigmaskills-root-'));
+      temps.push(outDir);
+      const from = result.root;
+      fs.cpSync(from, path.join(outDir, source.rootSkill), { recursive: true, filter: (item) => item === from || !path.basename(item).startsWith('.') });
+      result = { ...result, root: outDir };
+    }
     return result;
   }
 

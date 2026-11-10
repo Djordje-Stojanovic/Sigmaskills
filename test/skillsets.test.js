@@ -238,8 +238,8 @@ const pack = (id) => registry.packs.find((entry) => entry.id === id);
 
 test('registry: the four new sets are pinned and listed, before Local', () => {
   const ids = registry.packs.map((entry) => entry.id);
-  assert.deepEqual(ids, ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'local']);
-  for (const id of ['anthropic', 'design-md', 'last30days', 'financial-services']) {
+  assert.deepEqual(ids, ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'local']);
+  for (const id of ['anthropic', 'design-md', 'last30days', 'financial-services', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail']) {
     for (const source of pack(id).sources) assert.match(source.ref, /^([0-9a-f]{40}|v\d+\.\d+\.\d+)$/, `${id} is pinned`);
   }
   assert.equal(pack('anthropic').sources[0].skills.length, 19);
