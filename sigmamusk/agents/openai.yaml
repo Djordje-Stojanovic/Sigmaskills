@@ -1,6 +1,6 @@
 interface:
   display_name: SigmaMusk
-  short_description: Musk's Algorithm on your work, one issue to ship
+  short_description: Musk's Algorithm on one thing, one codebase or a whole setup
   default_prompt: Use $sigmamusk to measure the waste in this repo, run the Algorithm,
     file one issue with a delete list, and offer SigmaShip.
 policy:

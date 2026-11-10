@@ -32,6 +32,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmamusk` has three sizes of one method: one thing (the review that files one issue), one codebase (`/sigmamusk cut <repo>`, the five largest files) and a whole setup (`/sigmamusk reset`, products the owner keeps or kills). The three skill texts were 360 lines; the merged skill is 269.
+
+### Removed
+
+- `sigmarefactor` and `sigmareset`: both are sizes of `sigmamusk` now (`cut` and `reset`). An installed copy stays untouched; `update` lists it under *Retired skills* with the `uninstall` command.
+
 ## [0.23.0] — 2026-11-10
 
 ### Added

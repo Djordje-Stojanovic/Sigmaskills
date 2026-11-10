@@ -6,7 +6,7 @@ Machine-wide for the whole pack: `git`, Python 3, and `gh` signed in (`gh auth s
 
 ## Repo setup shared by several skills
 
-- **Agent docs.** sigmareview, sigmabrief, sigmaship, sigmarefactor and sigmaloop read `AGENTS.md` or `CLAUDE.md`. Offer to create `AGENTS.md` when neither exists.
+- **Agent docs.** sigmareview, sigmabrief, sigmaship, sigmamusk and sigmaloop read `AGENTS.md` or `CLAUDE.md`. Offer to create `AGENTS.md` when neither exists.
 - **Issue tracker.** sigmaloop reads `docs/agents/issue-tracker.md`; sigmaimprove uses "the tracker named in the repository's agent docs". The Matt Pocock setup writes that file (see `mattpocock.md`). Without it, sigmaimprove falls back to `.scratch/sigmaimprove/`.
 - **Merge habit.** sigmaship squash-merges, closes the linked issue, deletes the local and remote branch, removes the worktree and syncs the base. Offer the GitHub settings that match: squash only, PR title as the commit title, delete the branch on merge:
   `gh api -X PATCH repos/<owner>/<repo> -F allow_squash_merge=true -F allow_merge_commit=false -F allow_rebase_merge=false -F delete_branch_on_merge=true -f squash_merge_commit_title=PR_TITLE`
@@ -30,10 +30,6 @@ Needs: an issue with acceptance criteria, git worktrees, `gh` with merge rights,
 ### sigmawrite
 
 Needs: nothing for plain use; the GUI option ("easy talk") needs a browser. Setup: optional, paste its system-prompt block into the host's instructions.
-
-### sigmarefactor
-
-Needs: the repo's tests. Optional: `laloc`. Setup: none.
 
 ### sigmaresearch
 
@@ -94,10 +90,6 @@ Needs: nothing beyond the agent host. The goal prompt it ends with needs `sigmal
 ### sigmaboat
 
 Needs: the `boat` CLI (static download from boat.dev for Linux, macOS and Windows) and `BOAT_API_KEY` in the environment or a secrets file. Setup: `boat login --key-stdin` once per machine.
-
-### sigmareset
-
-Needs: nothing to install. It asks the owner keep or kill per product, so run it with the owner in the chat.
 
 ### sigmamusk
 

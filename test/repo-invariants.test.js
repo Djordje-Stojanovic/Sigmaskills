@@ -22,7 +22,6 @@ const KNOWN_SKILLS = [
   { id: 'sigmacourse', title: 'SigmaCourse', needsReferences: true },
   { id: 'sigmamusk', title: 'SigmaMusk', needsReferences: true },
   { id: 'sigmaboat', title: 'SigmaBoat', needsReferences: false },
-  { id: 'sigmareset', title: 'SigmaReset', needsReferences: false },
   { id: 'sigmadebug', title: 'SigmaDebug', needsReferences: false },
   { id: 'sigmacreatearena', title: 'SigmaCreateArena', needsReferences: true },
   {
@@ -49,11 +48,6 @@ const KNOWN_SKILLS = [
     id: 'sigmawrite',
     title: 'SigmaWrite',
     needsReferences: false,
-  },
-  {
-    id: 'sigmarefactor',
-    title: 'SigmaRefactor',
-    needsReferences: true,
   },
   {
     id: 'sigmaresearch',

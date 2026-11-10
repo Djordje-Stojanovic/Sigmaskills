@@ -71,9 +71,7 @@ Near-miss triggers (in `npm test`). Score = prompt words found in the "Use when"
 | Implement and ship issue #12 end to end and merge the PR | sigmaship 4 | sigmabrief 0 | pass |
 | Build this ready ticket in a worktree with a draft PR | sigmaship 4 | sigmabrief 0 | pass |
 | Explain this in simplified technical English with less jargon | sigmawrite 6 | sigmabrief 0 | pass |
-| Rewrite this for an outsider: clear, no gibberish | sigmawrite 2 | sigmarefactor -1 | pass |
-| Review my large files and simplify them to reduce code size | sigmarefactor 7 | sigmareview -1 | pass |
-| Run a laloc scan and help me shrink the biggest files | sigmarefactor 3 | sigmaimprove 0 | pass |
+| Rewrite this for an outsider: clear, no gibberish | sigmawrite 2 | sigmamusk -1 | pass |
 
 ## Recommendation
 

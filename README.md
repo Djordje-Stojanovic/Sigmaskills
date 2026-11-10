@@ -74,7 +74,6 @@ Each skill has one job. Say its name to start it.
 | **SigmaShip** | `sigmaship` | Ships one planned ticket: build, review, merge, clean up |
 | **SigmaFreedom** | `sigmafreedom` | Removes model-written refusals from a repo's agent docs |
 | **SigmaWrite** | `sigmawrite` | Plain technical English, and status boards on request |
-| **SigmaRefactor** | `sigmarefactor` | Shrinks large files with your approval, same behavior |
 | **SigmaDebug** | `sigmadebug` | Settles open topics one at a time and ships each fix |
 | **SigmaCreateArena** | `sigmacreatearena` | Ranks any options blind, by Elo |
 | **SigmaResearch** | `sigmaresearch` | Reads public sources and counts those read in full |
@@ -89,9 +88,8 @@ Each skill has one job. Say its name to start it.
 | **SigmaSpeedLoop** | `sigmaspeedloop` | Makes a model serve faster on a rented GPU |
 | **SigmaSetup** | `sigmasetup` | Sets up each installed pack in a repo, with you |
 | **SigmaCourse** | `sigmacourse` | Plans a course of any size and builds its repo |
-| **SigmaMusk** | `sigmamusk` | Runs Musk's Algorithm on your work and files the delete list |
+| **SigmaMusk** | `sigmamusk` | Runs Musk's Algorithm on one thing, one codebase or a whole setup: measure, delete first |
 | **SigmaBoat** | `sigmaboat` | Runs authorized work on boat.dev cloud sandboxes |
-| **SigmaReset** | `sigmareset` | Cuts a bloated repo, machine or setup back to what you use |
 
 ### Which one do I need?
 
@@ -130,10 +128,6 @@ Deletes model-written refusals and moral limits from a repo's agent docs and ski
 A writing voice inspired by ASD-STE100 Simplified Technical English: short sentences, common words, still technical. It stays on until you turn it off. To use it everywhere, paste the **Paste as system prompt** block from [`sigmawrite/SKILL.md`](sigmawrite/SKILL.md) into your host's instructions.
 
 The GUI option keeps replies short and puts status reports or question batches on one interactive board. Say "easy talk" (or "sigmawrite gui") to start it. Your ticks and answers come back through **Copy my answers**. Say "easy talk off" to stop. This replaces the old SigmaWriteGUI skill.
-
-### SigmaRefactor
-
-Counts lines (with `laloc` if you have it), reads the five largest files and explains safe ways to shrink them. It edits only after your approval, keeps behavior, tests and interfaces, and reports the lines removed.
 
 ### SigmaDebug
 
@@ -193,15 +187,11 @@ Plans a course on any subject, from a one-hour primer to a program of thousands 
 
 ### SigmaMusk
 
-Runs Elon Musk's engineering review on your work. It measures the waste first, runs the five-step Algorithm, and files one issue with a ranked delete list and checkable acceptance criteria. A report page in a new look shows the numbers. It answers in Musk's voice and offers SigmaShip. Alone, it grills you with 3 to 5 questions first; `--fast "<problem>"` researches, decides and ships end to end when the request is clear. `--demon` turns the voice up.
+Runs Elon Musk's five-step Algorithm on your work, at three sizes. **One thing** (a plan, a feature, a process): it measures the waste, files one issue with a ranked delete list and checkable acceptance criteria, shows the numbers on a report page, answers in Musk's voice and offers SigmaShip. Alone, it grills you with 3 to 5 questions first; `--fast "<problem>"` researches, decides and ships end to end; `--demon` turns the voice up. **One codebase** (`cut`, was SigmaRefactor): it counts lines, reads the five largest files and explains safe ways to shrink them; it edits only after your approval and keeps behavior, tests and public interfaces. **A whole setup** (`reset`, was SigmaReset): it opens every thing before it judges it, groups what it finds into 15 to 30 products with their cost and proven use, asks you keep or kill, deletes the rest in every place it lives and keeps one map file as the handoff.
 
 ### SigmaBoat
 
 Gives work you already authorized more machines: boat.dev cloud sandboxes (full Ubuntu VMs, no GPU). It builds one stopped base per repo, forks one sandbox per worker, runs each worker's gate there, lands the result by the work's own rules, and deletes every sandbox it started. It starts nothing unless you name boat.
-
-### SigmaReset
-
-Brings a bloated repo, machine or whole setup back to what you use. It opens every thing before it judges it, groups what it finds into 15 to 30 products with their cost and proven use, and asks you keep or kill, at most 12 per round. It deletes the rest in every place it lives, measures before and after, and keeps one map file as the handoff.
 
 ---
 
@@ -391,7 +381,6 @@ $sigmabrief https://github.com/owner/repo/issues/12
 $sigmabrief all open
 $sigmaship https://github.com/owner/repo/issues/42
 $sigmawrite
-$sigmarefactor
 $sigmadebug
 $sigmacreatearena Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
@@ -407,8 +396,9 @@ $sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
 $sigmasetup
 $sigmacourse Plan a 40-hour course that makes me fluent in SQL
 $sigmamusk Why does our test suite take 20 minutes?
+$sigmamusk cut this repo: the five largest files
+$sigmamusk reset: my setup is bloated, list every product, I say keep or kill
 $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
-$sigmareset My setup is bloated. List every product, I say keep or kill
 ```
 
 </td>
@@ -424,7 +414,6 @@ $sigmareset My setup is bloated. List every product, I say keep or kill
 /skill:sigmabrief all open
 /skill:sigmaship https://github.com/owner/repo/issues/42
 /skill:sigmawrite
-/skill:sigmarefactor
 /skill:sigmadebug
 /skill:sigmacreatearena Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
@@ -442,7 +431,6 @@ $sigmareset My setup is bloated. List every product, I say keep or kill
 /skill:sigmamusk Run the Algorithm on this agent loop --demon
 /skill:sigmamusk --fast "cache every calc script by a hash of its inputs"
 /skill:sigmaboat Ship #42 on a boat fork of this repo
-/skill:sigmareset List every product in this repo, I say keep or kill
 ```
 
 </td>
@@ -459,7 +447,6 @@ $sigmareset My setup is bloated. List every product, I say keep or kill
 | `sigmaship` | issue URL · `#N` | Refuses tickets without checkable acceptance criteria |
 | `sigmafreedom` | a repo path | Deletes refusals from agent docs and skill sources; every deletion is in a was/now log |
 | `sigmawrite` | (no input) · or "easy talk" for the GUI board · `EASYTALK REPLY` | Session writing voice until you turn it off; the GUI option makes a board |
-| `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
 | `sigmadebug` | (no input) · or a list of topics | Writes a topic .txt and a plan .md; one background SigmaShip worker per clear topic |
 | `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |
@@ -474,9 +461,8 @@ $sigmareset My setup is bloated. List every product, I say keep or kill
 | `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
 | `sigmasetup` | (no input) · or the packs to set up | One question round; writes only in this repo; every change has an undo |
 | `sigmacourse` | a subject · the learner · a goal | Grills first; writes the course repo and the goal prompt; never starts the loop |
-| `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
+| `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` · `cut <repo>` · `reset` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
 | `sigmaboat` | a loop file, ship issue, speed-loop project or spec · the repo | Starts sandboxes only when you name boat; no plan of its own; deletes every worker |
-| `sigmareset` | what is in scope (a repo, a machine, a whole setup) | Asks keep or kill per product, at most 12 per round; deletes the rest; keeps one map file |
 
 ### Requirements
 

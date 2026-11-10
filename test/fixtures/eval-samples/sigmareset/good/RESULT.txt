@@ -1,7 +1,0 @@
-**The numbers, before and after.** Lines in git: 325,128 -> 309,921 (`python measure.py .`). Commands: 136 -> 76 (`ls bin | wc -l`). Running services: 43 -> 41 (`docker ps -q | wc -l`).
-
-**Killed:** the log viewer (0 opens in 9 days), the usage charts, 57 commands nobody typed. **Kept:** the media server, the chat page, the publisher.
-
-**Waits for the owner:** the old film work files (430 GB) and the detector models (79 GB). Both exist in one place only; I can save a copy first.
-
-**Not checked:** the backup restore was not run after the cut.
