@@ -325,6 +325,16 @@
   "near": "sigmaship"
  },
  {
+  "prompt": "My whole setup is bloated and I lost track of what exists. List every product and I say keep or kill",
+  "skill": "sigmareset",
+  "near": "sigmamusk"
+ },
+ {
+  "prompt": "Run a sigmareset on this machine and its repos, then delete what I do not use",
+  "skill": "sigmareset",
+  "near": "sigmarefactor"
+ },
+ {
   "prompt": "Debug these open topics one by one, plan each fix and ship each in the background",
   "skill": "sigmadebug",
   "near": "sigmaship"

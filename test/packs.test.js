@@ -140,6 +140,10 @@ test('packs: resolveSelection joins presets and skill ids and reports what it ca
     const all = resolveSelection(packs, { presets: ['all'] });
     assert.ok(all.skills.length > 80);
     assert.deepEqual(all.unavailable, [], 'all skips unavailable packs without complaint');
+
+    const core = resolveSelection(packs, { presets: ['core'] });
+    const sigma = packs.packs.find((pack) => pack.id === 'sigma').skills.map((skill) => skill.id);
+    assert.deepEqual(core.skills.map((skill) => skill.id), [...sigma, 'full-send', 'full-stop'], 'core is every Sigma skill plus the two tstack ship skills');
   } finally {
     box.cleanup();
   }

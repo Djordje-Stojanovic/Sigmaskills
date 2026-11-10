@@ -566,7 +566,14 @@ function sigmadebug({ result }) {
   return problems;
 }
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmacourse, sigmamusk, sigmaboat, sigmadebug, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+// sigmareset ends with the numbers before and after, what was killed and kept, what waits for the owner and what was not checked.
+function sigmareset({ result }) {
+  const problems = requireText(result, [/before/i, /after/i, /kill/i, /ke(pt|ep)/i, /owner/i, /not check/i], 'reply');
+  if ((result.match(/\d[\d,.]*\s*(->|to)\s*\d/g) || []).length < 2) problems.push('reply: fewer than 2 numbers with before and after');
+  return problems;
+}
+
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmacourse, sigmamusk, sigmaboat, sigmareset, sigmadebug, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

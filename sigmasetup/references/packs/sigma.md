@@ -95,6 +95,10 @@ Needs: nothing beyond the agent host. The goal prompt it ends with needs `sigmal
 
 Needs: the `boat` CLI (static download from boat.dev for Linux, macOS and Windows) and `BOAT_API_KEY` in the environment or a secrets file. Setup: `boat login --key-stdin` once per machine.
 
+### sigmareset
+
+Needs: nothing to install. It asks the owner keep or kill per product, so run it with the owner in the chat.
+
 ### sigmamusk
 
 Needs: `gh` signed in to file the issue (without it, the issue body prints in chat). Hands off to `sigmaship` when installed. Setup: none.

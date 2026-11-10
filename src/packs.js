@@ -135,7 +135,7 @@ export function findPack(packCatalog, name) {
 /**
  * Turn `--preset` names and skill ids into one install list.
  *
- * `all` means every available pack. A preset that names no pack, or a pack with nothing
+ * `all` means every available pack; `core` means the Sigma pack plus `full-send` and `full-stop`. A preset that names no pack, or a pack with nothing
  * available on this machine, is reported instead of skipped silently.
  *
  * @param {{ packs: object[], skills: Map<string, object> }} packCatalog
@@ -161,6 +161,12 @@ export function resolveSelection(packCatalog, { presets = [], skillIds = [] }) {
       for (const pack of packCatalog.packs) {
         if (pack.available && !pack.limit) pack.skills.forEach(add);
       }
+      continue;
+    }
+    if (name === 'core') {
+      // The default install: every Sigma skill, plus Theo Browne's full-send and full-stop from the tstack pack.
+      packCatalog.packs.filter((pack) => pack.id === 'sigma').forEach((pack) => pack.skills.forEach(add));
+      ['full-send', 'full-stop'].map((id) => packCatalog.skills.get(id)).filter(Boolean).forEach(add);
       continue;
     }
     const pack = findPack(packCatalog, name);
