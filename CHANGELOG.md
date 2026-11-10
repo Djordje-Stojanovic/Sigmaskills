@@ -40,6 +40,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Removed
 
 - `sigmarefactor` and `sigmareset`: both are sizes of `sigmamusk` now (`cut` and `reset`). An installed copy stays untouched; `update` lists it under *Retired skills* with the `uninstall` command.
+- `sigmasetup`, `sigmadesign`, `sigmacourse` and `sigmafinanceman`: another skill or pack already does each job. Per-pack notes are in the README's *Packs* section; a design system comes from `frontend-design` and the Design.md pack, with `sigmataste` for the critique; a big build is planned with `grilling`, `to-spec` and `sigmaloop`; finance models come from the Financial Services pack (99 skills, with `dcf`, `comps`, `3-statement-model`). Installed copies stay untouched; `update` lists them under *Retired skills*.
 
 ## [0.23.0] — 2026-11-10
 

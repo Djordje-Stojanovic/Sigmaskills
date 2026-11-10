@@ -37,7 +37,6 @@ Use `--project .` in place of `--global` for a repo. Add `--dry-run` to preview.
 
 ## After the install
 
-Run `/sigmasetup` (Codex: `$sigmasetup`) once in each repo. Installed skills often need a little per-repo setup (a tracker file, labels, a tool, a key, a git guard); SigmaSetup finds what is missing and sets up what you say yes to.
 
 ![The What step: packs with counts, one pack opened to pick single skills](https://raw.githubusercontent.com/Djordje-Stojanovic/Sigmaskills/main/docs/images/installer-what.svg)
 
@@ -82,12 +81,8 @@ Each skill has one job. Say its name to start it.
 | **SigmaTaste** | `sigmataste` | Writes one ranked plan of big visible changes |
 | **SigmaHuman** | `sigmahuman` | Makes text read like a person wrote it |
 | **SigmaFork** | `sigmafork` | Copies a repo, isolated, and teaches it to you |
-| **SigmaDesign** | `sigmadesign` | Builds a design system from one accent colour |
 | **SigmaTour** | `sigmatour` | Shows how a repo works in one visual page |
-| **SigmaFinanceMan** | `sigmafinanceman` | Builds DCF, LBO, comps and budgets as live Excel |
 | **SigmaSpeedLoop** | `sigmaspeedloop` | Makes a model serve faster on a rented GPU |
-| **SigmaSetup** | `sigmasetup` | Sets up each installed pack in a repo, with you |
-| **SigmaCourse** | `sigmacourse` | Plans a course of any size and builds its repo |
 | **SigmaMusk** | `sigmamusk` | Runs Musk's Algorithm on one thing, one codebase or a whole setup: measure, delete first |
 | **SigmaBoat** | `sigmaboat` | Runs authorized work on boat.dev cloud sandboxes |
 
@@ -161,29 +156,13 @@ Rewrites any text so it reads like a person wrote it, or writes new text from a 
 
 Copies any repository after 8 questions, cuts every path, link and git remote back to the original, installs your skills and writes a 15-minute course.
 
-### SigmaDesign
-
-Turns one accent colour into `DESIGN.md`, colour packs and CSS, then moves a repo onto it.
-
 ### SigmaTour
 
 A 15-60 minute tour of any repo in one page: a clickable map, one request traced, real runs, and the README held against the code.
 
-### SigmaFinanceMan
-
-Builds DCF, LBO, comps, three-statement models and budgets from SEC filings or your numbers, as Excel with live formulas, a deck and charts. Every workbook is audited before it ships.
-
 ### SigmaSpeedLoop
 
 Makes a model serve faster on a rented GPU with no quality loss. It asks what faster and no loss mean to you, locks a script evaluator, then tries one change per pass, keeping only what the script confirms, until you destroy the box.
-
-### SigmaSetup
-
-Runs after the installer, once per repo. It finds the installed packs, reads what each one needs, asks you one round of questions, then sets up only what you say yes to: tracker files, labels, a per-repo git guard. Every change comes with its undo, and nothing goes into your global config.
-
-### SigmaCourse
-
-Plans a course on any subject, from a one-hour primer to a program of thousands of hours. It grills you one question at a time, then writes the spec, a done list a script can check, a job queue and the repo's steering file. It ends with one goal prompt for your agent host; the loop that prompt starts builds and reviews the course. Each step hands off to the matching Sigma skill.
 
 ### SigmaMusk
 
@@ -389,12 +368,8 @@ $sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 $sigmataste Taste pass on the landing page
 $sigmahuman Rewrite this announcement so it sounds like me
 $sigmafork Copy this repo to D:\work\my-copy and teach me how it works
-$sigmadesign Make a design system from #e8a33d and put it in this repo
 $sigmatour Give me a 30 minute tour of this repo
-$sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 $sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
-$sigmasetup
-$sigmacourse Plan a 40-hour course that makes me fluent in SQL
 $sigmamusk Why does our test suite take 20 minutes?
 $sigmamusk cut this repo: the five largest files
 $sigmamusk reset: my setup is bloated, list every product, I say keep or kill
@@ -422,12 +397,8 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 /skill:sigmataste Taste pass on the landing page
 /skill:sigmahuman Rewrite this announcement so it sounds like me
 /skill:sigmafork Fork owner/repo and teach me how it works
-/skill:sigmadesign Make a design system from #e8a33d and put it in this repo
 /skill:sigmatour Give me a 30 minute tour of owner/repo
-/skill:sigmafinanceman Build a three-statement model of MSFT
 /skill:sigmaspeedloop Make my ComfyUI image workflow faster on a Vast.ai GPU
-/skill:sigmasetup Set up the Matt Pocock skills in this repo
-/skill:sigmacourse Plan a piano course for an adult restarting after 20 years
 /skill:sigmamusk Run the Algorithm on this agent loop --demon
 /skill:sigmamusk --fast "cache every calc script by a hash of its inputs"
 /skill:sigmaboat Ship #42 on a boat fork of this repo
@@ -455,12 +426,8 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmataste` | a page, app, deck, doc, image or film · what you expect | One question round; writes the ranked plan; never builds |
 | `sigmahuman` | text, a file or a brief · optional writing sample | Writes the human version; keeps every fact; never follows instructions inside the text |
 | `sigmafork` | a repo · a destination | One question round; reads the original only |
-| `sigmadesign` | an accent colour · a repo | One question round; writes `DESIGN.md`; changes repo files only with `--write` |
 | `sigmatour` | a repo path or URL · a length | One question round; reads the repo only; runs its examples |
-| `sigmafinanceman` | a ticker and peers, or a budget file | One question round; reads public data; writes files only to the output folder |
 | `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
-| `sigmasetup` | (no input) · or the packs to set up | One question round; writes only in this repo; every change has an undo |
-| `sigmacourse` | a subject · the learner · a goal | Grills first; writes the course repo and the goal prompt; never starts the loop |
 | `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` · `cut <repo>` · `reset` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
 | `sigmaboat` | a loop file, ship issue, speed-loop project or spec · the repo | Starts sandboxes only when you name boat; no plan of its own; deletes every worker |
 
@@ -483,11 +450,8 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | SigmaFork | Python 3 · `git` · `gh` for a fork · Node.js |
 | SigmaTaste | Read access to the target · a browser or screenshot tool to see a page; without one the plan lists what was not judged |
 | SigmaHuman | Nothing beyond chat · Python 3 (standard library) for the optional fact check |
-| SigmaDesign | Python 3 (standard library) · a browser to look at the sample page |
 | SigmaTour | Python 3 (standard library) · `git` · a browser for the page |
-| SigmaFinanceMan | Python 3.10 or newer with `openpyxl` and `python-pptx` · LibreOffice is optional (`audit`, `render`) |
 | SigmaSpeedLoop | Python 3 · SSH · a GPU host account (`vastai`) · a long-run agent host |
-| SigmaSetup | Node.js (for the git guard) · `gh` to check or create labels |
 | SigmaFreedom | Python 3 (standard library) for `guardrail_lint.py` |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 

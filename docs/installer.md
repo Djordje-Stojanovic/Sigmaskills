@@ -425,12 +425,8 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaloop -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmataste -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmahuman -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmafork -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadesign -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmatour -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmafinanceman -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaspeedloop -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmasetup -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmacourse -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmamusk -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaboat -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
@@ -461,12 +457,8 @@ $skill-installer install sigmaloop from https://github.com/Djordje-Stojanovic/Si
 $skill-installer install sigmataste from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmahuman from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmafork from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmadesign from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmatour from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmafinanceman from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaspeedloop from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmasetup from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmacourse from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmamusk from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaboat from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
@@ -494,12 +486,8 @@ cp -R Sigmaskills/sigmaloop ~/.agents/skills/sigmaloop
 cp -R Sigmaskills/sigmataste ~/.agents/skills/sigmataste
 cp -R Sigmaskills/sigmahuman ~/.agents/skills/sigmahuman
 cp -R Sigmaskills/sigmafork ~/.agents/skills/sigmafork
-cp -R Sigmaskills/sigmadesign ~/.agents/skills/sigmadesign
 cp -R Sigmaskills/sigmatour ~/.agents/skills/sigmatour
-cp -R Sigmaskills/sigmafinanceman ~/.agents/skills/sigmafinanceman
 cp -R Sigmaskills/sigmaspeedloop ~/.agents/skills/sigmaspeedloop
-cp -R Sigmaskills/sigmasetup ~/.agents/skills/sigmasetup
-cp -R Sigmaskills/sigmacourse ~/.agents/skills/sigmacourse
 cp -R Sigmaskills/sigmamusk ~/.agents/skills/sigmamusk
 cp -R Sigmaskills/sigmaboat ~/.agents/skills/sigmaboat
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
@@ -523,12 +511,8 @@ Copy-Item -Recurse Sigmaskills\sigmaloop     "$HOME\.agents\skills\sigmaloop"
 Copy-Item -Recurse Sigmaskills\sigmataste    "$HOME\.agents\skills\sigmataste"
 Copy-Item -Recurse Sigmaskills\sigmahuman    "$HOME\.agents\skills\sigmahuman"
 Copy-Item -Recurse Sigmaskills\sigmafork     "$HOME\.agents\skills\sigmafork"
-Copy-Item -Recurse Sigmaskills\sigmadesign   "$HOME\.agents\skills\sigmadesign"
 Copy-Item -Recurse Sigmaskills\sigmatour     "$HOME\.agents\skills\sigmatour"
-Copy-Item -Recurse Sigmaskills\sigmafinanceman "$HOME\.agents\skills\sigmafinanceman"
 Copy-Item -Recurse Sigmaskills\sigmaspeedloop "$HOME\.agents\skills\sigmaspeedloop"
-Copy-Item -Recurse Sigmaskills\sigmasetup "$HOME\.agents\skills\sigmasetup"
-Copy-Item -Recurse Sigmaskills\sigmacourse "$HOME\.agents\skills\sigmacourse"
 Copy-Item -Recurse Sigmaskills\sigmamusk "$HOME\.agents\skills\sigmamusk"
 Copy-Item -Recurse Sigmaskills\sigmaboat "$HOME\.agents\skills\sigmaboat"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"

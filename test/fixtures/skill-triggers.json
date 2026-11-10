@@ -246,21 +246,6 @@
   "near": "sigmaimprove"
  },
  {
-  "prompt": "Make a design system for my app from one accent colour, with dark and light and a yellow colour pack",
-  "skill": "sigmadesign",
-  "near": "sigmataste"
- },
- {
-  "prompt": "Create a design template with tokens and a sample page, then move every repo I own onto one DESIGN.md",
-  "skill": "sigmadesign",
-  "near": "sigmaimprove"
- },
- {
-  "prompt": "Replace the hard-coded hex colours in this site with design tokens and add a new red-white theme",
-  "skill": "sigmadesign",
-  "near": "sigmamusk"
- },
- {
   "prompt": "Give me a visual tour of this repository: what it does and how it works",
   "skill": "sigmatour",
   "near": "sigmafork"
@@ -271,16 +256,6 @@
   "near": "sigmareview"
  },
  {
-  "prompt": "Build me a DCF and a comps table for this ticker in Excel",
-  "skill": "sigmafinanceman",
-  "near": "sigmaresearch"
- },
- {
-  "prompt": "Help me plan a monthly budget from my income and spending",
-  "skill": "sigmafinanceman",
-  "near": "sigmahuman"
- },
- {
   "prompt": "Make my vLLM model serve faster on a rented GPU without losing quality",
   "skill": "sigmaspeedloop",
   "near": "sigmareview"
@@ -289,26 +264,6 @@
   "prompt": "Run speed loops to tune inference and the KV cache of my model",
   "skill": "sigmaspeedloop",
   "near": "sigmaloop"
- },
- {
-  "prompt": "Set up the installed skill packs for this repo after the installer ran",
-  "skill": "sigmasetup",
-  "near": "sigmafork"
- },
- {
-  "prompt": "After the installer ran, set up the installed packs in this repo",
-  "skill": "sigmasetup",
-  "near": "sigmaship"
- },
- {
-  "prompt": "Plan a whole course on Rust for me, from curriculum to a goal prompt",
-  "skill": "sigmacourse",
-  "near": "sigmaloop"
- },
- {
-  "prompt": "Plan a curriculum and course that teaches adults piano at any size",
-  "skill": "sigmacourse",
-  "near": "sigmataste"
  },
  {
   "prompt": "Run the Musk Algorithm on this repo and tell me what to delete first",
