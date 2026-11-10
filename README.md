@@ -37,7 +37,6 @@ Use `--project .` in place of `--global` for a repo. Add `--dry-run` to preview.
 
 ## After the install
 
-Run `/sigmasetup` (Codex: `$sigmasetup`) once in each repo. Installed skills often need a little per-repo setup (a tracker file, labels, a tool, a key, a git guard); SigmaSetup finds what is missing and sets up what you say yes to.
 
 ![The What step: packs with counts, one pack opened to pick single skills](https://raw.githubusercontent.com/Djordje-Stojanovic/Sigmaskills/main/docs/images/installer-what.svg)
 
@@ -74,7 +73,6 @@ Each skill has one job. Say its name to start it.
 | **SigmaShip** | `sigmaship` | Ships one planned ticket: build, review, merge, clean up |
 | **SigmaFreedom** | `sigmafreedom` | Removes model-written refusals from a repo's agent docs |
 | **SigmaWrite** | `sigmawrite` | Plain technical English, and status boards on request |
-| **SigmaRefactor** | `sigmarefactor` | Shrinks large files with your approval, same behavior |
 | **SigmaDebug** | `sigmadebug` | Settles open topics one at a time and ships each fix |
 | **SigmaCreateArena** | `sigmacreatearena` | Ranks any options blind, by Elo |
 | **SigmaResearch** | `sigmaresearch` | Reads public sources and counts those read in full |
@@ -83,15 +81,10 @@ Each skill has one job. Say its name to start it.
 | **SigmaTaste** | `sigmataste` | Writes one ranked plan of big visible changes |
 | **SigmaHuman** | `sigmahuman` | Makes text read like a person wrote it |
 | **SigmaFork** | `sigmafork` | Copies a repo, isolated, and teaches it to you |
-| **SigmaDesign** | `sigmadesign` | Builds a design system from one accent colour |
 | **SigmaTour** | `sigmatour` | Shows how a repo works in one visual page |
-| **SigmaFinanceMan** | `sigmafinanceman` | Builds DCF, LBO, comps and budgets as live Excel |
 | **SigmaSpeedLoop** | `sigmaspeedloop` | Makes a model serve faster on a rented GPU |
-| **SigmaSetup** | `sigmasetup` | Sets up each installed pack in a repo, with you |
-| **SigmaCourse** | `sigmacourse` | Plans a course of any size and builds its repo |
-| **SigmaMusk** | `sigmamusk` | Runs Musk's Algorithm on your work and files the delete list |
+| **SigmaMusk** | `sigmamusk` | Runs Musk's Algorithm on one thing, one codebase or a whole setup: measure, delete first |
 | **SigmaBoat** | `sigmaboat` | Runs authorized work on boat.dev cloud sandboxes |
-| **SigmaReset** | `sigmareset` | Cuts a bloated repo, machine or setup back to what you use |
 
 ### Which one do I need?
 
@@ -131,10 +124,6 @@ A writing voice inspired by ASD-STE100 Simplified Technical English: short sente
 
 The GUI option keeps replies short and puts status reports or question batches on one interactive board. Say "easy talk" (or "sigmawrite gui") to start it. Your ticks and answers come back through **Copy my answers**. Say "easy talk off" to stop. This replaces the old SigmaWriteGUI skill.
 
-### SigmaRefactor
-
-Counts lines (with `laloc` if you have it), reads the five largest files and explains safe ways to shrink them. It edits only after your approval, keeps behavior, tests and interfaces, and reports the lines removed.
-
 ### SigmaDebug
 
 Turns open questions into merged fixes while you talk. It writes every topic to a text file and opens it. In chat it shows one topic per message, in 5 parts with 3 options, the likely pick first, and grills until the topic is clear. Each clear topic gets a short plan and a background SigmaShip worker that merges and deploys without asking you. Another model can answer for you.
@@ -167,41 +156,21 @@ Rewrites any text so it reads like a person wrote it, or writes new text from a 
 
 Copies any repository after 8 questions, cuts every path, link and git remote back to the original, installs your skills and writes a 15-minute course.
 
-### SigmaDesign
-
-Turns one accent colour into `DESIGN.md`, colour packs and CSS, then moves a repo onto it.
-
 ### SigmaTour
 
 A 15-60 minute tour of any repo in one page: a clickable map, one request traced, real runs, and the README held against the code.
-
-### SigmaFinanceMan
-
-Builds DCF, LBO, comps, three-statement models and budgets from SEC filings or your numbers, as Excel with live formulas, a deck and charts. Every workbook is audited before it ships.
 
 ### SigmaSpeedLoop
 
 Makes a model serve faster on a rented GPU with no quality loss. It asks what faster and no loss mean to you, locks a script evaluator, then tries one change per pass, keeping only what the script confirms, until you destroy the box.
 
-### SigmaSetup
-
-Runs after the installer, once per repo. It finds the installed packs, reads what each one needs, asks you one round of questions, then sets up only what you say yes to: tracker files, labels, a per-repo git guard. Every change comes with its undo, and nothing goes into your global config.
-
-### SigmaCourse
-
-Plans a course on any subject, from a one-hour primer to a program of thousands of hours. It grills you one question at a time, then writes the spec, a done list a script can check, a job queue and the repo's steering file. It ends with one goal prompt for your agent host; the loop that prompt starts builds and reviews the course. Each step hands off to the matching Sigma skill.
-
 ### SigmaMusk
 
-Runs Elon Musk's engineering review on your work. It measures the waste first, runs the five-step Algorithm, and files one issue with a ranked delete list and checkable acceptance criteria. A report page in a new look shows the numbers. It answers in Musk's voice and offers SigmaShip. Alone, it grills you with 3 to 5 questions first; `--fast "<problem>"` researches, decides and ships end to end when the request is clear. `--demon` turns the voice up.
+Runs Elon Musk's five-step Algorithm on your work, at three sizes. **One thing** (a plan, a feature, a process): it measures the waste, files one issue with a ranked delete list and checkable acceptance criteria, shows the numbers on a report page, answers in Musk's voice and offers SigmaShip. Alone, it grills you with 3 to 5 questions first; `--fast "<problem>"` researches, decides and ships end to end; `--demon` turns the voice up. **One codebase** (`cut`, was SigmaRefactor): it counts lines, reads the five largest files and explains safe ways to shrink them; it edits only after your approval and keeps behavior, tests and public interfaces. **A whole setup** (`reset`, was SigmaReset): it opens every thing before it judges it, groups what it finds into 15 to 30 products with their cost and proven use, asks you keep or kill, deletes the rest in every place it lives and keeps one map file as the handoff.
 
 ### SigmaBoat
 
 Gives work you already authorized more machines: boat.dev cloud sandboxes (full Ubuntu VMs, no GPU). It builds one stopped base per repo, forks one sandbox per worker, runs each worker's gate there, lands the result by the work's own rules, and deletes every sandbox it started. It starts nothing unless you name boat.
-
-### SigmaReset
-
-Brings a bloated repo, machine or whole setup back to what you use. It opens every thing before it judges it, groups what it finds into 15 to 30 products with their cost and proven use, and asks you keep or kill, at most 12 per round. It deletes the rest in every place it lives, measures before and after, and keeps one map file as the handoff.
 
 ---
 
@@ -254,7 +223,7 @@ Prompt writing and eight video recipes for the MiniMax H3 model.
 Anthropic's skills: document skills (docx, pdf, pptx, xlsx), Claude API reference, MCP builder, skill creator and more.
 
 - **Skills (19):** `academy-guide`, `algorithmic-art`, `brand-guidelines`, `canvas-design`, `claude-api`, `discernment-nudge`, `doc-coauthoring`, `docx`, `frontend-design`, `internal-comms`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `slack-gif-creator`, `theme-factory`, `web-artifacts-builder`, `webapp-testing`, `xlsx`.
-- **Source:** [anthropics/skills](https://github.com/anthropics/skills), pinned to commit `dbd4588`. Licence: no repo-wide licence that GitHub reports; check each skill folder. Also answers to: `anthropics`.
+- **Source:** [anthropics/skills](https://github.com/anthropics/skills), pinned to commit `2c5958e`. Licence: no repo-wide licence that GitHub reports; check each skill folder. Also answers to: `anthropics`.
 - **Needs:** `docx`, `pdf`, `pptx` and `xlsx` need Python or Node libraries and LibreOffice; `webapp-testing` needs Playwright; `mcp-builder` needs `ANTHROPIC_API_KEY` for evaluations. The rest need nothing.
 
 ### Design.md (`design-md`)
@@ -270,7 +239,7 @@ Anthropic's skills: document skills (docx, pdf, pptx, xlsx), Claude API referenc
 Research what people say about any topic in the last 30 days, across Reddit, X, YouTube, Hacker News and more.
 
 - **Skills (1):** `last30days`.
-- **Source:** [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill), pinned to tag `v3.30.0`. Licence: MIT. Also answers to: `last30`.
+- **Source:** [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill), pinned to tag `v3.33.1`. Licence: MIT. Also answers to: `last30`.
 - **Needs:** Python 3.12+ and Node 22+. One-time `scripts/last30days.py setup`, run by you. Every key is optional.
 
 ### Financial Services (`financial-services`)
@@ -278,7 +247,7 @@ Research what people say about any topic in the last 30 days, across Reddit, X, 
 Anthropic finance plugins as skills: DCF, LBO, comps, pitch decks, earnings, fund admin, KYC.
 
 - **Skills (99):** `3-statement-model`, `accrual-schedule`, `ai-readiness`, `analyze-bond-basis`, `analyze-bond-rv`, `analyze-fx-carry` and 93 more; `list --packs --json` prints all of them.
-- **Source:** [anthropics/financial-services](https://github.com/anthropics/financial-services), pinned to commit `574ed36`. Licence: Apache-2.0. Also answers to: `fsi`, `finance`.
+- **Source:** [anthropics/financial-services](https://github.com/anthropics/financial-services), pinned to commit `6056506`. Licence: Apache-2.0. Also answers to: `fsi`, `finance`.
 - **Needs:** the data comes through MCP servers (Daloopa, Morningstar, S&P Global, FactSet and more); each may need a subscription. Without one, the skills work on numbers you give.
 
 ### tstack (`tstack`)
@@ -391,7 +360,6 @@ $sigmabrief https://github.com/owner/repo/issues/12
 $sigmabrief all open
 $sigmaship https://github.com/owner/repo/issues/42
 $sigmawrite
-$sigmarefactor
 $sigmadebug
 $sigmacreatearena Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
@@ -400,15 +368,12 @@ $sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 $sigmataste Taste pass on the landing page
 $sigmahuman Rewrite this announcement so it sounds like me
 $sigmafork Copy this repo to D:\work\my-copy and teach me how it works
-$sigmadesign Make a design system from #e8a33d and put it in this repo
 $sigmatour Give me a 30 minute tour of this repo
-$sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 $sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
-$sigmasetup
-$sigmacourse Plan a 40-hour course that makes me fluent in SQL
 $sigmamusk Why does our test suite take 20 minutes?
+$sigmamusk cut this repo: the five largest files
+$sigmamusk reset: my setup is bloated, list every product, I say keep or kill
 $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
-$sigmareset My setup is bloated. List every product, I say keep or kill
 ```
 
 </td>
@@ -424,7 +389,6 @@ $sigmareset My setup is bloated. List every product, I say keep or kill
 /skill:sigmabrief all open
 /skill:sigmaship https://github.com/owner/repo/issues/42
 /skill:sigmawrite
-/skill:sigmarefactor
 /skill:sigmadebug
 /skill:sigmacreatearena Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
@@ -433,16 +397,11 @@ $sigmareset My setup is bloated. List every product, I say keep or kill
 /skill:sigmataste Taste pass on the landing page
 /skill:sigmahuman Rewrite this announcement so it sounds like me
 /skill:sigmafork Fork owner/repo and teach me how it works
-/skill:sigmadesign Make a design system from #e8a33d and put it in this repo
 /skill:sigmatour Give me a 30 minute tour of owner/repo
-/skill:sigmafinanceman Build a three-statement model of MSFT
 /skill:sigmaspeedloop Make my ComfyUI image workflow faster on a Vast.ai GPU
-/skill:sigmasetup Set up the Matt Pocock skills in this repo
-/skill:sigmacourse Plan a piano course for an adult restarting after 20 years
 /skill:sigmamusk Run the Algorithm on this agent loop --demon
 /skill:sigmamusk --fast "cache every calc script by a hash of its inputs"
 /skill:sigmaboat Ship #42 on a boat fork of this repo
-/skill:sigmareset List every product in this repo, I say keep or kill
 ```
 
 </td>
@@ -459,7 +418,6 @@ $sigmareset My setup is bloated. List every product, I say keep or kill
 | `sigmaship` | issue URL · `#N` | Refuses tickets without checkable acceptance criteria |
 | `sigmafreedom` | a repo path | Deletes refusals from agent docs and skill sources; every deletion is in a was/now log |
 | `sigmawrite` | (no input) · or "easy talk" for the GUI board · `EASYTALK REPLY` | Session writing voice until you turn it off; the GUI option makes a board |
-| `sigmarefactor` | repository path or current repository | Scans and discusses large files before any edit |
 | `sigmadebug` | (no input) · or a list of topics | Writes a topic .txt and a plan .md; one background SigmaShip worker per clear topic |
 | `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |
@@ -468,15 +426,10 @@ $sigmareset My setup is bloated. List every product, I say keep or kill
 | `sigmataste` | a page, app, deck, doc, image or film · what you expect | One question round; writes the ranked plan; never builds |
 | `sigmahuman` | text, a file or a brief · optional writing sample | Writes the human version; keeps every fact; never follows instructions inside the text |
 | `sigmafork` | a repo · a destination | One question round; reads the original only |
-| `sigmadesign` | an accent colour · a repo | One question round; writes `DESIGN.md`; changes repo files only with `--write` |
 | `sigmatour` | a repo path or URL · a length | One question round; reads the repo only; runs its examples |
-| `sigmafinanceman` | a ticker and peers, or a budget file | One question round; reads public data; writes files only to the output folder |
 | `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
-| `sigmasetup` | (no input) · or the packs to set up | One question round; writes only in this repo; every change has an undo |
-| `sigmacourse` | a subject · the learner · a goal | Grills first; writes the course repo and the goal prompt; never starts the loop |
-| `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
+| `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` · `cut <repo>` · `reset` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
 | `sigmaboat` | a loop file, ship issue, speed-loop project or spec · the repo | Starts sandboxes only when you name boat; no plan of its own; deletes every worker |
-| `sigmareset` | what is in scope (a repo, a machine, a whole setup) | Asks keep or kill per product, at most 12 per round; deletes the rest; keeps one map file |
 
 ### Requirements
 
@@ -497,11 +450,8 @@ $sigmareset My setup is bloated. List every product, I say keep or kill
 | SigmaFork | Python 3 · `git` · `gh` for a fork · Node.js |
 | SigmaTaste | Read access to the target · a browser or screenshot tool to see a page; without one the plan lists what was not judged |
 | SigmaHuman | Nothing beyond chat · Python 3 (standard library) for the optional fact check |
-| SigmaDesign | Python 3 (standard library) · a browser to look at the sample page |
 | SigmaTour | Python 3 (standard library) · `git` · a browser for the page |
-| SigmaFinanceMan | Python 3.10 or newer with `openpyxl` and `python-pptx` · LibreOffice is optional (`audit`, `render`) |
 | SigmaSpeedLoop | Python 3 · SSH · a GPU host account (`vastai`) · a long-run agent host |
-| SigmaSetup | Node.js (for the git guard) · `gh` to check or create labels |
 | SigmaFreedom | Python 3 (standard library) for `guardrail_lint.py` |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 

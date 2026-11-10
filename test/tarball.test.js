@@ -171,7 +171,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.match(helpOut, /sigmaimprove/);
     assert.match(helpOut, /sigmabrief/);
     assert.match(helpOut, /sigmawrite/);
-    assert.match(helpOut, /sigmarefactor/);
+    assert.match(helpOut, /sigmamusk/);
     assert.doesNotMatch(helpOut, /release/);
     assert.doesNotMatch(helpOut, /--write-identities|--expected-(?:commit|version|digest)/);
 

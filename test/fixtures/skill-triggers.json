@@ -67,16 +67,16 @@
  {
   "prompt": "Rewrite this for an outsider: clear, no gibberish",
   "skill": "sigmawrite",
-  "near": "sigmarefactor"
+  "near": "sigmamusk"
  },
  {
   "prompt": "Review my large files and simplify them to reduce code size",
-  "skill": "sigmarefactor",
+  "skill": "sigmamusk",
   "near": "sigmareview"
  },
  {
   "prompt": "Run a laloc scan and help me shrink the biggest files",
-  "skill": "sigmarefactor",
+  "skill": "sigmamusk",
   "near": "sigmaimprove"
  },
  {
@@ -117,27 +117,32 @@
  {
   "prompt": "Read config.json and tell me the port",
   "skill": null,
-  "avoid": "sigmadeeplook"
+  "avoid": "sigmadeeplook",
+  "near": "sigmareview"
  },
  {
   "prompt": "Explain this Python file to me",
   "skill": null,
-  "avoid": "sigmadeeplook"
+  "avoid": "sigmadeeplook",
+  "near": "sigmareview"
  },
  {
   "prompt": "Summarise README.md for the release notes",
   "skill": null,
-  "avoid": "sigmadeeplook"
+  "avoid": "sigmadeeplook",
+  "near": "sigmareview"
  },
  {
   "prompt": "What is in package.json",
   "skill": null,
-  "avoid": "sigmadeeplook"
+  "avoid": "sigmadeeplook",
+  "near": "sigmareview"
  },
  {
   "prompt": "Review this repo and list the biggest risks",
   "skill": null,
-  "avoid": "sigmadeeplook"
+  "avoid": "sigmadeeplook",
+  "near": "sigmareview"
  },
  {
   "prompt": "Research this video topic online and cite the sources",
@@ -147,7 +152,8 @@
  {
   "prompt": "Total the amount column of this 2 GB CSV export",
   "skill": null,
-  "avoid": "sigmadeeplook"
+  "avoid": "sigmadeeplook",
+  "near": "sigmareview"
  },
  {
   "prompt": "Transcribe this MP3 recording",
@@ -232,27 +238,12 @@
  {
   "prompt": "Copy my project folder to a new place so the copy never writes into the original, then onboard me",
   "skill": "sigmafork",
-  "near": "sigmarefactor"
+  "near": "sigmamusk"
  },
  {
   "prompt": "Duplicate this repository, install the skill bundle and give me a mini course to learn it",
   "skill": "sigmafork",
   "near": "sigmaimprove"
- },
- {
-  "prompt": "Make a design system for my app from one accent colour, with dark and light and a yellow colour pack",
-  "skill": "sigmadesign",
-  "near": "sigmataste"
- },
- {
-  "prompt": "Create a design template with tokens and a sample page, then move every repo I own onto one DESIGN.md",
-  "skill": "sigmadesign",
-  "near": "sigmaimprove"
- },
- {
-  "prompt": "Replace the hard-coded hex colours in this site with design tokens and add a new red-white theme",
-  "skill": "sigmadesign",
-  "near": "sigmarefactor"
  },
  {
   "prompt": "Give me a visual tour of this repository: what it does and how it works",
@@ -265,16 +256,6 @@
   "near": "sigmareview"
  },
  {
-  "prompt": "Build me a DCF and a comps table for this ticker in Excel",
-  "skill": "sigmafinanceman",
-  "near": "sigmaresearch"
- },
- {
-  "prompt": "Help me plan a monthly budget from my income and spending",
-  "skill": "sigmafinanceman",
-  "near": "sigmahuman"
- },
- {
   "prompt": "Make my vLLM model serve faster on a rented GPU without losing quality",
   "skill": "sigmaspeedloop",
   "near": "sigmareview"
@@ -285,26 +266,6 @@
   "near": "sigmaloop"
  },
  {
-  "prompt": "Set up the installed skill packs for this repo after the installer ran",
-  "skill": "sigmasetup",
-  "near": "sigmafork"
- },
- {
-  "prompt": "After the installer ran, set up the installed packs in this repo",
-  "skill": "sigmasetup",
-  "near": "sigmaship"
- },
- {
-  "prompt": "Plan a whole course on Rust for me, from curriculum to a goal prompt",
-  "skill": "sigmacourse",
-  "near": "sigmaloop"
- },
- {
-  "prompt": "Plan a curriculum and course that teaches adults piano at any size",
-  "skill": "sigmacourse",
-  "near": "sigmataste"
- },
- {
   "prompt": "Run the Musk Algorithm on this repo and tell me what to delete first",
   "skill": "sigmamusk",
   "near": "sigmareview"
@@ -312,7 +273,7 @@
  {
   "prompt": "Elon review of our agent loop: idiot index, bottleneck, what to delete",
   "skill": "sigmamusk",
-  "near": "sigmarefactor"
+  "near": "sigmareview"
  },
  {
   "prompt": "Run this loop file on boat.dev sandboxes with two workers",
@@ -326,13 +287,13 @@
  },
  {
   "prompt": "My whole setup is bloated and I lost track of what exists. List every product and I say keep or kill",
-  "skill": "sigmareset",
-  "near": "sigmamusk"
+  "skill": "sigmamusk",
+  "near": "sigmareview"
  },
  {
   "prompt": "Run a sigmareset on this machine and its repos, then delete what I do not use",
-  "skill": "sigmareset",
-  "near": "sigmarefactor"
+  "skill": "sigmamusk",
+  "near": "sigmareview"
  },
  {
   "prompt": "Debug these open topics one by one, plan each fix and ship each in the background",

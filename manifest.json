@@ -30,11 +30,6 @@
       "needsReferences": true
     },
     {
-      "id": "sigmarefactor",
-      "title": "SigmaRefactor",
-      "needsReferences": true
-    },
-    {
       "id": "sigmaresearch",
       "title": "SigmaResearch",
       "needsReferences": true
@@ -75,33 +70,13 @@
       "needsReferences": true
     },
     {
-      "id": "sigmadesign",
-      "title": "SigmaDesign",
-      "needsReferences": true
-    },
-    {
       "id": "sigmatour",
       "title": "SigmaTour",
       "needsReferences": true
     },
     {
-      "id": "sigmafinanceman",
-      "title": "SigmaFinanceMan",
-      "needsReferences": true
-    },
-    {
       "id": "sigmaspeedloop",
       "title": "SigmaSpeedLoop",
-      "needsReferences": true
-    },
-    {
-      "id": "sigmasetup",
-      "title": "SigmaSetup",
-      "needsReferences": true
-    },
-    {
-      "id": "sigmacourse",
-      "title": "SigmaCourse",
       "needsReferences": true
     },
     {
@@ -112,11 +87,6 @@
     {
       "id": "sigmaboat",
       "title": "SigmaBoat",
-      "needsReferences": false
-    },
-    {
-      "id": "sigmareset",
-      "title": "SigmaReset",
       "needsReferences": false
     },
     {

@@ -168,16 +168,6 @@ function sigmawrite({ files, result = '' }) {
   return problems;
 }
 
-function sigmarefactor({ files }) {
-  const text = files['REFACTOR-SCAN.md'];
-  if (!text) return ['missing REFACTOR-SCAN.md'];
-  const problems = requireText(
-    text,
-    [/laloc|fallback/i, /src\/logic\.js[^\n]*\d/, /src\/game\.js[^\n]*\d/, /risk/i, /verif/i],
-    'REFACTOR-SCAN.md',
-  );
-  return problems;
-}
 
 // The SigmaWrite GUI option: a board built from the installed template.
 function writeBoard({ files, result }) {
@@ -375,32 +365,6 @@ function sigmafork({ files, result }) {
   return problems;
 }
 
-// sigmadesign writes a design system under design/ (DESIGN.md, built CSS, a sample page) and changes no other file.
-function sigmadesign({ files, result }) {
-  const problems = [];
-  for (const [name, text] of Object.entries(files)) {
-    if (name.startsWith('design/')) continue;
-    const original = path.join(FIXTURE, ...name.split('/'));
-    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed a file outside design/: ${name}`);
-  }
-  const design = files['design/DESIGN.md'] ?? '';
-  if (!design) return [...problems, 'missing design/DESIGN.md'];
-  problems.push(...requireText(design, [/^---\r?\n[\s\S]*?^colors:/m, /^\s+primary:\s*"?#[0-9a-fA-F]{6}/m, /^\s+light-canvas:/m, /^typography:/m, /^rounded:/m, /^components:/m, /^## Overview/m], 'design/DESIGN.md'));
-  if (/\bFILL\b/.test(design)) problems.push('design/DESIGN.md: FILL markers left from the template');
-  const tokens = files['design/site/tokens.css'] ?? '';
-  if (!tokens) problems.push('missing design/site/tokens.css');
-  else problems.push(...requireText(tokens, [/:root\s*\{/, /:root\[data-theme="light"\]/, /--primary:\s*#[0-9a-fA-F]{6}/], 'design/site/tokens.css'));
-  const components = files['design/site/components.css'] ?? '';
-  if (!components) problems.push('missing design/site/components.css');
-  else if (/#[0-9a-fA-F]{3,6}\b/.test(components.replace(/\/\*[\s\S]*?\*\//g, ''))) problems.push('design/site/components.css: a colour literal instead of a token');
-  const page = files['design/site/index.html'] ?? '';
-  if (!page) problems.push('missing design/site/index.html');
-  else problems.push(...requireText(page, [/tokens\.css/, /components\.css/, /<title>[^<]+<\/title>/], 'design/site/index.html'));
-  if (!/design\/DESIGN\.md/.test(result)) problems.push('reply does not name design/DESIGN.md');
-  if (!/contrast/i.test(result)) problems.push('reply does not give the contrast check result');
-  if (!/looked|screenshot/i.test(result)) problems.push('reply does not say the page was looked at');
-  return problems;
-}
 
 // sigmatour reads the repository and writes one tour page under tour/, with the scan's data block and a trace.
 function sigmatour({ files, result }) {
@@ -421,38 +385,6 @@ function sigmatour({ files, result }) {
   return problems;
 }
 
-// sigmafinanceman writes its files under finance/ (workbook, report data, page) and changes no other file.
-function sigmafinanceman({ files, result }) {
-  const problems = [];
-  for (const [name, text] of Object.entries(files)) {
-    if (name.startsWith('finance/')) continue;
-    const original = path.join(FIXTURE, ...name.split('/'));
-    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed a file outside finance/: ${name}`);
-  }
-  if (!Object.keys(files).some((name) => /^finance\/[^/]+\.xlsx$/.test(name))) problems.push('missing finance/<stem>.xlsx');
-  const reportName = Object.keys(files).find((name) => /^finance\/[^/]+\.report\.json$/.test(name));
-  if (!reportName) problems.push('missing finance/<stem>.report.json');
-  else {
-    try {
-      const report = JSON.parse(files[reportName]);
-      if (!report.hero || !report.hero.value) problems.push(`${reportName}: no hero number`);
-      if (!Array.isArray(report.sources) || report.sources.length === 0) problems.push(`${reportName}: no sources`);
-    } catch {
-      problems.push(`${reportName}: not JSON`);
-    }
-  }
-  const pageName = Object.keys(files).find((name) => /^finance\/[^/]+\.html$/.test(name));
-  if (!pageName) problems.push('missing finance/<stem>.html');
-  else {
-    const page = files[pageName];
-    const hero = page.indexOf('class="hero"');
-    const table = page.indexOf('<table');
-    if (hero === -1 || (table !== -1 && table < hero)) problems.push(`${pageName}: the page does not lead with the answer`);
-  }
-  if (!/(^|\D)0 errors/.test(result)) problems.push('reply does not give the workbook audit result');
-  if (!/Ruling:/.test(result)) problems.push('reply does not list the defaults it took');
-  return problems;
-}
 
 // sigmaspeedloop scaffolds one project under Projects/<name>/ (signed spec, run file, queue, results header, weights),
 // rents nothing in an offline run, and changes no other file.
@@ -500,42 +432,8 @@ function sigmaspeedloop({ files, result }) {
   return problems;
 }
 
-// sigmasetup writes only setup files in the repo, keeps the git guard's two parts together,
-// and reports every change with its undo.
-function sigmasetup({ files, result }) {
-  const problems = [];
-  const setupFile = (name) => /^(\.claude\/|docs\/agents\/)/.test(name) || name === 'AGENTS.md' || name === 'CLAUDE.md';
-  for (const [name, text] of Object.entries(files)) {
-    if (setupFile(name)) continue;
-    const original = path.join(FIXTURE, ...name.split('/'));
-    if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed a file that is not setup: ${name}`);
-  }
-  const settings = files['.claude/settings.json'];
-  if (settings?.includes('sigma-git-guard.mjs') && !files['.claude/hooks/sigma-git-guard.mjs']) {
-    problems.push('.claude/settings.json runs the git guard but .claude/hooks/sigma-git-guard.mjs is missing');
-  }
-  problems.push(...requireText(result, [/\|\s*Pack\s*\|/i, /\|\s*Undo\s*\|/i], 'reply'));
-  return problems;
-}
 
-// sigmacourse sets up a course repo (steering, spec with a base rate, a done list, a queue,
-// a run file, one check command) and ends with one fenced goal prompt that runs that check.
-const COURSE_FILES = ['AGENTS.md', 'docs/course/spec.md', 'docs/course/done.md', 'loop/queue.tsv', 'loop/run.md', 'checks/check.py'];
 
-function sigmacourse({ files, result }) {
-  const problems = COURSE_FILES.filter((name) => !files[name]).map((name) => `missing ${name}`);
-  const spec = files['docs/course/spec.md'] ?? '';
-  if (!/BASE RATE[^\n]*\b(source|assum)/i.test(spec)) problems.push('docs/course/spec.md: the base rate needs a source or a stated assumption');
-  const done = files['docs/course/done.md'] ?? '';
-  if ((done.match(/^\s*-?\s*R-\d{3}\b/gm) || []).length < 3) problems.push('docs/course/done.md: fewer than 3 numbered requirements');
-  if (!/\bDONE\b/.test(done)) problems.push('docs/course/done.md: no completion ladder line (DONE)');
-  const rows = (files['loop/queue.tsv'] ?? '').split(/\r?\n/).filter(Boolean);
-  if (!/\tdone_when\b/.test(rows[0] ?? '') || rows.length < 2) problems.push('loop/queue.tsv: needs a done_when column and at least one row');
-  const prompt = [...result.matchAll(/^```text\r?\n([\s\S]*?)^```/gm)].map((m) => m[1]).find((b) => /checks\/check\.py/.test(b));
-  if (!prompt) problems.push('reply has no fenced ```text goal prompt that runs checks/check.py');
-  else problems.push(...requireText(prompt, [/loop\/run\.md/, /re-read|every turn/i], 'prompt'));
-  return problems;
-}
 
 // sigmamusk measures before it judges (numbers next to commands), files one issue with
 // checkable acceptance criteria (or prints its body), and ends by offering SigmaShip.
@@ -566,14 +464,8 @@ function sigmadebug({ result }) {
   return problems;
 }
 
-// sigmareset ends with the numbers before and after, what was killed and kept, what waits for the owner and what was not checked.
-function sigmareset({ result }) {
-  const problems = requireText(result, [/before/i, /after/i, /kill/i, /ke(pt|ep)/i, /owner/i, /not check/i], 'reply');
-  if ((result.match(/\d[\d,.]*\s*(->|to)\s*\d/g) || []).length < 2) problems.push('reply: fewer than 2 numbers with before and after');
-  return problems;
-}
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmadesign, sigmatour, sigmafinanceman, sigmaspeedloop, sigmasetup, sigmacourse, sigmamusk, sigmaboat, sigmareset, sigmadebug, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmarefactor, sigmaresearch, sigmadeeplook, sigmafreedom };
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmafork, sigmatour, sigmaspeedloop, sigmamusk, sigmaboat, sigmadebug, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];
