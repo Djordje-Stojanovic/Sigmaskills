@@ -40,13 +40,15 @@ From the JSON take: the active-sandbox maximum minus the running ones (the worke
 
 ## 2. Build or reuse the base
 
-Look for `base-<repo>` in `boat list --filter sr --json` (`s` stopped, `r` running). Reuse it when it is stopped and the commit it printed when built (`git rev-parse --short HEAD` below) is the one the work needs. Otherwise:
+Look for `base-<repo>` in `boat list --filter sr --json` (`s` stopped, `r` running). Reuse it when it is stopped and the commit it printed when built (`git rev-parse --short HEAD` below) is the one the work needs, and the Sigmaskills release it printed is the newest (`npm view @djordje-stojanovic/sigmaskills version`). Otherwise:
 
 ```sh
 boat new --ttl 7200 --name base-<repo> --json          # id from the "ready" event
 printf '%s' "$GH_TOKEN" | boat ssh <base> -- sh -c 'h="Authorization: Basic $(printf "x-access-token:%s" "$(cat)" | base64 -w0)"; GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraHeader GIT_CONFIG_VALUE_0="$h" git clone -q <url> <repo> </dev/null'
 boat exec <base> --cwd <repo> -- git rev-parse --short HEAD   # the base's commit
 boat exec <base> --cwd <repo> --timeout 0 -- <install command>
+boat exec <base> --timeout 0 -- npx -y @djordje-stojanovic/sigmaskills@latest install --preset sigma --agent claude,codex --global --yes   # newest Sigmaskills, so every fork has the skills
+boat exec <base> -- npx -y @djordje-stojanovic/sigmaskills@latest --version   # the release the base holds
 boat exec <base> --cwd <repo> --timeout 0 -- <gate command>   # once, to prove the base is green
 boat exec <base> -- du -sh <repo>                             # report the disk use
 boat stop <base>

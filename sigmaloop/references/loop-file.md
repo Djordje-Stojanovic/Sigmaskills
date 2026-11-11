@@ -19,7 +19,7 @@ Speed metric: <accepted output per hour and per token, in the user's unit>. Draf
 At the stop line every item in <tracker> is accepted with dated evidence, or carries a dated line: done, left, why, next step.
 
 ## Crew
-Shape: <solo | crew of N slots>. Roles and tiers (ids only from the user or <repo model file>):
+Shape: <solo | crew of N slots>. Solo: this session plans, builds, self-reviews and lands each unit; drop the table and rules 1-4. Crew: roles and tiers (ids and effort only from the user or <repo model file>):
 | Role | Tier | Model ids, in fallback order |
 |---|---|---|
 | Planner (orchestrator) | top | <ids> |
@@ -33,7 +33,7 @@ Shape: <solo | crew of N slots>. Roles and tiers (ids only from the user or <rep
 
 ## Failure rules
 - **Stuck:** a job with no new commit and no new output for <30> minutes is stuck. Read the time from its last commit or log line, never by polling: check it when any notice wakes you.
-- **Restart:** a stuck job gets a WIP commit, is stopped, and restarts from its last pushed commit with the same brief.
+- **Restart:** a stuck job gets a WIP commit, is stopped, and restarts from that WIP commit with the same brief.
 - **Provider:** a provider that fails twice (429, rate limit, or a cut-off run) drops to last place in every fallback list.
 - **Tier:** a job that fails twice moves one tier up.
 - **Cleanup:** remove a finished job's worktree; stop a stray process by its process id only, never by name.
@@ -77,7 +77,7 @@ Shape: <solo | crew of N slots>. Roles and tiers (ids only from the user or <rep
 Start nothing new. Let running jobs finish and write their state. Run the full gate once and print it. Prove sync: no open PR of this run, one worktree, no stray process. Write the final handoff: accepted (with evidence), open (reason, next step), owner steps.
 
 ## On stop (only when the owner asks)
-Run sigmamusk, then sigmarefactor, then sigmareview on the loop's own scaffolding. Target: half the scaffolding bytes and checks about 10x faster. Measure both before and after, and print the numbers.
+Run sigmamusk, then `sigmamusk cut`, then sigmareview on the loop's own scaffolding. Target: half the scaffolding bytes and checks about 10x faster. Measure both before and after, and print the numbers.
 ```
 
 ## Rules for the file

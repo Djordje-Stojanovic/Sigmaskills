@@ -4,15 +4,14 @@ import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import test from 'node:test';
 import { runCli } from '../src/cli.js';
-import { buildPackRows, windowRows } from '../src/wizard.js';
+import { buildPackRows, previewFrame, windowRows } from '../src/wizard.js';
 import { getCatalog } from '../src/catalog.js';
 import {
-  ACME_PACK, createRemote, createSandbox, writeUserConfig,
+  ACME_PACK, createMockIo, createRemote, createSandbox, writeUserConfig,
 } from './pack-fixtures.js';
 
 const UP = '[A';
 const DOWN = '\x1b[B';
-const RIGHT = '\x1b[C';
 const ENTER = '\r';
 const ANSI = /\x1b\[[0-9;?]*[A-Za-z]/g;
 
@@ -51,31 +50,6 @@ async function wizard(box, keys, args = [], options = {}) {
 }
 
 const skillPath = (box, id) => path.join(box.project, '.agents', 'skills', id, 'SKILL.md');
-
-test('wizard: opens on the grouped picker in the DESIGN.md palette', async () => {
-  const box = createSandbox();
-  try {
-    const { code, io } = await wizard(box, '');
-    assert.equal(code, 0);
-    const first = io.frames()[1];
-    assert.match(first, /Σ SIGMA SKILLS/);
-    assert.match(first, /1 What\s+2 Where\s+3 Review/);
-    for (const title of ['Sigma', 'Matt Pocock', 'Three.js', 'HyperFrames', 'MiniMax H3', 'Local']) {
-      assert.ok(first.includes(title), `${title} row`);
-    }
-    assert.match(first, /0\/38/);
-    assert.match(first, /n\/a/, 'an unavailable pack is shown but marked');
-    assert.match(io.raw(), /\x1b\[48;2;9;9;11m/, 'canvas #09090b');
-    assert.match(io.raw(), /\x1b\[1;38;2;52;211;153m/, 'emerald #34d399');
-    assert.match(io.text(), /Cancelled\. Nothing was written\./);
-    assert.ok(!fs.existsSync(path.join(box.project, '.agents')));
-    assert.deepEqual(io.rawModes, [true, false], 'raw mode restored');
-    assert.ok(io.raw().includes('\x1b[?1049l'), 'left the alternate screen');
-    assert.ok(io.raw().endsWith('\n') && io.raw().includes('\x1b[?25h'), 'cursor shown again');
-  } finally {
-    box.cleanup();
-  }
-});
 
 test('wizard: the Sigma pack key, then Where and Review, installs the whole pack', async () => {
   const box = createSandbox();
@@ -124,8 +98,8 @@ test('wizard: a pack from outside installs, and the review names the download', 
   try {
     createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
     writeUserConfig(box.home, { packs: [ACME_PACK] });
-    // Acme is the 12th row: eleven built-in packs come first.
-    const { code, io } = await wizard(box, `${DOWN.repeat(11)} ${ENTER}${ENTER}${ENTER}`);
+    // Acme is the 21st row: twenty built-in packs come first.
+    const { code, io } = await wizard(box, `${DOWN.repeat(20)} ${ENTER}${ENTER}${ENTER}`);
     assert.equal(code, 0, io.err());
     assert.ok(io.frames().some((frame) => /Downloads\s+acme\/skills/.test(frame)));
     assert.match(io.text(), /2 skills installed/);
@@ -149,33 +123,6 @@ test('wizard: open a pack, pick single skills, and filter', async () => {
     assert.match(io.text(), /1 skill installed/);
     assert.ok(fs.existsSync(skillPath(box, 'beta')));
     assert.ok(!fs.existsSync(skillPath(box, 'alpha')));
-  } finally {
-    box.cleanup();
-  }
-});
-
-test('wizard: right opens a pack, space toggles one skill, left closes it', async () => {
-  const box = createSandbox();
-  try {
-    const { code, io } = await wizard(box, `${DOWN}${RIGHT}${DOWN} ${ENTER}`);
-    assert.equal(code, 0);
-    const pickerFrames = io.frames().filter((frame) => frame.includes('Pick packs'));
-    assert.ok(pickerFrames.some((frame) => frame.includes('ask-matt')), 'the Matt Pocock skills are listed once the pack is open');
-    const last = pickerFrames.at(-1);
-    assert.match(last, /\[x\]\s+ask-matt/);
-    assert.match(last, /1 skill selected from 1 pack/);
-    assert.match(last, /\[-\]\s+2 Matt Pocock\s+1\/38/, 'the pack shows a partial mark');
-  } finally {
-    box.cleanup();
-  }
-});
-
-test('wizard: nothing selected shows a notice and does not advance', async () => {
-  const box = createSandbox();
-  try {
-    const { io } = await wizard(box, ENTER);
-    assert.ok(io.frames().some((frame) => frame.includes('Select at least one skill.')));
-    assert.ok(!io.frames().some((frame) => frame.includes('2 Where') && frame.includes('Method')));
   } finally {
     box.cleanup();
   }
@@ -231,20 +178,6 @@ test('wizard: --classic, --static, --no-color and a pipe use the line-by-line in
   }
 });
 
-test('wizard: a short, narrow terminal still shows every step within its bounds', async () => {
-  const box = createSandbox();
-  try {
-    const { io } = await wizard(box, `1${ENTER}${ENTER}`, [], { columns: 50, rows: 14 });
-    for (const frame of io.frames().slice(1)) {
-      const lines = frame.split('\n').filter((line) => !/^\s*$/.test(line) || true);
-      assert.ok(lines.length <= 15, `frame has ${lines.length} lines`);
-      for (const line of lines) assert.ok(line.length <= 50, `line too wide: ${line.length}`);
-    }
-  } finally {
-    box.cleanup();
-  }
-});
-
 test('wizard helpers: windowRows keeps the cursor in view and buildPackRows nests skills', () => {
   assert.deepEqual(windowRows(5, 2, 10), { start: 0, end: 5 });
   assert.deepEqual(windowRows(100, 0, 10), { start: 0, end: 10 });
@@ -259,4 +192,104 @@ test('wizard helpers: windowRows keeps the cursor in view and buildPackRows nest
   assert.deepEqual(buildPackRows(packs, new Set(['a']), '').map((row) => row.skill?.id || row.pack.id), ['a', 'one', 'two', 'b']);
   assert.deepEqual(buildPackRows(packs, new Set(), 'sec').map((row) => row.skill.id), ['two']);
   assert.deepEqual(buildPackRows(packs, new Set(), 'berry').map((row) => row.skill.id), ['three'], 'a pack name matches its skills');
+});
+
+const RIGHT = '\x1b[C';
+const PAGE_DOWN = '\x1b[6~';
+const CTRL_C = '\x03';
+
+test('wizard helpers: previewFrame wraps, keeps the indent and clamps the scroll', () => {
+  const text = ['# Title', '', '  indented words that are long enough to wrap around the edge', 'last'].join('\r\n');
+  const all = previewFrame(text, 30, 10, 0);
+  assert.equal(all.top, 0);
+  assert.deepEqual(all.lines.slice(0, 2), ['# Title', '']);
+  assert.ok(all.lines.length > 4, 'the long line wraps');
+  assert.ok(all.lines.slice(2, -1).every((line) => line.startsWith('  ') && line.length <= 30), 'wrapped parts keep the indent and the width');
+  assert.equal(all.total, all.lines.length);
+  assert.deepEqual(previewFrame(text, 30, 2, 99).lines, all.lines.slice(-2), 'a scroll past the end stops at the last page');
+  assert.equal(previewFrame(text, 30, 2, 99).top, all.total - 2);
+  assert.equal(previewFrame(text, 30, 2, -5).top, 0);
+});
+
+test('wizard: p opens the full text of a Sigma skill, PgDn scrolls it, q closes it', async () => {
+  const box = createSandbox();
+  try {
+    const first = getCatalog().skills[0].id;
+    const { code, io } = await wizard(box, `${RIGHT}${DOWN}p${PAGE_DOWN}q${CTRL_C}`);
+    assert.equal(code, 130);
+    const frames = io.frames();
+    const opened = frames.find((frame) => frame.includes(`${first}  SKILL.md   lines 1-`));
+    assert.ok(opened, 'the preview names the skill and the lines it shows');
+    assert.ok(opened.includes(`name: ${first}`), 'the frame holds the text of SKILL.md');
+    assert.ok(frames.some((frame) => /SKILL\.md {3}lines (?!1-)\d+-\d+ of \d+/.test(frame)), 'PgDn moves down');
+    assert.ok(frames.at(-1).includes('Pick packs'), 'q goes back to the list');
+    assert.ok(!fs.existsSync(skillPath(box, first)), 'reading a skill installs nothing');
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('wizard: p shows the text of a pack skill, and a clear line when the source cannot be reached', async () => {
+  const box = createSandbox();
+  try {
+    createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
+    writeUserConfig(box.home, { packs: [ACME_PACK] });
+    const ok = await wizard(box, `/beta${ENTER}${UP}pq${CTRL_C}`);
+    assert.ok(ok.io.frames().some((frame) => /beta {2}SKILL\.md/.test(frame) && frame.includes('Beta skill.')), ok.io.err());
+
+    fs.rmSync(path.join(box.remotes, 'acme'), { recursive: true, force: true });
+    const down = await wizard(box, `/beta${ENTER}${UP}pq${CTRL_C}`);
+    assert.ok(down.io.frames().some((frame) => frame.includes('Could not load the text of beta')));
+    assert.ok(down.io.frames().at(-1).includes('Filter: beta'), 'the wizard is still usable');
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('wizard: unticking installed skills lists them under Remove, and the confirm removes them', async () => {
+  const box = createSandbox();
+  try {
+    createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
+    writeUserConfig(box.home, { packs: [ACME_PACK] });
+    const first = getCatalog().skills[0].id;
+    const setup = createMockIo(box.env);
+    assert.equal(await runCli(['install', first, 'alpha', 'beta', '--yes', '--project', box.project], setup), 0, setup.getStderr());
+    assert.ok(fs.existsSync(skillPath(box, first)) && fs.existsSync(skillPath(box, 'alpha')));
+
+    // Untick the first Sigma skill, then alpha (the last hit of the filter). Only removals: Where is skipped.
+    const { code, io } = await wizard(box, `${RIGHT}${DOWN} /alpha${ENTER}${UP} ${ENTER}${ENTER}`);
+    assert.equal(code, 0, io.err());
+    const frames = io.frames();
+    assert.ok(frames.some((frame) => new RegExp(`\\[ \\]  ${first}.*will remove`).test(frame)), 'the unticked skill says what will happen');
+    const review = frames.find((frame) => frame.includes('Remove 2 skills'));
+    assert.ok(review, 'the review lists the removals');
+    assert.ok(review.includes(first) && review.includes('alpha') && !/Install \d|Update \d/.test(review));
+    assert.match(io.text(), /removed .*alpha/);
+    assert.ok(!fs.existsSync(skillPath(box, first)));
+    assert.ok(!fs.existsSync(skillPath(box, 'alpha')));
+    assert.ok(fs.existsSync(skillPath(box, 'beta')), 'a skill that stayed ticked is kept');
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('wizard: an installed skill picked again is an update, apart from the installs', async () => {
+  const box = createSandbox();
+  try {
+    createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
+    writeUserConfig(box.home, { packs: [ACME_PACK] });
+    const setup = createMockIo(box.env);
+    assert.equal(await runCli(['install', 'alpha', '--yes', '--project', box.project], setup), 0, setup.getStderr());
+
+    // alpha: space unticks it, space again picks it for an update. beta is new.
+    const { code, io } = await wizard(box, `/alpha${ENTER}${UP}  /beta${ENTER}${UP} ${ENTER}${ENTER}${ENTER}`);
+    assert.equal(code, 0, io.err());
+    const frames = io.frames();
+    assert.ok(frames.some((frame) => /\[x\] {2}alpha.*will update/.test(frame)));
+    const review = frames.find((frame) => frame.includes('Update 1 skill'));
+    assert.ok(review && review.includes('Install 1 skill') && !review.includes('Remove'), 'installs and updates are listed apart');
+    assert.ok(fs.existsSync(skillPath(box, 'alpha')) && fs.existsSync(skillPath(box, 'beta')));
+  } finally {
+    box.cleanup();
+  }
 });

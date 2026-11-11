@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { findPackageRoot } from '../src/catalog.js';
 import { inspectManagedPath, recommendedLinkMethod } from '../src/links.js';
 import { computeSkillRevision } from '../src/revision.js';
+import { packInto, installTarball } from './packed.js';
 
 const ROOT = findPackageRoot();
 const LINK_METHOD = recommendedLinkMethod();
@@ -93,11 +94,7 @@ function listTarball(tmpDir, tarballFileName) {
 test('packed Release candidate covers lifecycle, platforms, terminals, schemas, allowlist, identities, and offline use', async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-rc-'));
   try {
-    const packOutput = execSync(`npm pack --pack-destination "${tmpDir}"`, {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim();
-    const tarballFileName = packOutput.split(/\r?\n/).pop()?.trim();
+    const tarballFileName = packInto(tmpDir);
     assert.ok(tarballFileName, 'expected tarball filename from npm pack');
     const tarballPath = path.join(tmpDir, tarballFileName);
     const packedFiles = listTarball(tmpDir, tarballFileName);
@@ -134,8 +131,7 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
 
     const appDir = path.join(tmpDir, 'app');
     fs.mkdirSync(appDir, { recursive: true });
-    execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
+    installTarball(appDir, tarballPath);
     const packedRoot = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills');
     const bin = path.join(packedRoot, 'bin', 'sigmaskills.js');
     const offline = offlineEnv({ HOME: path.join(tmpDir, 'offline-home'), USERPROFILE: path.join(tmpDir, 'offline-home') });
@@ -146,6 +142,9 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
     const listed = JSON.parse(runCli(bin, ['list', '--json'], { cwd: appDir, env: offline }));
     assert.equal(listed.version, packedPkg.version);
     assert.equal(listed.name, packedManifest.name);
+    // Fast stand-in: the packed tarball is right and its CLI runs offline. The full lifecycle (minutes on a loaded PC)
+    // runs with SIGMA_SLOW_TESTS=1, as a separate CI step on every pull request.
+    if (!process.env.SIGMA_SLOW_TESTS) return;
     for (const skill of listed.skills) {
       assert.equal(skill.revision, computeSkillRevision(path.join(packedRoot, skill.id)));
     }

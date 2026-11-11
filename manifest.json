@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "sigmaskills",
-  "version": "0.21.0",
+  "version": "0.24.1",
   "description": "Portable Agent Skills monorepo and first-party Sigma Installer",
   "skills": [
     {
@@ -27,11 +27,6 @@
     {
       "id": "sigmawrite",
       "title": "SigmaWrite",
-      "needsReferences": false
-    },
-    {
-      "id": "sigmarefactor",
-      "title": "SigmaRefactor",
       "needsReferences": true
     },
     {
@@ -43,11 +38,6 @@
       "id": "sigmadeeplook",
       "title": "SigmaDeepLook",
       "needsReferences": true
-    },
-    {
-      "id": "sigmawritegui",
-      "title": "SigmaWriteGUI",
-      "needsReferences": false
     },
     {
       "id": "sigmacreatearena",
@@ -75,38 +65,13 @@
       "needsReferences": true
     },
     {
-      "id": "sigmafork",
-      "title": "SigmaFork",
-      "needsReferences": true
-    },
-    {
-      "id": "sigmadesign",
-      "title": "SigmaDesign",
-      "needsReferences": true
-    },
-    {
       "id": "sigmatour",
       "title": "SigmaTour",
       "needsReferences": true
     },
     {
-      "id": "sigmafinanceman",
-      "title": "SigmaFinanceMan",
-      "needsReferences": true
-    },
-    {
       "id": "sigmaspeedloop",
       "title": "SigmaSpeedLoop",
-      "needsReferences": true
-    },
-    {
-      "id": "sigmasetup",
-      "title": "SigmaSetup",
-      "needsReferences": true
-    },
-    {
-      "id": "sigmacourse",
-      "title": "SigmaCourse",
       "needsReferences": true
     },
     {
@@ -118,9 +83,22 @@
       "id": "sigmaboat",
       "title": "SigmaBoat",
       "needsReferences": false
+    },
+    {
+      "id": "sigmadebug",
+      "title": "SigmaDebug",
+      "needsReferences": false
     }
   ],
   "retired": [
-    "sigmaperformance"
+    "sigmaperformance",
+    "sigmawritegui",
+    "sigmafork",
+    "sigmarefactor",
+    "sigmareset",
+    "sigmasetup",
+    "sigmadesign",
+    "sigmacourse",
+    "sigmafinanceman"
   ]
 }

@@ -24,6 +24,7 @@
           "type": "git",
           "repo": "mattpocock/skills",
           "path": "skills",
+          "ref": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
           "skills": [
             {
               "id": "ask-matt",
@@ -126,6 +127,10 @@
               "description": "Wire dependency-cruiser into a TypeScript repo so each package is a deep module, with implementation hidden in subfolders and reachable only throug..."
             },
             {
+              "id": "software-factory",
+              "description": "Shared language for designing a software factory: the tasks it runs and the services it plugs into."
+            },
+            {
               "id": "tdd",
               "description": "Test-driven development."
             },
@@ -193,6 +198,7 @@
           "type": "git",
           "repo": "CloudAI-X/threejs-skills",
           "path": "skills",
+          "ref": "0e181866f095b5f06d005133876e926515390d95",
           "skills": [
             {
               "id": "threejs-animation",
@@ -262,7 +268,7 @@
           "type": "git",
           "repo": "heygen-com/hyperframes",
           "path": "skills",
-          "ref": "v0.8.188",
+          "ref": "v0.9.30",
           "skills": [
             {
               "id": "figma",
@@ -289,8 +295,16 @@
               "description": "Bring existing video code or footage into HyperFrames and verify it frame by frame against the original - Remotion first, also Motion Canvas, Lotti..."
             },
             {
+              "id": "reverse-any-video",
+              "description": "Rebuild any video file as an editable HyperFrames project - motion graphics, talking heads, live action or AI-generated footage - checked against t..."
+            },
+            {
               "id": "slideshow",
               "description": "Build a HyperFrames slideshow to present live - slides, fragment reveals, branching hotspots and presenter mode with speaker notes, served by `hype..."
+            },
+            {
+              "id": "style-sampling",
+              "description": "Make a new episode in a proven video style - Collage Explainer, Finance Explainer, Animated Science Explainer, 3D Brand Explainer, 3D True Crime -..."
             }
           ]
         },
@@ -298,6 +312,7 @@
           "type": "git",
           "repo": "nateherkai/hyperframes-student-kit",
           "path": ".agents/skills",
+          "ref": "10511e5af86fc47756ea89803b397422e2d89284",
           "skills": [
             {
               "id": "cut-mistakes",
@@ -341,7 +356,7 @@
             },
             {
               "id": "website-to-hyperframes",
-              "description": "|"
+              "description": "Capture a website and create a HyperFrames video from it."
             }
           ]
         }
@@ -412,84 +427,84 @@
         {
           "type": "git",
           "repo": "anthropics/skills",
-          "ref": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+          "ref": "2c5958ecac7cee2b583967a2c4981d0f4a75c579",
           "path": "skills",
           "skills": [
             {
               "id": "academy-guide",
-              "description": "Recommends Claude Academy courses when a user asks how to use Claude."
+              "description": "Stop and check this skill before finishing any reply to a question about how to use Claude or a Claude product \u2014 it recommends matching courses, tu..."
             },
             {
               "id": "algorithmic-art",
-              "description": "Generative art with p5.js: seeded randomness, flow fields and particles."
+              "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration."
             },
             {
               "id": "brand-guidelines",
-              "description": "Applies Anthropic's brand colours and fonts to an artifact."
+              "description": "Applies Anthropic's official brand colors and typography to any sort of artifact that may benefit from having Anthropic's look-and-feel."
             },
             {
               "id": "canvas-design",
-              "description": "Poster and art designs as PNG or PDF, built from a written design philosophy."
+              "description": "Create beautiful visual art in .png and .pdf documents using design philosophy."
             },
             {
               "id": "claude-api",
-              "description": "Claude API and SDK reference for Python, TypeScript, Go, Java, PHP, Ruby, C# and curl."
+              "description": "Reference for the Claude API / Anthropic SDK \u2014 model ids, pricing, params, streaming, tool use, MCP, agents, caching, token counting, model migration."
             },
             {
               "id": "discernment-nudge",
-              "description": "Adds 2-3 follow-up questions after a substantive answer to check key facts."
+              "description": "After you give a substantive answer or draft that the user may act on \u2014 advice or recommendations, drafted artifacts such as goals, plans, pitches,..."
             },
             {
               "id": "doc-coauthoring",
-              "description": "Structured workflow for co-writing docs, specs and proposals."
+              "description": "Guide users through a structured workflow for co-authoring documentation."
             },
             {
               "id": "docx",
-              "description": "Create, read and edit Word files: comments, tracked changes and templates."
+              "description": "Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files) or Word templates (.dotx files)."
             },
             {
               "id": "frontend-design",
-              "description": "Distinctive UI design guidance that avoids template-looking output."
+              "description": "Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one."
             },
             {
               "id": "internal-comms",
-              "description": "Status reports, newsletters and FAQs in set formats."
+              "description": "A set of resources to help me write all kinds of internal communications, using the formats that my company likes to use."
             },
             {
               "id": "mcp-builder",
-              "description": "Guide to building and testing MCP servers in Python or Node."
+              "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools."
             },
             {
               "id": "pdf",
-              "description": "Read, extract, merge, split, fill and create PDF files."
+              "description": "Use this skill whenever the user wants to do anything with PDF files."
             },
             {
               "id": "pptx",
-              "description": "Create, read and edit PowerPoint decks."
+              "description": "Use this skill any time a .pptx or .potx file is involved in any way \u2014 as input, output, or both."
             },
             {
               "id": "skill-creator",
-              "description": "Create, edit, test and benchmark skills, with eval scripts."
+              "description": "Create new skills, modify and improve existing skills, and measure skill performance."
             },
             {
               "id": "slack-gif-creator",
-              "description": "Animated GIFs that fit Slack's size and frame limits."
+              "description": "Knowledge and utilities for creating animated GIFs optimized for Slack."
             },
             {
               "id": "theme-factory",
-              "description": "Applies one of 10 preset themes, or a new one, to any artifact."
+              "description": "Toolkit for styling artifacts with a theme."
             },
             {
               "id": "web-artifacts-builder",
-              "description": "Multi-file React, Tailwind and shadcn/ui artifacts, bundled to one HTML file."
+              "description": "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn..."
             },
             {
               "id": "webapp-testing",
-              "description": "Playwright tests for a local web app: screenshots and console logs."
+              "description": "Toolkit for interacting with and testing local web applications using Playwright."
             },
             {
               "id": "xlsx",
-              "description": "Create, edit and recalculate Excel files with formulas."
+              "description": "Use this skill any time a spreadsheet file is the primary input or output."
             }
           ]
         }
@@ -951,12 +966,12 @@
         {
           "type": "git",
           "repo": "mvanhorn/last30days-skill",
-          "ref": "v3.30.0",
+          "ref": "v3.33.1",
           "path": "skills",
           "skills": [
             {
               "id": "last30days",
-              "description": "Research what people say about any topic in the last 30 days across Reddit, X, YouTube, TikTok, Hacker News, Polymarket, GitHub and the web."
+              "description": "Research what people actually say about any topic in the last 30 days."
             }
           ]
         }
@@ -974,7 +989,7 @@
         {
           "type": "git",
           "repo": "anthropics/financial-services",
-          "ref": "574ed3624aebd0418c7e96cd101262f30210ab26",
+          "ref": "60565064557ca77b12f62aa7877f365d111c129d",
           "path": "plugins",
           "transform": "financial-services",
           "skills": [
@@ -1526,6 +1541,656 @@
             {
               "id": "takeover",
               "description": "Take over existing work."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "superpowers",
+      "title": "Superpowers",
+      "blurb": "Jesse Vincent's workflow skills: brainstorm, write a plan, execute it, TDD, debug, review, finish the branch.",
+      "aliases": [
+        "obra"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "obra/superpowers",
+          "path": "skills",
+          "ref": "22f0b463e7a5e579904dd6211a520321035526f7",
+          "skills": [
+            {
+              "id": "brainstorming",
+              "description": "You MUST use this before any creative work - creating features, building components, adding functionality, modifying behavior, or planning anything..."
+            },
+            {
+              "id": "diagnosing-superpowers",
+              "description": "Use when a superpowers session went wrong and your human partner wants to know why \u2014 repeated work, ignored plans, stumbles, poor results, a skill..."
+            },
+            {
+              "id": "dispatching-parallel-agents",
+              "description": "Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies"
+            },
+            {
+              "id": "executing-plans",
+              "description": "Use when executing an implementation plan in the current session as the implementer yourself \u2014 your human partner chose inline execution, or no sub..."
+            },
+            {
+              "id": "finishing-a-development-branch",
+              "description": "Use when implementation is complete, all tests pass, and you need to decide how to integrate the work"
+            },
+            {
+              "id": "receiving-code-review",
+              "description": "Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requir..."
+            },
+            {
+              "id": "requesting-code-review",
+              "description": "Use when completing tasks, implementing major features, or before merging to verify work meets requirements"
+            },
+            {
+              "id": "subagent-driven-development",
+              "description": "Use when executing implementation plans with independent tasks in the current session"
+            },
+            {
+              "id": "systematic-debugging",
+              "description": "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes"
+            },
+            {
+              "id": "test-driven-development",
+              "description": "Use when implementing any feature or bugfix, before writing implementation code"
+            },
+            {
+              "id": "using-git-worktrees",
+              "description": "Use when starting feature work that needs isolation from current workspace or before executing implementation plans - ensures an isolated workspace..."
+            },
+            {
+              "id": "using-superpowers",
+              "description": "Use when starting any conversation - establishes how to find and use skills, requiring skill invocation before ANY response including clarifying qu..."
+            },
+            {
+              "id": "verification-before-completion",
+              "description": "Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirm..."
+            },
+            {
+              "id": "writing-plans",
+              "description": "Use when you have a spec or requirements for a multi-step task, before touching code"
+            },
+            {
+              "id": "writing-skills",
+              "description": "Use when creating new skills, editing existing skills, or verifying skills work before deployment"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "impeccable",
+      "title": "Impeccable",
+      "blurb": "Paul Bakaus's design vocabulary for agents: one skill with commands to audit, polish, critique and restyle a frontend.",
+      "aliases": [
+        "pbakaus"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "pbakaus/impeccable",
+          "path": "plugin/skills",
+          "ref": "ec229b48547f24685ffb22aa51c462c5ae27908c",
+          "skills": [
+            {
+              "id": "impeccable",
+              "description": "Use to design, redesign, critique, audit, polish or animate a frontend: websites, landing pages, dashboards, app UI, components, native iOS/Android..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security-audit",
+      "title": "Security Audit",
+      "blurb": "Cloudflare's security audit skill: find vulnerabilities and verify each finding before it is reported.",
+      "aliases": [
+        "cloudflare",
+        "audit"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "cloudflare/security-audit-skill",
+          "path": "skills",
+          "ref": "c1c8a8c1471069fb0e188eeaff69b8e8db6564a8",
+          "skills": [
+            {
+              "id": "security-audit",
+              "description": "Security guidance and vulnerability review for codebases, APIs, services, CLI tools, libraries, and daemons."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anatomy",
+      "title": "Anatomy",
+      "blurb": "Detailed, interactive isometric illustrations of real machines and how they work.",
+      "aliases": [
+        "isometric"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "wheresryan22/anatomy",
+          "path": "",
+          "rootSkill": "anatomy",
+          "ref": "1482e8469b0a9e0d8cc18ea2740a01423d29ae80",
+          "skills": [
+            {
+              "id": "anatomy",
+              "description": "Build crafted, highly detailed, interactive isometric SVG figures that explain a technical idea as a real physical object (a test rig, a dial gauge..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "diagram-design",
+      "title": "Diagram Design",
+      "blurb": "Cathryn Lavery's editorial diagrams: architecture, flow, sequence and more as clean HTML and SVG.",
+      "aliases": [
+        "diagram",
+        "diagrams"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "cathrynlavery/diagram-design",
+          "path": "skills",
+          "ref": "f2496acbde9f45ccb55c24d4f75210c8a1355df8",
+          "skills": [
+            {
+              "id": "diagram-design",
+              "description": "Create branded architecture, architecture delta, IT current-state, flowchart, sequence, state machine, ER/data model, timeline, swimlane, quadrant,..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "taste-skill",
+      "title": "Taste",
+      "blurb": "Art direction for coding agents: reference images, a visual brief and a browser check, so a page does not look generated.",
+      "aliases": [
+        "taste",
+        "leonxlnx"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "Leonxlnx/taste-skill",
+          "path": "skills",
+          "ref": "f6b76575f949707b4e3c37cd86cb44b0b98643e8",
+          "skills": [
+            {
+              "id": "taste-skill",
+              "description": "tasteskill 2.5.1, the anti-slop frontend skill."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hallmark",
+      "title": "Hallmark",
+      "blurb": "A design skill that refuses the AI look: new pages, audits, redesigns and design extraction.",
+      "aliases": [
+        "nutlope"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "Nutlope/hallmark",
+          "path": "skills",
+          "ref": "407fa689f4a276f2fd389208d271d0fef08f5058",
+          "skills": [
+            {
+              "id": "hallmark",
+              "description": "Design skill for websites and new pages that look designed, not generated."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ponytail",
+      "title": "Ponytail",
+      "blurb": "The lazy senior developer: the smallest change that fully works, plus audit, review, debt and gain reports.",
+      "aliases": [
+        "lazy"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "DietrichGebert/ponytail",
+          "path": "skills",
+          "ref": "v5.3.3",
+          "skills": [
+            {
+              "id": "ponytail",
+              "description": "Lazy senior dev mode: the smallest change that fully solves the task, and a reply a busy human understands in one read."
+            },
+            {
+              "id": "ponytail-audit",
+              "description": "Quality audit of a whole repo: bugs, security holes, what breaks under real load, risky code without tests, slow paths, and what to delete, merge o..."
+            },
+            {
+              "id": "ponytail-debt",
+              "description": "List every `shortcut:` comment (and older `ponytail:` ones) as a debt ledger."
+            },
+            {
+              "id": "ponytail-gain",
+              "description": "Show ponytail's measured savings (code, cost, speed) from the benchmark."
+            },
+            {
+              "id": "ponytail-help",
+              "description": "Quick reference for ponytail levels, skills and commands."
+            },
+            {
+              "id": "ponytail-review",
+              "description": "Quality review of a change: is the logic right, is it safe, does it hold under real load, is risky code tested, is it fast enough, and is every lin..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "blender",
+      "title": "Blender",
+      "blurb": "Drive Blender 5 from code: modeling, rigging, shaders, physics, rendering, camera, lighting, VFX, styles and game export.",
+      "aliases": [
+        "blender3d"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "arjun988/blender-skills",
+          "path": ".claude/skills",
+          "ref": "904f095d8f36a6e72adaebb08d07f884a074743d",
+          "skills": [
+            {
+              "id": "analog-found-footage-horror",
+              "description": "Analog, VHS, CRT, and found-footage horror aesthetics for Blender shots including camera imperfections and documentary framing."
+            },
+            {
+              "id": "animation",
+              "description": "Game-ready animation in Blender including walk/run/idle cycles, combat, mechanical animation, camera animation, constraints, Graph Editor, and NLA..."
+            },
+            {
+              "id": "anime-style",
+              "description": "Anime and cel-shaded art direction for Blender with hard color breaks, toon shaders, clean silhouettes, and anime proportion language."
+            },
+            {
+              "id": "apocalypse-worlds",
+              "description": "Apocalyptic and dystopian world art direction for Blender including post-apocalyptic, zombie, alien invasion, post-human, dystopian, and utopian co..."
+            },
+            {
+              "id": "archviz",
+              "description": "Architectural visualization in Blender for interiors/exteriors with real-world scale, camera composition, PBR materials, and still/animation delive..."
+            },
+            {
+              "id": "asset-optimization",
+              "description": "Validates and optimizes Blender assets for polycount, topology, UV efficiency, material count, naming, collections, and game-ready performance."
+            },
+            {
+              "id": "biome-worlds",
+              "description": "Biome and setting art direction for Blender covering underwater, desert, arctic, jungle, underground, and floating-island environments."
+            },
+            {
+              "id": "blender-director",
+              "description": "Use when starting any Blender asset task, planning a production pipeline, coordinating multiple disciplines, or matching a reference photo/concept..."
+            },
+            {
+              "id": "blender-modeler",
+              "description": "Core Blender modeling specialist for Edit Mode, modifiers, collections, precision modeling, and scene organization."
+            },
+            {
+              "id": "body-horror-style",
+              "description": "Body horror art direction for Blender focusing on flesh wrongness, mutation, fusion, and visceral material storytelling."
+            },
+            {
+              "id": "brutalist-mood",
+              "description": "Brutalist and concrete-monument mood direction for Blender architecture and scenes with raw concrete, monumental scale, and austere composition."
+            },
+            {
+              "id": "camera-cinematography",
+              "description": "Cinematic camera work in Blender including framing, lenses, composition, camera animation, and shot language beyond basic rendering setup via MCP."
+            },
+            {
+              "id": "cartoon-style",
+              "description": "Cartoon art direction for Blender with squash-stretch readable shapes, bold colors, and graphic silhouettes for games and animation."
+            },
+            {
+              "id": "character-archetypes",
+              "description": "Character archetype art direction for Blender covering fantasy races, horror creatures, roles (knight, assassin, detective), and body types (mecha,..."
+            },
+            {
+              "id": "character-artist",
+              "description": "AAA character modeling for human anatomy, stylization, facial topology, clothing, hair, and animation-ready meshes."
+            },
+            {
+              "id": "chibi-style",
+              "description": "Chibi and SD proportion art direction for Blender characters with oversized heads, simplified anatomy, and cute silhouette rules."
+            },
+            {
+              "id": "cloth-sim",
+              "description": "Garment blockout, cloth simulation, pin groups, and bake to shape keys or caches for characters and props in Blender via MCP."
+            },
+            {
+              "id": "collision-proxy",
+              "description": "Collision proxy authoring for games including UCX/UHX naming, convex hulls, capsules, and simple collider meshes in Blender via MCP."
+            },
+            {
+              "id": "comic-book-style",
+              "description": "Comic book and graphic-novel art direction for Blender with ink-line emphasis, halftone cues, and high-contrast framing."
+            },
+            {
+              "id": "compositing",
+              "description": "Blender compositor workflows for beauty stacks, render passes, color grade, glare, and delivery outputs via MCP."
+            },
+            {
+              "id": "cosmic-eldritch-horror",
+              "description": "Cosmic, eldritch, and Lovecraftian horror art direction for Blender with non-Euclidean cues, impossible scale, and incomprehensible forms."
+            },
+            {
+              "id": "cozy-wholesome-mood",
+              "description": "Cozy, cute, wholesome, relaxing, and peaceful mood direction for Blender assets and scenes."
+            },
+            {
+              "id": "creature-artist",
+              "description": "AAA creature modeling for fantasy, aliens, monsters, and organic creature design with believable anatomy and movement."
+            },
+            {
+              "id": "dark-gritty-mood",
+              "description": "Dark, grim, gritty, rusty, abandoned, decayed, industrial, lonely, and melancholic mood direction for Blender."
+            },
+            {
+              "id": "dream-surreal-mood",
+              "description": "Dreamlike, surreal, mysterious, mystical, hopeful, and chaotic mood direction for Blender scenes."
+            },
+            {
+              "id": "dream-weirdcore-style",
+              "description": "Dreamcore, weirdcore, and traumacore-inspired art direction for Blender with nostalgic wrongness, liminal nostalgia, and surreal childhood spaces."
+            },
+            {
+              "id": "environment-artist",
+              "description": "AAA environment art for modular kits, buildings, terrain, vegetation, architecture, and scene composition."
+            },
+            {
+              "id": "export-pipeline",
+              "description": "Production export from Blender to FBX, GLTF, OBJ, USD, and Alembic with scale, pivot, rotation, normals, materials, animation, and collision verifi..."
+            },
+            {
+              "id": "fantasy-worlds",
+              "description": "Fantasy world-building art direction for Blender covering medieval, high fantasy, dark fantasy, and urban fantasy asset language."
+            },
+            {
+              "id": "folk-horror-style",
+              "description": "Folk horror art direction for Blender with rural ritual uncanny, pastoral daylight dread, and community-wrongness storytelling."
+            },
+            {
+              "id": "frutiger-aero-style",
+              "description": "Frutiger Aero art direction for Blender with glossy skeuomorphism, aqua UI cues, nature-tech optimism, and mid-2000s futurism."
+            },
+            {
+              "id": "genre-action-combat",
+              "description": "Art direction for action, hack-and-slash, beat 'em up, and fighting-game readable combat spaces and prop language in Blender."
+            },
+            {
+              "id": "genre-card-party-idle",
+              "description": "Art direction for card games, deck builders, party games, idle/incremental, educational, and rhythm game presentational spaces in Blender."
+            },
+            {
+              "id": "genre-metroidvania-roguelike",
+              "description": "Art direction for metroidvania, roguelike, and roguelite games in Blender with biome gates, room modules, and run-readable props."
+            },
+            {
+              "id": "genre-narrative-vn",
+              "description": "Art direction for visual novel, interactive movie, walking simulator, and story-driven presentation spaces in Blender."
+            },
+            {
+              "id": "genre-open-world-sandbox",
+              "description": "Art direction for open world and sandbox games in Blender with biome landmarks, traversable scale, and discovery props."
+            },
+            {
+              "id": "genre-puzzle-platformer",
+              "description": "Art direction for puzzle and platformer games in Blender with readable interactables, jump volumes, and clear hazard language."
+            },
+            {
+              "id": "genre-racing-sports",
+              "description": "Art direction for racing and sports games in Blender with track landmarks, stadium kits, and high-speed readability."
+            },
+            {
+              "id": "genre-rpg",
+              "description": "Art direction for RPG, JRPG, CRPG, ARPG, and MMORPG worlds in Blender including loot rarity reads and region identity."
+            },
+            {
+              "id": "genre-shooter",
+              "description": "Art direction for FPS, TPS, shooter, battle royale, and extraction-shooter maps and props in Blender with sightline and cover language."
+            },
+            {
+              "id": "genre-soulslike",
+              "description": "Art direction for soulslike games in Blender with monumental melancholy spaces, fog gates, bonfire landmarks, and lethal readability."
+            },
+            {
+              "id": "genre-stealth",
+              "description": "Art direction for stealth-game spaces in Blender with shadow volumes, patrol-friendly layouts, and concealment materials."
+            },
+            {
+              "id": "genre-strategy-sim",
+              "description": "Art direction for strategy, RTS, turn-based strategy, tower defense, MOBA, city builder, colony sim, and simulation games in Blender."
+            },
+            {
+              "id": "genre-survival",
+              "description": "Art direction for survival and survival-horror gameplay spaces in Blender emphasizing resource props, crafting readability, and tension routes."
+            },
+            {
+              "id": "geometry-nodes",
+              "description": "Blender Geometry Nodes for procedural modeling, scatter systems, vegetation, buildings, pipes, cables, and reusable node groups."
+            },
+            {
+              "id": "godot-export",
+              "description": "Godot-specific Blender export favoring GLTF/GLB with correct scale, materials, animation clips, and collision shapes via MCP."
+            },
+            {
+              "id": "hair-groom",
+              "description": "Hair and fur grooming in Blender using curves, particle hair, geometry nodes, and game hair-card workflows."
+            },
+            {
+              "id": "hand-painted-style",
+              "description": "Hand-painted texture art direction for Blender with brushwork albedo, soft value transitions, and stylized PBR restraint."
+            },
+            {
+              "id": "hard-surface",
+              "description": "AAA hard surface modeling for sci-fi, industrial, military, vehicles, weapons, robotics, and mechanical props."
+            },
+            {
+              "id": "hd-2d-style",
+              "description": "HD-2D art direction combining pixel characters/sprites with 3D environments, depth of field, and theatrical lighting."
+            },
+            {
+              "id": "historical-worlds",
+              "description": "Historical and period world art direction for Blender including Western, pirate, samurai/ninja, Viking, ancient Egypt/Greece/Rome, Victorian, moder..."
+            },
+            {
+              "id": "horror-style",
+              "description": "Psychological horror art direction for Blender assets inspired by Silent Hill, Resident Evil, Chilla's Art, Fear to Fathom, and Iron Lung."
+            },
+            {
+              "id": "indie-horror-aesthetics",
+              "description": "Indie horror aesthetic pack for Blender covering Silent Hill, Fear to Fathom, Puppet Combo, corporate horror, cabin/forest/hospital horror, and rel..."
+            },
+            {
+              "id": "isometric-style",
+              "description": "Isometric and strategy-game art direction for Blender including diorama framing, true-iso camera setup, readable silhouettes, and tile asset rules."
+            },
+            {
+              "id": "lighting",
+              "description": "Cinematic and game lighting in Blender including three-point lighting, HDRI, horror lighting, volumetrics, rim lighting, and mood-driven illumination."
+            },
+            {
+              "id": "liminal-space-style",
+              "description": "Liminal space and Backrooms art direction for Blender with empty transitional architecture, wrong familiarity, and endless repetition."
+            },
+            {
+              "id": "lod-pipeline",
+              "description": "Dedicated LOD generation, naming, screen-size targets, and validation for game meshes in Blender via MCP."
+            },
+            {
+              "id": "lookdev",
+              "description": "Look development loop for Blender assets combining materials, lighting, camera, and screenshot comparison until shading reads correctly via MCP."
+            },
+            {
+              "id": "lowpoly-style",
+              "description": "Low-poly art direction for Blender inspired by PS1/PS2, Lethal Company, Mouthwashing, and Fear to Fathom."
+            },
+            {
+              "id": "manga-style",
+              "description": "Manga-inspired art direction for Blender emphasizing monochrome value design, speed lines, screentone feel, and manga panel staging."
+            },
+            {
+              "id": "mascot-puppet-horror",
+              "description": "Mascot and puppet horror art direction for Blender with cheerful brand characters made wrong, felt/foam materials, and uncanny performance."
+            },
+            {
+              "id": "materials",
+              "description": "Blender PBR and stylized material creation for metal, wood, concrete, fabric, glass, dirt, rust, and procedural shaders."
+            },
+            {
+              "id": "minimalist-style",
+              "description": "Minimalist and abstract-leaning art direction for Blender with reduced forms, limited palettes, and negative space."
+            },
+            {
+              "id": "neon-retrofuturism",
+              "description": "Neon, vaporwave, synthwave, and retrofuturistic mood/art direction for Blender with grid horizons, chrome, and dusk palettes."
+            },
+            {
+              "id": "noir-style",
+              "description": "Noir art direction for Blender with high-contrast lighting, wet streets, silhouettes, and monochrome or limited-color grading."
+            },
+            {
+              "id": "painterly-style",
+              "description": "Painterly art direction spanning watercolor and oil-painting looks for Blender using soft edges, pigment texture, and illustrative lighting."
+            },
+            {
+              "id": "physics-sim",
+              "description": "Rigid body, soft body, and destruction setups in Blender including constraints, cell fracture debris, and baked caches via MCP."
+            },
+            {
+              "id": "pixel-art-style",
+              "description": "Pixel-art and texel-constrained art direction for Blender assets destined for pixel rendering, low-res textures, or HD-2D-adjacent pixel reads."
+            },
+            {
+              "id": "procedural-modeling",
+              "description": "Procedural asset creation for rocks, buildings, vegetation, roads, terrain, pipes, cables, and sci-fi panels using Geometry Nodes and modifier-base..."
+            },
+            {
+              "id": "prop-artist",
+              "description": "Everyday and hero prop modeling for furniture, tools, household objects, kitbash parts, and readable game props."
+            },
+            {
+              "id": "psx-horror-style",
+              "description": "PS1/PSX-era horror art direction combining low-poly affine textures, limited color depth, fog, and psychological horror staging for Blender assets."
+            },
+            {
+              "id": "qa-review",
+              "description": "Production QA gate for Blender assets using viewport screenshots, validation checklists, naming audits, and ship/no-ship verdicts via MCP."
+            },
+            {
+              "id": "realistic-style",
+              "description": "Photorealistic AAA art direction for Blender including photogrammetry cleanup, real-world scale, high-poly workflows, PBR accuracy, and scan optimi..."
+            },
+            {
+              "id": "rendering",
+              "description": "Blender rendering with Cycles and Eevee including sampling, denoising, camera setup, render passes, color management, and render optimization."
+            },
+            {
+              "id": "retopology",
+              "description": "Production retopology for animation-ready, low-poly, quad-dominant meshes with proper edge loops and efficient polygon flow."
+            },
+            {
+              "id": "retro-16bit-style",
+              "description": "Retro 16-bit art direction for Blender-assisted SNES/Genesis-era color richness, dither cues, and sprite-like clarity."
+            },
+            {
+              "id": "retro-8bit-style",
+              "description": "Retro 8-bit art direction for Blender-assisted pixel/low-res aesthetics inspired by NES-era constraints."
+            },
+            {
+              "id": "rigging",
+              "description": "Production rigging in Blender with armatures, IK/FK, constraints, weight painting, mechanical rigs, facial rigs, and drivers."
+            },
+            {
+              "id": "scene-assembly",
+              "description": "Large scene layout in Blender with collections, linking, overrides, streaming-friendly organization, and set assembly via MCP."
+            },
+            {
+              "id": "sci-fi-punk-worlds",
+              "description": "Sci-fi and punk world art direction for Blender including hard sci-fi, space, cyberpunk, steampunk, dieselpunk, atompunk, solarpunk, biopunk, and c..."
+            },
+            {
+              "id": "sculpting",
+              "description": "Blender sculpting for organic and hard surface detail using Dyntopo, multiresolution, brushes, alpha workflow, wrinkles, and damage."
+            },
+            {
+              "id": "set-dressing",
+              "description": "Set dressing and environmental storytelling placement for interiors and exteriors using prop density, narrative clusters, and readability rules via..."
+            },
+            {
+              "id": "stop-motion-craft-style",
+              "description": "Stop-motion and craft aesthetics for Blender including claymation, paper craft, and handmade physical-material cues."
+            },
+            {
+              "id": "stylized-style",
+              "description": "Stylized art direction for Blender with shape language, exaggeration, color harmony, NPR rendering, and hand-painted asset workflows."
+            },
+            {
+              "id": "texture-workflow",
+              "description": "Production texture workflow for atlases, baking AO/curvature/normal/roughness maps, decals, and texture memory optimization."
+            },
+            {
+              "id": "unity-export",
+              "description": "Unity-specific Blender export for scale, axis, materials, humanoid/generic rigs, LODs, and collision import via MCP."
+            },
+            {
+              "id": "unreal-export",
+              "description": "Unreal Engine-specific Blender export for FBX scale, LODs, UCX collision, sockets, materials, and skeletal mesh workflows via MCP."
+            },
+            {
+              "id": "uv-workflow",
+              "description": "Production UV unwrapping for seam placement, UV packing, texel density, UDIM, lightmap UVs, and modular UV layouts."
+            },
+            {
+              "id": "vector-style",
+              "description": "Vector-clean art direction for Blender with flat fills, sharp silhouettes, and UI-like graphic clarity."
+            },
+            {
+              "id": "vegetation-artist",
+              "description": "Vegetation and foliage authoring for Blender including trees, plants, grass cards, canopy LODs, and game-friendly leaf atlases via MCP."
+            },
+            {
+              "id": "vehicle-artist",
+              "description": "Dedicated vehicle modeling for cars, trucks, aircraft, ships, boats, mechs, and transit assets with proportion, panel flow, and game LOD awareness..."
+            },
+            {
+              "id": "vfx-fx",
+              "description": "Cinematic and game VFX in Blender including smoke, fire, particles, trails, and Geometry Nodes FX setups via MCP."
+            },
+            {
+              "id": "visual-console-eras",
+              "description": "Visual era art direction for Blender covering PS1\u2013PS5 stylistic cues, retro arcade, DOS, CRT, VHS, and film-grain presentation."
+            },
+            {
+              "id": "voxel-style",
+              "description": "Voxel and Minecraft-adjacent art direction for Blender with block grid modeling, limited palettes, and chunk-friendly assets."
             }
           ]
         }

@@ -1,6 +1,6 @@
 # Installer guide
 
-This guide covers the Sigma Installer (`npx @djordje-stojanovic/sigmaskills`) and the other ways to install SigmaSkills. For a first install, the [README quick start](../README.md#quick-start) is enough.
+This guide covers the Sigma Installer (`npx @djordje-stojanovic/sigmaskills`) and the other ways to install SigmaSkills. For a first install, the [README one-line install](../README.md#install-in-one-line) is enough.
 
 The Sigma Installer needs Node.js 22 or newer.
 
@@ -44,9 +44,9 @@ npx @djordje-stojanovic/sigmaskills
 
 In a color terminal it opens the full-screen wizard, drawn in the [DESIGN.md](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/DESIGN.md) palette (near-black canvas, one emerald accent). Three steps, one screen each:
 
-1. **What.** One row per pack, with a count (`13/13`). Space on a pack row picks or clears the whole pack; the number keys `1`-`9` and `0` (the tenth pack) do the same. A pack with a limit (Design.md) shows `held/3` and opens instead of picking all. Right arrow opens a pack so you can pick single skills; left arrow closes it. `/` filters every skill by name, description, or pack. `a` picks everything that is available. A pack that cannot be reached on this machine (for example the Local pack without a folder) is marked `[!]` and says why.
+1. **What.** One row per pack, with a count (`13/13`). Space on a pack row picks or clears the whole pack; the number keys `1`-`9` and `0` (the tenth pack) do the same. A pack with a limit (Design.md) shows `held/3` and opens instead of picking all. Right arrow opens a pack so you can pick single skills; left arrow closes it. `/` filters every skill by name, description, or pack. `a` picks everything that is available. `p` opens the full `SKILL.md` of the highlighted skill; the arrow keys and PgUp/PgDn scroll it and Esc closes it (a pack skill is fetched once, then cached). An installed skill shows ticked: space unticks it (`will remove`), and space again picks it for an update. A pack that cannot be reached on this machine (for example the Local pack without a folder) is marked `[!]` and says why.
 2. **Where.** The scope (`s` switches between Project and Global), then the Agent Hosts. Hosts that read `.agents/skills` show as covered and cannot be unchecked. A host with its own folder, such as Claude Code, is a row you can toggle; a host whose folder exists in your home folder is marked `found here` and starts checked. `/` searches every host in the registry. `m` switches Link and Copy.
-3. **Review.** The skill count per pack, the destinations, the sources that will be downloaded, and a warning for Global Installation (it needs an explicit `y`; Enter alone does not install globally). If a Sigma skill already exists with different content, you choose `r` replace (after a private backup), `s` skip, or `e` export before you can continue.
+3. **Review.** Installs, updates and removals in three separate lists (nothing is removed before you confirm; an edited Sigma skill gets a private backup first), the skill count per pack, the destinations, the sources that will be downloaded, and a warning for Global Installation (it needs an explicit `y`; Enter alone does not install globally). If a Sigma skill already exists with different content, you choose `r` replace (after a private backup), `s` skip, or `e` export before you can continue.
 
 `b` goes back, Escape cancels, Ctrl+C aborts with exit code 130. Nothing is written before the last step. After the confirmation the wizard leaves the alternate screen and prints progress and a summary into your normal scrollback.
 
@@ -117,22 +117,34 @@ The installer checks input before it plans anything:
 
 ## Packs and presets
 
-A **pack** is a named group of skills. `--preset <pack>` installs all of it, and you can repeat the flag or join names with commas. `list --packs` prints every pack, its aliases, and its skills.
+A **pack** is a named group of skills. `--preset <pack>` installs all of it, and you can repeat the flag or join names with commas. `--pack` is the same flag. `packs` (or `list --packs`) prints every pack with its skill count, source and skills. One pack into one repo: `install --pack blender --project .`.
 
-| Preset | Aliases | What it installs |
-|--------|---------|------------------|
-| `sigma` | `sigmaskills` | the skills bundled in this package |
-| `mattpocock` | `matt`, `pocock` | the skills in [mattpocock/skills](https://github.com/mattpocock/skills) |
-| `threejs` | `three` | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) |
-| `hyperframes` | `hf` | the HyperFrames skills (pinned to one upstream release tag) and the student kit |
-| `minimax-h3` | `minimax`, `h3` | the MiniMax H3 prompt and recipe skills |
-| `anthropic` | `anthropics` | 19 skills from [anthropics/skills](https://github.com/anthropics/skills), pinned to one commit |
-| `design-md` | `design`, `awesome-design-md` | 84 brand looks from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), one `design-<brand>` skill each (SKILL.md, DESIGN.md, LICENSE). At most 3 installed at a time |
-| `last30days` | `last30` | [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill) at tag `v3.30.0` (a 17.5 MB copy; the skill runs on Python 3.12+ and Node 22+, and yt-dlp is optional) |
-| `financial-services` | `fsi`, `finance` | [anthropics/financial-services](https://github.com/anthropics/financial-services), pinned: its 62 skills, 10 agents and 27 commands, each as a skill |
-| `tstack` | `theo` | 9 agent skills from [t3dotgg/tstack](https://github.com/t3dotgg/tstack) by Theo Browne (MIT), pinned to one commit: `full-send`, `full-stop`, `council`, `sol-loop`, `file-pr`, `takeover`, `babysit-pr`, `modernize`, `leaving-pr-comments` |
-| `local` | `own` | a folder of your own skills; see [Your own packs](#your-own-packs) |
-| `all` | | every pack that is available on this machine |
+| Preset | Aliases |
+|--------|---------|
+| `sigma` | `sigmaskills` |
+| `mattpocock` | `matt`, `pocock` |
+| `threejs` | `three` |
+| `blender` | `blender3d` |
+| `hyperframes` | `hf` |
+| `minimax-h3` | `minimax`, `h3` |
+| `anthropic` | `anthropics` |
+| `design-md` | `design`, `awesome-design-md` |
+| `last30days` | `last30` |
+| `financial-services` | `fsi`, `finance` |
+| `tstack` | `theo` |
+| `superpowers` | `obra` |
+| `impeccable` | `pbakaus` |
+| `security-audit` | `cloudflare`, `audit` |
+| `anatomy` | `isometric` |
+| `diagram-design` | `diagram`, `diagrams` |
+| `taste-skill` | `taste`, `leonxlnx` |
+| `hallmark` | `nutlope` |
+| `ponytail` | `lazy` |
+| `local` | `own` |
+| `core` | the global default: every Sigma skill, the whole Matt Pocock pack and the whole tstack pack. `install --global --yes` with no pack, skill or `--all` installs it |
+| `all` | every pack that is available on this machine |
+
+What each pack does, its skills, source, licence and needs: [Packs in the README](../README.md#packs). `local` is a folder of your own skills; see [Your own packs](#your-own-packs).
 
 ```bash
 npx @djordje-stojanovic/sigmaskills install --preset threejs --agent claude --project .
@@ -261,6 +273,7 @@ It checks live per-file hashes and links. A valid Skill Customization is drift, 
 
 ```bash
 npx @djordje-stojanovic/sigmaskills update --dry-run
+npx @djordje-stojanovic/sigmaskills update --check      # one line per out-of-date skill; exit 1 when one exists
 npx @djordje-stojanovic/sigmaskills update --yes
 npx @djordje-stojanovic/sigmaskills update --skill sigmareview --skill sigmaship
 ```
@@ -412,18 +425,12 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmafreedom -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaloop -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmataste -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmahuman -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmafork -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadesign -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmatour -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmafinanceman -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaspeedloop -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmasetup -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmacourse -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmamusk -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaboat -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmarefactor -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawritegui -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadebug -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmacreatearena -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaresearch -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadeeplook -g
@@ -449,18 +456,12 @@ $skill-installer install sigmafreedom from https://github.com/Djordje-Stojanovic
 $skill-installer install sigmaloop from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmataste from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmahuman from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmafork from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmadesign from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmatour from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmafinanceman from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaspeedloop from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmasetup from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmacourse from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmamusk from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaboat from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmarefactor from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmawritegui from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmadebug from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmacreatearena from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaresearch from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmadeeplook from https://github.com/Djordje-Stojanovic/Sigmaskills
@@ -483,18 +484,12 @@ cp -R Sigmaskills/sigmafreedom ~/.agents/skills/sigmafreedom
 cp -R Sigmaskills/sigmaloop ~/.agents/skills/sigmaloop
 cp -R Sigmaskills/sigmataste ~/.agents/skills/sigmataste
 cp -R Sigmaskills/sigmahuman ~/.agents/skills/sigmahuman
-cp -R Sigmaskills/sigmafork ~/.agents/skills/sigmafork
-cp -R Sigmaskills/sigmadesign ~/.agents/skills/sigmadesign
 cp -R Sigmaskills/sigmatour ~/.agents/skills/sigmatour
-cp -R Sigmaskills/sigmafinanceman ~/.agents/skills/sigmafinanceman
 cp -R Sigmaskills/sigmaspeedloop ~/.agents/skills/sigmaspeedloop
-cp -R Sigmaskills/sigmasetup ~/.agents/skills/sigmasetup
-cp -R Sigmaskills/sigmacourse ~/.agents/skills/sigmacourse
 cp -R Sigmaskills/sigmamusk ~/.agents/skills/sigmamusk
 cp -R Sigmaskills/sigmaboat ~/.agents/skills/sigmaboat
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
-cp -R Sigmaskills/sigmarefactor ~/.agents/skills/sigmarefactor
-cp -R Sigmaskills/sigmawritegui ~/.agents/skills/sigmawritegui
+cp -R Sigmaskills/sigmadebug ~/.agents/skills/sigmadebug
 cp -R Sigmaskills/sigmacreatearena ~/.agents/skills/sigmacreatearena
 cp -R Sigmaskills/sigmaresearch ~/.agents/skills/sigmaresearch
 cp -R Sigmaskills/sigmadeeplook ~/.agents/skills/sigmadeeplook
@@ -513,18 +508,12 @@ Copy-Item -Recurse Sigmaskills\sigmafreedom  "$HOME\.agents\skills\sigmafreedom"
 Copy-Item -Recurse Sigmaskills\sigmaloop     "$HOME\.agents\skills\sigmaloop"
 Copy-Item -Recurse Sigmaskills\sigmataste    "$HOME\.agents\skills\sigmataste"
 Copy-Item -Recurse Sigmaskills\sigmahuman    "$HOME\.agents\skills\sigmahuman"
-Copy-Item -Recurse Sigmaskills\sigmafork     "$HOME\.agents\skills\sigmafork"
-Copy-Item -Recurse Sigmaskills\sigmadesign   "$HOME\.agents\skills\sigmadesign"
 Copy-Item -Recurse Sigmaskills\sigmatour     "$HOME\.agents\skills\sigmatour"
-Copy-Item -Recurse Sigmaskills\sigmafinanceman "$HOME\.agents\skills\sigmafinanceman"
 Copy-Item -Recurse Sigmaskills\sigmaspeedloop "$HOME\.agents\skills\sigmaspeedloop"
-Copy-Item -Recurse Sigmaskills\sigmasetup "$HOME\.agents\skills\sigmasetup"
-Copy-Item -Recurse Sigmaskills\sigmacourse "$HOME\.agents\skills\sigmacourse"
 Copy-Item -Recurse Sigmaskills\sigmamusk "$HOME\.agents\skills\sigmamusk"
 Copy-Item -Recurse Sigmaskills\sigmaboat "$HOME\.agents\skills\sigmaboat"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
-Copy-Item -Recurse Sigmaskills\sigmarefactor "$HOME\.agents\skills\sigmarefactor"
-Copy-Item -Recurse Sigmaskills\sigmawritegui      "$HOME\.agents\skills\sigmawritegui"
+Copy-Item -Recurse Sigmaskills\sigmadebug      "$HOME\.agents\skills\sigmadebug"
 Copy-Item -Recurse Sigmaskills\sigmacreatearena "$HOME\.agents\skills\sigmacreatearena"
 Copy-Item -Recurse Sigmaskills\sigmaresearch "$HOME\.agents\skills\sigmaresearch"
 Copy-Item -Recurse Sigmaskills\sigmadeeplook "$HOME\.agents\skills\sigmadeeplook"

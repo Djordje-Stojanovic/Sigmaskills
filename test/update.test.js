@@ -22,6 +22,7 @@ import {
   formatUpdateHuman,
   executeUpdate,
 } from '../src/update.js';
+import { packInto, installTarball } from './packed.js';
 
 const ROOT = findPackageRoot();
 
@@ -166,6 +167,33 @@ test('update: upstream-only change restores official files and reports older Rel
     assert.equal(state.skills.sigmawrite.revision, getCatalog(ROOT).skills.find((s) => s.id === 'sigmawrite').revision);
     assert.equal(state.skills.sigmawrite.release, getCatalog(ROOT).manifest.version);
   } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('update: succeeds when the file system refuses to rename the old skill folder (EXDEV, #269)', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-exdev-'));
+  const realRename = fs.renameSync;
+  const refuse = (code) => (from, to) => {
+    if (path.basename(String(to)).startsWith('.sigmawrite-backup-')) throw Object.assign(new Error(`${code}: rename`), { code });
+    return realRename(from, to);
+  };
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    ageOfficial(projectRoot, 'sigmawrite');
+
+    fs.renameSync = refuse('EACCES');
+    const denied = await runCli(['update', '--yes', '--project', projectRoot], createMockIo());
+    assert.notEqual(denied, 0, 'any rename error but EXDEV still fails');
+    assert.match(fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8'), /sigma-older/);
+
+    fs.renameSync = refuse('EXDEV');
+    const code = await runCli(['update', '--yes', '--project', projectRoot], createMockIo());
+    assert.equal(code, 0);
+    const md = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8');
+    assert.equal(md.includes('<!-- sigma-older -->'), false);
+  } finally {
+    fs.renameSync = realRename;
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
 });
@@ -665,19 +693,37 @@ test('cli: update --dry-run groups skills and writes nothing; missing flags fail
   }
 });
 
+test('cli: update --check exits 0 when current, 1 with one line per stale skill, and writes nothing (#273)', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-check-'));
+  try {
+    installWrite(projectRoot, 'sigmawrite');
+    const fresh = createMockIo();
+    assert.equal(await runCli(['update', '--check', '--project', projectRoot], fresh), 0);
+    assert.match(fresh.getStdout(), /Everything is up to date/);
+
+    ageOfficial(projectRoot, 'sigmawrite');
+    const before = snapshotTree(projectRoot);
+    const stale = createMockIo();
+    assert.equal(await runCli(['update', '--check', '--project', projectRoot], stale), 1);
+    assert.match(stale.getStdout(), /^sigmawrite \(sigma\): out of date/m);
+    assert.match(stale.getStdout(), /1 out of date\. Update with: sigmaskills update --yes/);
+    const jsonIo = createMockIo();
+    assert.equal(await runCli(['update', '--check', '--json', '--project', projectRoot], jsonIo), 1);
+    assert.deepEqual(JSON.parse(jsonIo.getStdout()).outOfDate.map((row) => row.id), ['sigmawrite']);
+    assert.deepEqual(snapshotTree(projectRoot), before);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
 test('packed CLI updates Project and Global Installation while preserving customization', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-pack-update-'));
   try {
-    const packOutput = execSync(`npm pack --pack-destination "${tmpDir}"`, {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim();
-    const tarballFileName = packOutput.split(/\r?\n/).pop()?.trim();
+    const tarballFileName = packInto(tmpDir);
     const tarballPath = path.join(tmpDir, tarballFileName);
     const appDir = path.join(tmpDir, 'test-app');
     fs.mkdirSync(appDir, { recursive: true });
-    execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
+    installTarball(appDir, tarballPath);
     const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
 
     const project = path.join(tmpDir, 'proj');

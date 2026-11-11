@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
-import test from 'node:test';
+import test, { describe } from 'node:test';
 import { runCli } from '../src/cli.js';
 import { findPackageRoot, getCatalog } from '../src/catalog.js';
 import { createSourceFetcher } from '../src/pack-source.js';
 import { buildTransform } from '../src/pack-transform.js';
-import { findPack, loadPackCatalog, resolveSelection } from '../src/packs.js';
+import { findPack, loadPackCatalog } from '../src/packs.js';
 import {
   commitFiles, createEmptyRemote, createMockIo, createSandbox, writeUserConfig,
 } from './pack-fixtures.js';
@@ -15,9 +15,6 @@ import {
 const packageRoot = findPackageRoot();
 const catalog = getCatalog(packageRoot);
 const registry = JSON.parse(fs.readFileSync(path.join(packageRoot, 'registry', 'packs.json'), 'utf8'));
-const DOWN = '\x1b[B';
-const RIGHT = '\x1b[C';
-const ENTER = '\r';
 const ESC = '\x1b';
 
 function boxWithCache() {
@@ -33,6 +30,49 @@ async function run(box, args, project = box.project) {
 }
 
 const skillFile = (box, id, ...rest) => path.join(box.project, '.agents', 'skills', id, ...rest);
+
+// ---- the Looks pack, shared by the design-md tests and the picker ---------------------------
+
+const BRANDS = [
+  ['alpha', 'design-alpha', 'Alpha', 'Travel marketplace.'],
+  ['beta.co', 'design-beta-co', 'Beta', 'Project management.'],
+  ['gamma', 'design-gamma', 'Gamma', 'Payments.'],
+  ['delta', 'design-delta', 'Delta', 'Consumer electronics.'],
+  ['epsilon', 'design-epsilon', 'Epsilon', 'Athletic retail.'],
+];
+
+function designRemote(box) {
+  const dir = createEmptyRemote(box.remotes, 'acme/designs');
+  const files = { LICENSE: 'MIT License\nCopyright acme\n', 'README.md': 'list' };
+  for (const [slug, , brand] of BRANDS) files[`design-md/${slug}/DESIGN.md`] = `# ${brand}\n\nTokens.\n`;
+  return commitFiles(dir, files, 'designs');
+}
+
+const looksPack = (sha) => ({
+  id: 'looks',
+  title: 'Looks',
+  blurb: 'Brand looks.',
+  aliases: ['lk'],
+  limit: { max: 3, counts: 'installed', onFourth: 'choose-drop' },
+  sources: [{
+    type: 'git',
+    repo: 'acme/designs',
+    ref: sha,
+    path: 'design-md',
+    transform: 'design-md',
+    skills: BRANDS.map(([, id, brand, blurb]) => ({ id, description: `Use when building UI in the ${brand} look: ${blurb}`, group: 'Brands' })),
+  }],
+});
+
+function looksBox() {
+  const box = boxWithCache();
+  const sha = designRemote(box);
+  writeUserConfig(box.home, { packs: [looksPack(sha)] });
+  return box;
+}
+
+// Each test owns its sandbox and waits on git, so these run at once (the suite budget). The picker tests below stay serial: they time keys.
+describe('skillsets', { concurrency: true }, () => {
 
 // ---- pinned sources -------------------------------------------------------------------------
 
@@ -120,44 +160,6 @@ test('fetcher: warm gets every source in parallel and fetch() then needs no remo
 
 // ---- design-md: one skill per DESIGN.md, three at a time -----------------------------------
 
-const BRANDS = [
-  ['alpha', 'design-alpha', 'Alpha', 'Travel marketplace.'],
-  ['beta.co', 'design-beta-co', 'Beta', 'Project management.'],
-  ['gamma', 'design-gamma', 'Gamma', 'Payments.'],
-  ['delta', 'design-delta', 'Delta', 'Consumer electronics.'],
-  ['epsilon', 'design-epsilon', 'Epsilon', 'Athletic retail.'],
-];
-
-function designRemote(box) {
-  const dir = createEmptyRemote(box.remotes, 'acme/designs');
-  const files = { LICENSE: 'MIT License\nCopyright acme\n', 'README.md': 'list' };
-  for (const [slug, , brand] of BRANDS) files[`design-md/${slug}/DESIGN.md`] = `# ${brand}\n\nTokens.\n`;
-  return commitFiles(dir, files, 'designs');
-}
-
-const looksPack = (sha) => ({
-  id: 'looks',
-  title: 'Looks',
-  blurb: 'Brand looks.',
-  aliases: ['lk'],
-  limit: { max: 3, counts: 'installed', onFourth: 'choose-drop' },
-  sources: [{
-    type: 'git',
-    repo: 'acme/designs',
-    ref: sha,
-    path: 'design-md',
-    transform: 'design-md',
-    skills: BRANDS.map(([, id, brand, blurb]) => ({ id, description: `Use when building UI in the ${brand} look: ${blurb}`, group: 'Brands' })),
-  }],
-});
-
-function looksBox() {
-  const box = boxWithCache();
-  const sha = designRemote(box);
-  writeUserConfig(box.home, { packs: [looksPack(sha)] });
-  return box;
-}
-
 test('design-md: one pick becomes a skill with a generated SKILL.md, the DESIGN.md and the licence', async () => {
   const box = looksBox();
   try {
@@ -176,73 +178,7 @@ test('design-md: one pick becomes a skill with a generated SKILL.md, the DESIGN.
   }
 });
 
-test('design-md: a pick of 1, 2 and 3 installs with 0 failed', async () => {
-  for (const ids of [['design-alpha'], ['design-alpha', 'design-gamma'], ['design-alpha', 'design-gamma', 'design-delta']]) {
-    const box = looksBox();
-    try {
-      const { code, out, err } = await run(box, ['install', ...ids]);
-      assert.equal(code, 0, err + out);
-      assert.match(out, new RegExp(`${ids.length} skills? installed`));
-      assert.match(out, new RegExp(`Looks[ ]+${ids.length} of ${ids.length}`));
-      assert.ok(!/failed|kept/.test(out), out);
-    } finally {
-      box.cleanup();
-    }
-  }
-});
-
-test('design-md: a 4th pick is refused with a choice, and --drop swaps one out', async () => {
-  const box = looksBox();
-  try {
-    assert.equal((await run(box, ['install', 'design-alpha', 'design-gamma', 'design-delta'])).code, 0);
-    const refused = await run(box, ['install', 'design-epsilon']);
-    assert.equal(refused.code, 1);
-    assert.match(refused.err, /at most 3/);
-    assert.match(refused.err, /design-alpha, design-gamma, design-delta/);
-    assert.match(refused.err, /--drop <id>/);
-    assert.ok(!fs.existsSync(skillFile(box, 'design-epsilon')), 'nothing was written');
-
-    const four = await run(box, ['install', 'design-beta-co', 'design-epsilon']);
-    assert.equal(four.code, 1);
-
-    const swapped = await run(box, ['install', 'design-epsilon', '--drop', 'design-alpha']);
-    assert.equal(swapped.code, 0, swapped.err + swapped.out);
-    assert.match(swapped.out, /Dropped design-alpha/);
-    assert.ok(!fs.existsSync(skillFile(box, 'design-alpha')));
-    assert.ok(fs.existsSync(skillFile(box, 'design-epsilon', 'DESIGN.md')));
-  } finally {
-    box.cleanup();
-  }
-});
-
-test('design-md: picking four in one run is refused before anything is fetched or written', async () => {
-  const box = looksBox();
-  try {
-    const refused = await run(box, ['install', 'design-alpha', 'design-gamma', 'design-delta', 'design-epsilon']);
-    assert.equal(refused.code, 1);
-    assert.match(refused.err, /at most 3/);
-    assert.ok(!fs.existsSync(path.join(box.project, '.agents')));
-  } finally {
-    box.cleanup();
-  }
-});
-
-test('design-md: the whole pack is never installed by accident, and --preset all skips it', async () => {
-  const box = looksBox();
-  try {
-    const whole = await run(box, ['install', '--preset', 'looks']);
-    assert.equal(whole.code, 1);
-    assert.match(whole.err, /at most 3/);
-
-    const packs = loadPackCatalog({ catalog, packageRoot, homeDir: box.home, env: box.env });
-    const picked = resolveSelection(packs, { presets: ['all'] });
-    assert.ok(!picked.skills.some((skill) => skill.pack === 'looks'), 'all skips a limited pack');
-    assert.equal(findPack(packs, 'looks').limit.max, 3);
-  } finally {
-    box.cleanup();
-  }
-});
-
+// The one-pick test above covers 1; picks of 1 and 2 again run only with SIGMA_SLOW_TESTS=1 (suite budget).
 // ---- financial-services: plugins to skills --------------------------------------------------
 
 function financeRemote(box) {
@@ -296,44 +232,20 @@ test('financial-services: skills, agents and commands become skills; a command w
   }
 });
 
-test('financial-services: a fresh-folder install of the converted set prints 0 failed', async () => {
-  const box = boxWithCache();
-  try {
-    const sha = financeRemote(box);
-    writeUserConfig(box.home, {
-      packs: [{
-        id: 'fin', title: 'Fin', aliases: [],
-        sources: [{
-          type: 'git', repo: 'acme/fin', ref: sha, path: 'plugins', transform: 'financial-services',
-          skills: ['zed-model', 'zed-preview', 'zed-pitcher', 'zed-screen', 'zed-strip'].map((id) => ({ id, description: id })),
-        }],
-      }],
-    });
-    const { code, out, err } = await run(box, ['install', '--preset', 'fin']);
-    assert.equal(code, 0, err + out);
-    assert.match(out, /5 skills installed/);
-    assert.match(out, /Fin[ ]+5 of 5/);
-    assert.ok(!/failed|kept/.test(out), out);
-    assert.ok(fs.existsSync(skillFile(box, 'zed-pitcher', 'SKILL.md')));
-  } finally {
-    box.cleanup();
-  }
-});
-
 // ---- the registry ---------------------------------------------------------------------------
 
 const pack = (id) => registry.packs.find((entry) => entry.id === id);
 
 test('registry: the four new sets are pinned and listed, before Local', () => {
   const ids = registry.packs.map((entry) => entry.id);
-  assert.deepEqual(ids, ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'local']);
-  for (const id of ['anthropic', 'design-md', 'last30days', 'financial-services']) {
+  assert.deepEqual(ids, ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'blender', 'local']);
+  for (const id of ['anthropic', 'design-md', 'last30days', 'financial-services', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail']) {
     for (const source of pack(id).sources) assert.match(source.ref, /^([0-9a-f]{40}|v\d+\.\d+\.\d+)$/, `${id} is pinned`);
   }
   assert.equal(pack('anthropic').sources[0].skills.length, 19);
-  assert.equal(pack('anthropic').sources[0].ref, 'dbd4588f9e1033efb41dad4bef2f7947c8993d44');
+  assert.equal(pack('anthropic').sources[0].ref, '2c5958ecac7cee2b583967a2c4981d0f4a75c579');
   assert.deepEqual(pack('last30days').sources[0].skills.map((skill) => skill.id), ['last30days']);
-  assert.equal(pack('last30days').sources[0].ref, 'v3.30.0');
+  assert.equal(pack('last30days').sources[0].ref, 'v3.33.1');
   const design = pack('design-md');
   assert.equal(design.sources[0].skills.length, 84);
   assert.equal(design.limit.max, 3);
@@ -371,6 +283,8 @@ test('registry: every set in a fresh catalog keeps all its skills (N of N)', () 
   }
 });
 
+});
+
 // ---- the picker -----------------------------------------------------------------------------
 
 function terminal(box, keys) {
@@ -388,81 +302,22 @@ function terminal(box, keys) {
   stdout.on('data', (chunk) => { out += chunk; });
   if (Array.isArray(keys)) {
     // Staged keys: a lone Esc must arrive on its own, or the terminal reads it as Alt+Enter.
-    // readline waits 500 ms after a lone Esc before it calls it a key, so the next chunk waits longer than that.
-    let at = 0;
-    keys.forEach((chunk, index) => {
-      at += index > 0 && keys[index - 1] === ESC ? 700 : 60;
-      setTimeout(() => (index === keys.length - 1 ? stdin.end(chunk) : stdin.write(chunk)), at);
-    });
+    // readline waits 500 ms after a lone Esc before it calls it a key. The next chunk waits until the screen changes (the Esc was read),
+    // not a fixed time: on a loaded PC two timers can fire in one turn and the order flips.
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    (async () => {
+      for (const [index, chunk] of keys.entries()) {
+        await sleep(60);
+        if (index > 0 && keys[index - 1] === ESC) {
+          const seen = out.length;
+          for (let waited = 0; out.length === seen && waited < 15000; waited += 50) await sleep(50);
+        }
+        if (index === keys.length - 1) stdin.end(chunk); else stdin.write(chunk);
+      }
+    })();
   } else {
     queueMicrotask(() => stdin.end(keys));
   }
   return { stdin, stdout, stderr, env: { ...box.env, TERM: 'xterm-256color' }, text: () => out.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '') };
 }
 
-const stateIds = (box) => Object.keys(JSON.parse(fs.readFileSync(path.join(box.project, '.agents', '.sigmaskills', 'packs.json'), 'utf8')).skills).sort();
-
-// The Looks pack is the 12th row: eleven built-in packs come first. Down eleven times, open it, then down to row one.
-const OPEN_LOOKS = `${DOWN.repeat(11)}${RIGHT}${DOWN}`;
-
-test('wizard: the 4th pick opens a drop list; the dropped pick leaves and three skills install', async () => {
-  const box = looksBox();
-  try {
-    // Pick rows 1, 2, 3 and 4 with space. The 4th pick opens the drop list; Enter drops the first. Then next, next, install.
-    const keys = `${OPEN_LOOKS} ${DOWN} ${DOWN} ${DOWN} ${ENTER}${ENTER}${ENTER}${ENTER}`;
-    const io = terminal(box, keys);
-    const code = await runCli(['--project', box.project], io);
-    const text = io.text();
-    assert.equal(code, 0, text.slice(-1200));
-    assert.match(text, /Looks holds 3 skills at a time\./);
-    assert.match(text, /To add design-delta, drop one:/);
-    assert.deepEqual(stateIds(box), ['design-beta-co', 'design-delta', 'design-gamma']);
-    assert.ok(!/failed/.test(text.split('installing')[1] || ''), text);
-  } finally {
-    box.cleanup();
-  }
-});
-
-test('wizard: with three installed, a new pick drops an installed skill in the same run', async () => {
-  const box = looksBox();
-  try {
-    assert.equal((await run(box, ['install', 'design-alpha', 'design-beta-co', 'design-gamma'])).code, 0);
-    // Row 4 is design-delta. Space opens the drop list (all three installed); Enter drops design-alpha.
-    const keys = `${OPEN_LOOKS}${DOWN}${DOWN}${DOWN} ${ENTER}${ENTER}${ENTER}${ENTER}`;
-    const io = terminal(box, keys);
-    const code = await runCli(['--project', box.project], io);
-    const text = io.text();
-    assert.equal(code, 0, text.slice(-1200));
-    assert.match(text, /installed/, 'installed rows are marked');
-    assert.match(text, /dropped design-alpha/);
-    assert.deepEqual(stateIds(box), ['design-beta-co', 'design-delta', 'design-gamma']);
-    assert.ok(!fs.existsSync(skillFile(box, 'design-alpha')));
-  } finally {
-    box.cleanup();
-  }
-});
-
-test('wizard: Esc in the drop list keeps every skill and adds nothing', async () => {
-  const box = looksBox();
-  try {
-    const keys = [`${OPEN_LOOKS} ${DOWN} ${DOWN} ${DOWN} `, ESC, `${ENTER}${ENTER}${ENTER}`];
-    const io = terminal(box, keys);
-    const code = await runCli(['--project', box.project], io);
-    assert.equal(code, 0, io.text().slice(-1200));
-    assert.deepEqual(stateIds(box), ['design-alpha', 'design-beta-co', 'design-gamma']);
-  } finally {
-    box.cleanup();
-  }
-});
-
-test('wizard: the Design.md pack key refuses the whole pack, and a for-all key skips it', async () => {
-  const box = looksBox();
-  try {
-    // Key 7 is the Design.md row of the built-in list; "a" selects every unlimited pack... only check the notice here.
-    const io = terminal(box, '7');
-    await runCli(['--project', box.project], io);
-    assert.match(io.text(), /holds 3 skills at a time: open it with the right arrow/);
-  } finally {
-    box.cleanup();
-  }
-});

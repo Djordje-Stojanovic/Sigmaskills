@@ -135,7 +135,7 @@ export function findPack(packCatalog, name) {
 /**
  * Turn `--preset` names and skill ids into one install list.
  *
- * `all` means every available pack. A preset that names no pack, or a pack with nothing
+ * `all` means every available pack; `core` means the Sigma, Matt Pocock and tstack packs. A preset that names no pack, or a pack with nothing
  * available on this machine, is reported instead of skipped silently.
  *
  * @param {{ packs: object[], skills: Map<string, object> }} packCatalog
@@ -161,6 +161,11 @@ export function resolveSelection(packCatalog, { presets = [], skillIds = [] }) {
       for (const pack of packCatalog.packs) {
         if (pack.available && !pack.limit) pack.skills.forEach(add);
       }
+      continue;
+    }
+    if (name === 'core') {
+      // The default install: every Sigma skill, the whole Matt Pocock pack and Theo Browne's tstack pack. Every other pack is per project.
+      packCatalog.packs.filter((pack) => ['sigma', 'mattpocock', 'tstack'].includes(pack.id)).forEach((pack) => pack.skills.forEach(add));
       continue;
     }
     const pack = findPack(packCatalog, name);

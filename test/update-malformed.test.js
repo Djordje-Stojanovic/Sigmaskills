@@ -18,6 +18,7 @@ import { computeSkillRevisionAndHashes } from '../src/revision.js';
 import { getProjectStateDir } from '../src/state.js';
 import { executeProjectInstall } from '../src/transaction.js';
 import { createUpdatePlan, executeUpdate } from '../src/update.js';
+import { packInto, installTarball } from './packed.js';
 
 const ROOT = findPackageRoot();
 
@@ -296,16 +297,11 @@ test('update: invalid repair, editor failure, backup failure, and cancel write n
 test('packed CLI skips a malformed skill and updates a sibling Project Installation', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-pack-malformed-'));
   try {
-    const packOutput = execSync(`npm pack --pack-destination "${tmpDir}"`, {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim();
-    const tarballFileName = packOutput.split(/\r?\n/).pop()?.trim();
+    const tarballFileName = packInto(tmpDir);
     const tarballPath = path.join(tmpDir, tarballFileName);
     const appDir = path.join(tmpDir, 'test-app');
     fs.mkdirSync(appDir, { recursive: true });
-    execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
+    installTarball(appDir, tarballPath);
     const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
     const project = path.join(tmpDir, 'proj');
     execFileSync('node', [installedBin, 'install', 'sigmawrite', '--project', project], {

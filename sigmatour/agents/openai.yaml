@@ -1,8 +1,9 @@
 interface:
   display_name: SigmaTour
-  short_description: A visual 15-60 minute tour of any repository in one HTML page
+  short_description: A visual tour of any repository in one HTML page, with an isolated copy first on request
   default_prompt: Use $sigmatour to measure this repository, ask the short question round,
-    run its examples, and write the tour page with the map, the trace and the README check.
+    copy it isolated first if I asked for a copy, run its examples, and write the tour page
+    with the map, the trace and the README check.
 policy:
   products:
   - chatgpt

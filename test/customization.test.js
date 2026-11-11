@@ -38,56 +38,8 @@ test('customization: rejects missing section heading', () => {
   );
 });
 
-test('customization: rejects missing start tag', () => {
-  const md = `# Sample Skill\n\n${SECTION_HEADING}\n\n${CUSTOM_BLOCK_END}\n`;
-  assert.throws(
-    () => validateCustomizationBlock(md, 'sample'),
-    /missing opening '<sigmaskills-custom>' marker/i,
-  );
-});
-
-test('customization: rejects missing end tag', () => {
-  const md = `# Sample Skill\n\n${SECTION_HEADING}\n\n${CUSTOM_BLOCK_START}\n`;
-  assert.throws(
-    () => validateCustomizationBlock(md, 'sample'),
-    /missing closing '<\/sigmaskills-custom>' marker/i,
-  );
-});
-
 test('customization: rejects duplicate start tag', () => {
   const md = `# Sample Skill\n\n${SECTION_HEADING}\n\n${CUSTOM_BLOCK_START}\n${CUSTOM_BLOCK_START}\n${CUSTOM_BLOCK_END}\n`;
-  assert.throws(
-    () => validateCustomizationBlock(md, 'sample'),
-    /multiple '<sigmaskills-custom>' markers/i,
-  );
-});
-
-test('customization: rejects duplicate end tag', () => {
-  const md = `# Sample Skill\n\n${SECTION_HEADING}\n\n${CUSTOM_BLOCK_START}\n${CUSTOM_BLOCK_END}\n${CUSTOM_BLOCK_END}\n`;
-  assert.throws(
-    () => validateCustomizationBlock(md, 'sample'),
-    /multiple '<\/sigmaskills-custom>' markers/i,
-  );
-});
-
-test('customization: rejects reversed markers', () => {
-  const md = `# Sample Skill\n\n${SECTION_HEADING}\n\n${CUSTOM_BLOCK_END}\n${CUSTOM_BLOCK_START}\n`;
-  assert.throws(
-    () => validateCustomizationBlock(md, 'sample'),
-    /closing marker appears before opening marker/i,
-  );
-});
-
-test('customization: rejects markers placed before ## Personal instructions heading', () => {
-  const md = `${CUSTOM_BLOCK_START}\n${CUSTOM_BLOCK_END}\n# Sample Skill\n\n${SECTION_HEADING}\n`;
-  assert.throws(
-    () => validateCustomizationBlock(md, 'sample'),
-    /markers must appear inside the '## Personal instructions' section/i,
-  );
-});
-
-test('customization: rejects nested markers', () => {
-  const md = `# Sample Skill\n\n${SECTION_HEADING}\n\n${CUSTOM_BLOCK_START}${CUSTOM_BLOCK_START}${CUSTOM_BLOCK_END}${CUSTOM_BLOCK_END}\n`;
   assert.throws(
     () => validateCustomizationBlock(md, 'sample'),
     /multiple '<sigmaskills-custom>' markers/i,

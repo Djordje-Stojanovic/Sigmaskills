@@ -26,7 +26,7 @@ No questions yet. Find, in this order, and stop when you have a ranked picture:
 
 1. A ticket or plan file the user named.
 2. The repo's tracker (`docs/agents/issue-tracker.md`, `TODO*`, `.scratch/**`, `gh issue list` and `gh pr list` when a remote exists).
-3. Steering files (`AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`): landing rules, test and gate commands, model rules, no-touch areas.
+3. Steering files (`AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`): landing rules, test and gate commands, model rules, no-touch areas. If the repo has `ENGINEERING.md`, read it before you change code and follow it closely: it is the owner's engineering standard. `DESIGN.md` for anything people see. Tell the run to follow both.
 4. Live state: `git status`, `git worktree list`, open PRs, other agents in the repo.
 5. Speed facts, when a past run left them: its gate time, review passes per landing, record files nobody reads, accepted output per hour. They feed the "Do not" list.
 

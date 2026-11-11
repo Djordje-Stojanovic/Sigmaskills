@@ -32,14 +32,117 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
-### Fixed
+### Added
 
-- `sigmaboat`: a GitHub token now goes to a sandbox on stdin, never as `-e KEY=VALUE` (visible on the command line and copied into every fork of a base). The base clone uses a one-command git header; workers sign in with `gh auth login --with-token`. Clearer wording for cost, `--filter sr` and the base's commit. The unused, empty `package-lock.json` is gone. (#254)
+- The `blender` pack (94 skills from `arjun988/blender-skills`). One command puts a pack into one repo: `install --pack blender --project .`. A pack that lives only on your machine goes into `~/.sigmaskills/packs.json`, with a `dir` source and a `prefix`.
+- `sigmaskills packs` prints every pack with its skill count and source (`list --packs` does the same). `--pack` is a second name for `--preset`.
 
 ### Changed
 
-- `sigmaloop` is general and faster. It names roles and tiers (planner, builder, reviewer, clerk; cheap, mid, top) instead of model ids, and drops fixed paths, models and counts. The default run is a native `/goal` driven by completion notices, with no wake task or cron; `/loop` is an option. The loop file adds failure rules (stuck by last commit or output time, WIP commit and restart, a provider that fails twice drops to last, a job that fails twice moves one tier up, cleanup by process id, no polling), speed rules (one closing review per job, changed units only, one full gate at the end, bulk compute, a parallel-process cap instead of short time caps), a "Do not" list from a real 2-week run, and an owner-triggered On stop step (sigmamusk, sigmarefactor, sigmareview, measured before and after). The question round asks for the speed metric, the stop line and what may be deleted. The historical `example.md` is gone.
-- `sigmaship` review rounds work by intent. The reviewer gets the ticket's goal and criteria, `git diff --stat`, and the builder's Skipped and Risk lines. It asks first "did the ticket ask for this?" and reads every line only of risky files (money, security, migrations, deploy config); other files get a hunk only when the stat, the Risk line or a doubt calls for it. (Thinkcenter_Setup#1611 R16)
+- `core`, the global default, is now every Sigma skill, the whole Matt Pocock pack and the whole `tstack` pack (Theo Browne's 9 skills, including `full-send` and `full-stop`). It was the Sigma skills plus `full-send` and `full-stop`. `install --global --yes` with no pack, skill or `--all` installs `core` (it was an error). `tstack` is still a pack of its own for a single repo.
+- `mattpocock` and `threejs` are pinned to one upstream commit each, and the HyperFrames student kit too (before, they followed the upstream head). `hyperframes` moves from `v0.8.188` to `v0.9.30` (18 skills become 20).
+- `sigmahuman` follows blader/humanizer v4.0.0 (was v3.1.0). The 26 patterns are the new upstream text. Our layer takes the new order of the draft check (facts first, then read aloud) and a rule for files (read the whole file, report how many sections you reviewed). It does not take v4's step "add a specific detail you know to be true": facts still come from the source or the brief only, and `references/patterns.md` says so for §14 and §17.
+- `sigmaloop` is general and faster. It names roles and tiers (planner, builder, reviewer, clerk; cheap, mid, top) instead of model ids, and drops fixed paths, models and counts. The default run is a native `/goal` driven by completion notices, with no wake task or cron; `/loop` is an option. The loop file adds failure rules (stuck by last commit or output time, WIP commit and restart, a provider that fails twice drops to last, a job that fails twice moves one tier up, cleanup by process id, no polling), speed rules (one closing review per job, changed units only, one full gate at the end, bulk compute, a parallel-process cap instead of short time caps), a "Do not" list from a real 2-week run, and an owner-triggered On stop step (sigmamusk, `sigmamusk cut`, sigmareview, measured before and after). The question round asks for the speed metric, the stop line and what may be deleted. The historical `example.md` is gone.
+
+## [0.24.1] — 2026-11-10
+
+### Fixed
+
+- `update` no longer stops with "missing bundled Skill Revision" when a skill that 0.24.0 took out of the pack is still installed. `sigmarefactor`, `sigmareset`, `sigmasetup`, `sigmadesign`, `sigmacourse` and `sigmafinanceman` are on the retired list now: `update` leaves them untouched and lists them under *Retired skills*. A test fails when a skill leaves the pack without going on that list.
+
+## [0.24.0] — 2026-11-10
+
+### Changed
+
+- `sigmatour` is the one skill for both jobs: tour a repo where it is, or copy it first and tour the copy. Copy mode keeps what `sigmafork` did — the 8 grill questions, the isolated copy (`copy`, `paths`, `fix`, `verify` in `sigmatour.py`; the page scan is `scan`, the path scan is `paths`), the skill bundles, and logs in `.sigmatour/` — and writes the one tour page (`<name>-tour.html` in the copy) from the one template and builder. The two skills were 3,478 lines; the merged skill is 2,268. Ask with `/sigmatour Copy the film repo for a new project, isolated, and walk me through it`. Asking for `sigmafork` by name still triggers `sigmatour`.
+- `sigmamusk` has three sizes of one method: one thing (the review that files one issue), one codebase (`/sigmamusk cut <repo>`, the five largest files) and a whole setup (`/sigmamusk reset`, products the owner keeps or kills). The three skill texts were 360 lines; the merged skill is 269.
+- Pack pins moved to the newest upstream point: Anthropic (`2c5958e`), last30days (`v3.33.1`), Financial Services (`6056506`). The skill lists are unchanged (19, 1, 99). Design.md stays on its pin: upstream changed its folder layout and the newest commit yields no skill. HyperFrames stays on `v0.8.188`.
+
+### Removed
+
+- `sigmafork`: `sigmatour` copies first on request and tours the copy (above). Its own course template, guide reference and page builder go with it. An installed copy stays untouched; `update` lists it under *Retired skills* with the `uninstall` command. Old copies keep their `.sigmafork/` logs; new ones write `.sigmatour/`, and the tour scan skips both. The page in a new copy is `<name>-tour.html`, not `ONBOARDING.html`.
+- `sigmarefactor` and `sigmareset`: both are sizes of `sigmamusk` now (`cut` and `reset`). An installed copy stays untouched; `update` lists it under *Retired skills* with the `uninstall` command.
+- `sigmasetup`, `sigmadesign`, `sigmacourse` and `sigmafinanceman`: another skill or pack already does each job. Per-pack notes are in the README's *Packs* section; a design system comes from `frontend-design` and the Design.md pack, with `sigmataste` for the critique; a big build is planned with `grilling`, `to-spec` and `sigmaloop`; finance models come from the Financial Services pack (99 skills, with `dcf`, `comps`, `3-statement-model`). Installed copies stay untouched; `update` lists them under *Retired skills*.
+
+## [0.23.0] — 2026-11-10
+
+### Added
+
+- Eight packs from the fastest-growing skill repos of October 2026 (#273), each pinned: `superpowers` (obra/superpowers, 15 skills), `impeccable` (pbakaus/impeccable), `security-audit` (cloudflare/security-audit-skill), `anatomy` (wheresryan22/anatomy), `diagram-design` (cathrynlavery/diagram-design), `taste-skill` (Leonxlnx/taste-skill), `hallmark` (Nutlope/hallmark) and `ponytail` (DietrichGebert/ponytail at `v5.3.3`, 6 skills). The installer now has 18 packs. A source may name a `rootSkill`: a repo whose `SKILL.md` sits at its top installs as one skill folder, without its dot folders.
+- The wizard shows a skill before you install it: `p` opens the full `SKILL.md` of the highlighted skill, the arrow keys and PgUp/PgDn scroll, Esc closes. A pack skill is fetched from its pinned source once and cached; when the source cannot be reached, the view says so.
+- The wizard uninstalls: an installed skill shows ticked, space unticks it, and the Review step lists installs, updates and removals apart. Nothing is removed before the confirm; an edited Sigma skill gets a private backup first.
+- `update --check`: one line per out-of-date skill, nothing written, exit code 1 when one exists (`--json` for scripts).
+- `sigmareset` (SigmaReset): brings a bloated repo, machine or whole setup back to what the owner uses. It lists every product with its cost and proven use, the owner says keep or kill, the agent deletes the rest and measures before and after.
+- README: one section per pack (what it does, its skills, source, licence, needs). A setup guide per new pack for SigmaSetup.
+
+### Changed
+
+- `docs/installer.md` keeps the preset and alias table and links to the README for the pack descriptions, which were written twice.
+
+## [0.22.7] — 2026-11-09
+
+### Changed
+
+- `sigmamusk` is 28 % shorter (2,885 to 2,067 words across SKILL.md and its references) and truer to Musk's own words from the Lex Fridman clip: the five steps carry his lines (the perfect answer to the wrong question, the 10 % add-back rule, optimising what should not exist, speed only after that, automate last), plus the house rules that ride on them (every addition deletes something, a lesson is one line or a deletion and never a new check, fix only the broken part, never trade speed, quality, beauty or error rate). The first-principles, Karpathy, heuristics and worked-moves lists fold into six lines; the modes table holds Grill and Fast; the quote list drops to the ten that get used. Behaviour, the three outputs, the SigmaShip question and `--demon` are unchanged.
+
+## [0.22.6] — 2026-11-09
+
+### Changed
+
+- sigmaship, sigmarefactor, sigmareview, sigmaloop, sigmabrief and sigmamusk now read the repo's `ENGINEERING.md` before they change code and follow it closely, the way sigmataste follows `DESIGN.md` for looks.
+
+## [0.22.5] — 2026-11-07
+
+### Changed
+
+- The `mattpocock` pack lists `software-factory`, the eighth skill in Matt Pocock's `skills/in-progress` folder. The other seven were already there. The pack follows the upstream head, so every install and update brings the latest text. (#268)
+
+### Fixed
+
+- `update` no longer fails with `EXDEV` on overlay file systems such as the spark-box container. When the old skill folder cannot be renamed aside, the installer copies it and deletes the original. (#269)
+
+## [0.22.4] — 2026-11-07
+
+### Changed
+
+- sigmadebug's text file is now a numbered record: done and running topics on top as short blocks (`N. Title: DONE (PR #x)` or `AGENT RUNNING`), open topics below as `### N. Title` blocks with their 5 parts and options, the current one marked `(NOW)`. Topics move up and renumber as they finish. It replaces the `[ ] T1` checklist.
+
+## [0.22.3] — 2026-11-07
+
+### Changed
+
+- sigmadebug is shorter and clearer: one topic per message, one-line status pings that name the one open topic, workers that use free tools unless the owner names a paid one and check real exit codes, and one short block per landed PR. The letter-batch answers ("all A", "1A 2C") are gone.
+- `npm test` does less work: the baseline check reads each Release tag with two git calls instead of two per folder, the pack-set tests run at once, and the packed CLI's full lifecycle (and two repeat design-md picks) moved behind `SIGMA_SLOW_TESTS=1`; CI still runs that lifecycle as its own step.
+
+## [0.22.2] — 2026-11-06
+
+### Fixed
+
+- An install that skips a changed or older canonical copy (`--adopt-changed skip`, `--adopt-legacy skip`) no longer moves the recorded revision, so a later `update` still sees the skill as stale. Before, the host link advanced the record while the files stayed old.
+
+## [0.22.1] — 2026-11-06
+
+### Changed
+
+- The README leads with what Sigmaskills is, the one-line install, how updates reach every machine and a one-line catalogue of all 23 skills. (#260)
+- `sigmaboat` installs the newest Sigmaskills in the base, and reuses a base only when it holds the newest release. (#260)
+- Agent Host registry sync (vercel-labs/skills cad8cda): Antigravity IDE and CLI both read global skills from `~/.gemini/config/skills`. (#257)
+
+## [0.22.0] — 2026-11-06
+
+### Added
+
+- `sigmadebug` (SigmaDebug): turns a pile of open questions into merged fixes while you talk. It lists every topic in a .txt checklist and opens it, settles the topics one at a time in a 5-part format with 3 options (the likely pick first, marked ★) and grills until each is clear. Each clear topic gets a short fix plan in `fix-issues-plan-temp-<date>.md` and a background `/sigmaship` worker that never asks you anything. Optional proxy answerer on any model or host; optional SigmaWrite board instead of the .txt. Works in any host. (#256)
+
+### Changed
+
+- `sigmawritegui` is now the GUI option of `sigmawrite`. "easy talk", "SigmaWriteGUI board" and `EASYTALK REPLY` still work and go to SigmaWrite; the board template moved to `sigmawrite/template.html`. `sigmawritegui` is listed as retired: `update` reports an installed copy and leaves it; remove it with `sigmaskills uninstall --skill sigmawritegui`. (#256)
+- `npm test` runs in about 3 minutes instead of 58 on a loaded Windows PC (under 2 minutes in CI), and fails when the default run goes over 180 s, naming the 5 slowest files. It packs the tarball once for every test file, reads Release baselines with one git process, and runs the LibreOffice recalculation and the slow SigmaDeepLook files only with `SIGMA_SLOW_TESTS=1`. The default SigmaDeepLook set fails when it goes over 60 s. (#256)
+- `sigmaship` review rounds work by intent. The reviewer gets the ticket's goal and criteria, `git diff --stat`, and the builder's Skipped and Risk lines. It asks first "did the ticket ask for this?" and reads every line only of risky files (money, security, migrations, deploy config); other files get a hunk only when the stat, the Risk line or a doubt calls for it. (#253, Thinkcenter_Setup#1611 R16)
+
+### Fixed
+
+- `sigmaboat`: a GitHub token now goes to a sandbox on stdin, never as `-e KEY=VALUE` (visible on the command line and copied into every fork of a base). The base clone uses a one-command git header; workers sign in with `gh auth login --with-token`. Clearer wording for cost, `--filter sr` and the base's commit. The unused, empty `package-lock.json` is gone. (#254, #255)
 
 ## [0.21.0] — 2026-11-06
 
@@ -669,7 +772,18 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.1...HEAD
+[0.24.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.0...v0.24.1
+[0.24.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.23.0...v0.24.0
+[0.23.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.7...v0.23.0
+[0.22.7]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.6...v0.22.7
+[0.22.6]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.5...v0.22.6
+[0.22.5]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.4...v0.22.5
+[0.22.4]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.3...v0.22.4
+[0.22.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.2...v0.22.3
+[0.22.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.1...v0.22.2
+[0.22.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.0...v0.22.1
+[0.22.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.20.1...v0.21.0
 [0.20.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.19.0...v0.20.0

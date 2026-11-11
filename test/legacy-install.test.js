@@ -11,6 +11,7 @@ import { createInstallPlan, formatPlanHuman } from '../src/plan.js';
 import { loadProjectLock, PROJECT_LOCK_FILENAME } from '../src/project-lock.js';
 import { getProjectStateDir, loadProjectState, STATE_FILENAME } from '../src/state.js';
 import { executeProjectInstall } from '../src/transaction.js';
+import { packInto, installTarball } from './packed.js';
 
 const ROOT = findPackageRoot();
 
@@ -323,16 +324,11 @@ test('install: failure after backup or after state change restores the prior tre
 test('packed CLI classifies, backups, and exports changed Sigma-looking trees', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-pack-legacy-'));
   try {
-    const packOutput = execSync(`npm pack --pack-destination "${tmpDir}"`, {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim();
-    const tarballFileName = packOutput.split(/\r?\n/).pop()?.trim();
+    const tarballFileName = packInto(tmpDir);
     const tarballPath = path.join(tmpDir, tarballFileName);
     const appDir = path.join(tmpDir, 'test-app');
     fs.mkdirSync(appDir, { recursive: true });
-    execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
+    installTarball(appDir, tarballPath);
     const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
     const packedRoot = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills');
 

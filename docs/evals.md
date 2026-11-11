@@ -2,7 +2,7 @@
 
 A skill is a set of instructions, so an edit can quietly break what it produces. The evals catch that in two layers.
 
-## Layer 1: contract checks in `npm test` (runs in CI)
+## Layer 1: contract checks (`scripts/eval-contracts.js`; the `npm test` file for them was cut on 2026-11-08)
 
 - `scripts/eval-contracts.js` holds one check per skill. A check reads what a run left behind (the files and the final chat reply) and lists every way it breaks the skill's documented output. An empty list is a pass.
 - `test/fixtures/eval-samples/<skill>/good` and `bad` hold small sample outputs. The test asserts that each check accepts the good sample and rejects the bad one. A new skill fails this test until it has a check and samples.
@@ -16,9 +16,10 @@ What each check requires:
 | SigmaImprove | `.scratch/sigmaimprove/*.md` (local tracker) | 1–20 category files titled `SigmaImprove · <ID> <name>`; Where we stand, Entries, History; entries table; each Idea has problem, recommendation, done-when; each Signal has what we see, gap, questions; at least 10 entries across 5 category groups |
 | SigmaBrief | Final chat reply | Dispatch lines `wave N \| … \| isolation: … \| type: …`; fenced `text` briefs that each say do not merge and end with the fixed report-back line; no fixture file added or changed (no `SIGMABRIEF-*.md`, no code edits) |
 | SigmaShip | `PR-BODY.md` and `CLEANUP.md` (the runner asks for them) | `Closes #N`, spec and map line, Acceptance with every box ticked, Rulings, Follow-ups, Review rounds table with at least one round; cleanup output shows `main in sync` and `tree clean` |
-| SigmaWrite | `docs/NOTES.md` in the fixture, rewritten | Code names `step`, `saveBest`, `src/scores.js` survive; the planted jargon is gone; no sentence over 30 words |
+| SigmaWrite (plain) | `docs/NOTES.md` in the fixture, rewritten | Code names `step`, `saveBest`, `src/scores.js` survive; the planted jargon is gone; no sentence over 30 words |
 | SigmaRefactor | `REFACTOR-SCAN.md` (the runner asks for it) | Counting method named (`laloc` or fallback); ranked files with line counts; choices with risk and verification |
-| SigmaWriteGUI | `status-board.html` and final chat reply | Installed template preserved outside its DATA block; valid JavaScript with PAGE, DO, ANS, FYI; reply links the saved board |
+| SigmaWrite (GUI option) | `status-board.html` and final chat reply | Installed template preserved outside its DATA block; valid JavaScript with PAGE, DO, ANS, FYI; reply links the saved board |
+| SigmaDebug | Final chat reply | The topic file path; 5 headings per topic; 3 lettered options with one ★; a plan file; worker handoff naming `/sigmaship`; no worker questions |
 | SigmaCreateArena | `arena/arena.json` and final chat reply | Valid config with title, question, metrics, groups, at least four players and items that name known players and groups; no `picks.jsonl`; reply links the local arena (port 3410-3499) |
 | SigmaResearch | Final chat reply | Sources table with platform, URL, publication/access dates, route, scope and evidence (or None with a gap); a Contradictions section; explicit Access gaps section |
 | SigmaDeepLook | Final chat reply | Sections Evidence and Limits in order; every evidence bullet names an artifact path and a time, page, cell or offset; Limits explicit (or None); the reply ends with the path to `view.html`; no private coordinates |
@@ -70,14 +71,12 @@ Near-miss triggers (in `npm test`). Score = prompt words found in the "Use when"
 | Implement and ship issue #12 end to end and merge the PR | sigmaship 4 | sigmabrief 0 | pass |
 | Build this ready ticket in a worktree with a draft PR | sigmaship 4 | sigmabrief 0 | pass |
 | Explain this in simplified technical English with less jargon | sigmawrite 6 | sigmabrief 0 | pass |
-| Rewrite this for an outsider: clear, no gibberish | sigmawrite 2 | sigmarefactor -1 | pass |
-| Review my large files and simplify them to reduce code size | sigmarefactor 7 | sigmareview -1 | pass |
-| Run a laloc scan and help me shrink the biggest files | sigmarefactor 3 | sigmaimprove 0 | pass |
+| Rewrite this for an outsider: clear, no gibberish | sigmawrite 2 | sigmamusk -1 | pass |
 
 ## Recommendation
 
-Keep the live runs on demand. Keep the contract and trigger checks in CI, as they are now.
+Keep the live runs on demand. Keep the contract and trigger checks as the Layer 1 samples.
 
 - The contract checks already stop the failure that SC-015 names: an edit that breaks a skill's documented output shape and nobody notices. They are free, fast, and deterministic.
-- A live run costs about $3 and 13 minutes, and model output changes from run to run. The first run had one false failure. A CI gate would need an API key in pull-request workflows and would turn model noise into red builds.
+- A live run costs about $3 and 13 minutes, and model output changes from run to run. The first run had one false failure. A gate would need an API key and would turn model noise into red builds.
 - Run `node scripts/eval-skills.js` before each Release, and after any edit to a skill's workflow or output contract.

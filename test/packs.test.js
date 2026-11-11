@@ -20,11 +20,11 @@ function load(box, extra) {
   return loadPackCatalog({ catalog, packageRoot, homeDir: box.home, env: box.env });
 }
 
-test('packs: the registry lists the bundled Sigma pack and the ten outside packs', () => {
+test('packs: the registry lists the bundled Sigma pack and the nineteen outside packs', () => {
   const box = createSandbox();
   try {
     const packs = load(box);
-    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'local']);
+    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'blender', 'local']);
     const sigma = findPack(packs, 'sigma');
     assert.equal(sigma.skills.length, catalog.skills.length);
     assert.ok(sigma.skills.every((skill) => skill.kind === 'bundled'));
@@ -34,7 +34,27 @@ test('packs: the registry lists the bundled Sigma pack and the ten outside packs
     assert.equal(findPack(packs, 'threejs').skills.length, 13);
     assert.ok(findPack(packs, 'hyperframes').skills.some((skill) => skill.id === 'hyperframes'));
     assert.ok(findPack(packs, 'hyperframes').skills.some((skill) => skill.id === 'cut-silences'), 'the student kit is part of the HyperFrames pack');
+    // #273: the top-10 packs of October 2026, each pinned; anatomy is the one whose skill is the repo root
+    assert.equal(findPack(packs, 'superpowers').skills.length, 15);
+    assert.equal(findPack(packs, 'ponytail').skills.length, 6);
+    for (const id of ['impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark']) assert.equal(findPack(packs, id).skills.length, 1, id);
+    assert.equal(findPack(packs, 'anatomy').skills[0].source.rootSkill, 'anatomy');
+    assert.equal(findPack(packs, 'obra').id, 'superpowers');
     assert.equal(findPack(packs, 'nope'), null);
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('mattpocock pack: takes every skill in upstream skills/in-progress and is pinned to the newest upstream commit (#268 followed the head)', () => {
+  const box = createSandbox();
+  try {
+    const matt = findPack(load(box), 'mattpocock');
+    const ids = matt.skills.map((skill) => skill.id);
+    for (const id of ['chief-of-staff', 'claude-handoff', 'loop-me', 'setup-ts-deep-modules', 'software-factory', 'writing-beats', 'writing-fragments', 'writing-shape']) {
+      assert.ok(ids.includes(id), `${id} is in the mattpocock pack`);
+    }
+    assert.match(matt.sources[0].ref, /^[0-9a-f]{40}$/, 'a full commit, so a project installs the same skills each time');
   } finally {
     box.cleanup();
   }
@@ -120,6 +140,12 @@ test('packs: resolveSelection joins presets and skill ids and reports what it ca
     const all = resolveSelection(packs, { presets: ['all'] });
     assert.ok(all.skills.length > 80);
     assert.deepEqual(all.unavailable, [], 'all skips unavailable packs without complaint');
+
+    const core = resolveSelection(packs, { presets: ['core'] });
+    const sigma = packs.packs.find((pack) => pack.id === 'sigma').skills.map((skill) => skill.id);
+    const matt = packs.packs.find((pack) => pack.id === 'mattpocock').skills.map((skill) => skill.id);
+    const tstack = packs.packs.find((pack) => pack.id === 'tstack').skills.map((skill) => skill.id);
+    assert.deepEqual(core.skills.map((skill) => skill.id), [...sigma, ...matt, ...tstack], 'core is every Sigma skill plus the whole Matt Pocock and tstack packs');
   } finally {
     box.cleanup();
   }
@@ -159,6 +185,21 @@ test('agents: global groups resolve the same friendly names', () => {
     const names = describeRoots(groups);
     assert.match(names.get('.agents/skills'), /Codex/);
     assert.equal(names.get('.claude/skills'), 'Claude Code');
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('packs: the per-project packs are registered and every outside source is pinned', () => {
+  const box = createSandbox();
+  try {
+    const packs = load(box);
+    for (const id of ['mattpocock', 'threejs', 'hyperframes']) {
+      const pack = findPack(packs, id);
+      assert.ok(pack.skills.length > 0, `${id} lists skills`);
+      for (const source of pack.sources) assert.match(source.ref, /^([0-9a-f]{40}|v\d[\w.]*)$/, `${id} ${source.repo} is pinned`);
+    }
+    assert.equal(findPack(packs, 'blender').skills.length, 94, 'Blender holds the 94 arjun988 skills');
   } finally {
     box.cleanup();
   }

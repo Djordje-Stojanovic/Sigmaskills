@@ -15,6 +15,7 @@ import { createInstallPlan, formatPlanHuman } from '../src/plan.js';
 import { loadProjectLock, PROJECT_LOCK_FILENAME } from '../src/project-lock.js';
 import { loadProjectState, saveProjectState, recordSkillInState, STATE_FILENAME } from '../src/state.js';
 import { executeProjectInstall } from '../src/transaction.js';
+import { packInto, installTarball } from './packed.js';
 
 const ROOT = findPackageRoot();
 const LINK_METHOD = recommendedLinkMethod();
@@ -279,16 +280,11 @@ test('plan: foreign content still fails closed and generic lock entries do not g
 test('packed CLI adopts manual copies, generic-CLI links, Sigma state, duplicates, and no-op reruns', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-pack-adopt-'));
   try {
-    const packOutput = execSync(`npm pack --pack-destination "${tmpDir}"`, {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim();
-    const tarballFileName = packOutput.split(/\r?\n/).pop()?.trim();
+    const tarballFileName = packInto(tmpDir);
     const tarballPath = path.join(tmpDir, tarballFileName);
     const appDir = path.join(tmpDir, 'test-app');
     fs.mkdirSync(appDir, { recursive: true });
-    execSync('npm init -y', { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
-    execSync(`npm install "${tarballPath}"`, { cwd: appDir, encoding: 'utf8', stdio: 'pipe' });
+    installTarball(appDir, tarballPath);
     const installedBin = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills', 'bin', 'sigmaskills.js');
     const packedRoot = path.join(appDir, 'node_modules', '@djordje-stojanovic', 'sigmaskills');
 

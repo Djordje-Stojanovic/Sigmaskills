@@ -35,7 +35,7 @@ test('hyperframes pack: the source is pinned to a release tag and lists only ski
   const heygen = pack.sources.find((source) => source.repo === 'heygen-com/hyperframes');
   assert.match(heygen.ref, /^v\d+\.\d+\.\d+$/, 'a release tag, never the head');
   const ids = heygen.skills.map((skill) => skill.id).sort();
-  assert.deepEqual(ids, ['figma', 'hyperframes', 'hyperframes-cli', 'hyperframes-registry', 'media-use', 'remotion-to-hyperframes', 'slideshow']);
+  assert.deepEqual(ids, ['figma', 'hyperframes', 'hyperframes-cli', 'hyperframes-registry', 'media-use', 'remotion-to-hyperframes', 'reverse-any-video', 'slideshow', 'style-sampling']);
 });
 
 test('pack install: a source with a ref installs from that tag even after upstream moved a skill', async () => {
@@ -108,9 +108,9 @@ test('wizard: Sigma plus Local in a fresh folder installs each name once', async
     let out = '';
     stdout.setEncoding('utf8');
     stdout.on('data', (chunk) => { out += chunk; });
-    // Sigma is key 1. Local is the 11th row (number keys stop at ten): move down ten rows, then Space picks it.
+    // Sigma is key 1. Local is the 20th row (number keys stop at ten): move down nineteen rows, then Space picks it.
     // Keys arrive one at a time.
-    const keys = ['1', ...Array(10).fill(DOWN), ' ', ENTER, ENTER, ENTER];
+    const keys = ['1', ...Array(19).fill(DOWN), ' ', ENTER, ENTER, ENTER];
     keys.forEach((chunk, index) => {
       setTimeout(() => (index === keys.length - 1 ? stdin.end(chunk) : stdin.write(chunk)), 200 * (index + 1));
     });

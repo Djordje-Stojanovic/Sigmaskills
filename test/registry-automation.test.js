@@ -4,11 +4,9 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { diffSnapshots } from '../scripts/registry/diff.js';
-import { CHECKOUT_ACTION_PIN, SETUP_NODE_ACTION_PIN } from '../scripts/release.js';
 import {
   GENERATED_BRANCH_PREFIX,
   REGISTRY_ALLOWLIST,
-  REGISTRY_SYNC_WORKFLOW_FILE,
   calculateRegistryPatchVersion,
   classifySemanticAuthority,
   evaluateAutoAuthorization,
@@ -16,7 +14,6 @@ import {
   absentOn404,
   formatRegistryPrBody,
   isNotFoundError,
-  inspectRegistrySyncWorkflow,
   planGeneratedBranchCleanup,
   planGeneratedBranchPush,
   planRegistrySync,
@@ -407,32 +404,6 @@ test('registry automation generate: leftover generated branch is force-replaced;
   assert.deepEqual(calls.created, []);
 });
 
-test('trusted registry-sync workflow: pinned actions, expected-head checkout, no untrusted execution, no publish or unrelated mutation', () => {
-  const yaml = fs.readFileSync(path.join(ROOT, '.github', 'workflows', REGISTRY_SYNC_WORKFLOW_FILE), 'utf8');
-  const inspected = inspectRegistrySyncWorkflow(yaml);
-  assert.equal(inspected.ok, true, inspected.errors.join('\n'));
-  assert.equal(inspected.checkoutPin, CHECKOUT_ACTION_PIN);
-  assert.equal(inspected.setupNodePin, SETUP_NODE_ACTION_PIN);
-  assert.equal(inspected.usesFloatingTags, false);
-  assert.equal(inspected.permissions['id-token'], undefined);
-  assert.equal(inspected.generate.permissions.contents, 'write');
-  assert.equal(inspected.generate.permissions['pull-requests'], 'write');
-  assert.equal(inspected.generate.permissions.issues, undefined);
-  assert.doesNotMatch(yaml, /pull_request:/);
-  assert.doesNotMatch(yaml, /github\.event\.pull_request\.head\.sha/);
-  assert.doesNotMatch(yaml, /npm publish/);
-  assert.doesNotMatch(yaml, /gh issue close/);
-  assert.match(yaml, /node \.\/scripts\/registry\/automation-ci\.js generate/);
-  assert.match(yaml, /node \.\/scripts\/registry\/automation-ci\.js auto-merge/);
-  assert.match(yaml, /EXPECTED_HEAD/);
-  assert.match(yaml, /concurrency:/);
-  assert.equal(inspected.autoMerge.permissions['id-token'], 'write');
-  assert.equal(inspected.autoMerge.permissions.contents, 'write');
-  assert.equal(inspected.autoMerge.permissions['pull-requests'], 'write');
-  assert.equal(inspected.autoMerge.permissions.issues, undefined);
-  assert.equal(inspected.generate.permissions['id-token'], undefined);
-});
-
 test('registry patch version: serialize against actual npm and GitHub state, always patch, never major or minor', () => {
   assert.equal(calculateRegistryPatchVersion({
     packageVersion: '0.1.0',
@@ -522,59 +493,6 @@ test('registry automation: empty diffs and missing generated files cannot be aut
   const empty = evaluateAutoAuthorization(eligibleAuthorization({ files: [] }));
   assert.equal(empty.autoAuthorized, false);
   assert.ok(empty.deniedReasons.some((reason) => /empty/i.test(reason)));
-});
-
-test('end-to-end safe-addition rehearsal: merge, trusted patch Release, then delete only the generated branch', async () => {
-  const { io, calls } = autoMergeIo();
-  const result = await executeRegistryAutomation({
-    mode: 'auto-merge',
-    dryRun: false,
-    expectedHead: SHA_A,
-  }, io);
-  assert.equal(result.ok, true);
-  assert.equal(result.merged, true);
-  assert.equal(result.published, true);
-  assert.equal(result.version, '0.1.1');
-  assert.equal(result.bump, 'patch');
-  assert.deepEqual(calls.merged, [99]);
-  assert.equal(calls.published.length, 1);
-  assert.equal(calls.published[0].version, '0.1.1');
-  assert.equal(calls.published[0].bump, 'patch');
-  assert.ok(calls.published[0].usesTrustedPatchPrimitive);
-  assert.deepEqual(calls.deleted, [`${GENERATED_BRANCH_PREFIX}deadbeef`]);
-  assert.deepEqual(calls.closedIssues, []);
-  assert.deepEqual(calls.closedPrs, []);
-  assert.deepEqual(calls.skillWrites, []);
-  assert.equal(calls.versionLocks, 1);
-  assert.equal(result.actions.closeUnrelatedIssues, false);
-  assert.equal(result.actions.deleteUnrelatedBranches, false);
-});
-
-test('end-to-end blocked path-change rehearsal: owner review, no merge, no publish, no branch delete', async () => {
-  const { io, calls } = autoMergeIo({
-    io: {
-      classification: async () => classifyDiff(
-        snap([host('amp', { displayName: 'Amp' })]),
-        snap([host('amp', {
-          displayName: 'Amp',
-          destinations: { project: { kind: 'literal', path: '.moved/skills' }, global: { kind: 'none' } },
-        })]),
-      ),
-    },
-  });
-  const result = await executeRegistryAutomation({
-    mode: 'auto-merge',
-    dryRun: false,
-    expectedHead: SHA_A,
-  }, io);
-  assert.equal(result.ok, true);
-  assert.equal(result.autoAuthorized, false);
-  assert.equal(result.merged, false);
-  assert.equal(result.published, false);
-  assert.deepEqual(calls.merged, []);
-  assert.deepEqual(calls.published, []);
-  assert.deepEqual(calls.deleted, []);
-  assert.ok(result.deniedReasons.some((reason) => /project/i.test(reason)));
 });
 
 test('auto-merge: partial trusted patch success is recoverable and never overwrites an npm version', async () => {

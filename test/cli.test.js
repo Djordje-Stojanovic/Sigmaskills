@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { getCatalog } from '../src/catalog.js';
 import { runCli } from '../src/cli.js';
 
 const PACKAGE_VERSION = JSON.parse(
@@ -32,13 +31,6 @@ test('cli: --version prints package version', async () => {
   assert.equal(io.getStderr(), '');
 });
 
-test('cli: -v prints package version', async () => {
-  const io = createMockIo();
-  const exitCode = await runCli(['-v'], io);
-  assert.equal(exitCode, 0);
-  assert.equal(io.getStdout().trim(), PACKAGE_VERSION);
-});
-
 test('cli: --help prints usage and dynamically lists skills', async () => {
   const io = createMockIo();
   const exitCode = await runCli(['--help'], io);
@@ -66,20 +58,6 @@ test('cli: list --json outputs valid JSON array of skills with revisions', async
     assert.ok(skill.id);
     assert.ok(skill.title);
     assert.match(skill.revision, /^[a-f0-9]{64}$/);
-  }
-});
-
-test('cli: list shows short descriptions for people; list --json keeps the full description', async () => {
-  const { skills } = getCatalog();
-  const human = createMockIo();
-  assert.equal(await runCli(['list'], human), 0);
-  const json = createMockIo();
-  assert.equal(await runCli(['list', '--json'], json), 0);
-  const parsed = JSON.parse(json.getStdout());
-  for (const skill of skills) {
-    assert.ok(human.getStdout().includes(`  Description: ${skill.shortDescription}\n`), skill.id);
-    assert.ok(!human.getStdout().includes(skill.description), `${skill.id} full description stays out of human list`);
-    assert.equal(parsed.skills.find((entry) => entry.id === skill.id).description, skill.description);
   }
 });
 

@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaDebug
+  short_description: Settle open topics one by one, ship each fix in the background
+  default_prompt: Use $sigmadebug to list my open topics in a text file, grill each one, plan
+    each fix, and ship each in a background agent.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

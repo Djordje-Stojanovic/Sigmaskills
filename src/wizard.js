@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { KeyInput } from './key-input.js';
 import { SIGMA_PALETTE as C, TerminalRenderer, createStyler, wrapWords } from './terminal.js';
 import {
@@ -8,9 +10,11 @@ import {
   searchHosts,
 } from './destinations.js';
 import { POPULAR_AGENTS, describeRoots, detectPopularAgents } from './agents.js';
-import { createSourceFetcher } from './pack-source.js';
+import { createSourceFetcher, findSkillDirs } from './pack-source.js';
 import { packStatus, uninstallPackSkills } from './pack-install.js';
 import { runInstall } from './install-run.js';
+import { executeUninstall } from './uninstall.js';
+import { loadGlobalState, loadProjectState } from './state.js';
 import { formatSummary } from './report.js';
 import { isSearchChar } from './destination-items.js';
 
@@ -51,6 +55,20 @@ export function buildPackRows(packs, expanded, query) {
     if (expanded.has(pack.id)) for (const skill of pack.skills) rows.push({ type: 'skill', pack, skill });
   }
   return rows;
+}
+
+/**
+ * The part of a skill's text that shows in the preview: lines wrapped to the width with their
+ * indent kept, and the scroll offset clamped to the text. Pure, so tests can check it.
+ */
+export function previewFrame(text, width, height, offset) {
+  const lines = String(text).split(/\r?\n/).flatMap((line) => {
+    const flat = line.replace(/\t/g, '  ').trimEnd();
+    const indent = flat.match(/^ */)[0].slice(0, Math.max(0, width - 10));
+    return flat.trim() ? wrapWords(flat.trim(), width - indent.length).map((part) => indent + part) : [''];
+  });
+  const top = Math.max(0, Math.min(offset, lines.length - height));
+  return { lines: lines.slice(top, top + height), top, total: lines.length };
 }
 
 function checkbox(state) {
@@ -198,7 +216,8 @@ export async function runWizard(params) {
   const installedNow = () => {
     if (!installedByScope.has(state.scope)) {
       try {
-        installedByScope.set(state.scope, new Set(packStatus(stateParams()).map((row) => row.id)));
+        const sigma = state.scope === 'global' ? loadGlobalState(path.resolve(homeDir), customStateDir) : loadProjectState(path.resolve(projectRoot), customStateDir);
+        installedByScope.set(state.scope, new Set([...packStatus(stateParams()).map((row) => row.id), ...Object.keys(sigma.skills || {})]));
       } catch {
         installedByScope.set(state.scope, new Set());
       }
@@ -212,6 +231,7 @@ export async function runWizard(params) {
     for (const id of state.selected) if (own.has(id)) held.add(id);
     return held;
   };
+  let previewFetcher = null;
   const selectedSkills = () => packCatalog.packs.flatMap((pack) => pack.skills).filter((skill) => state.selected.has(skill.id));
 
   // ---- step 1: what ------------------------------------------------------------------------
@@ -250,14 +270,16 @@ export async function runWizard(params) {
             ]));
           } else {
             const chosen = state.selected.has(item.skill.id);
+            const have = installedNow().has(item.skill.id);
+            const going = state.drop.has(item.skill.id);
             lines.push(screen.row([
               cursorMark,
               [query ? '' : '    ', C.mute],
-              [chosen ? '[x]' : '[ ]', chosen ? C.primary : C.mute, chosen],
+              [chosen || (have && !going) ? '[x]' : '[ ]', chosen ? C.primary : C.mute, chosen],
               ['  ', C.mute],
               [item.skill.id.padEnd(30), here ? C.ink : C.text, here],
               [(query ? `${item.pack.title}${item.skill.group ? ` · ${item.skill.group}` : ''}` : (item.skill.group || '')).padEnd(query ? 0 : 28), C.mute],
-              [installedNow().has(item.skill.id) ? (state.drop.has(item.skill.id) ? '  will drop' : '  installed') : '', state.drop.has(item.skill.id) ? C.warn : C.ok],
+              [have ? (going ? '  will remove' : chosen ? '  will update' : '  installed') : '', going ? C.warn : C.ok],
             ]));
           }
         }
@@ -275,7 +297,7 @@ export async function runWizard(params) {
         const wrapped = wrapWords(about || '', screen.width - 2);
         lines.push(screen.row([[wrapped[0] || '', C.text]]));
         lines.push(screen.row([[wrapped[1] || '', C.mute]]));
-        lines.push(screen.row([[searching ? 'type to filter · enter keep · esc clear' : '↑↓ move · space select · →← open or close · 1-0 pick a pack · a all · / filter', C.mute]]));
+        lines.push(screen.row([[searching ? 'type to filter · enter keep · esc clear' : '↑↓ move · space select · →← open or close · p read the skill · 1-0 pick a pack · a all · / filter', C.mute]]));
         lines.push(screen.row([['enter next · esc cancel', C.mute]]));
         screen.paint(lines);
       };
@@ -330,10 +352,70 @@ export async function runWizard(params) {
         searching = true;
         query = '';
         cursor = 0;
+      } else if (key.name === 'p') {
+        if (focus?.type !== 'skill') state.notice = 'Open a pack and highlight a skill, then p shows its full text.';
+        else {
+          const outcome = await showPreview(focus.skill);
+          if (outcome) return outcome;
+        }
       } else if (key.name === 'return') {
-        if (state.selected.size === 0) state.notice = 'Select at least one skill.';
+        if (state.selected.size === 0 && state.drop.size === 0) state.notice = 'Select at least one skill.';
         else return 'next';
       }
+    }
+  }
+
+  /** The full SKILL.md of one skill: the bundled file, or the pack's pinned source (fetched once, then cached). */
+  function skillText(skill) {
+    if (skill.kind !== 'external') return fs.readFileSync(path.join(packageRoot, skill.id, 'SKILL.md'), 'utf8');
+    previewFetcher ||= createSourceFetcher({ env });
+    const dir = findSkillDirs(previewFetcher.fetch(skill.source).root).get(skill.id);
+    if (!dir) throw new Error(`the source has no skill named ${skill.id}`);
+    return fs.readFileSync(path.join(dir, 'SKILL.md'), 'utf8');
+  }
+
+  async function showPreview(skill) {
+    let offset = 0;
+    let text = null;
+    while (true) {
+      const room = Math.max(3, screen.height - 7);
+      const frame = text === null ? { lines: ['Loading the text…'], top: 0, total: 0 } : previewFrame(text, screen.width - 2, room, offset);
+      offset = frame.top;
+      const paint = () => {
+        const lines = screen.header(0, version, scopeLabel());
+        lines.push(screen.row([
+          [skill.id, C.ink, true],
+          ['  SKILL.md', C.mute],
+          [frame.total ? `   lines ${frame.top + 1}-${frame.top + frame.lines.length} of ${frame.total}` : '', C.mute],
+        ]));
+        for (const line of frame.lines) lines.push(screen.row([[` ${line}`, C.text]]));
+        while (lines.length < screen.height - 2) lines.push(screen.blank());
+        lines.push(screen.rule());
+        lines.push(screen.row([['↑↓ scroll · PgUp PgDn page · esc close', C.mute]]));
+        screen.paint(lines);
+      };
+      renderer.paint = paint;
+      paint();
+      if (text === null) {
+        try {
+          text = skillText(skill);
+        } catch (err) {
+          text = `Could not load the text of ${skill.id}: ${String(err.message || err).split('\n')[0]}\n\nA pack skill needs the network the first time. Close with esc and try again.`;
+        }
+        continue;
+      }
+      const key = await input.next();
+      if (key.name === 'input-error') throw key.error;
+      if (key.name === 'ctrl-c') return 'abort';
+      if (key.name === 'eof') return 'cancel';
+      if (['escape', 'p', 'q', 'return', 'left'].includes(key.name)) return '';
+      if (key.name === 'up') offset -= 1;
+      else if (key.name === 'down') offset += 1;
+      else if (key.name === 'pageup') offset -= room;
+      else if (key.name === 'pagedown' || key.name === 'space') offset += room;
+      else if (key.name === 'home') offset = 0;
+      else if (key.name === 'end') offset = frame.total;
+      offset = Math.max(0, offset);
     }
   }
 
@@ -358,6 +440,12 @@ export async function runWizard(params) {
       state.selected.delete(id);
       return;
     }
+    // An installed skill is ticked without being picked. Space unticks it: it is removed on confirm.
+    // Space again picks it, and the install updates it.
+    if (installedNow().has(id) && !state.drop.has(id)) {
+      state.drop.add(id);
+      return;
+    }
     const pack = packOf(id);
     if (pack?.limit) {
       const held = slotsOf(pack);
@@ -365,8 +453,8 @@ export async function runWizard(params) {
         state.pendingDrop = { pack, id };
         return;
       }
-      state.drop.delete(id);
     }
+    state.drop.delete(id);
     state.selected.add(id);
   }
 
@@ -532,17 +620,26 @@ export async function runWizard(params) {
       const needsChoice = plan.pending > 0 && !state.resolution;
       const paint = () => {
         const lines = screen.header(2, version, scopeLabel());
-        const count = skills.length;
-        lines.push(screen.row([[`Install ${count} skill${count === 1 ? '' : 's'}`, C.ink, true]]));
+        const plural = (n) => `${n} skill${n === 1 ? '' : 's'}`;
+        const fresh = skills.filter((skill) => !installedNow().has(skill.id));
+        const updates = skills.filter((skill) => installedNow().has(skill.id));
+        if (fresh.length || (!updates.length && !state.drop.size)) lines.push(screen.row([[`Install ${plural(fresh.length)}`, C.ink, true]]));
         for (const pack of packCatalog.packs) {
-          const inPack = skills.filter((skill) => skill.pack === pack.id).length;
+          const inPack = fresh.filter((skill) => skill.pack === pack.id).length;
           if (inPack) lines.push(screen.row([['  ', C.mute], [pack.title.padEnd(16), C.text], [`${inPack}`, C.primary, true], [` of ${pack.skills.length}`, C.mute]]));
         }
-        if (state.drop.size) lines.push(screen.row([['  ', C.mute], ['Drop'.padEnd(16), C.warn, true], [[...state.drop].join(', '), C.mute]]));
+        if (updates.length) {
+          lines.push(screen.row([[`Update ${plural(updates.length)}`, C.ink, true], ['  already installed', C.mute]]));
+          lines.push(screen.row([['  ', C.mute], [updates.map((skill) => skill.id).join(', '), C.text]]));
+        }
+        if (state.drop.size) {
+          lines.push(screen.row([[`Remove ${plural(state.drop.size)}`, C.warn, true], ['  an edited skill gets a private backup first', C.mute]]));
+          lines.push(screen.row([['  ', C.mute], [[...state.drop].join(', '), C.text]]));
+        }
         lines.push(screen.blank());
         lines.push(screen.row([[state.scope === 'global' ? 'Global  ' : 'Project ', C.primary, true], [state.scope === 'global' ? homeDir : projectRoot, C.mute]]));
-        lines.push(screen.row([['  ', C.mute], ['.agents/skills'.padEnd(22), C.ink], ['copy'.padEnd(8), C.mute], [names.get(UNIVERSAL_PROJECT_DESTINATION) || '', C.mute]]));
-        for (const root of state.roots) {
+        if (skills.length) lines.push(screen.row([['  ', C.mute], ['.agents/skills'.padEnd(22), C.ink], ['copy'.padEnd(8), C.mute], [names.get(UNIVERSAL_PROJECT_DESTINATION) || '', C.mute]]));
+        for (const root of skills.length ? state.roots : []) {
           lines.push(screen.row([['  ', C.mute], [root.padEnd(22), C.ink], [(state.method === 'link' ? 'linked' : 'copy').padEnd(8), C.mute], [names.get(root) || '', C.mute]]));
         }
         if (sources.length) {
@@ -564,7 +661,8 @@ export async function runWizard(params) {
         while (lines.length < screen.height - 3) lines.push(screen.blank());
         lines.push(screen.rule());
         const ready = !plan.error && !needsChoice;
-        lines.push(screen.row([[ready ? (state.scope === 'global' ? 'y install · b back · esc cancel' : 'enter or y install · b back · esc cancel') : 'b back · esc cancel', ready ? C.primary : C.mute, ready]]));
+        const verb = skills.length ? 'install' : 'remove';
+        lines.push(screen.row([[ready ? (state.scope === 'global' ? `y ${verb} · b back · esc cancel` : `enter or y ${verb} · b back · esc cancel`) : 'b back · esc cancel', ready ? C.primary : C.mute, ready]]));
         screen.paint(lines);
       };
       renderer.paint = paint;
@@ -600,13 +698,15 @@ export async function runWizard(params) {
         renderer.line('Cancelled. Nothing was written.');
         return 0;
       }
-      if (outcome === 'next') at = Math.min(flow.length - 1, at + 1);
-      else if (outcome === 'back') at = Math.max(0, at - 1);
+      const skip = state.selected.size === 0 ? 2 : 1;
+      if (outcome === 'next') at = Math.min(flow.length - 1, at + skip);
+      else if (outcome === 'back') at = Math.max(0, at - skip);
       else if (outcome === 'install') break;
     }
     renderer.cleanup();
     return await execute();
   } finally {
+    previewFetcher?.close();
     input.close();
     renderer.cleanup();
   }
@@ -620,12 +720,13 @@ export async function runWizard(params) {
       : {};
     const started = Date.now();
     renderer.line('');
-    renderer.line(`${s(renderer.ascii ? 'SIGMA SKILLS' : 'Σ SIGMA SKILLS', C.primary, true)}  ${s(`installing ${skills.length} skill${skills.length === 1 ? '' : 's'}…`, C.mute)}`);
+    renderer.line(`${s(renderer.ascii ? 'SIGMA SKILLS' : 'Σ SIGMA SKILLS', C.primary, true)}  ${s(skills.length ? `installing ${skills.length} skill${skills.length === 1 ? '' : 's'}…` : 'removing…', C.mute)}`);
     const fetcher = createSourceFetcher({ env });
     let done = 0;
     const external = skills.filter((skill) => skill.kind === 'external').length;
-    let run;
+    let run = { entries: [] };
     let dropped = [];
+    let stuck = [];
     try {
       const sources = skills.filter((skill) => skill.kind === 'external').map((skill) => skill.source);
       if (sources.length > 0) {
@@ -633,10 +734,23 @@ export async function runWizard(params) {
         await fetcher.warm(sources);
       }
       if (state.drop.size > 0) {
-        dropped = uninstallPackSkills({ ...stateParams(), skillIds: [...state.drop] }).results.filter((entry) => entry.status === 'removed').map((entry) => entry.id);
-        if (dropped.length > 0) renderer.line(`  ${s('·', C.mute)} ${s(`dropped ${dropped.join(', ')}`, C.mute)}`);
+        const packs = uninstallPackSkills({ ...stateParams(), skillIds: [...state.drop] }).results;
+        dropped = packs.filter((entry) => entry.status === 'removed').map((entry) => entry.id);
+        stuck = packs.filter((entry) => entry.status !== 'removed' && entry.status !== 'not-installed').map((entry) => entry.id);
+        // What the pack state does not know is a Sigma skill: its own uninstall keeps an edited copy as a private backup.
+        const sigmaIds = packs.filter((entry) => entry.status === 'not-installed').map((entry) => entry.id);
+        if (sigmaIds.length > 0) {
+          const result = executeUninstall({
+            catalog, projectRoot, homeDir, scope: state.scope, customStateDir, packageRoot, env, skillIds: sigmaIds, yes: true, clean: 'remove', changed: 'backup',
+          });
+          const gone = result.skills.filter((skill) => skill.outcome === 'removed').map((skill) => skill.id);
+          dropped.push(...gone);
+          stuck.push(...sigmaIds.filter((id) => !gone.includes(id)));
+        }
+        if (dropped.length > 0) renderer.line(`  ${s(renderer.ascii ? 'v' : '✓', C.ok, true)} removed ${dropped.join(', ')}`);
+        if (stuck.length > 0) renderer.line(`  ${s('!', C.warn, true)} not removed: ${stuck.join(', ')}`);
       }
-      run = runInstall({
+      if (skills.length > 0) run = runInstall({
         catalog, skills, scope: state.scope, projectRoot, homeDir, customStateDir, packageRoot, env,
         roots: [...state.roots], method: state.roots.size ? state.method : undefined, adopt, fetcher, version,
         packTitles: new Map(packCatalog.packs.map((pack) => [pack.id, pack.title])),
@@ -655,6 +769,7 @@ export async function runWizard(params) {
     } finally {
       fetcher.close();
     }
+    if (skills.length === 0) return stuck.length > 0 ? 1 : 0;
     const names = describeRoots(groups);
     const lines = formatSummary({
       styler,
@@ -667,6 +782,6 @@ export async function runWizard(params) {
       seconds: (Date.now() - started) / 1000,
     });
     for (const line of lines) renderer.line(line);
-    return run.entries.some((entry) => entry.status === 'failed') ? 1 : 0;
+    return stuck.length > 0 || run.entries.some((entry) => entry.status === 'failed') ? 1 : 0;
   }
 }

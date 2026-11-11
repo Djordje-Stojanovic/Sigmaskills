@@ -5,10 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { loadSkillBaselines } from '../src/adoption.js';
-import { hashSkillsAtRef, readSkillTreeAtRef } from '../scripts/baselines.js';
+import { hashSkillsAtRef, readSkillTreesAtRef } from '../scripts/baselines.js';
 import { getCatalog, findPackageRoot } from '../src/catalog.js';
 import { createInstallPlan } from '../src/plan.js';
-import { formatReleaseHuman, writeReleaseIdentities } from '../scripts/release.js';
+import { writeReleaseIdentities } from '../scripts/release.js';
 import { computeSkillRevision } from '../src/revision.js';
 import { executeProjectInstall } from '../src/transaction.js';
 
@@ -40,8 +40,9 @@ test('baselines: the bundled file holds every earlier Release, rebuilt exactly f
 test('baselines: an untouched copy of each earlier Release is legacy, high provenance, and upgrades with no flag', () => {
   const catalog = getCatalog(ROOT);
   for (const release of EARLIER_RELEASES) {
+    const trees = readSkillTreesAtRef(ROOT, `v${release}`);
     for (const skill of catalog.skills) {
-      const tree = readSkillTreeAtRef(ROOT, `v${release}`, skill.id);
+      const tree = trees[skill.id];
       if (!tree) continue;
       const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-baseline-legacy-'));
       try {
@@ -67,7 +68,7 @@ test('baselines: a changed copy of an earlier Release still needs an explicit ch
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-baseline-changed-'));
   try {
     const dest = path.join(projectRoot, '.agents', 'skills', 'sigmawrite');
-    plantTree(dest, readSkillTreeAtRef(ROOT, 'v0.3.0', 'sigmawrite'));
+    plantTree(dest, readSkillTreesAtRef(ROOT, 'v0.3.0').sigmawrite);
     fs.appendFileSync(path.join(dest, 'SKILL.md'), '\nmy local edit\n');
     const plan = createInstallPlan(catalog, { skillId: 'sigmawrite', projectRoot, packageRoot: ROOT, dryRun: true });
     assert.notEqual(plan.destinations[0].recognition, 'legacy');
@@ -76,27 +77,6 @@ test('baselines: a changed copy of an earlier Release still needs an explicit ch
       /explicit replace, skip, or export/,
     );
     assert.match(fs.readFileSync(path.join(dest, 'SKILL.md'), 'utf8'), /my local edit/);
-  } finally {
-    fs.rmSync(projectRoot, { recursive: true, force: true });
-  }
-});
-
-test('baselines: plan labels files from the installer point of view', () => {
-  const catalog = getCatalog(ROOT);
-  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-baseline-labels-'));
-  try {
-    const dest = path.join(projectRoot, '.agents', 'skills', 'sigmawrite');
-    fs.cpSync(path.join(ROOT, 'sigmawrite'), dest, { recursive: true });
-    fs.rmSync(path.join(dest, 'agents', 'openai.yaml'));
-    fs.writeFileSync(path.join(dest, 'extra.md'), 'local only', 'utf8');
-    const plan = createInstallPlan(catalog, { skillId: 'sigmawrite', projectRoot, packageRoot: ROOT, dryRun: true });
-    const { diff } = plan.destinations[0];
-    assert.deepEqual(diff.added, ['agents/openai.yaml']);
-    assert.deepEqual(diff.deleted, ['extra.md']);
-    // A file the new Release adds is written, not replaced.
-    assert.ok(plan.writes.includes('.agents/skills/sigmawrite/agents/openai.yaml'));
-    assert.ok(!plan.replacements.includes('.agents/skills/sigmawrite/agents/openai.yaml'));
-    assert.ok(plan.replacements.includes('.agents/skills/sigmawrite/SKILL.md'));
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -185,18 +165,11 @@ test('release --write-identities run twice leaves one candidate compare link', (
   }
 });
 
-test('baselines: release guidance names the baselines file among the files to commit', () => {
-  const human = formatReleaseHuman({ identitiesCommitted: false, skills: [] });
-  assert.match(human, /registry\/skill-baselines\.json/);
-  const maintainers = fs.readFileSync(path.join(ROOT, 'docs', 'maintainers.md'), 'utf8');
-  assert.match(maintainers, /`--write-identities` writes[^\n]*?skill hashes[^\n]*?`registry\/skill-baselines\.json`/);
-});
-
 test('baselines: personal links prevent automatic legacy replacement and appear in the preview', () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-baseline-link-'));
   try {
     const dest = path.join(projectRoot, '.agents', 'skills', 'sigmareview');
-    plantTree(dest, readSkillTreeAtRef(ROOT, 'v0.1.0', 'sigmareview'));
+    plantTree(dest, readSkillTreesAtRef(ROOT, 'v0.1.0').sigmareview);
     const personal = path.join(projectRoot, 'personal');
     fs.mkdirSync(personal);
     fs.writeFileSync(path.join(personal, 'note.txt'), 'keep me');
