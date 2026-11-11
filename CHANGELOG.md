@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.25.0] — 2026-11-11
+
 ### Added
 
 - The `blender` pack (94 skills from `arjun988/blender-skills`). One command puts a pack into one repo: `install --pack blender --project .`. A pack that lives only on your machine goes into `~/.sigmaskills/packs.json`, with a `dir` source and a `prefix`.
@@ -772,7 +774,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.1...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.25.0...HEAD
+[0.25.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.1...v0.25.0
 [0.24.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.0...v0.24.1
 [0.24.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.22.7...v0.23.0
