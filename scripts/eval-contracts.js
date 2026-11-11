@@ -270,7 +270,7 @@ function sigmafreedom({ result }) {
 
 // sigmaloop writes one loop file and one prompt; it starts nothing and leaves the target repository as it found it.
 const LOOP_FILE = '.scratch/loops/overnight.md';
-const LOOP_SECTIONS = ['Stance', 'Goal', 'Crew', 'Each wake', 'Priority', 'Landing', 'Finish'];
+const LOOP_SECTIONS = ['Stance', 'Goal', 'Crew', 'Each turn', 'Priority', 'Landing', 'Finish'];
 
 function sigmaloop({ files, result }) {
   const problems = [];
@@ -285,9 +285,12 @@ function sigmaloop({ files, result }) {
     if (!new RegExp(`^## ${name}\\b`, 'm').test(loop)) problems.push(`${LOOP_FILE}: missing section "## ${name}"`);
   }
   if (!/Stop line:[^\n]*\d{1,2}:\d{2}/.test(loop)) problems.push(`${LOOP_FILE}: the stop line needs a clock time`);
-  const prompt = [...result.matchAll(/^```text\r?\n([\s\S]*?)^```/gm)].map((m) => m[1]).find((b) => /^\/loop\b/m.test(b));
-  if (!prompt) return [...problems, 'reply has no fenced ```text prompt that starts with /loop'];
-  problems.push(...requireText(prompt, [/overnight\.md/, /ScheduleWakeup/, /\d{1,2}:\d{2}/, /re-read/i, /stop: true/], 'prompt'));
+  const prompt = [...result.matchAll(/^```text\r?\n([\s\S]*?)^```/gm)].map((m) => m[1]).find((b) => /^\/(?:goal|loop)\b/m.test(b));
+  if (!prompt) return [...problems, 'reply has no fenced ```text prompt that starts with /goal or /loop'];
+  problems.push(...requireText(prompt, [/overnight\.md/, /\d{1,2}:\d{2}/, /re-?read|read .*first/i], 'prompt'));
+  // /goal is driven by completion notices; only the /loop option schedules wakes.
+  if (/^\/loop\b/m.test(prompt)) problems.push(...requireText(prompt, [/ScheduleWakeup/, /stop: true/], 'prompt'));
+  else if (/ScheduleWakeup|CronCreate/.test(prompt)) problems.push('prompt: a /goal run schedules no wake');
   return problems;
 }
 

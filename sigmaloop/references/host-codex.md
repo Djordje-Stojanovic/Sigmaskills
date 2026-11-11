@@ -17,7 +17,7 @@ Prompt skeleton (under 4,000 characters):
 ```text
 /goal By <time, zone>, every open item in <tracker or ticket> is ticked with dated evidence, or has a dated log line (done, left, why, next step); <status file> is current. Rules and order live in <loop file path>: read it first and at the start of every turn; edits apply on the next turn.
 Order: <loop file> "Priority", top down. First: <items 1-3>.
-Crew: <solo, or the sub-agent mix>. Each gets one whole ticket (finish, prove, one reviewer for at most 3 rounds, PR, CI, merge); no helpers; only the orchestrator starts agents. A free slot takes the most valuable eligible item for its model at once; a fix round goes to the same agent by send_input.
+Crew: <solo, or roles and tiers from the loop file>. Each builder gets one whole unit; one review closes it (fix in place, acceptance record, verdict); only the orchestrator starts agents. A free slot is refilled at once; a large finding goes to the same agent by send_input.
 Landing per item: <code + tests, docs, tracker tick with evidence, PR merged, branch + worktree gone, deploy proof>.
 Authorised: <list>. Take the safer option when no rule decides; log it.
 Each turn: read the clock; do the next item; update the handoff; print the check that proves it. Never end a turn idle while an item is workable. At <time, zone> do the Finish block in the loop file, then mark the goal complete.
