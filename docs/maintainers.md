@@ -77,7 +77,7 @@ If one is missing, `npm test` fails on purpose.
 ### Packs and screenshots
 
 - `registry/packs.json` is the snapshot of the outside packs (ids and one-line descriptions), so the picker needs no network. Rebuild it with `node scripts/packs-snapshot.js <clones-dir>`, where the folder holds a shallow clone of each source repo (the script's header names them). Review the diff: a skill that left its repository should leave the snapshot. The pack list lives in that script. It keeps the packs it does not list (Anthropic, Design.md, last30days, Financial Services) as they are; their skill lists come from `node scripts/pack-list.js <transform> <repo checkout> <source path>`, run against a checkout at the pinned commit. To move a pin, change `ref` in `registry/packs.json`, re-run that list and review the diff.
-- `node scripts/capture-installer.js` runs the real wizard in a simulated terminal and rewrites the three SVG screenshots in `docs/images/` that the README shows. Run it after any change to the wizard or the summary. It needs the network for the summary capture.
+- `node scripts/capture-installer.js` runs the real wizard in a simulated terminal and rewrites the three SVG screenshots in `docs/images/`. The README shows two of them. Run it after any change to the wizard or the summary. It needs the network for the summary capture.
 
 ## Releases
 
@@ -86,7 +86,7 @@ Releases run from a repository checkout, never from the published package. The n
 Before step 1, bring the inputs up to date. Nothing does this on a schedule, so no pull requests wait between Releases:
 
 - **Agent Host registry:** run `gh workflow run registry-sync.yml` (no inputs needed). If upstream changed the agent list, it opens a registry pull request. Review it, and merge it once `npm test` is green.
-- **Action pins:** compare the `actions/checkout` and `actions/setup-node` SHAs in `.github/workflows/*.yml` with their latest releases (`gh api repos/actions/checkout/releases/latest`). To bump, change the SHA and the `# vX.Y.Z` comment in all three workflows and the matching `CHECKOUT_ACTION_PIN` or `SETUP_NODE_ACTION_PIN` in `scripts/release-publication.js`. The tests check that they agree.
+- **Action pins:** compare the `actions/checkout` and `actions/setup-node` SHAs in `.github/workflows/*.yml` with their latest releases (`gh api repos/actions/checkout/releases/latest`). To bump, change the SHA and the `# vX.Y.Z` comment in both workflows and the matching `CHECKOUT_ACTION_PIN` or `SETUP_NODE_ACTION_PIN` in `scripts/release-publication.js`. The tests check that they agree.
 
 1. `npm run release -- --dry-run` previews the next Release.
 2. `npm run release -- --write-identities` writes the version identities. Commit them and merge.
