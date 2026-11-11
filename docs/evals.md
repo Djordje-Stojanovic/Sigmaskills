@@ -17,7 +17,6 @@ What each check requires:
 | SigmaBrief | Final chat reply | Dispatch lines `wave N \| … \| isolation: … \| type: …`; fenced `text` briefs that each say do not merge and end with the fixed report-back line; no fixture file added or changed (no `SIGMABRIEF-*.md`, no code edits) |
 | SigmaShip | `PR-BODY.md` and `CLEANUP.md` (the runner asks for them) | `Closes #N`, spec and map line, Acceptance with every box ticked, Rulings, Follow-ups, Review rounds table with at least one round; cleanup output shows `main in sync` and `tree clean` |
 | SigmaWrite (plain) | `docs/NOTES.md` in the fixture, rewritten | Code names `step`, `saveBest`, `src/scores.js` survive; the planted jargon is gone; no sentence over 30 words |
-| SigmaRefactor | `REFACTOR-SCAN.md` (the runner asks for it) | Counting method named (`laloc` or fallback); ranked files with line counts; choices with risk and verification |
 | SigmaWrite (GUI option) | `status-board.html` and final chat reply | Installed template preserved outside its DATA block; valid JavaScript with PAGE, DO, ANS, FYI; reply links the saved board |
 | SigmaDebug | Final chat reply | The topic file path; 5 headings per topic; 3 lettered options with one ★; a plan file; worker handoff naming `/sigmaship`; no worker questions |
 | SigmaCreateArena | `arena/arena.json` and final chat reply | Valid config with title, question, metrics, groups, at least four players and items that name known players and groups; no `picks.jsonl`; reply links the local arena (port 3410-3499) |

@@ -6,7 +6,7 @@ Portable [Agent Skills](https://agentskills.io/) that install once and run on **
 
 | | |
 |---|---|
-| **Release** | [**v0.22.6**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.22.6) |
+| **Release** | [**v0.25.0**](https://github.com/Djordje-Stojanovic/Sigmaskills/releases/tag/v0.25.0) |
 | **Changelog** | [CHANGELOG.md](CHANGELOG.md) |
 | **License** | [MIT](LICENSE) |
 | **Spec** | [agentskills.io](https://agentskills.io/) |
@@ -91,7 +91,7 @@ SigmaReview and SigmaImprove split on one question: **is it wrong, or could it b
 
 - If a test, a doc, a stated goal, or a budget can prove it wrong, it is a SigmaReview finding. Examples: a crash, a security hole, a page that breaks its latency budget.
 - If good people could disagree about the answer, it is a SigmaImprove idea. Examples: weak animation, a missing level, an onboarding flow with too many steps.
-- If the code is only too large and behavior must not change, use SigmaRefactor.
+- If the code is only too large and behavior must not change, use SigmaMusk (`cut`).
 - If the question is how one target looks, reads or feels, and you want one plan of visible changes now, use SigmaTaste.
 - If the text itself must sound like a person wrote it, use SigmaHuman. SigmaWrite is for plain technical English.
 
@@ -444,7 +444,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | SigmaShip | Push rights and GitHub tooling (`gh` or connector) to open, merge, and close; the repository's test commands |
 | SigmaBrief | `gh` read access when briefing from issues or PRs · **no** push to the product repo |
 | SigmaWrite | Nothing beyond chat; the GUI option needs a writable output folder and a browser or HTML preview (chat fallback when unavailable) |
-| SigmaRefactor | Read access to the target repository · `laloc` is optional; without it the skill counts lines itself |
+| SigmaMusk (`cut`) | Read access to the target repository · `laloc` is optional; without it the skill counts lines itself |
 | SigmaDebug | A writable folder (Downloads by default); background agents if the host has them, else it ships the plans one after the other |
 | SigmaCreateArena | Python 3 (standard library only) and a browser; the server listens on 127.0.0.1 |
 | SigmaResearch | Python 3 for the bundled readers · `yt-dlp` for YouTube comments · Claude in Chrome and owner's existing session for X; missing tools become access gaps |
