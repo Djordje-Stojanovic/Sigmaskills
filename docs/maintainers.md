@@ -123,6 +123,8 @@ The trusted `release.yml` workflow then checks everything again on its own:
 - Every action is pinned by commit SHA.
 - Every job has a 30-minute timeout.
 
+After a publish, read `npm view @djordje-stojanovic/sigmaskills dist-tags`: a green run proves nothing. npm can hold the version as staged until the package owner releases it on npmjs.com, and a second run then fails with `E409 Cannot publish over previously staged version`.
+
 Publishing fails closed, with setup guidance, when the npm name is not reserved, the trusted publisher or environment protection is missing, or a version, tag, or GitHub Release conflicts. A matching npm provenance or an existing GitHub Release at the same commit is skipped. It is never overwritten or duplicated.
 
 ## Agent Host registry automation
