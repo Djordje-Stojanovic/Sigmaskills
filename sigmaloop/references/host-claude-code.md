@@ -6,7 +6,7 @@ Facts ([/goal](https://code.claude.com/docs/en/goal), [scheduled tasks](https://
 
 - `/goal <condition>` starts a turn at once and starts another after each turn until a small model judges the condition met (doc). That model reads only the conversation, so the condition names a command whose output each turn prints. Up to 4,000 characters; add `or stop after N turns` to bound it. `claude -p "/goal …"` ran two working turns and exited 0 (ran).
 - Agents still running at turn end skip the check, and at most 3 idle check-ins follow (doc). So a turn that waits on jobs ends with the jobs running; their completion notices start the next turn. A usage limit pauses the goal; an auth failure or a context overflow clears it (doc).
-- `--resume` brings back the goal. Background shells never come back (doc): restart their jobs from the last pushed commit.
+- `--resume` brings back the goal. Background shells never come back (doc): restart each job from its own last commit, pushed or WIP (the loop file's Restart rule).
 - Permissions are inherited. Set auto mode or an allowlist first, or the run stalls on a prompt (doc).
 - `/loop <prompt>` is the option for work that waits on a clock. The next wake is `ScheduleWakeup`; `stop: true` ends it; a turn with neither gets one fallback wake about 20 minutes later, then the loop ends (doc). `/loop` needs a live session: `claude -p "/loop …"` ran once and exited (ran). A recurring task expires after 7 days (doc).
 

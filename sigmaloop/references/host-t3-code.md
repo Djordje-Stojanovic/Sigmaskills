@@ -70,7 +70,7 @@ Put the selected roles, tstack flow and landing in the loop file. In crew mode, 
 
 ```text
 Work unattended until <time, zone>. You are the orchestrator in this thread. Rules and order live in <loop file path>: re-read it at every wake.
-FIRST TURN: call schedule_task {schedule:{type:'interval', everyMs:<900000>}, bindToCurrentThread:true, title:"<slug> wake", prompt:"WAKE. Read <loop file path> and <handoff path>. t3_queue list this thread and cancel any extra WAKE message. Read the clock (<zone>). Before <time, zone>: do 'Each wake'. At or after it: do 'Finish', then delete_scheduled_task with the id on the 'Wake task' line of the handoff."} Write the returned scheduledTaskId on a 'Wake task:' line in <handoff path>. Then start item 1.
+FIRST TURN: call schedule_task {schedule:{type:'interval', everyMs:<900000>}, bindToCurrentThread:true, title:"<slug> wake", prompt:"WAKE. Read <loop file path> and <handoff path>. t3_queue list this thread and cancel any extra WAKE message. Read the clock (<zone>). Before <time, zone>: do 'Each turn'. At or after it: do 'Finish', then delete_scheduled_task with the id on the 'Wake task' line of the handoff."} Write the returned scheduledTaskId on a 'Wake task:' line in <handoff path>. Then start item 1.
 ORDER: <loop file> "Priority", top down. First: <items 1-3>.
 CREW: <shape from the loop file>. One whole unit per builder (build, prove, one closing review, PR, CI, merge); delegate_task with isolation 'worktree' and the spec path; completion wakes you. Re-read the loop file at every wake. Never start an item the handoff marks running.
 LANDING: <one line>.

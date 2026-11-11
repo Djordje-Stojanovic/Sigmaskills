@@ -33,10 +33,10 @@ Shape: <solo | crew of N slots>. Solo: this session plans, builds, self-reviews 
 
 ## Failure rules
 - **Stuck:** a job with no new commit and no new output for <30> minutes is stuck. Read the time from its last commit or log line, never by polling: check it when any notice wakes you.
-- **Restart:** a stuck job gets a WIP commit, is stopped, and restarts from that WIP commit with the same brief.
+- **Restart:** a stuck job gets a WIP commit, is stopped, and restarts from that WIP commit with the same brief. A job stuck <3> times is parked: write why in the handoff, take the next unit, never restart it again.
 - **Provider:** a provider that fails twice (429, rate limit, or a cut-off run) drops to last place in every fallback list.
 - **Tier:** a job that fails twice moves one tier up.
-- **Cleanup:** remove a finished job's worktree; stop a stray process by its process id only, never by name.
+- **Cleanup:** remove a finished job's worktree; stop a stray process only by a process id this run wrote into the handoff, never by name and never an id it did not start.
 - **No polling.** No sleep loops, no "still waiting" turns. Wait for completion notices.
 
 ## Speed rules
