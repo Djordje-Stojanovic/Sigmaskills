@@ -171,6 +171,48 @@ test('update: upstream-only change restores official files and reports older Rel
   }
 });
 
+test('update: a no-op update moves the installed Release label to the running Release (#1093)', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-label-noop-'));
+  try {
+    installWrite(projectRoot, 'sigmaloop');
+    installWrite(projectRoot, 'sigmawrite');
+    // Every file already equals the running Release; only the recorded Release is old.
+    refreshRecordedHashes(projectRoot, 'sigmaloop', { release: '0.24.1' });
+    refreshRecordedHashes(projectRoot, 'sigmawrite', { release: '0.24.1' });
+
+    const io = createMockIo();
+    assert.equal(await runCli(['update', '--yes', '--project', projectRoot], io), 0);
+    assert.match(io.getStdout(), /\[no-op\]/);
+
+    const statusIo = createMockIo();
+    assert.equal(await runCli(['status', '--json', '--project', projectRoot], statusIo), 0);
+    assert.equal(JSON.parse(statusIo.getStdout()).release.installed, getCatalog(ROOT).manifest.version);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('update: an update that changes one skill moves the installed Release label (#1093)', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-label-mixed-'));
+  try {
+    installWrite(projectRoot, 'sigmaloop');
+    installWrite(projectRoot, 'sigmawrite');
+    // sigmaloop already equals the running Release but keeps the old label; sigmawrite differs.
+    refreshRecordedHashes(projectRoot, 'sigmaloop', { release: '0.24.1' });
+    ageOfficial(projectRoot, 'sigmawrite');
+
+    const io = createMockIo();
+    assert.equal(await runCli(['update', '--yes', '--project', projectRoot], io), 0);
+    assert.match(io.getStdout(), /Changed skills:/);
+
+    const statusIo = createMockIo();
+    assert.equal(await runCli(['status', '--json', '--project', projectRoot], statusIo), 0);
+    assert.equal(JSON.parse(statusIo.getStdout()).release.installed, getCatalog(ROOT).manifest.version);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
 test('update: succeeds when the file system refuses to rename the old skill folder (EXDEV, #269)', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-exdev-'));
   const realRename = fs.renameSync;

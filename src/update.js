@@ -25,6 +25,8 @@ import {
   loadGlobalState,
   loadProjectState,
   migrateStateForCommand,
+  saveGlobalState,
+  saveProjectState,
 } from './state.js';
 import { collectStatus } from './status.js';
 import { executeProjectInstall } from './transaction.js';
@@ -527,6 +529,30 @@ function installOptionsFor(skill, options, scope) {
   };
 }
 
+/**
+ * Move the recorded Release for skills whose files already equal the running Release.
+ * Their files need no change, so the install transaction never rewrites their state entry.
+ */
+function recordRunningRelease(options, plan, skillIds) {
+  if (skillIds.length === 0) return;
+  const scope = plan.scope;
+  const root = path.resolve(scope === 'global'
+    ? options.homeDir || resolveHomeDir(options.env || process.env)
+    : options.projectRoot || process.cwd());
+  const state = loadScopeState(options, root, scope);
+  const skills = { ...(state.skills || {}) };
+  let changed = false;
+  for (const skillId of skillIds) {
+    if (!skills[skillId] || skills[skillId].release === plan.release.running) continue;
+    skills[skillId] = { ...skills[skillId], release: plan.release.running };
+    changed = true;
+  }
+  if (!changed) return;
+  const next = { ...state, skills };
+  if (scope === 'global') saveGlobalState(root, next, options.customStateDir);
+  else saveProjectState(root, next, options.customStateDir);
+}
+
 function ownerAbsPath(skill, options) {
   return path.resolve(
     options.scope === 'global' ? options.homeDir : options.projectRoot,
@@ -745,6 +771,12 @@ function runUpdate(options, updated) {
       backupIntegrity: backupDir ? { ok: true, path: backupDir } : { ok: true },
     });
   }
+
+  // A skill at the running Release still carries the older label until a later install rewrites it.
+  // A full update relabels every such skill; --skill relabels only the requested ones.
+  recordRunningRelease(options, plan, plan.unchanged
+    .map((skill) => skill.id)
+    .filter((skillId) => requested.length === 0 || requested.includes(skillId)));
 
   return result;
 }
