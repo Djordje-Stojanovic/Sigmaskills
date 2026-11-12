@@ -49,7 +49,7 @@ Table: number, command, what it means. The highest index is the first entry of t
 Each step applies only to what survived the one before.
 
 1. **Make the requirements less dumb.** Every requirement is dumb to some degree, however smart the person who gave it; skip this and you get the perfect answer to the wrong question. Each requirement gets a named person, never "the team" or "the spec". Question the owner's rules and your own.
-2. **Delete the part or the step.** People forget to try deleting it entirely. They remember the one time a deletion hurt and keep too much ever after: override that. Delete until about 1 in 10 things must come back; if nothing comes back, you did not delete enough. First to go: checks that caught nothing, "in case" logic, dead code, handoffs, approval paths, work done twice.
+2. **Delete the part or the step.** People forget to try deleting it entirely. They remember the one time a deletion hurt and keep too much ever after: override that. The default verdict is delete: a part stays only when a named person needs it and a number shows what breaks without it. Delete until about 1 in 10 things must come back, and mark the cuts you expect back; if you mark none, cut deeper. First to go: checks that caught nothing, "in case" logic, dead code, handoffs, approval paths, work done twice.
 3. **Simplify.** Only what survived step 2. The most common mistake of smart engineers is to optimise a thing that should not exist. A strong engineer understands the result in 30 seconds.
 4. **Speed up.** Anything can go faster, but only after steps 1 to 3. Measure the real bottleneck and name it with its number.
 5. **Automate last.** Only a stable, repeated process. Musk went backwards many times: automated, sped up, simplified, then deleted.
@@ -73,7 +73,7 @@ House rules that ride on the Algorithm:
 - "We did a lot": show the commits, the landed output, the measured gain.
 - Budget is a human construct: compare value with cost from first principles and fund it from something dumber.
 
-**Done when:** every requirement has an owner; every part and step has a verdict (delete, simplify, speed up, automate, keep); the bottleneck is named with its number; the smallest ship is one task a strong engineer starts today.
+**Done when:** every requirement has an owner; every part and step has a verdict (delete, simplify, speed up, automate; keep only with its person and number); the bottleneck is named with its number; the smallest ship is one task a strong engineer starts today.
 
 ## 3. File the issue
 
@@ -83,7 +83,7 @@ One issue in the target repo (`gh issue create`) in the shape of [report.md](ref
 
 Build the report page by [report.md](references/report.md) (not in Fast, unless asked). Answer by [voice.md](references/voice.md): the reality in the first sentence, numbers not adjectives, one quote at most.
 
-Reply shape: **Verdict** (blunt, with the key numbers) · **Delete list** (ranked by gain; then what stays and why) · **Dumb requirements** (each with its owner and the question to ask) · **Bottleneck** (the constraint and how to remove it) · **Smallest ship** · **Do not automate yet** · the issue link and the page link.
+Reply shape: **Verdict** (blunt, with the key numbers) · **Delete list** (ranked by gain, the cuts expected back marked; then what stays, each with its person and number) · **Dumb requirements** (each with its owner and the question to ask) · **Bottleneck** (the constraint and how to remove it) · **Smallest ship** · **Do not automate yet** · the issue link and the page link.
 
 In Review and Grill, end with one question: **"Run SigmaShip end to end on #N?"** Recommend yes when the smallest ship is clear; on yes, run SigmaShip on that issue. In Fast, five lines instead: what shipped, the PR, the measured gain, what was deleted, what is next.
 

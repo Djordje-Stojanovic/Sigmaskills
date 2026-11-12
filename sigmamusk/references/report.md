@@ -17,7 +17,7 @@ Title: `sigmamusk: <the one change that buys the most>`. Under about 600 words; 
 1. <part or process> — <gain, measured or estimated and labelled> — <file or command>
 
 ## Keep
-- <part> — <why it earns its place>
+- <part> — needed by: <name> — breaks without it: <number>
 
 ## Dumb requirements
 - "<requirement>" — owner: <name> — ask: <question>

@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmamusk` deletes by default: a part stays only when a named person needs it and a number shows what breaks without it, and the reply marks the cuts expected to come back (about 1 in 10).
+
 ### Fixed
 
 - `update` now moves the installed Release label to the running Release for every skill whose files already match it, so `status` no longer says `installed 0.24.1 / running v0.25.0` after a successful update. (#1093)
