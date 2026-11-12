@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `--preset design-pack` installs the design pair, `impeccable` and `taste-skill`, in one flag. The research behind it is in `docs/research/design-pack.md`.
+
 ### Changed
 
 - `sigmaloop` now says where a repo's model file lives: the page its `AGENTS.md` or `CLAUDE.md` names as the model page. It copies that page's date into the loop file and asks when the date is over 14 days old.

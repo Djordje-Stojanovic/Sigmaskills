@@ -142,6 +142,7 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `ponytail` | `lazy` |
 | `local` | `own` |
 | `core` | the global default: every Sigma skill, the whole Matt Pocock pack and the whole tstack pack. `install --global --yes` with no pack, skill or `--all` installs it |
+| `design-pack` | the design pair for one repo with a page: `impeccable` and `taste-skill`, at their pinned commits. `sigmataste` is a Sigma skill, so `core` has it already. `frontend-design` is in the `anthropic` pack (19 skills): add it alone with `install frontend-design`. Research: [`docs/research/design-pack.md`](research/design-pack.md) |
 | `all` | every pack that is available on this machine |
 
 What each pack does, its skills, source, licence and needs: [Packs in the README](../README.md#packs). `local` is a folder of your own skills; see [Your own packs](#your-own-packs).
