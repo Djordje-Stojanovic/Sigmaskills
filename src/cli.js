@@ -15,7 +15,7 @@ import {
 } from './purge.js';
 import { executeProjectInstall, executeProjectInstallBatch } from './transaction.js';
 import { listGlobalDestinationGroups, listProjectDestinationGroups, loadHostRegistry, resolveHomeDir } from './destinations.js';
-import { CORE_PACKS, checkLimits, loadPackCatalog, resolveSelection } from './packs.js';
+import { BUNDLES, CORE_PACKS, checkLimits, loadPackCatalog, resolveSelection } from './packs.js';
 import { createSourceFetcher } from './pack-source.js';
 import { packStatus, uninstallPackSkills, updatePackSkills } from './pack-install.js';
 import { COPY_ONLY_ROOTS, resolveAgentRoots, suggestAgents } from './agents.js';
@@ -62,7 +62,7 @@ Options:
   -h, --help        Show help
   --skill <name>    Skill identifier to install, update, restore, or uninstall (repeatable)
   --all             Install every shipped Sigma skill, or uninstall every recorded skill in the chosen scope
-  --preset <pack>   Also --pack. Install a whole pack: core (Sigma + Matt Pocock + tstack), sigma, mattpocock, threejs, blender, hyperframes,
+  --preset <pack>   Also --pack. Install a whole pack: core (Sigma + Matt Pocock + tstack), design-pack (impeccable + taste-skill), sigma, mattpocock, threejs, blender, hyperframes,
                     minimax-h3, anthropic, last30days, financial-services, tstack, local, or all
                     (design-md is picked by skill: 3 at a time; repeatable, or comma-separated; 'packs' shows each pack)
   --drop <skill>    With install: remove an installed skill of a limited pack (design-md) to make room
@@ -666,7 +666,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       const picked = resolveSelection(packs, { presets: opts.presets, skillIds: opts.skillIds });
       if (picked.unknownPresets.length > 0) {
         writeErr(`sigmaskills error: unknown preset '${picked.unknownPresets[0]}'`);
-        writeErr(`Presets: ${packs.packs.map((pack) => pack.id).join(', ')}, all. Run 'sigmaskills list --packs' for details.`);
+        writeErr(`Presets: ${[...Object.keys(BUNDLES), ...packs.packs.map((pack) => pack.id)].join(', ')}, all. Run 'sigmaskills list --packs' for details.`);
         return 1;
       }
       if (picked.unavailable.length > 0) {

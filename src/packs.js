@@ -9,6 +9,9 @@ const USER_CONFIG_FILE = 'packs.json';
 /** The packs a Global Installation holds: every Sigma skill, Matt Pocock and tstack. Every other pack is per project. */
 export const CORE_PACKS = ['sigma', 'mattpocock', 'tstack'];
 
+/** Presets that name several packs at once. `core` is the global default; `design-pack` is the per-project design pair. */
+export const BUNDLES = { core: CORE_PACKS, 'design-pack': ['impeccable', 'taste-skill'] };
+
 /**
  * The owner's own config: `~/.sigmaskills/packs.json`.
  *   { "dirs": { "<pack id>": "<folder>" }, "packs": [ <full pack definitions> ] }
@@ -138,7 +141,7 @@ export function findPack(packCatalog, name) {
 /**
  * Turn `--preset` names and skill ids into one install list.
  *
- * `all` means every available pack; `core` means the Sigma, Matt Pocock and tstack packs. A preset that names no pack, or a pack with nothing
+ * `all` means every available pack; `core` means the Sigma, Matt Pocock and tstack packs; `design-pack` means impeccable and taste-skill. A preset that names no pack, or a pack with nothing
  * available on this machine, is reported instead of skipped silently.
  *
  * @param {{ packs: object[], skills: Map<string, object> }} packCatalog
@@ -166,9 +169,9 @@ export function resolveSelection(packCatalog, { presets = [], skillIds = [] }) {
       }
       continue;
     }
-    if (name === 'core') {
-      // The default install: every Sigma skill, the whole Matt Pocock pack and Theo Browne's tstack pack. Every other pack is per project.
-      packCatalog.packs.filter((pack) => CORE_PACKS.includes(pack.id)).forEach((pack) => pack.skills.forEach(add));
+    if (BUNDLES[name]) {
+      // `core` is the default install: every Sigma skill, the whole Matt Pocock pack and Theo Browne's tstack pack. Every other pack is per project.
+      packCatalog.packs.filter((pack) => BUNDLES[name].includes(pack.id)).forEach((pack) => pack.skills.forEach(add));
       continue;
     }
     const pack = findPack(packCatalog, name);

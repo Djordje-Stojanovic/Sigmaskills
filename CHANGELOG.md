@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `--preset design-pack` installs the design pair, `impeccable` and `taste-skill`, in one flag. The research behind it is in `docs/research/design-pack.md`.
+
 ### Changed (sigmaloop is the factory for a many-lane run)
 
 - `sigmaloop` carries the lessons of a five-lane night run. The loop file gains budgets with a meter, the owner's words log, the owner page, a size limit for the run file, a goal line cap, owner quotes on every limit, and links to the makers' prompting guides. Its review rule is now one gate per pull request with fixed rounds (it was one closing review). The new `references/lanes.md`, read only for two or more lanes, holds levels (workers end, managers go on, the top never ends), one backlog with a claim mark, the lane status block and the card file.

@@ -151,6 +151,20 @@ test('packs: resolveSelection joins presets and skill ids and reports what it ca
   }
 });
 
+test('packs: design-pack is impeccable plus taste-skill in one flag, and `design` stays design-md', () => {
+  const box = createSandbox();
+  try {
+    const packs = load(box);
+    const ids = (preset) => resolveSelection(packs, { presets: [preset] }).skills.map((skill) => skill.id);
+    const pack = (id) => packs.packs.find((p) => p.id === id).skills.map((skill) => skill.id);
+    assert.deepEqual(ids('design-pack'), [...pack('impeccable'), ...pack('taste-skill')]);
+    assert.equal(ids('design-pack').length, 2);
+    assert.deepEqual(resolveSelection(packs, { presets: ['design'] }).wholeLimited.map((p) => p.id), ['design-md']);
+  } finally {
+    box.cleanup();
+  }
+});
+
 test('agents: friendly names resolve to destination roots and the universal root is always kept', () => {
   const box = createSandbox();
   try {
