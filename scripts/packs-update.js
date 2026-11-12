@@ -8,7 +8,7 @@
  * (nothing is installed or cached) and checks every SKILL.md the way the installer reads one: valid
  * frontmatter with a name and a description (src/catalog.js parseSkillFrontmatter). It prints one line per pack:
  *   <pack>  <old> -> <new>  PASS (<n> skills, +<added> -<removed>)
- * A pack that fails keeps its old pin. A pack without a `ref` follows the head and is skipped.
+ * A pack that fails keeps its old pin. A pack without a `ref` follows the head and is skipped; so is a pack pinned to a tag.
  * A pass writes the new `ref` and the new skill list to registry/packs.json (new skills get their
  * first sentence as description), and the new ref into scripts/packs-snapshot.js, so a later
  * snapshot run does not move it back. Exit code 1 when a pack fails.
@@ -68,6 +68,12 @@ try {
     const label = pack.id.padEnd(20);
     if (!pack.sources.every((source) => source.ref)) {
       console.log(`${label}unpinned (follows head)  skipped`);
+      continue;
+    }
+    // A tag pin is named in a test, in src/ponytail.js and in the snapshot's --branch clone: it moves by hand.
+    const tags = pack.sources.map((source) => source.ref).filter((ref) => !/^[0-9a-f]{40}$/.test(ref));
+    if (tags.length > 0) {
+      console.log(`${label}tag pin ${tags.join(', ')} (moves by hand)  skipped`);
       continue;
     }
     const checked = [];

@@ -38,7 +38,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added (packs per project, only the core global)
 
-- `npm run packs:update` moves every pack pin to its repository's newest commit and checks each `SKILL.md`. It prints one line per pack (old commit, new commit, PASS or the failure) and keeps the old pin of a failing pack. It installs nothing. (#201)
+- `npm run packs:update` moves every commit pin to its repository's newest commit (a tag pin moves by hand) and checks each `SKILL.md`. It prints one line per pack (old commit, new commit, PASS or the failure) and keeps the old pin of a failing pack. It installs nothing. (#201)
 - `uninstall --non-core` removes every installed pack skill outside the core (Sigma, Matt Pocock, tstack). `uninstall --global --non-core --yes` keeps only the core global. (#201)
 
 ## [0.25.0] — 2026-11-11
