@@ -34,6 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
+- `sigmaloop` now says where a repo's model file lives: the page its `AGENTS.md` or `CLAUDE.md` names as the model page. It copies that page's date into the loop file and asks when the date is over 14 days old.
 - `sigmamusk` deletes by default: a part stays only when a named person needs it and a number shows what breaks without it, and the reply marks the cuts expected to come back (about 1 in 10).
 
 ### Fixed
