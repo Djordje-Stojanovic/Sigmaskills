@@ -143,6 +143,36 @@ test('pack uninstall: removes the copy, the links, and the record', async () => 
   }
 });
 
+test('uninstall --non-core: a Global Installation keeps the Sigma skills and drops every other pack', async () => {
+  const { box, run } = setup();
+  try {
+    assert.equal((await run(['install', 'sigmawrite', '--global', '--yes'])).code, 0);
+    assert.equal((await run(['install', '--preset', 'acme', '--global', '--yes'])).code, 0);
+    const globalSkill = (id) => path.join(box.home, '.agents', 'skills', id, 'SKILL.md');
+    assert.ok(fs.existsSync(globalSkill('alpha')) && fs.existsSync(globalSkill('sigmawrite')));
+
+    assert.equal((await run(['uninstall', '--non-core', '--global'])).code, 1, 'needs --yes or --dry-run');
+    const preview = await run(['uninstall', '--non-core', '--global', '--dry-run']);
+    assert.equal(preview.code, 0, preview.err);
+    assert.ok(fs.existsSync(globalSkill('alpha')), 'a dry run writes nothing');
+
+    const { code, out, err } = await run(['uninstall', '--non-core', '--global', '--yes']);
+    assert.equal(code, 0, err);
+    assert.match(out, /2 skills removed/);
+    assert.ok(!fs.existsSync(globalSkill('alpha')) && !fs.existsSync(globalSkill('beta')));
+    assert.ok(fs.existsSync(globalSkill('sigmawrite')), 'the core stays');
+
+    const again = await run(['uninstall', '--non-core', '--global', '--yes']);
+    assert.equal(again.code, 0, again.err);
+    assert.match(again.out, /Nothing outside the core is installed/);
+    const mixed = await run(['uninstall', '--non-core', '--all', '--yes']);
+    assert.equal(mixed.code, 1);
+    assert.match(mixed.err, /--non-core cannot be combined/);
+  } finally {
+    box.cleanup();
+  }
+});
+
 test('pack install: a skill at the repo root installs as one folder, without dot folders, and uninstalls (#273)', async () => {
   const box = createSandbox();
   try {
