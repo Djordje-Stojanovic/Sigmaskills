@@ -10,7 +10,7 @@ const USER_CONFIG_FILE = 'packs.json';
 export const CORE_PACKS = ['sigma', 'mattpocock', 'tstack'];
 
 /** Presets that name several packs at once. `core` is the global default; `design-pack` is the per-project design pair. */
-const BUNDLES = { core: CORE_PACKS, 'design-pack': ['impeccable', 'taste-skill'] };
+export const BUNDLES = { core: CORE_PACKS, 'design-pack': ['impeccable', 'taste-skill'] };
 
 /**
  * The owner's own config: `~/.sigmaskills/packs.json`.

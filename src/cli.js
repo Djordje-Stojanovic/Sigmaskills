@@ -15,7 +15,7 @@ import {
 } from './purge.js';
 import { executeProjectInstall, executeProjectInstallBatch } from './transaction.js';
 import { listGlobalDestinationGroups, listProjectDestinationGroups, loadHostRegistry, resolveHomeDir } from './destinations.js';
-import { CORE_PACKS, checkLimits, loadPackCatalog, resolveSelection } from './packs.js';
+import { BUNDLES, CORE_PACKS, checkLimits, loadPackCatalog, resolveSelection } from './packs.js';
 import { createSourceFetcher } from './pack-source.js';
 import { packStatus, uninstallPackSkills, updatePackSkills } from './pack-install.js';
 import { COPY_ONLY_ROOTS, resolveAgentRoots, suggestAgents } from './agents.js';
@@ -666,7 +666,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       const picked = resolveSelection(packs, { presets: opts.presets, skillIds: opts.skillIds });
       if (picked.unknownPresets.length > 0) {
         writeErr(`sigmaskills error: unknown preset '${picked.unknownPresets[0]}'`);
-        writeErr(`Presets: ${packs.packs.map((pack) => pack.id).join(', ')}, all. Run 'sigmaskills list --packs' for details.`);
+        writeErr(`Presets: ${[...Object.keys(BUNDLES), ...packs.packs.map((pack) => pack.id)].join(', ')}, all. Run 'sigmaskills list --packs' for details.`);
         return 1;
       }
       if (picked.unavailable.length > 0) {
