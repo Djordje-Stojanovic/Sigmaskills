@@ -158,6 +158,6 @@ Owner's order, 2026-11-12. Run Musk's five steps before every task: question, de
   - L3: he decides or acts.
   - L4: decided; build it.
   - END: agents do it; he picks the moment.
-- https://review.geldtools.com is the one place where he answers, grades and sees everything, for every project.
+- The owner's review site is the one place where he answers, grades and sees everything, for every project.
 - The loop runs on three flight levels. Level 3 is the map, Level 2 the managers, Level 1 the workers. A worker takes one ticket per chat; then the chat is archived.
 - Done means a second agent checked it live and wrote the proof.
