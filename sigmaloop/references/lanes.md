@@ -12,6 +12,8 @@ Read this only when the run has two or more lanes. One agent alone does not need
 
 Two levels under the top, never three. Why: a worker that never ends fills its context; a manager that ends drops its queue. A job with no end state (a speed hunt) is a lane: a failed try is logged and the next one starts.
 
+A long run starts a fresh chat or thread for each phase and hands over through the run file and the status files, never through chat history. The old thread is archived, never deleted. Why: a host replays a thread's whole history when it opens it; one very long thread took up to 376 s to open.
+
 ## One backlog, lanes without a topic
 
 One file, one ticket per line. The mark says who holds it:
@@ -51,6 +53,11 @@ FOR_OWNER: <only taste, new money, a delete of his things, a step for his hands:
 ```
 
 The top waits on these files, never by polling a thread: reading a whole thread costs far more than the 12 lines.
+
+## Limits of the box
+
+- Memory is a budget like spend. Before a heavy job (a site build, a server, a browser) a worker checks free memory and waits under the floor. A lane runs one server and one browser at a time and closes them when its check ends. Why: 34 headless browsers and 7 site servers took one box down for 17 minutes.
+- Every command against another machine has a time limit and names exact folders, never a whole disk. Why: one search of a whole disk hung a worker for 34 minutes.
 
 ## Merging
 
