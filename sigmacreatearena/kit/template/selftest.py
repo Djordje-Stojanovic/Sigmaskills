@@ -1,7 +1,7 @@
 """Self-test of the ranking engine: a simulated judge with known true strengths and 65 % consistency
 (the usual rate of a human judge). Passes when the engine finds the true #1 and the true order has a high rank correlation.
 Also checks anchors (a reference player stronger than all candidates must not take a top place or soak up the picks)
-and refs (a group's reference media reach the page as /g/<group>/<i> links with a kind and a label).
+grid mode (all options at once, fixed order, ratings persist) and refs (a group's reference media reach the page as /g/<group>/<i> links with a kind and a label).
 
   python selftest.py          (writes nothing next to the arena: it works in a temp copy)
 """
@@ -82,7 +82,17 @@ ok_refs = (rs == [{"url": "/g/g%201/0", "label": "", "kind": "image"}, {"url": "
            and server.public_refs("g0", {}) == [])
 print("refs:", "PASS" if ok_refs else "FAIL", rs)
 
-ok = ok_rank and ok_anchor and ok_refs
+# 4. grid mode: every option of each group at once, numbered in a fixed order, blind; a rating and comment persist
+c = arena.cfg()
+g1, g2 = server.grid(c), server.grid(c)
+code = g1[0]["options"][0]["code"]
+saved = server.rate(c, code, 4, "clean") and not server.rate(c, "???", 3, "")
+opt = next(o for o in server.grid(c)[0]["options"] if o["code"] == code)
+ok_grid = (len(g1) == 3 and all(len(g["options"]) == 18 for g in g1) and g1 == g2 and saved and (opt["rating"], opt["comment"]) == (4, "clean")
+           and all("player" not in o and "src" not in o for g in g1 for o in g["options"]))
+print("grid:", "PASS" if ok_grid else "FAIL")
+
+ok = ok_rank and ok_anchor and ok_refs and ok_grid
 shutil.rmtree(tmp, ignore_errors=True)
 print("PASS" if ok else "FAIL")
 sys.exit(0 if ok else 1)
