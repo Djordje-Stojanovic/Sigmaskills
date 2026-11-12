@@ -7,7 +7,7 @@ description: Use when asked for sigmaloop or a paste-ready unattended-run prompt
 
 Turn a repo's open work into one loop prompt for the host the user names, plus a loop file the prompt tells the agent to re-read. SigmaLoop is a prompt factory: read, ask once, write two things, stop. It never starts the loop and never works the items.
 
-Read [questions.md](references/questions.md) before step 2, [loop-file.md](references/loop-file.md) before step 3, and [hosts.md](references/hosts.md) before step 4 (it names one host file to read).
+Read [questions.md](references/questions.md) before step 2, [loop-file.md](references/loop-file.md) before step 3, and [hosts.md](references/hosts.md) before step 4 (it names one host file to read). Read [lanes.md](references/lanes.md) only when the run has more than one lane.
 
 ## Operating contract
 
@@ -38,11 +38,11 @@ One numbered list, at most 10 questions, each with its recommended answer first,
 
 ## 3. Write the loop file
 
-Fill the template in [loop-file.md](references/loop-file.md). Save it where the user said (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). The defaults there (one closing review, changed-units-only checks, one final gate, failure rules, the "Do not" list) are copied whole unless an answer overrides one.
+Fill the template in [loop-file.md](references/loop-file.md). Save it where the user said (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). It names the budgets, the owner's words file and the owner page; the run's first turn creates them, SigmaLoop writes none. The defaults there (the review rule, changed-units-only checks, one final gate, failure rules, the "Do not" list) are copied whole unless an answer overrides one.
 
 ## 4. Write the host prompt
 
-Use the skeleton in the host file that [hosts.md](references/hosts.md) names. **Default: a native `/goal` run with no scheduled wake and no cron.** Job completion notices drive the run; a slot is refilled in the same turn its job ends. Use a scheduled loop only when the stop line is a clock event the work waits on, or the host has no `/goal`. The prompt is short: the done command, the loop file path to re-read every turn, and the 2-3 limits that must hold. Tell the user what the host will not do.
+Use the skeleton in the host file that [hosts.md](references/hosts.md) names. **Default: a native `/goal` run with no scheduled wake and no cron.** Job completion notices drive the run; a slot is refilled in the same turn its job ends. Use a scheduled loop only when the stop line is a clock event the work waits on, or the host has no `/goal`. The prompt is short: the done command, the loop file path to re-read every turn, and the 2-3 limits that must hold. Over about 1,000 characters, move text into the loop file: the prompt is read once, the loop file every turn. Tell the user what the host will not do.
 
 ## 5. Stop
 
