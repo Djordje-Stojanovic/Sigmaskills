@@ -167,6 +167,7 @@ How pack skills install:
 - A folder that is in the way and not owned stays untouched, and the summary says so. A copy you edited stays during `update` and `uninstall`. `--force` replaces or removes either one after a backup in `pack-backups/` in the state folder.
 - Bundled Sigma skills install first, as one transaction. If a pack skill then fails, the Sigma skills stay installed and the summary lists the failure. The exit code is 1.
 - `update` also refreshes pack skills: it downloads each source again and replaces only the copies that are unchanged since the install. `update --skill <id>` limits it. `uninstall --skill <id>` and `uninstall --all` remove pack skills and every link the installer made for them. `status` lists them under *Pack skills*.
+- `uninstall --non-core` removes every installed pack skill outside the core and leaves the Sigma, Matt Pocock and tstack skills. Run `uninstall --global --non-core --yes` to keep only the core global.
 - `purge` removes bundled Sigma content only. Use `uninstall --all` for pack skills.
 - Global scope works the same way, under your home folder, and needs `--global --yes`.
 
