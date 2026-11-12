@@ -5,7 +5,8 @@
   python server.py --open        also opens the page in the browser
 
 Files next to this script: arena.json (config + items), picks.jsonl (append-only), codes.json (blind codes),
-results.json / results.md (rewritten on every board view). Media paths in arena.json are relative to this folder.
+results.json / results.md (rewritten on every board view),
+ratings.json (grid mode: item id -> 1-5 rating and comment). Media paths in arena.json are relative to this folder.
 """
 import json, mimetypes, os, random, socket, string, sys, threading, time, uuid, webbrowser
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
@@ -63,6 +64,32 @@ def public_item(it, code):
     return out
 
 
+def grid(c):
+    """Grid mode: every option of each group at once, in a fixed shuffle per group (blind: codes only), with its saved 1-5 rating and comment."""
+    k, _ = codes(c)
+    rt = arena.load("ratings.json", {}) or {}
+    out = []
+    for g, gv in c["groups"].items():
+        its = sorted((it for it in c["items"] if it.get("group") == g), key=lambda it: it["id"])
+        random.Random(g).shuffle(its)
+        opts = [dict(public_item(it, k[it["id"]]), n=i + 1, rating=(rt.get(it["id"]) or {}).get("r", 0), comment=(rt.get(it["id"]) or {}).get("c", ""))
+                for i, it in enumerate(its)]
+        out.append({"id": g, "label": gv.get("label", g), "prompt": gv.get("prompt", ""), "refs": public_refs(g, gv), "options": opts})
+    return out
+
+
+def rate(c, code, r, comment):
+    """Saves one grid rating (0 = none, 1-5) and comment under the item id in ratings.json. False for an unknown code."""
+    _, rev = codes(c)
+    iid = rev.get(code)
+    if not iid:
+        return False
+    rt = arena.load("ratings.json", {}) or {}
+    rt[iid] = {"r": r if r in (0, 1, 2, 3, 4, 5) else 0, "c": str(comment or "")[:2000], "t": time.strftime("%Y-%m-%d %H:%M:%S")}
+    arena.save("ratings.json", rt)
+    return True
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
@@ -103,6 +130,9 @@ class H(BaseHTTPRequestHandler):
             return self.send(200, {"token": uuid.uuid4().hex[:10], "left": public_item(L, k[L["id"]]), "right": public_item(R, k[R["id"]]),
                                    "group": {"id": g, "label": gv.get("label", g or ""), "prompt": gv.get("prompt", ""), "refs": public_refs(g, gv)},
                                    "repeat": bool(n.get("repeat_of")), "repeat_of": n.get("repeat_of"), "why": n["why"], "picks": len(ps)})
+        if p == "/api/grid":
+            with LOCK:
+                return self.send(200, grid(c))
         if p == "/api/state":
             with LOCK:
                 return self.send(200, arena.state(c))
@@ -158,6 +188,10 @@ class H(BaseHTTPRequestHandler):
             return self.send(403, {"error": "local page only"})
         body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
         c = arena.cfg()
+        if p == "/api/rate":
+            with LOCK:
+                ok = rate(c, body.get("code"), body.get("rating"), body.get("comment"))
+            return self.send(200 if ok else 400, {"ok": ok})
         _, rev = codes(c)
         with LOCK, open(os.path.join(HERE, "picks.jsonl"), "a", encoding="utf-8") as f:
             if p == "/api/pick":

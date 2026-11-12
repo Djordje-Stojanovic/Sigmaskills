@@ -110,6 +110,19 @@ tr:nth-child(3) .medal{background:linear-gradient(135deg,#e5e7eb,#9ca3af);color:
 tr:nth-child(4) .medal{background:linear-gradient(135deg,#fdba74,#b45309);color:#2b1300}
 .legend{color:var(--mute);font-size:13px;margin:10px 2px}
 .help{display:none;max-width:780px}.help.on{display:block}
+/* grid mode: every option of a group at once, rate 1-5, comment */
+.grid{display:none}.grid.on{display:block}
+@media (max-width:600px){header{flex-wrap:wrap}}
+.gg{margin:0 0 26px}.gg h2{font-size:17px;margin:0 0 4px}.gg h2 small{color:var(--mute);font-weight:500;margin-left:6px}.gg .gp{color:#cfd5e4;font-size:14px;margin:0 0 10px}
+.gcells{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))}
+.gcell{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.gcell .stage{min-height:180px;max-height:46vh}.gcell .stage img,.gcell .stage video{max-height:46vh}.gcell .stage audio{width:90%}
+.gcell .lab2{padding:6px 10px;font-weight:800;font-size:13px;color:var(--mute)}
+.stars{display:flex;gap:4px;padding:8px}.stars button{flex:1;min-height:40px;border:1px solid var(--line);background:var(--bg2);border-radius:10px;cursor:pointer;font-weight:700}
+.stars button.on{background:#5b8cff33;border-color:var(--a);color:#cdd9ff}
+.gcell textarea{margin:0 8px 8px;min-height:44px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--text);font:inherit;padding:8px}
+.gtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 14px;color:var(--mute)}
+#gout{display:none;width:100%;min-height:140px;margin:0 0 14px;background:var(--bg2);color:var(--text);border:1px solid var(--line);border-radius:10px;font:13px/1.4 ui-monospace,monospace}
 .help .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin-bottom:12px}
 .help td,.help th{white-space:normal}
 </style>
@@ -117,13 +130,18 @@ tr:nth-child(4) .medal{background:linear-gradient(135deg,#fdba74,#b45309);color:
 <body>
 <header>
   <div class="brand" id="title">Arena<small id="sub">blind pairs · Elo</small></div>
-  <div class="tabs"><button class="on" data-tab="rank">Rank</button><button data-tab="board">Board</button><button data-tab="help">Keys</button></div>
+  <div class="tabs"><button class="on" data-tab="grid">Grid</button><button data-tab="rank">Rank</button><button data-tab="board">Board</button><button data-tab="help">Keys</button></div>
   <div class="grow"></div>
   <div class="stat"><b id="np">0</b> picks · consistency <b id="cons">–</b></div>
 </header>
 
 <main>
-  <section id="rank">
+  <section class="grid on" id="grid">
+    <div class="gtop"><span>Every option at once, names hidden. Click a picture for full size (<kbd>←</kbd> <kbd>→</kbd> step, <kbd>Esc</kbd> closes). Rate 1 to 5, comment if you like: it saves at once.</span><button class="btn" id="gcopy">Copy my ratings</button></div>
+    <textarea id="gout" readonly></textarea>
+    <div id="gbody"></div>
+  </section>
+  <section id="rank" style="display:none">
     <div class="prompt"><span class="tag" id="gl">Group</span><div class="txt" id="gp"></div><div class="refs" id="grefs"></div><span class="repeat" id="rep">↺ consistency check</span></div>
     <div class="duel">
       <div class="side L" id="sL"><span class="lab">A · left</span><div class="stage" id="mL"></div></div>
@@ -147,7 +165,7 @@ tr:nth-child(4) .medal{background:linear-gradient(135deg,#fdba74,#b45309);color:
   </section>
 </main>
 
-<div class="actions" id="actions">
+<div class="actions" id="actions" style="display:none">
   <button class="btn" id="undo" title="Undo the last pick"><kbd>⌫</kbd> Undo</button>
   <button class="btn badb" id="bad" title="Both are bad (a tie that is flagged)"><kbd>B</kbd> Both bad</button>
   <input class="note" id="note" placeholder="Note (optional, N)…">
@@ -248,7 +266,28 @@ function keysHelp(){const r=C.metrics.map((m,i)=>{const k=ROWKEYS[i];return k?`<
   <tr><td><kbd>R</kbd></td><td>All references in one grid (F / G also shows them in a column)</td></tr>
   <tr><td colspan="2">Row keys go by key position, not letter: the bottom-left key is Y on QWERTZ and Z on QWERTY.</td></tr>`}
 
+let GD=[],gzi=null;
+const gimgs=()=>[...document.querySelectorAll("#gbody .stage img,#gbody .stage video")];
+function gzoom(i){const a=gimgs();if(!a.length)return;gzi=(i+a.length)%a.length;const el=a[gzi];zoomSide="grid";
+  $("zc").innerHTML=el.tagName==="IMG"?`<img class="one" src="${el.src}">`:`<video class="one" src="${el.src}" autoplay loop muted playsinline></video>`;
+  $("zl").textContent=el.closest(".gcell").dataset.name+"  (← → step, Esc closes)";$("zoom").classList.add("on")}
+async function drawGrid(){GD=await j("/api/grid");
+  $("gbody").innerHTML=GD.map((g,gi)=>`<section class="gg"><h2>${esc(g.label)}<small>${g.options.length} options</small></h2>${g.prompt?`<p class="gp">${esc(g.prompt)}</p>`:""}
+    <div class="gcells">${g.options.map((o,oi)=>`<div class="gcell" data-g="${gi}" data-o="${oi}" data-name="${esc(g.label)}, option ${o.n}"><div class="lab2">Option ${o.n}</div><div class="stage"></div>
+    <div class="stars" role="group" aria-label="Rating of option ${o.n}, 1 to 5">${[1,2,3,4,5].map(v=>`<button data-r="${v}" class="${o.rating===v?"on":""}">${v}</button>`).join("")}</div>
+    <textarea placeholder="Your comment" aria-label="Comment on option ${o.n}">${esc(o.comment)}</textarea></div>`).join("")}</div></section>`).join("");
+  document.querySelectorAll("#gbody .gcell").forEach(cell=>{const o=GD[cell.dataset.g].options[cell.dataset.o],st=cell.querySelector(".stage");
+    if(o.kind==="audio")st.innerHTML=`<audio controls preload="none" src="${o.url}"></audio>`;
+    else if(o.kind==="image")st.innerHTML=`<img loading="lazy" src="${o.url}" alt="">`;else stage(st,o,"G");
+    if(o.kind==="image"||o.kind==="video")st.onclick=()=>gzoom(gimgs().indexOf(st.firstElementChild));
+    const put=()=>j("/api/rate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:o.code,rating:o.rating,comment:o.comment})}).then(()=>toast("Saved"));
+    cell.querySelectorAll(".stars button").forEach(b=>b.onclick=()=>{o.rating=o.rating===+b.dataset.r?0:+b.dataset.r;cell.querySelectorAll(".stars button").forEach(x=>x.classList.toggle("on",+x.dataset.r===o.rating));put()});
+    const ta=cell.querySelector("textarea");ta.onchange=()=>{o.comment=ta.value;put()}})}
+function gridText(){return [C.title+": my grid ratings"].concat(GD.flatMap(g=>g.options.filter(o=>o.rating||o.comment.trim()).map(o=>`Grid ${g.label}, option ${o.n} (${o.code}): ${o.rating?o.rating+" of 5":"no rating"}${o.comment.trim()?" | “"+o.comment.trim()+"”":""}`))).join("\n")}
+$("gcopy").onclick=()=>{if(document.activeElement)document.activeElement.blur();const t=gridText(),o=$("gout");o.style.display="block";o.value=t;o.select();
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied"),()=>toast("Select the text and copy it"))};
 document.addEventListener("keydown",e=>{
+  if(zoomSide==="grid"){if(e.key==="ArrowRight")gzoom(gzi+1);else if(e.key==="ArrowLeft")gzoom(gzi-1);else if(e.key==="Escape")unzoom();return}
   if(e.target.tagName==="INPUT"){if(e.key==="Enter"){e.target.blur();submit()}if(e.key==="Escape")e.target.blur();return}
   if(!$("rank").offsetParent)return;
   if(zoomSide==="ref"||zoomSide==="refs"){e.preventDefault();if(e.key==="ArrowRight"||e.key===" ")zoomRef((refIx??-1)+1);else if(e.key==="ArrowLeft")zoomRef((refIx??1)-1);else if(e.key==="r"||e.key==="R")zoomSide==="refs"?unzoom():zoomRefs();else if(e.key==="Escape")unzoom();return}
@@ -265,11 +304,11 @@ document.addEventListener("keydown",e=>{
 });
 $("zoom").onclick=unzoom;$("go").onclick=()=>submit();$("bad").onclick=()=>submit(true);$("undo").onclick=undo;
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
-  ["rank","board","help"].forEach(id=>$(id).classList.toggle("on",id===b.dataset.tab));$("rank").style.display=b.dataset.tab==="rank"?"":"none";
+  ["grid","rank","board","help"].forEach(id=>$(id).classList.toggle("on",id===b.dataset.tab));$("rank").style.display=b.dataset.tab==="rank"?"":"none";
   $("actions").style.display=b.dataset.tab==="rank"?"":"none";if(b.dataset.tab==="board")refreshStat()});
 (async()=>{C=await j("/api/config");document.title=C.title;$("title").innerHTML=`${esc(C.title)}<small>${C.players} options · ${C.items} items · blind pairs · Elo</small>`;
-  judge();keysHelp();await next();refreshStat();
-  const h=location.hash.slice(1);if(h=="board"||h=="help")document.querySelector(`.tabs button[data-tab=${h}]`).click()})();
+  judge();keysHelp();drawGrid();await next();refreshStat();
+  const h=location.hash.slice(1);if(h=="rank"||h=="board"||h=="help")document.querySelector(`.tabs button[data-tab=${h}]`).click()})();
 </script>
 </body>
 </html>
