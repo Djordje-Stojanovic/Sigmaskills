@@ -6,6 +6,9 @@ import { findSkillDirs } from './pack-source.js';
 const USER_CONFIG_DIR = '.sigmaskills';
 const USER_CONFIG_FILE = 'packs.json';
 
+/** The packs a Global Installation holds: every Sigma skill, Matt Pocock and tstack. Every other pack is per project. */
+export const CORE_PACKS = ['sigma', 'mattpocock', 'tstack'];
+
 /**
  * The owner's own config: `~/.sigmaskills/packs.json`.
  *   { "dirs": { "<pack id>": "<folder>" }, "packs": [ <full pack definitions> ] }
@@ -165,7 +168,7 @@ export function resolveSelection(packCatalog, { presets = [], skillIds = [] }) {
     }
     if (name === 'core') {
       // The default install: every Sigma skill, the whole Matt Pocock pack and Theo Browne's tstack pack. Every other pack is per project.
-      packCatalog.packs.filter((pack) => ['sigma', 'mattpocock', 'tstack'].includes(pack.id)).forEach((pack) => pack.skills.forEach(add));
+      packCatalog.packs.filter((pack) => CORE_PACKS.includes(pack.id)).forEach((pack) => pack.skills.forEach(add));
       continue;
     }
     const pack = findPack(packCatalog, name);

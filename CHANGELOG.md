@@ -35,10 +35,16 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Changed
 
 - `sigmaloop` now says where a repo's model file lives: the page its `AGENTS.md` or `CLAUDE.md` names as the model page. It copies that page's date into the loop file and asks when the date is over 14 days old.
+- `sigmamusk` deletes by default: a part stays only when a named person needs it and a number shows what breaks without it, and the reply marks the cuts expected to come back (about 1 in 10).
 
 ### Fixed
 
 - `update` now moves the installed Release label to the running Release for every skill whose files already match it, so `status` no longer says `installed 0.24.1 / running v0.25.0` after a successful update. (#1093)
+
+### Added (packs per project, only the core global)
+
+- `npm run packs:update` moves every commit pin to its repository's newest commit (a tag pin moves by hand) and checks each `SKILL.md`. It prints one line per pack (old commit, new commit, PASS or the failure) and keeps the old pin of a failing pack. It installs nothing. (#201)
+- `uninstall --non-core` removes every installed pack skill outside the core (Sigma, Matt Pocock, tstack). `uninstall --global --non-core --yes` keeps only the core global. (#201)
 
 ## [0.25.0] — 2026-11-11
 

@@ -15,7 +15,7 @@ import {
 } from './purge.js';
 import { executeProjectInstall, executeProjectInstallBatch } from './transaction.js';
 import { listGlobalDestinationGroups, listProjectDestinationGroups, loadHostRegistry, resolveHomeDir } from './destinations.js';
-import { checkLimits, loadPackCatalog, resolveSelection } from './packs.js';
+import { CORE_PACKS, checkLimits, loadPackCatalog, resolveSelection } from './packs.js';
 import { createSourceFetcher } from './pack-source.js';
 import { packStatus, uninstallPackSkills, updatePackSkills } from './pack-install.js';
 import { COPY_ONLY_ROOTS, resolveAgentRoots, suggestAgents } from './agents.js';
@@ -104,6 +104,7 @@ Options:
   --narrow          Use the narrow-terminal layout
   -y, --yes         Skip interactive confirmations
   --remove          With 'ponytail': turn it off in this project
+  --non-core        With 'uninstall': remove every installed pack skill outside the core (keeps Sigma, Matt Pocock, tstack)
   --check           With 'ponytail': report on or off per agent; exit 1 when any is off
                     With 'update': list each out-of-date skill, write nothing; exit 1 when any is out of date
 
@@ -147,6 +148,7 @@ const FLAGS = [
   { name: '--packs', key: 'packs' },
   { name: '--remove', key: 'remove' },
   { name: '--check', key: 'check' },
+  { name: '--non-core', key: 'nonCore' },
   { name: '--preset', alias: '--pack', key: 'presets', value: true, repeatable: true },
   { name: '--agent', alias: '-a', key: 'agents', value: true, repeatable: true },
   { name: '--skill', key: 'skillIds', value: true, repeatable: true },
@@ -478,15 +480,23 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeErr('sigmaskills error: uninstall --all cannot be combined with --skill');
         return 1;
       }
-      if (opts.skillIds.length === 0 && !opts.all) {
-        writeErr('sigmaskills error: uninstall requires --skill <id> or --all');
+      if (opts.nonCore && (opts.all || opts.skillIds.length > 0)) {
+        writeErr('sigmaskills error: uninstall --non-core cannot be combined with --all or --skill');
+        return 1;
+      }
+      if (opts.skillIds.length === 0 && !opts.all && !opts.nonCore) {
+        writeErr('sigmaskills error: uninstall requires --skill <id>, --all or --non-core');
         return 1;
       }
       if (!opts.dryRun && !opts.yes) {
         writeErr('sigmaskills error: uninstall requires --yes to apply, or --dry-run to preview');
         return 1;
       }
-      const externalIds = externalIdsOf(opts.skillIds);
+      // Every Sigma skill is core, so --non-core only touches pack skills.
+      const externalIds = opts.nonCore
+        ? packStatus(stateParams()).filter((row) => !CORE_PACKS.includes(row.pack)).map((row) => row.id)
+        : externalIdsOf(opts.skillIds);
+      if (opts.nonCore && externalIds.length === 0 && !opts.json) writeOut('Nothing outside the core is installed.');
       const sigmaIds = opts.skillIds.filter((id) => !externalIds.includes(id));
       const runSigma = opts.all || sigmaIds.length > 0;
       const result = runSigma ? executeUninstall({
