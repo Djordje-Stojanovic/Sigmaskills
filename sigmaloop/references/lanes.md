@@ -24,7 +24,7 @@ One file, one ticket per line. The mark says who holds it:
 - [d] T05 ... | dropped: "<his sentence>"
 ```
 
-- A free lane takes the first open ticket it may take, of any kind. It prefers a repo it knows and never idles for that.
+- The loop file's Priority is this one backlog, ranked; never a list per lane. A free lane takes the first open ticket it may take, of any kind. It prefers a repo it knows and never idles for that.
 - Claim rule: the top is the only writer. It marks `[~LANE n]` before it hands the ticket out, and only if no branch `<run>/<ID>` and no live thread with `<ID>` in its title exists. A worker's title starts with the ticket id and its branch carries it, so the guard can see double work. Why: run 1 rendered one film twice.
 - The top hands each lane a queue of several tickets. A lane with one ticket left says so in its status block.
 - A ticket that needs the owner is marked `[y]`, gets one card, and the lane takes the next ticket in the same turn.

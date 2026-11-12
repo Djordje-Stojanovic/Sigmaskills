@@ -38,6 +38,8 @@ Shape: <solo | crew of N slots | N lanes: read lanes.md>. Solo: this session pla
 2. One whole unit per builder: build, prove with the unit's acceptance tests, commit. The brief is a spec path and a done line.
 3. One review per pull request. The builder first re-reads its own diff in a fresh context. Then one gate before the merge, by another model family when one is free; the reviewer runs the change, not only reads it, and ends with MERGE or a finding list. The builder fixes each finding or dismisses it in writing; style nits are dropped. At most 3 rounds, 5 for security, data loss or publishing; a round with nothing new ends it. No human review.
 4. When a job ends, its slot takes the most valuable eligible unit in the same turn. Slots: <N>, capped by CPU (below), not by habit.
+5. Lanes only: workers end after one ticket, lane managers go on ticket after ticket, the top never ends before the stop line. Priority is one ranked list for all lanes, never one list per lane.
+Guides (workers are briefed by the guide of their model): <links>
 
 ## Failure rules
 - **Stuck:** a job with no new commit and no new output for <30> minutes is stuck. Read the time from its last commit or log line, never by polling: check it when any notice wakes you.
@@ -59,7 +61,7 @@ Shape: <solo | crew of N slots | N lanes: read lanes.md>. Solo: this session pla
 2. Read the handoff and any new owner message (copy it to the words file first). Run <status command>.
 3. For each finished job: send it to review, or accept it; refill its slot at once.
 4. Fill every free slot from Priority. Skip units that share files with a running job.
-5. Rewrite the handoff (<path>): running jobs with process ids and worktrees, accepted since last turn, queue.
+5. Rewrite the handoff (<path>), never append; the run file stays under <60> KB and old notes go to <log file>: running jobs with process ids and worktrees, accepted since last turn, queue.
 
 ## Priority
 <The ranked list, or the tracker section that holds it. Items that need the user live: write their facts, never decide them.>
@@ -93,6 +95,6 @@ Run sigmamusk, then `sigmamusk cut`, then sigmareview on the loop's own scaffold
 - Every number comes from an answer or the repo; a `<30>` style default is a recommendation the question round confirms.
 - Failure rules, Speed rules, Do not and Finish are defaults: copy each whole. Drop a line only when an answer contradicts it.
 - Write rules as checks the agent can run, not as wishes.
-- Prompt each role's model by its maker's guide (Anthropic first, OpenAI second, the rest third; links, never copies; checked 2026-11-12): Claude [best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices), the model page `.../prompt-engineering/prompting-claude-<model>`, [skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), [subagents](https://code.claude.com/docs/en/sub-agents); OpenAI [latest model](https://developers.openai.com/api/docs/guides/latest-model), [AGENTS.md](https://developers.openai.com/codex/guides/agents-md); Google [prompt design](https://ai.google.dev/gemini-api/docs/prompting-strategies); DeepSeek [thinking mode](https://api-docs.deepseek.com/guides/thinking_mode); Kimi [prompt practice](https://platform.kimi.com/docs/guide/prompt-best-practice); Meta [reasoning](https://dev.meta.ai/docs/reasoning). A model with no guide: say so in the file, do not guess.
+- Fill the Guides line with the maker's guide for each model in the table (Anthropic first, OpenAI second, the rest third; links, never copies; checked 2026-11-12): Claude [best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices), the model page `.../prompt-engineering/prompting-claude-<model>`, [skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), [subagents](https://code.claude.com/docs/en/sub-agents); OpenAI [latest model](https://developers.openai.com/api/docs/guides/latest-model), [AGENTS.md](https://developers.openai.com/codex/guides/agents-md); Google [prompt design](https://ai.google.dev/gemini-api/docs/prompting-strategies); DeepSeek [thinking mode](https://api-docs.deepseek.com/guides/thinking_mode); Kimi [prompt practice](https://platform.kimi.com/docs/guide/prompt-best-practice); Meta [reasoning](https://dev.meta.ai/docs/reasoning). A model with no guide: say so in the file, do not guess.
 - Model ids appear only in the Crew table. Everywhere else, name the role or tier.
 - Host-only facts (wake tools, cache flags, proxies) belong in the host file, not here.
