@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaloop` now says where a repo's model file lives: the page its `AGENTS.md` or `CLAUDE.md` names as the model page. It copies that page's date into the loop file and asks when the date is over 14 days old.
+
 ### Fixed
 
 - `update` now moves the installed Release label to the running Release for every skill whose files already match it, so `status` no longer says `installed 0.24.1 / running v0.25.0` after a successful update. (#1093)
