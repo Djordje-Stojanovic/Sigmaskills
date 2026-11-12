@@ -145,3 +145,19 @@ Triage uses the five default canonical label names. See `docs/agents/triage-labe
 ### Domain docs
 
 Domain documentation uses the single-context layout. See `docs/agents/domain.md`.
+
+## How we work
+
+Owner's order, 2026-11-12. Run Musk's five steps before every task: question, delete, simplify, speed up, automate.
+
+- Every word the owner says goes into one log.
+- Every task is a ticket: what he gets, his own words, and a check that proves it done.
+- The map sorts tickets into lists, and each ticket names what it waits for:
+  - L1: the agent researches and decides.
+  - L2: the agent researches; he decides.
+  - L3: he decides or acts.
+  - L4: decided; build it.
+  - END: agents do it; he picks the moment.
+- https://review.geldtools.com is the one place where he answers, grades and sees everything, for every project.
+- The loop runs on three flight levels. Level 3 is the map, Level 2 the managers, Level 1 the workers. A worker takes one ticket per chat; then the chat is archived.
+- Done means a second agent checked it live and wrote the proof.
