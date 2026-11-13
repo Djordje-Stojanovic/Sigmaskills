@@ -4,3 +4,6 @@ node_modules/
 .cursor/
 __pycache__/
 .pi/git/
+# the installer run inside this repo copies its own skills here; the tracked .agents/skills/* stay
+/.agents/skills/sigma*/
+/.claude/skills/
