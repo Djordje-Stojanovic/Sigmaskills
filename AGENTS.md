@@ -148,6 +148,8 @@ Domain documentation uses the single-context layout. See `docs/agents/domain.md`
 
 ## How we work
 
+- Before you write code: [`ENGINEERING.md`](ENGINEERING.md). Section 1 is the Algorithm, Musk's five steps. Run them, in order, before every task.
+
 Owner's order, 2026-11-12. Run Musk's five steps before every task: question, delete, simplify, speed up, automate.
 
 - Every word the owner says goes into one log.
