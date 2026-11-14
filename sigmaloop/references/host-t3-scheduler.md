@@ -1,6 +1,6 @@
 # T3 scheduler reference
 
-Scheduler modes only. Marks and version evidence: [host-t3-code.md](host-t3-code.md).
+Scheduler modes only. Marks and version evidence: `host-t3-code.md`.
 
 **Scheduler.** `schedule_task` makes work that runs when no turn is active (source). The schedule is an object, not text: `{type:'interval', everyMs}` (minimum 60000), `{type:'fixed_time', timeOfDay:'09:00', weekdays:[0-6]}` or `{type:'webhook'}`. `bindToCurrentThread` defaults to true inside a thread: each run posts the prompt into that thread. False starts a new thread per run, in a fresh worktree of `main` (source). Prompt limit 120,000 characters (source). There is **no** `update_scheduled_task` tool. To change or pause a task, call `schedule_task` again with `scheduledTaskId` (only the given fields change; `enabled=false` pauses). `delete_scheduled_task` stops it at once. `list_scheduled_tasks` lists. `run_scheduled_task_now` fires one run (source). The tool list of a live T3 server shows exactly these, and no update tool (ran: devbox `0.1.6-nightly.20261031.9003956`, 2026-10-31). The owner can also manage tasks in Settings, Scheduled tasks (doc).
 

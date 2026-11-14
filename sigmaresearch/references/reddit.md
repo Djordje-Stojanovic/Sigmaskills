@@ -29,7 +29,7 @@ Search results open the top `--threads` threads (default 2), so comments get rea
 
    Any browser the owner runs works: his signed-in browser, a Playwright browser on another machine, or a stealth Chromium such as CloakBrowser on a server (headed under Xvfb; one fixed fingerprint per profile). In a signed-in session `fetch(location.pathname + '.json?limit=500&raw_json=1')` from the thread page returns the full JSON with votes. Some browser extensions refuse reddit.com; then use another browser host. Label the scope `partial` when fewer comments render than `comment-count`.
 6. **Another address.** Reddit limits and blocks by address. When one address is throttled or network-blocked, run the same reader from another machine the owner runs (`ssh <host> python read.py reddit <url>`), or through the owner's VPN exit. A VPN app changes the route of the whole machine, including other running jobs, so the owner switches it, or it runs on a machine that does nothing else.
-7. **More archives:** PullPush (`https://api.pullpush.io/reddit/search/submission/?q=WORDS` and `/comment/`; often throttled), the Wayback CDX list of the thread, archive.today. See [deep routes](deep-routes.md).
+7. **More archives:** PullPush (`https://api.pullpush.io/reddit/search/submission/?q=WORDS` and `/comment/`; often throttled), the Wayback CDX list of the thread, archive.today. See deep routes (`deep-routes.md`).
 
 Tested 2026-10-21 from one home address: JSON answered 401 and 403 (network policy) to scripts and to a stealth browser; Arctic Shift answered every thread with its full comment tree (68, 65 and 53 comments); RSS answered once per minute; the rendered page in a stealth browser showed the post and 25 to 32 comments with live votes; PullPush answered 429.
 

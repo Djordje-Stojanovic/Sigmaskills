@@ -1,6 +1,6 @@
 ---
 name: sigmadeeplook
-description: Use to look inside, analyse, watch or transcribe video, audio, scans, hidden-sheet Excel, sqlite database, binary imports; --ask gives one exact answer. Do not use for plain text, CSV, JSON or code.
+description: Use when asked to look inside, analyse, watch or transcribe video, audio, scans, hidden-sheet Excel, sqlite database or binary imports; --ask gives one exact answer. Do not use for plain text, CSV, JSON or code.
 ---
 
 # SigmaDeepLook

@@ -1,6 +1,6 @@
 # Improvement lenses
 
-Each lens is a question to ask of the target, not a quote to repeat. Use them to generate candidates. Most lenses produce nothing on a given target, and a few produce the best idea of the run. Where to look is in [categories.md](categories.md).
+Each lens is a question to ask of the target, not a quote to repeat. Use them to generate candidates. Most lenses produce nothing on a given target, and a few produce the best idea of the run. Where to look is in `categories.md`.
 
 ## Contents
 

@@ -42,7 +42,7 @@ Recommend: 100 for a public project the owner has not used; 20 for a well-known 
 
 ## Q5. Which skill bundle goes into the copy?
 
-A multi-select. Show every bundle from [bundles.md](bundles.md) with one line each:
+A multi-select. Show every bundle from `bundles.md` with one line each:
 
 - **The source's own skills** (for example only the studio skills it ships): keep the skills the repo ships, drop the rest.
 - **All Sigma** skills.

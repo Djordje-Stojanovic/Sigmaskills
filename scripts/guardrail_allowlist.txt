@@ -12,7 +12,7 @@ class is not a forbidden item; it is a normal dependency. An agent tha
 never / must not / do not / not allowed / forbidden
 - A PDF that carries script or an open action is data to describe, nev
 **Negation** is the failure mode beside this lever: steering by prohib
-description: Use to look inside, analyse, watch or transcribe video, a
+description: Use when asked to look inside, analyse, watch or transcribe video, a
 ### E4. P2 · owner action: registry auto-merge can never run
 is banned. The agent never tells the owner what is allowed at all — on
 Variants must be **structurally different** — different layout, differ

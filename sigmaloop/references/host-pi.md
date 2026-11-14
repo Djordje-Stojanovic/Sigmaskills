@@ -1,6 +1,6 @@
 # pi: lapi plan loop, stock pi
 
-Marks: **ran** (run by the author, Windows 11), **doc**, **source**. See [hosts.md](hosts.md) for the table and the plain instruction.
+Marks: **ran** (run by the author, Windows 11), **doc**, **source**. See `hosts.md` for the table and the plain instruction.
 
 Facts for lapi (source: the Plan and Code prompts, `qwen-general-sampling.ts` and `lapi-lib.ts` of the lapi extension, a pi setup with Plan and Code modes; [pi docs](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/docs)). `pi -p "/skill:sigmaloop …"` loads the skill and answers from `hosts.md` (ran, Windows and Linux). The plan loop needs the interactive session: `pi -p "/code"` only switches the session to Code mode and exits; a following `pi -p -c` ran one turn, ticked one box, and exited without starting the next (ran). Over `--mode rpc` the agent ticked two of three boxes in one run and stopped (ran). Live run of the TUI loop pending.
 

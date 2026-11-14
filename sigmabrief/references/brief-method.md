@@ -76,4 +76,4 @@ For `finish-PR`: continue the existing PR branch; worktree only if that branch w
 
 ## 5. Emit and stop
 
-Produce the chat output in [prompt-contract.md](prompt-contract.md). Do not implement. Do not open product-repo PRs. Do not write report files into the target repository.
+Produce the chat output in `prompt-contract.md`. Do not implement. Do not open product-repo PRs. Do not write report files into the target repository.

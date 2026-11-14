@@ -1,6 +1,6 @@
 # A run with more than one lane
 
-Read this only when the run has two or more lanes. One agent alone does not need it. Budgets, the review rule, the words log and the owner page are in [loop-file.md](loop-file.md); this file adds what several lanes need.
+Read this only when the run has two or more lanes. One agent alone does not need it. Budgets, the review rule, the words log and the owner page are in `loop-file.md`; this file adds what several lanes need.
 
 ## Levels
 

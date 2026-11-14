@@ -1,6 +1,6 @@
 # Claude Code: `/goal` (default), `/loop` (option)
 
-Marks: **ran** (run by the author, Windows 11), **doc**, **source**. See [hosts.md](hosts.md) for the table and the plain instruction.
+Marks: **ran** (run by the author, Windows 11), **doc**, **source**. See `hosts.md` for the table and the plain instruction.
 
 Facts ([/goal](https://code.claude.com/docs/en/goal), [scheduled tasks](https://code.claude.com/docs/en/scheduled-tasks)):
 

@@ -13,7 +13,7 @@ Where the boldness is spent. Name the one memorable element. Two elements shouti
 
 ## Fix moves
 
-- Choose the bold place from the subject (see [only this one](only-this-one.md)): a huge headline set with intent, one real image full bleed, one live demo, one striking number.
+- Choose the bold place from the subject (see only this one (`only-this-one.md`)): a huge headline set with intent, one real image full bleed, one live demo, one striking number.
 - Quiet everything around it: fewer colours, less motion, plain components.
 - Cut one decoration per screen. If space opens up, fill it with scale or real content, never another ornament.
 - In copy, ration the punch: one or two bold lines per page, the rest plain and specific.

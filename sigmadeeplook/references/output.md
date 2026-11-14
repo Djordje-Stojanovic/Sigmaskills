@@ -76,4 +76,4 @@ Checked 17-10 in a venv with no packages and nothing but Python on PATH: every f
 
 ## Install
 
-Python 3.10 or newer; nothing else for the bare tier. `python look.py doctor` prints every optional tool, package and model with its install line for this machine. The per-family list is [installs](installs.md).
+Python 3.10 or newer; nothing else for the bare tier. `python look.py doctor` prints every optional tool, package and model with its install line for this machine. The per-family list is installs (`installs.md`).
