@@ -15,7 +15,7 @@ Needs Python 3 (standard library only) and a browser. The server listens on 127.
 
 Run a grilling round: numbered questions, your recommended answer under each (use `/grilling` if it is installed). Look up every fact yourself; only decisions go to the user. Cover, in order:
 
-0. **Which mode fits?** Grid: the user wants to look at everything and decide (see all, rate 1-5, comment, copy the ratings back). Arena: a ranking is needed (blind pairs, Elo per metric). Recommend Grid when they want to glance and choose; Arena when many close options need a settled order. Both run from the same kit; Grid opens first. With Grid only, skip questions 3 (anchors), 6 (metrics) and 8 (cost columns).
+0. **Which mode?** Grid is the default: the user looks at everything and decides (see all, rate 1-5, comment, copy the ratings back). Use Arena only when the user asks for a ranking (blind pairs, Elo per metric). Both run from the same kit; Grid opens first. With Grid only, skip questions 3 (anchors), 6 (metrics) and 8 (cost columns).
 1. **What is ranked, and what happens to the winner?** (a new default, a caption, a model kept, files deleted.) One sentence each.
 2. **The players:** which options, and where each comes from (the user, research with links, your own idea: say which). Recommend 6-12, at most 20. Keep today's default as a baseline, plus a strong outside reference if one exists.
 3. **Which players are anchors (reference players)?** Recommend: the baseline and the outside reference. Anchors keep a rating but never take a top place or soak up picks (`"anchors"` in `arena.json`).
