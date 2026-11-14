@@ -5,7 +5,7 @@ description: 'Use when asked for sigmavast or to rent a GPU (vast.ai and other c
 
 # SigmaVast
 
-Rent a GPU for one job with `lacompute`, run the job, and prove the machine is gone. Every rental, start to teardown, goes through `lacompute`: it checks the price cap, names the machine, records the spend and deletes it at the end. `lacompute --help`, `lacompute config` and the guide it names hold the owner's own facts (cap, key paths, offer filter); read them there.
+Rent a GPU for one job with `lacompute`, run the job, and prove the machine is gone. Every rental, start to teardown, goes through `lacompute`: it checks the price cap, names the machine, records the spend and deletes it at the end. `lacompute --help` and `lacompute config` show the settings (the cap, the key paths). `docs/guides/COMPUTE.md` in Thinkcenter_Setup explains the rest.
 
 ## When to rent
 
@@ -14,9 +14,9 @@ Rent a GPU for one job with `lacompute`, run the job, and prove the machine is g
 
 ## 1. Pick the card
 
-- Size by the model's memory need: weights (parameters x bytes per parameter) + KV cache or activations + about 20 % headroom. `-s NNgb` asks for that much GPU memory.
+- Size by the model's memory need: weights (parameters x bytes per parameter) + KV cache or activations + about 20 % headroom (a rule of thumb). `-s NNgb` asks for that much GPU memory.
 - Take the smallest size that fits. The price per hour grows with it, and `lacompute` prints it before the start.
-- No hosts in China: `lacompute config` shows the offer filter; it must exclude `CN`. If it does not, stop and say so.
+- No hosts in China: the vast.ai offer filter is the line in `~/.config/lazy/vast-offers.txt`. It must exclude `CN` (`notin [CN]`). No file, or no such line: stop and say so.
 
 ## 2. Check before the start
 
@@ -27,7 +27,7 @@ lacompute cost      # money spent so far
 ```
 
 - The cap is the owner's. A start above it is refused; never raise it yourself.
-- **Login code.** When `check` says the provider needs a login code, stop. Ask the owner for the code through a secret card (the host's secret request), never in chat, then run the login command `check` names.
+- **Login code.** When `check` says vast.ai cannot rent (2FA), stop and ask the owner for the code from his email. Then run the two `vastai tfa` steps in `docs/guides/COMPUTE.md` (Owner steps). Never print the code back.
 
 ## 3. Run
 
@@ -36,7 +36,7 @@ lacompute -t gpu -s <NN>gb --max <time> --get <outputs> -- '<job>'
 lacompute -t gpu -s <NN>gb --max <time> --detach -- '<job>'   # long job; lacompute logs -f follows it
 ```
 
-- The job fetches its own code and inputs; `--repo` is not used for a GPU rental.
+- The job fetches its own code and inputs. Do not pass `--repo`: it copies the GitHub token to the rented machine.
 - `--env` values show on command lines: settings only, never a key.
 - `--max` is the provider-side end. Set it to the job's real length plus a margin.
 
@@ -46,12 +46,12 @@ lacompute -t gpu -s <NN>gb --max <time> --detach -- '<job>'   # long job; lacomp
 
 ```sh
 lacompute list --json | python3 -c 'import json,sys; print([m.get("name") for m in json.load(sys.stdin)["machines"]])'
-vastai show instances --raw | python3 -c 'import json,sys; print([i["id"] for i in json.load(sys.stdin)])'
+vastai show instances --raw | python3 -c 'import json,sys; print([i.get("id") for i in json.load(sys.stdin) if str(i.get("label","")).startswith("lc-")])'
 ```
 
 Both must print `[]`. A leftover: `lacompute kill-all`, then check again.
 
-**Never print a raw instance listing** (`vastai show instances`, `--raw`, `lacompute list --json` unfiltered): its `onstart` line holds an API key. Filter to named fields every time. If a key was printed anyway, say so in the report and ask the owner to rotate it.
+**Never print a raw instance listing** (`vastai show instances --raw` as a whole): its `onstart` field can hold an API key. Filter to named fields every time. If a key was printed anyway, say so in the report and ask the owner to rotate it.
 
 ## Final response
 
