@@ -28,7 +28,7 @@ Simpler never means worse: we cut parts, steps and words, never what the viewer 
 ## 3. The rest, in a few lines
 
 - **Modules:** few entry points, the complexity hidden inside. Delete a module in your head: if nothing gets harder, merge it away. Add a seam only when a second real case exists. Every product part works alone: one entry point, its config in one file, no hardcoded paths, hosts or channel names.
-- **Decisions:** every choice has a trade-off; write it down. One that a later agent could undo by mistake gets a short ADR (`docs/adr/`).
+- **Decisions:** every project is planned, reviewed and decided on https://review.geldtools.com, not in chat. Every choice has a trade-off; write it down. One that a later agent could undo by mistake gets a short ADR (`docs/adr/`).
 - **Pages people see:** colours, type and spacing from one token file; one bold idea per page; works on a phone and with a keyboard. Take a screenshot and look before you call it done.
 - **Shipping:** one command, safe to run twice; never hand-edit a live server; know the rollback before you deploy; check the live page after.
 - **Docs:** each fact lives in one place; change the docs in the same change as the code; an old doc is worse than none.
