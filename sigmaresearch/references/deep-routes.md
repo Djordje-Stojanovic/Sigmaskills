@@ -41,7 +41,7 @@ Use more than one engine; each ranks differently and none shows everything. Try 
 
 - **PDFs and decks:** download and read the text (`pdftotext`, or the host's PDF reader). Count a PDF as read in full only when you read the pages that carry the claim, and say which pages.
 - **Company and government filings:** SEC EDGAR full-text search `https://efts.sec.gov/LATEST/search-index?q=%22PHRASE%22&forms=10-K`; national registers, court dockets, patent offices (Google Patents, Espacenet, WIPO), procurement portals, parliament and council minutes.
-- **Transcripts:** YouTube and podcast captions through `yt-dlp` ([video sites](access-ladder.md#video-sites)); conference talk pages often hold slides and a transcript; earnings-call and hearing transcripts sit on the host's site or in the archive.
+- **Transcripts:** YouTube and podcast captions through `yt-dlp` (video sites (`access-ladder.md`)); conference talk pages often hold slides and a transcript; earnings-call and hearing transcripts sit on the host's site or in the archive.
 - **Books and long reports:** the publisher's sample, the Internet Archive full-text search (`https://archive.org/advancedsearch.php?q=WORDS&output=json`), Google Books search inside a book.
 
 ## 5. Code and community
@@ -58,7 +58,7 @@ arXiv `https://export.arxiv.org/api/query?search_query=all:WORDS`; OpenAlex `htt
 
 ## 7. Other languages and regions
 
-Search in the language where the thing happened: a Serbian, German, Chinese, Russian, Korean or Japanese site often holds the story years before an English one. Use the local engine and the local news, forum and video sites. Fetch the original page, translate inline, keep the original quote and the URL ([pages in another language](access-ladder.md#pages-in-another-language)).
+Search in the language where the thing happened: a Serbian, German, Chinese, Russian, Korean or Japanese site often holds the story years before an English one. Use the local engine and the local news, forum and video sites. Fetch the original page, translate inline, keep the original quote and the URL (pages in another language (`access-ladder.md`)).
 
 ## 8. The owner's signed-in browser
 

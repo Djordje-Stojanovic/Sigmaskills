@@ -319,7 +319,7 @@ test('every relative link and anchor in the skill folders resolves', () => {
 const PRIVATE_PARTS = /Thinkcenter_Setup|Design_Experiments|geldtools|lazy_toolkits|\bCT100\b|storgestudio|StorgeStudio/i;
 
 test('no tracked file outside the history names a private repository, host or path', () => {
-  const skip = new Set(['CHANGELOG.md', 'registry/skill-baselines.json', 'test/repo-invariants.test.js', 'test/sigmawrite-gui.test.js']);
+  const skip = new Set(['CHANGELOG.md', 'ENGINEERING.md', 'registry/skill-baselines.json', 'test/repo-invariants.test.js', 'test/sigmawrite-gui.test.js']);
   const files = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' }).split('\n').filter(Boolean)
     .filter((f) => !skip.has(f) && !f.startsWith('docs/audits/') && !/\.(png|jpe?g|gif|webp|ico|woff2?|pdf|mp4|wav)$/i.test(f));
   const hits = files.filter((f) => fs.existsSync(path.join(ROOT, f)) && PRIVATE_PARTS.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));

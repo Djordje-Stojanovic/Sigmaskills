@@ -1,6 +1,6 @@
 # T3 Code: `schedule_task`, `/goal`, and a crew of threads
 
-Marks: **ran** (run by the author), **doc** (T3 user docs), **source** (T3 source). See [hosts.md](hosts.md) for the table and the plain instruction. A step not run says "live run pending".
+Marks: **ran** (run by the author), **doc** (T3 user docs), **source** (T3 source). See `hosts.md` for the table and the plain instruction. A step not run says "live run pending".
 
 Checked 2026-10-31 against T3 `0.1.6-nightly.20261030.3904`, source commit `36dac688a1` of [pingdotgg/t3code](https://github.com/pingdotgg/t3code) (`apps/server/src/mcp/toolkits/`, `apps/server/src/scheduledTasks/`, `packages/contracts/src/scheduledTask.ts`, `orchestratorMcp.ts`), and `docs/user/`. `main` is 315 commits later; in those files it changed the scheduler only by refactors and webhook logging, and no tool name or description (source: diff). Run on 2026-11-12 (ran): native `/goal` on a Claude thread, `delegate_task` async for lane managers and workers (a finished child woke its parent), one status file per lane. The clock and run-to-done skeletons: live run pending.
 
@@ -36,19 +36,19 @@ A child may not run at wider permission modes than its parent (source). Start th
 
 **Native `/goal`.** With Codex and Claude, a message that starts with `/goal <condition>` sets a goal, and the agent keeps working across turns until it judges it met (doc: `composer.md`, Goals). T3 reads the command in the message path, so the first message, a queued message and a `t3_thread_send` all work (source: `parseGoalCommand`, `Orchestrator.ts`). `/goal` alone shows it, `/goal clear` removes it. Codex also takes `/goal pause` and `/goal resume`; Claude does not (T3 rejects them for Claude). Stop on a Claude thread ends the turn and keeps the goal; Claude checks it again at the end of the next message. Stop on a Codex thread pauses it (doc). A goal command never joins a running turn: it stops the run or waits in the queue (source). Whether the provider's own `/loop` works in a T3 thread is **not documented**, and T3's Claude adapter has no handling for `ScheduleWakeup` or `CronCreate` (source: no match). Do not assume it. The schedule is the wake.
 
-For clock or scheduled run-to-done mode, read [host-t3-scheduler.md](host-t3-scheduler.md) before filling the scheduler skeleton: it covers schedule fields, overlap, permissions, restart and cleanup.
+For clock or scheduled run-to-done mode, read `host-t3-scheduler.md` before filling the scheduler skeleton: it covers schedule fields, overlap, permissions, restart and cleanup.
 
 ## The crew
 
 The orchestrator thread runs the loop. Workers do the items.
 
-**Per builder:** build, prove, review, PR, CI, merge. Roles, tiers and failure rules: [loop-file.md](loop-file.md), Crew and Failure rules.
+**Per builder:** build, prove, review, PR, CI, merge. Roles, tiers and failure rules: `loop-file.md`, Crew and Failure rules.
 
 **Model chain by usage.** Write the chain into the loop file's Crew section from `orchestrator_capabilities` (never guess a model id). Apply the provider and tier rules in loop-file.md, Failure rules. A worker takes the first step with usage left; a step is out when a child ends on a usage or rate-limit error. If a step shares a pool with the orchestrator, give it a floor (a percent of weekly and 5-hour limit left). Set the target on `delegate_task` (`target.providerInstanceId`, `target.model`, `target.options`) or `modelSelection` on `t3_thread_launch`; `t3_thread_configure` changes a live thread.
 
 **Wake hygiene** (scheduler modes only). `t3_queue` `list` this thread at the start of each wake and `cancel` piled-up wake messages. A closed queue (after Stop or a restart) waits for **Resume**.
 
-**Failure and speed rules**: [loop-file.md](loop-file.md). More than one lane: [lanes.md](lanes.md).
+**Failure and speed rules**: `loop-file.md`. More than one lane: `lanes.md`.
 
 **Waiting.** Read a child's status file or result, not its thread: `t3_thread_read` starts at the first message and costs a lot (ran).
 

@@ -1,6 +1,6 @@
 # Codex: `/goal`
 
-Marks: **ran** (run by the author, Windows 11), **doc**, **source**. See [hosts.md](hosts.md) for the table and the plain instruction.
+Marks: **ran** (run by the author, Windows 11), **doc**, **source**. See `hosts.md` for the table and the plain instruction.
 
 Facts ([slash commands](https://learn.chatgpt.com/codex/reference/slash-commands.md), [hooks](https://learn.chatgpt.com/docs/hooks), [scheduled tasks](https://learn.chatgpt.com/docs/automations), source of [openai/codex](https://github.com/openai/codex): `codex-rs/tui/src/goal_display.rs`, `codex-rs/ext/goal/templates/goals/continuation.md`):
 

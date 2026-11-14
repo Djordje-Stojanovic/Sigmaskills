@@ -1,6 +1,6 @@
 # Logs, subtitles, certificates, model files, disk images, git bundles, EPUB, Avro, EVTX, PSD
 
-One reference for the families that are not big enough for their own page. Same five parts: when `look.py` is not enough, pipeline, failure modes, what to show the human, install lines (all in [installs](installs.md)).
+One reference for the families that are not big enough for their own page. Same five parts: when `look.py` is not enough, pipeline, failure modes, what to show the human, install lines (all in installs (`installs.md`)).
 
 ## When look.py is not enough
 

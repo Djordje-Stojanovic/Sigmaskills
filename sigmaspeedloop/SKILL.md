@@ -1,6 +1,6 @@
 ---
 name: sigmaspeedloop
-description: Make any AI model serve faster on a rented GPU with no quality loss, one scripted keep-or-revert change at a time. Use for speed loops, inference or KV tuning. Do not use for training or code review.
+description: Use when asked to make an AI model serve faster on a rented GPU with no quality loss, one scripted keep-or-revert change at a time, for speed loops, inference or KV tuning. Do not use for training or code review.
 ---
 
 # SigmaSpeedLoop

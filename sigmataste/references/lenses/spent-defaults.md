@@ -16,7 +16,7 @@ Looks that appear whatever the subject: the defaults a model or a template reach
 
 ## Fix moves
 
-- For each spent default, ask what the subject would do instead (see [only this one](only-this-one.md)). Replace it with that, or remove it.
+- For each spent default, ask what the subject would do instead (see only this one (`only-this-one.md`)). Replace it with that, or remove it.
 - Give radius, shadow and borders roles: one value per level of hierarchy, not one for everything.
 - Choose the typeface on purpose; write down why in one line.
 

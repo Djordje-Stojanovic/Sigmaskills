@@ -21,7 +21,7 @@ A prompt that needs a tool the host lacks stalls the run. Pick the row for the h
 Invoke SigmaLoop the host's way (`/sigmaloop` in Claude Code, `$sigmaloop` in Codex, `/skill:sigmaloop` in pi). Skill folders in the table come from the installer registry, except `agy`, whose global folder is proven by a run (the installer overrides the registry) and must be a real copy, not a junction (ran). Windows: in Git Bash a leading `/word` argument is rewritten to a path (ran, Claude Code and `agy`); use PowerShell or `MSYS_NO_PATHCONV=1` (ran: it fixed `/loop`).
 
 
-Per-host facts and the prompt skeleton: [Claude Code](host-claude-code.md), [Codex](host-codex.md), [Antigravity and Gemini CLI](host-antigravity.md), [pi and lapi](host-pi.md), [T3 Code](host-t3-code.md). Read only the one file for the host the user named.
+Per-host facts and the prompt skeleton: Claude Code (`host-claude-code.md`), Codex (`host-codex.md`), Antigravity and Gemini CLI (`host-antigravity.md`), pi and lapi (`host-pi.md`), T3 Code (`host-t3-code.md`). Read only the one file for the host the user named.
 
 ## Other hosts: plain instruction
 

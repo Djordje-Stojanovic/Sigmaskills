@@ -8,7 +8,7 @@ Algolia API. A query returns top stories; the top `--threads` (default 1) are op
 
 ## GitHub (`github`)
 
-`owner/repo`, a repo URL or an issue URL, or a topic query (repo search by stars). A repo read returns stars, forks, open issues plus PRs, last push, licence, archived flag and the last five release dates, then the most-reacted issues matching `bug` or the words after the repo (`github "yt-dlp/yt-dlp download fails"`). It uses `GITHUB_TOKEN` or `gh auth token` when present, for rate limit only; the token is never printed or cached. Cite a commit or tag for source behavior. The reader only reads; code search, issue search and commit search are in [deep routes](deep-routes.md).
+`owner/repo`, a repo URL or an issue URL, or a topic query (repo search by stars). A repo read returns stars, forks, open issues plus PRs, last push, licence, archived flag and the last five release dates, then the most-reacted issues matching `bug` or the words after the repo (`github "yt-dlp/yt-dlp download fails"`). It uses `GITHUB_TOKEN` or `gh auth token` when present, for rate limit only; the token is never printed or cached. Cite a commit or tag for source behavior. The reader only reads; code search, issue search and commit search are in deep routes (`deep-routes.md`).
 
 ## Stack Overflow (`stackoverflow`)
 

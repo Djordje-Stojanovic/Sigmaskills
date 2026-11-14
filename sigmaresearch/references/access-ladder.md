@@ -1,6 +1,6 @@
 # Access ladder
 
-Walk this ladder for every URL you need to read in full. When a rung is blocked, take the next and log which rung worked. A platform is dead only when every route that fits it is on your route list: the wider catalogue is in [deep routes](deep-routes.md), and the persistence rules are in [Access and persistence](../SKILL.md#access-and-persistence). The tests below were run on 2026-10-15 from one home connection; that is historical evidence, not a live check.
+Walk this ladder for every URL you need to read in full. When a rung is blocked, take the next and log which rung worked. A platform is dead only when every route that fits it is on your route list: the wider catalogue is in deep routes (`deep-routes.md`), and the persistence rules are in [Access and persistence](../SKILL.md#access-and-persistence). The tests below were run on 2026-10-15 from one home connection; that is historical evidence, not a live check.
 
 | Rung | Route | Example | Blocked means |
 |---|---|---|---|
@@ -10,7 +10,7 @@ Walk this ladder for every URL you need to read in full. When a rung is blocked,
 | 4 | Official API or free tier that needs no login | Hacker News Firebase API, GitHub through an existing `gh`, a site's public JSON list | a key or login is needed: next rung |
 | 5 | Archive mirror | `https://web.archive.org/web/<URL>` (and `archive.ph/newest/<URL>`, Common Crawl, a project mirror) for a page that is down, removed, changed or blocked | no copy: next rung |
 | 6 | The host's own browser tool | its read-page or page-text call; it renders pages that plain requests cannot | the tool refuses the site: next rung |
-| 7 | The owner's browser session | Claude in Chrome on his existing logins, read only, any site: [X in Chrome](x.md); read the page's network calls for the JSON behind it | extension missing or session gone: log the gap |
+| 7 | The owner's browser session | Claude in Chrome on his existing logins, read only, any site: X in Chrome (`x.md`); read the page's network calls for the JSON behind it | extension missing or session gone: log the gap |
 | 8 | Video sites | subtitles, then audio and speech-to-text: [video sites](#video-sites) | the site refuses the audio: log the gap |
 
 `UA` is an ordinary browser user agent, for example `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36`. It is plain request metadata, never a disguise. On Windows PowerShell call `curl.exe`, because `curl` is an alias.

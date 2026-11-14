@@ -16,7 +16,7 @@ Whether the design holds up for people who see, move or read differently, and in
 
 ## Fix moves
 
-- Fix contrast through the colour roles (see [colour](colour.md)), in both themes and forced colours.
+- Fix contrast through the colour roles (see colour (`colour.md`)), in both themes and forced colours.
 - Add a second cue to colour: an icon, a label, a pattern.
 - Native elements first (`button`, `a`, `label`, `table`), then ARIA only where native cannot.
 - Names for icon buttons; `alt` that states the point of an image in context, empty `alt` for decoration.

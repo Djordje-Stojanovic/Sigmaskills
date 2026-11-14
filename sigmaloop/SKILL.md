@@ -42,7 +42,7 @@ Fill the template in [loop-file.md](references/loop-file.md). Save it where the 
 
 ## 4. Write the host prompt
 
-Use the skeleton in the host file that [hosts.md](references/hosts.md) names. **Default: a native `/goal` run with no scheduled wake and no cron.** Job completion notices drive the run; a slot is refilled in the same turn its job ends. Use a scheduled loop only when the stop line is a clock event the work waits on, or the host has no `/goal`. The prompt is short: the done command, the loop file path to re-read every turn, and the 2-3 limits that must hold. Over about 1,000 characters, move text into the loop file: the prompt is read once, the loop file every turn. Tell the user what the host will not do.
+Use the skeleton in the host file that [hosts.md](references/hosts.md) names. The host files: [Claude Code](references/host-claude-code.md), [Codex](references/host-codex.md), [Antigravity](references/host-antigravity.md), [pi](references/host-pi.md), [T3 Code](references/host-t3-code.md), [T3 scheduler](references/host-t3-scheduler.md). **Default: a native `/goal` run with no scheduled wake and no cron.** Job completion notices drive the run; a slot is refilled in the same turn its job ends. Use a scheduled loop only when the stop line is a clock event the work waits on, or the host has no `/goal`. The prompt is short: the done command, the loop file path to re-read every turn, and the 2-3 limits that must hold. Over about 1,000 characters, move text into the loop file: the prompt is read once, the loop file every turn. Tell the user what the host will not do.
 
 ## 5. Stop
 
