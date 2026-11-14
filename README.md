@@ -84,6 +84,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaSpeedLoop** | `sigmaspeedloop` | Makes a model serve faster on a rented GPU |
 | **SigmaMusk** | `sigmamusk` | Runs Musk's Algorithm on one thing, one codebase or a whole setup: measure, delete first |
 | **SigmaBoat** | `sigmaboat` | Runs authorized work on boat.dev cloud sandboxes |
+| **SigmaVast** | `sigmavast` | Rents a GPU for one job through `lacompute`, inside the cap, and proves the teardown |
 
 ### Which one do I need?
 
@@ -432,6 +433,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
 | `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` · `cut <repo>` · `reset` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
 | `sigmaboat` | a loop file, ship issue, speed-loop project or spec · the repo | Starts sandboxes only when you name boat; no plan of its own; deletes every worker |
+| `sigmavast` | a GPU job · its memory need | Rents only through `lacompute`, never above the cap; proves `[]` after the teardown |
 
 ### Requirements
 

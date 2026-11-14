@@ -85,6 +85,11 @@
       "needsReferences": false
     },
     {
+      "id": "sigmavast",
+      "title": "SigmaVast",
+      "needsReferences": false
+    },
+    {
       "id": "sigmadebug",
       "title": "SigmaDebug",
       "needsReferences": false

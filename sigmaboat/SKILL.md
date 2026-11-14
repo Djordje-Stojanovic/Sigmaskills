@@ -5,99 +5,46 @@ description: 'Use when asked for sigmaboat or to run authorized work (loop file,
 
 # SigmaBoat
 
-Give work the user already authorized extra machines: [boat.dev](https://boat.dev) sandboxes (full Ubuntu VMs, no GPU). SigmaBoat builds one stopped base per repo, forks one sandbox per worker, runs each worker's gate there, lands the result by the work's own rules, and deletes every sandbox it started.
+Give work the user already authorized extra machines: [boat.dev](https://boat.dev) sandboxes (Ubuntu VMs, no GPU). SigmaBoat keeps one stopped base per repo, forks one worker per item, runs each item's gate there, lands the result by the work's own rules, and deletes every worker it started.
 
 ## Operating contract
 
-- **Explicit only.** Start a sandbox only when the user's message or the spec names boat. No size has a GPU, so not for GPU work or renders.
-- **Authorized work only.** The input is a loop file, an issue with acceptance criteria, a speed-loop project or a spec. SigmaBoat writes no plan: SigmaLoop writes prompts, SigmaShip ships tickets. The host runs that work with its own mechanism (subagents, threads, `/goal`); SigmaBoat only supplies and cleans up the machines.
-- **Cost.** boat's auto-stop (`--ttl` on every start) ends each sandbox; deleting it ends it sooner. Read the live limits; set no budget the user did not give.
-- **Secrets.** Read `BOAT_API_KEY` from the environment or a secrets file named by path. Sign in with `--key-stdin`. Send a token (for example `GH_TOKEN`) on stdin, never as a flag: `-e KEY=VALUE` shows the value on the command line, and a fork copies the base's environment. Never print a value.
+- **Explicit only.** Start a sandbox only when the user's message or the spec names boat. No size has a GPU: GPU work goes to `lacompute` (SigmaVast).
+- **Authorized work only.** The input is a loop file, an issue with acceptance criteria or a spec. SigmaBoat writes no plan; the host runs the work with its own subagents, threads or `/goal`. SigmaBoat supplies the machines and cleans them up.
+- **Through `laboat` only.** `laboat` signs in with the key of the machine it runs on and reads keys and limits for you. The raw `boat` CLI is not the way here: Git Bash cannot run `boat.exe`, and a hand login leaves a key on a command line. `lahelp laboat` is the command list; read it once.
+- **Secrets.** Never print a key or token. `laboat checkout` and `laboat job --key NAME` pass them on stdin.
 - **Delete what you start.** At the end, and after any failure, every worker is gone. Keep only stopped bases.
 
-## Facts that change commands
+## Where it runs
 
-- `boat exec` stops a command after 30 s unless you pass `--timeout`; `0` means no limit.
-- Piped or captured, every command prints JSON (`--json` turns on by itself). Read ids from the `ready` event of `boat new --json`.
-- Auto-stop counts from start or resume. Only a running `boat prompt` extends it; `exec`, SSH and threads do not. Set `--ttl` on every `new` and `fork`.
-- boat sets its own `GITHUB_TOKEN` in every sandbox, and it cannot reach private repos: run git and gh there as `env -u GITHUB_TOKEN ...`.
-- A fork copies the whole disk of the source's newest snapshot. Fork only a stopped base (`boat info` says `stopped`), and never put a Tailscale, T3 or secret identity on a base.
-- Free trial: 2 sandboxes at once, `--ttl` at most 7200, sizes `small` and `default`, no saved snapshots. Read the real numbers with `boat limits --json`.
+- `laboat` runs on the machine you type it on. `laboat --on <machine> ...` (a name from the hosts file) runs it on another.
+- A **machine** failure (no CLI, no key, no network, a refused key) prints one line and hands the command to the next machine. A **job** failure inside a sandbox is never retried elsewhere: report its exit code.
+- Every command on one sandbox takes its `bx_` id. Auto-stop ends a sandbox at its `--ttl` (trial maximum 2 h): split longer items.
 
-## 1. Sign in and read the limits
+## Steps
 
 ```sh
-printf '%s' "$BOAT_API_KEY" | boat login --key-stdin --json   # POSIX
-boat limits --json
+laboat limits --all                 # free slots per account; workers = min(slots, ready items)
+laboat base <repo>                  # build or refresh the stopped base (clone, install)
+laboat job <repo> <branch> [--key NAME]... -- '<command>'   # one whole item: fork, branch, run, bring the branch home, delete
 ```
 
-```powershell
-$env:BOAT_API_KEY | boat login --key-stdin --json             # Windows PowerShell
-boat limits --json
-```
-
-From the JSON take: the active-sandbox maximum minus the running ones (the worker slots), the machine types that are `available`, and the trial line. Workers = min(slots, ready items).
-
-## 2. Build or reuse the base
-
-Look for `base-<repo>` in `boat list --filter sr --json` (`s` stopped, `r` running). Reuse it when it is stopped and the commit it printed when built (`git rev-parse --short HEAD` below) is the one the work needs, and the Sigmaskills release it printed is the newest (`npm view @djordje-stojanovic/sigmaskills version`). Otherwise:
+By hand, the same item in four steps:
 
 ```sh
-boat new --ttl 7200 --name base-<repo> --json          # id from the "ready" event
-printf '%s' "$GH_TOKEN" | boat ssh <base> -- sh -c 'h="Authorization: Basic $(printf "x-access-token:%s" "$(cat)" | base64 -w0)"; GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraHeader GIT_CONFIG_VALUE_0="$h" git clone -q <url> <repo> </dev/null'
-boat exec <base> --cwd <repo> -- git rev-parse --short HEAD   # the base's commit
-boat exec <base> --cwd <repo> --timeout 0 -- <install command>
-boat exec <base> --timeout 0 -- npx -y @djordje-stojanovic/sigmaskills@latest install --preset sigma --agent claude,codex --global --yes   # newest Sigmaskills, so every fork has the skills
-boat exec <base> -- npx -y @djordje-stojanovic/sigmaskills@latest --version   # the release the base holds
-boat exec <base> --cwd <repo> --timeout 0 -- <gate command>   # once, to prove the base is green
-boat exec <base> -- du -sh <repo>                             # report the disk use
-boat stop <base>
-boat info <base> --json                                       # repeat until the state is stopped
+laboat fork <repo>                                  # prints the worker's bx_ id
+laboat exec <id> --cwd <repo> -- <gate command>     # keeps the exit code
+laboat pull <id> <repo> <branch>                    # the branch into your checkout
+laboat delete <id>                                  # usage saved, then deleted
 ```
 
-A public repo needs no token: `boat exec <base> --timeout 0 -- git clone <url> <repo>`. The token above lives only in that one command's environment, so the base holds no secret on its disk or in its environment.
-
-## 3. Fork the workers
-
-```sh
-boat fork <base> --ttl 7200 --wait --json                        # id from the "ready" event
-printf '%s\n' "$GH_TOKEN" | boat ssh <id> -- sh -c 'unset GITHUB_TOKEN; gh auth login --with-token && gh auth setup-git'
-```
-
-One fork per worker, at most the free slots. A failed fork is retried once with `--fail-fast`; then that item waits for a free slot.
-
-## 4. Run each worker's item
-
-The host's worker (subagent, thread or loop step) does the item. Commands it runs on its sandbox:
-
-```sh
-boat exec <id> --cwd <repo> --timeout 0 -- git switch -c <branch>
-boat exec <id> --cwd <repo> --timeout 0 -- <command>
-boat exec <id> --cwd <repo> --timeout 0 -- <gate command>   # the item's own check; keep its exit code
-boat ssh <id>                                               # an interactive shell when needed
-```
-
-A worker whose job may pass the 2 h auto-stop on the trial splits it, or stops and resumes with `boat resume --ttl 7200 <id>`.
-
-## 5. Land
-
-Follow the landing rules of the work that was invoked (the loop file, SigmaShip, the spec): push the branch from the sandbox, open the pull request, merge only if that work authorizes it. SigmaBoat adds no landing rule of its own.
-
-## 6. Collect usage and delete
-
-For every worker, also after a failure:
-
-```sh
-boat usage <id> --json
-boat delete <id> --yes --json
-boat list --all --json      # only base-* remain
-```
+Then land by the rules of the work that was invoked (loop file, SigmaShip, spec): push, open the pull request, merge only if that work allows it. Last: `laboat clean` (deletes every sandbox but the bases; exit 1 names one it could not delete) and `laboat list` shows only `base-*`.
 
 ## Final response
 
-1. A table: worker id, item, gate exit code, minutes, cost from `boat usage`, deleted (yes).
-2. The base: id, revision, disk use, state (stopped).
-3. What the work's own landing produced (pull request links), and any item that did not finish, with its reason.
+1. A table: worker id (`bx_...`), item, gate exit code, minutes, cost, deleted (yes).
+2. The base: id, revision, state (stopped).
+3. The pull requests the landing produced, and each item that did not finish, with its reason.
 
 ## Personal instructions
 

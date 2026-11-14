@@ -111,6 +111,11 @@ read-only probe; a spec-sheet number is not a ceiling.
 6. `check_state.py`, `plot_progress.py`, then rewrite `PROGRESS.md` as one table: champion against the owner's
    current setup.
 
+**Charts.** The [speedloop repo](https://github.com/Djordje-Stojanovic/speedloop) draws two per project:
+`tools/chart.py` turns `wins.tsv` into `chart.png` and `TABLE.md` (one row per win), and `tools/progress.py` turns
+`progress.json` into `progress.png` (every experiment a dot, every champion a line). A segment's label names the
+model or agent that FOUND its champion, not the one that measured it again at home; a line across machines says so.
+
 Rules learned the hard way (all in [lessons.md](references/lessons.md)):
 
 - Profile the path you have never profiled before you optimize it.

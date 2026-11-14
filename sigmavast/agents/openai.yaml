@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaVast
+  short_description: Rent a GPU for one job through lacompute, then prove it is gone
+  default_prompt: Use $sigmavast to rent a GPU for this job through lacompute, inside the
+    spend cap, and prove the teardown.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false
