@@ -34,7 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
-- `sigmavast` guides an agent through renting a GPU with `lacompute`: when to rent, a card by memory need, the spend cap, no hosts in China, the teardown proved by `[]`, and never a raw instance listing (its `onstart` field can hold a key).
+- `sigmavast` guides an agent through renting a GPU with `lacompute`: when to rent, a card by memory need, the spend cap, no hosts in China, the teardown proved by `[]`, and never a raw instance listing (its `onstart` field holds a key).
 - `--preset design-pack` installs the design pair, `impeccable` and `taste-skill`, in one flag. The research behind it is in `docs/research/design-pack.md`.
 
 ### Changed

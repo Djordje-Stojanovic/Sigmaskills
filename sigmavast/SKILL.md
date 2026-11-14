@@ -51,7 +51,7 @@ vastai show instances --raw | python3 -c 'import json,sys; print([i.get("id") fo
 
 Both must print `[]`. A leftover: `lacompute kill-all`, then check again.
 
-**Never print a raw instance listing** (`vastai show instances --raw` as a whole): its `onstart` field can hold an API key. Filter to named fields every time. If a key was printed anyway, say so in the report and ask the owner to rotate it.
+**Never print a raw instance listing** (`vastai show instances --raw` as a whole): its `onstart` field holds an API key (a real run printed one). Filter to named fields every time. If a key was printed anyway, say so in the report and ask the owner to rotate it.
 
 ## Final response
 
