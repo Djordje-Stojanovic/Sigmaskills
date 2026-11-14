@@ -73,3 +73,4 @@ description: 'Use when asked for sigmaboat or to run authorized work (loop file,
 description: 'Use when asked for sigmadebug, or to list and settle every open question, one topic at a time. Grills each, plans each fix, ships each in a background agent. Do not use for one bug (SigmaReview).'
 Do not use for one bug (SigmaReview).
 description: Use when asked for sigmawrite, easy talk, a SigmaWriteGUI board, an EASYTALK REPLY, less jargon, gibberish or outsider-clear text. Plain English and status boards. Do not use to rewrite code or APIs.
+description: 'Use when asked for sigmavast or to rent a GPU (vast.ai and other clouds) for one job through lacompute: pick the card, keep the spend cap, prove the teardown. Do not use for CPU sandboxes (SigmaBoat) or local GPUs.'

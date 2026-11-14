@@ -111,6 +111,13 @@ read-only probe; a spec-sheet number is not a ceiling.
 6. `check_state.py`, `plot_progress.py`, then rewrite `PROGRESS.md` as one table: champion against the owner's
    current setup.
 
+**Charts.** Step 6's `plot_progress.py` reads `results.tsv` and writes `progress.png`. The
+[speedloop repo](https://github.com/Djordje-Stojanovic/speedloop) has two more tools: `tools/chart.py` turns `wins.tsv`
+into `chart.png` and `TABLE.md` (one row per win), and `tools/progress.py` turns `progress.json` into `progress.png`
+(every experiment a dot, every champion a line; it also writes `progress.png`). In `progress.json`, a segment's `who`
+names the model or agent that FOUND its champion, not the one that measured it again at home (`base`). A segment from
+another machine sets `align`, which scales its numbers; say so in `note`.
+
 Rules learned the hard way (all in [lessons.md](references/lessons.md)):
 
 - Profile the path you have never profiled before you optimize it.
