@@ -5,7 +5,7 @@ description: 'Use when asked for sigmavast or to rent a GPU (vast.ai and other c
 
 # SigmaVast
 
-Rent a GPU for one job with `lacompute`, run the job, and prove the machine is gone. Every rental, start to teardown, goes through `lacompute`: it checks the price cap, names the machine, records the spend and deletes it at the end. `lacompute --help` and `lacompute config` show the settings (the cap, the key paths). `docs/guides/COMPUTE.md` in Thinkcenter_Setup explains the rest.
+Rent a GPU for one job with `lacompute`, run the job, and prove the machine is gone. Every rental, start to teardown, goes through `lacompute`: it checks the price cap, names the machine, records the spend and deletes it at the end. `lacompute --help` and `lacompute config` show the settings (the cap, the key paths). The guide named in `lacompute --help` explains the rest.
 
 ## When to rent
 
