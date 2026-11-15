@@ -21,7 +21,7 @@ A rental needs four facts: the job, its length, the spend cap, and which data le
   - Cap: the one `lacompute config` shows. Never raise it.
   - Data: only what the job's own code fetches. No key reaches the machine by any route: not in `--env`, not in the job string, not in a file. No private repo copy, no `--repo`.
 
-Rent when the job needs a GPU, or more GPU memory than the local machines have free, and the owner asked for the run. Do not rent for CPU work (SigmaBoat), for a job a local GPU can take, or to "try" a command (the smoke test of section 1 is the one exception).
+Rent only when the job needs a GPU, or more GPU memory than the local machines have free, and the owner asked for the run. Do not rent for CPU work (SigmaBoat), for a job a local GPU can take, or to "try" a command (the smoke test of section 1 is the one exception).
 
 ## 2. Read today's offers
 
