@@ -7,18 +7,30 @@ description: 'Use when asked for sigmavast or to rent a GPU (vast.ai and other c
 
 Rent a GPU for one job with `lacompute`, run the job, and prove the machine is gone. Every rental, start to teardown, goes through `lacompute`: it checks the price cap, names the machine, records the spend and deletes it at the end. `lacompute --help` and `lacompute config` show the settings (the cap, the key paths). The guide named in `lacompute --help` explains the rest.
 
-## When to rent
+This skill types no card, no price and no cap as a rule. It reads today's offers and the job's needs.
 
-- Rent when the job needs a GPU or more GPU memory than the local machines have free, and the user asked for the run.
-- Do not rent for CPU work (SigmaBoat), for a job a local GPU can take, or to "try" a command. A smoke test is `-- nvidia-smi` with `--max 10m`.
+## 1. Settle the job
 
-## 1. Pick the card
+A rental needs four facts: the job, its length, the spend cap, and which data leaves the machine.
+
+- **The owner gave them:** use them. Ask only about what is missing.
+- **The owner gave none and is there to answer:** ask one short round, all four at once: what job, how long, what spend cap, which data leaves the machine. Then go.
+- **The owner said "do it overnight" (or "do stuff"), or is not there:** do not wait. Take these defaults and say which you took in the final response:
+  - Job: the work you were given (loop file, issue, spec). None: stop, there is nothing to rent for.
+  - Length: the job's own estimate plus 25 %. No estimate: a smoke test first (`-- nvidia-smi`, `--max 10m`), then size the real run from what it showed.
+  - Cap: the one `lacompute config` shows. Never raise it.
+  - Data: only what the job's own code fetches. No keys in `--env`, no private repo copy, no `--repo`.
+
+Rent when the job needs a GPU, or more GPU memory than the local machines have free, and the owner asked for the run. Do not rent for CPU work (SigmaBoat), for a job a local GPU can take, or to "try" a command.
+
+## 2. Read today's offers
 
 - Size by the model's memory need: weights (parameters x bytes per parameter) + KV cache or activations + about 20 % headroom (a rule of thumb). `-s NNgb` asks for that much GPU memory.
-- Take the smallest size that fits. The price per hour grows with it, and `lacompute` prints it before the start.
-- No hosts in China: the vast.ai offer filter is the line in `~/.config/lazy/vast-offers.txt`. It must exclude `CN` (`notin [CN]`). No file, or no such line: stop and say so.
+- Read the offers now: `vastai search offers` with the owner's offer filter (`lacompute config` names the file). Never use a card or price from memory or from an older run.
+- Take the cheapest offer that fits the memory need and the length, with hourly price x length under the cap. `lacompute` prints the price before the start.
+- The offer filter holds the owner's host rules (for example no hosts in China). No filter: stop and say so. Never loosen it.
 
-## 2. Check before the start
+## 3. Check before the start
 
 ```sh
 lacompute check     # can each provider rent now? one line each, with the fix
@@ -26,10 +38,10 @@ lacompute config    # max_per_hour, max_per_day and where each came from
 lacompute cost      # money spent so far
 ```
 
-- The cap is the owner's. A start above it is refused; never raise it yourself.
-- **Login code.** When `check` says vast.ai cannot rent (2FA), stop and ask the owner for the code from his email. Then run the two `vastai tfa` steps in `docs/guides/COMPUTE.md` (Owner steps). Never print the code back.
+- A start above the cap is refused by `lacompute`.
+- **Login code.** When `check` says vast.ai cannot rent (2FA), stop and ask the owner for the code from his email. Then run the two `vastai tfa` steps in the guide (Owner steps). Never print the code back.
 
-## 3. Run
+## 4. Run
 
 ```sh
 lacompute -t gpu -s <NN>gb --max <time> --get <outputs> -- '<job>'
@@ -40,7 +52,7 @@ lacompute -t gpu -s <NN>gb --max <time> --detach -- '<job>'   # long job; lacomp
 - `--env` values show on command lines: settings only, never a key.
 - `--max` is the provider-side end. Set it to the job's real length plus a margin.
 
-## 4. Tear down and prove it
+## 5. Tear down and prove it
 
 `lacompute` deletes the machine when the job ends. Prove it, printing named fields only:
 
@@ -53,12 +65,17 @@ Both must print `[]`. A leftover: `lacompute kill-all`, then check again.
 
 **Never print a raw instance listing** (`vastai show instances --raw` as a whole): its `onstart` field holds an API key (a real run printed one). Filter to named fields every time. If a key was printed anyway, say so in the report and ask the owner to rotate it.
 
+## Docs
+
+Live: https://docs.vast.ai (page list: https://docs.vast.ai/llms.txt; add `.md` to a page address for plain text). The machines also keep a copy that `lasynctoolkit` refreshes: `docs/vendor/Vast_docs/` in the toolkit checkout that holds `lacompute` and its guide. Read `cli/reference/search-offers.md` (every offer filter field), `cli/reference/create-instance.md` and `guides/instances/pricing.md` there before you guess a flag, a filter or a price. When you brief a worker agent, give it this line.
+
 ## Final response
 
 1. The job, the card (GPU, memory, region), minutes and cost of this run.
 2. Spend to date against the cap, from `lacompute cost`.
 3. The teardown proof: both lists printed `[]`.
-4. What did not finish, with its reason.
+4. The defaults you took (section 1), or "owner gave the details".
+5. What did not finish, with its reason.
 
 ## Personal instructions
 

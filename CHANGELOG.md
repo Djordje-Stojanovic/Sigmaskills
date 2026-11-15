@@ -34,12 +34,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
-- `sigmavast` guides an agent through renting a GPU with `lacompute`: when to rent, a card by memory need, the spend cap, no hosts in China, the teardown proved by `[]`, and never a raw instance listing (its `onstart` field holds a key).
+- `sigmavast` guides an agent through renting a GPU with `lacompute`. It types no card, price or cap: it reads today's offers and the job's needs. With no details and the owner there, it asks one short round (job, length, spend cap, data that leaves); for "do it overnight" or no owner, it takes written defaults and names them. It keeps the teardown proof (`[]`), never prints a raw instance listing (its `onstart` field holds a key), and points to the vast.ai docs.
 - `--preset design-pack` installs the design pair, `impeccable` and `taste-skill`, in one flag. The research behind it is in `docs/research/design-pack.md`.
 
 ### Changed
 
 - `sigmaboat` runs through `laboat`: on the machine it is typed on, `--on <machine>` elsewhere, a machine failure hands over to the next machine, a job failure is never retried. 105 lines became 52.
+- `sigmaboat` names where the boat.dev docs are (the live site and the copy the machines keep) and tells the host to pass that line to each worker agent.
 - `sigmaspeedloop` names the speedloop repo's two charts and the rule that a segment names who found its champion.
 
 ### Changed (sigmaloop is the factory for a many-lane run)
