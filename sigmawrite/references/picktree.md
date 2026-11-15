@@ -20,11 +20,11 @@ One JSON file:
 
 ## Show it
 
-On a machine with his review page (review.geldtools.com, run folder `/work/temp/ultraplan2`), one command makes it an entry:
+Where his review page runs (a run folder with `cards/` and `media/` that the page build reads; on the dev box `/work/temp/ultraplan2`), one command makes it an entry:
 
     python3 <skill>/scripts/picktree.py tree.json --review /work/temp/ultraplan2 --id DISK-MODELS --title "Models on the Spark" --body "<p>Measured today. Your target: 183 GB free.</p>" --project Homelab
 
-The page rebuilds within a minute. Give him the link `https://review.geldtools.com/#DISK-MODELS`. His picks land in `/work/temp/ultraplan2/answers/DISK-MODELS.json`, field `pick`.
+The page rebuilds within a minute. Give him the page's link with `#DISK-MODELS` at the end. His picks land in `/work/temp/ultraplan2/answers/DISK-MODELS.json`, field `pick`.
 
 Anywhere else, one self-contained HTML file (no server, no network), in the same look:
 
