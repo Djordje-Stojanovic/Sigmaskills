@@ -1,6 +1,6 @@
 # Pick tree
 
-A pick tree lets the owner decide over many nested things that have a size or a count: disks, models, projects, files to delete. He opens the rows he cares about. He picks a choice for a row and can add a word to it. His picks come back as plain lines. A pick tree deletes nothing. You act on his picks afterwards.
+A pick tree lets the owner decide over many nested things that have a size or a count: disks, models, projects, files to delete. He opens the rows he cares about. He picks a choice for a row. Then he can add a word to that row. His picks come back as plain lines. A pick tree deletes nothing. You act on his picks afterwards.
 
 ## The data
 
@@ -12,7 +12,7 @@ One JSON file:
                "k": [{"n": "q4.gguf", "s": 21474836480, "c": {"used by": "chat lane", "last read": "2 days ago"}}]},
               {"n": "old-tts/", "s": 21474836480, "rec": "delete", "c": {"used by": "NOTHING NAMES IT"}}]}
 
-- `title`: the page title. The picks he makes in his browser are saved under this title. Give each tree its own title.
+- `title`: the page title. Without it, the file name is used. The picks he makes in his browser are saved under this title, so give each new decision its own title.
 - `root`: the folder the top rows sit in. A row's full path is `root` plus the names down to that row.
 - `choices`: the words he picks from, for example `keep` and `delete`.
 - `rows`: the top rows. Each row has:
@@ -23,11 +23,13 @@ One JSON file:
   - `rec`: your pick, one of `choices`. The page shows it as "my pick". Leave it out where he decides alone.
 - `fmt`: `"bytes"` (the default) shows sizes as GB. Any other value shows the count, with `unit` after it: `"fmt": "count", "unit": "files"`.
 - `total`: the size of the whole tree. The top rows show their share of it.
-- `rest`: the name of the last row that a folder gets when its rows do not add up to its size. The row appears only when the gap is 0.05 GB or more (1 or more for a count).
+- `rest`: the name of the last row that a folder gets when its rows do not add up to its size. The row appears only when the gap is 0.05 GB or more (1 or more for a count). Without `rest`, the row says "the rest, under the size shown".
 - `note` (optional): one line under the title.
 - Sort each level largest first. The page keeps your order.
 
 When any row has a `rec`, the page shows a "Take my picks" button. He presses it to take all of your picks at once.
+
+His picks stay in that browser until he changes them. Copy my picks does not clear them. A tree with the same title shows the old picks on rows that still exist.
 
 ## Show it on his review page
 
@@ -41,7 +43,7 @@ Where his review page runs (a run folder with `cards/` and `media/`; on the dev 
 
 The review page rebuilds when its cards change. Give him the page link with `#DISK-MODELS` at the end.
 
-His picks go to `/work/temp/ultraplan2/answers/DISK-MODELS.json`. The `pick` field holds the same lines as the copied text below, without the header. A comment on the whole tree goes to `comment`.
+His picks go to `/work/temp/ultraplan2/answers/DISK-MODELS.json`. The `pick` field holds the same lines as the copied text below, without the header. A comment on the whole tree goes to `comment`. A rerun with the same `--id` shows his old picks on rows that still exist.
 
 ## Anywhere else
 
