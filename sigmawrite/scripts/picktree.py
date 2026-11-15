@@ -113,7 +113,7 @@ input,select,textarea,button{font:inherit;color:inherit}
     const pk = t.picks[path] || {}, cols = Object.entries(r.c || {}).map(([k, v]) => `<span><b>${esc(k)}:</b> ${esc(v)}</span>`).join(" ");
     const opts = ['<option value="">Pick</option>'].concat(t.choices.map((ch) => `<option value="${esc(ch)}"${pk.p === ch ? " selected" : ""}>${esc(ch)}${r.rec === ch ? " (my pick)" : ""}</option>`)).join("");
     const w = parent ? Math.max(1, Math.round(100 * r.s / parent)) : 0;
-    return `<div class="tr" data-path="${esc(path)}"><details${r.k ? " data-k" : ""}><summary><span class="ts">${esc(fmt(r.s))}</span>`
+    return `<div class="tr" data-path="${esc(path)}"><details${r.k && !flat ? " data-k" : ""}><summary><span class="ts">${esc(fmt(r.s))}</span>`
       + `<span class="tn">${esc(flat ? path : r.n)}${r.rec ? ` <em class="trec">my pick: ${esc(r.rec)}</em>` : ""}</span>${cols ? `<span class="tc">${cols}</span>` : ""}${w ? `<i class="tsh" style="width:${w}%"></i>` : ""}</summary>`
       + `<div class="tk"></div></details><select class="tp" aria-label="Your pick for ${esc(r.n)}">${opts}</select></div>`;
   }
@@ -140,7 +140,7 @@ input,select,textarea,button{font:inherit;color:inherit}
   const word = (p, k) => `<input type="text" class="input tw-w" placeholder="A word on this row" aria-label="A word on ${esc(p)}" value="${esc(k.w || "")}">`;
   box.addEventListener("toggle", (e) => { const d = e.target; if (!d.open || d.dataset.done) return; d.dataset.done = 1;
     const p = d.closest(".tr").dataset.path, r = find(p), k = t.picks[p] || {};
-    d.querySelector(".tk").innerHTML = (k.p || k.w ? word(p, k) : "") + (r.k ? kids(r, p) : ""); }, true);
+    d.querySelector(".tk").innerHTML = (k.p || k.w ? word(p, k) : "") + (r.k && !t.q ? kids(r, p) : ""); }, true);
   box.addEventListener("input", (e) => { const x = e.target.closest(".tp,.tw-w"); if (!x) return; const p = x.closest(".tr").dataset.path, k = t.picks[p] = t.picks[p] || {};
     if (!x.classList.contains("tp")) { k.w = x.value.trim(); return keep(); }
     k.p = x.value; const d = x.closest(".tr").querySelector(":scope>details");
