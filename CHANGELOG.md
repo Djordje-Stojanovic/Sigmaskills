@@ -34,12 +34,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
-- `sigmavast` guides an agent through renting a GPU with `lacompute`: when to rent, a card by memory need, the spend cap, no hosts in China, the teardown proved by `[]`, and never a raw instance listing (its `onstart` field holds a key).
+- The README opens with one line per system (macOS and Linux, Windows PowerShell) that installs every Sigma skill on a machine with nothing but Claude Code, and names the second way: skills enabled on a claude.ai account load in every Claude Code session signed in with it.
+- `sigmavast` guides an agent through renting a GPU with `lacompute`. It types no card, price or cap: it reads today's offers and the job's needs. With no details and the owner there, it asks one short round (job, length, spend cap, data that leaves); for "do it overnight" or no owner, it takes written defaults and names them. It keeps the teardown proof (`[]`), never prints a raw instance listing (its `onstart` field holds a key), and points to the vast.ai docs.
 - `--preset design-pack` installs the design pair, `impeccable` and `taste-skill`, in one flag. The research behind it is in `docs/research/design-pack.md`.
 
 ### Changed
 
 - `sigmaboat` runs through `laboat`: on the machine it is typed on, `--on <machine>` elsewhere, a machine failure hands over to the next machine, a job failure is never retried. 105 lines became 52.
+- `sigmaboat` names where the boat.dev docs are (the live site and the copy the machines keep) and tells the host to pass that line to each worker agent.
 - `sigmaspeedloop` is now `sigmaclimb`, a loop for any measurable target: serving speed, a render, a kernel, an algorithm, a training run. The method (one change per pass, a locked scorer, noise first, a quality gate, keep or revert, a chart that names who found each champion) is written for any target, and the GPU and vLLM details moved to `references/example-model-serving.md`. A held-out check is now a required step: sealed inputs the agent never sees, PASS or FAIL only, at every KEEP.
 - `sigmaclimb` takes habits from the RTX 5070 training project: a hypothesis line, search before you run, the simpler change wins a tie, one category per pass, a plateau forces a search round, notes a fresh session can learn from. `sigmaspeedloop` is on the retired list, so `update` leaves an installed copy alone and names the `uninstall` command. The trigger words `sigmaspeedloop` and `speed loop` stay in the description.
 - `sigmaclimb` enforces the held-out check in code: `verdict.py promote` is the only way to a new champion and refuses without a held-out PASS for that exact change. `scripts/bench/heldout.py init` makes the sealed set; the loop sees PASS or FAIL only. A hand-edited `champion.json` makes the next verdict VOID.

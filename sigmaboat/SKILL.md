@@ -14,6 +14,7 @@ Give work the user already authorized extra machines: [boat.dev](https://boat.de
 - **Through `laboat` only.** `laboat` signs in from the keys file of the machine it runs on, on every run, and passes keys on stdin. Use it for every boat call, not the raw `boat` CLI: Git Bash cannot run `boat.exe`. `lahelp laboat` is the command list; read it once.
 - **Secrets.** Never print a key or token. `laboat checkout` and `laboat job --key NAME` pass them on stdin.
 - **Delete what you start.** At the end, and after any failure, every worker is gone. Keep only stopped bases.
+- **Docs.** Live: https://docs.boat.dev (page list: https://docs.boat.dev/llms.txt; add `.md` to a page address for plain text). The machines also keep a copy that `lasynctoolkit` refreshes: `docs/vendor/Boat_docs/` in the toolkit checkout that holds `laboat` and its guide. Read `cli-reference.md`, `pricing.md` and `limits.md` there before you guess a flag, a price or a limit. When you brief a worker agent, paste these two addresses and the `docs/vendor/Boat_docs/` path into its brief.
 
 ## Where it runs
 

@@ -1,5 +1,23 @@
 # SigmaSkills
 
+## On a new machine: one line
+
+Claude Code is all you need: no Node. The Git Bash line needs Git for Windows; the PowerShell line does not. One line copies every Sigma skill into `~/.claude/skills`. Run it again later to update. Inside Claude Code, type `!` first to run it in the session's shell.
+
+macOS, Linux, Git Bash:
+
+```bash
+d=$(mktemp -d) && curl -fsSL https://github.com/Djordje-Stojanovic/Sigmaskills/archive/refs/heads/main.tar.gz | tar -xz -C "$d" --strip-components=1 && mkdir -p ~/.claude/skills && for s in "$d"/sigma*; do [ -f "$s/SKILL.md" ] && cp -R "$s" ~/.claude/skills/; done; rm -rf "$d"
+```
+
+Windows PowerShell:
+
+```powershell
+$t = "$env:TEMP\sigmaskills-src"; Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory $t | Out-Null; curl.exe -fsSL -o "$t.tgz" https://github.com/Djordje-Stojanovic/Sigmaskills/archive/refs/heads/main.tar.gz; if ($LASTEXITCODE -eq 0) { tar -xzf "$t.tgz" -C $t --strip-components=1 }; if ($LASTEXITCODE -eq 0) { New-Item -ItemType Directory "$HOME\.claude\skills" -Force | Out-Null; Get-ChildItem $t -Directory -Filter sigma* | Where-Object { Test-Path "$($_.FullName)\SKILL.md" } | Copy-Item -Destination "$HOME\.claude\skills" -Recurse -Force }; Remove-Item $t, "$t.tgz" -Recurse -Force
+```
+
+No install at all: skills you turn on in your claude.ai account load in Claude Code when you sign in with that account. That needs Claude Code 2.1.273 or later. It does not work with an API key or on Amazon Bedrock ([how](https://code.claude.com/docs/en/skills#how-synced-skills-behave)). To add your own skills in claude.ai, go to Customize, then Skills, click +, choose Create skill, then Upload a skill, and upload one ZIP per skill folder.
+
 **High-rigor Agent Skills for every serious coding agent.**
 
 Portable [Agent Skills](https://agentskills.io/) that install once and run on **Codex**, **Claude Code**, **Cursor**, **Pi**, **OpenCode**, **Reasonix**, **Kimi Code CLI**, and any tool that reads a `SKILL.md`.
