@@ -16,14 +16,15 @@ def bands(runs, p):
     if p.get("measurer") == "pairs":
         s = max(abs(share(raw(r, "score.json")["pairs"]["champion"]) - 0.5) for r in runs)
         return {}, {}, s
-    rows = [raw(r, "score.json")["probes"] for r in runs]
+    rows = [(raw(r, "score.json") or {}).get("probes") or {} for r in runs]
     med = {k: statistics.median(x[k] for x in rows if x.get(k) is not None)
            for k in {k for x in rows for k in x} if any(x.get(k) is not None for x in rows)}
     rats = [ratios(x, med, set(p.get("lower_is_better", []))) for x in rows]
     spread = {k: max((abs(r[k] - 1) for r in rats if k in r), default=0) for k in med}
     scores = [weighted(r, p.get("weights", {})) for r in rats]
     if None in scores or not scores:
-        sys.exit("NOT LOCKED: an A/A run has no scored probe; a noise band from nothing would make every gain count")
+        bad = [r for r, s in zip(runs, scores) if s is None]
+        sys.exit(f"NOT LOCKED: {bad or runs} has no scored probe; a noise band from nothing would make every gain count")
     return med, spread, max(abs(s - 1) for s in scores)
 
 

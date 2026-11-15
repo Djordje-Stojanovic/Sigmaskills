@@ -69,7 +69,7 @@ already knows. The serving example's `prefill_new` probe reads text made fresh f
 
 `promote` makes the new champion: it needs the quality check, a confirmation when the gain is small, and a held-out
 PASS only in `required` mode (`held-out.md`). `--owner "<his words>"` promotes any scored verdict on his word
-(ARCHIVE or REJECT too); never a VOID, a CRASH or a failed quality check.
+(ARCHIVE or REJECT too); never a VOID, a CRASH, or a run whose quality check failed or has not run.
 
 ## 6. The serving example: real settings (`common.py`, `project.json`)
 

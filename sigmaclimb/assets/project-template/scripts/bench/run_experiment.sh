@@ -7,7 +7,7 @@
 #   score writes OUT/score.json, quality writes OUT/quality.json, a VOID reason goes to OUT/status.
 # Writes RUN/raw/: change, meta.json (status + seconds per stage), progress.log, the target's files, then DONE.
 set -u
-RUN=${1%/}; CHANGE=$2; MODE=${3:-}
+RUN=$(printf '%s' "${1%/}" | tr '\134' /); CHANGE=$2; MODE=${3:-}  # a Windows path with backslashes works too
 HERE=$(cd "$(dirname "$0")" && pwd)
 export CLIMB_ROOT=${CLIMB_ROOT:-$(cd "$HERE/../.." && pwd)}
 TARGET=${TARGET:-$HERE/target.sh}

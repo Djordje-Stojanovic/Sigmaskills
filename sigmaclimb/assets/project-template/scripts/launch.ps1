@@ -26,6 +26,7 @@ foreach ($f in 'project.json', 'evaluator.lock', 'state\champion.json') {
 & $box -Push -Src $Serve -Dst "/root/work/serve/$Run.sh"
 & $box "mkdir -p /root/runs/$Run"  # the stage-1 verdict on the box reads the invariants check too
 & $box -Push -Src "runs\$Run\invariants.json" -Dst "/root/runs/$Run/invariants.json"
+if ($LASTEXITCODE -ne 0) { throw 'push of invariants.json failed: the box would judge the pass VOID' }
 $mode = if ($Full -or $Record) { 'full' } else { '' }
 $env_ = "RECORD=$([int][bool]$Record) BENCHY=$([int][bool]$Benchy)"
 & $box "sed -i 's/\r`$//' /root/work/serve/$Run.sh /root/work/scripts/bench/*.sh; cd /root/work && ($env_ nohup bash scripts/bench/run_experiment.sh /root/runs/$Run /root/work/serve/$Run.sh $mode > /root/work/launch-$Run.log 2>&1 &); sleep 2; echo launched $Run $mode"

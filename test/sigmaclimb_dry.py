@@ -192,7 +192,7 @@ class Climb(unittest.TestCase):
         # a box: the run folder lives outside the project (/root/runs/<id>), with the invariants check pushed into it
         box_run = os.path.join(self.tmp, "box_runs", "0006")
         put(os.path.join(box_run, "invariants.json"), {"ok": True, "problems": []})
-        subprocess.run([BASH, "scripts/bench/run_experiment.sh", box_run.replace("\\", "/"), "change.patch"], cwd=self.proj,
+        subprocess.run([BASH, "scripts/bench/run_experiment.sh", box_run, "change.patch"], cwd=self.proj,  # backslashes on Windows
                        env=dict(env, FAKE_A="12.0"), check=True, capture_output=True)
         self.assertTrue(os.path.exists(os.path.join(box_run, "raw", "quality_ran")), "stage 1 on the box must see the invariants")
 
