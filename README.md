@@ -2,7 +2,7 @@
 
 ## On a new machine: one line
 
-Claude Code is all you need: no Node, no Git. One line copies every Sigma skill into `~/.claude/skills`. Run it again later to update. Inside Claude Code, type `!` first to run it in the session's shell.
+Claude Code is all you need: no Node. The Git Bash line needs Git for Windows; the PowerShell line does not. One line copies every Sigma skill into `~/.claude/skills`. Run it again later to update. Inside Claude Code, type `!` first to run it in the session's shell.
 
 macOS, Linux, Git Bash:
 
@@ -13,10 +13,10 @@ d=$(mktemp -d) && curl -fsSL https://github.com/Djordje-Stojanovic/Sigmaskills/a
 Windows PowerShell:
 
 ```powershell
-$t = "$env:TEMP\sigmaskills-src"; Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory $t | Out-Null; curl.exe -fsSL -o "$t.tgz" https://github.com/Djordje-Stojanovic/Sigmaskills/archive/refs/heads/main.tar.gz; tar -xzf "$t.tgz" -C $t --strip-components=1; New-Item -ItemType Directory "$HOME\.claude\skills" -Force | Out-Null; Get-ChildItem $t -Directory -Filter sigma* | Where-Object { Test-Path "$($_.FullName)\SKILL.md" } | Copy-Item -Destination "$HOME\.claude\skills" -Recurse -Force; Remove-Item $t, "$t.tgz" -Recurse -Force
+$t = "$env:TEMP\sigmaskills-src"; Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory $t | Out-Null; curl.exe -fsSL -o "$t.tgz" https://github.com/Djordje-Stojanovic/Sigmaskills/archive/refs/heads/main.tar.gz; if ($LASTEXITCODE -eq 0) { tar -xzf "$t.tgz" -C $t --strip-components=1 }; if ($LASTEXITCODE -eq 0) { New-Item -ItemType Directory "$HOME\.claude\skills" -Force | Out-Null; Get-ChildItem $t -Directory -Filter sigma* | Where-Object { Test-Path "$($_.FullName)\SKILL.md" } | Copy-Item -Destination "$HOME\.claude\skills" -Recurse -Force }; Remove-Item $t, "$t.tgz" -Recurse -Force
 ```
 
-No install at all: skills you turn on in your claude.ai account load in every Claude Code session where you sign in with that account ([how](https://code.claude.com/docs/en/skills#skills-synced-from-claudeai)). In claude.ai, open Settings, then Customize, then Skills, and upload one zip per skill folder.
+No install at all: skills you turn on in your claude.ai account load in Claude Code when you sign in with that account. That needs Claude Code 2.1.273 or later. It does not work with an API key or on Amazon Bedrock ([how](https://code.claude.com/docs/en/skills#how-synced-skills-behave)). To add your own skills in claude.ai, go to Customize, then Skills, click +, choose Create skill, then Upload a skill, and upload one ZIP per skill folder.
 
 **High-rigor Agent Skills for every serious coding agent.**
 

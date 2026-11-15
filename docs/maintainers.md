@@ -57,7 +57,7 @@ To run the skills themselves on a small fixture game, use `node scripts/eval-ski
 
 No GitHub workflow runs tests (owner 2026-11-08: the failure mails). Run `npm test` locally before every merge; `package.json` requires Node.js 22 or newer (`engines.node`). Only the Release and Registry sync workflows remain, both started by hand.
 
-The land step of a pull request ends with one command from the toolkit checkout: `python3 scripts/project_skills.py --global`. It installs `main` on the PC, the dev box and the Spark (AGENTS.md has the full path). A machine that is off catches up at the daily repo timer.
+The land step of a pull request ends with one command from the toolkit checkout: `python3 scripts/project_skills.py --global`. It installs `main` on the PC, the dev box and the Spark (AGENTS.md has the full path). If a machine is off, its line says FAIL and the other machines still update. Run the command again when it is back on.
 
 ### Adding, renaming, or removing a skill
 
