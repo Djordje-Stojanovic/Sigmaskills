@@ -319,6 +319,11 @@ test('picktree: bad tree gives one plain line; title cannot end its script; --id
     assert.equal(run('ok.json', '-o', 'ok.html').status, 0);
     assert.doesNotMatch(fs.readFileSync(path.join(dir, 'ok.html'), 'utf8'), /<\/script><b>x/);
     assert.equal(run('ok.json', '--review', dir, '--id', '../x').status, 1);
+    fs.writeFileSync(path.join(dir, 'num.json'), '{"root": 5, "choices": ["keep"], "rows": []}');
+    assert.equal(run('num.json', '-o', 'num.html').status, 1);
+    fs.writeFileSync(path.join(dir, 'same.json'), '{"choices": ["keep"], "rows": [{"n": "a", "s": 1}]}');
+    assert.equal(run('same.json', '-o', 'same.json').status, 1);
+    assert.match(fs.readFileSync(path.join(dir, 'same.json'), 'utf8'), /^\{"choices"/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

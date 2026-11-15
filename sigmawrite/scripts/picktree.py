@@ -20,13 +20,16 @@ def check(t):
     """The shape every reader expects: one plain line when it is wrong (asserts vanish under python -O)."""
     if not (isinstance(t, dict) and isinstance(t.get("rows"), list)): fail("the tree is an object with a rows list")
     if not (isinstance(t.get("choices"), list) and t["choices"] and all(isinstance(c, str) for c in t["choices"])): fail('choices: a list of words, for example ["keep", "delete"]')
+    for k in ("title", "note", "root", "unit", "rest", "fmt"):
+        if k in t and not isinstance(t[k], str): fail(f"{k}: text, if there")
+    if "total" in t and not isinstance(t["total"], (int, float)): fail("total: a number, if there")
     def rows(rs, where):
         for r in rs:
-            if not (isinstance(r, dict) and isinstance(r.get("n"), str) and isinstance(r.get("s"), (int, float)) and isinstance(r.get("k") or [], list)):
+            if not (isinstance(r, dict) and isinstance(r.get("n"), str) and r["n"].strip("/\\ ") and isinstance(r.get("s"), (int, float)) and isinstance(r.get("k") or [], list)):
                 fail(f"{where}: a row needs n (name) and s (size); k, if there, is a list")
             if r.get("rec") not in (None, *t["choices"]): fail(f"{where}/{r['n']}: rec must be one of the choices")
             rows(r.get("k") or [], where + "/" + r["n"])
-        names = [r["n"] for r in rs]
+        names = [r["n"].rstrip("/\\") for r in rs]   # "a/" and "a" make one path, so they clash too
         if len(set(names)) != len(names): fail(f"{where}: two rows share a name, so one pick would land on both")
     rows(t["rows"], "rows")
     return t
@@ -55,6 +58,7 @@ def main():
                                                                          "tree": "tree.json", "project": o.project, "state": "open"}, ensure_ascii=False))
         print("entry", o.id, "written to", o.review); return
     out = o.out or os.path.splitext(o.tree)[0] + ".html"
+    if os.path.abspath(out) == os.path.abspath(o.tree): sys.exit("picktree: the page would overwrite the tree file; give -o another name")
     put(out, page(t, title)); print("wrote", out)
 
 PAGE = r"""<!doctype html>
