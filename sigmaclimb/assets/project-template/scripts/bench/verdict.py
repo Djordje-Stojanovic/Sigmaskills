@@ -1,12 +1,17 @@
 """verdict.py - the only thing that decides KEEP. Reads raw files, never the worker's summary.
 
-  python scripts/bench/verdict.py runs/<n>      -> runs/<n>/verdict.json + one summary line
+  python scripts/bench/verdict.py runs/<n>                    -> runs/<n>/verdict.json + one summary line
+  python scripts/bench/verdict.py promote runs/<n> [runs/<m>...] -> the only way to a new champion
 
 Champion numbers = median over the runs listed in state/champion.json. Thresholds come from evaluator.lock.
+promote needs KEEP on every run, and a held-out PASS (heldout.py) for this exact change. Else it prints REFUSED and why.
+A champion that neither promote nor the A/A baseline made turns every later verdict VOID.
 """
 import hashlib, json, math, os, statistics, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from heldout import fingerprint  # noqa: E402
 # Score weights live in project.json ("weights"). Components a run lacks are dropped and the rest renormalized.
 # Defaults = the la125 owner mix (v7): 1-stream decode and agent turns first, then 2 agents, prefill, 3 agents.
 def _project():
@@ -116,6 +121,60 @@ def lock_ok(lock):
     return True, None
 
 
+def heldout_problem(run, runs, score=None):
+    """None when a held-out PASS exists for this exact change; else one line saying why not.
+    score=None re-checks a standing champion (same run and change; settings may have moved since)."""
+    sealed = PROJECT.get("sealed_dir")
+    if not sealed:
+        return "no sealed set: run heldout.py init, then set sealed_dir in project.json"
+    res = os.path.join(sealed, "results")
+    f = os.path.join(res, os.path.basename(run) + ".json")
+    if not os.path.isdir(res) or os.access(res, os.W_OK):
+        return f"{res} is missing or this user can write it, so a PASS there proves nothing"
+    if not os.path.exists(f):
+        return f"no held-out result for {run}"
+    if os.access(f, os.W_OK):
+        return f"this user can write {f}"
+    r, fp = json.load(open(f)), fingerprint(ROOT, run)
+    for k in ("run", "change") + (("config",) if score is not None else ()):
+        if r.get(k) != fp[k]:
+            return f"stale held-out result: {k} differs"
+    if any(fingerprint(ROOT, x)["change"] != fp["change"] for x in runs):
+        return "a confirmation run is another change"
+    if score is not None and r.get("visible_score") != round(score, 6):
+        return "stale held-out result: score differs"
+    sealed_copy, mine = os.path.join(sealed, "heldout.py"), os.path.join(os.path.dirname(os.path.abspath(__file__)), "heldout.py")
+    if not os.path.exists(sealed_copy) or open(sealed_copy, "rb").read() != open(mine, "rb").read():
+        return "the sealed heldout.py differs from scripts/bench/heldout.py"
+    return None if r.get("result") == "PASS" else f"held-out {r.get('result')} for {run}"
+
+
+def champion_problem(lock):
+    """The champion is the A/A baseline, or a change that promote let through. A hand-edited champion.json is neither."""
+    c = json.load(open(os.path.join(ROOT, "state", "champion.json"), encoding="utf-8"))
+    if set(c["runs"]) <= set(lock["thresholds"].get("baseline_runs", [])):
+        return None
+    if not c.get("heldout_run"):
+        return "champion.json was not written by promote"
+    return heldout_problem(c["heldout_run"], c["runs"])
+
+
+def promote(run, *confirm):
+    out = decide(run)
+    why = None if out["verdict"] == "KEEP" else f"{run} is {out['verdict']}"
+    for c in confirm:
+        why = why or (None if decide(c)["verdict"] == "KEEP" else f"confirmation run {c} is not KEEP")
+    why = why or heldout_problem(run, [run, *confirm], out["score"])
+    if why:
+        print(f"REFUSED: {why}")
+        return 1
+    path = os.path.join(ROOT, "state", "champion.json")
+    json.dump({"runs": [run, *confirm], "heldout_run": run}, open(path + ".tmp", "w"))
+    os.replace(path + ".tmp", path)
+    print(f"PROMOTED: champion = {[run, *confirm]}, held-out PASS")
+    return 0
+
+
 DRIFT_KEYS = ("tf_top1", "tf_dlp", "dec_dlp", "dec_prefix")
 
 
@@ -169,6 +228,8 @@ def decide(run):
     ok, bad = lock_ok(lock)
     if not ok:
         out.update(verdict="VOID", why=f"evaluator file changed: {bad}")
+    elif (bad := champion_problem(lock)):
+        out.update(verdict="VOID", why=f"champion has no held-out PASS: {bad}")
     elif not inv["ok"]:
         out.update(verdict="VOID", why="invariant broken: " + "; ".join(inv["problems"]))
     elif out["status"] == "MEMFLOOR":
@@ -202,4 +263,7 @@ def decide(run):
 
 
 if __name__ == "__main__":
-    decide(sys.argv[1].rstrip("/\\"))
+    a = [x.rstrip("/\\") for x in sys.argv[1:]]
+    if a[:1] == ["promote"] and len(a) > 1:
+        sys.exit(promote(*a[1:]))
+    decide(a[0])

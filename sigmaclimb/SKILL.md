@@ -40,22 +40,27 @@ For a code change (a kernel, a solver, a render) it can also special-case them: 
 detect the benchmark. A fixed gate cannot catch that. A held-out check can:
 
 - **Sealed inputs.** A second input set: new seeds, new shapes, new scenes, new instances, new prompts. The owner (or
-  a script the loop cannot read) writes it and the runner that uses it. It lives outside the project folder, on another
-  machine or under another user. The agent never opens it. If the target has no such place, the owner runs the check
-  by hand at each KEEP.
+  a script the loop cannot read) writes it and the runner that uses it. `scripts/bench/heldout.py init` makes the
+  folder: inputs mode 0700 under a second user (or on another machine), a results folder the loop can read but not
+  write. The agent never opens the inputs. If the target has no such place, the owner runs the check by hand at each KEEP.
 - **Pass or fail only.** The runner prints PASS or FAIL and nothing else. A number is a leak: each number tells the
   agent where to push. The loop writes the answer, word for word, in the results description.
-- **Same gate, same score.** On the sealed set, the gate must pass, and the score ratio must be at least half of the
-  ratio the KEEP showed (median of as many runs as the confirmation used), with the same sign. (Default. The owner
-  may set another ratio.)
+- **Same gate, same score.** On the sealed set, the gate must pass, and the score gain must be at least half of the
+  gain of the KEEP run (`runs/<n>/verdict.json`), with the same sign. The owner sets the share at `init` (default 0.5).
 - **When.** At every KEEP, after its confirmation run, before promotion. Until the PASS the champion stays, and the
   loop tests other ideas on it. One look per KEEP. No look on a REJECT.
+- **The code enforces it.** `python scripts/bench/verdict.py promote runs/<n> runs/<confirm>` is the only writer of
+  `state/champion.json`. It refuses (one line, with the reason) unless every run is KEEP and a PASS exists for that
+  exact change: same run, same change file (`runs/<n>/serve.sh`), same `project.json` and `evaluator.lock`, same score,
+  in a results folder the loop's user cannot write, written by the locked `heldout.py`. A champion that did not come
+  through `promote` (and is not the A/A baseline) makes every later verdict VOID.
 - **Spent means replaced.** After about 10 looks, or if the agent saw the set (a log, an error message), the owner
   builds a new one and the loop says so in `insights.md`.
 - **Last look.** The owner runs the final check on the final champion, on his own setup. That is the real truth.
 
-Agree what it holds in phase 4, before the lock. A project with no held-out check is not ready for pass 1. Enforcing
-it in code (a verdict that refuses promotion without the runner's PASS) is not built yet.
+Agree what it holds in phase 4, before the lock. A project with no held-out check is not ready for pass 1: `promote`
+refuses without one. The gate holds only when the loop's user and the sealing user differ, or the results folder is a
+read-only mount; root can write everywhere, so a loop run as root gets no gate.
 
 ## Works for any target
 
@@ -121,7 +126,7 @@ owner's real use, and every result measured before the final scorer was lost.
 1. Pop the `pending` idea with the highest `p=%`. Check what it changes and what the default is today.
 2. `candidate/` = the champion plus ONE change. Run it; keep a background waiter alive; never poll.
 3. The verdict script decides. `record.py` writes the results row from the raw files.
-4. A KEEP needs a confirmation run, then the held-out check. Promote only when both pass; keep a revert point.
+4. A KEEP needs a confirmation run, then the held-out check. Promote with `verdict.py promote`, which checks both; keep a revert point.
 5. A failure that can recur goes to `ruled_out.tsv` with a reopen condition. One line to `insights.md`.
 6. `check_state.py`, `plot_progress.py`, then rewrite `PROGRESS.md` as one table: champion against the owner's current
    setup.
