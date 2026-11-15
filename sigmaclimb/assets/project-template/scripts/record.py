@@ -43,7 +43,7 @@ def main():
     row = {
         "pass": a.__dict__["pass"], "utc": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%MZ"),
         "parent": a.parent, "idea_id": a.idea, "category": a.category, "work_type": a.work,
-        "image": os.environ.get("SPEEDLOOP_IMAGE_LABEL", "image"), "verdict": verdict, "score": fmt(v.get("score"), 4),
+        "image": os.environ.get("CLIMB_IMAGE_LABEL") or os.environ.get("SPEEDLOOP_IMAGE_LABEL", "image"), "verdict": verdict, "score": fmt(v.get("score"), 4),
         "decode_tps": fmt(x.get("decode_greedy")), "decode_long_tps": fmt(x.get("decode_sampled")),
         "prefill_tps_64k": fmt(x.get("prefill_64k"), 1), "ttft_128k_s": fmt(x.get("ttft_128k")),
         "replay_wall_s": fmt(x.get("replay_wall_s"), 1), "replay_ttft_p50_s": fmt(x.get("replay_ttft_p50")),

@@ -428,7 +428,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaloop -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmataste -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmahuman -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmatour -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaspeedloop -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaclimb -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmamusk -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaboat -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmavast -g
@@ -460,7 +460,7 @@ $skill-installer install sigmaloop from https://github.com/Djordje-Stojanovic/Si
 $skill-installer install sigmataste from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmahuman from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmatour from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmaspeedloop from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmaclimb from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmamusk from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaboat from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmavast from https://github.com/Djordje-Stojanovic/Sigmaskills
@@ -489,7 +489,7 @@ cp -R Sigmaskills/sigmaloop ~/.agents/skills/sigmaloop
 cp -R Sigmaskills/sigmataste ~/.agents/skills/sigmataste
 cp -R Sigmaskills/sigmahuman ~/.agents/skills/sigmahuman
 cp -R Sigmaskills/sigmatour ~/.agents/skills/sigmatour
-cp -R Sigmaskills/sigmaspeedloop ~/.agents/skills/sigmaspeedloop
+cp -R Sigmaskills/sigmaclimb ~/.agents/skills/sigmaclimb
 cp -R Sigmaskills/sigmamusk ~/.agents/skills/sigmamusk
 cp -R Sigmaskills/sigmaboat ~/.agents/skills/sigmaboat
 cp -R Sigmaskills/sigmavast ~/.agents/skills/sigmavast
@@ -514,7 +514,7 @@ Copy-Item -Recurse Sigmaskills\sigmaloop     "$HOME\.agents\skills\sigmaloop"
 Copy-Item -Recurse Sigmaskills\sigmataste    "$HOME\.agents\skills\sigmataste"
 Copy-Item -Recurse Sigmaskills\sigmahuman    "$HOME\.agents\skills\sigmahuman"
 Copy-Item -Recurse Sigmaskills\sigmatour     "$HOME\.agents\skills\sigmatour"
-Copy-Item -Recurse Sigmaskills\sigmaspeedloop "$HOME\.agents\skills\sigmaspeedloop"
+Copy-Item -Recurse Sigmaskills\sigmaclimb "$HOME\.agents\skills\sigmaclimb"
 Copy-Item -Recurse Sigmaskills\sigmamusk "$HOME\.agents\skills\sigmamusk"
 Copy-Item -Recurse Sigmaskills\sigmaboat "$HOME\.agents\skills\sigmaboat"
 Copy-Item -Recurse Sigmaskills\sigmavast "$HOME\.agents\skills\sigmavast"

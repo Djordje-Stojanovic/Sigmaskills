@@ -10,7 +10,7 @@
 | `scripts/launch.ps1` | invariants + push serve file + start `run_experiment.sh` (`-Record`, `-NoBenchy`) | no |
 | `scripts/wait.ps1` | waits for DONE with retries, pulls `runs/<id>/raw` | no |
 | `scripts/status.py` | the one status line the host's stop check reads | no |
-| `scripts/record.py` | writes a results.tsv row from raw files (`SPEEDLOOP_IMAGE_LABEL` env) | no |
+| `scripts/record.py` | writes a results.tsv row from raw files (`CLIMB_IMAGE_LABEL` env) | no |
 | `scripts/bench/common.py` | streaming client, `stop_after`, salts, long docs (`BENCH_MODEL` env) | defaults |
 | `scripts/bench/gate.py` | fidelity + needles (`--record` writes references) | prompts, needle sizes |
 | `scripts/bench/speed.py` | speed probes (v6 replay, c2, c3, chat) | efforts, tokens, contexts; non-LLM: rewrite |

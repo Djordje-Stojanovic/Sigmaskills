@@ -372,9 +372,9 @@ function sigmatour({ files, result }) {
 }
 
 
-// sigmaspeedloop scaffolds one project under Projects/<name>/ (signed spec, run file, queue, results header, weights),
+// sigmaclimb scaffolds one project under Projects/<name>/ (signed spec, run file, queue, results header, weights),
 // rents nothing in an offline run, and changes no other file.
-function sigmaspeedloop({ files, result }) {
+function sigmaclimb({ files, result }) {
   const problems = [];
   for (const [name, text] of Object.entries(files)) {
     if (name.startsWith('Projects/')) continue;
@@ -386,6 +386,7 @@ function sigmaspeedloop({ files, result }) {
   const dir = goalName.slice(0, -'GOAL.md'.length);
   const goal = files[goalName];
   if (!/Stop line:/.test(goal)) problems.push(`${goalName}: no stop line`);
+  if (!/held-out/i.test(goal)) problems.push(`${goalName}: no held-out check`);
   const left = goal.match(/<[A-Za-z][^<>:\n]{0,80}>/g); // any template placeholder; links (<https:...>) have a colon
   if (left) problems.push(`${goalName}: template placeholders left: ${[...new Set(left)].join(', ')}`);
   const spec = files[`${dir}SPEC_DRAFT.md`];
@@ -451,7 +452,7 @@ function sigmadebug({ result }) {
 }
 
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmatour, sigmaspeedloop, sigmamusk, sigmaboat, sigmadebug, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmaresearch, sigmadeeplook, sigmafreedom };
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmatour, sigmaclimb, sigmamusk, sigmaboat, sigmadebug, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];
