@@ -205,7 +205,8 @@ replay) came back at +7.9 % and +5 % on repeat. Judge borderline cases on the 2-
 
 **7.3 Keep floor 5 %, single-probe rule 10 %.** The owner set the floor to 5 % (v5 noise had pushed it to
 6.1 %, which hid real small wins). Single-probe rule: one probe >= +10 % while every other probe stays >= -5 %
-is a KEEP even if the weighted score dilutes it. Both live in `evaluator.lock`, not in code.
+is a KEEP even if the weighted score dilutes it. Now: the floor is `min_gain` in `project.json`, and a single-probe
+win is an ARCHIVE that the owner promotes with his word.
 
 **7.4 Bundles of small changes lost.** Five lossless micro-wins stacked in one pass gave replay -11 %, then -9 %
 without one piece. Leave-one-out found nothing clean. Rule: stack only two changes that touch different files,
@@ -219,8 +220,8 @@ another (block verification and attn-quant fusion: agent replay +11 %, 3 streams
 agent-turn latency (warm TTFT). Weights v7: replay .30, decode .30, 2 agents .15, prefill .15, 3 agents .10.
 Ask for this order in Phase 1 and encode it in `project.json`.
 
-**7.7 Queue by success probability, not FIFO.** Put `p=NN%` in the notes of every idea and keep the file sorted
-by it (owner ruling 2026-10-25). Re-sort after every pass. Down-rank with a reason when evidence arrives
+**7.7 Queue by share x odds, not FIFO.** Put `p=NN%` in the notes of every idea, its profile part and that part's
+share in their columns, and keep the file sorted by share x p. Re-sort after every pass. Down-rank with a reason when evidence arrives
 (a closed-source code path, a CUDA graph already used, a microbench at 90 % of the floor).
 
 **7.8 Owner rulings change the rules mid-run.** Log each with date and the runs it re-judged. Examples:
@@ -276,17 +277,34 @@ calls; the regular-lane image rejected the checkpoint's kernel layout. Overlays 
 
 ## 10. Process
 
-**10.1 Sub-agents.** Ask the owner which models and effort levels are allowed (the first project allowed only
-mid-size models at medium or high effort, and a small model for recon). Use them for research rounds, recon of
-flags, building an overlay with one model and a second model as reviewer. The main session decides and records. See `loop.md`.
+**10.1 One agent runs the loop; it uses no sub-agents.** A summary from another agent comes back unchecked and costs
+tokens nobody asked for. The loop agent does its own research, recon and builds.
 
-**10.2 Outside research models beat in-house guessing for kernels.** Paste self-contained prompts (system facts,
-profile, rules, answer format) into 2-3 outside models; keep only ideas with a concrete code path
-(`docs/16`, `docs/17`). Down-rank anything that is closed source or measured at T=0 on another model.
+**10.2 Settings first starves the code ideas.** A loop that runs cheap settings and repeat runs first, and drops
+low-odds ideas fast, never reaches a structural change. Effort estimates for code ideas ran far too high: built,
+one took a small part of its estimate, with a dry test before any scored run. Rule: at least every third pass is
+a code or design change; read the source and build the first hour before you believe "days".
 
 **10.3 Do not end a turn without a live waiter**, and do not poll a log. Use a background `wait.ps1`.
 
-**10.4 Update `PROGRESS.md` as one table:** champion vs the owner's home setup. The owner reads that first.
+**10.4 Update `PROGRESS.md` as one table:** champion vs the start and the owner's home setup. The owner reads that
+first, in plain words (`plain-words.md`), and only at a KEEP and at the end.
+
+**10.5 A cold start is noise, not rigour.** Restarting fresh with cleared caches for every run made the first
+minutes slower than the rest, and that drift was larger than many gains. Rule: one fixed warm-up for both sides;
+ABAB on one live target when the change is a live switch; cold and warm as two probes when both matter.
+
+**10.6 A probe that repeats its input cannot see new input.** A prompt-reading probe that read the same document
+in every run missed that new text read much slower. Rule: one probe per score uses new input each run.
+
+**10.7 The quality check ate the pass.** A full quality check on every pass, also on slower ideas, took more time
+than the measurement and found nothing on the passes it ran. Rule: measure first, check quality only on a stage-1
+winner, and keep the check within a quarter of a pass.
+
+**10.8 A slow road to the champion stalls the loop.** Confirmation, a fresh start and a held-out check after every
+KEEP took longer than several passes, and while promotion waited, every new idea was compared with an old champion.
+Rule: the champion moves at each confirmed KEEP; a confirmation only when the gain is small; every verdict shows
+the gain against the champion before and against the start.
 
 ## 11. Late lessons (2026-10-26 to 10-29)
 
@@ -296,7 +314,7 @@ number of tokens (`max_tokens = min_tokens`, `ignore_eos`) and score warm-turn f
 (evaluator v8). Check `completion_tokens` per turn before trusting any wall-time gain.
 
 **11.2 The box keeps its own copy of the evaluator.** After any change to `scripts/bench/*`, push the files to the
-box (`/root/work/bench/`) and compare sha256 before the run reaches its probes.
+box (`/root/work/scripts/bench/`; `launch.ps1` pushes them) and compare sha256 before the run reaches its probes.
 
 **11.3 Profile the slow path you have never profiled.** The first prefill profile (after 80 passes) found a 397-token
 tail step costing 10% of a 16k prefill, caused by where the prefix-cache checkpoint sits. A one-flag change
@@ -319,7 +337,9 @@ evaluator inside the container, prove each change is active in-process, keep a r
 
 **12.1 The first project had no held-out check.** Every prompt, probe and threshold sat in `scripts/bench/`, which
 the agent could read. About 110 passes ran against the same inputs. The hash lock stopped edits, not tuning to the
-inputs. Rule: a sealed second input set, PASS or FAIL only, at every KEEP (see `SKILL.md`).
+inputs. A later project then made a sealed held-out check required: it answered FAIL with no reason, on every
+KEEP, also for a change that could not alter any output, and nothing could be promoted. Rule now: off by default,
+the answer names its stage, a self-test on the champion first, the owner's word promotes (`held-out.md`).
 
 **12.2 What `TrainRTX5070` (3 rounds, one RTX 5070) did better; `SKILL.md` carries the habits:**
 - The training data never touches the validation shards (the last 2 shards are never read for training). The scorer's
@@ -334,4 +354,4 @@ inputs. Rule: a sealed second input set, PASS or FAIL only, at every KEEP (see `
 **12.3 The idea queue.** The 5070 project ran a strict first-in-first-out queue and let an idea go only when a
 results row ruled it out. Its oldest rows waited on things that were not there (FP8 headroom, a GDN kernel), so
 each ~55 minute run went to the oldest row. SigmaClimb sorts by `p=NN%` and kills an idea the moment evidence says so.
-That is quicker, and it is why this method drops low-odds ideas fast.
+That is quicker; 10.2 adds the guard that keeps bold ideas in the queue.

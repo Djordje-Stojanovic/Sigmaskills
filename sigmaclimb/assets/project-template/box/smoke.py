@@ -1,6 +1,6 @@
-"""smoke.py - 1-minute check that the server supports what the bench needs. Run from /root/work/bench."""
+"""smoke.py - 1-minute check that the server supports what the bench needs. Run from /root/work/scripts/bench."""
 import json, sys, time
-sys.path.insert(0, "/root/work/bench")
+sys.path.insert(0, "/root/work/scripts/bench")
 from common import chat_stream, completion_logprobs, SESSION, BASE, MODEL
 from gate import TOOLS, prompt_lp, chat_logprobs
 

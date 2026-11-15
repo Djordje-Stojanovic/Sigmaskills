@@ -1,270 +1,227 @@
-"""verdict.py - the only thing that decides KEEP. Reads raw files, never the worker's summary.
+"""verdict.py - the only thing that decides. It reads raw files and project.json, never the agent's summary.
 
-  python scripts/bench/verdict.py runs/<n>                    -> runs/<n>/verdict.json + one summary line
-  python scripts/bench/verdict.py promote runs/<n> [runs/<m>...] -> the only way to a new champion
+  python scripts/bench/verdict.py runs/<n>                                   -> runs/<n>/verdict.json + one line
+  python scripts/bench/verdict.py promote runs/<n> [runs/<m>] [--owner "his words"]  -> the only writer of state/champion.json
 
-Champion numbers = median over the runs listed in state/champion.json. Thresholds come from evaluator.lock.
-promote needs KEEP on every run, and a held-out PASS (heldout.py) for this exact change. Else it prints REFUSED and why.
-A champion that neither promote nor the A/A baseline made turns every later verdict VOID.
+A run holds raw/score.json, raw/quality.json ({"ok": bool, "fails": [...]}, written by stage 2 only),
+raw/meta.json ({"status": "OK", "stage_s": {...}}) and raw/change (a copy of the change).
+score.json: {"probes": {name: value}} when project.json "measurer" is "script";
+            {"pairs": {"champion": {"won", "lost", "tied"}, "start": {...}}} when it is "pairs" (blind pairs, judged).
+Every number comes from project.json and evaluator.lock. This file holds no threshold of its own.
+
+Verdicts: VOID (scorer edited, invariant broken), CRASH (the run failed), REJECT, ARCHIVE (a trade: the owner
+rules), STAGE1-WIN (the score wins, the quality check has not run yet: never a KEEP), KEEP.
 """
-import hashlib, json, math, os, statistics, sys
+import datetime, hashlib, json, math, os, statistics, sys, time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from heldout import fingerprint  # noqa: E402
-# Score weights live in project.json ("weights"). Components a run lacks are dropped and the rest renormalized.
-# Defaults = the la125 owner mix (v7): 1-stream decode and agent turns first, then 2 agents, prefill, 3 agents.
-def _project():
-    p = os.path.join(ROOT, "project.json")
-    return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {}
+ROOT = os.environ.get("CLIMB_ROOT") or os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+CHAMPION = os.path.join(ROOT, "state", "champion.json")
 
 
-PROJECT = _project()
-WEIGHTS = PROJECT.get("weights") or {"short": 0.30, "warm": 0.20, "miss": 0.10, "long": 0.15, "prefill": 0.10,
-                                     "c2": 0.08, "replay": 0.04, "c3": 0.03}  # v8.2 default
-# project.json also sets the keep floor and the single-probe rule. If it is silent, the A/A bands decide the floor.
-KEEP_FLOOR = PROJECT.get("keep_floor")
-SINGLE_WIN = PROJECT.get("single_probe_win", 0.10)
-SINGLE_OTHER_MIN = PROJECT.get("single_probe_others_min", 0.95)
+def jload(path, default=None):
+    return json.load(open(path, encoding="utf-8")) if os.path.exists(path) else default
 
 
-def load(run, name):
-    p = os.path.join(ROOT, run, "raw", name)
-    return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else None
+def raw(run, name):
+    return jload(os.path.join(ROOT, run, "raw", name))
 
 
-def extract(run):
-    """Raw numbers of one run. Higher is better for every component (replay is inverted)."""
-    s, g, m = load(run, "speed.json"), load(run, "gate.json"), load(run, "meta.json") or {}
-    te, tt = load(run, "tooleval.json"), load(run, "tooleval_time.json")
-    if g is not None and te:  # ToolEvalBench TC-01..TC-25 points ride along with the gate
-        g = dict(g, tooleval_points=te["scores"]["total_points"], tooleval_max=te["scores"]["max_points"],
-                 tooleval_wall_s=(tt or {}).get("wall_s"))
-    out = {"meta": m, "gate": g, "bw": [x["copy_gbps"] for x in (load(run, "bw_before.json"), load(run, "bw_after.json")) if x]}
-    if s:  # evaluator v2 (real settings): decode = short decode (low/medium) and long xhigh thinking
-        out.update(
-            replay_wall_s=s["replay"]["wall_s"], decode_greedy=s["short"]["decode_tps_geo"],
-            decode_sampled=s["long"]["decode_tps"], prefill_geo=s["prefill"]["prefill_tps_geo"],
-            c3_tps=s["parallel"]["aggregate_tps"], c2_tps=(s.get("parallel2") or {}).get("aggregate_tps"),
-            prefill_64k=s["prefill"]["64k"]["prefill_tps"],
-            ttft_128k=s["prefill"]["128k"]["ttft_s"], replay_ttft_p50=s["replay"]["ttft_p50_s"],
-            mtp_accept=s.get("mtp_accept_decode_probe"), replay_version=s["replay"].get("version"),
-            warm_miss=None if s["replay"].get("warm_hit_rate") is None else 1 - s["replay"]["warm_hit_rate"],
-            warm_ttft_sum=sum(x["ttft_s"] for rs in s["replay"]["turns"] for x in rs[1:] if x.get("ttft_s")) or None)
-    return out
+def sha(path):
+    """Line endings do not count: a Windows checkout and the box hold the same file."""
+    return hashlib.sha256(open(path, "rb").read().replace(b"\r\n", b"\n")).hexdigest() if os.path.exists(path) else None
 
 
-MISS_FLOOR = 0.001  # a 100 % warm hit rate scores as a 0.1 % miss, so the miss ratio stays finite
+def change_hash(run):
+    return sha(os.path.join(ROOT, run, "raw", "change"))
 
 
-def ratios(cand, champ):
-    """candidate / champion per score component (>1 = candidate faster)."""
-    return {
-        # replay wall time compares only between runs of the same replay version (v8 = fixed-length turns)
-        **({"replay": champ["replay_wall_s"] / cand["replay_wall_s"]}
-           if cand.get("replay_version") == champ.get("replay_version") else {}),
-        **({"warm": champ["warm_ttft_sum"] / cand["warm_ttft_sum"]} if cand.get("warm_ttft_sum") and champ.get("warm_ttft_sum") else {}),
-        "short": cand["decode_greedy"] / champ["decode_greedy"],
-        "long": cand["decode_sampled"] / champ["decode_sampled"],
-        **({"miss": max(champ["warm_miss"], MISS_FLOOR) / max(cand["warm_miss"], MISS_FLOOR)}
-           if cand.get("warm_miss") is not None and champ.get("warm_miss") is not None else {}),
-        "prefill": cand["prefill_geo"] / champ["prefill_geo"],
-        "c3": cand["c3_tps"] / champ["c3_tps"],
-        **({"c2": cand["c2_tps"] / champ["c2_tps"]} if cand.get("c2_tps") and champ.get("c2_tps") else {}),
-    }
+def project():
+    return jload(os.path.join(ROOT, "project.json"), {})
 
 
-def single_probe_win(cand, champ, t):
-    """Owner rule 2026-10-24: one probe >= +10% while every other probe stays >= -5% is a KEEP,
-    even when the weighted score dilutes it (e.g. long thinking +14%, rest flat)."""
-    win, other = t.get("single_win", SINGLE_WIN), t.get("single_other_min", SINGLE_OTHER_MIN)
-    p = {"short": cand["decode_greedy"] / champ["decode_greedy"], "long": cand["decode_sampled"] / champ["decode_sampled"],
-         "prefill": cand["prefill_geo"] / champ["prefill_geo"], "c3": cand["c3_tps"] / champ["c3_tps"]}
-    if cand.get("warm_miss") is not None and champ.get("warm_miss") is not None:
-        p["miss"] = max(champ["warm_miss"], MISS_FLOOR) / max(cand["warm_miss"], MISS_FLOOR)
-    if cand.get("warm_ttft_sum") and champ.get("warm_ttft_sum"):
-        p["warm"] = champ["warm_ttft_sum"] / cand["warm_ttft_sum"]
-    if cand.get("replay_version") == champ.get("replay_version"):
-        p["replay"] = champ["replay_wall_s"] / cand["replay_wall_s"]
-    if cand.get("c2_tps") and champ.get("c2_tps"):
-        p["c2"] = cand["c2_tps"] / champ["c2_tps"]
-    best = max(p, key=p.get)
-    if p[best] >= 1 + win and all(v >= other for k, v in p.items() if k != best):
-        return {best: round(p[best], 4)}
+def lock_problem(lock):
+    if lock is None:
+        return "no evaluator.lock yet: run aa.py on the A/A runs first"
+    bench = os.path.join(ROOT, "scripts", "bench")
+    for rel, digest in lock["files"].items():
+        if sha(os.path.join(bench, rel)) != digest:
+            return f"scorer file changed: {rel}"
     return None
 
 
-def score(r):
-    w = {k: WEIGHTS[k] for k in WEIGHTS if k in r}
-    tot = sum(w.values())
-    return math.exp(sum(w[k] / tot * math.log(r[k]) for k in w))
-
-
-def champion():
-    runs = json.load(open(os.path.join(ROOT, "state", "champion.json"), encoding="utf-8"))["runs"]
-    rows = [extract(r) for r in runs]
-    keys = ("replay_wall_s", "decode_greedy", "decode_sampled", "prefill_geo", "c3_tps", "c2_tps", "warm_ttft_sum", "warm_miss")
-    out = {"replay_version": max((x.get("replay_version") or 0) for x in rows)}
-    for k in keys:
-        same = [x for x in rows if k != "replay_wall_s" or (x.get("replay_version") or 0) == out["replay_version"]]
-        vals = [x[k] for x in same if x.get(k) is not None]
-        out[k] = statistics.median(vals) if vals else None
-    return out, runs
-
-
-def lock_ok(lock):
-    bench = os.path.join(ROOT, "scripts", "bench")
-    for rel, digest in lock["files"].items():
-        p = os.path.join(bench, rel)
-        if not os.path.exists(p) or hashlib.sha256(open(p, "rb").read()).hexdigest() != digest:
-            return False, rel
-    return True, None
-
-
-def heldout_problem(run, runs, score=None):
-    """None when a held-out PASS exists for this exact change; else one line saying why not.
-    score=None re-checks a standing champion (same run and change; settings may have moved since)."""
-    sealed = PROJECT.get("sealed_dir")
-    if not sealed:
-        return "no sealed set: run heldout.py init, then set sealed_dir in project.json"
-    res = os.path.join(sealed, "results")
-    f = os.path.join(res, os.path.basename(run) + ".json")
-    me = getattr(os, "getuid", lambda: -1)()  # Windows has no uid: only the write bit decides there
-    if not os.path.isdir(res) or os.access(res, os.W_OK) or os.stat(res).st_uid == me:
-        return f"{res} is missing, or this user owns or can write it, so a PASS there proves nothing"
-    if not os.path.exists(f):
-        return f"no held-out result for {run}"
-    if os.access(f, os.W_OK):
-        return f"this user can write {f}"
-    r, fp = json.load(open(f)), fingerprint(ROOT, run)
-    for k in ("run", "change") + (("config",) if score is not None else ()):
-        if r.get(k) != fp[k]:
-            return f"stale held-out result: {k} differs"
-    if any(fingerprint(ROOT, x)["change"] != fp["change"] for x in runs):
-        return "a confirmation run is another change"
-    if score is not None and r.get("visible_score") != round(score, 6):
-        return "stale held-out result: score differs"
-    sealed_copy, mine = os.path.join(sealed, "heldout.py"), os.path.join(os.path.dirname(os.path.abspath(__file__)), "heldout.py")
-    if not os.path.exists(sealed_copy) or open(sealed_copy, "rb").read() != open(mine, "rb").read():
-        return "the sealed heldout.py differs from scripts/bench/heldout.py"
-    return None if r.get("result") == "PASS" else f"held-out {r.get('result')} for {run}"
-
-
-def champion_problem(lock):
-    """The champion is the A/A baseline, or a change that promote let through. A hand-edited champion.json is neither."""
-    c = json.load(open(os.path.join(ROOT, "state", "champion.json"), encoding="utf-8"))
-    if set(c["runs"]) <= set(lock["thresholds"].get("baseline_runs", [])):
-        return None
-    if not c.get("heldout_run"):
-        return "champion.json was not written by promote"
-    return heldout_problem(c["heldout_run"], c["runs"])
-
-
-def promote(run, *confirm):
-    out = decide(run)
-    why = None if out["verdict"] == "KEEP" else f"{run} is {out['verdict']}"
-    for c in confirm:
-        why = why or (None if decide(c)["verdict"] == "KEEP" else f"confirmation run {c} is not KEEP")
-    why = why or heldout_problem(run, [run, *confirm], out["score"])
-    if why:
-        print(f"REFUSED: {why}")
-        return 1
-    path = os.path.join(ROOT, "state", "champion.json")
-    json.dump({"runs": [run, *confirm], "heldout_run": run}, open(path + ".tmp", "w"))
-    os.replace(path + ".tmp", path)
-    print(f"PROMOTED: champion = {[run, *confirm]}, held-out PASS")
-    return 0
-
-
-DRIFT_KEYS = ("tf_top1", "tf_dlp", "dec_dlp", "dec_prefix")
-
-
-def gate_ok(g, t):
-    """Owner decision 2026-10-23: numerics may drift (e.g. mbt 4096 picks other kernels) if quality is not
-    worse. A drift-only failure passes when ToolEvalBench >= the champion's lowest A/A score (no slack) and
-    needles, empty and looping checks pass. Any other failure stays final."""
-    fails = _gate_fails(g, t)
-    drift = [f for f in fails if f.split(" ")[0] in DRIFT_KEYS]
-    other = [f for f in fails if f not in drift]
-    if drift and not other and g.get("tooleval_points", -1) >= t.get("tooleval_min", 10**9):
-        return True, [f"drift accepted (tools {g.get('tooleval_points')} >= {t.get('tooleval_min')}): " + "; ".join(drift)]
-    return not fails, fails
-
-
-def _gate_fails(g, t):
-    fails = []
-    if g is None:
-        return ["no gate.json"]
-    if g["tf_top1"] < t["tf_top1_min"] - 0.002:
-        fails.append(f"tf_top1 {g['tf_top1']:.4f} < {t['tf_top1_min']:.4f}")
-    if g["tf_dlp"] > max(1.5 * t["tf_dlp_max"], t["tf_dlp_max"] + 0.01):
-        fails.append(f"tf_dlp {g['tf_dlp']:.4f} > band {t['tf_dlp_max']:.4f}")
-    if g["dec_dlp"] > max(1.5 * t["dec_dlp_max"], t["dec_dlp_max"] + 0.01):
-        fails.append(f"dec_dlp {g['dec_dlp']:.4f} > band {t['dec_dlp_max']:.4f}")
-    if g["dec_prefix"] < t["dec_prefix_min"] - 0.15:
-        fails.append(f"dec_prefix {g['dec_prefix']:.3f} < band {t['dec_prefix_min']:.3f}")
-    if g["reliability_ok"] < t["reliability_min"]:
-        fails.append(f"reliability {g['reliability_ok']}/{g['reliability_total']} < {t['reliability_min']}")
-    if g["empty_outputs"] > 0:
-        fails.append(f"{g['empty_outputs']} empty outputs")
-    if g["looping_outputs"] > t["looping_max"]:
-        fails.append(f"{g['looping_outputs']} looping outputs")
-    # ToolEvalBench runs at T=1.0 (real use) and is not deterministic: it is a regression alarm, not a ranker.
-    # Reject only a drop beyond the A/A noise: min - max(3 points, 2 x A/A range). Fidelity stays the main veto.
-    if "tooleval_min" in t:
-        allow = max(3, 2 * t.get("tooleval_range", 0))
-        if g.get("tooleval_points", -1) < t["tooleval_min"] - allow:
-            fails.append(f"ToolEvalBench {g.get('tooleval_points')}/{g.get('tooleval_max')} < band "
-                         f"{t['tooleval_min']} - {allow}")
-    return fails
-
-
-def decide(run):
-    lock = json.load(open(os.path.join(ROOT, "evaluator.lock"), encoding="utf-8"))
+def champion(lock):
     t = lock["thresholds"]
-    cand = extract(run)
-    inv = json.load(open(os.path.join(ROOT, run, "invariants.json"), encoding="utf-8")) \
-        if os.path.exists(os.path.join(ROOT, run, "invariants.json")) else {"ok": False, "problems": ["invariants.json missing"]}
-    out = {"run": run, "status": cand["meta"].get("status")}
-    ok, bad = lock_ok(lock)
-    if not ok:
-        out.update(verdict="VOID", why=f"evaluator file changed: {bad}")
-    elif (bad := champion_problem(lock)):
-        out.update(verdict="VOID", why=f"champion has no held-out PASS: {bad}")
-    elif not inv["ok"]:
-        out.update(verdict="VOID", why="invariant broken: " + "; ".join(inv["problems"]))
-    elif out["status"] == "MEMFLOOR":
-        out.update(verdict="VOID", why=f"MemAvailable fell to {cand['meta'].get('low_mem_gib')} GiB during start (floor 4)")
-    elif out["status"] != "OK":
-        out.update(verdict="CRASH", why=f"run status {out['status']}")
-    elif any(b < t["bw_median"] * 0.75 for b in cand["bw"]) or len(cand["bw"]) < 2:
-        out.update(verdict="RERUN", why=f"bandwidth flip or missing probe: {cand['bw']} vs median {t['bw_median']}")
-    else:
-        gok, fails = gate_ok(cand["gate"], t)
-        champ, champ_runs = champion()
-        r = ratios(cand, champ)
-        sc = score(r)
-        floor = KEEP_FLOOR if KEEP_FLOOR is not None else t.get("keep_floor", max(0.02, 2 * t["score_spread"]))  # owner set 0.05 on 2026-10-24
-        drops = {k: r[k] for k in r if r[k] < 1 - max(0.02, 2 * t["spread"].get(k, 0.02))}
-        clear_wins = {k: r[k] for k in r if r[k] > 1 + max(0.05, 3 * t["spread"].get(k, 0.02))}
-        out.update(ratios=r, score=sc, floor=floor, champion_runs=champ_runs, gate_fails=fails)
-        if not gok:
-            out.update(verdict="REJECT", why="quality gate: " + "; ".join(fails))
-        elif sc >= 1 + floor and not drops:
-            out.update(verdict="KEEP", why=f"score {sc:.4f} >= {1 + floor:.4f}, no probe dropped past its band")
-        elif (single := single_probe_win(cand, champ, t)):
-            out.update(verdict="KEEP", why=f"single-probe win {single} (owner rule 2026-10-24), score {sc:.4f}")
-        elif clear_wins:
-            out.update(verdict="ARCHIVE", why=f"score {sc:.4f} below keep, but clear single win {clear_wins}; drops {drops}")
-        else:
-            out.update(verdict="REJECT", why=f"score {sc:.4f} < {1 + floor:.4f}" + (f"; drops {drops}" if drops else ""))
-    json.dump(out, open(os.path.join(ROOT, run, "verdict.json"), "w", encoding="utf-8"), indent=1)
-    print(f"VERDICT {out['verdict']}: {out['why']}")
+    return jload(CHAMPION) or {"runs": t["baseline_runs"], "probes": t["baseline_probes"],
+                               "start": t["baseline_probes"], "history": []}
+
+
+def ratios(cand, ref, lower):
+    """Per probe, candidate against a reference. Above 1 is better, whatever the probe's direction."""
+    out = {}
+    for k, v in cand.items():
+        r = ref.get(k)
+        if v and r and v > 0 and r > 0:
+            out[k] = r / v if k in lower else v / r
     return out
 
 
+def weighted(r, weights):
+    """Weighted geometric mean. A probe with weight 0 is a guard: it never scores, but it may not drop."""
+    w = {k: weights[k] for k in r if weights.get(k)}
+    tot = sum(w.values())
+    return math.exp(sum(w[k] / tot * math.log(r[k]) for k in w)) if tot else None
+
+
+def missing(cand, champ, p):
+    """Scored or guard probes the champion measured and the candidate did not: a gap is never a pass."""
+    return sorted(k for k in p.get("weights", {}) if champ.get(k) and not cand.get(k))
+
+
+def share(p):
+    n = p and p["won"] + p["lost"] + p["tied"]
+    return (p["won"] + p["tied"] / 2) / n if n else None
+
+
+def min_gain(p, t):
+    return p["min_gain"] if p.get("min_gain") is not None else 2 * t["score_spread"]
+
+
+def max_drop(p, t, k):
+    return p["max_drop"] if p.get("max_drop") is not None else 2 * t["spread"].get(k, 0)
+
+
+def show(out, pairs):
+    if out.get("vs_champion") is None:
+        return ""
+    if pairs:
+        start = "n/a" if out.get("vs_start") is None else f"{out['vs_start']:.0%}"
+        return f" | won {out['vs_champion']:.0%} of pairs against the champion before, {start} against the start"
+    start = "n/a" if out.get("vs_start") is None else f"x{out['vs_start']:.3f}"
+    return f" | x{out['vs_champion']:.3f} against the champion before, {start} against the start"
+
+
+def decide(run):
+    p, lock = project(), jload(os.path.join(ROOT, "evaluator.lock"))
+    pairs = p.get("measurer") == "pairs"
+    meta, sc, q = raw(run, "meta.json") or {}, raw(run, "score.json") or {}, raw(run, "quality.json")
+    inv = jload(os.path.join(ROOT, run, "invariants.json"))
+    status = str(meta.get("status", "no meta.json"))
+    out = {"run": run, "utc": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")}
+    if (bad := lock_problem(lock)):
+        out.update(verdict="VOID", why=bad)
+    elif p.get("invariants", True) and inv is None:
+        out.update(verdict="VOID", why="no invariants.json: the change was not checked against the locked settings "
+                                     "(write it before the pass, or set \"invariants\": false when nothing is locked)")
+    elif inv is not None and not inv.get("ok"):
+        out.update(verdict="VOID", why="invariant broken: " + "; ".join(inv.get("problems", [])))
+    elif status.startswith("VOID"):
+        out.update(verdict="VOID", why=status)
+    elif status != "OK":
+        out.update(verdict="CRASH", why=f"run status {status}")
+    elif not sc.get("pairs" if pairs else "probes"):
+        out.update(verdict="CRASH", why="no score in raw/score.json")
+    elif not pairs and (gone := missing(sc["probes"], champion(lock)["probes"], p)):
+        out.update(verdict="CRASH", why=f"probes the champion has are missing: {gone}")
+    else:
+        t, champ = lock["thresholds"], champion(lock)
+        mg = min_gain(p, t)
+        if pairs:
+            vc, vs = share(sc["pairs"].get("champion")), share(sc["pairs"].get("start"))
+            gain, drops, ups = None if vc is None else vc - 0.5, {}, {}
+        else:
+            lower = set(p.get("lower_is_better", []))
+            r = ratios(sc["probes"], champ["probes"], lower)
+            vc = weighted(r, p.get("weights", {}))
+            vs = weighted(ratios(sc["probes"], champ["start"], lower), p.get("weights", {}))
+            gain = None if vc is None else vc - 1
+            drops = {k: round(v, 4) for k, v in r.items() if v < 1 - max_drop(p, t, k)}
+            ups = {k: round(v, 4) for k, v in r.items() if v > 1 + max(mg, max_drop(p, t, k))}
+            out.update(ratios=r)
+        out.update(vs_champion=vc, vs_start=vs, gain=gain, min_gain=mg, champion_runs=champ["runs"])
+        win = gain is not None and gain > 0 and gain >= mg
+        if gain is None:
+            out.update(verdict="CRASH", why="the score shares no probe or pair with the champion")
+        elif q is not None and not q.get("ok"):
+            out.update(verdict="REJECT", why="quality check failed: " + "; ".join(q.get("fails", [])))
+        elif win and not drops:
+            out.update(verdict="KEEP" if q is not None else "STAGE1-WIN",
+                       why=f"gain {gain:+.4f} >= {mg:.4f}, no probe dropped past its band"
+                           + ("" if q is not None else "; the quality check runs next"))
+        elif win or ups:
+            out.update(verdict="ARCHIVE", why=f"not a clean win: up {ups or 'the score'}, down {drops or 'nothing'}; the owner rules")
+        else:
+            out.update(verdict="REJECT", why=f"gain {gain:+.4f} < {mg:.4f}" + (f"; drops {drops}" if drops else ""))
+    json.dump(out, open(os.path.join(ROOT, run, "verdict.json"), "w", encoding="utf-8"), indent=1)
+    print(f"VERDICT {out['verdict']}: {out['why']}{show(out, pairs)}")
+    return out
+
+
+def heldout_answer(run, p):
+    """PASS | FAIL quality | FAIL gain | another change | None, from heldout.py's answer file."""
+    d = (p.get("heldout") or {}).get("dir")
+    r = jload(os.path.join(d, "results", os.path.basename(run) + ".json")) if d else None
+    if r is None:
+        return None
+    return r["result"] if r.get("change") == change_hash(run) else "another change (stale answer)"
+
+
+def promote(run, confirm, owner=None):
+    p = project()
+    out, q = decide(run), raw(run, "quality.json")
+    mode = (p.get("heldout") or {}).get("mode", "off")
+    answer = heldout_answer(run, p) if mode != "off" else None
+    why = None
+    if out["verdict"] in ("VOID", "CRASH"):
+        why = f"{run} is {out['verdict']}: {out['why']}"
+    elif q is None:
+        why = f"the quality check has not run on {run}: every new champion passes it"
+    elif not q.get("ok"):
+        why = f"{run} failed the quality check"
+    elif out["verdict"] != "KEEP" and not owner:
+        why = f"{run} is {out['verdict']}; only the owner's word (--owner) promotes it"
+    elif not owner and out["gain"] < p.get("confirm_below", 2) * out["min_gain"] and not confirm:
+        why = f"gain {out['gain']:+.4f} is under {p.get('confirm_below', 2)} x the smallest gain: run one confirmation first"
+    for c in confirm:
+        if why:
+            break
+        if decide(c)["verdict"] != "KEEP":
+            why = f"confirmation run {c} is not a KEEP"
+        elif change_hash(c) != change_hash(run):
+            why = f"confirmation run {c} is another change"
+    if not why and mode == "required" and not owner and answer != "PASS":
+        why = f"held-out check (required): {answer or 'no answer yet'} for {run}"
+    if why:
+        print(f"REFUSED: {why}")
+        return 1
+    if mode == "advisory":
+        print(f"held-out check (advisory, does not block): {answer or 'not run'}")
+    lock = jload(os.path.join(ROOT, "evaluator.lock"))
+    old, runs = champion(lock), [run, *confirm]
+    probes = {}
+    for x in runs:
+        for k, v in ((raw(x, "score.json") or {}).get("probes") or {}).items():
+            probes.setdefault(k, []).append(v)
+    score_file = os.path.join(ROOT, run, "raw", "score.json")
+    entry = {"runs": runs, "utc": out["utc"], "vs_champion": out["vs_champion"], "vs_start": out["vs_start"],
+             "heldout": answer, "owner": owner, "who": os.environ.get("CLIMB_WHO", ""),
+             "keep_to_champion_min": round((time.time() - os.path.getmtime(score_file)) / 60, 1)}
+    new = {"runs": runs, "probes": {k: statistics.median(v) for k, v in probes.items()}, "start": old["start"],
+           "history": old.get("history", []) + [entry]}
+    os.makedirs(os.path.dirname(CHAMPION), exist_ok=True)
+    json.dump(new, open(CHAMPION + ".tmp", "w", encoding="utf-8"), indent=1)
+    os.replace(CHAMPION + ".tmp", CHAMPION)
+    print(f"PROMOTED: champion = {runs}" + (f", on the owner's word: {owner}" if owner else "") + show(out, p.get("measurer") == "pairs"))
+    return 0
+
+
 if __name__ == "__main__":
-    a = [x.rstrip("/\\") for x in sys.argv[1:]]
+    a = sys.argv[1:]
+    owner = a[a.index("--owner") + 1] if "--owner" in a else None
+    if owner is not None:
+        del a[a.index("--owner"):a.index("--owner") + 2]
+    a = [x.rstrip("/\\") for x in a]
     if a[:1] == ["promote"] and len(a) > 1:
-        sys.exit(promote(*a[1:]))
+        sys.exit(promote(a[1], a[2:], owner))
+    if len(a) != 1:
+        sys.exit(__doc__)
     decide(a[0])

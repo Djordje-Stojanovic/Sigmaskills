@@ -1,4 +1,4 @@
-"""speed.py - stage 2 speed probes, evaluator v2: the owner's real settings, fixed.
+"""speed.py - the serving example's score probes (stage 1 of a pass), evaluator v2: the owner's real settings, fixed.
 
   python3 speed.py --out FILE
 
@@ -9,13 +9,14 @@ after a fixed token count so the probes fit ~10 minutes; the server sees the rea
 2a short decode: Albond's 5 prompts at effort low and medium, 512 tokens each (chat, Open WebUI)
 2b long thinking: 64k-token context, effort xhigh, 3072 tokens of thinking (decode deep in a long turn)
 2c prefill: unique long prompts at 16k / 64k / 128k tokens, 1 output token (prompt reading only)
+2c' prefill_new: 64k characters of text made fresh for this run (never cached anywhere), 1 output token
 2d agent replay (v6): 3 real agent sessions at once (efforts medium / low / xhigh), 4 consecutive turns each
    1024 tokens per turn, prefix cache ON
 2e parallel: 3 concurrent requests, effort low, 512 tokens each, aggregate tok/s (v7: also 2 concurrent)
 2f chat (v6): normal conversation at ~100k tokens, effort low, model answers fed back, 5 rounds
 Every request outside 2d starts with a unique salt line, so the prefix cache cannot help.
 """
-import argparse, glob, json, math, os, statistics, threading, time
+import argparse, glob, json, math, os, random, statistics, threading, time
 
 from common import HERE, chat_stream, long_document, metrics_snapshot, salt, write_json
 
@@ -79,6 +80,32 @@ def prefill_probe():
                       "ttft_s": statistics.median([x["ttft_s"] for x in rows])}
     out["prefill_tps_geo"] = geomean([out[k]["prefill_tps"] for k in PREFILL_CHARS])
     return out
+
+
+def fresh_prefill_probe(n_chars=int(64_000 * 3.6)):
+    """Same amount of work every run, new text every run: a fixed-text probe measures only the cached path."""
+    words = sorted(set(long_document(400_000).split()))
+    rng = random.Random()  # unseeded on purpose: the text must be new to the target
+    doc, size = [], 0
+    while size < n_chars:
+        w = rng.choice(words)
+        doc.append(w)
+        size += len(w) + 1
+    r = chat_stream([{"role": "user", "content": " ".join(doc)[:n_chars] + "\n\nName one word used above."}],
+                    effort="low", stop_after=1, seed=4)
+    return {"ttft_s": r["ttft_s"], "prompt_tokens": r["prompt_tokens"],
+            "prefill_tps": r["prompt_tokens"] / r["ttft_s"] if r["ttft_s"] else None}
+
+
+def probes(res):
+    """The flat probe map verdict.py reads (raw/score.json). Directions and weights live in project.json."""
+    rp = res["replay"]
+    return {"short": res["short"]["decode_tps_geo"], "long": res["long"]["decode_tps"],
+            "prefill": res["prefill"]["prefill_tps_geo"], "prefill_new": res["prefill_new"]["prefill_tps"],
+            "ttft_128k": res["prefill"]["128k"]["ttft_s"], "c2": res["parallel2"]["aggregate_tps"],
+            "c3": res["parallel"]["aggregate_tps"], "replay": rp["wall_s"], "warm": rp["warm_ttft_sum_s"] or None,
+            # a 100 % warm hit rate scores as a 0.1 % miss, so the ratio stays finite
+            "miss": None if rp["warm_hit_rate"] is None else max(1 - rp["warm_hit_rate"], 0.001)}
 
 
 def replay_probe():
@@ -203,6 +230,7 @@ if __name__ == "__main__":
     res = {"version": 3, "short": short_decode_probe(), "long": long_thinking_probe()}
     m1 = metrics_snapshot()
     res["prefill"] = prefill_probe()
+    res["prefill_new"] = fresh_prefill_probe()
     res["parallel"] = parallel_probe()
     res["parallel2"] = parallel_probe(2)  # v7: 2 agents (owner priority 2)
     res["replay"] = replay_probe()
@@ -212,6 +240,7 @@ if __name__ == "__main__":
     res["mtp_accept_decode_probe"] = accepted / drafted if drafted else None
     res["elapsed_s"] = time.time() - t0
     write_json(a.out, res)
+    write_json(os.path.join(os.path.dirname(os.path.abspath(a.out)), "score.json"), {"probes": probes(res)})
     print(json.dumps({"short_tps": res["short"]["decode_tps_geo"], "long_tps": res["long"]["decode_tps"],
                       "prefill_tps_geo": res["prefill"]["prefill_tps_geo"], "c3_tps": res["parallel"]["aggregate_tps"], "c2_tps": res["parallel2"]["aggregate_tps"],
                       "replay_wall_s": res["replay"]["wall_s"],
