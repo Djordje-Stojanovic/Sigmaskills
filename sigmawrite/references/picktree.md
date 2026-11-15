@@ -12,7 +12,7 @@ One JSON file:
                "k": [{"n": "q4.gguf", "s": 21474836480, "c": {"used by": "chat lane", "last read": "2 days ago"}}]},
               {"n": "old-tts/", "s": 21474836480, "rec": "delete", "c": {"used by": "NOTHING NAMES IT"}}]}
 
-- `title`: the page title. Without it, the file name is used. The picks he makes in his browser are saved under this title, so give each new decision its own title.
+- `title`: the page title. Without it, the file name (no extension) is used. The picks he makes in his browser are saved under this title, so give each new decision its own title.
 - `root`: the folder the top rows sit in. A row's full path is `root` plus the names down to that row.
 - `choices`: the words he picks from, for example `keep` and `delete`.
 - `rows`: the top rows. Each row has:
