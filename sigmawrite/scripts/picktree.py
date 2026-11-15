@@ -14,15 +14,20 @@ def put(path, text):
     with open(path + ".tmp", "w", encoding="utf-8") as f: f.write(text)
     os.replace(path + ".tmp", path)
 
+def fail(msg): sys.exit("picktree: " + msg)
+
 def check(t):
-    """The shape every reader expects; a clear error beats a blank page."""
-    assert isinstance(t, dict) and isinstance(t.get("rows"), list), "a tree is an object with a rows list"
-    assert t.get("choices") and all(isinstance(c, str) for c in t["choices"]), "choices: a list of words, for example [\"keep\", \"delete\"]"
+    """The shape every reader expects: one plain line when it is wrong (asserts vanish under python -O)."""
+    if not (isinstance(t, dict) and isinstance(t.get("rows"), list)): fail("the tree is an object with a rows list")
+    if not (isinstance(t.get("choices"), list) and t["choices"] and all(isinstance(c, str) for c in t["choices"])): fail('choices: a list of words, for example ["keep", "delete"]')
     def rows(rs, where):
         for r in rs:
-            assert isinstance(r.get("n"), str) and isinstance(r.get("s"), (int, float)), f"{where}: every row needs n (name) and s (size)"
-            assert r.get("rec") in (None, *t["choices"]), f"{where}/{r['n']}: rec must be one of the choices"
+            if not (isinstance(r, dict) and isinstance(r.get("n"), str) and isinstance(r.get("s"), (int, float)) and isinstance(r.get("k") or [], list)):
+                fail(f"{where}: a row needs n (name) and s (size); k, if there, is a list")
+            if r.get("rec") not in (None, *t["choices"]): fail(f"{where}/{r['n']}: rec must be one of the choices")
             rows(r.get("k") or [], where + "/" + r["n"])
+        names = [r["n"] for r in rs]
+        if len(set(names)) != len(names): fail(f"{where}: two rows share a name, so one pick would land on both")
     rows(t["rows"], "rows")
     return t
 
@@ -37,10 +42,14 @@ def main():
     a.add_argument("tree"); a.add_argument("-o", "--out"); a.add_argument("--title"); a.add_argument("--review"); a.add_argument("--id")
     a.add_argument("--body", default=""); a.add_argument("--project", default="")
     o = a.parse_args()
-    t = check(json.load(open(o.tree, encoding="utf-8")))
+    try:
+        with open(o.tree, encoding="utf-8") as f: t = check(json.load(f))
+    except (OSError, ValueError) as e: sys.exit(f"picktree: {o.tree} is not a readable tree: {e}")
     title = o.title or t.get("title") or os.path.splitext(os.path.basename(o.tree))[0]
     if o.review:
-        if not o.id: sys.exit("--review needs --id, the entry id (its address is <review page>/#<id>)")
+        # the same rule as answers.py, or the answer box refuses the entry; the id is also a file name
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,79}", o.id or ""): sys.exit("picktree: --review needs --id: letters, digits, dot, dash or underscore, up to 80 characters")
+        if not os.path.isdir(o.review): sys.exit(f"picktree: --review {o.review} is not a folder: give the review page's run folder")
         put(os.path.join(o.review, "media", o.id, "tree.json"), json.dumps(t, ensure_ascii=False))
         put(os.path.join(o.review, "cards", o.id + ".json"), json.dumps({"id": o.id, "kind": "tree", "title": title, "body": o.body or (t.get("note") and f"<p>{html.escape(t['note'])}</p>") or "",
                                                                          "tree": "tree.json", "project": o.project, "state": "open"}, ensure_ascii=False))
