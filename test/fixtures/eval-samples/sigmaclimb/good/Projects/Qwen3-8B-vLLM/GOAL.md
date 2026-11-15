@@ -5,4 +5,4 @@ Host: Claude Code /goal. Stop line: the owner destroys the Vast instance. Spec: 
 ## Mission
 Make Qwen3-8B on vLLM faster (decode, prefill, agent turns, parallel requests) on one rented RTX 4090, with zero
 loss in quality, measured under the owner's real settings. One change per pass; keep it only if
-`scripts/bench/verdict.py` says KEEP and a confirmation run agrees.
+`scripts/bench/verdict.py` says KEEP, a confirmation run agrees and the held-out check passes.
