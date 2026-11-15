@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -139,7 +140,7 @@ test('plan: dry run produces accurate preview without mutating files', () => {
     assert.equal(plan.scope, 'project');
     assert.equal(plan.method, 'copy');
     assert.equal(plan.unownedConflict, false);
-    assert.equal(plan.writes.length, 4); // SKILL.md, agents/openai.yaml, template.html, references/gui.md
+    assert.equal(plan.writes.length, 6); // SKILL.md, agents/openai.yaml, template.html, references/gui.md, references/picktree.md, scripts/picktree.py
     assert.equal(plan.replacements.length, 0);
     assert.equal(plan.lockChanges.action, 'add');
 
@@ -299,5 +300,31 @@ test('install: reinstalling an owned exact skill is a no-op', () => {
     assert.ok(lock.skills.sigmawrite);
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+// picktree.py: a bad tree stops with one plain line, the title cannot end its script, and --id stays a plain name
+const python = spawnSync('python3', ['--version']).status === 0;
+test('picktree: bad tree gives one plain line; title cannot end its script; --id must be a plain name', { skip: !python && 'python3 not found' }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'picktree-test-'));
+  const script = path.join(ROOT, 'sigmawrite', 'scripts', 'picktree.py');
+  const run = (...args) => spawnSync('python3', ['-I', script, ...args], { cwd: dir, encoding: 'utf8' });
+  try {
+    fs.writeFileSync(path.join(dir, 'bad.json'), '{"rows": "nope"}');
+    const bad = run('bad.json', '-o', 'bad.html');
+    assert.equal(bad.status, 1);
+    assert.match(bad.stderr, /^picktree: /);
+    assert.doesNotMatch(bad.stderr, /Traceback/);
+    fs.writeFileSync(path.join(dir, 'ok.json'), JSON.stringify({ title: '</script><b>x</b>', choices: ['keep'], rows: [{ n: 'a.bin', s: 1 }] }));
+    assert.equal(run('ok.json', '-o', 'ok.html').status, 0);
+    assert.doesNotMatch(fs.readFileSync(path.join(dir, 'ok.html'), 'utf8'), /<\/script><b>x/);
+    assert.equal(run('ok.json', '--review', dir, '--id', '../x').status, 1);
+    fs.writeFileSync(path.join(dir, 'num.json'), '{"root": 5, "choices": ["keep"], "rows": []}');
+    assert.equal(run('num.json', '-o', 'num.html').status, 1);
+    fs.writeFileSync(path.join(dir, 'same.json'), '{"choices": ["keep"], "rows": [{"n": "a", "s": 1}]}');
+    assert.equal(run('same.json', '-o', 'same.json').status, 1);
+    assert.match(fs.readFileSync(path.join(dir, 'same.json'), 'utf8'), /^\{"choices"/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });
