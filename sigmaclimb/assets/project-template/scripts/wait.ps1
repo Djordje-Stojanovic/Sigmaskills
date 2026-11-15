@@ -13,7 +13,7 @@ $t0 = Get-Date
 $last = ''
 while ($true) {
   $state = $null
-  try { $state = & $box "test -f /root/runs/$Run/DONE && echo DONE || tail -1 /root/runs/$Run/progress.log 2>/dev/null" 2>$null } catch { $state = $null }
+  try { $state = & $box "test -f /root/runs/$Run/raw/DONE && echo DONE || tail -1 /root/runs/$Run/raw/progress.log 2>/dev/null" 2>$null } catch { $state = $null }
   if ($state -and $state -ne $last) { Write-Host "$((Get-Date).ToString('HH:mm:ss')) $state"; $last = $state }
   if ($state -match '^DONE') { break }
   if (((Get-Date) - $t0).TotalMinutes -gt $MaxMinutes) { Write-Host "WAIT TIMEOUT after $MaxMinutes min"; exit 3 }
@@ -21,9 +21,9 @@ while ($true) {
 }
 New-Item -ItemType Directory -Force "runs\$Run\raw" | Out-Null
 for ($i = 1; $i -le 10; $i++) {
-  try { & $box -Pull -Src "/root/runs/$Run/." -Dst "runs\$Run\raw" 2>$null } catch {}
+  try { & $box -Pull -Src "/root/runs/$Run/raw/." -Dst "runs\$Run\raw" 2>$null } catch {}
   if (Test-Path "runs\$Run\raw\meta.json") { break }
   Write-Host "pull attempt $i failed, retrying in 30 s"; Start-Sleep 30
 }
 $meta = Get-Content "runs\$Run\raw\meta.json" -Raw | ConvertFrom-Json
-Write-Host "RUN $Run FINISHED status=$($meta.status) start_s=$($meta.start_s) low_mem_gib=$($meta.low_mem_gib) kv=$($meta.kv_tokens) minutes=$([math]::Round(((Get-Date)-$t0).TotalMinutes,1))"
+Write-Host "RUN $Run FINISHED status=$($meta.status) stages=$($meta.stage_s | ConvertTo-Json -Compress) minutes=$([math]::Round(((Get-Date)-$t0).TotalMinutes,1))"

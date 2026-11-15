@@ -2,6 +2,8 @@
 import os, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+from status import loop_speed  # noqa: E402
 FILES = ["ideas.tsv", "ruled_out.tsv", "results.tsv"]
 VERDICTS = {"BASELINE", "AA", "KEEP", "ARCHIVE", "REJECT", "VOID", "CRASH", "RECON"}
 
@@ -34,6 +36,10 @@ if os.path.exists(os.path.join(ROOT, "ideas.tsv")):
                   if l.split("\t")[1:2] == ["pending"])
     if pending < 3:
         problems.append(f"ideas.tsv: only {pending} pending ideas (rule: >= 3) - refill now")
+
+share = loop_speed(ROOT)[2]
+if share is not None and share < 0.5:
+    problems.append(f"the last passes spent {share:.0%} of their time measuring the score (rule: >= half) - fix the loop first")
 
 print("STATE: CLEAN" if not problems else "STATE: " + str(len(problems)) + " problem(s)\n  " + "\n  ".join(problems))
 sys.exit(0 if not problems else 1)

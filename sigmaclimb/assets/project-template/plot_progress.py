@@ -1,24 +1,9 @@
-"""plot_progress.py - draws progress.png from results.tsv. The human looks at it; the worker only runs it.
-A chart failure never stops a pass: it prints a warning and exits 0."""
-import argparse, os, sys
+"""plot_progress.py - draws progress.png from results.tsv and state/champion.json. The owner looks at it.
+Run it at a KEEP and at the end, not after every pass. A chart failure never stops a pass: it warns and exits 0."""
+import argparse, json, os, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 KEEP, BAD, GRAY, BASE = "#2ecc71", "#e74c3c", "#b0b0b0", "#3498db"
-# metric column, label, higher is better
-SPEED = [("replay_wall_s", "agent replay wall time (s)", False),
-         ("decode_tps", "short decode tok/s, 1 stream (low/medium, T=1)", True),
-         ("prefill_tps_64k", "prefill tok/s at 64k", True),
-         ("c3_tps", "3 parallel requests, total tok/s", True)]
-CAVEAT = "Vast.ai GB10 box, not the home Spark. Gray = tried, green = kept, blue = baseline / A-A."
-
-
-def load():
-    import pandas as pd
-    df = pd.read_csv(os.path.join(ROOT, "results.tsv"), sep="\t")
-    for c in df.columns:
-        if c not in ("utc", "parent", "idea_id", "category", "work_type", "image", "verdict", "description"):
-            df[c] = pd.to_numeric(df[c], errors="coerce")
-    return df.reset_index(drop=True)
 
 
 def colours(df):
@@ -26,86 +11,67 @@ def colours(df):
             for v in df["verdict"]]
 
 
-def p_score(ax, df):
-    m = df["score"].notna()
-    ax.scatter(df.index[m], df["score"][m], c=[c for c, k in zip(colours(df), m) if k], s=30, zorder=3)
-    kept = df[(df["verdict"] == "KEEP") & df["description"].astype(str).str.contains("PROMOTED")]
-    if not kept.empty:
-        # only promotions count (a KEEP and its confirmation run measure the same change once);
-        # score is relative to the champion at the time, so the cumulative product is the gain over the first baseline
-        cum = kept["score"].cumprod()
-        ax.step(kept.index, cum, where="post", color=KEEP, lw=2, label="cumulative gain vs first baseline")
-        for i, r in kept.iterrows():
-            ax.annotate(str(r["idea_id"])[:24], (i, cum[i]), fontsize=6, rotation=20, xytext=(3, 3),
-                        textcoords="offset points")
-        ax.legend(fontsize=7)
+def p_chain(ax, champ, machine):
+    """Each champion against the start, back to the first baseline, labelled with who found it."""
+    hist = champ.get("history", [])
+    xs, ys = [0] + list(range(1, len(hist) + 1)), [1.0] + [h["vs_start"] or 1.0 for h in hist]
+    ax.step(xs, ys, where="post", color=KEEP, lw=2)
+    for i, h in enumerate(hist, start=1):
+        ax.annotate(f"#{i} {h.get('who') or '?'}" + (" (owner's word)" if h.get("owner") else ""), (i, ys[i]),
+                    fontsize=7, rotation=20, xytext=(3, 3), textcoords="offset points")
     ax.axhline(1.0, color="k", lw=.6, ls=":")
-    ax.set_title("speed score vs champion (1.0 = same; higher is better)")
+    ax.set_title(f"champions against the start (1.0 = start; higher is better), measured on {machine}", fontsize=9)
     ax.grid(alpha=.2)
 
 
-def p_discovery(ax, df):
-    wins = (df["verdict"] == "KEEP").cumsum()
-    ax.plot(df.index, wins, color=KEEP, lw=2)
-    tail = wins.iloc[-20:]
-    slope = (tail.iloc[-1] - tail.iloc[0]) / max(len(tail) - 1, 1) if len(tail) else 0
-    ax.text(.02, .92, f"last 20 passes: {slope:.2f} keeps/pass", transform=ax.transAxes, fontsize=8)
-    ax.set_title("discovery curve (flat = escalate: new category or research)")
+def p_vs_champion(ax, df):
+    m = df["vs_champion"].notna()
+    ax.scatter(df.index[m], df["vs_champion"][m], c=[c for c, k in zip(colours(df), m) if k], s=30, zorder=3)
+    ax.axhline(1.0, color="k", lw=.6, ls=":")
+    ax.set_title("each pass against the champion before it (gray = tried, green = kept)", fontsize=9)
     ax.grid(alpha=.2)
 
 
-def p_metric(ax, df, col, label, higher):
-    if col not in df or df[col].notna().sum() == 0:
-        ax.set_title(f"{label}: no data yet", fontsize=9)
-        return
-    m = df[col].notna()
-    ax.scatter(df.index[m], df[col][m], c=[c for c, k in zip(colours(df), m) if k], s=24, zorder=3)
-    best_rows = df[m & df["verdict"].isin(["KEEP", "BASELINE"])]
-    if not best_rows.empty:
-        ax.step(best_rows.index, best_rows[col], where="post", color=KEEP, lw=1.5)
-    ax.set_title(f"{label} ({'higher' if higher else 'lower'} is better)", fontsize=9)
+def p_probe(ax, df, name, lower):
+    vals = df["probes"].fillna("").map(lambda s: dict(x.split("=") for x in s.split() if "=" in x).get(name))
+    vals = vals.astype(float)
+    m = vals.notna()
+    ax.scatter(df.index[m], vals[m], c=[c for c, k in zip(colours(df), m) if k], s=24, zorder=3)
+    ax.set_title(f"{name} ({'lower' if lower else 'higher'} is better)", fontsize=9)
     ax.grid(alpha=.2)
 
 
-def p_gate(ax, df):
-    if df["gate_top1"].notna().sum() == 0:
-        ax.set_title("quality gate: no data yet", fontsize=9)
-        return
-    m = df["gate_top1"].notna()
-    ax.scatter(df.index[m], df["gate_top1"][m] * 100, c=[c for c, k in zip(colours(df), m) if k], s=24)
-    aa = df[df["verdict"] == "AA"]["gate_top1"].dropna()
-    if not aa.empty:
-        ax.axhspan(aa.min() * 100, 100, color=BASE, alpha=.12, label="A/A band (normal restart drift)")
-        ax.legend(fontsize=7)
-    ax.set_title("quality gate: top-1 agreement with baseline % (must stay in the band)", fontsize=9)
-    ax.grid(alpha=.2)
-
-
-def p_time(ax, df):
-    if df["minutes"].notna().sum():
-        ax.bar(df.index, df["minutes"].fillna(0), color=colours(df))
-        ax2 = ax.twinx()
-        ax2.plot(df.index, df["cost_usd"].fillna(0).cumsum(), color=BAD, lw=1.5)
-        ax2.set_ylabel("cumulative $", fontsize=7)
-    ax.set_title("minutes per pass (bars) + cumulative cost (line)", fontsize=9)
+def p_loop(ax, df):
+    ax.bar(df.index, df["minutes"].fillna(0), color=colours(df))
+    ax2 = ax.twinx()
+    ax2.plot(df.index, df["score_share"] * 100, color=BASE, lw=1.5)
+    ax2.axhline(50, color=BASE, lw=.6, ls=":")
+    ax2.set_ylabel("% of the pass that measures the score", fontsize=7)
+    ax.set_title("minutes per pass (bars) and the share that measures the score (line; keep it above 50 %)", fontsize=9)
 
 
 def render(out):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    df = load()
+    import pandas as pd
+    df = pd.read_csv(os.path.join(ROOT, "results.tsv"), sep="\t")
     if df.empty:
         print("no data yet")
         return
+    for c in ("vs_champion", "vs_start", "minutes", "score_share"):
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+    proj = json.load(open(os.path.join(ROOT, "project.json"), encoding="utf-8"))
+    cp = os.path.join(ROOT, "state", "champion.json")
+    champ = json.load(open(cp, encoding="utf-8")) if os.path.exists(cp) else {}
+    top = sorted(proj.get("weights", {}), key=lambda k: -proj["weights"][k])[:4]
     fig, axes = plt.subplots(4, 2, figsize=(16, 18), constrained_layout=True)
-    ax = list(axes.flat)
-    kept = int((df["verdict"] == "KEEP").sum())
-    fig.suptitle(f"la125 speed loop: {len(df)} passes, {kept} kept\n{CAVEAT}", fontweight="bold")
-    panels = [lambda a: p_score(a, df), lambda a: p_discovery(a, df)]
-    panels += [lambda a, s=s: p_metric(a, df, *s) for s in SPEED]
-    panels += [lambda a: p_gate(a, df), lambda a: p_time(a, df)]
-    for a, f in zip(ax, panels):
+    fig.suptitle(f"{proj.get('name', 'climb')}: {len(df)} passes, {len(champ.get('history', []))} champions",
+                 fontweight="bold")
+    panels = [lambda a: p_chain(a, champ, proj.get("machine", "?")), lambda a: p_vs_champion(a, df)]
+    panels += [lambda a, k=k: p_probe(a, df, k, k in proj.get("lower_is_better", [])) for k in top]
+    panels += [lambda a: p_loop(a, df)]
+    for a, f in zip(axes.flat, panels):
         try:
             f(a)
         except Exception as e:  # one broken panel never kills the chart
