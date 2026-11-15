@@ -7,7 +7,7 @@
 
 Standard library only. Files are written to a .tmp name and renamed, so a reader never sees half a file.
 """
-import argparse, html, json, os, sys
+import argparse, html, json, os, re, sys
 
 def put(path, text):
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
@@ -27,8 +27,10 @@ def check(t):
     return t
 
 def page(t, title):
-    data = json.dumps(t, ensure_ascii=False).replace("<", "\\u003c")   # no "</script>" or "<!--" can end the data block
-    return PAGE.replace("__TITLE__", html.escape(title)).replace("__TITLEJS__", json.dumps(title)).replace("__NOTE__", t.get("note") and f"<p class=lead>{html.escape(t['note'])}</p>" or "").replace("__DATA__", data)
+    js = lambda v: json.dumps(v, ensure_ascii=False).replace("<", "\\u003c")   # no "</script>" or "<!--" can end a script block
+    note = f"<p class=lead>{html.escape(t['note'])}</p>" if t.get("note") else ""
+    subs = {"TITLE": html.escape(title), "TITLEJS": js(title), "NOTE": note, "DATA": js(t)}
+    return re.sub(r"__(TITLEJS|TITLE|NOTE|DATA)__", lambda m: subs[m.group(1)], PAGE)   # one pass: a title that holds "__DATA__" stays text
 
 def main():
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -65,7 +67,7 @@ input,select,textarea,button{font:inherit;color:inherit}
 .tr>details>summary::-webkit-details-marker{display:none}
 .tr>details[data-k]>summary .tn::before{content:"▸ ";color:var(--mute)}.tr>details[data-k][open]>summary .tn::before{content:"▾ "}
 .ts{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;font-size:14px}.tn{overflow-wrap:anywhere;font-size:14px}
-.trec{font-style:normal;font-weight:600;color:var(--acc);font-size:13px}.tc{grid-column:2;color:var(--mute);font-size:13px;line-height:1.4;margin-top:2px}.tc span{display:inline-block;margin-right:12px}.tc b{font-weight:600}
+.trec{font-style:normal;font-weight:600;color:var(--acc);font-size:13px}.tc{grid-column:2;color:var(--mute);font-size:13px;line-height:1.4;margin-top:2px;overflow-wrap:anywhere}.tc span{display:inline-block;margin-right:12px}.tc b{font-weight:600}
 .tsh{position:absolute;left:0;bottom:-1px;height:2px;background:var(--acc);opacity:.55}
 .tp{position:absolute;right:0;top:4px;width:clamp(96px,24vw,184px);height:36px;padding:0 8px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface-2);font-size:14px;font-weight:500}
 @media (pointer:coarse),(max-width:640px){.tp{height:44px;top:0}}
@@ -94,11 +96,11 @@ input,select,textarea,button{font:inherit;color:inherit}
   const fmt = (v) => data.fmt === "bytes" ? (v >= 10 * G ? Math.round(v / G).toLocaleString("en") + " GB" : (v / G).toFixed(1) + " GB") : Number(v).toLocaleString("en") + (data.unit ? " " + data.unit : "");
   const join = (a, b) => (a ? a.replace(/[\\/]$/, "") + (a.includes("\\") ? "\\" : "/") : "") + b.replace(/[\\/]$/, "");
   function row(r, path, parent, flat) {
-    if (r.rest) return `<div class="tr rest"><div class="trow"><span class="ts">${fmt(r.s)}</span><span class="tn">${esc(r.n)}</span></div></div>`;
+    if (r.rest) return `<div class="tr rest"><div class="trow"><span class="ts">${esc(fmt(r.s))}</span><span class="tn">${esc(r.n)}</span></div></div>`;
     const pk = t.picks[path] || {}, cols = Object.entries(r.c || {}).map(([k, v]) => `<span><b>${esc(k)}:</b> ${esc(v)}</span>`).join(" ");
     const opts = ['<option value="">Pick</option>'].concat(t.choices.map((ch) => `<option value="${esc(ch)}"${pk.p === ch ? " selected" : ""}>${esc(ch)}${r.rec === ch ? " (my pick)" : ""}</option>`)).join("");
     const w = parent ? Math.max(1, Math.round(100 * r.s / parent)) : 0;
-    return `<div class="tr" data-path="${esc(path)}"><details${r.k ? " data-k" : ""}><summary><span class="ts">${fmt(r.s)}</span>`
+    return `<div class="tr" data-path="${esc(path)}"><details${r.k ? " data-k" : ""}><summary><span class="ts">${esc(fmt(r.s))}</span>`
       + `<span class="tn">${esc(flat ? path : r.n)}${r.rec ? ` <em class="trec">my pick: ${esc(r.rec)}</em>` : ""}</span>${cols ? `<span class="tc">${cols}</span>` : ""}${w ? `<i class="tsh" style="width:${w}%"></i>` : ""}</summary>`
       + `<div class="tk"></div></details><select class="tp" aria-label="Your pick for ${esc(r.n)}">${opts}</select></div>`;
   }
