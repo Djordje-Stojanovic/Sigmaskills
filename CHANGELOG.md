@@ -40,7 +40,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Changed
 
 - `sigmaboat` runs through `laboat`: on the machine it is typed on, `--on <machine>` elsewhere, a machine failure hands over to the next machine, a job failure is never retried. 105 lines became 52.
-- `sigmaspeedloop` names the speedloop repo's two charts and the rule that a segment names who found its champion.
+- `sigmaspeedloop` is now `sigmaclimb`, a loop for any measurable target: serving speed, a render, a kernel, an algorithm, a training run. The method (one change per pass, a locked scorer, noise first, a quality gate, keep or revert, a chart that names who found each champion) is written for any target, and the GPU and vLLM details moved to `references/example-model-serving.md`. A held-out check is now a required step: sealed inputs the agent never sees, PASS or FAIL only, at every KEEP. It also takes five habits from the RTX 5070 training project (hypothesis line, search before you run, deletes count, one category per pass, a plateau forces a search round). `sigmaspeedloop` is on the retired list, so `update` leaves an installed copy alone and names the `uninstall` command. The trigger words `sigmaspeedloop` and `speed loop` stay in the description.
 
 ### Changed (sigmaloop is the factory for a many-lane run)
 

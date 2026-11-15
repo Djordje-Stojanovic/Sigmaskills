@@ -33,7 +33,8 @@ if `scripts/bench/verdict.py` says KEEP and a confirmation re-run agrees.
 4. `python scripts/bench/verdict.py runs/NNNN`. Never override it.
 5. `python scripts/record.py --run runs/NNNN --pass N --idea ... --category ... --work CONTENT --minutes M --desc "..."`
    (what changed; hypothesis + evidence; what happened; conclusion and what it rules out).
-6. KEEP -> confirmation re-run. Promote only if confirmed: champion/, checkpoints/pass-N/, state/champion.json,
+6. KEEP -> confirmation re-run, then the held-out check (sealed inputs outside this folder; it prints PASS or FAIL only;
+   write `heldout: pass|fail` in the results description). Promote only if both pass: champion/, checkpoints/pass-N/, state/champion.json,
    champion/<recipe>.yaml with comments on what each change needs.
 7. Remove the idea from `ideas.tsv`; recurring failure -> `ruled_out.tsv` with a reopen condition.
 8. One sentence to `insights.md`; `python check_state.py`; `python plot_progress.py`; rewrite `PROGRESS.md`
@@ -41,7 +42,7 @@ if `scripts/bench/verdict.py` says KEEP and a confirmation re-run agrees.
 
 ## Rules that decide (numbers live in project.json and evaluator.lock)
 - Keep floor 5 %. Single-probe rule: one probe >= +10 % and every other >= -5 % is a KEEP.
-- Every KEEP needs a confirmation run. Judge borderline cases on the median of 2-3 runs. Noise bands are large.
+- Every KEEP needs a confirmation run and a held-out PASS. Never open the held-out inputs. Judge borderline cases on the median of 2-3 runs. Noise bands are large.
 - Profile before you optimize. Measure the real memory-bandwidth ceiling before you say "at the limit".
 - Never stack two overlay loaders (sitecustomize.py); merge them into one directory first.
 - Stop line, decisions, research rounds, sub-agent rules: skill `references/loop.md`.

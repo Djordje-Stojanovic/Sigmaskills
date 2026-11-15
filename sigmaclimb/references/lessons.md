@@ -314,3 +314,24 @@ and gave every probe a real weight; the "no probe may drop past its band" rule p
 **11.6 Home transfer is its own experiment.** At home the baseline was already faster (io_uring, warm caches), so
 gains were smaller on some probes and larger on others. Measure home baseline and candidate with the locked
 evaluator inside the container, prove each change is active in-process, keep a rollback.
+
+## 12. The held-out check, and what the RTX 5070 training project did better
+
+**12.1 The first project had no held-out check.** Every prompt, probe and threshold sat in `scripts/bench/`, which
+the agent could read. About 110 passes ran against the same inputs. The hash lock stopped edits, not tuning to the
+inputs. Rule: a sealed second input set, PASS or FAIL only, at every KEEP (see `SKILL.md`).
+
+**12.2 What `TrainRTX5070` (3 rounds, one RTX 5070) did better, ported in `SKILL.md`:**
+- The training data never touches the validation shards (the last 2 shards are never read for training). The scorer's
+  inputs are split from the agent's by construction. Its weakness: the same split picks every KEEP, and the metric
+  function is locked by a written rule, not a hash.
+- A commit states the bottleneck, the hypothesis and the evidence. One category per experiment. A plateau (5 runs
+  with no gain over 0.005) forces a search round and two big changes. A deletion that holds the score is kept.
+- The `description` column of the results file is the agent's memory: what changed, why, what happened, what it rules out.
+- Noise was measured first (three runs of the unchanged code, sigma about 0.0014 to 0.0020), and the keep floor sits
+  just above it (0.002).
+
+**12.3 The idea queue.** The 5070 project ran a strict first-in-first-out queue and let an idea go only when a
+results row ruled it out. Its oldest rows waited on things that were not there (FP8 headroom, a GDN kernel), so
+each ~55 minute run went to the oldest row. SigmaClimb sorts by `p=NN%` and kills an idea the moment evidence says so.
+That is quicker, and it is why this method drops low-odds ideas fast.

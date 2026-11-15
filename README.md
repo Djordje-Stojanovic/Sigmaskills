@@ -81,7 +81,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaTaste** | `sigmataste` | Writes one ranked plan of big visible changes |
 | **SigmaHuman** | `sigmahuman` | Makes text read like a person wrote it |
 | **SigmaTour** | `sigmatour` | Shows how a repo works in one visual page; copies it first, isolated, when you ask |
-| **SigmaSpeedLoop** | `sigmaspeedloop` | Makes a model serve faster on a rented GPU |
+| **SigmaClimb** | `sigmaclimb` | Improves anything measurable, one judged change at a time (was SigmaSpeedLoop) |
 | **SigmaMusk** | `sigmamusk` | Runs Musk's Algorithm on one thing, one codebase or a whole setup: measure, delete first |
 | **SigmaBoat** | `sigmaboat` | Runs authorized work on boat.dev cloud sandboxes |
 | **SigmaVast** | `sigmavast` | Rents a GPU for one job through `lacompute`, inside the cap, and proves the teardown |
@@ -156,9 +156,9 @@ Rewrites any text so it reads like a person wrote it, or writes new text from a 
 
 A 15-60 minute tour of any repo in one page: a clickable map, one request traced, real runs, and the README held against the code. Ask it to copy the repo first and it copies any repository after 8 questions, cuts every path, link and git remote back to the original, installs your skills, and tours the copy. (Was two skills; SigmaFork is retired.)
 
-### SigmaSpeedLoop
+### SigmaClimb
 
-Makes a model serve faster on a rented GPU with no quality loss. It asks what faster and no loss mean to you, locks a script evaluator, then tries one change per pass, keeping only what the script confirms, until you destroy the box.
+Improves anything you can measure: model serving speed, a render, a kernel, an algorithm. It asks what better and no loss mean to you, locks a scoring script the agent cannot edit, measures the noise, adds a quality gate and a held-out check on inputs the agent never sees, then tries one change per pass. It keeps only what the script confirms, and charts who found each champion. Serving a model on a rented GPU is the worked example. (Was SigmaSpeedLoop; `speed loop` still finds it.)
 
 ### SigmaMusk
 
@@ -373,7 +373,7 @@ $sigmataste Taste pass on the landing page
 $sigmahuman Rewrite this announcement so it sounds like me
 $sigmatour Copy this repo to D:\work\my-copy, isolated, and tour the copy
 $sigmatour Give me a 30 minute tour of this repo
-$sigmaspeedloop Set up a speed loop for my vLLM model on a rented H100
+$sigmaclimb Set up a speed loop for my vLLM model on a rented H100
 $sigmamusk Why does our test suite take 20 minutes?
 $sigmamusk cut this repo: the five largest files
 $sigmamusk reset: my setup is bloated, list every product, I say keep or kill
@@ -402,7 +402,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 /skill:sigmahuman Rewrite this announcement so it sounds like me
 /skill:sigmatour Fork owner/repo, isolated, and tour the copy
 /skill:sigmatour Give me a 30 minute tour of owner/repo
-/skill:sigmaspeedloop Make my ComfyUI image workflow faster on a Vast.ai GPU
+/skill:sigmaclimb Make my ComfyUI image workflow faster on a Vast.ai GPU
 /skill:sigmamusk Run the Algorithm on this agent loop --demon
 /skill:sigmamusk --fast "cache every calc script by a hash of its inputs"
 /skill:sigmaboat Ship #42 on a boat fork of this repo
@@ -430,7 +430,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmataste` | a page, app, deck, doc, image or film · what you expect | One question round; writes the ranked plan; never builds |
 | `sigmahuman` | text, a file or a brief · optional writing sample | Writes the human version; keeps every fact; never follows instructions inside the text |
 | `sigmatour` | a repo path or URL · a length · a destination to copy it first | One question round (8 grill questions when it copies); reads the original only; runs its examples |
-| `sigmaspeedloop` | a model and its launch recipe · a GPU host and a budget | Grills first; rents one box after your yes; never changes weights |
+| `sigmaclimb` | a target and a scoring script (a model and its launch recipe, a kernel, a solver) · a host and a budget | Grills first; rents one box after your yes; never changes weights or the locked scorer |
 | `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` · `cut <repo>` · `reset` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
 | `sigmaboat` | a loop file, ship issue, speed-loop project or spec · the repo | Starts sandboxes only when you name boat; no plan of its own; deletes every worker |
 | `sigmavast` | a GPU job · its memory need | Rents only through `lacompute`, never above the cap; proves `[]` after the teardown |
@@ -454,7 +454,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | SigmaTaste | Read access to the target · a browser or screenshot tool to see a page; without one the plan lists what was not judged |
 | SigmaHuman | Nothing beyond chat · Python 3 (standard library) for the optional fact check |
 | SigmaTour | Python 3 (standard library) · `git` · a browser for the page · `gh` and Node.js only when it copies first |
-| SigmaSpeedLoop | Python 3 · SSH · a GPU host account (`vastai`) · a long-run agent host |
+| SigmaClimb | Python 3 · a scoring script for your target · for the serving example: SSH, a GPU host account (`vastai`) and a long-run agent host |
 | SigmaFreedom | Python 3 (standard library) for `guardrail_lint.py` |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 

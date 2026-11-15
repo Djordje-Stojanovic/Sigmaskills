@@ -27,6 +27,7 @@ These rules close the known shortcuts. They become §INVARIANTS and §ANTI-GAMIN
 | Measure on a warm box, baseline on a cold one | Cache and clock effects | Champion re-measured in the same session as each candidate (paired A/B) |
 | Thermal or neighbour noise on the cloud box | Random wins | A/A spread sets the threshold; baseline re-run every N experiments to catch drift |
 | Edit the benchmark or its parser | Anything | Hash lock; the worker cannot write to `scripts/bench/` |
+| Tune to the visible prompts, probes and traces | A 100-pass loop fits the inputs it can read | Held-out check at every KEEP: sealed inputs, PASS or FAIL only (`references/evaluator.md` section 10) |
 | Claim a result without running it | Fake log | Raw outputs saved under `runs/<id>/`; the verdict script reads raw files, not the worker's summary |
 
 ## Verdict hierarchy (strongest first)
@@ -35,6 +36,7 @@ These rules close the known shortcuts. They become §INVARIANTS and §ANTI-GAMIN
 2. Quality gate (logprob fidelity) — a fail is final.
 3. Speed measurement, paired against the champion, beyond the noise floor.
 4. Promotion-only checks (tool-eval scenarios, GSM8K/IFEval subset).
-5. Final truth: the champion is re-measured on the **home Spark** before it can enter the real `la125` recipe. Only you approve that step.
+5. Held-out check on sealed inputs the worker never sees (PASS or FAIL only). A fail reverts the KEEP.
+6. Final truth: the champion is re-measured on the **home Spark** before it can enter the real `la125` recipe. Only you approve that step.
 
 A weaker layer can never overrule a stronger one.
