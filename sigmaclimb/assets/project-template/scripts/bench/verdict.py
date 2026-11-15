@@ -72,6 +72,11 @@ def weighted(r, weights):
     return math.exp(sum(w[k] / tot * math.log(r[k]) for k in w)) if tot else None
 
 
+def missing(cand, champ, p):
+    """Scored or guard probes the champion measured and the candidate did not: a gap is never a pass."""
+    return sorted(k for k in p.get("weights", {}) if champ.get(k) and not cand.get(k))
+
+
 def share(p):
     n = p and p["won"] + p["lost"] + p["tied"]
     return (p["won"] + p["tied"] / 2) / n if n else None
@@ -104,6 +109,8 @@ def decide(run):
     out = {"run": run, "utc": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")}
     if (bad := lock_problem(lock)):
         out.update(verdict="VOID", why=bad)
+    elif p.get("invariants", True) and inv is None:
+        out.update(verdict="VOID", why="no invariants.json: the change was not checked against the locked settings")
     elif inv is not None and not inv.get("ok"):
         out.update(verdict="VOID", why="invariant broken: " + "; ".join(inv.get("problems", [])))
     elif status.startswith("VOID"):
@@ -112,6 +119,8 @@ def decide(run):
         out.update(verdict="CRASH", why=f"run status {status}")
     elif not sc.get("pairs" if pairs else "probes"):
         out.update(verdict="CRASH", why="no score in raw/score.json")
+    elif not pairs and (gone := missing(sc["probes"], champion(lock)["probes"], p)):
+        out.update(verdict="CRASH", why=f"probes the champion has are missing: {gone}")
     else:
         t, champ = lock["thresholds"], champion(lock)
         mg = min_gain(p, t)
@@ -174,8 +183,8 @@ def promote(run, confirm, owner=None):
     for c in confirm:
         if why:
             break
-        if decide(c)["verdict"] not in ("KEEP", "STAGE1-WIN"):
-            why = f"confirmation run {c} does not win"
+        if decide(c)["verdict"] != "KEEP":
+            why = f"confirmation run {c} is not a KEEP"
         elif change_hash(c) != change_hash(run):
             why = f"confirmation run {c} is another change"
     if not why and mode == "required" and not owner and answer != "PASS":

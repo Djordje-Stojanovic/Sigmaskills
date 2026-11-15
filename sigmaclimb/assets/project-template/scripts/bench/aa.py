@@ -21,7 +21,7 @@ def bands(runs, p):
            for k in {k for x in rows for k in x} if any(x.get(k) is not None for x in rows)}
     rats = [ratios(x, med, set(p.get("lower_is_better", []))) for x in rows]
     spread = {k: max((abs(r[k] - 1) for r in rats if k in r), default=0) for k in med}
-    return med, spread, max(abs(weighted(r, p.get("weights", {})) - 1) for r in rats)
+    return med, spread, max(abs((weighted(r, p.get("weights", {})) or 1) - 1) for r in rats)
 
 
 def main(runs):

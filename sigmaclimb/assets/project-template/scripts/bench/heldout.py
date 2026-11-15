@@ -14,7 +14,8 @@ import hashlib, json, os, subprocess, sys
 
 
 def _hash(path):
-    return hashlib.sha256(open(path, "rb").read()).hexdigest() if os.path.exists(path) else None
+    """The same hash as verdict.py: line endings do not count."""
+    return hashlib.sha256(open(path, "rb").read().replace(b"\r\n", b"\n")).hexdigest() if os.path.exists(path) else None
 
 
 def _run_check(d, project, run):
@@ -57,6 +58,7 @@ def check(project, d, share, run):
 if __name__ == "__main__":
     a = [x.rstrip("/\\") for x in sys.argv[1:]]
     if len(a) >= 2 and a[0] in ("selftest", "check"):
+        a[1] = os.path.abspath(a[1])  # check.py runs in DIR, so a relative project path would point elsewhere
         h = json.load(open(os.path.join(a[1], "project.json"), encoding="utf-8")).get("heldout") or {}
         if not h.get("dir"):
             sys.exit("set heldout.dir in project.json first")

@@ -21,7 +21,7 @@ if (-not $inv.ok) { Write-Host "NOT LAUNCHED: invariants broken -> verdict VOID"
 & $box '[ -d /root/work/scripts ] && rm -rf /root/work/scripts.prev && mv /root/work/scripts /root/work/scripts.prev; mkdir -p /root/work/state /root/work/serve'
 & $box -Push -Src scripts -Dst '/root/work/'
 foreach ($f in 'project.json', 'evaluator.lock', 'state\champion.json') {
-  if (Test-Path $f) { & $box -Push -Src $f -Dst "/root/work/$($f -replace '\','/')" }
+  if (Test-Path $f) { & $box -Push -Src $f -Dst "/root/work/$($f.Replace('\', '/'))" }
 }
 & $box -Push -Src $Serve -Dst "/root/work/serve/$Run.sh"
 $mode = if ($Full -or $Record) { 'full' } else { '' }

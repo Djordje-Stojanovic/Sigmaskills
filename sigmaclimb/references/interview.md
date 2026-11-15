@@ -49,4 +49,4 @@ better, and what did you look at?"** Show two real versions of the target (the s
 ## Write it down
 
 `SPEC_DRAFT.md` holds every answer and each `Ruling: <decision> - <reason> - <cost if wrong>` you took for him.
-`project.json` holds every number; no script holds a threshold of its own. The owner signs off with a "yes".
+`project.json` holds every setting of the loop; the scripts read them from there. The owner signs off with a "yes".

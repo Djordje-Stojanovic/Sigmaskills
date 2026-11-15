@@ -41,13 +41,13 @@ def p_probe(ax, df, name, lower):
     ax.grid(alpha=.2)
 
 
-def p_loop(ax, df):
+def p_loop(ax, df, floor):
     ax.bar(df.index, df["minutes"].fillna(0), color=colours(df))
     ax2 = ax.twinx()
     ax2.plot(df.index, df["score_share"] * 100, color=BASE, lw=1.5)
-    ax2.axhline(50, color=BASE, lw=.6, ls=":")
+    ax2.axhline(floor * 100, color=BASE, lw=.6, ls=":")
     ax2.set_ylabel("% of the pass that measures the score", fontsize=7)
-    ax.set_title("minutes per pass (bars) and the share that measures the score (line; keep it above 50 %)", fontsize=9)
+    ax.set_title("minutes per pass (bars) and the share that measures the score (line; keep it above " + f"{floor:.0%})", fontsize=9)
 
 
 def render(out):
@@ -70,7 +70,7 @@ def render(out):
                  fontweight="bold")
     panels = [lambda a: p_chain(a, champ, proj.get("machine", "?")), lambda a: p_vs_champion(a, df)]
     panels += [lambda a, k=k: p_probe(a, df, k, k in proj.get("lower_is_better", [])) for k in top]
-    panels += [lambda a: p_loop(a, df)]
+    panels += [lambda a: p_loop(a, df, proj.get("score_share_min", 0.5))]
     for a, f in zip(axes.flat, panels):
         try:
             f(a)

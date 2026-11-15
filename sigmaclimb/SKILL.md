@@ -107,8 +107,8 @@ Never skip the interview or the lock. A scorer rebuilt after pass 1 throws away 
    background waiter alive; never poll.
 3. `verdict.py` decides; `record.py` writes the results row from the raw files. `STAGE1-WIN` is never a KEEP.
 4. A KEEP becomes the champion with `verdict.py promote`. It needs the quality check, one confirmation run when the
-   gain is small, and the held-out check only in `required` mode. Every verdict prints two numbers: against the
-   champion before, and against the start.
+   gain is small, and the held-out check only in `required` mode. Every scored verdict prints two numbers: against
+   the champion before, and against the start.
 5. One run and at most one confirmation per idea. Then show the table and move on. A dead idea goes to
    `ruled_out.tsv` with what it rules out and the condition that reopens it. One line to `insights.md`.
 6. At a KEEP and at the end: commit, `plot_progress.py`, rewrite `PROGRESS.md` (champion against the start and the

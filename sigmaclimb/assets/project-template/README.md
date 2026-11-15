@@ -27,7 +27,9 @@ For another target, replace these:
    "tied"}, "start": {...}}}` for blind pairs.
 3. Its quality step writes `raw/quality.json`: `{"ok": true, "fails": []}`.
 4. `project.json`: the probe weights, `lower_is_better`, the measurer, and the rest from the interview.
-5. The launch and wait scripts, if the target does not run on a rented box. Local: `bash scripts/bench/run_experiment.sh runs/0005 candidate/change.patch`.
+5. Your invariants check writes `runs/<id>/invariants.json` (`{"ok": true, "problems": []}`) before a pass; set
+   `"invariants": false` in `project.json` only when nothing is locked.
+6. The launch and wait scripts, if the target does not run on a rented box. Local: `bash scripts/bench/run_experiment.sh runs/0005 candidate/change.patch`.
 
 ## Held-out check
 

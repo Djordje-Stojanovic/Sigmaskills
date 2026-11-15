@@ -8,7 +8,7 @@ column; a label appears only in a code span, after the phrase. Say what a thing 
 | KEEP | the change is better and stays |
 | STAGE1-WIN | the change scored better; the quality check runs next |
 | REJECT | the change is not better; it is undone |
-| ARCHIVE | not a clean win: one part got better and another worse, or the gain is too small overall; you decide |
+| ARCHIVE | not a clean win: the result is better but one part got worse, or one part is clearly better but the total is short; you decide |
 | VOID | the run does not count (the scorer or a locked setting changed) |
 | CRASH | the run failed before it measured anything |
 | champion | the best setup so far |

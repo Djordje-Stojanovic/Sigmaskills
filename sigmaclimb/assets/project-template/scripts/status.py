@@ -43,7 +43,9 @@ def speed_text(root=ROOT):
     f = lambda x, unit: "n/a" if x is None else f"{x:.0f} {unit}"
     text = (f"loop: {f(per_idea, 'min')} per idea, {f(to_champ, 'min')} from a KEEP to its champion, "
             f"{'n/a' if share is None else f'{share:.0%}'} of a pass measures the score")
-    return text + (" - UNDER HALF: fix the loop before the next idea" if share is not None and share < 0.5 else "")
+    p = os.path.join(root, "project.json")
+    floor = (json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {}).get("score_share_min", 0.5)
+    return text + (f" - UNDER {floor:.0%}: fix the loop before the next idea" if share is not None and share < floor else "")
 
 
 def main():

@@ -19,6 +19,7 @@ while ($true) {
   if (((Get-Date) - $t0).TotalMinutes -gt $MaxMinutes) { Write-Host "WAIT TIMEOUT after $MaxMinutes min"; exit 3 }
   Start-Sleep 30
 }
+if (Test-Path "runs\$Run\raw") { Remove-Item -Recurse -Force "runs\$Run\raw" }  # a reused run number keeps no old file
 New-Item -ItemType Directory -Force "runs\$Run\raw" | Out-Null
 for ($i = 1; $i -le 10; $i++) {
   try { & $box -Pull -Src "/root/runs/$Run/raw/." -Dst "runs\$Run\raw" 2>$null } catch {}

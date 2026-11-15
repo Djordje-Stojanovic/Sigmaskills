@@ -35,9 +35,11 @@ class Climb(unittest.TestCase):
 
     def run_dir(self, name, probes=None, quality=None, change="change A", pairs=None, stages=None):
         raw = os.path.join(self.proj, "runs", name, "raw")
+        shutil.rmtree(raw, ignore_errors=True)  # a new run starts empty, as run_experiment.sh does
         put(os.path.join(raw, "score.json"), {"pairs": pairs} if pairs else {"probes": probes})
         put(os.path.join(raw, "meta.json"), {"status": "OK", "stage_s": stages or {"start": 60, "score": 300, "quality": 60}})
         put(os.path.join(raw, "change"), change)
+        put(os.path.join(self.proj, "runs", name, "invariants.json"), {"ok": True, "problems": []})
         if quality is not None:
             put(os.path.join(raw, "quality.json"), {"ok": quality, "fails": [] if quality else ["needle lost"]})
 
@@ -72,6 +74,15 @@ class Climb(unittest.TestCase):
         self.assertRegex(self.verdict("runs/0004"), r"^VERDICT STAGE1-WIN")
         self.assertIn("REFUSED: the quality check has not run", self.verdict("promote", "runs/0004"))
 
+    def test_a_missing_probe_or_invariants_check_is_never_a_pass(self):
+        self.run_dir("0004", {"a": 13.0}, quality=True)  # b not measured
+        self.assertIn("VERDICT CRASH: probes the champion has are missing: ['b']", self.verdict("runs/0004"))
+        self.run_dir("0005", {"a": 13.0, "b": 5.0}, quality=True)
+        os.remove(os.path.join(self.proj, "runs", "0005", "invariants.json"))
+        self.assertRegex(self.verdict("runs/0005"), r"^VERDICT VOID: no invariants.json")
+        self.project(invariants=False)
+        self.assertRegex(self.verdict("runs/0005"), r"^VERDICT KEEP")
+
     def test_a_trade_and_a_side_effect(self):
         self.run_dir("0004", {"a": 13.0, "b": 6.0}, quality=True)  # a +30 %, b 20 % slower
         self.assertRegex(self.verdict("runs/0004"), r"^VERDICT ARCHIVE")
@@ -79,9 +90,11 @@ class Climb(unittest.TestCase):
     def test_promote_off_owner_and_confirmation(self):
         self.run_dir("0004", {"a": 10.6, "b": 5.0}, quality=True)  # small gain: needs one confirmation
         self.assertIn("run one confirmation first", self.verdict("promote", "runs/0004"))
-        self.run_dir("0005", {"a": 10.7, "b": 5.0}, change="change B")
+        self.run_dir("0005", {"a": 10.7, "b": 5.0}, change="change B", quality=True)
         self.assertIn("is another change", self.verdict("promote", "runs/0004", "runs/0005"))
-        self.run_dir("0005", {"a": 10.7, "b": 5.0})
+        self.run_dir("0005", {"a": 10.7, "b": 5.0})  # no quality check on the confirmation: not a KEEP
+        self.assertIn("is not a KEEP", self.verdict("promote", "runs/0004", "runs/0005"))
+        self.run_dir("0005", {"a": 10.7, "b": 5.0}, quality=True)
         self.assertIn("PROMOTED", self.verdict("promote", "runs/0004", "runs/0005"))
         self.assertEqual(self.champion()["runs"], ["runs/0004", "runs/0005"])
         self.run_dir("0006", {"a": 13.0, "b": 6.0}, quality=True)  # a trade: only the owner's word promotes it
@@ -102,16 +115,22 @@ class Climb(unittest.TestCase):
         owner_check("false", 0.0)
         self.assertIn("SELFTEST FAIL", self.py("scripts/bench/heldout.py", "selftest", self.proj))
         self.assertIn("BROKEN", self.py("scripts/bench/heldout.py", "check", self.proj, "runs/0004"))
-        owner_check("true", 0.0)
-        self.assertEqual("SELFTEST PASS", self.py("scripts/bench/heldout.py", "selftest", self.proj))
+        put(os.path.join(d, "check.py"), 'import os, sys\nok = os.path.isfile(os.path.join(sys.argv[1], "project.json"))\n'
+            'print(\'{"quality_ok": %s, "gain": 0.0}\' % ("true" if ok else "false"))\n')
+        self.assertEqual("SELFTEST PASS", self.py("scripts/bench/heldout.py", "selftest", "."))  # "." as the docs say
         owner_check("false", 0.09)
         self.assertEqual("FAIL quality", self.py("scripts/bench/heldout.py", "check", self.proj, "runs/0004"))
         self.assertIn("REFUSED: held-out check (required): FAIL quality", self.verdict("promote", "runs/0004"))
         owner_check("true", 0.01)  # visible gain +9.5 %: half of it is the bar
         self.assertEqual("FAIL gain", self.py("scripts/bench/heldout.py", "check", self.proj, "runs/0004"))
         self.assertIn("FAIL gain", self.verdict("promote", "runs/0004"))
+        change = os.path.join(self.proj, "runs", "0004", "raw", "change")
+        with open(change, "wb") as f:
+            f.write(b"change A\nline 2\n")
         owner_check("true", 0.06)
         self.assertEqual("PASS", self.py("scripts/bench/heldout.py", "check", self.proj, "runs/0004"))
+        with open(change, "wb") as f:  # the same change with Windows line endings is still the change checked
+            f.write(b"change A\r\nline 2\r\n")
         self.assertIn("PROMOTED", self.verdict("promote", "runs/0004"))
         self.assertEqual(self.champion()["history"][-1]["heldout"], "PASS")
 
@@ -148,7 +167,7 @@ class Climb(unittest.TestCase):
         line = self.py("scripts/status.py")
         self.assertIn("45 min per idea", line)  # 90 minutes over 2 ideas; the baseline does not count
         self.assertIn("25 min from a KEEP to its champion", line)
-        self.assertIn("40% of a pass measures the score - UNDER HALF", line)
+        self.assertIn("40% of a pass measures the score - UNDER 50%", line)
         self.assertIn("score", subprocess.run([sys.executable, "check_state.py"], cwd=self.proj, capture_output=True, text=True).stdout)
 
     @unittest.skipUnless(BASH, "needs bash")
@@ -159,6 +178,8 @@ class Climb(unittest.TestCase):
             '  quality) OUT=$1; touch "$OUT/quality_ran"; echo \'{"ok": true, "fails": []}\' > "$OUT/quality.json" ;;',
             'esac', ""]))
         put(os.path.join(self.proj, "change.patch"), "one change")
+        for name in ("0004", "0005"):
+            put(os.path.join(self.proj, "runs", name, "invariants.json"), {"ok": True, "problems": []})
         env = dict(os.environ, TARGET=os.path.join(self.proj, "fake_target.sh"), PYTHON=sys.executable, CLIMB_ROOT=self.proj)
         for name, a, quality_runs, verdict in (("0004", "9.0", False, "REJECT"), ("0005", "12.0", True, "KEEP")):
             subprocess.run([BASH, "scripts/bench/run_experiment.sh", f"runs/{name}", "change.patch"], cwd=self.proj,
