@@ -21,7 +21,7 @@ A rental needs four facts: the job, its length, the spend cap, and which data le
   - Cap: the one `lacompute config` shows. Never raise it.
   - Data: only what the job's own code fetches. No key reaches the machine by any route: not in `--env`, not in the job string, not in a file. No private repo copy, no `--repo`.
 
-Rent when the job needs a GPU, or more GPU memory than the local machines have free, and the owner asked for the run. Do not rent for CPU work (SigmaBoat), for a job a local GPU can take, or to "try" a command.
+Rent when the job needs a GPU, or more GPU memory than the local machines have free, and the owner asked for the run. Do not rent for CPU work (SigmaBoat), for a job a local GPU can take, or to "try" a command (the smoke test of section 1 is the one exception).
 
 ## 2. Read today's offers
 
@@ -67,7 +67,7 @@ Both must print `[]`. A leftover: `lacompute kill-all`, then check again.
 
 ## Docs
 
-Live: https://docs.vast.ai (page list: https://docs.vast.ai/llms.txt; add `.md` to a page address for plain text). Once `lasynctoolkit` has mirrored them, the toolkit checkout that holds `lacompute` and its guide keeps a copy in `docs/vendor/Vast_docs/`. Read `cli/reference/search-offers.md` (every offer filter field), `cli/reference/create-instance.md` and `guides/instances/pricing.md` in either place before you guess a flag, a filter or a price. When you brief a worker agent, give it this line.
+Live: https://docs.vast.ai (page list: https://docs.vast.ai/llms.txt; add `.md` to a page address for plain text). Once `lasynctoolkit` has mirrored them, the toolkit checkout that holds `lacompute` and its guide keeps a copy in `docs/vendor/Vast_docs/`. Read `cli/reference/search-offers.md` (every offer filter field), `cli/reference/create-instance.md` and `guides/instances/pricing.md` in either place before you guess a flag, a filter or a price. When you brief a worker agent, paste these two addresses and the `docs/vendor/Vast_docs/` path into its brief.
 
 ## Final response
 
