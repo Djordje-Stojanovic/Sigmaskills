@@ -147,10 +147,11 @@ Required. The scorer in sections 1-9 is fixed and the agent can read all of it. 
 
 - **What it holds.** A second prompt pack (new text, new salts, new needles), a replay of real agent sessions that are
   not in the scorer's replay, and the same gate and speed score on them.
-- **Where it lives.** On the owner's PC or another machine, never in the project repo and never on the box. A script
-  there copies nothing back except one line: PASS or FAIL.
-- **Rule.** PASS = the gate holds and the held-out score ratio is at least half of the visible gain (same sign). A
-  visible +10 % needs at least +5 % held out.
+- **Where it lives.** Under a second user or on another machine, never in the project repo and never on the box.
+  `scripts/bench/heldout.py init` makes it (template README). The wrapper reads one line from the owner's `check.py`
+  (gate flag and ratio), keeps the answer in a results folder the loop cannot write, and prints PASS or FAIL.
+- **Rule.** PASS = the gate holds and the held-out score gain is at least half of the visible gain (same sign). A
+  visible +10 % needs at least +5 % held out. `verdict.py promote` reads the PASS; no PASS, no new champion.
 - **When.** After the confirmation run of every KEEP, before promotion. Never after a REJECT.
 - **Record.** Write `heldout: pass` or `heldout: fail` in the results description. A FAIL is a revert, and a line in
   `ruled_out.tsv` saying the gain did not transfer.
