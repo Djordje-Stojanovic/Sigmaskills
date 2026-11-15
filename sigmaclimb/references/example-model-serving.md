@@ -1,6 +1,6 @@
 # Worked example: make a model serve faster on a rented GPU
 
-The first SigmaClimb project. `SKILL.md` holds the method for any target. This file holds what is true only when the
+The first project. `SKILL.md` holds the method for any target. This file holds what is true only when the
 target is a served model: the GPU host, the engine, the probes and the files of `assets/project-template/`.
 The other files in this folder (`evaluator.md`, `lessons.md`, `case-study-la125.md`, `setup-vast.md`) are also about
 this example.

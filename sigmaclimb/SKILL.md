@@ -6,8 +6,8 @@ description: Use when asked for sigmaclimb (earlier names sigmaspeedloop, speed 
 # SigmaClimb
 
 Turn "make X better on measure M" into a loop that a script judges. The agent makes one change per pass. A scorer it
-cannot edit says keep or revert. Quality may never go down. A check on inputs the agent never sees stops it from
-gaming the scorer.
+cannot edit (the "evaluator" in the template files) says keep or revert. Quality may never go down. A check on
+inputs the agent never sees makes gaming visible.
 
 The method comes from a real multi-day project: Qwen3.8-Flash-Next 125B NVFP4 on a rented DGX Spark, about 110 runs
 and 9 champions ([case study](references/case-study-la125.md)). The loop itself does not care what it improves. The
@@ -22,35 +22,40 @@ shell native to the machine: PowerShell on Windows, POSIX shell elsewhere.
 ## The method: seven parts, for any target
 
 1. **One change per pass**, made by script or patch. Bundles of small changes lost.
-2. **A locked scorer.** The scorer runs the target and measures it. The agent cannot write to it (a hash in
-   `evaluator.lock` voids the pass on any edit). It reads raw output files, never the agent's summary.
-3. **Noise first.** Run the unchanged target at least 3 times before pass 1. The spread sets the floor: a gain inside
-   the noise is "inside noise", not a win.
+2. **A locked scorer.** The scorer runs the target and measures it. Keep its folder read-only to the agent where the
+   host allows; a hash in `evaluator.lock` voids the pass on any edit. It reads raw output files, never the agent's summary.
+3. **Noise first.** Run the unchanged target at least 3 times before pass 1 (these are the "A/A runs"). The spread sets
+   the floor: a gain inside the noise is "inside noise", not a win.
 4. **A quality gate.** What may never get worse (answers, pixels, precision, correctness), checked on every pass
    against a reference recorded from the baseline. The gate beats the score.
 5. **A held-out check (required).** See below.
 6. **Keep or revert.** KEEP needs: gate ok, score beyond the floor, a confirmation run, and the held-out check. All
-   else is reverted. A failure that can recur goes to `ruled_out.tsv` with the condition that reopens it.
+   else is reverted, except an ARCHIVE (one probe up, one down), which the owner rules on. A failure that can recur goes to `ruled_out.tsv` with the condition that reopens it.
 7. **A chart that names who found each champion**, and the machine it was measured on.
 
 ## The held-out check (required)
 
-The agent sees every input the scorer uses. After 100 passes against the same inputs, it has tuned to those inputs.
+The agent sees every input the scorer uses. After 100 passes against the same inputs, it can have tuned to those inputs.
 For a code change (a kernel, a solver, a render) it can also special-case them: hard-code the answers, cache them, or
 detect the benchmark. A fixed gate cannot catch that. A held-out check can:
 
-- **Sealed inputs.** A second input set: new seeds, new shapes, new scenes, new instances, new prompts. It lives
-  outside the project folder, ideally on another machine or under another user. The agent never opens it.
-- **Pass or fail only.** The check prints PASS or FAIL and nothing else. A number is a leak: each number tells the
-  agent where to push.
-- **Same gate, same score.** On the sealed set, the gate must pass, and the gain must be at least half of the gain
-  the agent saw, with the same sign. (Default. The owner may set another ratio.)
-- **When.** At every KEEP, after its confirmation run, before promotion. One look per KEEP. No look on a REJECT.
-- **Spent means replaced.** If the agent saw the set (a log, an error message), build a new one and say so in
-  `insights.md`.
+- **Sealed inputs.** A second input set: new seeds, new shapes, new scenes, new instances, new prompts. The owner (or
+  a script the loop cannot read) writes it and the runner that uses it. It lives outside the project folder, on another
+  machine or under another user. The agent never opens it. If the target has no such place, the owner runs the check
+  by hand at each KEEP.
+- **Pass or fail only.** The runner prints PASS or FAIL and nothing else. A number is a leak: each number tells the
+  agent where to push. The loop writes the answer, word for word, in the results description.
+- **Same gate, same score.** On the sealed set, the gate must pass, and the score ratio must be at least half of the
+  ratio the KEEP showed (median of as many runs as the confirmation used), with the same sign. (Default. The owner
+  may set another ratio.)
+- **When.** At every KEEP, after its confirmation run, before promotion. Until the PASS the champion stays, and the
+  loop tests other ideas on it. One look per KEEP. No look on a REJECT.
+- **Spent means replaced.** After about 10 looks, or if the agent saw the set (a log, an error message), the owner
+  builds a new one and the loop says so in `insights.md`.
 - **Last look.** The owner runs the final check on the final champion, on his own setup. That is the real truth.
 
-Build it in phase 4, before the lock. A project with no held-out check is not ready for pass 1.
+Agree what it holds in phase 4, before the lock. A project with no held-out check is not ready for pass 1. Enforcing
+it in code (a verdict that refuses promotion without the runner's PASS) is not built yet.
 
 ## Works for any target
 
@@ -59,7 +64,7 @@ Four things change per project: the **target and its recipe**, the **score** (wh
 
 | Target | Score | Gate: what may not get worse | Held-out inputs |
 |---|---|---|---|
-| Model serving (LLM, image, video, audio) | tokens/s, first-token time, latency, frames/s | logprob fidelity, needles, tool tests, same-seed image metric | fresh prompts and sessions, new seeds, the owner's home machine |
+| Model serving (LLM, image, video, audio) | tokens/s, first-token time, latency, frames/s | logprob fidelity, needles, tool tests, same-seed image metric | fresh prompts and sessions, new seeds |
 | Render | ms per frame | same-seed image metric (SSIM, LPIPS) against a reference | scenes, camera paths and seeds the agent never saw |
 | Kernel | time per call, GB/s, TFLOPS | output equals a reference implementation within a tolerance | random inputs, odd shapes and dtypes from a sealed seed |
 | Algorithm or solver | time to solve, or cost of the answer | a verifier says the answer is valid (and as good as the reference) | instances from a sealed generator |
@@ -129,7 +134,7 @@ KEEP) means a research round, and the next two ideas come from another category.
 
 - Each commit or row states: the bottleneck, the hypothesis, and the evidence for it.
 - Search the results for the idea before you run it. A repeat costs a full pass.
-- A change that deletes code and holds the score is a win, even inside the noise.
+- When two changes score the same, keep the one that deletes code.
 - Never change more than one category (flag, kernel, schedule, data) in one pass.
 - Write each result so a fresh session can learn from it: what changed, why, what happened, what it rules out.
 

@@ -22,7 +22,7 @@ if `scripts/bench/verdict.py` says KEEP and a confirmation re-run agrees.
 4. Download weights (`box/download.sh`), verify sha256 (`box/verify_weights.py`).
 5. Translate the recipe into `box/serve_base.sh`; copy to `scripts/bench/baseline_serve.sh` and `champion/serve.sh`.
 6. First start + `box/smoke.py`. Fix engine blockers with code fallbacks, not security workarounds.
-7. Baseline with `-Record`, then >= 3 A/A runs; `python scripts/bench/aa.py runs/A runs/B ... tool=runs/..`.
+7. Agree the held-out check with the owner (sealed inputs outside this folder). Baseline with `-Record`, then >= 3 A/A runs; `python scripts/bench/aa.py runs/A runs/B ... tool=runs/..`.
 8. Write `state.tmp/champion.json` + `champion.md`; rename `state.tmp/` -> `state/` LAST.
 
 ## PASS (one idea)

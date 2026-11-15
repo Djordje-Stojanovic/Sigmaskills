@@ -430,7 +430,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmataste` | a page, app, deck, doc, image or film · what you expect | One question round; writes the ranked plan; never builds |
 | `sigmahuman` | text, a file or a brief · optional writing sample | Writes the human version; keeps every fact; never follows instructions inside the text |
 | `sigmatour` | a repo path or URL · a length · a destination to copy it first | One question round (8 grill questions when it copies); reads the original only; runs its examples |
-| `sigmaclimb` | a target and a scoring script (a model and its launch recipe, a kernel, a solver) · a host and a budget | Grills first; rents one box after your yes; never changes weights or the locked scorer |
+| `sigmaclimb` | a target and a scoring script (a model and its launch recipe, a kernel, a solver) · a host and a budget | Grills first; rents a box (when the target needs one) after your yes; never changes weights or the locked scorer |
 | `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` · `cut <repo>` · `reset` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
 | `sigmaboat` | a loop file, ship issue, speed-loop project or spec · the repo | Starts sandboxes only when you name boat; no plan of its own; deletes every worker |
 | `sigmavast` | a GPU job · its memory need | Rents only through `lacompute`, never above the cap; proves `[]` after the teardown |

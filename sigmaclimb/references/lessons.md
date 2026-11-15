@@ -321,11 +321,11 @@ evaluator inside the container, prove each change is active in-process, keep a r
 the agent could read. About 110 passes ran against the same inputs. The hash lock stopped edits, not tuning to the
 inputs. Rule: a sealed second input set, PASS or FAIL only, at every KEEP (see `SKILL.md`).
 
-**12.2 What `TrainRTX5070` (3 rounds, one RTX 5070) did better, ported in `SKILL.md`:**
+**12.2 What `TrainRTX5070` (3 rounds, one RTX 5070) did better; `SKILL.md` carries the habits:**
 - The training data never touches the validation shards (the last 2 shards are never read for training). The scorer's
   inputs are split from the agent's by construction. Its weakness: the same split picks every KEEP, and the metric
   function is locked by a written rule, not a hash.
-- A commit states the bottleneck, the hypothesis and the evidence. One category per experiment. A plateau (5 runs
+- Search the results for an idea before you run it. A commit states the bottleneck, the hypothesis and the evidence. One category per experiment. A plateau (5 runs
   with no gain over 0.005) forces a search round and two big changes. A deletion that holds the score is kept.
 - The `description` column of the results file is the agent's memory: what changed, why, what happened, what it rules out.
 - Noise was measured first (three runs of the unchanged code, sigma about 0.0014 to 0.0020), and the keep floor sits

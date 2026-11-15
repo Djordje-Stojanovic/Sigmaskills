@@ -27,7 +27,7 @@ These rules close the known shortcuts. They become §INVARIANTS and §ANTI-GAMIN
 | Measure on a warm box, baseline on a cold one | Cache and clock effects | Champion re-measured in the same session as each candidate (paired A/B) |
 | Thermal or neighbour noise on the cloud box | Random wins | A/A spread sets the threshold; baseline re-run every N experiments to catch drift |
 | Edit the benchmark or its parser | Anything | Hash lock; the worker cannot write to `scripts/bench/` |
-| Tune to the visible prompts, probes and traces | A 100-pass loop fits the inputs it can read | Held-out check at every KEEP: sealed inputs, PASS or FAIL only (`references/evaluator.md` section 10) |
+| Tune to the visible prompts, probes and traces | A 100-pass loop fits the inputs it can read | Held-out check at every KEEP: sealed inputs, PASS or FAIL only (the skill's `references/evaluator.md`, section 10) |
 | Claim a result without running it | Fake log | Raw outputs saved under `runs/<id>/`; the verdict script reads raw files, not the worker's summary |
 
 ## Verdict hierarchy (strongest first)
