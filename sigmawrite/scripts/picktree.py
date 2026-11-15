@@ -27,7 +27,7 @@ def check(t):
     return t
 
 def page(t, title):
-    data = json.dumps(t, ensure_ascii=False).replace("</", "<\\/")
+    data = json.dumps(t, ensure_ascii=False).replace("<", "\\u003c")   # no "</script>" or "<!--" can end the data block
     return PAGE.replace("__TITLE__", html.escape(title)).replace("__TITLEJS__", json.dumps(title)).replace("__NOTE__", t.get("note") and f"<p class=lead>{html.escape(t['note'])}</p>" or "").replace("__DATA__", data)
 
 def main():
