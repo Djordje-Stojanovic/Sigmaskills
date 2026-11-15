@@ -15,20 +15,20 @@ A rental needs four facts: the job, its length, the spend cap, and which data le
 
 - **The owner gave them:** use them. Ask only about what is missing.
 - **The owner gave none and is there to answer:** ask one short round, all four at once: what job, how long, what spend cap, which data leaves the machine. Then go.
-- **The owner said "do it overnight" (or "do stuff"), or is not there:** do not wait. Take these defaults and say which you took in the final response:
+- **The owner said "do it overnight" (or "do stuff"), or is not there:** do not wait. Take these defaults for each fact the owner did not give. A fact the owner gave always wins. Say which defaults you took in the final response:
   - Job: the work you were given (loop file, issue, spec). None: stop, there is nothing to rent for.
   - Length: the job's own estimate plus 25 %. No estimate: a smoke test first (`-- nvidia-smi`, `--max 10m`), then size the real run from what it showed.
   - Cap: the one `lacompute config` shows. Never raise it.
-  - Data: only what the job's own code fetches. No keys in `--env`, no private repo copy, no `--repo`.
+  - Data: only what the job's own code fetches. No key reaches the machine by any route: not in `--env`, not in the job string, not in a file. No private repo copy, no `--repo`.
 
 Rent when the job needs a GPU, or more GPU memory than the local machines have free, and the owner asked for the run. Do not rent for CPU work (SigmaBoat), for a job a local GPU can take, or to "try" a command.
 
 ## 2. Read today's offers
 
 - Size by the model's memory need: weights (parameters x bytes per parameter) + KV cache or activations + about 20 % headroom (a rule of thumb). `-s NNgb` asks for that much GPU memory.
-- Read the offers now: `vastai search offers` with the owner's offer filter (`lacompute config` names the file). Never use a card or price from memory or from an older run.
+- Read the offers now: `vastai search offers` with the owner's offer filter, the line in `~/.config/lazy/vast-offers.txt`. Never use a card or price from memory or from an older run.
 - Take the cheapest offer that fits the memory need and the length, with hourly price x length under the cap. `lacompute` prints the price before the start.
-- The offer filter holds the owner's host rules (for example no hosts in China). No filter: stop and say so. Never loosen it.
+- The offer filter must exclude China: `notin [CN]` in its line of `~/.config/lazy/vast-offers.txt`. No file, or no such line: stop and say so. Never loosen it.
 
 ## 3. Check before the start
 
@@ -38,7 +38,7 @@ lacompute config    # max_per_hour, max_per_day and where each came from
 lacompute cost      # money spent so far
 ```
 
-- A start above the cap is refused by `lacompute`.
+- The cap is the owner's. A start above it is refused by `lacompute`. Never raise it yourself.
 - **Login code.** When `check` says vast.ai cannot rent (2FA), stop and ask the owner for the code from his email. Then run the two `vastai tfa` steps in the guide (Owner steps). Never print the code back.
 
 ## 4. Run
@@ -67,7 +67,7 @@ Both must print `[]`. A leftover: `lacompute kill-all`, then check again.
 
 ## Docs
 
-Live: https://docs.vast.ai (page list: https://docs.vast.ai/llms.txt; add `.md` to a page address for plain text). The machines also keep a copy that `lasynctoolkit` refreshes: `docs/vendor/Vast_docs/` in the toolkit checkout that holds `lacompute` and its guide. Read `cli/reference/search-offers.md` (every offer filter field), `cli/reference/create-instance.md` and `guides/instances/pricing.md` there before you guess a flag, a filter or a price. When you brief a worker agent, give it this line.
+Live: https://docs.vast.ai (page list: https://docs.vast.ai/llms.txt; add `.md` to a page address for plain text). Once `lasynctoolkit` has mirrored them, the toolkit checkout that holds `lacompute` and its guide keeps a copy in `docs/vendor/Vast_docs/`. Read `cli/reference/search-offers.md` (every offer filter field), `cli/reference/create-instance.md` and `guides/instances/pricing.md` in either place before you guess a flag, a filter or a price. When you brief a worker agent, give it this line.
 
 ## Final response
 
