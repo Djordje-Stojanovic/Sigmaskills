@@ -80,7 +80,7 @@ input,select,textarea,button{font:inherit;color:inherit}
 .tsh{position:absolute;left:0;bottom:-1px;height:2px;background:var(--acc);opacity:.55}
 .tp{position:absolute;right:0;top:4px;width:clamp(96px,24vw,184px);height:36px;padding:0 8px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface-2);font-size:14px;font-weight:500}
 @media (pointer:coarse),(max-width:640px){.tp{height:44px;top:0}}
-.tk{margin-left:8px;padding:0 0 6px 10px;border-left:1px solid var(--line)}.tw-w{display:block;margin:4px 0 8px;min-height:40px}
+.tk{margin-left:8px;padding:0 0 6px 10px;border-left:1px solid var(--line)}.tw-w{display:block;margin:4px 0 8px;min-height:44px}
 .tr.rest .trow{display:grid;grid-template-columns:clamp(52px,14vw,76px) minmax(0,1fr);column-gap:10px;padding:10px 0;color:var(--mute);font-size:14px}
 .send{position:sticky;bottom:0;display:flex;align-items:center;gap:12px;margin:16px -16px 0;padding:12px 16px;background:var(--canvas);border-top:1px solid var(--line)}#n{color:var(--mute);font-size:14px}
 #out{display:none;margin-top:8px;min-height:140px}
@@ -90,7 +90,7 @@ input,select,textarea,button{font:inherit;color:inherit}
 <div class="bar"><input type="search" class="input tq" placeholder="Search this tree" aria-label="Search this tree" autocomplete="off"><button type="button" class="btn tall" hidden>Take my picks</button></div>
 <div class="tw"></div>
 <textarea class="input" id="any" placeholder="A comment on the whole tree, if you have one" aria-label="A comment on the whole tree" style="margin-top:12px"></textarea>
-<div class="send"><button type="button" class="btn go" id="copy">Copy my picks</button><span id="n"></span></div>
+<div class="send"><button type="button" class="btn go" id="copy">Copy my picks</button><span id="n" role="status"></span></div>
 <textarea class="input" id="out" readonly aria-label="Your picks, to copy by hand"></textarea></div>
 <script type="application/json" id="data">__DATA__</script>
 <script>
@@ -136,7 +136,7 @@ input,select,textarea,button{font:inherit;color:inherit}
   const word = (p, k) => `<input type="text" class="input tw-w" placeholder="A word on this row" aria-label="A word on ${esc(p)}" value="${esc(k.w || "")}">`;
   box.addEventListener("toggle", (e) => { const d = e.target; if (!d.open || d.dataset.done) return; d.dataset.done = 1;
     const p = d.closest(".tr").dataset.path, r = find(p), k = t.picks[p] || {};
-    d.querySelector(".tk").innerHTML = (k.p || k.w ? word(p, k) : "") + (r.k && !t.q ? kids(r, p) : ""); }, true);
+    d.querySelector(".tk").innerHTML = (k.p || k.w ? word(p, k) : "") + (r.k ? kids(r, p) : ""); }, true);
   box.addEventListener("input", (e) => { const x = e.target.closest(".tp,.tw-w"); if (!x) return; const p = x.closest(".tr").dataset.path, k = t.picks[p] = t.picks[p] || {};
     if (!x.classList.contains("tp")) { k.w = x.value.trim(); return keep(); }
     k.p = x.value; const d = x.closest(".tr").querySelector(":scope>details");
