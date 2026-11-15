@@ -41,26 +41,29 @@ detect the benchmark. A fixed gate cannot catch that. A held-out check can:
 
 - **Sealed inputs.** A second input set: new seeds, new shapes, new scenes, new instances, new prompts. The owner (or
   a script the loop cannot read) writes it and the runner that uses it. `scripts/bench/heldout.py init` makes the
-  folder: inputs mode 0700 under a second user (or on another machine), a results folder the loop can read but not
-  write. The agent never opens the inputs. If the target has no such place, the owner runs the check by hand at each KEEP.
-- **Pass or fail only.** The runner prints PASS or FAIL and nothing else. A number is a leak: each number tells the
-  agent where to push. The loop writes the answer, word for word, in the results description.
+  folder as a second user (or on another machine): inputs mode 0700, a results folder the loop can read but not write. The agent never opens the inputs. If the target has no such place, the owner runs the check by hand at each KEEP.
+- **Pass or fail only.** The runner prints PASS or FAIL and nothing else; it keeps only the last line of the owner's
+  script, as a gate flag and a ratio, and drops the rest. A number is a leak: each number tells the agent where to
+  push. The loop writes the answer, word for word, in the results description.
 - **Same gate, same score.** On the sealed set, the gate must pass, and the score gain must be at least half of the
   gain of the KEEP run (`runs/<n>/verdict.json`), with the same sign. The owner sets the share at `init` (default 0.5).
 - **When.** At every KEEP, after its confirmation run, before promotion. Until the PASS the champion stays, and the
-  loop tests other ideas on it. One look per KEEP. No look on a REJECT.
+  loop tests other ideas on it. One look per run, and the set allows 10 looks (`--looks`); a repeat look prints the stored answer, a spent set prints FAIL.
 - **The code enforces it.** `python scripts/bench/verdict.py promote runs/<n> runs/<confirm>` is the only writer of
   `state/champion.json`. It refuses (one line, with the reason) unless every run is KEEP and a PASS exists for that
-  exact change: same run, same change file (`runs/<n>/serve.sh`), same `project.json` and `evaluator.lock`, same score,
-  in a results folder the loop's user cannot write, written by the locked `heldout.py`. A champion that did not come
-  through `promote` (and is not the A/A baseline) makes every later verdict VOID.
-- **Spent means replaced.** After about 10 looks, or if the agent saw the set (a log, an error message), the owner
-  builds a new one and the loop says so in `insights.md`.
+  exact change: same run, same change file (`runs/<n>/serve.sh`, set in `heldout.py`), same `project.json` and
+  `evaluator.lock`, same score, in a results folder that another user owns and the loop's user cannot write. The look
+  fails if the change moves while it runs. A champion that did not come through `promote` (and is not the A/A baseline)
+  makes every later verdict VOID.
+- **Spent means replaced.** After 10 looks, or if the agent saw the set (a log, an error message), the owner builds a
+  new one and the loop says so in `insights.md`.
 - **Last look.** The owner runs the final check on the final champion, on his own setup. That is the real truth.
 
 Agree what it holds in phase 4, before the lock. A project with no held-out check is not ready for pass 1: `promote`
-refuses without one. The gate holds only when the loop's user and the sealing user differ, or the results folder is a
-read-only mount; root can write everywhere, so a loop run as root gets no gate.
+refuses without one. The gate holds only under three conditions: the loop's user is not the sealing user (root can
+write everywhere, so a loop run as root gets no gate); `scripts/bench/`, `evaluator.lock`, `project.json` and `state/`
+are read-only to the loop's user, as the scorer already needs; and the owner's `check.py` runs the candidate as neither
+the sealing user nor the loop's user, or the candidate can read the inputs.
 
 ## Works for any target
 

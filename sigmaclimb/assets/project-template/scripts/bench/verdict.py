@@ -129,8 +129,9 @@ def heldout_problem(run, runs, score=None):
         return "no sealed set: run heldout.py init, then set sealed_dir in project.json"
     res = os.path.join(sealed, "results")
     f = os.path.join(res, os.path.basename(run) + ".json")
-    if not os.path.isdir(res) or os.access(res, os.W_OK):
-        return f"{res} is missing or this user can write it, so a PASS there proves nothing"
+    me = getattr(os, "getuid", lambda: -1)()  # Windows has no uid: only the write bit decides there
+    if not os.path.isdir(res) or os.access(res, os.W_OK) or os.stat(res).st_uid == me:
+        return f"{res} is missing, or this user owns or can write it, so a PASS there proves nothing"
     if not os.path.exists(f):
         return f"no held-out result for {run}"
     if os.access(f, os.W_OK):

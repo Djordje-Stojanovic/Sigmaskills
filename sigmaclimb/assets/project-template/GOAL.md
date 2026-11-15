@@ -33,7 +33,7 @@ if `scripts/bench/verdict.py` says KEEP and a confirmation re-run agrees.
 4. `python scripts/bench/verdict.py runs/NNNN`. Never override it.
 5. `python scripts/record.py --run runs/NNNN --pass N --idea ... --category ... --work CONTENT --minutes M --desc "..."`
    (what changed; hypothesis + evidence; what happened; conclusion and what it rules out).
-6. KEEP -> confirmation re-run, then the held-out check (`sudo -n -u <seal user> python3 <sealed_dir>/heldout.py check . runs/NNNN`;
+6. KEEP -> confirmation re-run, then the held-out check (`sudo -n -u <seal user> python3 <sealed_dir>/heldout.py check <PROJECT_DIR> runs/NNNN` (the line `init` printed);
    it prints PASS or FAIL only; write `heldout: pass|fail` in the results description). Promote with
    `python scripts/bench/verdict.py promote runs/NNNN runs/<confirm>`: it refuses without a held-out PASS for this exact change,
    and it is the only writer of `state/champion.json`. After PROMOTED: champion/, checkpoints/pass-N/,
