@@ -73,14 +73,14 @@ All three read the instance file and `secrets/vast_known_hosts`.
 ```powershell
 .\scripts\box.ps1 'nvidia-smi; df -h /; free -g'                         # remote command
 .\scripts\box.ps1 -Push -Src local\file -Dst /root/work/x                # copy up (recursive)
-.\scripts\box.ps1 -Pull -Src /root/runs/0005/. -Dst runs\0005\raw        # copy down
-.\scripts\launch.ps1 -Run 0005 -Serve candidate\serve.sh [-Record] [-NoBenchy]   # invariants, push, start; returns at once
+.\scripts\box.ps1 -Pull -Src /root/runs/0005/raw/. -Dst runs\0005\raw    # copy down
+.\scripts\launch.ps1 -Run 0005 -Serve candidate\serve.sh [-Full] [-Record] [-Benchy]   # invariants, push, start; returns at once
 .\scripts\wait.ps1 -Run 0005 -MaxMinutes 90                              # run in the background; retries; pulls raw files
 ```
 
 - Do pushes and pulls from PowerShell. Git Bash rewrites `/root/...` paths in `scp`.
 - Use named `-Src/-Dst` parameters (a `[string[]]` param swallowed paths once).
-- Windows shell files have CRLF: `launch.ps1` runs `sed -i 's/\r$//'` after the push.
+- Windows shell files have CRLF: `launch.ps1` runs `sed -i 's/\r$//'` after the push. The lock hash ignores line endings.
 - Long jobs: `(nohup bash job.sh > log 2>&1 &)` on the box, then a background `wait.ps1` locally. It prints one line
   per stage change and `RUN <id> FINISHED ...`. Every SSH call inside it is retried.
 - Put Python in files, push them, run them. Do not quote Python through PowerShell, ssh and bash.

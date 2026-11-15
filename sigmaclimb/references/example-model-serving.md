@@ -1,9 +1,9 @@
 # Worked example: make a model serve faster on a rented GPU
 
 The first project. `SKILL.md` holds the method for any target. This file holds what is true only when the
-target is a served model: the GPU host, the engine, the probes and the files of `assets/project-template/`.
-The other files in this folder (`evaluator.md`, `lessons.md`, `case-study-la125.md`, `setup-vast.md`) are also about
-this example.
+target is a served model: the GPU host, the engine, the probes and the serving files of `assets/project-template/`
+(the template README lists them). `evaluator.md` sections 6-9, `lessons.md`, `case-study-la125.md` and
+`setup-vast.md` are also about this example.
 
 ## What changes per project
 
@@ -22,7 +22,9 @@ this example.
 The GPU host is usually Vast.ai ([setup-vast.md](setup-vast.md)); for new rentals use the skill `sigmavast`. Another
 rental works the same way: keep its key in the project's `secrets/`, and give `scripts/box.ps1` its SSH host and port.
 
-## Phase 1: what to pin with the owner
+## Phase 1: what the interview pins for a served model
+
+The questions are in `interview.md`; for a served model they mean:
 
 - **What "faster" means:** exact weights and revision, engine, image and launch recipe (read the recipe file
   read-only); the real workload (streams, context, chat or agents, image size, clip length); the priority order,
@@ -30,18 +32,22 @@ rental works the same way: keep its key in the project's `secrets/`, and give `s
 - **The real request settings:** sampler, thinking and effort levels as the owner's client sends them, output limit.
   A greedy scorer measures a workload nobody runs.
 - **What "no quality loss" means:** forbidden changes (more quantization, precision cuts, other weights, lossy
-  samplers, fewer steps), the drift policy, the keep floor and the single-probe rule.
+  samplers, fewer steps) and the drift policy. The smallest gain comes from the noise runs (`min_gain` in
+  `project.json`); a single-probe win is an ARCHIVE the owner rules on.
 - **Invariants and budget:** memory budget, context, served name, credit, hours, the owner's own machines (read-only
-  at most), and which sub-agents the owner allows.
+  at most).
+- **The quality check's size:** the full fidelity check plus a tool suite took longer than the speed probes in the
+  first project. It runs only on a stage-1 winner; keep it within a quarter of a pass, or run a fixed subset.
 - **Logistics:** where the API keys live, the project folder, git or not, charts.
 
 ## Phase 2: scaffold
 
 Copy `assets/project-template/` into `<workspace>/Projects/<Model-Engine>/` and rename `_gitignore` to `.gitignore`
-(package managers drop dot-files). Then adapt, in this order: `project.json` (weights, floors, offer filters),
+(package managers drop dot-files). Then adapt, in this order: `project.json` (weights, offer filters),
 `box/serve_base.sh` (the owner's recipe, flag for flag), `scripts/bench/invariants.py`, the probes in
-`scripts/bench/` (rewrite them for a non-LLM model), `scripts/bench/build_replay.py` (the owner's real agent logs as
-traces), then `GOAL.md` and the TSV files. Seed `ideas.tsv` with a research round; every idea carries `p=NN%`.
+`scripts/bench/speed.py` (rewrite them for a non-LLM model), `scripts/bench/build_replay.py` (the owner's real agent
+logs as traces), then `GOAL.md` and the TSV files. Seed `ideas.tsv` after the profile; every idea carries its part,
+its share and `p=NN%`.
 
 ## Phase 3: bring up the box
 
@@ -53,32 +59,40 @@ Follow [setup-vast.md](setup-vast.md). The points that cost hours before:
 - Run `box/smoke.py` before you spend a baseline. Copy the reference outputs home after every record run.
 - Never print a secret. Never change the owner's payment settings.
 
-## Phase 4: the four stages of the scorer, and the held-out check
+## Phase 3, continued: the scorer, then the lock
 
-Read [evaluator.md](evaluator.md). Four stages, each a script:
+Read [evaluator.md](evaluator.md). `launch.ps1` checks the invariants, pushes the scorer, the settings and the champion
+to the box, and starts `run_experiment.sh`, which calls `target.sh`:
 
 1. `invariants.py`: a broken invariant makes the run VOID before launch.
-2. `gate.py` plus a task-quality suite: the fidelity gate.
-3. `speed.py`: probes at the owner's real settings. **Every replay or throughput turn writes a fixed number of
-   tokens** (`max_tokens = min_tokens`), or wall time measures the sampled answer length instead of speed.
-4. `verdict.py`: the weighted geometric mean against the champion median, the keep floor, the single-probe rule,
-   and no probe below its A/A band.
+2. Stage 1, `speed.py`: probes at the owner's real settings, written to `raw/score.json`. **Every replay or
+   throughput turn writes a fixed number of tokens** (`max_tokens = min_tokens`), or wall time measures the sampled
+   answer length instead of speed. The box runs `verdict.py` on the score; anything but a stage-1 win ends the pass.
+3. Stage 2, `gate.py`, ToolEvalBench and `quality.py`: the quality check, on the same running server.
+4. `verdict.py` at home: the final verdict from the pulled raw files.
 
-The held-out check for serving: a second prompt pack (new text, new salts, a replay of agent sessions that are not in
-the scorer's replay) and the same gate and score on it. Keep it on the owner's PC, not in the repo and not on the
-box; the main session asks for PASS or FAIL only. See [evaluator.md](evaluator.md) section 10.
+The baseline runs with `-Record`, the A/A runs with `-Full`. Then `quality.py bands` and `aa.py` on those runs.
+
+The owner's home machine is the held-out check for serving: he runs the champion there in his real use
+(`held-out.md`).
 
 After the lock, any edit to `scripts/bench/` is an evaluator migration: log it in `evaluator.lock`, push the files to
 the box (it keeps its own copy) and measure the champion again. Measure the real memory-bandwidth ceiling with a
 read-only probe; a spec-sheet number is not a ceiling.
+
+## Phase 4: the serving profile
+
+Time each part of one real request and of one agent turn: prompt reading, first token, decode, the scheduler's gaps,
+the cache's hit rate, start time. The server's metrics and a profiler trace of one request give the shares. The
+biggest share gets the next ideas.
 
 ## Phase 5: serving-only steps of a pass
 
 - Step 1 also asks: does the flag exist in the installed engine, and what is its default? Several ideas were on by
   default already.
 - `candidate/serve.sh` = the champion plus ONE change. `scripts/bench/verdict.py runs/<n>` decides.
-- Profile the path you have never profiled before you optimize it.
-- Noise is large: a champion can swing 10 % between identical runs.
+- A flag that the engine reads at run time gets an ABAB test on one live server first: minutes, not a pass.
+- Noise is large: a champion can swing 10 % between identical runs. Same warm-up both sides; never "fresh and empty".
 - A trade (one probe up, one down) is an ARCHIVE; the owner rules on it, from a table.
 
 ## Finish

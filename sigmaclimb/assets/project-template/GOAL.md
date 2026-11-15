@@ -1,68 +1,72 @@
-# GOAL.md - <MODEL> speed loop on Vast.ai (run file: re-read at the start of EVERY turn)
+# GOAL.md - <PROJECT> climb (run file: re-read at the start of EVERY turn)
 
-Host: <the agent host and its loop mode, for example Claude Code /goal or Codex /goal>. Stop line: the owner destroys the Vast instance. Spec: `SPEC_DRAFT.md`.
-Fill every <...> from the signed spec before the first run; leave nothing in angle brackets.
+Host: <the agent host and its loop mode, for example Claude Code /goal or Codex /goal>. Stop line: <the stop rule
+from the interview, for example: the owner destroys the rented instance, or writes STOP; then REPORT.md>.
+Spec: `SPEC_DRAFT.md`. Settings: `project.json`. Fill every <...> from the signed spec; leave nothing in angle brackets.
+One agent runs this loop. It starts no sub-agent.
 
 ## Mission
-Make <MODEL> faster (decode, prefill/TTFT, agent replay, parallel requests) on one rented <GPU>, with zero
-loss in quality or reliability, measured under the owner's real settings. One change per pass; keep it only
-if `scripts/bench/verdict.py` says KEEP and a confirmation re-run agrees.
+Make <TARGET> better on <SCORE> under the owner's real use, with no loss on <GUARDS>. One change per pass; it stays
+only when `scripts/bench/verdict.py` says KEEP and `verdict.py promote` makes it the champion.
 
 ## Each turn
-1. Read this file, `PROGRESS.md`, the last 40 lines of `insights.md`, the head of `ideas.tsv`, `state/champion.md`.
+1. Read this file, `PROGRESS.md` (the profile and the champion table), the last 40 lines of `insights.md`, the head
+   of `ideas.tsv`, `state/champion.json`.
 2. Recover first: `state/pass.json` STARTED without FINISHED -> finish it from raw files or mark CRASH.
-3. No `state/` -> SETUP. Else the next step of the current pass.
-4. Never end a turn without a live background `scripts/wait.ps1` unless the instance is gone.
-5. End every turn by printing `python scripts/status.py`.
+3. No `state/` -> SETUP. No profile in `PROGRESS.md` -> PROFILE. Else the next step of the current pass.
+4. Never end a turn without a live background waiter on the running pass, unless the target is gone.
+5. End every turn with `python scripts/status.py`. If it says UNDER HALF, fix the loop before the next idea.
 
 ## SETUP (once)
-1. Vast login with 2FA email code (`references/setup-vast.md` of the skill). Never pass `--api-key` later.
-2. Test rental (5 min, cheap image): SSH, nvidia-smi, io_uring probe, HF speed, destroy.
-3. Rent ONE box with image <IMAGE:TAG>, disk <GB>. Write `state.tmp/instance.json`.
-4. Download weights (`box/download.sh`), verify sha256 (`box/verify_weights.py`).
-5. Translate the recipe into `box/serve_base.sh`; copy to `scripts/bench/baseline_serve.sh` and `champion/serve.sh`.
-6. First start + `box/smoke.py`. Fix engine blockers with code fallbacks, not security workarounds.
-7. Agree the held-out check with the owner: he seals a set once (`README.md`, "Held-out check") and sets `sealed_dir` in `project.json`. Baseline with `-Record`, then >= 3 A/A runs; `python scripts/bench/aa.py runs/A runs/B ... tool=runs/..`.
-8. Write `state.tmp/champion.json` + `champion.md`; rename `state.tmp/` -> `state/` LAST.
+1. Bring the target up (serving example: `references/setup-vast.md` of the skill; the box files in `box/`).
+2. Translate the owner's recipe into the change format (serving: `box/serve_base.sh` -> `scripts/bench/baseline_serve.sh`
+   and `champion/serve.sh`). Smoke test.
+3. Baseline with the quality references (`launch.ps1 -Record`), then `repeats` - 1 more runs of the unchanged target
+   (`-Full`). Serving: `python scripts/bench/quality.py bands runs/0001 runs/0002 runs/0003`.
+4. `python scripts/bench/aa.py runs/0001 runs/0002 runs/0003` writes `evaluator.lock`.
+5. Held-out check: mode `<off | advisory | required>` from the interview. If not off: `heldout.dir` set,
+   `python scripts/bench/heldout.py selftest .` says PASS before first use (`references/held-out.md`).
+6. Rename `state.tmp/` -> `state/` LAST.
+
+## PROFILE (after SETUP, after each KEEP, at every plateau)
+Measure where the score goes, part by part (time per stage, bytes per stream, flaws per chapter). Write the table
+(part, share, how measured) at the top of `PROGRESS.md`. Re-rank `ideas.tsv` by share x p.
 
 ## PASS (one idea)
-1. Pop the `pending` row with the highest success probability (`p=NN%` in its notes; keep the file sorted by it, re-sort after every pass). Grep `results.tsv` + `ruled_out.tsv` first. **Check that the
-   flag/env exists and its default in the installed engine** (`runs/*recon*/serve_help.txt`, envs.py).
-2. `candidate/serve.sh` = champion + ONE change. Write `state/pass.json` STARTED with what must move and why.
-3. `.\scripts\launch.ps1 -Run NNNN -Serve candidate\serve.sh`; background `.\scripts\wait.ps1 -Run NNNN`.
-4. `python scripts/bench/verdict.py runs/NNNN`. Never override it.
-5. `python scripts/record.py --run runs/NNNN --pass N --idea ... --category ... --work CONTENT --minutes M --desc "..."`
-   (what changed; hypothesis + evidence; what happened; conclusion and what it rules out).
-6. KEEP -> confirmation re-run, then the held-out check (`sudo -n -u <seal user> python3 <sealed_dir>/heldout.py check <PROJECT_DIR> runs/NNNN` (the line `init` printed);
-   it prints PASS or FAIL only; write `heldout: pass|fail` in the results description). Promote with
-   `python scripts/bench/verdict.py promote runs/NNNN runs/<confirm>`: it refuses without a held-out PASS for this exact change,
-   and it is the only writer of `state/champion.json`. After PROMOTED: champion/, checkpoints/pass-N/,
-   champion/<recipe>.yaml with comments on what each change needs.
-7. Remove the idea from `ideas.tsv`; recurring failure -> `ruled_out.tsv` with a reopen condition.
-8. One sentence to `insights.md`; `python check_state.py`; `python plot_progress.py`; rewrite `PROGRESS.md`
-   (<= 60 lines; one table: champion vs the owner's home setup); `state/pass.json` FINISHED. Keep >= 3 pending ideas (research round if short).
+1. Take the `pending` row with the highest share x `p=NN%`. Grep `results.tsv` + `ruled_out.tsv` first. Check that
+   the setting exists and what its default is today. Every third pass (`bold_every`) is a code or design change.
+2. A live switch: run a 10-minute ABAB kill test on the running target first. A bold idea: a spike of up to two
+   hours with a dry test that needs no target.
+3. `candidate/` = champion + ONE change. Write `state/pass.json` STARTED: the part, the hypothesis, the evidence.
+4. Start the pass (serving: `.\scripts\launch.ps1 -Run NNNN -Serve candidate\serve.sh`; background
+   `.\scripts\wait.ps1 -Run NNNN`). Stage 1 measures; stage 2 runs the quality check only on a STAGE1-WIN.
+5. `python scripts/bench/verdict.py runs/NNNN`. Never override it.
+6. `python scripts/record.py --run runs/NNNN --pass N --idea ... --category ... --work CODE|SETTING --part ... --desc "..."`
+   (what changed; hypothesis + evidence; what happened; what it rules out).
+7. KEEP -> `python scripts/bench/verdict.py promote runs/NNNN [runs/<confirm>]`. It asks for one confirmation run
+   only when the gain is small, and for a held-out PASS only in `required` mode. ARCHIVE -> a table to the owner;
+   his word promotes it (`--owner "<his words>"`).
+8. Remove the idea from `ideas.tsv`; a dead idea -> `ruled_out.tsv` with what it rules out and a reopen condition.
+9. One sentence to `insights.md`; `python check_state.py`. At a KEEP: commit, `python plot_progress.py`, rewrite
+   `PROGRESS.md` in plain words, then PROFILE. `state/pass.json` FINISHED. Keep >= 3 pending ideas.
 
-## Rules that decide (numbers live in project.json and evaluator.lock)
-- Keep floor 5 %. Single-probe rule: one probe >= +10 % and every other >= -5 % is a KEEP.
-- Every KEEP needs a confirmation run and a held-out PASS; `verdict.py promote` enforces it. Never open the held-out inputs. Judge borderline cases on the median of 2-3 runs. Noise bands are large.
-- Profile before you optimize. Measure the real memory-bandwidth ceiling before you say "at the limit".
-- Never stack two overlay loaders (sitecustomize.py); merge them into one directory first.
-- Stop line, decisions, research rounds, sub-agent rules: skill `references/loop.md`.
+## Rules that decide (every number lives in project.json and evaluator.lock)
+- The smallest gain, the drop bands, the confirmation rule, the quality share, the category switch and the bold slot
+  are settings in `project.json`. One run and at most one confirmation per idea.
+- After `category_switch_after` passes without a KEEP in one category: change category and PROFILE again.
+- Same warm-up for both sides; never "fresh and empty" by default. One probe reads new input every run.
 
 ## Invariants (violation = VOID)
-<weights/revision, quantization, KV dtype, max_model_len, max_num_seqs, served name, sampling defaults,
-thinking, memory budget (GMU), MemAvailable floor during start, evaluator files == evaluator.lock>
-
-## Docs: which source wins
-1. The engine installed on the box (serve --help=all, envs.py, config/). 2. Context7 / upstream docs.
-3. Web research for forum results and PRs.
+<what may never change: for a served model the weights, quantization, context length, served name, sampling
+defaults, memory budget; the evaluator files == evaluator.lock>
 
 ## Never
 - Touch the owner's own machines beyond read-only facts they allowed.
-- Quantize further, cut precision, use a lossy sampler, or game a probe (`docs/03_ANTI_GAMING.md`).
+- Cut what the owner protects (quality, precision, steps) or game a probe (`docs/03_ANTI_GAMING.md`).
 - Rent a second instance, destroy the instance (owner only), weaken container security, print a secret.
 - Edit a bash script while it runs; hand-type numbers into TSVs.
 
 ## Finish
-When `scripts/status.py` shows the instance gone: write `REPORT.md` (every pass in plain English, champion vs the
-owner's current setup, final recipe + diff, failures and why, next ideas), then print `python scripts/status.py`.
+When the stop line holds: write `REPORT.md` (what changed for the owner first; every pass in plain words; champion
+against the start and the owner's setup; final recipe + diff; failures and why; next ideas), then print
+`python scripts/status.py`.

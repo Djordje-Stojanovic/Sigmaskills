@@ -1,20 +1,35 @@
-# <Model> speed loop on Vast.ai
+# <Project> climb
 
-Made from the sigmaclimb skill. Rules: GOAL.md (re-read every turn). Spec: SPEC_DRAFT.md.
+Made from the sigmaclimb skill. Rules: GOAL.md (re-read every turn). Spec: SPEC_DRAFT.md. Settings: project.json.
 Status: python scripts/status.py. Chart: python plot_progress.py -> progress.png.
-Queue: ideas.tsv (sorted by p=NN%). Results: results.tsv. Dead ends: ruled_out.tsv. Learnings: insights.md.
-Per-project constants (score weights, floors, Vast filters, image label): project.json.
+Queue: ideas.tsv (sorted by share x p=NN%). Results: results.tsv. Dead ends: ruled_out.tsv. Learnings: insights.md.
+
+## Generic core: keep these for any target
+
+| File | Does |
+|---|---|
+| `project.json` | every setting of the loop, with its default and reason |
+| `scripts/bench/run_experiment.sh` | one pass: score first, the quality check only on a stage-1 win |
+| `scripts/bench/verdict.py` | decides, and `promote` makes the champion |
+| `scripts/bench/aa.py` | noise bands and the hash lock |
+| `scripts/bench/heldout.py` | the optional held-out check |
+| `scripts/record.py`, `scripts/status.py`, `check_state.py`, `plot_progress.py` | results rows, status line, checks, chart |
+| `GOAL.md`, `PROGRESS.md`, the TSV files | run file, owner page, queue and results |
+
+## The worked example: a served model on a rented box
+
+`scripts/bench/target.sh`, `speed.py`, `common.py`, `gate.py`, `quality.py`, `invariants.py`, `bw.py`,
+`build_replay.py`, `scripts/box.ps1`, `launch.ps1`, `wait.ps1`, `box/*`, `docs/03_ANTI_GAMING.md`.
+
+For another target, replace these:
+1. `scripts/bench/target.sh`: the five steps of your target (start, warmup, score, quality, stop).
+2. Its score step writes `raw/score.json`: `{"probes": {"name": value}}`, or `{"pairs": {"champion": {"won", "lost",
+   "tied"}, "start": {...}}}` for blind pairs.
+3. Its quality step writes `raw/quality.json`: `{"ok": true, "fails": []}`.
+4. `project.json`: the probe weights, `lower_is_better`, the measurer, and the rest from the interview.
+5. The launch and wait scripts, if the target does not run on a rented box. Local: `bash scripts/bench/run_experiment.sh runs/0005 candidate/change.patch`.
 
 ## Held-out check
 
-The loop may promote a champion only with a PASS from inputs it cannot read. `verdict.py promote` refuses without one.
-Once per target, the owner makes the sealed set:
-
-    sudo adduser --system --group climbseal; sudo install -d -o climbseal /var/lib/climb-sealed   # once per machine
-    sudo -u climbseal python3 scripts/bench/heldout.py init /var/lib/climb-sealed/<project>
-
-`init` prints the rest: write `inputs/check.py` there (the contract is in `heldout.py`), set `sealed_dir` in `project.json`,
-and give the loop's user one `sudo` line that runs only the check. The loop sees PASS or FAIL. The results folder must belong
-to another user: a second user, or a read-only mount from another machine. Keep `scripts/bench/`, `evaluator.lock`,
-`project.json` and `state/` read-only to the loop's user, and run the candidate in `check.py` as a third user or in a sandbox.
-The set allows 10 looks, one per run. After that, or after any leak, make a new set and say so in `insights.md`.
+Off by default. To use it, set `heldout.mode` and `heldout.dir` in `project.json`, put the owner's `check.py` in that
+folder, and run `python scripts/bench/heldout.py selftest .` once. The skill's `references/held-out.md` has the rest.

@@ -1,8 +1,8 @@
 interface:
   display_name: SigmaClimb
-  short_description: Improve anything measurable, one judged change at a time
-  default_prompt: Use $sigmaclimb to set up a hill-climb loop for this target (model serving, a render, a kernel or an
-    algorithm), with a locked scorer, a quality gate and a held-out check.
+  short_description: Make anything measurable or judgeable better, one judged change at a time
+  default_prompt: Use $sigmaclimb to interview me, profile this target and run a hill-climb loop on it, with a locked
+    scorer and a quality check.
 policy:
   products:
   - chatgpt

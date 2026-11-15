@@ -1,159 +1,120 @@
-# The evaluator (v8): honest, script-only, owner-real
+# The evaluator: honest, cheap, sized to the target
 
-The evaluator is the product. A loop with a weak judge optimizes garbage. No LLM judge, no agent ratings.
-Only `scripts/bench/verdict.py` decides, and it reads raw files. Version history: `evaluator.lock` "migrations".
+The evaluator is the product. A loop with a weak judge optimizes garbage. Only `scripts/bench/verdict.py` decides, and
+it reads raw files and `project.json`. The measurer behind it can be a script, the owner picking blind pairs, or a
+judge he accepts. Version history: `evaluator.lock` "migrations".
 
 ## Contents
-1. Stages and timing
-2. Real settings
-3. Quality gate
-4. ToolEvalBench (floor)
-5. Speed probes and weights (v8)
-6. Noise: A/A, floor, confirmation
-7. Verdict rules
-8. Pitfalls
-9. Adapting probes to non-LLM models
-10. The held-out check
+1. A pass in two stages
+2. The quality check, sized to the target
+3. Noise: same state for both sides
+4. A probe with new input
+5. Verdict rules
+6. The serving example: real settings
+7. The serving example: quality check
+8. The serving example: score probes and weights
+9. Pitfalls of the serving example
 
-## 1. Stages and timing (~40 min end to end)
+## 1. A pass in two stages
 
-| Stage | Script | Time |
+| Stage | What | Ends the pass when |
 |---|---|---|
-| 0 invariant diff | `scripts/bench/invariants.py` (run by `launch.ps1`) | seconds |
-| bandwidth probe before | `bw.py` | 10 s |
-| server start (+ 1 s MemAvailable log) | `run_experiment.sh` | ~5 min (+ recompile) |
-| fixed warm-up (3 x 256 tokens) | | 0.5 min |
-| 1 quality gate | `gate.py` | ~8 min |
-| 1b ToolEvalBench (97 scenarios) | in `run_experiment.sh` | ~9 min |
-| 2 speed probes | `speed.py` | ~11 min |
-| llama-benchy (forum-comparable) | in `run_experiment.sh` | ~3 min |
-| stop + bandwidth probe after | | ~1 min |
-| 3 verdict (local) | `verdict.py` | seconds |
+| 0 | invariants: the change touches nothing locked | an invariant breaks (VOID) |
+| start + warm-up | the target starts; a fixed warm-up, the same for both sides | it crashes |
+| 1 score | every score probe; then `verdict.py` on the score alone | the verdict is not `STAGE1-WIN` |
+| 2 quality | the quality check, on the same running target | never: the final verdict reads it |
 
-## 2. Real settings (put them in `common.py` and `project.json`)
+`run_experiment.sh` records the seconds of every stage in `raw/meta.json`. The score stage should be at least half
+of a pass; `status.py` says when it is not. A slower idea costs only stage 1.
 
-- Server-side sampling as the owner uses it (Qwen thinking: T=1.0, top_p 0.95, top_k 20), fixed seed per request.
-- Thinking on if the owner never turns it off. Effort per probe = the owner's mix (low/medium daily, xhigh
-  sometimes). Read the client config for the name mapping.
-- `max_tokens` = the owner's value (65536). Measure a fixed slice and stop client-side (`stop_after=N`).
-  Stop only after the event's tokens were timed.
+## 2. The quality check, sized to the target
+
+- The interview sets it (`interview.md`, question 6). Default: at most a quarter of a pass
+  (`quality_share_max`). A frame comparison takes seconds; a model eval suite takes minutes.
+- It runs on every stage-1 winner, including changes that cannot alter the output (they get it once, too).
+- Its bands come from the noise runs, never from zero. It writes `raw/quality.json`: `{"ok": bool, "fails": [...]}`.
+- If it outgrows its share: run a smaller fixed subset on every winner, and the full check before the final report.
+
+## 3. Noise: same state for both sides
+
+- Run the unchanged target `repeats` times (default 3). `aa.py` writes each probe's spread and the score spread.
+- The smallest gain that counts is twice the score spread unless `project.json` sets `min_gain`. A probe may drop by
+  twice its own spread unless `max_drop` is set.
+- A fixed warm-up before the measured part, identical for champion and candidate. Do not clear caches or restart
+  "fresh" by default: a cold start adds the noise it was meant to remove. If cold and warm both matter to the
+  owner, measure both on purpose, as two probes.
+- When the change is a live switch (a setting the target reads at run time), test A and B on one running target,
+  interleaved (ABAB). It costs minutes and cancels drift. Use it as a 10-minute kill test before a scored pass.
+- A confirmation run only when the gain is under `confirm_below` (2) times the smallest gain. One run and at most one
+  confirmation per idea.
+- A new machine is a new baseline: measure the champion there before you judge a candidate.
+
+## 4. A probe with new input
+
+Every score has at least one probe whose input is new in every run: new text, a new scene, a new instance, a new
+camera path, with the amount of work fixed. A probe that repeats its input measures only the path that some cache
+already knows. The serving example's `prefill_new` probe reads text made fresh for each run.
+
+## 5. Verdict rules (`verdict.py`)
+
+1. VOID: a scorer file changed (hash), an invariant broke, or the target wrote a VOID status.
+2. CRASH: the run status is not OK, or there is no score.
+3. The score: the weighted geometric mean of the probe ratios against the champion (or the share of blind pairs
+   won). Every verdict prints it against the champion before and against the start.
+4. REJECT if the quality check failed.
+5. KEEP: gain >= the smallest gain, and no probe dropped past its band. Without a quality check yet: STAGE1-WIN.
+6. ARCHIVE: not a clean win (the score wins but a probe dropped, or one probe is clearly up but the score is
+   short). The owner rules.
+7. Else REJECT.
+
+`promote` makes the new champion: it needs the quality check, a confirmation when the gain is small, and a held-out
+PASS only in `required` mode (`held-out.md`). `--owner "<his words>"` promotes on his word.
+
+## 6. The serving example: real settings (`common.py`, `project.json`)
+
+- Server-side sampling as the owner uses it (for example T=1.0, top_p 0.95, top_k 20), a fixed seed per request.
+- Thinking on if the owner never turns it off. Effort per probe = the owner's mix. Read the client config.
+- `max_tokens` = the owner's value. Measure a fixed slice and stop client-side (`stop_after=N`), only after the
+  event's tokens were timed.
 - Decode rate = tokens after the first / time after the first token. Never request wall time.
-- Greedy (T=0) is only for the fidelity gate. Speed probes use the real sampler, because speculative-decode
-  acceptance differs under greedy.
+- Greedy (T=0) only for the fidelity check. Speed probes use the real sampler: speculative-decode acceptance differs.
 
-## 3. Quality gate (`gate.py`)
+## 7. The serving example: quality check (`gate.py`, ToolEvalBench, `quality.py`)
 
-- **Teacher-forced fidelity**: `/v1/completions`, `prompt_logprobs=2`, `max_tokens=1`, T=0 on ~75k positions
-  (code, prose, multilingual, math, JSON, real agent text). Per position: top-1 agreement, mean |delta logprob|.
-- **Decode fidelity**: 24 greedy chat prompts x 512 tokens, top-5 logprobs, common-prefix length and |delta logprob|.
-- **Needles** at ~64k and ~128k tokens, empty-output and looping (6-gram) checks.
-- References are recorded by the baseline run (`-Record`) and pulled to `refs/` (they die with the box).
-- Greedy output is not reproducible on GB10 run to run: thresholds come from A/A, never from zero.
+- **Teacher-forced fidelity**: `/v1/completions`, `prompt_logprobs`, `max_tokens=1`, T=0 on a large fixed text mix.
+  Per position: top-1 agreement, mean |delta logprob|.
+- **Decode fidelity**: greedy chat prompts, common-prefix length and |delta logprob|.
+- **Needles** at long context, empty-output and looping checks.
+- **ToolEvalBench** at real sampling: a regression alarm, not a ranker. A drop below the A/A minimum minus
+  max(3, 2 x A/A range) fails.
+- References come from the baseline run (`launch.ps1 -Record`); copy them home after every record run.
+- `quality.py bands runs/A runs/B runs/C` (before `aa.py`) turns the A/A runs into bands; on the box `quality.py`
+  judges each run and writes `quality.json`. Drift rule: a fidelity-only failure passes when the tool score is at
+  least the A/A minimum and nothing else failed.
+- This check took longer than the speed probes in the first project. Size it with question 6 of the interview.
 
-## 4. ToolEvalBench (floor)
+## 8. The serving example: score probes and weights
 
-- Command: `tool-eval-bench run --base-url http://localhost:8000/v1 --model <name> --hardmode --temperature 1.0
-  --top-p 0.95 --top-k 20 --seed 42 --parallel 8 --no-live --json-file tooleval.json`, plus `--backend-kwargs`
-  with `reasoning_effort` low and `max_tokens` 65536.
-- Score = `scores.total_points / max_points` (97 scenarios -> 194 points). Champion band 154-169.
-- It is a regression alarm at T=1, not a ranker. Floor `tooleval_min` = 155 in the la125 lock. A drop below
-  `min - max(3, 2 x A/A range)` is a gate failure. Pin the version by commit. No context fill.
+| Probe | What | Direction |
+|---|---|---|
+| `short` | fixed prompts at the owner's daily effort levels, a fixed token slice, decode rate | higher |
+| `long` | long context, high effort, a fixed slice of thinking, decode rate | higher |
+| `prefill` | unique salted prompts at several lengths, 1 output token, geometric mean rate | higher |
+| `prefill_new` | text made fresh for this run, fixed length, 1 output token | higher |
+| `ttft_128k` | first-token time at the longest context (weight 0: a guard) | lower |
+| `warm`, `miss` | inside the agent replay: summed warm first-token time; prefix-cache miss share | lower |
+| `replay` | real agent sessions at once, consecutive turns, a fixed token count per turn | lower (wall time) |
+| `c2`, `c3` | 2 and 3 concurrent requests, fixed tokens each, aggregate rate | higher |
 
-## 5. Speed probes and weights (v8, the la125 owner's priorities)
-
-| Probe | What | Component | Weight |
-|---|---|---|---|
-| short decode | 5 fixed prompts x low/medium effort, 512 tokens, tok/s | short | **.30** |
-| warm agent turns | inside the replay: the sum of first-token times of the 9 warm turns (inverted) | warm | **.20** |
-| warm cache hits | inside the replay: champion miss share / candidate miss share | miss | **.10** |
-| long thinking | 64k context, xhigh, 3072 tokens, tok/s | long | **.15** |
-| prefill | unique salted prompts at 16k (x2), 64k, 128k, 1 output token, geo mean tok/s; TTFT 128k logged | prefill | **.10** |
-| 2 agents | 2 concurrent requests, effort low, fixed 512 tokens each, aggregate tok/s | c2 | **.08** |
-| agent replay (v8) | 3 real sessions at once, 4 consecutive real turns each (1 cold, 3 warm), **exactly 1024 tokens per turn** (`max_tokens = min_tokens`, `ignore_eos`), prefix cache on, a barrier between cold and warm turns | replay (wall time, inverted) | **.04** |
-| 3 agents | 3 concurrent, fixed 512 tokens each, aggregate tok/s | c3 | **.03** |
-| chat (logged only) | ~100k-token conversation, model answers fed back, 5 rounds; warm TTFT ~0.4 s | none | none |
-
-- Ask the owner for the order of these probes in phase 1, and derive the weights from it. Raw priority weights
-  (0.35 / 0.25 / ... / 0.01) left two probes almost unscored; v8.2 kept the order and gave each probe a real weight.
-- Weights are renormalized when a component is missing. Replay wall time compares only between runs of the same
-  replay version.
-- Score = weighted geometric mean of candidate/champion ratios. Weights live in `project.json`.
-- Why v8: in v7 each replay turn stopped where the sampled answer ended. Two runs of the same recipe wrote 2,855 and
-  6,758 tokens, and the wall time followed the length. A "+32 %" KEEP was luck.
+- The owner orders the probes in the interview; the weights in `project.json` follow that order, and each scored
+  probe gets a real weight. Probes he does not rank become guards (weight 0).
 - Salt every request outside the replay. In the replay, one salt per run in the system prompt.
-- The recorded-answer replay hits the prefix cache ~87 %; real chat that feeds the model's own answers back hits
-  100 %. Know which one you measure.
-- Bandwidth probe before and after; a flip (< 75 % of median) = RERUN. Measure the true ceiling with a
-  read-only probe (lessons 8.2).
 
-## 6. Noise: A/A, floor, confirmation
-
-- Baseline + >= 3 restarts of the unchanged recipe (5 used). `aa.py` writes per-probe spread and score spread
-  into `evaluator.lock`.
-- Real GB10 numbers at T=1: replay 8 % (up to 15 % on a new box), decode 3.7 %, prefill 1.9 %, c3 5.2 %,
-  score 3 %. The champion itself swings about 10 % on 2-3 stream probes between identical runs.
-- Keep floor = 5 % (owner ruling; the formula default is max(2 %, 2 x score spread)).
-- Every KEEP gets a confirmation run. Borderline: judge the 2-3 run median. Champion reference = median of the
-  runs in `state/champion.json`.
-- A new box needs new reference runs. After the lock, editing `scripts/bench/` is an evaluator migration:
-  log it in `evaluator.lock`, re-measure the champion.
-
-## 7. Verdict rules (`verdict.py`)
-
-1. VOID: evaluator hash mismatch, broken invariant, MemAvailable below floor during start.
-2. CRASH: run status not OK. RERUN: bandwidth flip or missing probe.
-3. Gate. Strict: any fidelity metric outside its A/A band fails. Drift rule (owner, 2026-10-23): a fidelity-only
-   failure passes when ToolEvalBench >= champion A/A min and needles, empty and looping checks pass.
-4. KEEP: gate ok, score >= 1 + floor (5 %), and no probe below 1 - max(2 %, 2 x its spread).
-5. KEEP (single-probe rule): one probe >= +10 % and every other probe >= -5 % (`single_win`, `single_other_min`).
-6. ARCHIVE: not KEEP, but one probe > 1 + max(5 %, 3 x spread). The owner decides the trade-off.
-7. Else REJECT. Every KEEP is confirmed before promotion.
-
-## 8. Pitfalls
+## 9. Pitfalls of the serving example
 
 - Parallel probes with natural stops measure output-length spread. Fix the length (`min_tokens`, `ignore_eos`).
 - `prompt_logprobs` dict keys are token ids. Compare by id, not text.
 - `ignore_eos` inflates speculative acceptance. Use it only in throughput probes.
-- A replay that cuts points 20-80k tokens apart caps the hit rate at ~45 %. Use consecutive real turns.
-- Read the server log's kernel roster once. Backends and cudagraph mode explain silent fallbacks.
-- A 5-10 % delta on c2 or c3 can be noise (lessons 7.1).
+- A replay that cuts points far apart caps the cache hit rate. Use consecutive real turns.
+- Read the server log's kernel roster once. Backends and graph mode explain silent fallbacks.
 - A greedy replay hides sampling-only gains. Keep the sampled decode probe.
-
-## 9. Adapting probes to non-LLM models
-
-Keep the structure: invariants, fidelity gate, speed probes, weights, A/A bands, verdict. Replace the content.
-Rename the components in `project.json` "weights" and in `verdict.py` `extract()` / `ratios()`.
-
-| Modality | Speed probes | Fidelity gate |
-|---|---|---|
-| Image (diffusers, ComfyUI) | latency per image at the owner's sizes and steps (p50, cold and warm); images per minute at 1, 2, 4 concurrent; peak VRAM | fixed seeds and prompts; same-seed output vs reference with an image metric (LPIPS, SSIM, PSNR; CLIP or FID on a set); A/A gives the band |
-| Video | latency per frame and per clip; frames per second; time to first frame; peak VRAM | fixed-seed clips; per-frame LPIPS/SSIM plus a temporal metric (flow warp error) vs reference |
-| Audio, music, TTS | real-time factor (audio seconds per wall second); time to first audio chunk; concurrent streams | fixed seeds; mel or waveform distance; CLAP or speaker similarity; ASR word error rate for speech |
-| Speech to text | real-time factor; latency to final text | word error rate on a fixed set (must not rise) |
-| Multimodal LLM | the LLM probes plus image-prefill latency at the owner's image sizes | the LLM gate plus fixed image Q&A with expected answers |
-
-Rules that carry over:
-- Use the owner's real sizes, steps and sampler.
-- Put a fixed seed in every request.
-- Bust caches where a cache exists.
-- Stop client-side at a fixed slice. Use a fixed output size in throughput probes.
-- Take bands from A/A, not from zero.
-- A switch that changes numerics must pass the metric gate, or it is rejected.
-- Quality may never drop: no lower precision, no fewer steps, no weaker scheduler, unless the owner rules it.
-
-## 10. The held-out check
-
-Required. The scorer in sections 1-9 is fixed and the agent can read all of it. This check is the part it cannot read.
-
-- **What it holds.** A second prompt pack (new text, new salts, new needles), a replay of real agent sessions that are
-  not in the scorer's replay, and the same gate and speed score on them.
-- **Where it lives.** Under a second user or on another machine, never in the project repo and never on the box.
-  `scripts/bench/heldout.py init` makes it (template README). The wrapper reads one line from the owner's `check.py`
-  (gate flag and ratio), keeps the answer in a results folder the loop cannot write, and prints PASS or FAIL.
-- **Rule.** PASS = the gate holds and the held-out score gain is at least half of the visible gain (same sign). A
-  visible +10 % needs at least +5 % held out. `verdict.py promote` reads the PASS; no PASS, no new champion.
-- **When.** After the confirmation run of every KEEP, before promotion. Never after a REJECT.
-- **Record.** Write `heldout: pass` or `heldout: fail` in the results description. A FAIL is a revert, and a line in
-  `ruled_out.tsv` saying the gain did not transfer.
-- **Spent.** If a log or an error shows the agent a held-out input, replace the set and log it in `insights.md`.
-- **Last look.** The champion also runs on the owner's home setup, by the owner. That is the last layer of the verdict hierarchy.
