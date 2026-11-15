@@ -32,14 +32,18 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.26.0] — 2026-11-15
+
 ### Added
 
 - The README opens with one line per system (macOS and Linux, Windows PowerShell) that installs every Sigma skill on a machine with nothing but Claude Code, and names the second way: skills enabled on a claude.ai account load in every Claude Code session signed in with it.
 - `sigmavast` guides an agent through renting a GPU with `lacompute`. It types no card, price or cap: it reads today's offers and the job's needs. With no details and the owner there, it asks one short round (job, length, spend cap, data that leaves); for "do it overnight" or no owner, it takes written defaults and names them. It keeps the teardown proof (`[]`), never prints a raw instance listing (its `onstart` field holds a key), and points to the vast.ai docs.
 - `--preset design-pack` installs the design pair, `impeccable` and `taste-skill`, in one flag. The research behind it is in `docs/research/design-pack.md`.
+- `sigmacreatearena` gets a Grid mode: the kit page opens on a Grid tab that shows every option of each group at once, names hidden, with a 1-5 rating and a comment under each, saved to `ratings.json`, and a "Copy my ratings" button. Grid is the default; the Arena (Elo) runs only when you ask for a ranking.
 
 ### Changed
 
+- The `sigmadeeplook` and `sigmaspeedloop` (now `sigmaclimb`) descriptions start with "Use when", like the other skills. In nine skills the reference files no longer link each other: `SKILL.md` links every reference, one level deep. `sigmaloop` `SKILL.md` now links its six host files.
 - `sigmaboat` runs through `laboat`: on the machine it is typed on, `--on <machine>` elsewhere, a machine failure hands over to the next machine, a job failure is never retried. 105 lines became 52.
 - `sigmaboat` names where the boat.dev docs are (the live site and the copy the machines keep) and tells the host to pass that line to each worker agent.
 - `sigmaspeedloop` is now `sigmaclimb`, a loop for any measurable target: serving speed, a render, a kernel, an algorithm, a training run. The method (one change per pass, a locked scorer, noise first, a quality gate, keep or revert, a chart that names who found each champion) is written for any target, and the GPU and vLLM details moved to `references/example-model-serving.md`. A held-out check is now a required step: sealed inputs the agent never sees, PASS or FAIL only, at every KEEP.
@@ -806,7 +810,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.25.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.0...HEAD
+[0.26.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.1...v0.25.0
 [0.24.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.0...v0.24.1
 [0.24.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.23.0...v0.24.0
