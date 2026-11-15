@@ -1,5 +1,23 @@
 # SigmaSkills
 
+## On a new machine: one line
+
+Claude Code is all you need: no Node, no Git. One line copies every Sigma skill into `~/.claude/skills`. Run it again later to update. Inside Claude Code, type `!` first to run it in the session's shell.
+
+macOS, Linux, Git Bash:
+
+```bash
+d=$(mktemp -d) && curl -fsSL https://github.com/Djordje-Stojanovic/Sigmaskills/archive/refs/heads/main.tar.gz | tar -xz -C "$d" --strip-components=1 && mkdir -p ~/.claude/skills && for s in "$d"/sigma*; do [ -f "$s/SKILL.md" ] && cp -R "$s" ~/.claude/skills/; done; rm -rf "$d"
+```
+
+Windows PowerShell:
+
+```powershell
+$t = "$env:TEMP\sigmaskills-src"; Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory $t | Out-Null; curl.exe -fsSL -o "$t.tgz" https://github.com/Djordje-Stojanovic/Sigmaskills/archive/refs/heads/main.tar.gz; tar -xzf "$t.tgz" -C $t --strip-components=1; New-Item -ItemType Directory "$HOME\.claude\skills" -Force | Out-Null; Get-ChildItem $t -Directory -Filter sigma* | Where-Object { Test-Path "$($_.FullName)\SKILL.md" } | Copy-Item -Destination "$HOME\.claude\skills" -Recurse -Force; Remove-Item $t, "$t.tgz" -Recurse -Force
+```
+
+No install at all: skills you turn on in your claude.ai account load in every Claude Code session where you sign in with that account ([how](https://code.claude.com/docs/en/skills#skills-synced-from-claudeai)). In claude.ai, open Settings, then Customize, then Skills, and upload one zip per skill folder.
+
 **High-rigor Agent Skills for every serious coding agent.**
 
 Portable [Agent Skills](https://agentskills.io/) that install once and run on **Codex**, **Claude Code**, **Cursor**, **Pi**, **OpenCode**, **Reasonix**, **Kimi Code CLI**, and any tool that reads a `SKILL.md`.

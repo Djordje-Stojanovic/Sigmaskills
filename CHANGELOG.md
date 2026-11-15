@@ -34,6 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
+- The README opens with one line per system (macOS and Linux, Windows PowerShell) that installs every Sigma skill on a machine with nothing but Claude Code, and names the second way: skills enabled on a claude.ai account load in every Claude Code session signed in with it.
 - `sigmavast` guides an agent through renting a GPU with `lacompute`. It types no card, price or cap: it reads today's offers and the job's needs. With no details and the owner there, it asks one short round (job, length, spend cap, data that leaves); for "do it overnight" or no owner, it takes written defaults and names them. It keeps the teardown proof (`[]`), never prints a raw instance listing (its `onstart` field holds a key), and points to the vast.ai docs.
 - `--preset design-pack` installs the design pair, `impeccable` and `taste-skill`, in one flag. The research behind it is in `docs/research/design-pack.md`.
 
