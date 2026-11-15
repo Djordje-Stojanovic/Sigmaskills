@@ -1,10 +1,9 @@
 """Dry self-test of the sigmaclimb template: made-up run folders, the real scripts, no target.
 Run: python3 test/sigmaclimb_dry.py   (test/sigmaclimb.test.js runs it under npm test)"""
-import json, os, shutil, subprocess, sys, tempfile, unittest, warnings
+import json, os, shutil, subprocess, sys, tempfile, unittest
 
 TEMPLATE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sigmaclimb", "assets", "project-template")
 BASH = shutil.which("bash")
-warnings.simplefilter("ignore", ResourceWarning)  # the scripts open files the short way; not a defect here
 
 
 def put(path, obj):
@@ -115,7 +114,8 @@ class Climb(unittest.TestCase):
         owner_check("false", 0.0)
         self.assertIn("SELFTEST FAIL", self.py("scripts/bench/heldout.py", "selftest", self.proj))
         self.assertIn("BROKEN", self.py("scripts/bench/heldout.py", "check", self.proj, "runs/0004"))
-        put(os.path.join(d, "check.py"), 'import os, sys\nok = os.path.isfile(os.path.join(sys.argv[1], "project.json"))\n'
+        put(os.path.join(d, "check.py"), 'import os, sys\nok = os.path.isfile(os.path.join(sys.argv[1], "project.json")) '
+            'and os.path.isfile(os.path.join(sys.argv[2], "raw", "score.json"))\n'
             'print(\'{"quality_ok": %s, "gain": 0.0}\' % ("true" if ok else "false"))\n')
         self.assertEqual("SELFTEST PASS", self.py("scripts/bench/heldout.py", "selftest", "."))  # "." as the docs say
         owner_check("false", 0.09)
@@ -189,7 +189,21 @@ class Climb(unittest.TestCase):
             self.assertEqual(os.path.exists(os.path.join(raw, "quality_ran")), quality_runs, name)
             self.assertEqual(set(json.load(open(os.path.join(raw, "meta.json")))["stage_s"]) >= {"start", "score", "stop"}, True)
             self.assertRegex(self.verdict(f"runs/{name}"), rf"^VERDICT {verdict}")
+        # a box: the run folder lives outside the project (/root/runs/<id>), with the invariants check pushed into it
+        box_run = os.path.join(self.tmp, "box_runs", "0006")
+        put(os.path.join(box_run, "invariants.json"), {"ok": True, "problems": []})
+        subprocess.run([BASH, "scripts/bench/run_experiment.sh", box_run.replace("\\", "/"), "change.patch"], cwd=self.proj,
+                       env=dict(env, FAKE_A="12.0"), check=True, capture_output=True)
+        self.assertTrue(os.path.exists(os.path.join(box_run, "raw", "quality_ran")), "stage 1 on the box must see the invariants")
+
+    def test_aa_refuses_a_band_from_nothing(self):
+        for name in ("0001", "0002", "0003"):
+            self.run_dir(name, {"a": None, "b": None})
+        r = subprocess.run([sys.executable, "scripts/bench/aa.py", "runs/0001", "runs/0002", "runs/0003"], cwd=self.proj,
+                           capture_output=True, text=True)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("NOT LOCKED", r.stderr)
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(warnings="ignore")  # the scripts open files the short way; not a defect here

@@ -21,7 +21,10 @@ def bands(runs, p):
            for k in {k for x in rows for k in x} if any(x.get(k) is not None for x in rows)}
     rats = [ratios(x, med, set(p.get("lower_is_better", []))) for x in rows]
     spread = {k: max((abs(r[k] - 1) for r in rats if k in r), default=0) for k in med}
-    return med, spread, max(abs((weighted(r, p.get("weights", {})) or 1) - 1) for r in rats)
+    scores = [weighted(r, p.get("weights", {})) for r in rats]
+    if None in scores or not scores:
+        sys.exit("NOT LOCKED: an A/A run has no scored probe; a noise band from nothing would make every gain count")
+    return med, spread, max(abs(s - 1) for s in scores)
 
 
 def main(runs):

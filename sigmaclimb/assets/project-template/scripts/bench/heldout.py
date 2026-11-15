@@ -21,6 +21,7 @@ def _hash(path):
 def _run_check(d, project, run):
     """The owner's script on one run: (quality_ok, gain), or None when it crashed or printed no answer."""
     try:
+        run = os.path.abspath(os.path.join(project, run))  # check.py runs in DIR: give it paths that work there
         p = subprocess.run([sys.executable, os.path.join(d, "check.py"), project, run], cwd=d, capture_output=True, text=True)
         r = json.loads(p.stdout.strip().splitlines()[-1])
         return (p.returncode == 0 and r["quality_ok"] is True), float(r["gain"])

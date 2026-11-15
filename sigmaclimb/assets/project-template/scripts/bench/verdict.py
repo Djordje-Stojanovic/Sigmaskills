@@ -110,7 +110,8 @@ def decide(run):
     if (bad := lock_problem(lock)):
         out.update(verdict="VOID", why=bad)
     elif p.get("invariants", True) and inv is None:
-        out.update(verdict="VOID", why="no invariants.json: the change was not checked against the locked settings")
+        out.update(verdict="VOID", why="no invariants.json: the change was not checked against the locked settings "
+                                     "(write it before the pass, or set \"invariants\": false when nothing is locked)")
     elif inv is not None and not inv.get("ok"):
         out.update(verdict="VOID", why="invariant broken: " + "; ".join(inv.get("problems", [])))
     elif status.startswith("VOID"):

@@ -12,7 +12,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 export CLIMB_ROOT=${CLIMB_ROOT:-$(cd "$HERE/../.." && pwd)}
 TARGET=${TARGET:-$HERE/target.sh}
 PY=${PYTHON:-python3}
-case "$RUN" in /*) OUT=$RUN/raw ;; *) OUT=$CLIMB_ROOT/$RUN/raw ;; esac
+case "$RUN" in /*|[A-Za-z]:*) OUT=$RUN/raw ;; *) OUT=$CLIMB_ROOT/$RUN/raw ;; esac  # absolute: a box's /root/runs/<id>
 rm -rf "$OUT"; mkdir -p "$OUT"; cp "$CHANGE" "$OUT/change"
 STAGES=""
 
