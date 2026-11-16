@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.26.1] — 2026-11-16
+
 ### Changed
 
 - `sigmaclimb` v2 fits any goal and finds more in less time (#321). `SKILL.md` names the seven parts of every loop (target, score, guards, measurer, noise, budget, stop rule) and no field. Phase 1 is an owner interview with a recommended answer per question (`references/interview.md`); every number lives in `project.json` as a rule with its reason. A new Profile phase finds where the score goes, and ideas rank by share x odds, with a code or design change at least every third pass. A pass measures first and runs the quality check only on a stage-1 win (`STAGE1-WIN` is never a KEEP). The champion moves at each confirmed KEEP, and every verdict prints the gain against the champion before and against the start. The measurer can be a script or blind pairs judged by the owner (the share of pairs won is the score). The held-out check is off by default, `advisory` or `required`, answers `PASS`, `FAIL quality` or `FAIL gain`, self-tests on the champion first, and the owner's word promotes (`promote --owner`); the setup that sealed the inputs under a second user is gone. `status.py` measures the loop itself (minutes per idea, minutes from a KEEP to its champion, the share of a pass that measures the score). New: `references/plain-words.md`, `held-out.md`, `examples.md`. The loop uses no sub-agents. The serving example moves to `target.sh` and `quality.py`; `test/sigmaclimb_dry.py` checks the scripts on made-up runs, also on Windows.
@@ -816,7 +818,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.1...HEAD
+[0.26.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.0...v0.26.1
 [0.26.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.1...v0.25.0
 [0.24.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.0...v0.24.1
