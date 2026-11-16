@@ -42,7 +42,7 @@ laboat pull <id> <repo> <branch>                    # the branch into your check
 laboat delete <id>                                  # usage saved, then deleted
 ```
 
-Then land by the rules of the work that was invoked (loop file, SigmaShip, spec): push, open the pull request, merge only if that work allows it. Last: `laboat clean` deletes only the sandboxes `laboat` made (named `worker-*`; exit 1 names one it could not delete), then `laboat list` shows only `base-*` and the sandboxes of other tools, which stay.
+Then land by the rules of the work that was invoked (loop file, SigmaShip, spec): push, open the pull request, merge only if that work allows it. Last: `laboat clean` deletes only the sandboxes `laboat` made (named `worker-*`; exit 1 names one it could not delete), then `laboat list` shows only `base-*` and the sandboxes of other tools, which stay. `laboat clean --all` also deletes the other tools' sandboxes: run it only when the owner asks.
 
 ## Final response
 
