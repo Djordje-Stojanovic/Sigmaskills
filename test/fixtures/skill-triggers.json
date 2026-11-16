@@ -324,5 +324,15 @@
   "prompt": "Hill climb my solver's runtime with a locked benchmark script and a held-out instance set",
   "skill": "sigmaclimb",
   "near": "sigmaloop"
+ },
+ {
+  "prompt": "I told you twice to stop hardcoding ports: make it a check that fails",
+  "skill": "sigmacorrect",
+  "near": "sigmareview"
+ },
+ {
+  "prompt": "Sigmacorrect: turn the mistakes I keep correcting into lints and tests",
+  "skill": "sigmacorrect",
+  "near": "sigmamusk"
  }
 ]

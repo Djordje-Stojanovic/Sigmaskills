@@ -32,6 +32,16 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmacorrect` (SigmaCorrect): makes a correction the owner gave twice impossible to need a third time. It finds the repeat, fixes it at the highest level that works (delete the wrong way, a type, a check whose error names the fix, a test, docs last), and proves the check fails on the real past mistake. In the default set, so every Sigma install gets it (#221, idea 3 from pstack `correct`).
+
+### Changed
+
+- `sigmaship`: a blast-radius step before the PR is marked ready. It lists what the change removes or renames, finds the readers outside the diff, and proves by running code the one fact the change is safe because of; the ledger gets a *Blast radius* line (#221, idea 2 from pstack `blast-radius`).
+- `sigmadebug`: attack the premise. After a second failed fix on one idea, the plan writes that idea down and tests it before any third fix (#221, idea 5 from pstack `principle-attack-the-premise`).
+- `ENGINEERING.md` and `sigmaship`: a correction given twice now becomes a check through SigmaCorrect; a one-time lesson stays one line.
+
 ## [0.26.2] — 2026-11-16
 
 ### Changed

@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaCorrect
+  short_description: Turn a correction given twice into a check that fails
+  default_prompt: Use $sigmacorrect to find the corrections I gave twice in this repo and make
+    each one impossible to repeat, with a check that fails on the old mistake.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

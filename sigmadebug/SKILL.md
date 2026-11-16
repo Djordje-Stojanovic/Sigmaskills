@@ -72,6 +72,8 @@ At once, append a plan to `fix-issues-plan-temp-<dd-mm-yyyy>.md` beside the .txt
 
 Small related topics may share one plan and one PR.
 
+**Attack the premise.** When a topic comes back because a second fix on the same idea failed, do not plan a third fix. Write the premise every fix assumed in one sentence ("word rules can sort radar topics"). Then run one test of the premise itself: an observation that would come out differently if it were false, such as how the failures spread, not how big they are. If the test breaks the premise, the plan changes the idea, not the rule. If it holds, ask the next why. Put the premise and the test result in the plan. A radar topic rule was once fixed three times before anyone asked whether word rules were the right idea.
+
 ## 4. Ship in the background
 
 Hand the plan to a background worker, then go straight to the next topic. Brief the worker with:

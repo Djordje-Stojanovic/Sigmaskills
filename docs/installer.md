@@ -434,6 +434,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaboat -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmavast -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadebug -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmacorrect -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmacreatearena -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaresearch -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadeeplook -g
@@ -466,6 +467,7 @@ $skill-installer install sigmaboat from https://github.com/Djordje-Stojanovic/Si
 $skill-installer install sigmavast from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmadebug from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmacorrect from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmacreatearena from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaresearch from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmadeeplook from https://github.com/Djordje-Stojanovic/Sigmaskills
@@ -495,6 +497,7 @@ cp -R Sigmaskills/sigmaboat ~/.agents/skills/sigmaboat
 cp -R Sigmaskills/sigmavast ~/.agents/skills/sigmavast
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
 cp -R Sigmaskills/sigmadebug ~/.agents/skills/sigmadebug
+cp -R Sigmaskills/sigmacorrect ~/.agents/skills/sigmacorrect
 cp -R Sigmaskills/sigmacreatearena ~/.agents/skills/sigmacreatearena
 cp -R Sigmaskills/sigmaresearch ~/.agents/skills/sigmaresearch
 cp -R Sigmaskills/sigmadeeplook ~/.agents/skills/sigmadeeplook
@@ -520,6 +523,7 @@ Copy-Item -Recurse Sigmaskills\sigmaboat "$HOME\.agents\skills\sigmaboat"
 Copy-Item -Recurse Sigmaskills\sigmavast "$HOME\.agents\skills\sigmavast"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
 Copy-Item -Recurse Sigmaskills\sigmadebug      "$HOME\.agents\skills\sigmadebug"
+Copy-Item -Recurse Sigmaskills\sigmacorrect "$HOME\.agents\skills\sigmacorrect"
 Copy-Item -Recurse Sigmaskills\sigmacreatearena "$HOME\.agents\skills\sigmacreatearena"
 Copy-Item -Recurse Sigmaskills\sigmaresearch "$HOME\.agents\skills\sigmaresearch"
 Copy-Item -Recurse Sigmaskills\sigmadeeplook "$HOME\.agents\skills\sigmadeeplook"

@@ -92,6 +92,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaFreedom** | `sigmafreedom` | Removes model-written refusals from a repo's agent docs |
 | **SigmaWrite** | `sigmawrite` | Plain technical English, and status boards on request |
 | **SigmaDebug** | `sigmadebug` | Settles open topics one at a time and ships each fix |
+| **SigmaCorrect** | `sigmacorrect` | Turns a correction you gave twice into a check that fails |
 | **SigmaCreateArena** | `sigmacreatearena` | Ranks any options blind, by Elo |
 | **SigmaResearch** | `sigmaresearch` | Reads public sources and counts those read in full |
 | **SigmaDeepLook** | `sigmadeeplook` | Reads what agents cannot: video, speech, scans, binaries |
@@ -145,6 +146,10 @@ The GUI option keeps replies short and puts status reports or question batches o
 ### SigmaDebug
 
 Turns open questions into merged fixes while you talk. It writes every topic to a text file and opens it. In chat it shows one topic per message, in 5 parts with 3 options, the likely pick first, and grills until the topic is clear. Each clear topic gets a short plan and a background SigmaShip worker that merges and deploys without asking you. Another model can answer for you.
+
+### SigmaCorrect
+
+Makes a correction you gave twice impossible to need a third time. It finds the repeat in your words and the git history, then fixes it at the highest level that works: delete the wrong way, a type, a check in the test command whose error names the fix, a test, and a line in `AGENTS.md` last. The check must fail on the real past mistake before it counts.
 
 ### SigmaCreateArena
 
@@ -383,6 +388,7 @@ $sigmabrief all open
 $sigmaship https://github.com/owner/repo/issues/42
 $sigmawrite
 $sigmadebug
+$sigmacorrect Stop hardcoding: make it a check
 $sigmacreatearena Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
 $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
@@ -412,6 +418,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 /skill:sigmaship https://github.com/owner/repo/issues/42
 /skill:sigmawrite
 /skill:sigmadebug
+/skill:sigmacorrect
 /skill:sigmacreatearena Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
 /skill:sigmadeeplook What happens at 2:10 in ~/clips/demo.mp4?
@@ -440,6 +447,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmaship` | issue URL · `#N` | Refuses tickets without checkable acceptance criteria |
 | `sigmafreedom` | a repo path | Deletes refusals from agent docs and skill sources; every deletion is in a was/now log |
 | `sigmawrite` | (no input) · or "easy talk" for the GUI board · `EASYTALK REPLY` | Session writing voice until you turn it off; the GUI option makes a board |
+| `sigmacorrect` | (no input) · or the correction in your words | Proves each new check fails on the real past mistake; docs last |
 | `sigmadebug` | (no input) · or a list of topics | Writes a topic .txt and a plan .md; one background SigmaShip worker per clear topic |
 | `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |

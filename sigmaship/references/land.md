@@ -12,6 +12,9 @@ Spec: <link or "in the issue"> · Map: <parent issue or "none">
 - [ ] <criterion 1> — evidence: <test name / command>
 - [ ] <criterion 2> — evidence: …
 
+## Blast radius
+Safe because: <one sentence> — proof: <command> → <output> (or `unproven`)
+
 ## Rulings
 - <decision> — <reason> — <cost if wrong>
 
