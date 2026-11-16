@@ -9,7 +9,7 @@ A correction the owner gives twice must never be needed a third time. A sentence
 
 ## 1. Find the repeat
 
-Read the owner's words (the chat, his log, issue comments), reverts and fix commits (`git log --grep`), review comments, and the lesson lines in `AGENTS.md` and `CLAUDE.md`. A mistake counts once he corrected it twice. Write each one as one line: his words, and the two places it happened (commit, file, chat date). One counted once is not yet a repeat: leave it.
+Read the owner's words (the chat, his log, issue comments), reverts and fix commits (`git log --grep`), review comments, and the lesson lines in `AGENTS.md` and `CLAUDE.md`. A mistake is a repeat once he has corrected it twice. Write each repeat as one line: his words, and the two places it happened (commit, file, chat date). A mistake he corrected only once is not a repeat yet: leave it.
 
 ## 2. Pick the highest level that works
 

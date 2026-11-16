@@ -30,6 +30,7 @@ Sigmaskills/
 ├── sigmaresearch/             SKILL.md · agents/ · references/ · scripts/ (readers, source-log counter)
 ├── sigmadeeplook/             SKILL.md · agents/ · references/ · scripts/ (look.py and its type modules)
 ├── sigmadebug/               SKILL.md · agents/
+├── sigmacorrect/             SKILL.md · agents/
 └── sigmacreatearena/ SKILL.md · agents/ · references/ · kit/
 ```
 
