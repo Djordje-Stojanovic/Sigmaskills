@@ -32,6 +32,12 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.26.2] — 2026-11-16
+
+### Changed
+
+- `sigmaboat`: `laboat clean --all` deletes every sandbox but the bases, other tools' too, and prints the list first. The skill says to run it only when the owner asks; plain `laboat clean` stays limited to `worker-*` (Thinkcenter_Setup N162).
+
 ## [0.26.1] — 2026-11-16
 
 ### Changed
@@ -39,7 +45,6 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - `sigmaclimb` v2 fits any goal and finds more in less time (#321). `SKILL.md` names the seven parts of every loop (target, score, guards, measurer, noise, budget, stop rule) and no field. Phase 1 is an owner interview with a recommended answer per question (`references/interview.md`); every number lives in `project.json` as a rule with its reason. A new Profile phase finds where the score goes, and ideas rank by share x odds, with a code or design change at least every third pass. A pass measures first and runs the quality check only on a stage-1 win (`STAGE1-WIN` is never a KEEP). The champion moves at each confirmed KEEP, and every verdict prints the gain against the champion before and against the start. The measurer can be a script or blind pairs judged by the owner (the share of pairs won is the score). The held-out check is off by default, `advisory` or `required`, answers `PASS`, `FAIL quality` or `FAIL gain`, self-tests on the champion first, and the owner's word promotes (`promote --owner`); the setup that sealed the inputs under a second user is gone. `status.py` measures the loop itself (minutes per idea, minutes from a KEEP to its champion, the share of a pass that measures the score). New: `references/plain-words.md`, `held-out.md`, `examples.md`. The loop uses no sub-agents. The serving example moves to `target.sh` and `quality.py`; `test/sigmaclimb_dry.py` checks the scripts on made-up runs, also on Windows.
 - `sigmaboat` matches boat's newest documents (#323). It no longer says "Git Bash cannot run `boat.exe`": boat's docs list Git Bash, `boat.exe` 1.0.100 ran there, and `laboat` runs in it. The worker count is `min(free slots, starts left, ready items)`, because a fork is a start that boat counts per minute, hour and day and never queues. The sizes are named (`small` is half the price). The last step no longer says `laboat clean` leaves only `base-*`: it deletes every sandbox but the bases, other tools' too, so `laboat list` comes first.
 - `sigmaboat`: `laboat clean` deletes only the sandboxes `laboat` made. They carry the name `worker-*` (`laboat new` and `laboat fork` set it); the bases and other tools' sandboxes stay. The last step of the skill says so, with no `laboat list` check first (Thinkcenter_Setup N162).
-- `sigmaboat`: `laboat clean --all` deletes every sandbox but the bases, other tools' too, and prints the list first. The skill says to run it only when the owner asks; plain `laboat clean` stays limited to `worker-*` (Thinkcenter_Setup N162).
 
 ## [0.26.0] — 2026-11-15
 
@@ -819,7 +824,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.1...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.2...HEAD
+[0.26.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.1...v0.26.2
 [0.26.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.0...v0.26.1
 [0.26.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.24.1...v0.25.0
