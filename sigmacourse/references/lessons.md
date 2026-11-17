@@ -19,7 +19,7 @@ A 1,000-hour course, built by unattended loops over several weeks. Each rule cos
 15. **Name the exact row in a brief.** A brief that names the exact requirement row passes review in one round; a general rule does not.
 16. **Read the clock; never guess it.** Status times were off by 30 minutes once.
 17. **One list, one home.** Two book lists drifted. Keep one, and point the other at it.
-18. **Count real content, not the plan.** A done line printed "done" while the course held about 305 hours of text and 85 of video against 2,000 planned. Count reading time, playable video runtime, workbooks and exam questions, each by script.
+18. **Count real content, not the plan.** A done line printed "COURSE DONE" while the course held about 305 hours of text and 85 of video against 2,000 planned. Count reading time, playable video runtime, workbooks and exam questions, each by script.
 19. **A format grid is not variety.** Topic-times-format cells looked varied: 172 titles covered 1,669 of 3,044 units. Measure repetition by title and by repeated figures, and cap a topic by what it has to teach.
 20. **Read what the checks passed.** Units that passed every number and length check held stems that could not be answered, and one answer-letter pattern in 25 of 47 tests. Read a sample of built units yourself; then fix the builder, not each unit.
 21. **A persona speaks only after a blind mix.** Mix real held-out answers with persona answers; the judge must be right on only 35 to 65 % of them, and one confirmed wrong fact fails it. A word-style score is printed beside it as information, not as the gate.

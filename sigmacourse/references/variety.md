@@ -99,4 +99,4 @@ Audio: an audio version per lesson, dialogues in cloned voices (the user's voice
 
 ## Budget script
 
-Every count and hour total above comes from one script (`tools/course_budget.py`), never from prose. To change a number, change the script, rerun it and paste the table.
+Every count and hour total above comes from the check command (`checks/check.py`, [repo-setup.md](repo-setup.md)), never from prose. To change a number, change the script, rerun it and paste the table.
