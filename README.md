@@ -156,6 +156,7 @@ Makes a correction you gave twice impossible to need a third time. It finds the 
 ### SigmaCreate
 
 Makes one new skill by one of two routes. A public skill is one you publish: it holds no names, paths, accounts, hosts or keys, and a search proves that before it ships. A local skill belongs to one project, repo or machine and may name its paths and commands; it lands where that agent loads skills. Either way it ends installed, with a fresh agent naming it.
+
 ### SigmaCourse
 
 Plans teaching of any length: a one-minute tutorial, a one-pager, a two-hour course, a 50-hour introduction or a program of thousands of hours. It first writes what the learner can do at the end and derives the parts from that, then cuts its own steps to the size. A one-pager gets three questions and one file; a long course gets a spec, a done list a script can check, a course repo and one goal prompt for your agent host.
