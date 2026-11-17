@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.27.0] — 2026-11-17
+
 ### Added
 
 - `sigmacreate` (SigmaCreate): makes a new skill by one of two routes. A public skill holds no personal data, and a search for the person's own names and ssh hosts, any Windows or home path, emails, private addresses and keys proves it; a version string like 10.0.26200 is not a hit. A local skill belongs to one project, repo or machine and lands where that agent loads skills. Both end installed, with a fresh agent naming the skill. Built from five creator skills: Matt Pocock's `writing-for-agents` and `write-a-skill`, Anthropic's `skill-creator`, obra's `writing-skills` and OpenAI's `skill-creator`, rewritten with no text copied and linked in the skill. In the default set (#201).
@@ -836,7 +838,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.2...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.0...HEAD
+[0.27.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.2...v0.27.0
 [0.26.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.1...v0.26.2
 [0.26.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.0...v0.26.1
 [0.26.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.25.0...v0.26.0
