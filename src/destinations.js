@@ -214,7 +214,6 @@ const GLOBAL_BASES = Object.freeze({
   configHome: (homeDir, env) => env.XDG_CONFIG_HOME || path.join(homeDir, '.config'),
   claudeHome: (homeDir, env) => env.CLAUDE_CONFIG_DIR || path.join(homeDir, '.claude'),
   codexHome: (homeDir, env) => env.CODEX_HOME || path.join(homeDir, '.codex'),
-  grokHome: (homeDir, env) => env.GROK_HOME || path.join(homeDir, '.grok'),
   hermesHome: (homeDir, env) => env.HERMES_HOME || path.join(homeDir, '.hermes'),
   vibeHome: (homeDir, env) => env.VIBE_HOME || path.join(homeDir, '.vibe'),
   autohandHome: (homeDir, env) => env.AUTOHAND_HOME || path.join(homeDir, '.autohand'),

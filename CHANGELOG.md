@@ -32,6 +32,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- The xAI model is gone from every skill, on the owner's word: no skill gives it a role. `sigmaresearch` searches X through a signed-in browser only; the `x_search` step is deleted. The provider lists in `sigmaship` (named reviewer) and the `sigmaloop` T3 Code host file drop its name.
+- The xAI coding agent leaves the Agent Host registry: the installer no longer offers it or writes into its skills folder. The pinned upstream copy in `test/fixtures` drops it too, and `registry/source.json` holds the new hash, so a later registry sync shows it as a new host for the owner to turn down.
+
 ## [0.27.1] — 2026-11-17
 
 ### Changed
