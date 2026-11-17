@@ -1,11 +1,11 @@
 # Lessons from a real course build
 
-A 1,000-hour course, built by unattended loops over several weeks. Each rule cost that build hours or days. The run file links this list; read it before the first round.
+What one long course build, run by unattended loops over several weeks, learned. The numbers below are what happened there, as evidence, not targets. Each rule cost that build hours or days.
 
 1. **Content before checks.** One loop finished 90 rows in 23 hours: 52 check scripts, 3 lessons, 0 personas; gated hours stayed 0. Build a check only when the content it checks exists and is about to be gated. Count evaluator passes as infra.
 2. **Count before you report.** An orchestrator said "most of what is left is lessons". A count showed no video, audio or image, 10% of case files, a fraction of personas, no history track, one lab tool. Every status answer counts each spec area on disk against its target.
 3. **Hardcoding hides in "every".** "Every lesson ends with work on a real case" and "the first writer slot writes lessons, the second makes media" were both rejected as hardcoding. Turn every "every lesson does X" into a range, and every fixed lane into a dynamic queue.
-4. **Too small is a defect.** Planned counts that looked fine on paper (case files, persona count, history hours) were all too small for the user's bar. Size from the parts tree and the bar, not from a round number; ask "is this enough to reach the bar?"
+4. **Too small is a defect.** Planned counts that looked fine on paper (case files, persona count, history hours) were all too small for the user's bar. Size from the ability map and the bar, not from a round number; ask "is this enough to reach the bar?"
 5. **Visuals before the voice pass.** A lesson edited after its voice pass cannot gate. Diagrams and numbers first, then the voice pass, then one review.
 6. **Voice frames; plain prose carries.** Whole paragraphs in a persona's chat voice lost a blind test 17 of 20 and blurred numbers. Use the teacher's voice for the hook and the "in their words" part.
 7. **Every target sits beside its base rate.** A lesson turned a goal into a 34% yearly growth rate and gave no odds; review failed it. Applies to every growth or success number, not only the headline goal.
@@ -14,11 +14,11 @@ A 1,000-hour course, built by unattended loops over several weeks. Each rule cos
 10. **Personas leak.** A persona run inside the repo talked about the tracker and the user's notes, and spoke in the user's plain-English style. Run personas outside the repo with every global rule file excluded; check with one OOC message when a new account wrapper appears.
 11. **Never edit the user's files.** A persona sheet was trimmed and given a header without asking. Use user files byte for byte; propose changes.
 12. **Blind tests leak through surface clues.** Only one side was cut with "...", so the real answer was guessable. Cut both sides the same way and surface-check before the user sees it.
-13. **Slow voice passes are a scheduling bug.** A 4-lesson pass took over an hour, almost all waiting on serial persona calls. Run persona calls in parallel, cap rounds at 3, batch 6–8 lessons, group merges, and measure minutes per pass.
+13. **Slow voice passes are a scheduling bug.** A 4-lesson pass took over an hour, almost all waiting on serial persona calls. Run persona calls in parallel, stop a pass when a round changes nothing, group merges, and measure minutes per pass.
 14. **One list, one home.** Two book lists drifted. Keep one, and point the other at it.
 15. **Count real content, not the plan.** A done line printed "COURSE DONE" while the course held about 305 hours of text and 85 of video against 2,000 planned. Count reading time, playable video runtime, workbooks and exam questions, each by script.
 16. **A format grid is not variety.** Topic-times-format cells looked varied: 172 titles covered 1,669 of 3,044 units. Measure repetition by title and by repeated figures, and cap a topic by what it has to teach.
 17. **Read what the checks passed.** Units that passed every number and length check held stems that could not be answered, and one answer-letter pattern in 25 of 47 tests. Read a sample of built units yourself; then fix the builder, not each unit.
-18. **A persona speaks only after a blind mix.** Mix real held-out answers with persona answers; the judge must be right on only 35 to 65 % of them, and one confirmed wrong fact fails it. A word-style score is printed beside it as information, not as the gate.
+18. **A persona speaks only after a blind mix.** Mix real held-out answers with persona answers; the judge must do no better than chance (a binomial test on the sample), and one confirmed wrong fact fails it. A word-style score is printed beside it as information, not as the gate.
 19. **One voice per video.** The user ruled out a narrator and a teacher's cloned voice in one film. A clone reads only the person's own words; course text takes a narrator.
 20. **Check once, delete bad checks, never content.** The builder checks each unit once and nobody regrades it; a unit that cannot be built as planned takes the nearest fit, and a check that blocks good content goes.
