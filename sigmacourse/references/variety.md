@@ -9,7 +9,7 @@ Each lesson declares four fields in its front matter, and a script checks the mi
 - `level:` the hardest item in it, on the ladder below;
 - `media:` the media pieces it carries, each with a spec id.
 
-Draw at random from the shapes that fit the lesson's node, seeded by the lesson id, so a rerun gives the same draw. The writer may override a draw that does not fit and logs why (`mix_override: <reason>`). The page frame stays the same (where the video sits, where the task sits, where the answer opens); the content does not.
+Draw at random from the shapes that can carry the node's proof task, seeded by the lesson id, so a rerun gives the same draw. The writer may override a draw that does not fit and logs why (`mix_override: <reason>`). The page frame stays the same (where the video sits, where the task sits, where the answer opens); the content does not.
 
 ## Shapes (examples; the grill drops, renames and adds in the field's words)
 
@@ -39,6 +39,6 @@ When the field has cases (a past decision, a performance to diagnose, a bug), sp
 
 ## Media
 
-A piece of media earns its place by teaching what text cannot: a demonstration, a real moment on tape, a mechanism in motion, a voice. One that reads the text aloud fails review. Every piece ends in active work. Kinds to draw from: a film per module, a lesson video, a slice of real footage, a long lecture, a short explainer, an animation from calculated data, a 3D shot where depth teaches, an audio version, diagrams and charts. Generated images serve atmosphere only, never data.
+A piece of media earns its place by teaching what text cannot: a demonstration, a real moment on tape, a mechanism in motion, a voice. One that reads the text aloud fails review. Every piece ends in active work. Kinds to draw from: a film where a whole module needs a story, a lesson video, a slice of real footage, a long lecture, a short explainer, an animation from calculated data, a 3D shot where depth teaches, an audio version, diagrams and charts. Generated images serve atmosphere only, never data.
 
 When the user names a lecture they love, fetch it, check its title, date and length, and write it as the rubric for long lectures. Estimate render hours from measured speeds before an unattended run.

@@ -7,7 +7,7 @@
 - A field skill when the subject needs models from filings or data.
 
 ## Order
-1. Pedagogy first, when the course is long enough to repay it: the doctrine evidence and the exemplar courses (`repo-setup.md`, doctrine).
+1. Pedagogy first, when the plan file step ran: the doctrine evidence and the exemplar courses (`repo-setup.md`, doctrine).
 2. The base rate for the goal. It goes on page one.
 3. Teachers just ahead of the lesson that needs them. Each teacher file: method, decisions with dates, quotes word for word with sources, mistakes and passes (keep a floor of mistakes, so the course is not a highlight reel).
 4. Corpora the grill named, harvested in full, then sorted.

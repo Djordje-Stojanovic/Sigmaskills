@@ -30,7 +30,7 @@ A job is a batch of lessons. Size it so one review can read the whole batch with
 
 ## Media
 
-The spec names the user's tool for each kind. HyperFrames for lesson videos and animations from data; SigmaDeepLook to transcribe and cut real footage; the user's generators for likenesses, voices, pictures and 3D. Every video gets a spec file, captions, a transcript and a contact-sheet check before it counts.
+The spec names the user's tool for each kind. HyperFrames, when installed, for lesson videos and animations from data; SigmaDeepLook to transcribe and cut real footage; the user's generators for likenesses, voices, pictures and 3D. Every video gets a spec file, captions, a transcript and a contact-sheet check before it counts.
 
 ## Review gates
 

@@ -18,6 +18,8 @@ loop/run.md               the run file the loop re-reads every turn
 loop/STEER.md             the user's orders during the run
 checks/check.py           the one check command
 content/ media/ research/ lab/   the course itself
+docs/books/book-list.md   the one book list (research-and-books.md)
+research/books/           one distilled note per book, and the map
 books/                    git-ignored; the user drops bought books here
 ```
 

@@ -15,15 +15,15 @@ Plan and build teaching of any size, on any subject, for any audience, in any me
 
 ## 1. The end state
 
-Write one line per separate ability the learner must have at the end: "At the end, the learner can <do what> on <real material> to <what standard>." Two lines are separate when a learner could have one without the other. The size is the learner time the user names, on any scale; when they name none, the map sets it. **Done when** every line names a real task, real material and a standard someone else could judge.
+Write one line per separate ability the learner must have at the end: "At the end, the learner can <do what> on <real material> to <what standard>." Two lines are separate when a learner could have one without the other. The size is the learner time the user names, on any scale; when they name none, the map's total from step 2 is the size; say it once and go on. **Done when** every line names a real task, real material and a standard someone else could judge.
 
 ## 2. The ability map
 
 1. Under each end line, write what the learner must be able to do just before it. Repeat for each new line until you reach what the learner can already do. Ask when you do not know. Merge duplicates: one ability, one node.
 2. For each node write: the proof task, the practice it needs (how many tries, with feedback, before the proof is likely to pass; an estimate with its reason), and the medium the proof needs (step 4).
 3. Give each node its minutes: teach, practice, proof. Reading and speaking time come from a rate you state for this audience, video from its real runtime. A script sums the minutes and counts the nodes and the longest prerequisite chain (one node needs no script).
-4. Fit the size. Over it: cut practice on the easiest nodes first, then the end line that matters least to the user; say which. Under it: finish short and say so, or, if the user wants the full size, add practice on the hardest nodes. Never pad with new topics.
-5. The outline is the map in order: each node after what it needs. One new idea per part. Nothing goes in that no end line needs. **Done when** the script prints the node count, the longest chain and the total minutes, and every outline item names the end line it serves.
+4. Fit a named size. Over it: cut practice on the easiest nodes first, then the end line that matters least to the user; say which. Under it: finish short and say so, or, if the user wants the full size, add practice on the hardest nodes. Never pad with new topics.
+5. The outline is the map in order: each node after what it needs. One new idea per part. Nothing goes in that no end line needs. **Done when** the node count, the longest chain and the total minutes are printed (by the script, from two nodes up), and every outline item names the end line it serves.
 
 ## 3. The process the map needs
 
@@ -31,7 +31,7 @@ Read the map, then run each step whose condition is true. Write the result as a 
 
 | Step | Run it when | Tool |
 |---|---|---|
-| Write in place, one file, the outline at its top until done | the writer can draft and check all of it in one sitting | this skill |
+| Write in place, one file, the outline at its top until done | one agent session can draft and check all of it, text and media, with no handoff (say the estimate) | this skill |
 | Plan file `course-plan.md` (end state, map, outline, media, sources) | the writer cannot, so the map must live outside the draft | this skill |
 | Grill | an open answer would change a node, an order, a proof or a medium. Ask only those areas | [grill.md](references/grill.md) |
 | Placement check | the learner's start is unknown and some nodes may already be known | a short test on those nodes |
@@ -54,17 +54,17 @@ Before any unattended run, read [lessons.md](references/lessons.md): what a real
 4. **Retrieval.** The learner recalls before rereading. Check: each part after the first asks for something from an earlier part, from memory.
 5. **Spacing.** Earlier abilities come back at growing gaps across the learner's real calendar. Check: the plan lists, per node, the later parts where it returns.
 6. **Real material.** Tasks use real cases, data or tools of the field. Check: the material is named and stored, or the task says it is invented and why.
-7. **Honest prerequisites.** The first page says what the learner must already be able to do. Check: every leaf of the map appears in that list.
+7. **Honest prerequisites.** The first page says what the learner must already be able to do. Check: every node that needs nothing before it appears in that list.
 8. **Medium follows the proof.** Text for reasoning and reference, video for motion or a real moment, audio for listening and voice, interactive for a control the learner moves, live for judgement in front of people. Check: each part's medium names the reason. "Learning styles" are no reason; the evidence does not support them.
 
 ## 5. Delivery: design, interface, performance, accessibility
 
-Run this for anything a learner opens: a page, an app, a deck, a video, a print file. Scale each item to what exists: a single printed page needs type, layout and contrast; a course site needs all of it.
+Run this for anything a learner opens: a page, an app, a deck, a video, a print file. Items 2 to 4 and 7 apply to screens and media; a print file gets items 1, 5 and 6, checked on a printed or PDF proof.
 
 1. **One design file before the first screen.** Colour, type, spacing and components as tokens; light and dark. Use the project's existing design file when it has one. Else a design skill when installed (`impeccable`, Anthropic `frontend-design`, a Design.md look); else write the tokens yourself. Check: every screen uses only the tokens.
 2. **The learner's path.** Every screen shows where the learner is, how far they are against the end lines, and the one next action. The learner can reach any finished part, leave and resume where they stopped. Answers open after the learner commits. Check: walk one learner from the first page to the last proof task with no dead end.
 3. **Phone and desktop.** The layout works at the narrowest and widest screens the learner uses, by touch and by keyboard. Check: screenshots at both widths, no sideways scroll, no hidden action.
-4. **A performance budget, written before the build.** Set it from the learner's slowest device and network (the grill asks): time until the first lesson is readable or playable, the weight of a page, the start time of a video. Check: measure each page type in the built course (Lighthouse or the browser's own tools); a miss is a defect. To climb a missed budget, SigmaClimb.
+4. **A performance budget, written before the build.** Three numbers from the learner's slowest device and network (the grill asks): time until the first lesson is readable or playable, the weight of a page, the start time of a video. Check: measure each page type in the built course (Lighthouse or the browser's own tools); a miss is a defect. To climb a missed budget, SigmaClimb.
 5. **Accessibility to WCAG 2.2 AA** (the common web standard). Contrast, readable text size, keyboard use, visible focus, alt text, captions and a transcript for every video and audio, reduced motion honoured. Check: an automatic checker (axe or the browser's own) with zero errors, plus one pass by keyboard only.
 6. **Taste.** SigmaTaste on the first screen, chart, film or deck of each kind; act on its top items. Load `dataviz` (or the host's chart skill) before any chart. Video through HyperFrames when installed.
 7. **Check the real thing.** Open the rendered course in a browser (`webapp-testing` when installed), play the media, read the console. Check: zero console errors, every page and media file loads, and the screenshots go into the review. A check that reads only source files does not count.
