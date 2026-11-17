@@ -26,7 +26,7 @@ One job is a batch: 1–3 lessons for a Course, 4–8 for a Program.
 - Build one per teacher: the user's own persona builder when installed, else a SigmaResearch pass (the source floor from the spec) turned into a persona file. The user's own persona sheets are used byte for byte.
 - Every quote is checked word for word against a stored source; read the passage around it.
 - An "as of" setting lets a persona speak from a case's decision date.
-- Run rules: `hosts.md`. Realism: a blind mix of the person's real held-out answers and the persona's answers (`lessons.md`, rule 21); cut both sides the same way so no surface clue gives the answer away.
+- Run rules: `hosts.md`. Realism: a blind mix of the person's real held-out answers and the persona's answers (`lessons.md`, rule 18); cut both sides the same way so no surface clue gives the answer away.
 
 ## Media
 

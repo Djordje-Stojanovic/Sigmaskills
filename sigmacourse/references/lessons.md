@@ -15,13 +15,10 @@ A 1,000-hour course, built by unattended loops over several weeks. Each rule cos
 11. **Never edit the user's files.** A persona sheet was trimmed and given a header without asking. Use user files byte for byte; propose changes.
 12. **Blind tests leak through surface clues.** Only one side was cut with "...", so the real answer was guessable. Cut both sides the same way and surface-check before the user sees it.
 13. **Slow voice passes are a scheduling bug.** A 4-lesson pass took over an hour, almost all waiting on serial persona calls. Run persona calls in parallel, cap rounds at 3, batch 6–8 lessons, group merges, and measure minutes per pass.
-14. **A crew change touches every check that counts slots.** The slot total lived in several files and their tests. Search for every place a count is hardcoded before changing it.
-15. **Name the exact row in a brief.** A brief that names the exact requirement row passes review in one round; a general rule does not.
-16. **Read the clock; never guess it.** Status times were off by 30 minutes once.
-17. **One list, one home.** Two book lists drifted. Keep one, and point the other at it.
-18. **Count real content, not the plan.** A done line printed "COURSE DONE" while the course held about 305 hours of text and 85 of video against 2,000 planned. Count reading time, playable video runtime, workbooks and exam questions, each by script.
-19. **A format grid is not variety.** Topic-times-format cells looked varied: 172 titles covered 1,669 of 3,044 units. Measure repetition by title and by repeated figures, and cap a topic by what it has to teach.
-20. **Read what the checks passed.** Units that passed every number and length check held stems that could not be answered, and one answer-letter pattern in 25 of 47 tests. Read a sample of built units yourself; then fix the builder, not each unit.
-21. **A persona speaks only after a blind mix.** Mix real held-out answers with persona answers; the judge must be right on only 35 to 65 % of them, and one confirmed wrong fact fails it. A word-style score is printed beside it as information, not as the gate.
-22. **One voice per video.** The user ruled out a narrator and a teacher's cloned voice in one film. A clone reads only the person's own words; course text takes a narrator.
-23. **Check once, delete bad checks, never content.** The builder checks each unit once and nobody regrades it; a unit that cannot be built as planned takes the nearest fit, and a check that blocks good content goes.
+14. **One list, one home.** Two book lists drifted. Keep one, and point the other at it.
+15. **Count real content, not the plan.** A done line printed "COURSE DONE" while the course held about 305 hours of text and 85 of video against 2,000 planned. Count reading time, playable video runtime, workbooks and exam questions, each by script.
+16. **A format grid is not variety.** Topic-times-format cells looked varied: 172 titles covered 1,669 of 3,044 units. Measure repetition by title and by repeated figures, and cap a topic by what it has to teach.
+17. **Read what the checks passed.** Units that passed every number and length check held stems that could not be answered, and one answer-letter pattern in 25 of 47 tests. Read a sample of built units yourself; then fix the builder, not each unit.
+18. **A persona speaks only after a blind mix.** Mix real held-out answers with persona answers; the judge must be right on only 35 to 65 % of them, and one confirmed wrong fact fails it. A word-style score is printed beside it as information, not as the gate.
+19. **One voice per video.** The user ruled out a narrator and a teacher's cloned voice in one film. A clone reads only the person's own words; course text takes a narrator.
+20. **Check once, delete bad checks, never content.** The builder checks each unit once and nobody regrades it; a unit that cannot be built as planned takes the nearest fit, and a check that blocks good content goes.
