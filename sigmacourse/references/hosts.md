@@ -16,7 +16,3 @@ Parallel agents: use the host's own way (Claude Code subagents, Codex spawned ag
 ## Personas on any host
 
 A persona runs as a headless session from a folder outside the course repo, with no tools, no extra servers, and the persona file as its system prompt or instructions. Exclude every global rule file the account loads (`CLAUDE.md`, `AGENTS.md`): a global writing rule flattens the persona's voice. One launcher script per persona.
-
-## Media on any host
-
-Media jobs call the user's own tools: video, voice, image and 3D generators, local or hosted. The spec names each tool, its machine and its limits. When a Sigma or other installed skill covers a tool (HyperFrames for programmatic video, an image or voice skill), the run file names that skill; otherwise it names the command.

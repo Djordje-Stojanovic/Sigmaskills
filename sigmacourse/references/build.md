@@ -4,11 +4,11 @@ The loop follows this every round. Keep only what the spec needs: a course with 
 
 ## The lesson pipeline
 
-A job is a batch of lessons. Size it so one review can read the whole batch with care; measure minutes per batch and adjust.
+A job is a batch of units: lessons, guide sections or scenes. Size it so one review can read the whole batch with care; measure minutes per batch and adjust.
 
 1. **Draw the mix** from `variety.md`, seeded by the lesson id.
 2. **Read before writing.** The notes the lesson cites, the doctrine, the glossary. Cite every note used.
-3. **Draft** by SKILL.md step 4. Lead with the point. One term for one thing. Facts from the sources only. SigmaWrite for technical passages, SigmaHuman for course prose (with the user's writing sample when given). Every number from a calc script; every goal beside its base rate.
+3. **Draft** by SKILL.md step 4. Lead with the point. One term for one thing, defined at its first use; a field with many terms gets one glossary. Facts from the sources only. SigmaWrite for technical passages, SigmaHuman for course prose (with the user's writing sample when given). Every number from a calc script; every goal beside its base rate.
 4. **Visuals and media specs** before the voice pass, because an edit after the voice pass makes it stale.
 5. **Lesson checks.** Fix every finding first.
 6. **Teacher voice pass** (when the lesson has a teacher persona). The persona reads the lesson and answers in its own words. Its voice frames the hook and the "in their words" parts; plain prose carries numbers and steps. Run a batch's persona calls in parallel, stop when a round changes nothing, and log its last notes for the reviewer.
@@ -26,13 +26,14 @@ A job is a batch of lessons. Size it so one review can read the whole batch with
 - One per teacher: the user's persona builder when installed, else a SigmaResearch pass turned into a persona file. The user's own persona sheets are used byte for byte.
 - Every quote is checked word for word against a stored source; read the passage around it.
 - An "as of" setting lets a persona speak from a case's decision date.
+- A persona the learner can ask inside the course cites its sources, says when it does not know, and opens no answer before the attempt.
 - Run rules: `hosts.md`. Realism: `lessons.md`, the blind mix.
 
 ## Media
 
-The spec names the user's tool for each kind. HyperFrames, when installed, for lesson videos and animations from data; SigmaDeepLook to transcribe and cut real footage; the user's generators for likenesses, voices, pictures and 3D. Every video gets a spec file, captions, a transcript and a contact-sheet check before it counts.
+The spec names the user's tool for each kind, its machine and its limits; the run file names the skill that drives it, else the command. HyperFrames, when installed, for lesson videos and animations from data; SigmaDeepLook to transcribe and cut real footage; the user's generators for likenesses, voices, pictures and 3D. Every video gets a spec file, captions, a transcript and a contact-sheet check before it counts.
 
-## Review gates
+## Review gates (those that apply)
 
 1. Source check: every quote, date and number matches a stored file.
 2. Every number recomputed by script.

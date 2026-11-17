@@ -39,7 +39,7 @@ DELIVERY: design file, devices and widths, performance budget, accessibility sta
 SOURCES:                     EVALUATOR: scripts + fresh reviewer one model up (+ user review packs)
 CREW and HOST:               STACK:            SECRETS:
 INVARIANTS: realism (source or assumption), compute in code, base rate beside every goal
-SIGN-OFF: the user said "yes, exactly" [ ]
+SIGN-OFF: the user said yes to the playback (grill.md, Alignment) [ ]   FIRST PART: accepted, plan fixes logged [ ]
 ```
 
 Each line records its source and date ("user <date>" or "default, logged"). When a newer user word replaces a line, mark the old one SUPERSEDED and keep its text.
