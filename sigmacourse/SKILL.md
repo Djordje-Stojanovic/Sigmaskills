@@ -22,7 +22,7 @@ Write one line per separate ability the learner must have at the end: "At the en
 1. Under each end line, write what the learner must be able to do just before it. Repeat for each new line until you reach what the learner can already do. Ask when you do not know. Merge duplicates: one ability, one node.
 2. For each node write: the proof task, the practice it needs (how many tries, with feedback, before the proof is likely to pass; an estimate with its reason), and the medium the proof needs (step 4).
 3. Give each node its minutes: teach, practice, proof. Reading and speaking time come from a rate you state for this audience, video from its real runtime. A script sums the minutes and counts the nodes and the longest prerequisite chain (one node needs no script).
-4. Fit the size. Over it: drop the end line that matters least to the user, and say which. Under it: finish short and say so, or, if the user wants the full size, add practice on the hardest nodes. Never pad with new topics.
+4. Fit the size. Over it: cut practice on the easiest nodes first, then the end line that matters least to the user; say which. Under it: finish short and say so, or, if the user wants the full size, add practice on the hardest nodes. Never pad with new topics.
 5. The outline is the map in order: each node after what it needs. One new idea per part. Nothing goes in that no end line needs. **Done when** the script prints the node count, the longest chain and the total minutes, and every outline item names the end line it serves.
 
 ## 3. The process the map needs
