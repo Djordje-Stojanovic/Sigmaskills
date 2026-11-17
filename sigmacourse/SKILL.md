@@ -27,7 +27,7 @@ Write one line per separate ability the learner must have at the end: "At the en
 
 ## 3. The process the map needs
 
-Read the map, then run each step whose condition is true. Write the result as a short table: step, true or false, the fact from the map that decided it. That table is the proof that the course, not a size, chose the process.
+Read the map, then run each step whose condition is true. Write the result as a short table: step, true or false, the fact from the map that decided it. That table is the proof that the course, not a size, chose the process. Read a named skill before its step; when it is not installed, do the step yourself and say which was missing.
 
 | Step | Run it when | Tool |
 |---|---|---|
