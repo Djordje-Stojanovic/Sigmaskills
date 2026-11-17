@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.27.2] — 2026-11-17
+
 ### Changed
 
 - The xAI model is gone from every skill, on the owner's word: no skill gives it a role. `sigmaresearch` searches X through a signed-in browser only, so the `x_search` step is deleted. `sigmaship` and the `sigmaloop` T3 Code host file no longer name it as a provider.
@@ -849,7 +851,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.1...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.2...HEAD
+[0.27.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.1...v0.27.2
 [0.27.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.0...v0.27.1
 [0.27.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.2...v0.27.0
 [0.26.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.1...v0.26.2
