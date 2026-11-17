@@ -344,5 +344,15 @@
   "prompt": "Sigmacreate a public skill I can publish, with no personal data in it",
   "skill": "sigmacreate",
   "near": "sigmaship"
+ },
+ {
+  "prompt": "Plan a whole course on Rust for me, from curriculum to a goal prompt",
+  "skill": "sigmacourse",
+  "near": "sigmaloop"
+ },
+ {
+  "prompt": "Make a one-page guide that teaches beginners to read a balance sheet",
+  "skill": "sigmacourse",
+  "near": "sigmawrite"
  }
 ]
