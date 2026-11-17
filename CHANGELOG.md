@@ -34,8 +34,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
-- The xAI model is gone from every skill, on the owner's word: no skill gives it a role. `sigmaresearch` searches X through a signed-in browser only; the `x_search` step is deleted. The provider lists in `sigmaship` (named reviewer) and the `sigmaloop` T3 Code host file drop its name.
-- The xAI coding agent leaves the Agent Host registry: the installer no longer offers it or writes into its skills folder. The pinned upstream copy in `test/fixtures` drops it too, and `registry/source.json` holds the new hash, so a later registry sync shows it as a new host for the owner to turn down.
+- Grok is gone from every skill. No skill gives it a role now. `sigmaresearch` searches X through a signed-in browser only, so the `x_search` step is deleted. `sigmaship` and the `sigmaloop` T3 Code host file no longer name it as a provider.
+- Grok leaves the Agent Host registry. The installer no longer offers it, writes into `.grok/skills`, or reads `GROK_HOME`. The test copy of upstream `agents.ts` drops it too. That copy no longer matches the hash pinned in `registry/source.json`, so `registry:sync -- --fetch` refuses it until the owner moves the pin. Upstream still lists Grok, so a later pin move shows it as a new host for the owner to review.
 
 ## [0.27.1] — 2026-11-17
 

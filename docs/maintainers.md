@@ -77,6 +77,7 @@ If one is missing, `npm test` fails on purpose.
 ### Registry scripts
 
 - `npm run registry:sync` rebuilds `registry/agent-hosts.json` from the pinned `vercel-labs/skills` revision. Flags: `--fetch` (download the pinned revision), `--dry-run`, `--allow-review` (write even when the diff needs owner review).
+- The test fixture `test/fixtures/vercel-skills/src/agents.ts` is a local edit (one upstream host removed), so its hash no longer matches the pin in `registry/source.json`. `--fetch` fails that check until the owner moves the pin.
 - `npm run registry:validate` checks the snapshot against `registry/schema.json` and the safety rules. `npm test` runs the same checks.
 
 ### Packs and screenshots
