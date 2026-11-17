@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmacourse`: the interview finds the real need. It asks only while a wrong guess costs more than the question, and picks its methods by what is still unknown: why chains, the "why now" story, the last time something stuck and the last time the learner quit, two rough samples to react to, a forced choice, a pre-mortem, watching the learner try, and a summary in the user's words. Each method names its source. It plays the whole plan back for a yes before the build, and fixes the plan after the first built part. Gaps found by comparing the skill with a real long course are closed as principles: unseen material for proofs, rubrics for open work, process graded apart from luck, mastery with a retake path, wrong beliefs as nodes, a first sitting that ends with a real task, help when stuck, a recap after a pause, a glossary, and the share of doing time. The level ladder and case axes are now examples. 395 lines before, 387 after.
+
 ## [0.27.0] — 2026-11-17
 
 ### Added

@@ -1,55 +1,48 @@
 # The course grill
 
-The areas a course may need answered. Ask an area only when its answer changes a node, an order, a proof, a medium or a process step; otherwise write "not needed: <reason>". One question at a time: recommended answer first, its reason, one concrete example. After each answer, add a pinned line to the plan (field, value, source, date). A vague word ("great", "deep", "properly") gets pinned to a comparison, a number or a named judge before you move on.
+Find what the user wants, what the learner needs, and what neither has put into words; then get a yes on the plan. Every method here helps the user see their own wish more clearly. None steers them against their interest.
 
-Every default is a starting point. The user's answer replaces it. Ask once, early: "Describe one piece of teaching you would love, and one you would hate."
+## How much to ask
 
-## 1. The learner
-- Who learns: one person, a team or an audience. One named learner allows personalization no mass course can.
-- What they can already do, past courses, where they stalled and why. A stall point becomes a design rule.
-- Conditions that change design: attention, language, time, a disability, decision paralysis (then: one pre-committed default per choice).
-- Their real sitting length and how often they sit.
+List the open unknowns that would change a node, an order, a proof, a medium or a process step. Rank them by what a wrong guess would cost: rework, a learner who quits, a course that misses the goal. Ask the top one, update, repeat. Stop when the next question costs more than a wrong guess (value of information). A short how-to may need no question; a long program needs many. There is no fixed number.
 
-## 2. The goal and its real odds
-- The goal as a result and a date. Ask "why" until you reach the real goal.
-- The bar as a named comparison ("as good as a working X").
-- The base rate: what share of comparable learners reach this, and how fast. Sourced, or an assumption with its reason.
-- What the course can promise and what it cannot.
+- One question at a time. Your recommended answer first, its reason, one concrete example.
+- Reuse the user's own words. Pin each answer in the plan: field, value, source, date.
+- A vague word ("great", "deep", "properly") gets pinned to a comparison, a number or a named judge.
+- "Just build it": write every answer as a guess, play the plan back once, take corrections.
 
-Then write the end state and the map (SKILL.md steps 1 and 2).
+## Methods: pick by what is still unknown
 
-## 3. Scope
-- The size, if the user named one, against the map's total. When they disagree, offer a bigger size or a smaller end state.
-- Finite (a done list) or ongoing.
-- Build first, or a pilot part first so the learner starts sooner.
-- Out of scope: what the course never touches.
+| Unknown | Ask or do | Source |
+|---|---|---|
+| The real goal behind the request | After each answer: "Why does that matter to you?" Stop when the answer is a value or a change in their life, or repeats. | Laddering, means-end chains: Reynolds and Gutman, *J. Advertising Research*, 1988 |
+| Why now, and what failed before | "What happened that made you look for this now? What did you try before, and why did it not do the job?" | Jobs to be done, the switch interview: Christensen et al., *Competing Against Luck*, 2016 |
+| How they really learn | "The last time you learned something that stuck: what made it stick? The last time you quit: when, and why?" Ask about past events, never "would you like". | Critical incident technique: Flanagan, *Psychological Bulletin*, 1954; Fitzpatrick, *The Mom Test*, 2013 |
+| Taste: tone, look, difficulty, voice | Make two short, rough, different samples of one real part. Ask which is closer and what is off. Never one sample: people criticise more freely when they see alternatives. | Tohidi et al., "Getting the right design and the design right", CHI 2006 |
+| Priorities | "If you could have only one: X or Y?" between two good things (depth or speed, rigour or fun). A rating calls everything important. | Best-worst scaling: Louviere, Flynn and Marley, 2015 |
+| How it fails | "Picture the end of the course's span. The learner dropped it. What happened?" Each reason becomes a node, a design rule or a check. | Pre-mortem: Klein, *Harvard Business Review*, 2007 |
+| What the learner can do now | When the learner is reachable, watch them try one proof task, or run the placement check. Do not ask them to rate themselves. | Contextual inquiry: Beyer and Holtzblatt, 1998 |
+| Whether you understood | Say back what you heard, in their words, then ask "What did I miss?" | Reflective summaries: Miller and Rollnick, *Motivational Interviewing*, 3rd ed., 2013 |
 
-## 4. Practice and feedback
-- Which shapes and task types fit the field (`variety.md`); which to rename, drop or add.
-- If the user wants one fixed lesson pattern: keep what they like, name what it costs (one task type trains one skill), offer a stable frame with varied work inside first.
-- Feedback: how blunt, how fast, who gives it (key, script, reviewer, persona, a human).
+**Dig for the unsaid.** When the stated wish, the why chain, the switch story and past behaviour point different ways, name the gap in one sentence and ask which is true: "You asked for X. The last two times you quit when Y happened. Should the course guard against Y?" The person you interview may not be the learner (a parent, a manager, a teacher): ask what the learner wants too, and run the past-behaviour and sample methods with the learner when you can.
 
-## 5. The evaluator
-- How the build knows a piece is good: scripts for numbers, sources and counts; a fresh reviewer for what no script can judge; user review packs on a cadence the user picks.
-- What counts as learner time: only accepted pieces, counted by script from real content.
+## Areas that may be open
 
-## 6. Runtime and crew (only when the build spans sessions)
-- Which host runs the loop, how many agents, which models write, review and research. Default: the host and models the user already uses; reviews one model up.
-- Machines, accounts, usage limits.
+Ask an area only when its answer changes the plan; otherwise write "not needed: <reason>". Every default is a starting point; the answer replaces it.
 
-## 7. Media and delivery
-- Which media the proofs need, and which of the user's tools and machines make video, voice, images and 3D.
-- Generated media, including likenesses and cloned voices of real people: the user's call.
-- Where the learner opens it: device, screen sizes, network, offline need, print. This sets the performance budget.
-- An existing design file or look. Accessibility needs beyond the standard.
-- Stack: plain files, a static site or an app. Default: the simplest one that carries the media and the learner's path.
+1. **The learner.** Who learns. What they can already do and what they have studied: build on it, never teach it again as new. Wrong beliefs that would block a node. Conditions that change design: age, language, attention, a disability, decision paralysis (then one pre-committed default per choice). Real sitting length and how often they sit.
+2. **The goal and its odds.** The result and a date. The bar as a named comparison. How often comparable learners reach it, sourced or an assumption. What the course cannot promise.
+3. **Scope.** The named size against the map's total; when they disagree, offer a bigger size or a smaller end state. Finite or ongoing. A pilot part first, or the whole build. What is out.
+4. **Practice, feedback, help.** Which shapes and task types fit the field ([variety.md](variety.md)). How blunt and how fast feedback is, and who gives it: a key, a rubric, a script, a reviewer, a persona, a person. Where the learner gets help when stuck. What keeps them going and what puts them off: progress shown, a person checking in, points, streaks.
+5. **The evaluator.** Scripts for numbers and counts; a fresh reviewer for what no script can judge; how often the user reviews. Learner time counts only accepted pieces, by script.
+6. **Runtime and crew** (only when the build spans sessions). Host, agents, models (reviews one model up), machines, accounts, limits. Default: what the user already uses.
+7. **Media and delivery.** Which media the proofs need and which of the user's tools make them; generated likenesses and cloned voices are the user's call. Where the learner opens it: device, screen sizes, network, offline, print; this sets the performance budget. An existing design file. Accessibility needs. Where progress and answers live. Stack, by default the simplest that carries the media and the learner's path.
+8. **Teachers and cases.** Real or invented teachers, and how deep each goes; the user's persona sheets are used byte for byte. Whether the field has cases.
+9. **Sources.** Allowed kinds, corpora, a book list, data, the user's own APIs.
+10. **Secrets.** Where keys live. The only confirm: deleting the repo or publishing a secret.
 
-## 8. Teachers and cases
-- Which real or invented people teach, and how deep each persona goes. Existing persona sheets are used byte for byte.
-- Whether the field has cases, and on which axes (`variety.md`).
+## Alignment
 
-## 9. Sources
-- Allowed source kinds, corpora to harvest, a book list, free or paid data, the user's own APIs.
-
-## 10. Secrets and confirms
-- Where keys live (environment or an ignored folder). Default confirm: only deleting the repo or publishing a secret.
+1. **Play the plan back before the build**, in one short block and the user's own words: who learns, what they can do at the end, what taking it will feel like, what it will not be, the size. Wait for a yes or corrections. After corrections, play back only what changed.
+2. **Evidence against the wish.** Where the user's wish and the evidence on learning disagree (no practice, rereading in place of recall, one task type for everything), say it once, plainly, with the source. Then the user's word wins; log it.
+3. **After the first built part**, show it rendered and ask "What is off?", with two concrete guesses of your own. Fix the plan first (the end lines, the map, the default that caused the miss), then the part, so every later part inherits the fix. The accepted part becomes the reference the reviewers compare with. Early, repeated tests with users: Gould and Lewis, *Communications of the ACM*, 1985.
