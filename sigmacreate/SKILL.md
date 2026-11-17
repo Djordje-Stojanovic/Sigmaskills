@@ -66,11 +66,12 @@ A public skill holds no personal data. Collect what would identify this person a
 
 ```bash
 git config user.name; git config user.email; gh api user -q .login; hostname; whoami
+awk '/^Host /{for(i=2;i<=NF;i++)print $i}' ~/.ssh/config
 grep -Ein '<each value above, joined with |>' -r <skill>/
-grep -Ein '[A-Z]:[\]Users[\]|/home/[a-z]|/Users/[a-z]|[[:alnum:]._%+-]+@[[:alnum:].-]+\.[a-z]{2,}|\b(10|192\.168|172\.(1[6-9]|2[0-9]|3[01]))\.[0-9]+\.[0-9]+|ghp_|github_pat_|sk-[A-Za-z0-9]|AKIA|BEGIN [A-Z ]*PRIVATE KEY' -r <skill>/
+grep -Ein '[A-Z]:[/\]Users[/\]|/home/[a-z]|/Users/[a-z]|[[:alnum:]._%+-]+@[[:alnum:].-]+\.[a-z]{2,}|\b(10|192\.168|172\.(1[6-9]|2[0-9]|3[01]))\.[0-9]+\.[0-9]+|ghp_|github_pat_|sk-[A-Za-z0-9]|AKIA|BEGIN [A-Z ]*PRIVATE KEY' -r <skill>/
 ```
 
-Also search for the hosts in `~/.ssh/config`, and run the target repo's own private-name check if it has one. Replace each hit with a placeholder (`<project>`, `~/repos/<name>`, `you@example.com`) or a word that fits anyone.
+Run the target repo's own private-name check too, if it has one. Replace each hit with a placeholder (`<project>`, `~/repos/<name>`, `you@example.com`) or a word that fits anyone.
 
 **Done when** both searches print nothing, or each line left is a placeholder you can name.
 
@@ -85,7 +86,7 @@ Also search for the hosts in `~/.ssh/config`, and run the target repo's own priv
 | Claude Code | `.claude/skills/<name>/` | `~/.claude/skills/<name>/` |
 | Codex, pi, and most others | `.agents/skills/<name>/` | `~/.agents/skills/<name>/` |
 
-The Sigma installer's host list (`registry/agent-hosts.json` in the Sigmaskills repo) holds the folders of about 70 other agents. A project skill goes into that repo's git with the change it belongs to; a machine skill stays on the machine.
+The Sigma installer's host list (`registry/agent-hosts.json` in the Sigmaskills repo) holds the folders of the other agents. A project skill goes into that repo's git with the change it belongs to; a machine skill stays on the machine.
 
 Prove that a fresh agent sees it. Start one in the target folder with closed input, and ask for its skills:
 
