@@ -32,6 +32,7 @@ Sigmaskills/
 ├── sigmadebug/               SKILL.md · agents/
 ├── sigmacorrect/             SKILL.md · agents/
 ├── sigmacreate/              SKILL.md · agents/
+├── sigmacourse/              SKILL.md · agents/ · references/
 └── sigmacreatearena/ SKILL.md · agents/ · references/ · kit/
 ```
 

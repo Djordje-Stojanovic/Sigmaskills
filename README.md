@@ -94,6 +94,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaDebug** | `sigmadebug` | Settles open topics one at a time and ships each fix |
 | **SigmaCorrect** | `sigmacorrect` | Turns a correction you gave twice into a check that fails |
 | **SigmaCreate** | `sigmacreate` | Makes a new skill, public or local, and proves an agent picks it up |
+| **SigmaCourse** | `sigmacourse` | Plans teaching of any length, from a one-pager to a 1,000-hour course |
 | **SigmaCreateArena** | `sigmacreatearena` | Ranks any options blind, by Elo |
 | **SigmaResearch** | `sigmaresearch` | Reads public sources and counts those read in full |
 | **SigmaDeepLook** | `sigmadeeplook` | Reads what agents cannot: video, speech, scans, binaries |
@@ -155,6 +156,10 @@ Makes a correction you gave twice impossible to need a third time. It finds the 
 ### SigmaCreate
 
 Makes one new skill by one of two routes. A public skill is one you publish: it holds no names, paths, accounts, hosts or keys, and a search proves that before it ships. A local skill belongs to one project, repo or machine and may name its paths and commands; it lands where that agent loads skills. Either way it ends installed, with a fresh agent naming it.
+
+### SigmaCourse
+
+Plans teaching of any length: a one-minute tutorial, a one-pager, a two-hour course, a 50-hour introduction or a program of thousands of hours. It first writes what the learner can do at the end and derives the parts from that, then cuts its own steps to the size. A one-pager gets three questions and one file; a long course gets a spec, a done list a script can check, a course repo and one goal prompt for your agent host.
 
 ### SigmaCreateArena
 
@@ -395,6 +400,7 @@ $sigmawrite
 $sigmadebug
 $sigmacorrect Stop hardcoding: make it a check
 $sigmacreate Turn what we just did into a skill for this repo
+$sigmacourse A one-page guide to reading a balance sheet
 $sigmacreatearena Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
 $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
@@ -426,6 +432,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 /skill:sigmadebug
 /skill:sigmacorrect
 /skill:sigmacreate Turn what we just did into a skill for this repo
+/skill:sigmacourse Plan a 10-hour course that makes me fluent in SQL
 /skill:sigmacreatearena Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
 /skill:sigmadeeplook What happens at 2:10 in ~/clips/demo.mp4?
@@ -456,6 +463,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmawrite` | (no input) · or "easy talk" for the GUI board · `EASYTALK REPLY` | Session writing voice until you turn it off; the GUI option makes a board |
 | `sigmacorrect` | (no input) · or the correction in your words | Proves each new check fails on the real past mistake; docs last |
 | `sigmacreate` | what the skill should do · public or local | Public skills pass a personal-data search; ends when a fresh agent lists it |
+| `sigmacourse` | a subject · a length (any) · the learner | Asks the length first; small sizes write one file, long ones a course repo and a goal prompt; never starts the loop |
 | `sigmadebug` | (no input) · or a list of topics | Writes a topic .txt and a plan .md; one background SigmaShip worker per clear topic |
 | `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |

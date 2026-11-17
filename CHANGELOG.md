@@ -35,6 +35,9 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Added
 
 - `sigmacreate` (SigmaCreate): makes a new skill by one of two routes. A public skill holds no personal data, and a search for the person's own names, home paths, emails, private addresses and keys proves it. A local skill belongs to one project, repo or machine and lands where that agent loads skills. Both end installed, with a fresh agent naming the skill. Built from five creator skills: Matt Pocock's `writing-for-agents` and `write-a-skill`, Anthropic's `skill-creator`, obra's `writing-skills` and OpenAI's `skill-creator`. In the default set (#201).
+
+- `sigmacourse` (SigmaCourse) is back in the pack, rebuilt for any length (N49, owner 17 Nov). The length is the first input and picks a tier: a Piece (a one-minute tutorial, a one-pager, a ten-minute guide) writes one file; a Session (up to about 3 hours) a plan file and its lessons; a Course (up to about 50 hours) and a Program (more) the spec, done list, course repo and goal prompt as before. Every tier first writes what the learner can do at the end and derives the parts from it, before any outline. `references/lessons.md` adds six lessons from the 1,000-hour build (count real content, a format grid is not variety, read what the checks passed, the blind persona mix, one voice per video, check once), and cuts three that had no stored source (the slot-count crew change, the exact row in a brief, the clock). It was retired in 0.24.0; an installed copy is now updated like any other Sigma skill.
+
 - `sigmacorrect` (SigmaCorrect): makes a correction the owner gave twice impossible to need a third time. It finds the repeat, fixes it at the highest level that works (delete the wrong way, a type, a check whose error names the fix, a test, docs last), and proves the check fails on the real past mistake. In the default set, so every Sigma install gets it (#221, idea 3 from pstack `correct`).
 
 ### Changed

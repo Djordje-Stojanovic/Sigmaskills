@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaCourse
+  short_description: Plan teaching of any length, from a one-pager to a course repo
+  default_prompt: Use $sigmacourse to plan a course on my subject at the length
+    I name. Start from what I can do at the end, then cut the steps to the size.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: true
