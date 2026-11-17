@@ -33,7 +33,8 @@ Read the map, then run each step whose condition is true. Write the result as a 
 |---|---|---|
 | Write in place, one file, the outline at its top until done | one agent session can draft and check all of it, text and media, with no handoff (say the estimate) | this skill |
 | Plan file `course-plan.md` (end state, map, outline, media, sources) | the writer cannot, so the map must live outside the draft | this skill |
-| Grill, playback, first-part review | an open answer would change a node, an order, a proof or a medium; depth follows what a wrong guess would cost | [grill.md](references/grill.md) |
+| Grill | an open answer would change a node, an order, a proof or a medium; depth follows what a wrong guess would cost | [grill.md](references/grill.md) |
+| Playback, first-part review | always: one line beside the result for a piece one session builds, a block before the build for more | [grill.md](references/grill.md#alignment) |
 | Placement check | the learner's start is unknown and some nodes may already be known | a short test on those nodes |
 | Spaced review | the learner time spans more than one sitting | step 4 |
 | Research | the course states a fact the user's sources do not hold | [research-and-books.md](references/research-and-books.md) |
@@ -47,6 +48,8 @@ Read the map, then run each step whose condition is true. Write the result as a 
 Before any unattended run, read [lessons.md](references/lessons.md): what a real long build learned.
 
 ## 4. Teach by what works (each check is what the reviewer tests)
+
+An item that cannot apply (a one-page reference has no spacing) is written "not needed: <reason>"; the user may drop any item, logged.
 
 1. **Backward design.** The proof task is written before the teaching, on material the teaching did not use, so a pass shows transfer, not memory. Check: the part's last item is the proof task from the map, and its material appears nowhere earlier.
 2. **Worked example before independent work.** Show a full solution, then a partly done one, then a blank one. Check: the first task is never cold, unless the part is a deliberate "try first, then teach" draw.

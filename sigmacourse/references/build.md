@@ -4,7 +4,7 @@ The loop follows this every round. Keep only what the spec needs: a course with 
 
 ## The lesson pipeline
 
-A job is a batch of lessons. Size it so one review can read the whole batch with care; measure minutes per batch and adjust.
+A job is a batch of units: lessons, guide sections or scenes. Size it so one review can read the whole batch with care; measure minutes per batch and adjust.
 
 1. **Draw the mix** from `variety.md`, seeded by the lesson id.
 2. **Read before writing.** The notes the lesson cites, the doctrine, the glossary. Cite every note used.
@@ -33,7 +33,7 @@ A job is a batch of lessons. Size it so one review can read the whole batch with
 
 The spec names the user's tool for each kind, its machine and its limits; the run file names the skill that drives it, else the command. HyperFrames, when installed, for lesson videos and animations from data; SigmaDeepLook to transcribe and cut real footage; the user's generators for likenesses, voices, pictures and 3D. Every video gets a spec file, captions, a transcript and a contact-sheet check before it counts.
 
-## Review gates
+## Review gates (those that apply)
 
 1. Source check: every quote, date and number matches a stored file.
 2. Every number recomputed by script.
