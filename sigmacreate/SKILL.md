@@ -62,14 +62,17 @@ Give a fresh agent, with no memory of this chat, one of the three prompts and th
 
 ## 4. Public route: the clean check
 
-A public skill holds no personal data. Collect what would identify this person and machine, then search the skill folder for it and for the usual shapes:
+A public skill holds no personal data. Collect what would identify this person and machine, including every host in `~/.ssh/config`, then search the skill folder for it and for the usual shapes:
 
 ```bash
-git config user.name; git config user.email; gh api user -q .login; hostname; whoami
-awk '/^Host /{for(i=2;i<=NF;i++)print $i}' ~/.ssh/config
-grep -Ein '<each value above, joined with |>' -r <skill>/
-grep -Ein '[A-Z]:[/\]Users[/\]|/home/[a-z]|/Users/[a-z]|[[:alnum:]._%+-]+@[[:alnum:].-]+\.[a-z]{2,}|\b(10|192\.168|172\.(1[6-9]|2[0-9]|3[01]))\.[0-9]+\.[0-9]+|ghp_|github_pat_|sk-[A-Za-z0-9]|AKIA|BEGIN [A-Z ]*PRIVATE KEY' -r <skill>/
+skill=<skill folder>; me=$(mktemp)
+{ git config user.name; git config user.email; gh api user -q .login; hostname; whoami
+  awk '/^Host /{for(i=2;i<=NF;i++)print $i}' ~/.ssh/config; } 2>/dev/null | grep -vE '^$|[*?]' | sort -u > "$me"
+grep -rniwE "$(paste -sd'|' "$me")" "$skill"   # one pattern: Git Bash grep aborts on -i with -f
+grep -rniE '\b[A-Za-z]:[/\][[:alnum:]]|/home/[a-z]|/Users/[a-z]|[[:alnum:]._%+-]+@[[:alnum:].-]+\.[a-z]{2,}|\b(10(\.[0-9]{1,3}){3}|192\.168(\.[0-9]{1,3}){2}|172\.(1[6-9]|2[0-9]|3[01])(\.[0-9]{1,3}){2})\b|ghp_|github_pat_|sk-[A-Za-z0-9]|AKIA|BEGIN [A-Z ]*PRIVATE KEY' "$skill"
 ```
+
+The drive pattern flags every Windows path (`C:\Users\`, `C:/Users/`, `D:\work\`), not only home folders.
 
 Run the target repo's own private-name check too, if it has one. Replace each hit with a placeholder (`<project>`, `~/repos/<name>`, `you@example.com`) or a word that fits anyone.
 
@@ -100,6 +103,10 @@ codex exec "List the names of the skills you can use, one per line." < /dev/null
 ## Report
 
 The name to type, the route, where it landed, the three prompts and the near one, the clean check output (public), and the proof line per machine.
+
+## Sources
+
+Built from five skill-creator skills, rewritten, no text copied: Matt Pocock's [writing-for-agents](https://github.com/mattpocock/skills/blob/main/skills/productivity/writing-for-agents/SKILL.md) and [write-a-skill](https://github.com/mattpocock/skills/blob/ab7196a1584ac60688aeb63cf0b56a5114c4a6f3/skills/productivity/write-a-skill/SKILL.md), Anthropic's [skill-creator](https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md), obra's [writing-skills](https://github.com/obra/superpowers/blob/main/skills/writing-skills/SKILL.md) and OpenAI's [skill-creator](https://github.com/openai/skills/blob/main/skills/.system/skill-creator/SKILL.md).
 
 ## Personal instructions
 
