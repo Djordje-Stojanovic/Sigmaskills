@@ -94,7 +94,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaDebug** | `sigmadebug` | Settles open topics one at a time and ships each fix |
 | **SigmaCorrect** | `sigmacorrect` | Turns a correction you gave twice into a check that fails |
 | **SigmaCreate** | `sigmacreate` | Makes a new skill, public or local, and proves an agent picks it up |
-| **SigmaCourse** | `sigmacourse` | Plans teaching of any length, from a one-pager to a 1,000-hour course |
+| **SigmaCourse** | `sigmacourse` | Plans and builds teaching of any size; the course decides its own process |
 | **SigmaCreateArena** | `sigmacreatearena` | Ranks any options blind, by Elo |
 | **SigmaResearch** | `sigmaresearch` | Reads public sources and counts those read in full |
 | **SigmaDeepLook** | `sigmadeeplook` | Reads what agents cannot: video, speech, scans, binaries |
@@ -159,7 +159,7 @@ Makes one new skill by one of two routes. A public skill is one you publish: it 
 
 ### SigmaCourse
 
-Plans teaching of any length: a one-minute tutorial, a one-pager, a two-hour course, a 50-hour introduction or a program of thousands of hours. It first writes what the learner can do at the end and derives the parts from that, then cuts its own steps to the size. A one-pager gets three questions and one file; a long course gets a spec, a done list a script can check, a course repo and one goal prompt for your agent host.
+Plans and builds teaching of any size, subject, audience and medium. It first writes what the learner can do at the end, maps every ability that needs, and derives the parts, their order and their length from that map. The map also decides which steps of the process run, so a short piece gets almost none and a long program gets a spec, a checked done list, a course repo and a goal prompt. Delivery is part of the job: one design file, the learner's path on phone and desktop, a performance budget measured in the built course, and accessibility.
 
 ### SigmaCreateArena
 
@@ -463,7 +463,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmawrite` | (no input) · or "easy talk" for the GUI board · `EASYTALK REPLY` | Session writing voice until you turn it off; the GUI option makes a board |
 | `sigmacorrect` | (no input) · or the correction in your words | Proves each new check fails on the real past mistake; docs last |
 | `sigmacreate` | what the skill should do · public or local | Public skills pass a personal-data search; ends when a fresh agent lists it |
-| `sigmacourse` | a subject · a length (any) · the learner | Asks the length first; small sizes write one file, long ones a course repo and a goal prompt; never starts the loop |
+| `sigmacourse` | a subject · the learner · a size (optional) | Prints a step table showing which process steps the course needed and why; never starts the loop |
 | `sigmadebug` | (no input) · or a list of topics | Writes a topic .txt and a plan .md; one background SigmaShip worker per clear topic |
 | `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |
