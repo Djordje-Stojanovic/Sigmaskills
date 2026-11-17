@@ -31,8 +31,8 @@ Read the map, then run each step whose condition is true. Write the result as a 
 
 | Step | Run it when | Tool |
 |---|---|---|
-| Write in place, one file | the map has one node, or the writer can draft and check all of it in one sitting | this skill |
-| Plan file `course-plan.md` (end state, map, outline, media, sources) | more than one node, so the order matters | this skill |
+| Write in place, one file, the outline at its top until done | the writer can draft and check all of it in one sitting | this skill |
+| Plan file `course-plan.md` (end state, map, outline, media, sources) | the writer cannot, so the map must live outside the draft | this skill |
 | Grill | an open answer would change a node, an order, a proof or a medium. Ask only those areas | [grill.md](references/grill.md) |
 | Placement check | the learner's start is unknown and some nodes may already be known | a short test on those nodes |
 | Spaced review | the learner time spans more than one sitting | step 4 |
