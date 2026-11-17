@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.27.1] — 2026-11-17
+
 ### Changed
 
 - `sigmacourse`: the interview finds the real need. It asks only while a wrong guess costs more than the question, and picks its methods by what is still unknown: why chains, the "why now" story, the last time something stuck and the last time the learner quit, two rough samples to react to, a forced choice, a pre-mortem, watching the learner try, and a summary in the user's words. Each method names its source. It plays the whole plan back for a yes before the build, and fixes the plan after the first built part. Gaps found by comparing the skill with a real long course are closed as principles: unseen material for proofs, rubrics for open work, process graded apart from luck, mastery with a retake path, wrong beliefs as nodes, a first sitting that ends with a real task, help when stuck, a recap after a pause, a glossary, and the share of doing time. The level ladder and case axes are now examples, and a teaching item that cannot apply is written "not needed". 395 lines before, 390 after.
@@ -842,7 +844,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.1...HEAD
+[0.27.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.0...v0.27.1
 [0.27.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.2...v0.27.0
 [0.26.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.1...v0.26.2
 [0.26.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.0...v0.26.1
