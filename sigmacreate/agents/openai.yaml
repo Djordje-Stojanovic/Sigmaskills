@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaCreate
+  short_description: Make a public or a local skill, installed and picked up
+  default_prompt: Use $sigmacreate to turn what we just did into a skill for this repo, install
+    it, and prove a fresh agent picks it up.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

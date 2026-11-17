@@ -334,5 +334,15 @@
   "prompt": "Sigmacorrect: turn the mistakes I keep correcting into lints and tests",
   "skill": "sigmacorrect",
   "near": "sigmamusk"
+ },
+ {
+  "prompt": "Make a new skill from what we just did, local to this repo, and install it",
+  "skill": "sigmacreate",
+  "near": "sigmacorrect"
+ },
+ {
+  "prompt": "Sigmacreate a public skill I can publish, with no personal data in it",
+  "skill": "sigmacreate",
+  "near": "sigmaship"
  }
 ]
