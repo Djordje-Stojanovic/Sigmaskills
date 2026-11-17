@@ -93,6 +93,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaWrite** | `sigmawrite` | Plain technical English, and status boards on request |
 | **SigmaDebug** | `sigmadebug` | Settles open topics one at a time and ships each fix |
 | **SigmaCorrect** | `sigmacorrect` | Turns a correction you gave twice into a check that fails |
+| **SigmaCreate** | `sigmacreate` | Makes a new skill, public or local, and proves an agent picks it up |
 | **SigmaCreateArena** | `sigmacreatearena` | Ranks any options blind, by Elo |
 | **SigmaResearch** | `sigmaresearch` | Reads public sources and counts those read in full |
 | **SigmaDeepLook** | `sigmadeeplook` | Reads what agents cannot: video, speech, scans, binaries |
@@ -150,6 +151,10 @@ Turns open questions into merged fixes while you talk. It writes every topic to 
 ### SigmaCorrect
 
 Makes a correction you gave twice impossible to need a third time. It finds the repeat in your words and the git history, then fixes it at the highest level that works: delete the wrong way, a type, a check in the test command whose error names the fix, a test, and a line in `AGENTS.md` last. The check must fail on the real past mistake before it counts.
+
+### SigmaCreate
+
+Makes one new skill by one of two routes. A public skill is one you publish: it holds no names, paths, accounts, hosts or keys, and a search proves that before it ships. A local skill belongs to one project, repo or machine and may name its paths and commands; it lands where that agent loads skills. Either way it ends installed, with a fresh agent naming it.
 
 ### SigmaCreateArena
 
@@ -389,6 +394,7 @@ $sigmaship https://github.com/owner/repo/issues/42
 $sigmawrite
 $sigmadebug
 $sigmacorrect Stop hardcoding: make it a check
+$sigmacreate Turn what we just did into a skill for this repo
 $sigmacreatearena Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
 $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
@@ -419,6 +425,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 /skill:sigmawrite
 /skill:sigmadebug
 /skill:sigmacorrect
+/skill:sigmacreate Turn what we just did into a skill for this repo
 /skill:sigmacreatearena Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
 /skill:sigmadeeplook What happens at 2:10 in ~/clips/demo.mp4?
@@ -448,6 +455,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmafreedom` | a repo path | Deletes refusals from agent docs and skill sources; every deletion is in a was/now log |
 | `sigmawrite` | (no input) · or "easy talk" for the GUI board · `EASYTALK REPLY` | Session writing voice until you turn it off; the GUI option makes a board |
 | `sigmacorrect` | (no input) · or the correction in your words | Proves each new check fails on the real past mistake; docs last |
+| `sigmacreate` | what the skill should do · public or local | Public skills pass a personal-data search; ends when a fresh agent lists it |
 | `sigmadebug` | (no input) · or a list of topics | Writes a topic .txt and a plan .md; one background SigmaShip worker per clear topic |
 | `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |

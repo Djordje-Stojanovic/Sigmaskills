@@ -34,6 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
+- `sigmacreate` (SigmaCreate): makes a new skill by one of two routes. A public skill holds no personal data, and a search for the person's own names, home paths, emails, private addresses and keys proves it. A local skill belongs to one project, repo or machine and lands where that agent loads skills. Both end installed, with a fresh agent naming the skill. Built from five creator skills: Matt Pocock's `writing-for-agents` and `write-a-skill`, Anthropic's `skill-creator`, obra's `writing-skills` and OpenAI's `skill-creator`. In the default set (#201).
 - `sigmacorrect` (SigmaCorrect): makes a correction the owner gave twice impossible to need a third time. It finds the repeat, fixes it at the highest level that works (delete the wrong way, a type, a check whose error names the fix, a test, docs last), and proves the check fails on the real past mistake. In the default set, so every Sigma install gets it (#221, idea 3 from pstack `correct`).
 
 ### Changed
