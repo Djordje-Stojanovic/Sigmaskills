@@ -40,6 +40,11 @@
       "needsReferences": true
     },
     {
+      "id": "sigmacorrect",
+      "title": "SigmaCorrect",
+      "needsReferences": false
+    },
+    {
       "id": "sigmacreatearena",
       "title": "SigmaCreateArena",
       "needsReferences": true
