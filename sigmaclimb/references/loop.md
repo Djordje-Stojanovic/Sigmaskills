@@ -44,7 +44,10 @@ Verdicts in `results.tsv`: BASELINE, AA, KEEP, ARCHIVE, REJECT, VOID, CRASH, REC
 
 The stop condition is the one line `scripts/status.py` prints: "LOOP FINISHED: ..." when the stop rule holds (the
 owner destroyed the rented box, or wrote a `STOP` file, and `REPORT.md` exists), "LOOP RUNNING: ..." in every other
-case. Paste the prompt after the setup files exist. Replace the first word with the host's command.
+case. Paste the prompt after the setup files exist. Replace the first word with the loop command of the user's
+harness. The table holds the harnesses met so far. For any other, find it (the user's words, your own tools), ask
+once when unclear, and read its docs (context7, a web search, a fast sigmaresearch pass) for a run-to-done mode;
+`sigmaloop` step 2 does the same.
 
 ```text
 <host loop command> <Project> climb is done: `python scripts/status.py` prints "LOOP FINISHED". Every turn: read <project>/GOAL.md first and follow it exactly, then print the output of `python scripts/status.py` at the end of the turn. Never end a turn without a live background job that waits on the running pass. Limits: never touch the owner's own machines; never cut what the owner protects (quality, precision, the invariants); ideas.tsv keeps at least 3 pending ideas, sorted by share x odds; one change per pass, and only scripts/bench/verdict.py decides; start no sub-agent; never print a secret.

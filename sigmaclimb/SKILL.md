@@ -15,9 +15,9 @@ number of one project is built in. [examples.md](references/examples.md) shows s
 worked example is a served model: [example](references/example-model-serving.md), [evaluator](references/evaluator.md), [setup](references/setup-vast.md), [case study](references/case-study-la125.md).
 
 One agent runs the loop from start to end. It starts no sub-agent: not for research, ideas or a second opinion.
-A judge model may still be the measurer (a scored call with a fixed question). The skill is host-neutral: any agent
-that can run a shell, keep files and wait on a background job can drive it. Long unattended runs use the host's own
-loop mode ([loop.md](references/loop.md)). Use the shell native to the machine.
+A judge model may still be the measurer (a scored call with a fixed question). Any agent that can run a shell, keep
+files and wait on a background job can drive it. A long unattended run uses the loop mode of the user's own harness:
+find it, and read its docs when you do not know it ([loop.md](references/loop.md#3-the-long-run-prompt)).
 
 ## The seven parts of every loop
 
@@ -72,12 +72,9 @@ pass; after 3 passes without a win in one idea category, the loop changes catego
 
 ## The held-out check
 
-Off by default. It runs the same quality check and score on inputs the loop never tuned to, on the same machine as
-the candidates. Modes in `project.json`: `off`, `advisory` (it reports, never blocks) and `required` (only when
-the owner opts in, in his own words, in the interview). It answers `PASS`, `FAIL quality` or `FAIL gain`, and it
-self-tests on the unchanged champion before first use: a check that fails the champion is broken, not strict. The
-owner's word promotes in every mode (`verdict.py promote ... --owner "<his words>"`). When the owner has his own
-machine, his run there is the held-out check: say that first. Details: [held-out.md](references/held-out.md).
+Off by default: the same quality check and score on inputs the loop never tuned to. `required` mode only when the
+owner opts in, in his own words; his word promotes in every mode. When he has his own machine, his run there is the
+held-out check: say that first. Modes, self-test and the check script: [held-out.md](references/held-out.md).
 
 ## The phases
 
@@ -99,33 +96,18 @@ Never skip the interview or the lock. A scorer rebuilt after pass 1 throws away 
 
 ## Phase 5: the loop
 
-`GOAL.md` holds the pass procedure. Each pass:
+The scaffolded `GOAL.md` holds the pass procedure, the rules that decide and the finish; the run re-reads it every
+turn. What it rests on:
 
-1. Take the `pending` idea with the highest **share x odds**: the share of its part in the profile times its chance
-   of success (`p=NN%`). Search `results.tsv` and `ruled_out.tsv` first; a repeat costs a whole pass.
-2. `candidate/` = the champion plus ONE change. Run `run_experiment.sh`: stage 1, and stage 2 only on a win. Keep a
-   background waiter alive; never poll.
-3. `verdict.py` decides; `record.py` writes the results row from the raw files. `STAGE1-WIN` is never a KEEP.
-4. A KEEP becomes the champion with `verdict.py promote`. It needs the quality check, one confirmation run when the
-   gain is small, and the held-out check only in `required` mode. Every scored verdict prints two numbers: against
-   the champion before, and against the start.
-5. One run and at most one confirmation per idea. Then show the table and move on. A dead idea goes to
-   `ruled_out.tsv` with what it rules out and the condition that reopens it. One line to `insights.md`.
-6. At a KEEP and at the end: commit, `plot_progress.py`, rewrite `PROGRESS.md` (champion against the start and the
-   owner's current setup). Not after every pass.
-
-**Idea queue.** Rank by share x odds, never by age. At least every third pass (`bold_every`) is a code or design
-change, not a setting: structural work is wanted, and bold ideas are where the big gains live. A bold idea gets a
-spike of up to two hours with a dry test that needs no target, before it costs a pass. An effort estimate is a guess:
-read the target's source, and build the first hour of a "days" idea before you believe the estimate. After
-`category_switch_after` passes without a KEEP in one category, change category and profile again.
-
-**Habits that pay.** Each row states the part, the hypothesis and the evidence. When two changes score the same,
-keep the one that deletes code. Write each result so a fresh session can learn from it: what changed, why, what
-happened, what it rules out. More: [lessons.md](references/lessons.md).
-
-**Finish.** When the stop rule holds, write `REPORT.md`: what changed for the owner first, then every pass in plain
-words, the champion against the start, the final recipe and its diff, what failed and why, what to try next.
+- **Rank ideas by share x odds** (the part's share in the profile times `p=NN%`), never by age. Search
+  `results.tsv` and `ruled_out.tsv` first: a repeat costs a whole pass.
+- **Only `verdict.py` decides.** `STAGE1-WIN` is never a KEEP. Every scored verdict prints two numbers: against the
+  champion before, and against the start. One run and at most one confirmation per idea.
+- **Bold ideas are where the big gains live.** At least every third pass (`bold_every`) is a code or design change.
+  An effort estimate is a guess: read the target's source and build the first hour of a "days" idea before you
+  believe it.
+- When two changes score the same, keep the one that deletes code. Keep a background waiter alive; never poll. Write
+  each result so a fresh session learns from it. More: [lessons.md](references/lessons.md).
 
 ## Talking to the owner
 

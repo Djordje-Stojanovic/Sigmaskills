@@ -12,13 +12,13 @@ A job is a batch of units: lessons, guide sections or scenes. Size it so one rev
 4. **Visuals and media specs** before the voice pass, because an edit after the voice pass makes it stale.
 5. **Lesson checks.** Fix every finding first.
 6. **Teacher voice pass** (when the lesson has a teacher persona). The persona reads the lesson and answers in its own words. Its voice frames the hook and the "in their words" parts; plain prose carries numbers and steps. Run a batch's persona calls in parallel, stop when a round changes nothing, and log its last notes for the reviewer.
-7. **One fresh review, one model up**, for the whole batch, by an agent that did not write it, with the rendered pages in hand (SKILL.md step 5). A failed lesson goes back with the findings; passed ones get their own PASS line.
+7. **One fresh review, one model up**, for the whole batch, by an agent that did not write it, with the rendered pages in hand (SKILL.md step 5, `delivery.md`). A failed lesson goes back with the findings; passed ones get their own PASS line.
 8. **Gate.** Stamp the review after the last prose edit. The check script counts the learner time.
 
 ## Code, checks and lab tools
 
 - SigmaShip for an issue with acceptance criteria. Every check and tool test-first (Matt Pocock `tdd`, or a planted-defect test that turns the check red).
-- A lab tool meets SKILL.md step 5 in full, does its one job end to end on real data, covers its main, empty and error states in a browser test, keeps its state over a restart, and lets the learner undo every destructive action.
+- A lab tool meets `delivery.md` in full, does its one job end to end on real data, covers its main, empty and error states in a browser test, keeps its state over a restart, and lets the learner undo every destructive action.
 - When two or more jobs fill one count, ship the counting script before the second job starts.
 
 ## Personas

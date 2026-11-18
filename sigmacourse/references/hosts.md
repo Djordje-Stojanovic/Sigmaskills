@@ -1,17 +1,17 @@
 # Hosts
 
-SigmaCourse works the same on every agent host. Three things change: how a skill is called, how agents run in parallel, and how the unattended run starts. SigmaLoop owns the run prompt; its `references/hosts.md` names the host file to read.
+SigmaCourse works the same on every agent harness. Three things change: how a skill is called, how agents run in parallel, and how the unattended run starts. Find the harness the user runs (the one they name, else your own tools and slash commands, else ask once). When you do not know it well, read its docs: the context7 MCP, a web search, or a fast research subagent. SigmaLoop owns the unattended-run prompt and does the same for its host file.
 
-| Host | Call the skill | Unattended run (SigmaLoop host file) |
+Harnesses met so far, as examples:
+
+| Harness | Call the skill | Unattended run |
 |---|---|---|
 | Claude Code | `/sigmacourse` | `/goal` (multi-day, comes back after a restart) or `/loop` |
 | Codex | `$sigmacourse` | `/goal` |
-| Antigravity | skills load from `<project>/.agents/skills` | its unattended mode, per `host-antigravity.md` |
-| pi | `/skill:sigmacourse` | the pi prompt, per `host-pi.md` |
-| T3 Code | the call of the agent it drives (Codex, Claude Code and others) | a scheduled task, per `host-t3-code.md` |
-| Any other host | read `SKILL.md` | the plain instruction SigmaLoop writes |
+| pi | `/skill:sigmacourse` | the pi prompt SigmaLoop writes |
+| T3 Code | the call of the agent it drives | a scheduled task or `/goal` in a thread |
 
-Parallel agents: use the host's own way (Claude Code subagents, Codex spawned agents); where none exists, run one job at a time. Every writing agent gets its own git worktree.
+Parallel agents: use the harness's own way (subagents, spawned agents, child threads); where none exists, run one job at a time. Every writing agent gets its own git worktree.
 
 ## Personas on any host
 

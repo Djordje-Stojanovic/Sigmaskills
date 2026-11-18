@@ -14,15 +14,9 @@ There are two routes:
 
 ## 1. Pick the route and find out
 
-Take the route from the request. "Publish", "for everyone", "a Sigma skill" or a skill repo as the target mean public. "For this repo", "on this machine", or a path or command of this place mean local. Ask only when nothing says which.
+Take the route from the request: publishing, "for everyone" or a skill repo as the target mean public; this repo, this machine, or a path or command of this place mean local. Ask only when nothing says which.
 
-Then find out before you ask. Read, in this order:
-
-1. The request and the chat. A workflow already done in this chat is the best draft: its steps, its tools, and every correction the person made.
-2. The target repo's `AGENTS.md` or `CLAUDE.md`, and two of its existing skills. They set the house style and the lists a new skill must join.
-3. The skills already installed. When one already does the job, improve that one instead of adding a second.
-
-Ask one message at most, holding only what none of these showed. Usually that is the words people will type to start it, and what done looks like.
+Then find out before you ask: the chat first (a workflow already done here is the best draft, with every correction the person made), then the target repo's `AGENTS.md` or `CLAUDE.md` and two of its skills (house style, and the lists a new skill must join), then the skills already installed (when one already does the job, improve it instead). Ask one message at most, holding only what none of these showed: usually the words people will type to start it, and what done looks like.
 
 **Done when** you can write the route, the name, three prompts that must start the skill, and one near prompt that must start a different one.
 
@@ -82,21 +76,16 @@ Run the target repo's own private-name check too, if it has one. Replace each hi
 
 **Public:** list the skill everywhere the repo's `AGENTS.md` says a new skill goes (manifest, tests, README, install docs, changelog), run the repo's test command, and ship it through the repo's own flow. Then install it with the repo's installer, or copy the folder to `~/.agents/skills/<name>/` and `~/.claude/skills/<name>/`.
 
-**Local:** copy the folder where the agent of that place loads skills:
+**Local:** copy the folder where the agents of that place load skills. Find which agents run there (their config folders, the user's words). Claude Code reads `.claude/skills/<name>/` (project) and `~/.claude/skills/<name>/` (machine); Codex, pi and most others read `.agents/skills/` and `~/.agents/skills/`. For any other agent, the Sigma installer's host list (`registry/agent-hosts.json` in the Sigmaskills repo) or the agent's own docs name the folder. A project skill goes into that repo's git with the change it belongs to; a machine skill stays on the machine.
 
-| Agent | One project or repo | One machine |
-|---|---|---|
-| Claude Code | `.claude/skills/<name>/` | `~/.claude/skills/<name>/` |
-| Codex, pi, and most others | `.agents/skills/<name>/` | `~/.agents/skills/<name>/` |
-
-The Sigma installer's host list (`registry/agent-hosts.json` in the Sigmaskills repo) holds the folders of the other agents. A project skill goes into that repo's git with the change it belongs to; a machine skill stays on the machine.
-
-Prove that a fresh agent sees it. Start one in the target folder with closed input, and ask for its skills:
+Prove that a fresh agent sees it: start it headless in the target folder with closed input and ask for its skills, for example:
 
 ```bash
 claude -p "List the names of the skills you can use, one per line." < /dev/null | grep -x '<name>'
 codex exec "List the names of the skills you can use, one per line." < /dev/null | grep '<name>'
 ```
+
+Another agent's docs name its headless flag.
 
 **Done when** the name comes back from a fresh agent on every machine the skill is meant for.
 
