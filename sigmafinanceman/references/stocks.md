@@ -56,7 +56,7 @@ Seven pass/fail tests on the last 10-K. Six or more pass: the dividend looks saf
 3. Free cash flow covers the dividend 1.3 times.
 4. Net debt / EBITDA 3.0x or less.
 5. EBIT covers interest 5 times.
-6. No cut in 10 years (1 % slack for rounding). The history read is 20 years, so a longer streak shows as "19+".
+6. No cut in 10 years (1 % slack for rounding). The history read starts at the first month Yahoo has.
 7. Revenue not shrinking over 3 years.
 
 A one-year failure of test 1 can be a one-off (a tax deposit, an acquisition paid in cash): read the cash-flow statement before calling a cut.
@@ -92,7 +92,7 @@ Margin of safety = 1 - price / value. Want 25 % or more (Buffett P1). The divide
 
 ## The full equity bridge
 
-The models subtract debt and minority interest and add cash. Read the 10-K notes for the rest before trusting a value per share: lease liabilities (when the EBITDA is before lease costs), unfunded pensions, preferred stock, equity stakes in other companies (add at market), and options and convertibles in the money (the diluted share count covers most of them).
+The models subtract debt, minority interest and preferred stock, and add cash and equity-method stakes at book value (KO on 2026-10-02: 20,710m). Replace a listed stake's book value with its market value from the 10-K note (`--set investments=`). Read the notes for the rest: lease liabilities (when the EBITDA is before lease costs), unfunded pensions, and options and convertibles in the money (the diluted share count covers most of them).
 
 ## Free data and its limits
 

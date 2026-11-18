@@ -41,6 +41,8 @@ import fin_svg as S  # noqa: E402
 PRINCIPLES = []   # tags such as "Buffett P1", set by --principles; every writer prints them
 
 KINDS = ("dcf", "lbo", "comps", "three", "ratios", "analyze", "score", "earnings", "dividend")
+DCF_SETS = ("price", "beta", "rf", "erp", "debt", "cash", "shares", "minority", "preferred", "investments", "terminal_g")   # carried to score and comps
+FETCH_SETS = ("cik",)   # read before the fetch, not model inputs
 FILE_KINDS = ("venture", "purchase", "property", "collectible", "bond")   # read a JSON file of inputs
 TICKER_KINDS = ("asset", "fund")                                         # price history only, no filings
 
@@ -73,7 +75,7 @@ def write_outputs(rep, stem, out, formats, xlsx_fn=None):
     files = []
     if "xlsx" in formats and xlsx_fn:
         p, cells = xlsx_fn(str(out / f"{stem}.xlsx"))
-        files.append(p)
+        files.append(p)   # cells.json carries the Python numbers that `audit` compares with the recalculated cells
         (out / f"{stem}.cells.json").write_text(json.dumps(cells, indent=1), encoding="utf-8")
     if "pptx" in formats:
         import fin_pptx
@@ -95,10 +97,14 @@ def run_company(kind, f, args, peers=None, cache=None):
     """One model for one company: returns (report, xlsx builder)."""
     import fin_xlsx as X
     cache = cache if cache is not None else {}
-    o = parse_sets(args.set)
+    o = {k: v for k, v in parse_sets(args.set).items() if k not in FETCH_SETS}
     if kind in ("dcf", "score", "comps") and "dcf" not in cache:
-        a = F.dcf_inputs(f, o if kind == "dcf" else None)
-        cache["dcf"] = (a, F.dcf(a), F.dcf_grid(a))
+        a = F.dcf_inputs(f, {k: v for k, v in o.items() if k in DCF_SETS} if kind != "dcf" else o)
+        r = F.dcf(a)
+        if r["value_per_share"] is None:
+            raise SystemExit(f"WACC {F.pct(r['wacc'], 2)} is not above terminal growth {F.pct(r['g'], 2)}: the growth formula has no finite "
+                             "value. Pass a lower --set terminal_g= or a higher --set erp= / --set beta=")
+        cache["dcf"] = (a, r, F.dcf_grid(a))
     if kind == "dcf":
         a, r, g = cache["dcf"]
         return RP.dcf_report(f, a, r, g), lambda p: X.dcf_book(f, a, p)
@@ -108,10 +114,10 @@ def run_company(kind, f, args, peers=None, cache=None):
     if kind == "comps":
         c = F.comps(f, peers)
         g = cache["dcf"][2][2]
-        inner = [g[i][j] for i in (1, 2, 3) for j in (1, 2, 3)]
+        inner = [g[i][j] for i in (1, 2, 3) for j in (1, 2, 3) if g[i][j] is not None]
         return RP.comps_report(c, (min(inner), max(inner))), lambda p: X.comps_book(c, p)
     if kind == "three":
-        a = F.three_inputs(f, o)
+        a = F.three_inputs(f, {k: v for k, v in o.items() if k not in ("price", "beta", "rf")})   # market inputs: no part of this model
         m = F.three_statement(f, a)
         return RP.three_report(f, a, m), lambda p: X.three_book(f, a, m, p)
     if kind == "ratios":
@@ -221,8 +227,12 @@ def recalc(path, outdir):
 
 
 def audit(path, expect=None):
-    """Formula errors, the Checks sheet, and (optional) cells that must equal the Python numbers. Returns (ok, lines)."""
+    """Formula errors, the Checks sheet, and the cells that must equal the Python numbers: `expect`, else the "expect" map in the
+    <stem>.cells.json written beside the workbook. A workbook with no Python numbers to compare says so. Returns (ok, lines)."""
     from openpyxl import load_workbook
+    side = Path(path).with_suffix(".cells.json")
+    if expect is None and side.exists():
+        expect = json.loads(side.read_text(encoding="utf-8")).get("expect")
     tmp = Path(tempfile.mkdtemp(prefix="finaudit-"))
     rc = recalc(path, tmp)
     wb = load_workbook(rc, data_only=True)
@@ -251,6 +261,8 @@ def audit(path, expect=None):
         same = isinstance(got, (int, float)) and abs(got - want) <= max(1e-6, abs(want) * 0.005)
         lines.append(f"cell {'PASS' if same else 'FAIL'}: {ref} = {got} (Python {want})")
         ok &= same
+    if not expect:
+        lines.append("cells: no Python numbers to compare (no <stem>.cells.json with an expect map beside the file)")
     return ok, lines
 
 
@@ -308,7 +320,14 @@ def main(argv=None):
         print("  " + "\n  ".join(files))
         return 0
     import fin_data as D
-    f = D.company(args.target, args.years)
+    o = parse_sets(args.set)   # read before any fetch: a value the user set is never fetched, so an outage cannot stop the run
+    has_market = args.cmd not in ("fetch", "all", "comps") and {"price", "beta"} <= set(o)
+    f = D.company(args.target, args.years, with_market=not has_market, with_rf="rf" not in o, cik=int(o["cik"]) if "cik" in o else None)
+    if has_market:
+        f["market"] = {"price": o["price"], "beta": o["beta"], "currency": "USD", "price_time": __import__("datetime").date.today().isoformat(),
+                       "source": "set by the user", "beta_months": "set", "low_52w": None, "high_52w": None}
+    if "rf" in o:
+        f["rf"], f["rf_date"], f["rf_source"] = o["rf"], "set by the user", "set by the user"
     if args.cmd == "fetch":
         print(json.dumps(f, indent=1, default=str))
         return 0

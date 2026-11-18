@@ -29,16 +29,23 @@ def dcf_report(f, a, r, grid):
              ["text"] + ["money"] * len(yrs), totals=[7, 9],
              )
     proj["row_formats"] = {1: "pct", 8: "num1"}
-    bridge = T("Enterprise value to value per share ($m)", ["Step", "Value"],
-               [["PV of free cash flows", r["pv_fcf"]], ["PV of terminal value", r["pv_tv"]], ["Enterprise value", r["ev"]],
+    bs_date, price_date = a["debt"]["source"].split("balance sheet of ")[-1][:10], f.get("market", {}).get("price_time", "")
+    bridge = T(f"Enterprise value to value per share ($m), valued on {price_date}", ["Step", "Value"],
+               [["PV of free cash flows", r["pv_fcf"]], ["PV of terminal value", r["pv_tv"]], [f"Enterprise value at {f['fiscal_year_ends'][-1]}", r["ev_fye"]],
+                [f"Enterprise value at {bs_date} (rolled forward, less cash earned since)", r["ev"]],
                 ["Less debt", -v("debt")], ["Plus cash and investments", v("cash")], ["Less minority interest", -v("minority")],
-                ["Equity value", r["equity"]], ["Diluted shares (m)", v("shares")], ["Value per share", r["value_per_share"]]],
-               ["text", "money"], totals=[2, 6], double=[8])
-    bridge["row_formats"] = {8: "ps"}
-    ig, im = F.implied(a, "growth_y1"), F.implied(a, "ebit_margin", -0.5, 0.95)
+                ["Less preferred stock", -v("preferred")], ["Plus equity-method stakes (book)", v("investments")],
+                [f"Equity value at {bs_date}", r["equity_bs"]], [f"Equity value at {price_date} (x (1 + cost of equity) for the days between)", r["equity"]],
+                ["Diluted shares today (m)", v("shares")], ["Value per share", r["value_per_share"]]],
+               ["text", "money"], totals=[2, 3, 10], double=[12])
+    bridge["row_formats"] = {12: "ps"}
+    ig, im, iw = F.implied(a, "growth_y1"), F.implied(a, "ebit_margin", -0.5, 0.95), F.implied_rate(a)
     rev_dcf = T("What the price implies (reverse DCF)", ["Input", "Model", "Price implies"],
-                [["Revenue growth, year 1", v("growth_y1"), ig], ["EBIT margin", v("ebit_margin"), im]], ["text", "pct", "pct"],
-                note="Each row moves one input until the DCF value equals the price, all else held. Blank: no value reaches the price.")
+                [["Discount rate (WACC)", r["wacc"], iw], ["Revenue growth, year 1", v("growth_y1"), ig], ["EBIT margin", v("ebit_margin"), im]],
+                ["text", "pct", "pct"],
+                note="Each row moves one input until the DCF value equals the price, all else held. Blank: no value reaches the price. "
+                     "Growth fades to the terminal rate in a straight line, so implied year-1 growth can look extreme; the implied "
+                     "discount rate is the steadier read. Compare it with the risk-free rate.")
     sc = F.scenarios(a)
     scen = T("Bear, base and bull", ["Case", "Growth, year 1", "EBIT margin", "Value per share", "vs price"],
              [[x["name"], x["growth_y1"], x["ebit_margin"], x["value_per_share"], (x["value_per_share"] / v("price") - 1) if v("price") else None]
@@ -61,13 +68,17 @@ def dcf_report(f, a, r, grid):
         f"worth ${F.money(r['pv_fcf'])}m today.",
         f"Everything after year {n} (terminal value): year-{n} cash growing {F.pct(r['g'])} a year forever, worth "
         f"${F.money(r['pv_tv'])}m today, {F.pct(r['tv_share'])} of the total.",
-        f"Enterprise value ${F.money(r['ev'])}m, less debt ${F.money(v('debt'))}m, plus cash ${F.money(v('cash'))}m"
+        f"Move it to today: enterprise value ${F.money(r['ev_fye'])}m at the year-end becomes ${F.money(r['ev'])}m on the balance "
+        f"sheet of {bs_date}; less debt ${F.money(v('debt'))}m, plus cash ${F.money(v('cash'))}m"
         + (f", less minority interest ${F.money(v('minority'))}m" if v("minority") else "")
-        + f": equity worth ${F.money(r['equity'])}m.",
-        f"Split over {F.money(v('shares'))}m diluted shares: {F.per_share(r['value_per_share'])} a share, "
+        + (f", less preferred ${F.money(v('preferred'))}m" if v("preferred") else "")
+        + (f", plus equity-method stakes ${F.money(v('investments'))}m at book" if v("investments") else "")
+        + f": equity worth ${F.money(r['equity'])}m on {price_date}.",
+        f"Split over {F.money(v('shares'))}m diluted shares today: {F.per_share(r['value_per_share'])} a share, "
         f"{F.pct(r['upside'])} against the price of {F.per_share(v('price'))}.",
-        "Turn it round: " + (f"the price is right if year-1 growth is {F.pct(ig)} instead of {F.pct(v('growth_y1'))}."
-                             if ig is not None else "no growth rate between -50 % and 100 % gives the price; the gap is in the margin or the risk."),
+        "Turn it round: " + (f"the price implies a discount rate of {F.pct(iw)} (the model uses {F.pct(r['wacc'])}; the 10-year Treasury pays "
+                             f"{F.pct(v('rf'))})" if iw is not None else "no discount rate up to 50 % gives the price")
+        + (f", or year-1 growth of {F.pct(ig)} instead of {F.pct(v('growth_y1'))}." if ig is not None and abs(ig) <= 0.25 else "."),
     ]
     sens = T("Value per share: WACC (rows) by terminal growth (columns)", ["WACC"] + [F.pct(g) for g in gs],
              [[F.pct(w)] + vals[i] for i, w in enumerate(ws)], ["text"] + ["ps"] * len(gs))
@@ -78,22 +89,28 @@ def dcf_report(f, a, r, grid):
     verdict = "under" if (r["upside"] or 0) > 0 else "over"
     return {
         "kind": "dcf", "title": f"{f['name']} ({f['ticker']}) DCF",
-        "subtitle": f"Latest 10-K: fiscal year ended {f['fiscal_year_ends'][-1]} (filed {f.get('last_10k')}). Money in $ millions.",
+        "subtitle": f"Latest 10-K: fiscal year ended {f['fiscal_year_ends'][-1]} (filed {f.get('last_10k') or 'date not in the SEC facts'}). "
+                    f"Balance sheet of {bs_date}; valued on {price_date}. Money in $ millions.",
         "hero": {"value": F.per_share(r["value_per_share"]), "label": "DCF value per share, base case",
                  "line": f"{F.pct(r['upside'])} vs the price of {F.per_share(v('price'))}: the market price looks {verdict}valued on these inputs."},
         "kpis": [("Enterprise value", F.money(r["ev"])), ("WACC", F.pct(r["wacc"])), ("Terminal growth", F.pct(r["g"])),
                  ("Terminal value share of EV", F.pct(r["tv_share"])), ("Range (inner 3x3)", f"{F.per_share(min(inner))} to {F.per_share(max(inner))}"),
-                 ("Price implies growth", F.pct(ig))],
+                 ("Price implies WACC", F.pct(iw))],
         "steps": steps,
         "tables": [bridge, scen, rev_dcf, proj, sens, inputs],
         "charts": [{"kind": "waterfall", "title": "From cash flows to value per share ($m)",
                     "steps": [("PV of cash flows", r["pv_fcf"], "part"), ("PV of terminal value", r["pv_tv"], "part"),
-                              ("Enterprise value", r["ev"], "total"), ("Debt", -v("debt"), "delta"), ("Cash", v("cash"), "delta"),
-                              ("Equity value", r["equity"], "total")]},
+                              ("Enterprise value", r["ev_fye"], "total"), ("Roll to " + bs_date, r["ev"] - r["ev_fye"], "delta"),
+                              ("Debt", -v("debt"), "delta"), ("Cash", v("cash"), "delta"), ("Minority interest", -v("minority"), "delta"),
+                              ("Preferred", -v("preferred"), "delta"), ("Equity-method stakes", v("investments"), "delta"),
+                              ("Roll to " + price_date, r["equity"] - r["equity_bs"], "delta"), ("Equity value", r["equity"], "total")]},
                    {"kind": "bars", "title": "Revenue and free cash flow ($m)", "labels": yrs,
                     "series": [("Revenue", [x["revenue"] for x in rows], "total"), ("Free cash flow", [x["fcf"] for x in rows], "part")]}],
-        "notes": ["Mid-year discounting (periods 0.5 to 4.5); the terminal value is discounted at the last period, as the cash flows are.",
-                  "Capex fades from its last filed share of revenue to the D&A share by the last year (steady state).",
+        "notes": [f"Mid-year discounting (periods 0.5 to {n - 0.5}) from the fiscal year-end; the terminal value is discounted at the last "
+                  "period, as the cash flows are. The value then rolls to the balance-sheet date at WACC, less the year-1 cash already earned, "
+                  "and to the price date at the cost of equity.",
+                  f"Growth costs capital: capex fades to D&A plus {F.pct(v('ppe_pct'))} of each extra dollar of sales (PP&E / revenue), and the "
+                  f"terminal cash flow pays for growth: ${F.money(r['fcf_terminal'])}m.",
                   f"Terminal value is {F.pct(r['tv_share'])} of enterprise value; 50-75 % is normal, above 75 % the answer leans on the "
                   "terminal assumptions, under 40 % the terminal inputs may be too low.",
                   "The scenarios and the reverse DCF are computed in Python; the workbook holds the base case: change an input there to test one."],
@@ -109,12 +126,14 @@ def lbo_report(f, a, r, grid):
               [["EBITDA"] + [x["ebitda"] for x in rows], ["Capex"] + [-x["capex"] for x in rows],
                ["Change in working capital"] + [-x["dnwc"] for x in rows], ["Interest"] + [-x["interest"] for x in rows],
                ["Tax"] + [-x["tax"] for x in rows], ["Free cash flow"] + [x["fcf"] for x in rows],
-               ["Debt repaid"] + [-x["paydown"] for x in rows], ["Debt at year end"] + [x["debt"] for x in rows],
-               ["Cash at year end"] + [x["cash"] for x in rows]], ["text"] + ["money"] * len(yrs), totals=[5, 7])
+               ["Debt repaid"] + [-x["paydown"] for x in rows], ["Revolver drawn"] + [x["draw"] for x in rows],
+               ["Debt at year end"] + [x["debt"] for x in rows],
+               ["Cash at year end"] + [x["cash"] for x in rows]], ["text"] + ["money"] * len(yrs), totals=[5, 8])
     su = T("Sources and uses at entry ($m)", ["Item", "Value"],
            [["Entry enterprise value", r["ev0"]], ["Fees", r["ev0"] * a["fees"]["value"]], ["Total uses", r["ev0"] * (1 + a["fees"]["value"])],
-            ["Senior debt", r["debt0"]], ["Sponsor equity", r["equity0"]], ["Total sources", r["debt0"] + r["equity0"]]],
-           ["text", "money"], totals=[2, 5], double=[5])
+            ["Senior debt", r["debt0"]], ["Minority interest (stays)", a["minority"]["value"]], ["Sponsor equity", r["equity0"]],
+            ["Total sources", r["debt0"] + a["minority"]["value"] + r["equity0"]]],
+           ["text", "money"], totals=[2, 6], double=[6])
     sens = T("IRR: entry multiple (rows) by exit multiple (columns)", ["Entry"] + [F.mult(x) for x in xs],
              [[F.mult(e)] + vals[i] for i, e in enumerate(es)], ["text"] + ["pct"] * len(xs))
     sens["center"] = (2, 3)
@@ -133,7 +152,8 @@ def lbo_report(f, a, r, grid):
                     "steps": [("Equity in", r["equity0"], "total"), ("Value created", r["exit_equity"] - r["equity0"], "delta"),
                               ("Equity out", r["exit_equity"], "total")]}],
         "notes": ["Interest is charged on the opening debt of each year (no circular reference).",
-                  "All free cash flow repays debt until it is gone, then builds cash.",
+                  "All free cash flow repays debt until it is gone, then builds cash; a shortfall is drawn on a revolver at the debt rate.",
+                  "Exit equity = exit EV - debt + cash - minority interest, never below zero.",
                   "IRR = money multiple ^ (1 / years) - 1: no dividends during the hold."],
         "sources": [f["source"], f["market"]["source"]],
     }
@@ -170,7 +190,8 @@ def comps_report(c, dcf_range=None):
                    {"kind": "hbars", "title": "EV/EBITDA by company", "rows": sorted([(r["ticker"], r["ev_ebitda"]) for r in peers + [t]
                                                                                        if r["ev_ebitda"]], key=lambda x: -x[1]), "fmt": "x",
                     "highlight": t["ticker"]}],
-        "notes": ["EV = market cap + debt - cash and short-term investments + minority interest; leases are left out.",
+        "notes": ["EV = market cap + debt - cash and short-term investments + minority interest + preferred - equity-method stakes; "
+                  "leases are left out. Balance sheet and shares are the newest filed; a loss gives no EV/EBITDA or P/E value.",
                   "Quartiles are Excel QUARTILE.INC over the peers only; the target is not in its own statistics."],
         "sources": ["SEC company facts per ticker (data.sec.gov)", "Yahoo chart prices"],
     }
@@ -221,18 +242,21 @@ def analysis_report(f, R, flags, z, pf):
     yoy = []
     for lab, c in (("Revenue", "revenue"), ("Operating income", "ebit"), ("Net income", "net_income"), ("Operating cash flow", "cfo"),
                    ("Capex", "capex"), ("Receivables", "receivables"), ("Total debt", None)):
-        h = hist(c) if c else [(a or 0) + (b or 0) + (d or 0) for a, b, d in zip(hist("debt_current"), hist("debt_noncurrent"), hist("short_borrowings"))]
+        h = hist(c or "debt")
         yoy.append([lab] + [None] + [F.div(b, a) - 1 if a and b is not None else None for a, b in zip(h, h[1:])])
     growth = T("Year-on-year growth", ["Line"] + [e[:4] for e in ends], yoy, ["text"] + ["pct"] * len(ends))
     ft = T("Red-flag checks (latest year vs the year before)", ["Check", "Result", "Measured", "Why it matters"],
-           [[x["check"], "FLAG" if x["flag"] else "clear", x["measure"], x["why"]] for x in flags], ["text"] * 4)
+           [[x["check"], "n/a" if x["flag"] is None else "FLAG" if x["flag"] else "clear", x["measure"], x["why"]] for x in flags], ["text"] * 4)
     ft["status_col"] = 1
-    pt = T(f"Piotroski F-score: {pf[0]} of 9", ["Signal", "Result"], [[n, "pass" if ok else "fail"] for n, ok in pf[1]], ["text", "text"])
+    known = sum(1 for _, ok in pf[1] if ok is not None)
+    pt = T(f"Piotroski F-score: {pf[0]} of 9 ({known} measurable)", ["Signal", "Result"],
+           [[n, "n/a" if ok is None else "pass" if ok else "fail"] for n, ok in pf[1]], ["text", "text"])
     pt["status_col"] = 1
     n_flags = sum(1 for x in flags if x["flag"])
+    n_known = sum(1 for x in flags if x["flag"] is not None)
     return {"kind": "analysis", "title": f"{f['name']} ({f['ticker']}) statement analysis",
             "subtitle": f"Common-size statements, growth and forensic checks, fiscal years {ends[0][:4]}-{ends[-1][:4]}.",
-            "hero": {"value": f"{n_flags} of {len(flags)}", "label": "red-flag checks raised",
+            "hero": {"value": f"{n_flags} of {n_known}", "label": "red-flag checks raised" + (f" ({len(flags) - n_known} unavailable)" if n_known < len(flags) else ""),
                      "line": f"Altman Z {z:.1f} ({'safe' if z and z > 2.99 else 'grey' if z and z > 1.81 else 'distress'} zone), Piotroski F-score {pf[0]} of 9."
                      if z else f"Piotroski F-score {pf[0]} of 9."},
             "kpis": [("Altman Z", f"{z:.2f}" if z else "n/a"), ("Piotroski F", f"{pf[0]} / 9"), ("Revenue growth", F.pct(R[-1]["revenue_growth"])),
@@ -278,7 +302,8 @@ def earnings_report(f, e):
             "charts": [{"kind": "bars", "title": "Revenue and operating income by quarter ($m)", "labels": [r["end"][:7] for r in q],
                         "series": [("Revenue", [r["revenue"] for r in q], "total"), ("Operating income", [r["ebit"] for r in q], "part")]}],
             "notes": ["No consensus estimates: free sources carry none, so the review compares against the company's own past.",
-                      "A derived fiscal-Q4 EPS is the year minus three quarters, so it can differ by a cent from the filed figure."],
+                      "A quarter not filed alone is a year to date minus the one before (fiscal Q4 = the year minus nine months). "
+                      "EPS does not subtract, so a quarter without a filed EPS shows n/a."],
             "sources": [f["source"]]}
 
 
@@ -296,12 +321,14 @@ def budget_report(b):
                      "line": f"Needs {F.pct(b['share']['needs'], 0)}, wants {F.pct(b['share']['wants'], 0)}, savings {F.pct(b['share']['savings'], 0)} "
                              f"of net pay; the emergency fund covers {b['emergency_months']:.1f} months of needs." if b["emergency_months"] else ""},
             "kpis": [("Needs", F.money(b["totals"]["needs"])), ("Wants", F.money(b["totals"]["wants"])), ("Savings", F.money(b["totals"]["savings"])),
-                     ("Saved per month", F.money(b["monthly_save"])), ("Fund in 12 months", F.money(b["path"][-1]))],
+                     ("Cash added per month", F.money(b["left"])), ("Cash in 12 months", F.money(b["path"][-1])),
+                     ("Cash runs out", f"month {b['gap_month']}" if b["gap_month"] is not None else "not within 12 months")],
             "tables": [split, lines],
             "charts": [{"kind": "waterfall", "title": f"Net pay to left over ({cur})", "steps": steps},
-                       {"kind": "bars", "title": f"Emergency fund over 12 months ({cur})", "labels": [f"M{m}" for m in range(13)],
+                       {"kind": "bars", "title": f"Emergency cash over 12 months ({cur})", "labels": [f"M{m}" for m in range(13)],
                         "series": [("Fund", b["path"], "total")]}],
-            "notes": ["Left over counts as savings in the 12-month path."], "sources": ["the household's own numbers"]}
+            "notes": ["Savings lines leave the account (an ETF plan, extra repayments). The left-over, plus or minus, moves the emergency "
+                      "cash in the 12-month path; a negative left-over spends it down."], "sources": ["the household's own numbers"]}
 
 
 def three_report(f, a, m):
@@ -315,7 +342,7 @@ def three_report(f, a, m):
     bs = T("Balance sheet ($m)", ["Line"] + yrs, [["Cash and investments"] + g("cash"), ["Receivables"] + g("receivables"), ["Inventory"] + g("inventory"),
                                                 ["PP&E"] + g("ppe"), ["Other assets"] + g("other_assets"), ["Total assets"] + g("assets"),
                                                 ["Payables"] + g("payables"), ["Debt"] + g("debt"), ["Other liabilities"] + g("other_liabilities"),
-                                                ["Equity"] + g("equity"), ["Liabilities and equity"] + g("liab_equity"),
+                                                ["Equity (incl. minority)"] + g("equity"), ["Liabilities and equity"] + g("liab_equity"),
                                                 ["Check (must be 0)"] + [r.get("check", r["assets"] - r["liab_equity"]) for r in allr]],
            ["text"] + ["money"] * len(yrs), totals=[5, 10], double=[10])
     cf = T("Cash flow, projected years ($m)", ["Line"] + [r["year"] for r in p],
@@ -323,7 +350,7 @@ def three_report(f, a, m):
             ["Capex"] + [-r["capex"] for r in p], ["Dividends and buybacks"] + [-r["dividends"] for r in p],
             ["Change in cash"] + [r["cfo"] - r["capex"] - r["dividends"] for r in p]], ["text"] + ["money"] * len(p), totals=[2, 5])
     inputs = T("Inputs and where they come from", ["Input", "Value", "Source"], [[k, val, s] for k, val, s in sources_of(a)], ["text", "auto", "text"])
-    worst = max(abs(r["check"]) for r in p)
+    worst = max(abs(r["check"]) for r in allr)
     return {"kind": "three", "title": f"{f['name']} ({f['ticker']}) three-statement model",
             "subtitle": f"Three filed years and {len(p)} projected years; cash is the plug from the cash-flow statement. $ millions.",
             "hero": {"value": F.money(p[-1]["net_income"]), "label": f"net income in {p[-1]['year']} ($m)",
@@ -333,6 +360,8 @@ def three_report(f, a, m):
             "tables": [is_, bs, cf, inputs],
             "charts": [{"kind": "bars", "title": "Revenue and net income ($m)", "labels": yrs,
                         "series": [("Revenue", g("revenue"), "total"), ("Net income", g("net_income"), "part")]}],
-            "notes": ["'Other' lines carry the filed totals the model does not split; they are held flat in the projection.",
+            "notes": ["'Other' lines carry the filed totals the model does not split; they are held flat in the projection. Filed years "
+                      "check filed assets against filed liabilities + filed equity (incl. minority interest).",
                       "Interest is charged on the opening debt; debt is held flat.",
-                      "Dividends and buybacks keep their last-year share of net income (the payout input)."], "sources": [f["source"]]}
+                      "Dividends and buybacks keep their last-year share of net income (the payout input); a loss pays nothing out."],
+            "sources": [f["source"]]}
