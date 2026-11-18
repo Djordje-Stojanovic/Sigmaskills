@@ -21,4 +21,4 @@ A JSON file the user keeps on the machine. Amounts are monthly; annual costs go 
 | `emergency_fund` | cash set aside today |
 | `lines[].bucket` | `needs` (rent, food, insurance, minimum debt payments), `wants` (eating out, hobbies, subscriptions, travel), `savings` (saving, investing, extra debt payments) |
 
-From a bank export: sum each category over 3 months, divide by 3, and give each category one bucket. Ask the user when a line could be either (a gym can be a need or a want); his answer wins.
+From a bank export: sum each category over 3 months, divide by 3, and give each category one bucket. Ask the user when a line could be either (a gym can be a need or a want); the user's answer wins.

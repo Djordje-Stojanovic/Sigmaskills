@@ -28,7 +28,7 @@ Number formats: money `#,##0_);(#,##0);"-"_)`, percent `0.0%`, multiple `0.0"x"`
 
 ## Workbook
 
-Sheets: `Inputs` (blue, each with a source comment), `Historicals` (filed numbers, blue, comment = us-gaap tag and period), the model sheet (green link block, then black formulas), and `Checks` (TRUE/FALSE ties, `All checks` at the bottom). Landscape, one page wide when printed. The sensitivity grid is odd-sized with the base case in the centre.
+The company models write one; the other classes write the page, the charts and the deck, as their maths is a few lines the page shows step by step. Sheets: `Inputs` (blue, each with a source comment), `Historicals` (filed numbers, blue, comment = us-gaap tag and period), the model sheet (green link block, then black formulas), and `Checks` (TRUE/FALSE ties, `All checks` at the bottom). Landscape, one page wide when printed. The sensitivity grid is odd-sized with the base case in the centre.
 
 ## Deck
 

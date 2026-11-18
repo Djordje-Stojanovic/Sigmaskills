@@ -111,51 +111,15 @@ The classic mistakes, for every kind:
 
 ## Playbooks by kind
 
-Each has what to check, the numbers, sizing, when to sell, and the classic mistakes. The nine steps still apply.
-
-### Growth stocks
-
-Check: durable growth, high return on new capital, a moat, a founder or manager who allocates well (Bezos P1, Huang P3). Numbers: revenue growth, gross margin, free cash flow margin, return on invested capital, share count, and a reverse DCF that shows the growth the price needs. Size: small to medium; the bad case is a halving or worse. Sell: the growth driver slows, the reverse test shows the price needs more than your bull case, or a better idea needs the money. Mistakes: paying for a story at any price, ignoring dilution from stock pay, and confusing a falling price with a falling business.
-
-### Dividend stocks
-
-Check: the dividend is covered by free cash flow, not by earnings alone; debt is modest; the business holds its position. Numbers: payout of free cash flow, interest cover, dividend growth over ten years, total return, and tax on the payout. Size: part of an income plan, never the whole. Sell: a cut is likely (payout above free cash flow, falling revenue), or the yield is high only because the price fell. Mistakes: chasing yield into a failing firm, ignoring that a dividend leaves the company and the tax follows it, and holding one sector.
-
-### Index funds and ETFs
-
-Check: low cost, wide, and simple (Buffett, 2013). Numbers: cost ratio, tracking gap, tax treatment, the mix of the fund (stocks and bonds), and your horizon. Size: the core of the plan for anyone with no edge. Buy on a schedule and in parts; never time the entry. Sell: only to meet the plan's goal, to rebalance, or to pay for a need. Mistakes: selling in a crash, adding a second fund that holds the same thing, paying for a fund that charges more than the index, and treating a thematic ETF as a diversified one.
+Each has what to check, the numbers, sizing, when to sell, and the classic mistakes. The nine steps still apply. The playbooks for stocks, venture, purchases (GPUs, cars), real estate, gold and crypto, collectibles and reselling, and bonds and funds sit at the end of each class file (SKILL.md routes to it).
 
 ### Macro and trading
 
 Check: a view on liquidity, rates, flows or a catalyst, and a way to be wrong cheaply (Druckenmiller P3, P4). Numbers: expected gain against loss, the stop level, the position's loss in money, costs and spreads, and a log of every trade. Size: loss budget set below the usual idea size; press only after profit and conviction (Druckenmiller P2: preserve capital, then press). Sell: the stop, the broken thesis, or the target. Mistakes: leverage that makes a right call a loss, no stop, averaging down, trading from boredom, and no log.
 
-### Private equity and venture capital
+### Private equity buyout
 
-Two different bets share this heading. Venture buys a small stake in a young company and wins on a few outliers. A buyout (private equity) buys control of a mature, cash-paying business, usually with debt, and wins on cash flow, debt paydown and a sale. Run the venture lines for a startup cheque and the buyout lines for a control deal or a buyout fund.
-
-**Venture.** Check: market size and risk layers (Andreessen P1, P4), founders, the cap table, the price, and the path to a sale or listing. Numbers: ownership after dilution, the return needed to be worth the fund's lock-up, and a 10x gain on invested capital in four to six years (Andreessen P2). Returns come from a few outliers (Thiel P1, Leone P5). Size: many small cheques, with money held back for follow-ons, and no cash you need. Sell: when a buyer offers a price above your hold case, or by a founder's 10-20% partial sale (Leone P1). Mistakes: too few shots, chasing a hot round, ignoring dilution and fees, and pricing by the last round (Leone calls protecting the last round's price a mistake).
-
-**Buyout.** Check: steady cash flow that can carry debt, a reason the business stays strong, the seller's motive, what the new owner will change, and who buys it at the exit. Numbers (model them with `finman.py lbo`): entry price as a multiple of EBITDA, total debt against EBITDA, interest cover in the stress case, free cash flow left to repay debt each year, the exit multiple (default: no higher than the entry multiple), and the equity IRR and multiple on money (MOIC) after fees. Split the gain into its three sources: earnings growth, debt paid down, and a change in multiple; a deal that only works on a higher exit multiple is a bet on the market, not on the business. Size: as an investor in a fund, a slice of the illiquid part of the plan, with cash for the capital calls; as a direct buyer, see "Buying a business". Funding: debt the stress-case cash flow covers with room (Buffett P5, Ackman P6, Munger P5). Sell: the exit plan is set at entry (sale to a buyer, a listing, or a recapitalisation); sell early when a buyer pays above the hold case. Mistakes: paying a top multiple at the top of the cycle, debt sized on the best year, cost cuts that starve the business, counting on a higher exit multiple, and fees that eat the return.
-
-### Real estate
-
-Check: location, the tenant market, the condition, the rules (rent control, tax, costs), and the exit. Numbers: net operating income divided by price (cap rate), cash-on-cash return, debt service cover, repairs and vacancy reserves, tax and fees both ways, and the IRR with a sale at the end. Size: one property is a large, illiquid bet; hold a cash reserve for repairs and empty months. Funding: a fixed rate and a payment that survives a year of no rent. Sell: the thesis broke, a better use of the equity exists, or the area changes. Mistakes: counting rent and ignoring costs, a floating rate, no reserve, and buying with emotion.
-
-### Crypto
-
-Check: what gives it value (use, scarcity, a network), who holds it, how you hold it, and what you can lose entirely. Numbers: it has no cash flow, so no DCF. Use size, a stop, and the real cost of custody and fees. Treat it as a power-law bet with a capped loss (Altman P3: lose 1x if wrong, win 100x if right; Thiel P1). Size: an amount you can lose completely. Sell: write the exit plan first: the price, the date or the fact that sells it. Mistakes: borrowing to buy, trusting an exchange with your whole stake, buying because the price rose, and no plan to take profit.
-
-### A business or asset you buy to rent out (for example GPUs)
-
-Check: demand, who pays, what supply is coming, and what replaces the asset. Numbers: monthly revenue = hours in the month × utilisation × price per GPU-hour × (1 − platform fee). Costs: power (kilowatts × hours × price per kilowatt-hour, with cooling), hosting, internet, repairs, financing, tax. Net cash = revenue − costs. Payback = all-in price / net cash per month. Break-even utilisation = fixed monthly cost / (hours × price × (1 − fee)). Depreciation: the resale value falls as new generations arrive and supply grows, so test a lower price per GPU-hour and a lower utilisation. Default (ours): the base case pays back within half the expected useful life, and the stress case still pays back within the full life. Compare with renting the same capacity yourself: if you use it on your own work, its value is the rent you avoid. Size: no more than you can lose if the price per hour halves. Sell: when the price per hour falls under the cost of power and hosting plus a margin, or when the payback case fails. Mistakes: assuming full utilisation, ignoring power and downtime, and buying at the top of a shortage.
-
-### Reselling goods
-
-Check: where you buy below where you sell, and who buys. Numbers: buy price + fees + shipping + returns + your hours = cost; margin = sale − cost; days to sell; turns per year. Annual return = margin per cycle × cycles per year. Size: stock you can sell within a set number of days; limit capital in any one item. Sell: set a markdown date when you buy. Mistakes: counting no time cost, stock that sits, no returns allowance, and a single platform that can close your account.
-
-### Cars
-
-Check: for personal use, a car is spending, not an investment: it usually loses value. As a trade or collector buy, check the price against recent sales, the condition and history, and the market for that model. Numbers: buy price + inspection + repairs + registration and tax + insurance + storage + holding days; compare with a realistic sale price after fees. Margin of safety = (sale price − all costs − buy price) / buy price. Size: small; each car is illiquid. Sell: a set holding limit or target. Mistakes: loving the car, hidden repairs, paying retail and hoping to sell at retail, and loans on an asset that drops.
+Check: steady cash flow that can carry debt, a reason the business stays strong, the seller's motive, what the new owner will change, and who buys it at the exit. Numbers (model them with `finman.py lbo`): entry price as a multiple of EBITDA, total debt against EBITDA, interest cover in the stress case, free cash flow left to repay debt each year, the exit multiple (default: no higher than the entry multiple), and the equity IRR and multiple on money (MOIC) after fees. Split the gain into its three sources: earnings growth, debt paid down, and a change in multiple; a deal that only works on a higher exit multiple is a bet on the market, not on the business. Size: as an investor in a fund, a slice of the illiquid part of the plan, with cash for the capital calls; as a direct buyer, see "Buying a business". Funding: debt the stress-case cash flow covers with room (Buffett P5, Ackman P6, Munger P5). Sell: the exit plan is set at entry (sale to a buyer, a listing, or a recapitalisation); sell early when a buyer pays above the hold case. Mistakes: paying a top multiple at the top of the cycle, debt sized on the best year, cost cuts that starve the business, counting on a higher exit multiple, and fees that eat the return.
 
 ### Buying a business
 

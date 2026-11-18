@@ -95,7 +95,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaCorrect** | `sigmacorrect` | Turns a correction you gave twice into a check that fails |
 | **SigmaCreate** | `sigmacreate` | Makes a new skill, public or local, and proves an agent picks it up |
 | **SigmaCourse** | `sigmacourse` | Plans and builds teaching of any size; the course decides its own process |
-| **SigmaFinanceMan** | `sigmafinanceman` | Values a public company from free data: DCF, comps, LBO, live Excel |
+| **SigmaFinanceMan** | `sigmafinanceman` | Values any investment from free data: stocks, startups, GPUs, homes, gold, cards |
 | **SigmaSetup** | `sigmasetup` | Sets up a repo for the installed packs and syncs your house rule files |
 | **SigmaCreateArena** | `sigmacreatearena` | Ranks any options blind, by Elo |
 | **SigmaResearch** | `sigmaresearch` | Reads public sources and counts those read in full |
@@ -584,7 +584,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmacorrect` | (no input) · or the correction in your words | Proves each new check fails on the real past mistake; docs last |
 | `sigmacreate` | what the skill should do · public or local | Public skills pass a personal-data search; ends when a fresh agent lists it |
 | `sigmacourse` | a subject · the learner · a size (optional) | Prints a step table showing which process steps the course needed and why; never starts the loop |
-| `sigmafinanceman` | a ticker and peers · or a budget file | One question round; reads public data; writes files only to the output folder |
+| `sigmafinanceman` | a ticker · or an input file (deal, purchase, home, collectible, bond, budget) | One question round; reads public data; writes files only to the output folder |
 | `sigmasetup` | (no input) · or "sync the house files" | Masters from `SIGMASETUP_HOUSE` or a `house:` line in its personal instructions; nothing is written before your yes |
 | `sigmadebug` | (no input) · or a list of topics | Writes a topic .txt and a plan .md; one background SigmaShip worker per clear topic |
 | `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |

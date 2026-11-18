@@ -52,6 +52,17 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Changed
 
 - `sigmaboat` names no lab wrapper and no key file. The base and every copy run with boat's `--no-env`; a box gets its keys when it starts, over stdin, or from a boat environment when the API key may write one (`references/boat.md`).
+- `sigmafinanceman` now values any investment, not only a listed company (#338). One question routes the run: what are you valuing, and what decision does it serve? Each answer loads one reference file and runs one command:
+  - Stocks: a dividend discount model, dividend safety, owner earnings, buybacks, quality checks and the margin of safety (`dividend`), beside the DCF family.
+  - Startups: a cap table with SAFEs, notes and the option pool, priced rounds, the exit waterfall, the VC method, power-law portfolio maths and a pitch deck's numbers (`venture`).
+  - Purchases such as a GPU or a car: buy, lease or rent, payback, NPV and IRR, and resale (`purchase`). GPU rent prices come live from vast.ai.
+  - Homes: rent or buy, the mortgage, cap rate and cash-on-cash (`property`). The mortgage rate comes from FRED.
+  - Gold, commodities and crypto: real return after US inflation, drawdowns and the range of past holds (`asset`). These pay nothing, so the page gives no fair value and says why.
+  - Collectibles: sold comparables, the grading premium, fees and liquidity (`collectible`). Pokémon card prices come live from pokemontcg.io.
+  - Bonds and funds: yield, duration and spread, tracking difference and fee drag (`bond`, `fund`).
+- `sigmafinanceman` comps count minority interest in EV and take it off the implied value per share. The workbook has a column for it.
+- `sigmafinanceman` reads FRED again. FRED stopped answering the skill's own user agent, so the 10-year rate had been falling back to Yahoo.
+- SKILL.md and its reference files total 33,738 tokens on the OpenAI tokenizer (o200k_base). A test keeps them at 50,000 or fewer.
 - `sigmaresearch` reads two new sources and has two more X routes. `arxiv` searches papers or reads one by id through the arXiv API, and falls back to the abstract page. `sec` reads a company's latest filed numbers by ticker, or searches the text of every EDGAR filing. It sends a generic contact; `SEC_USER_AGENT` sets your own. An X post now also reads through vxTwitter and X's oEmbed when FxTwitter and the embed JSON fail. Reddit keeps its order: the mirrors and archives tested on 2026-11-18 were blocked or rate-limited (#338).
 - `sigmahuman`: takes the rest of blader/humanizer v4.0.0 outside the patterns: prompt-injection examples, the *weak alone* rule, the ranking and same-time checks the fact script misses, a whole-file read and partial-pass report in file mode, and voice-detail examples. One upstream line stays out: "add a specific detail you know to be true" breaks the facts-from-source rule.
 - `sigmacourse`: a program measures a persona (small-word score, 8-word copy count); no model judge or agent grades it.

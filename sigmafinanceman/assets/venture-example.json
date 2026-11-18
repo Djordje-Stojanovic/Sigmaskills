@@ -1,0 +1,18 @@
+{
+  "company": "Example Robotics (made-up numbers)",
+  "currency": "USD",
+  "source": "made-up inputs for a private company",
+  "founders": [{"name": "Founder A", "shares": 4500000}, {"name": "Founder B", "shares": 4500000}],
+  "pool": 1000000,
+  "safes": [{"name": "Angel SAFE", "amount": 750000, "cap": 8000000, "discount": 0.2, "type": "post"}],
+  "notes": [],
+  "rounds": [
+    {"name": "Seed", "pre_money": 14000000, "amount": 3500000, "pool_target": 0.10, "liq_pref": 1, "participating": false},
+    {"name": "Series A", "pre_money": 45000000, "amount": 12000000, "pool_target": 0.12, "liq_pref": 1, "participating": false}
+  ],
+  "exits": [15000000, 60000000, 250000000, 1000000000],
+  "vc": {"investment": 3500000, "exit_value": 400000000, "future_dilution": 0.45, "target_multiple": 10, "years": 7},
+  "fund": {"size": 60000000, "cheques": 30, "reserve": 0.5, "fees_share": 0.15, "ownership_at_exit": 0.06},
+  "deck": {"arr": 1200000, "growth": 2.2, "burn_monthly": 180000, "cash": 3800000, "net_new_arr": 800000,
+           "gross_margin": 0.72, "arpa_monthly": 2500, "churn_monthly": 0.015, "cac": 18000}
+}

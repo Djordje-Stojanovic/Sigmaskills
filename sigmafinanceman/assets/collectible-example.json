@@ -1,0 +1,10 @@
+{
+  "item": "Charizard, Base Set (unlimited) holo #4",
+  "currency": "USD",
+  "pokemon": "name:charizard set.id:base1",
+  "grade": "raw",
+  "buy_price": 800,
+  "fees": {"sell_pct": 0.1325, "shipping": 15, "grading_cost": 75},
+  "sales": [],
+  "sources": []
+}

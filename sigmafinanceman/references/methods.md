@@ -48,9 +48,9 @@ Money is in millions of the filing currency, shares in millions. `scripts/fin_mo
 ## Comps
 
 - LTM = the last fiscal year + the newer year-to-date - the year-ago year-to-date (10-Q), per flow line.
-- EV = market cap + debt - cash; market cap uses the cover-page share count.
+- EV = market cap + debt - cash + minority interest; market cap uses the cover-page share count. Consolidated EBITDA counts all of each subsidiary, so the outside owners' claim belongs in EV.
 - Multiples: EV/Revenue, EV/EBITDA, EV/EBIT, P/E (a negative denominator shows `n/a`). Statistics are Excel `QUARTILE.INC`, `MEDIAN`, `MIN`, `MAX` over the peers only.
-- Implied value per share = (peer multiple x target metric - debt + cash) / shares; P/E: multiple x net income / shares. The football field shows the 52-week range, the 25th-75th band per multiple and the DCF inner 3 x 3 range, with the price as a marker.
+- Implied value per share = (peer multiple x target metric - debt + cash - minority interest) / shares; P/E: multiple x net income / shares. The football field shows the 52-week range, the 25th-75th band per multiple and the DCF inner 3 x 3 range, with the price as a marker.
 
 ## Three-statement model
 
