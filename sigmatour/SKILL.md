@@ -9,13 +9,13 @@ Give the reader a guided tour of one repository in a single HTML page. Two start
 
 ## Operating contract
 
-- **The original stays untouched.** Read the source; never write to it. In copy mode, record its state before the copy (`git status --porcelain` and the HEAD commit, or the newest file time for a folder without git), check it again at the end and report both. A tour in place writes nothing into the toured repo: the page and its pictures go where the user says; by default `./<repo name>-tour.html` in the current folder and pictures in `./<repo name>-tour/`. A GitHub repo is cloned to a temporary folder first (`git clone --depth 200 <url> <tmp>`).
+- **The original stays untouched.** Read the source; never write to it. In copy mode, record its state before the copy (`git status --porcelain` and the HEAD commit, or the newest file time for a folder without git), check it again at the end and report both. A tour in place writes nothing into the toured repo: the page and its pictures go where the user says; by default `./<repo name>-tour.html` in the current folder and pictures in `./<repo name>-tour/`. A remote repo is fetched to a temporary folder first (`git clone --depth 200 <url> <tmp>` for GitHub; any other forge, archive or zip by whatever reaches it).
 - **Isolation is a gate (copy mode).** The copy is done only when `scripts/sigmatour.py verify` prints `ISOLATED`: no absolute path, link (symlink or junction) or git remote in the copy reaches the original. Paths to other places (shared caches, output folders, sibling repos) are listed for review and remapped when the grill says so.
 - **Owner-only inputs.** Logins, passwords, API keys and tokens: the owner types them himself, in his browser, a terminal prompt (`gh auth login`, `npm login`) or the file the copy reads (`.env`). You say exactly where each one goes and why. You never type, print, copy or commit a secret value; name a key by its variable name, and you may point the copy at an existing keys file by path.
 - **No overwrite.** The helper refuses a destination folder that is not empty. Pick a new folder, or ask.
 - **Real runs only.** Every command and output in the tour ran during this session, on this machine — in copy mode, in the copy. When one cannot run here (a GPU, a paid key, a service), say why and show the repo's own committed output instead. Never hello world.
 - **Numbers from the helper.** Sizes, history, entry points and the README check come from `scripts/sigmatour.py`, never typed by hand.
-- **Shell native to the machine:** PowerShell on Windows, POSIX shell elsewhere. Close any server you start.
+- **Close any server you start.**
 
 The helper is one standard-library Python file. `python scripts/sigmatour.py selftest` checks it on this machine.
 
@@ -30,18 +30,11 @@ The user's words pick the mode. **Tour in place** (explain, walk through, learn)
 3. **Focus:** the whole repo, or one part or flow (name the candidates from the scan).
 4. **Runs:** may the tour install dependencies and run the examples here? Recommend yes when the repo runs on this machine without paid keys.
 
-**Copy mode** (copy, fork, duplicate, a destination folder): ask the 8 grill questions in **one** numbered round instead — [questions.md](references/questions.md), each with a recommended answer based on what the scan and a few minutes in the source showed (the README, the top-level folders, the package or build files, config that names keys, agent instructions, its size, hardcoded absolute paths from `python scripts/sigmatour.py paths <source> --source <source>`, which reads without writing). Use `/grilling`'s round format when it is installed. If the owner says "use the recommended answers", do not ask; log each answer you took for him as `Ruling:`. Write the answers to `grill.md` in your scratch folder; it moves into the copy in step 2.
+**Copy mode** (copy, fork, duplicate, a destination folder): ask the 8 grill questions in **one** numbered round instead — [questions.md](references/questions.md), each with a recommended answer based on what the scan and a few minutes in the source showed (the README, the top-level folders, the package or build files, config that names keys, agent instructions, its size, hardcoded absolute paths from `python scripts/sigmatour.py paths <source> --source <source>`, which reads without writing). If the owner says "use the recommended answers", do not ask; log each answer you took for him as `Ruling:`. Write the answers to `grill.md` in your scratch folder; it moves into the copy in step 2.
 
 ## 2. Copy it first (copy mode only)
 
-Follow [copy.md](references/copy.md) for the source kind (GitHub fork, GitHub clone, local git repo, local folder). In short:
-
-1. **Make the copy** at the destination from the grill. GitHub: `gh repo fork` or `git clone`. Local: `python scripts/sigmatour.py copy <source> <dest> --exclude <pattern>...`, which skips installed dependencies and caches, remakes links that point inside the source so they point inside the copy, and copies links that point outside as real files.
-2. **Cut every path back to the original:** `paths`, then `fix` (rewrites every spelling of the source path to the same spelling of the copy), then `--map OLD=NEW` for each outside folder the grill said the copy must own (its output folder, its cache, its database), then fix git remotes, then `verify` until it prints `ISOLATED`.
-3. **Owner-only inputs:** list each login and key the copy needs, with the exact place it goes. Wait while the owner types them. Then check that the copy sees them without printing the values (a status command, a dry run, a "key found" line).
-4. **Install and run:** install the copy's dependencies with its own lock file, then run its own check or one real example. A copy that does not run is not done; fix it or report the exact blocker.
-5. **Install the skill bundle** from the grill: [bundles.md](references/bundles.md). Project scope, inside the copy.
-6. **Move** `grill.md` and `study.md` (step 3) into `<dest>/.sigmatour/`, next to the helper's `copy.json` and `paths.json` logs.
+Follow [copy.md](references/copy.md) for the source kind (GitHub fork, clone or template, local git repo, local folder; for anything else, take the nearest kind). It walks you through making the copy, cutting every path back to the original until `verify` prints `ISOLATED`, the owner-only inputs, and proving the copy runs with its own lock file. A copy that does not run is not done: fix it or report the exact blocker. Then install the skill bundle from the grill, project scope, inside the copy ([bundles.md](references/bundles.md)), and move `grill.md` and `study.md` (step 3) into `<dest>/.sigmatour/`, next to the helper's `copy.json` and `paths.json` logs.
 
 From here the tour target is the copy, and the page goes inside it: `<dest>/<repo name>-tour.html`, unless the owner says otherwise — the name ends in `-tour.html`, so the scan never counts the page itself.
 
@@ -49,7 +42,7 @@ From here the tour target is the copy, and the page goes inside it: `<dest>/<rep
 
 Read in this order and keep notes (in copy mode, `study.md`): the README and docs; the entry points from the scan; the main flows from each entry point to its output (what calls what); the folders that matter; the examples, demos, tests and fixtures (in copy mode, the real example projects inside it); what the repo reads from outside (keys, services, files); the issues and changelog for known problems.
 
-When `/sigmaresearch` is installed and the repo is public, read how people use it and what they trip over: 5-10 sources for a tour in place, the grill's depth in copy mode (for example 100). Without `/sigmaresearch`, read the same kinds of sources with your own web tools and say so. In copy mode the research also feeds the "Top 3 resources" of step 6.
+When the repo is public, read how people use it and what they trip over: 5-10 sources for a tour in place, the grill's depth in copy mode (for example 100). Use `/sigmaresearch` when it is installed, else your own web tools, and say which. In copy mode the research also feeds the "Top 3 resources" of step 6.
 
 Then run the repo: install with its own lock file, run its own check or test, and run 2-3 real examples end to end. Save screenshots or output files for the page.
 

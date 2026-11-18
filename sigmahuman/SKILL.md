@@ -13,7 +13,7 @@ SigmaHuman makes text read like a person wrote it, for one reader and one purpos
 - **Rewrite:** text comes in, the same content goes out in a human voice.
 - **Write:** a brief comes in ("a birthday message for my boss", "chapter 3 from these notes", "a chorus about leaving Belgrade"), and new text goes out that sounds human from the first draft.
 
-The core is [blader/humanizer](https://github.com/blader/humanizer) v4.0.0 (MIT): 26 patterns from Wikipedia's "Signs of AI writing", strongest first. SigmaHuman adds lanes for each kind of text, a write-from-a-brief mode, voice matching, a fact check script, and a one-pass mode for pipelines.
+The core is [blader/humanizer](https://github.com/blader/humanizer) v4.0.0 (MIT): 26 patterns from Wikipedia's "Signs of AI writing", strongest first.
 
 ## Three rules that never bend
 
@@ -38,9 +38,9 @@ Every sentence you keep must add something the reader did not already have, from
 
 1. **Pick the lane.** Read [references/lanes.md](references/lanes.md) and take the lane for the kind of text: ear, book, song, chat, docs, post, or brief. A mixed job (a film's narration, captions and descriptions) runs each part in its own lane, in one pass.
 2. **Find the voice.** With a writing sample, read it first (see Voice below). Without one, take the voice from the kind of text and the lane.
-3. **Mark the tells.** Read the whole text once and mark every pattern in [references/patterns.md](references/patterns.md), strongest first. Look at paragraph shape as well as sentences: a contrast split over two sentences, three parallel examples, or the same closer after every section is the same tell at a larger scale.
+3. **Mark the tells.** Read the whole text once and mark every pattern in [references/patterns.md](references/patterns.md), strongest first (§1 not X but Y, §2 one-line closers, §3 sayings that sound deep, §4 staged run-ups, §5 arguing with no one). Look at paragraph shape as well as sentences: a contrast split over two sentences, three parallel examples, or the same closer after every section is the same tell at a larger scale.
 4. **Draft the rewrite.** Keep every supported claim. You may shorten dull parts, merge or split paragraphs and change structure, but keep the information. In Write mode, draft from the brief, then mark and fix your own draft the same way.
-5. **Check the draft.** First check that no fact was added, lost or changed; with Python available, run `python scripts/factcheck.py before.txt after.txt` (numbers, dates, quotes, names). The script cannot see a lost ranking or a lost claim that two things happen at the same time; edits under §6, §9 and §19 drop those most often, so check them by eye. Treat an addition as an error, and a lost claim as an error unless a pattern calls for the cut. Then read it aloud and ask what still sounds AI-generated. Last, search again for the tells that most often survive a rewrite: §1 contrasts, §2 closers, §6 triads, §8 dashes, §19 bold labels.
+5. **Check the draft.** First check that no fact was added, lost or changed: `python scripts/factcheck.py before.txt after.txt` compares numbers, dates, quotes and names (with no Python, compare them by hand). The script cannot see a lost ranking or a lost claim that two things happen at the same time; edits under §6, §9 and §19 drop those most often, so check them by eye. Treat an addition as an error, and a lost claim as an error unless a pattern calls for the cut. Then read it aloud and ask what still sounds AI-generated. Last, search again for the tells that most often survive a rewrite: §1 contrasts, §2 closers, §6 triads, §8 dashes, §19 bold labels.
 6. **Write the final version.** State each point naturally instead of patching flagged phrases one at a time. If a sentence stays awkward, rewrite the paragraph around its main point. Vary sentence length inside the lane's band: real writing alternates short and long.
 
 ## Voice
@@ -60,20 +60,10 @@ Match them. The sample overrides the patterns, including the dash rule in §8: i
 ## What to return
 
 - **Pasted text (default):** the final rewrite first, then a short list of the tells you fixed and any that remain on purpose.
-- **File mode:** when the user names a file, read the whole current file from disk first, even one you wrote this session, in chunks until every section is covered. Run the full process, change prose only, write only the final text to the file, then give a short summary: sections reviewed, tells fixed, fact check result. Report a partial pass as partial and name the sections you skipped.
+- **File mode:** when the user names a file, read it whole as [lanes.md](references/lanes.md#working-on-a-file) says, run the full process, change prose only, write only the final text to the file, then summarise: sections reviewed, tells fixed, fact check result, any section skipped.
 - **Embedded mode:** when another task uses this skill (a pull request, a commit message, a doc, a chat reply), return only the final text.
 - **Pipeline pass:** when a pipeline hands over a set of files once (a film's script, captions and publish texts), edit every file in place in one pass, keep the file formats and line counts, run the fact check, and return a short report: files changed, tells fixed per file, fact check result, anything you could not keep. The caller takes the output as written.
 - **Write mode:** the text, then one line naming any fact you left out because the brief did not give it.
-
-## The five strongest tells
-
-Act on one sighting (details and examples in [references/patterns.md](references/patterns.md)):
-
-1. **Not X but Y:** "It's not just a feature, it's a shift."
-2. **One-line closers and dramatic fragments:** "Let that sink in." "No nostalgia. No mercy."
-3. **Sayings that sound deep:** "At its core, what really matters is..."
-4. **A staged run-up:** "Here's the thing." "Honestly?" "Let's dive in."
-5. **Arguing with no one:** "I'm not saying X, but..." "To be clear..."
 
 ## When not to act
 

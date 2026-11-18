@@ -13,7 +13,7 @@ Needs Python 3 (standard library only) and a browser. The server listens on 127.
 
 ## 1. Grill (before anything is made)
 
-Run a grilling round: numbered questions, your recommended answer under each (use `/grilling` if it is installed). Look up every fact yourself; only decisions go to the user. Cover, in order:
+Run a grilling round: numbered questions, your recommended answer under each. Look up every fact yourself; only decisions go to the user. Cover, in order:
 
 0. **Which mode?** Grid is the default: the user looks at everything and decides (see all, rate 1-5, comment, copy the ratings back). Use Arena only when the user asks for a ranking (blind pairs, Elo per metric). Both run from the same kit; Grid opens first. With Grid only, skip questions 3 (anchors), 6 (metrics) and 8 (cost columns).
 1. **What is ranked, and what happens to the winner?** (a new default, a caption, a model kept, files deleted.) One sentence each.
@@ -45,7 +45,7 @@ A metric counts ×2 in Overall with `"weight": 2`. Stop when no open question is
 
 ## 3. Hand over and watch
 
-Tell the user in one short message: the link, how many options and groups. Grid: click a picture for full size, `←`/`→` step, rate 1-5, comment, "Copy my ratings" gives the lines to paste back (`ratings.json` keeps them too). Arena: the keys (`Q W E`, `A S D`, `Y X C` (Z on QWERTY), `U I O`, `J K L`: A better, same, B better, by key position; `↵` next, `B` both bad, `⌫` undo, `F`/`G` full size with the refs beside it; click a ref = full size, `←`/`→` next ref, `R` all refs), and "you decide when it is enough". While they rank, answer questions from `results.md` with tables: Elo, range, games, W-L-T, the cost columns, per metric. Say "tie" where ranges overlap. Never pick for the user, never edit `picks.jsonl`, never restart a server you did not start.
+Tell the user in one short message: the link, how many options and groups. Grid: click a picture for full size, `←`/`→` step, rate 1-5, comment, "Copy my ratings" gives the lines to paste back (`ratings.json` keeps them too). Arena: the keys in one line (the full list is in the guide), and "you decide when it is enough". While they rank, answer questions from `results.md` with tables: Elo, range, games, W-L-T, the cost columns, per metric. Say "tie" where ranges overlap. Never pick for the user, never edit `picks.jsonl`, never restart a server you did not start.
 
 ## 4. Close
 
