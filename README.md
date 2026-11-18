@@ -95,6 +95,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaCorrect** | `sigmacorrect` | Turns a correction you gave twice into a check that fails |
 | **SigmaCreate** | `sigmacreate` | Makes a new skill, public or local, and proves an agent picks it up |
 | **SigmaCourse** | `sigmacourse` | Plans and builds teaching of any size; the course decides its own process |
+| **SigmaFinanceMan** | `sigmafinanceman` | Values a public company from free data: DCF, comps, LBO, live Excel |
 | **SigmaCreateArena** | `sigmacreatearena` | Ranks any options blind, by Elo |
 | **SigmaResearch** | `sigmaresearch` | Reads public sources and counts those read in full |
 | **SigmaDeepLook** | `sigmadeeplook` | Reads what agents cannot: video, speech, scans, binaries |
@@ -160,6 +161,10 @@ Makes one new skill by one of two routes. A public skill is one you publish: it 
 ### SigmaCourse
 
 Plans and builds teaching of any size, subject, audience and medium. It first writes what the learner can do at the end, maps every ability that needs, and derives the parts, their order and their length from that map. The map also decides which steps of the process run, so a short piece gets almost none and a long program gets a spec, a checked done list, a course repo and a goal prompt. Delivery is part of the job: one design file, the learner's path on phone and desktop, a performance budget measured in the built course, and accessibility.
+
+### SigmaFinanceMan
+
+Values a public company from free data it fetches itself: SEC filings, the share price and the 10-year Treasury rate. It runs a DCF, comps, an LBO, a three-statement model, ratios, red flags, a value scorecard and an earnings review, or a household budget from your own file. The DCF gives a bear, base and bull value and what the share price implies (a reverse DCF: the growth the market is betting on). Each run writes an Excel workbook with live formulas, a deck, charts and one page that walks through the method in ten plain steps. Use the Financial Services pack instead when you have your own model template or a paid data feed.
 
 ### SigmaCreateArena
 
@@ -393,6 +398,7 @@ $sigmadebug
 $sigmacorrect Stop hardcoding: make it a check
 $sigmacreate Turn what we just did into a skill for this repo
 $sigmacourse A one-page guide to reading a balance sheet
+$sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
 $sigmacreatearena Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
 $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
@@ -425,6 +431,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 /skill:sigmacorrect
 /skill:sigmacreate Turn what we just did into a skill for this repo
 /skill:sigmacourse Plan a 10-hour course that makes me fluent in SQL
+/skill:sigmafinanceman What does the price of KO assume?
 /skill:sigmacreatearena Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
 /skill:sigmadeeplook What happens at 2:10 in ~/clips/demo.mp4?
@@ -456,6 +463,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmacorrect` | (no input) · or the correction in your words | Proves each new check fails on the real past mistake; docs last |
 | `sigmacreate` | what the skill should do · public or local | Public skills pass a personal-data search; ends when a fresh agent lists it |
 | `sigmacourse` | a subject · the learner · a size (optional) | Prints a step table showing which process steps the course needed and why; never starts the loop |
+| `sigmafinanceman` | a ticker and peers · or a budget file | One question round; reads public data; writes files only to the output folder |
 | `sigmadebug` | (no input) · or a list of topics | Writes a topic .txt and a plan .md; one background SigmaShip worker per clear topic |
 | `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |
@@ -490,6 +498,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | SigmaTour | Python 3 (standard library) · `git` · a browser for the page · `gh` and Node.js only when it copies first |
 | SigmaClimb | Python 3 · a scoring script for your target · for the serving example: SSH, a GPU host account (`vastai`) and a long-run agent host |
 | SigmaFreedom | Python 3 (standard library) for `guardrail_lint.py` |
+| SigmaFinanceMan | Python 3.10 or newer with `openpyxl` and `python-pptx` · LibreOffice is optional (`audit`, `render`) · network access to SEC, Yahoo and FRED |
 | SigmaDeepLook | Python 3.10 or newer; optional ffmpeg, LibreOffice, poppler, tesseract and Python packages · `look.py doctor` lists them; missing tools become Not-looked-at rows |
 
 Skills use the shell native to the machine that runs the agent (PowerShell on Windows, POSIX shell elsewhere). They do not assume WSL.

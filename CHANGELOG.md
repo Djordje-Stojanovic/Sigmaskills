@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmafinanceman` (SigmaFinanceMan) is back in the pack (#338). It values a public company from data it fetches itself (SEC filings, Yahoo prices, the FRED 10-year rate) and runs the model, which the Financial Services pack leaves to a paid feed or your own template. Its DCF now gives a bear, base and bull value (year-1 growth 5 points and the EBIT margin 3 points either side of the base) and a reverse DCF: the year-1 growth and the EBIT margin at which the value equals the share price. Minority interest comes off the equity value, in the workbook too. The page walks through the method in ten numbered steps with the run's own numbers, and it now wears the DESIGN.md look: dark by default, light on a light system and in print. The workbook and the deck keep the banker colours. The sanity checks flag a terminal value under 40 % of EV and an implied growth far above the filed growth. Each addition has a check in `finman.py selftest`. It was retired in 0.24.0; an installed copy is now updated like any other Sigma skill.
+
 ### Changed
 
 - `sigmaresearch` reads two new sources and has two more X routes. `arxiv` searches papers or reads one by id through the arXiv API, and falls back to the abstract page. `sec` reads a company's latest filed numbers by ticker, or searches the text of every EDGAR filing. It sends a generic contact; `SEC_USER_AGENT` sets your own. An X post now also reads through vxTwitter and X's oEmbed when FxTwitter and the embed JSON fail. Reddit keeps its order: the mirrors and archives tested on 2026-11-18 were blocked or rate-limited (#338).

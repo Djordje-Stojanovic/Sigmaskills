@@ -354,5 +354,15 @@
   "prompt": "Make a one-page guide that teaches beginners to read a balance sheet",
   "skill": "sigmacourse",
   "near": "sigmawrite"
+ },
+ {
+  "prompt": "Build me a DCF and a comps table for this ticker in Excel",
+  "skill": "sigmafinanceman",
+  "near": "sigmaresearch"
+ },
+ {
+  "prompt": "Help me plan a monthly budget from my income and spending",
+  "skill": "sigmafinanceman",
+  "near": "sigmahuman"
  }
 ]

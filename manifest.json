@@ -108,6 +108,11 @@
       "id": "sigmacourse",
       "title": "SigmaCourse",
       "needsReferences": true
+    },
+    {
+      "id": "sigmafinanceman",
+      "title": "SigmaFinanceMan",
+      "needsReferences": true
     }
   ],
   "retired": [
@@ -118,7 +123,6 @@
     "sigmareset",
     "sigmasetup",
     "sigmadesign",
-    "sigmafinanceman",
     "sigmaspeedloop"
   ]
 }
