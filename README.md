@@ -39,7 +39,7 @@ SigmaSkills is a set of skills for coding agents. A skill is a folder with one `
 npx @djordje-stojanovic/sigmaskills
 ```
 
-The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm. On the first screen, `u` updates every installed skill and `x` uninstalls them all. For a script, one line does it all: `npx @djordje-stojanovic/sigmaskills install --preset core --global --yes`. `core` is every Sigma skill plus the whole Matt Pocock pack and Theo Browne's whole tstack pack, and a bare `install --global --yes` means `--preset core`. Every other pack goes into one repo at a time: `install --pack blender --project .` (`--pack` is the same flag as `--preset`).
+The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm. On the first screen, `u` updates every installed skill and `x` uninstalls them all. For a script, one line does it all: `npx @djordje-stojanovic/sigmaskills install --preset core --global --yes`. `core` is every Sigma skill plus the whole Matt Pocock pack and Theo Browne's whole tstack pack, and a bare `install --global --yes` means `--preset core`. Every other pack goes into one repo at a time: `install --pack threejs --project .` (`--pack` is the same flag as `--preset`).
 
 ## Stay current
 
@@ -62,7 +62,7 @@ Use `--project .` in place of `--global` for a repo. Add `--dry-run` to preview.
 
 ### Presets
 
-`--preset <pack>` installs a whole pack, and the wizard lists every pack. `npx @djordje-stojanovic/sigmaskills packs` prints every pack with its skill count and source. The 19 packs, with their skills, source, licence and needs: [Packs](#packs).
+`--preset <pack>` installs a whole pack, and the wizard lists every pack. `npx @djordje-stojanovic/sigmaskills packs` prints every pack with its skill count and source. The 18 packs, with their skills, source, licence and needs: [Packs](#packs).
 
 ### Without the wizard
 
@@ -236,16 +236,8 @@ Geometry, materials, lighting, shaders, loaders, post-processing, R3F.
 HTML to video: the HyperFrames skill, CLI, registry, media and slideshows, plus the student kit.
 
 - **Skills (20):** `figma`, `hyperframes`, `hyperframes-cli`, `hyperframes-registry`, `media-use`, `remotion-to-hyperframes`, `reverse-any-video`, `slideshow`, `style-sampling`, `cut-mistakes`, `cut-silences`, `edit-video`, `gsap`, `hyperframes-video-beats`, `make-a-video`, `motion-showreel`, `short-form-edit`, `style-library`, `video-storytelling`, `website-to-hyperframes`.
-- **Source:** [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes), pinned to tag `v0.9.30` and [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit), pinned to commit `10511e5`. Licence: Apache-2.0 (HyperFrames); the student kit has its own licence file. Also answers to: `hf`.
+- **Source:** [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes), pinned to tag `v0.9.65` and [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit), pinned to commit `10511e5`. Licence: Apache-2.0 (HyperFrames); the student kit has its own licence file. Also answers to: `hf`.
 - **Needs:** Node.js 22+, FFmpeg and Chrome. Optional keys: `GEMINI_API_KEY`, `HEYGEN_API_KEY`, `FIGMA_TOKEN`.
-
-### Blender (`blender`)
-
-Drive Blender 5 from code: modeling, rigging, shaders, physics, rendering, camera, lighting, VFX, art styles and game export.
-
-- **Skills (94):** specialists such as `lighting`, `camera-cinematography`, `rigging`, `vfx-fx`, `qa-review`, `unity-export` and `pixel-art-style`; `list --packs --json` prints all of them.
-- **Source:** [arjun988/blender-skills](https://github.com/arjun988/blender-skills), pinned to commit `904f095`. Licence: MIT. Also answers to: `blender3d`.
-- **Needs:** Blender 5. Some skills drive Blender through an MCP server.
 
 ### MiniMax H3 (`minimax-h3`)
 
@@ -276,7 +268,7 @@ Anthropic's skills: document skills (docx, pdf, pptx, xlsx), Claude API referenc
 Research what people say about any topic in the last 30 days, across Reddit, X, YouTube, Hacker News and more.
 
 - **Skills (1):** `last30days`.
-- **Source:** [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill), pinned to tag `v3.33.1`. Licence: MIT. Also answers to: `last30`.
+- **Source:** [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill), pinned to tag `v4.3.2`. Licence: MIT. Also answers to: `last30`.
 - **Needs:** Python 3.12+ and Node 22+. One-time `scripts/last30days.py setup`, run by you. Every key is optional.
 
 ### Financial Services (`financial-services`)

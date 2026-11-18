@@ -40,7 +40,7 @@ const FLAG_CASES = {
   '--classic': [['--classic'], { classic: true }],
   '--packs': [['list', '--packs'], { packs: true }],
   '--preset': [['--preset', 'sigma,mattpocock', '--preset=threejs'], { presets: ['sigma,mattpocock', 'threejs'] }],
-  '--pack': [['install', '--pack', 'blender', '--pack=threejs'], { presets: ['blender', 'threejs'] }],
+  '--pack': [['install', '--pack', 'hyperframes', '--pack=threejs'], { presets: ['hyperframes', 'threejs'] }],
   '--drop': [['install', '--drop', 'design-a', '--drop=design-b'], { drops: ['design-a', 'design-b'] }],
   '--non-core': [['uninstall', '--non-core'], { nonCore: true }],
   '-a': [['-a', 'claude'], { agents: ['claude'] }],
