@@ -39,7 +39,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
-- Skills that read or reach something now treat access as an open question, not a closed list. When a known route fails, `sigmaresearch` finds 2-3 other ways to the same facts and logs which one answered. Its route catalogue is a source of ideas, and the owner's signed-in browser works through any browser tool your host has. `sigmadeeplook` falls back to the tools you already have when `look.py` cannot read a file. `sigmaboat` and `sigmavast` try other routes when a command or a provider fails, and read the docs through context7, a web search or `--help`. The four cards are 2,029 o200k tokens smaller. (#PR)
+- Skills that read or reach something now treat access as an open question, not a closed list. When a known route fails, `sigmaresearch` finds 2-3 other ways to the same facts and logs which one answered. Its route catalogue is a source of ideas, and the owner's signed-in browser works through any browser tool your host has. `sigmadeeplook` falls back to the tools you already have when `look.py` cannot read a file. `sigmaboat` and `sigmavast` try other routes when a command or a provider fails, and read the docs through context7, a web search or `--help`. The four cards are 2,029 o200k tokens smaller. (#370)
 
 ## [0.28.0] — 2026-11-18
 
