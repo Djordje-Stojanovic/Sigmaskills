@@ -118,6 +118,11 @@
       "id": "sigmasetup",
       "title": "SigmaSetup",
       "needsReferences": true
+    },
+    {
+      "id": "sigmaask",
+      "title": "SigmaAsk",
+      "needsReferences": true
     }
   ],
   "retired": [
@@ -128,5 +133,14 @@
     "sigmareset",
     "sigmadesign",
     "sigmaspeedloop"
-  ]
+  ],
+  "replacedBy": {
+    "sigmaperformance": "sigmareview",
+    "sigmawritegui": "sigmawrite",
+    "sigmafork": "sigmatour",
+    "sigmarefactor": "sigmamusk",
+    "sigmareset": "sigmamusk",
+    "sigmadesign": "frontend-design and the design-md pack, with sigmataste",
+    "sigmaspeedloop": "sigmaclimb"
+  }
 }

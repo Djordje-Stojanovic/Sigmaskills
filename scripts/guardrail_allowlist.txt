@@ -86,3 +86,4 @@ and do not use it until it passes
 Never use a card or price from memory or from an older run.
 Offer it; do not run it unasked.
 allowed / we will not" line carries no weight.
+description: 'Use when asked to ask sigma (ask-sigma), which skill to use, or what next: at any stage of any problem, build, plan or app, it finds where the user is and names the best next skill or flow from what is installed, with the exact thing to type. Do not use to run the recommended skill or to install skills (the Sigma installer does that).'

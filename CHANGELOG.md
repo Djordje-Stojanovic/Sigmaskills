@@ -32,6 +32,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmaask`: ask which skill fits a job and what comes next. It answers with a flow, such as `SigmaImprove → issues → SigmaShip`, and the exact thing to type. It looks at your machine first: which hosts you have, where skills are installed, what is out of date, retired or installed twice. Then it gives the install line for anything missing. It knows every pack in the registry and searches the web for the rest.
+- `manifest.json` names the skill that replaced each retired one (`replacedBy`).
+
 ## [0.28.0] — 2026-11-18
 
 ### Added

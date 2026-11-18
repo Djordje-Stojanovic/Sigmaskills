@@ -1,0 +1,10 @@
+interface:
+  display_name: SigmaAsk
+  short_description: Which skill, and what next, from what is on this machine
+  default_prompt: Use $sigmaask to tell me which skill or flow fits my job and what to type next.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: true

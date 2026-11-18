@@ -35,6 +35,7 @@ Sigmaskills/
 ├── sigmacourse/              SKILL.md · agents/ · references/
 ├── sigmafinanceman/          SKILL.md · agents/ · references/ · assets/ · scripts/ (finman.py and its fin_* modules)
 ├── sigmasetup/               SKILL.md · agents/ · references/ · scripts/
+├── sigmaask/                 SKILL.md · agents/ · references/ · scripts/
 └── sigmacreatearena/ SKILL.md · agents/ · references/ · kit/
 ```
 

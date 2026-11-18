@@ -49,6 +49,7 @@ Each skill has one job. Say its name to start it.
 
 | Skill | What it does | Needs |
 |-------|--------------|-------|
+| `sigmaask` | Tells you which skill to use and what comes next. It looks at what is installed on your machine first, and knows every pack. | Node.js 22 |
 | `sigmareview` | Finds and proves what is wrong in a repo (bugs, security, slow paths) and publishes one review PR. Never changes your code. | `gh` to push and open the PR |
 | `sigmaimprove` | Compares a product with the top 1-3 in its field and keeps one living issue of ideas per category. Never edits the product. | |
 | `sigmabrief` | Writes copy-pastable agent briefs from issues or plans, in safe parallel waves. Only when you ask by name. | |
