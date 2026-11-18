@@ -170,14 +170,12 @@ def table_slide(prs, t, max_rows=14):
         for ri, row in enumerate(part):
             gi = pi * max_rows + ri
             for ci, v in enumerate(row):
-                kind = t["formats"][ci]
-                if ci > 0 and t.get("row_formats", {}).get(gi) and kind in ("money", "auto"):
-                    kind = t["row_formats"][gi]
+                kind = S.kind_of(t, gi, ci, row)
                 txt = S.cell(v, kind)[0].replace('<span class="pad">)</span>', "").replace("&nbsp;", "")
                 txt = S.html.unescape(txt)
                 bold = gi in t["totals"] or gi in t["double"] or (t.get("center") == (gi, ci))
                 color = "ink"
-                if t.get("status_col") == ci:
+                if t.get("status_col") == ci and str(v).lower() != "n/a":
                     color = "gain" if str(v).lower() in ("pass", "clear") else "loss"
                 fill = "center" if t.get("center") == (gi, ci) else ("panel" if gi in t["totals"] or gi in t["double"] else "bg")
                 _cell(tbl.cell(ri + 1, ci), txt, bold, color, fill, PP_ALIGN.LEFT if (ci == 0 or kind == "text") else PP_ALIGN.RIGHT)

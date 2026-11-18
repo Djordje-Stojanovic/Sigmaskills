@@ -5,6 +5,7 @@ No chart library and no network: the page opens offline. Each chart is drawn twi
 narrow (phone: every label sits above its bar, nothing scrolls sideways).
 """
 import html
+import re
 
 import fin_models as F
 
@@ -32,7 +33,25 @@ def fmt(v, kind="money"):
         return f"{v:,.0f}"
     if kind == "num1":
         return f"{v:,.1f}"
+    if kind == "num":   # a plain number: up to 4 decimals, so $0.17 an hour and a beta of 0.60 read as they are
+        return f"{v:,.0f}" if abs(v) >= 1000 else f"{v:,.4f}".rstrip("0").rstrip(".")
     return F.money(v)
+
+
+RATE = re.compile(r"rate|cost of|growth|margin|premium|%|pct|yield|return|sweep|payout|vacancy|management|appreciation|discount|carry|"
+                  r"spread|dilution|^(g\d?|ke|rf|erp|wacc)$", re.I)
+NOT_RATE = re.compile(r"per.use|price|monthly|yearly|value|days", re.I)
+
+
+def kind_of(t, ri, ci, row):
+    """The format of one cell: the column's, a row override, or, in an inputs table, the input's own unit."""
+    kind = t["formats"][ci]
+    if ci > 0 and kind in ("money", "auto"):
+        if t.get("row_formats", {}).get(ri):
+            return t["row_formats"][ri]
+        if t["columns"][:2] == ["Input", "Value"] and isinstance(row[ci], (int, float)):
+            return "pct" if RATE.search(str(row[0])) and not NOT_RATE.search(str(row[0])) else "num"
+    return kind
 
 
 def _svg(w, h, body, title):
@@ -213,18 +232,15 @@ def cell(v, kind):
 def table_html(t):
     head = "".join(f'<th class="{"l" if i == 0 or t["formats"][i] == "text" else "n"}">{esc(c)}</th>' for i, c in enumerate(t["columns"]))
     body = []
-    rf = t.get("row_formats", {})
     center = t.get("center")
     for ri, row in enumerate(t["rows"]):
         cls = " total" if ri in t["totals"] else ""
         cls += " double" if ri in t["double"] else ""
         tds = []
         for ci, v in enumerate(row):
-            kind = t["formats"][ci]
-            if ci > 0 and rf.get(ri) and kind in ("money", "auto"):
-                kind = rf[ri]
+            kind = kind_of(t, ri, ci, row)
             h, c = cell(v, kind)
-            if t.get("status_col") == ci:
+            if t.get("status_col") == ci and str(v).lower() != "n/a":
                 c += " ok" if str(v).lower() in ("pass", "clear") else " bad"
             if center and (ri, ci) == center:
                 c += " center"

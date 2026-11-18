@@ -8,14 +8,15 @@ Every option delivers the same use: `uses_per_month` units (GPU-hours, km, machi
 
 | Option | Cost in today's money |
 |---|---|
-| Buy | price + (running cost per use x uses + fixed monthly cost), discounted - resale value at the end, discounted |
+| Buy | price + (running cost per use x uses + fixed monthly cost - income), discounted - resale value at the end, discounted |
 | Rent | rent per use x uses, discounted |
-| Lease | upfront + (lease payment + running + fixed) for the lease months, then rent for the rest of the life |
+| Lease | upfront + (lease payment + running + fixed) for the lease months, then rent for the rest of the life; a lease longer than the life adds the payments still owed, or `termination_fee` |
 
 - **Total cost of ownership** is the buy line: every cost of owning, less what you sell it for.
 - **Payback** = months until the monthly saving (rent avoided - running - fixed + any income) repays the price.
-- **NPV of buying** = rent cost - buy cost. Positive: buying wins.
-- **IRR of buying** = the yearly return of the flows -price, saving each month, resale at the end.
+- **One cash-flow series** (buy minus rent): -price, the saving each month, the resale at the end. NPV, IRR, payback, break-even and the winner all come from it.
+- **NPV of buying** = that series discounted = rent cost - buy cost. Positive: buying wins.
+- **IRR of buying** = the yearly return of that series; when no rate or several rates solve it, the report says so and the NPV decides.
 - **Break-even use** = the use a month at which buying and renting cost the same. Below it, rent.
 - **Depreciation** = declining balance from the price to the resale value: the same share of value lost each year. Hardware loses most in the first years.
 
@@ -30,8 +31,8 @@ Bear: rent prices 30 % lower and half the resale value (a new generation arrives
 | `running_per_use` | power: watts / 1000 x hours x price per kWh (the utility bill); fuel: litres per km x price |
 | `fixed_monthly` | insurance, storage, rack space, servicing |
 | `resale_value` | sold listings of the same item at the same age (eBay sold, local marketplaces). Hardware: the last generation's used price today is the best guide. |
-| `lease` | the lessor's quote: `monthly`, `months`, `upfront` |
-| `income_monthly` | when the item earns (rented out, billed to a client) |
+| `lease` | the lessor's quote: `monthly`, `months`, `upfront`, and `termination_fee` when early return is allowed |
+| `income_monthly` | income only an owner gets (rented out, billed to a client); it lowers the cost of buying and the break-even |
 
 Every input can be a number or `{"value": ..., "source": "..."}`; give the source.
 

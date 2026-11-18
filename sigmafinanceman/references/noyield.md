@@ -13,9 +13,9 @@ These pay nothing: no dividend, no rent, no coupon. All the return is the next b
 ## What the model computes
 
 - **Nominal and real return** a year over 1, 5, 10 years and the full history. Real = deflated by US CPI to today's dollars. Months are counted by the calendar; Yahoo skips some.
-- **Risk**: volatility a year (monthly log returns x √12), the worst real fall from a peak, and the longest stretch below a real peak in months.
-- **Hold ranges** (bear, base, bull): the 10th percentile, median and 90th percentile real return a year over every window of `--set horizon=10` years (5 when the history is under 15 years), less carry and spread. This is history, not a forecast.
-- **Carry**: `--set carry=0.004` a year for storage and insurance of metal, or a fund's fee; `--set spread=0.02` for the round-trip cost of buying and selling (coins and bars carry 2-8 %; an ETF under 0.1 %).
+- **Risk**: volatility a year (log returns of back-to-back months x √12; missing months are counted and shown), the worst real fall from a peak, and the longest stretch below a real peak in calendar months.
+- **Hold ranges** (bear, base, bull): the 10th percentile, median and 90th percentile real return a year over every window of `--set horizon=10` years (5 when the history is under 15 years), each window net of costs: (1 + gross) x (1 - carry) x (1 - spread)^(1/horizon) - 1, and the share that made money counted on that. Windows overlap: the report says how many separate holds fit back to back (20 years hold two 10-year holds). With no complete window it gives the full-period return under its own label. This is history, not a forecast.
+- **Carry**: `--set carry=0.004` a year for storage and insurance of metal (0 by default for an ETF ticker: its price is already after the fee); `--set spread=0.02` for the round-trip cost of buying and selling (coins and bars carry 2-8 %; an ETF under 0.1 %).
 - **A ratio** with `--peers`: now, the median, the range and the percentile of today.
 
 ## Ratios people use
@@ -26,7 +26,7 @@ These pay nothing: no dividend, no rent, no coupon. All the return is the next b
 
 ## What this can and cannot tell you
 
-It can tell you the range a holder lived through and what each hold length returned. It cannot tell you a fair value, a future return or a "cheap" price. A commodity future's price also includes the cost of rolling contracts (contango and backwardation), so a fund can lag the spot price for years. Crypto has 10-15 years of history: one cycle of hold windows, so the bull case rests on a very young sample.
+It can tell you the range a holder lived through and what each hold length returned. It cannot tell you a fair value, a future return or a "cheap" price. A futures ticker (`GC=F`) is the front contract's quote: its change is not what a holder earned after rolling contracts (contango and backwardation) and holding collateral, so a fund can lag it for years. For a holder's return, run the fund's own ticker. Crypto has 10-15 years of history: one cycle of hold windows, so the bull case rests on a very young sample.
 
 ## How much history supports the range
 

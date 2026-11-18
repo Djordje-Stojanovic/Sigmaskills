@@ -6,7 +6,7 @@ A startup has no cash flows to discount, so its value is the share of one exit y
 
 Work back from the exit.
 
-1. Exit value = exit revenue x exit multiple, or a direct `exit_value`.
+1. Exit equity = exit revenue x an EV multiple - `exit_net_debt`, or a direct `exit_value` (equity).
 2. Ownership you keep = 1 - the dilution of the later rounds (`future_dilution`; 40-60 % from seed to exit is common).
 3. Ownership needed today = investment x target multiple / (exit value x ownership kept).
 4. Most the post-money can be = exit value x ownership kept / target multiple.
@@ -18,9 +18,9 @@ Target multiples: 10-30x at seed, 5-10x at Series A, 3-5x later, as a fund needs
 Fully diluted shares: founders, the option pool (granted and free), converted SAFEs and notes, and each round's preferred shares.
 
 - **Option pool shuffle.** The pool top-up a round asks for (`pool_target`, a share of the post-money) sits in the pre-money. The earlier holders pay for it, not the new money. A 10 % pool in the pre-money cuts the real pre-money by about that much.
-- **Post-money SAFE** (YC form, `"type": "post"`). Before the round's new money, the holder owns amount / cap of the company with every SAFE and note counted in. Converts at the cap price or the discount price (round price x (1 - discount)), whichever is lower.
-- **Pre-money SAFE** (`"type": "pre"`) and **convertible note.** The cap price is the cap over the shares before them, pool included. A note converts principal plus interest (simple, `rate` x `months` / 12).
-- **Priced round.** Price per share = pre-money / (shares before + pool top-up + converted shares). The new money gets amount / price shares. The model solves the loop (the conversions depend on the price, the price on the conversions) by iteration.
+- **Post-money SAFE** (YC form, `"type": "post"`). Before the round's new money, the holder owns amount / cap of the company with every SAFE and note counted in. Converts at the lowest of the round price, the cap price and the discount price (round price x (1 - discount)): a cap above the round never costs the holder shares.
+- **Pre-money SAFE** (`"type": "pre"`) and **convertible note.** The cap price is the cap over the shares before them, pool included. A note converts principal plus interest (simple, `rate` x `months` / 12); `"pref_basis": "balance"` sets its preference on that balance when the note says so.
+- **Priced round.** Price per share = pre-money / (shares before + pool top-up + converted shares). The new money gets amount / price shares. The model solves the loop (the conversions depend on the price, the price on the conversions) by iteration, and stops with the round's name when the terms have no solution (a SAFE larger than its cap).
 - SAFEs and notes convert into the first priced round's preferred, with a liquidation preference equal to the cash they paid.
 
 Check after each round: post-money = pre-money + amount, the new money owns amount / post-money, and the pool is at its target. The selftest proves all three.
@@ -32,7 +32,7 @@ At an exit, preferred holders choose: take their preference (1x = their money ba
 - **Non-participating** (the norm): the larger of the two. The model converts the cheapest preference first and repeats until no holder gains by switching.
 - **Participating** (`"participating": true`): the preference and then a share as common. Expensive for founders in a modest exit.
 - Preferences here are pari passu (paid side by side). A senior stack pays the newest round first; say so when a term sheet has it.
-- Every option counts as granted and exercised at a zero strike, a small overstatement of the common's take.
+- Only granted options share in an exit: `options_granted` on a round (granted since the last round) and at the top level (granted since the last round, before the exit). The free pool is cancelled at the sale. Granted options exercise at `option_strike` when common's price beats it.
 
 The `exits` list sets the waterfall's columns; the low, middle and high exits are the bear, base and bull cases. Read the low exit first: that is where preferences bite.
 
@@ -47,7 +47,7 @@ The `exits` list sets the waterfall's columns; the low, middle and high exits ar
 | Vesting | founders' and staff shares earn over 4 years with a 1-year cliff; acceleration on a sale (single or double trigger) | double trigger |
 | Board | who controls the company between rounds | founders hold the majority at seed |
 
-A down round triggers anti-dilution and often a new pool: run the deal file twice, before and after, and read the founders' line. Secondary sales (founders or early staff sell some shares in a round) take cash off the table without new dilution; they count in the cap table as a transfer, not as new shares.
+A down round triggers anti-dilution and often a new pool. Put the protected series' clause on its round, `"anti_dilution": "full"` or `"broad"` (broad-based weighted average); at a later round below its price the model gives that series its extra shares before the new money. Another formula (narrow-based, a pay-to-play) is not in the model: say so beside the waterfall. Secondary sales (founders or early staff sell some shares in a round) take cash off the table without new dilution; they count in the cap table as a transfer, not as new shares.
 
 ## From the exit price to each holder's cash
 
@@ -77,8 +77,8 @@ Venture returns follow a power law: a few companies return the fund, most return
 
 - First cheque = fund size x (1 - fees share) x (1 - reserve) / cheques. Hold back about half for follow-ons.
 - The exit that returns the fund = fund size / ownership at exit. If no plausible exit of this company does it, the cheque cannot carry the fund.
-- Chance of at least one outlier = 1 - (1 - p)^n, with p from the outcome shape (default: 50 % return nothing, 20 % 1x, 18 % 3x, 9 % 10x, 3 % 50x; set your own under `fund.outcomes`).
-- Expected gross multiple, and the multiple if no outlier comes. The gap between them is the case for more shots.
+- Chance of at least one outlier = 1 - (1 - p)^n, with p from the outcome shape (default: Correlation Ventures' 21,640 US financings 2004-2013, 65 % under 1x, 25 % 1-5x, 6 % 5-10x, 4 % 10x+, with an assumed 0.2x, 3x, 7.5x and 20x inside each band; an outlier is 10x+, `outlier_multiple`; set your own under `fund.outcomes`, shares adding up to 1).
+- Expected gross multiple, and the expected multiple of a cheque that is not an outlier. The gap between them is the case for more shots.
 
 Check sizing: a cheque you can lose in full (strategy.md step 4); spread over enough companies that the outlier odds are high; size each by the exit that would return the fund, not by conviction alone.
 
@@ -89,8 +89,8 @@ The `deck` block recomputes what a deck claims and sets each against the usual b
 | Number | How | Bar |
 |---|---|---|
 | Runway | cash / net monthly burn | 18+ months after the round |
-| Burn multiple | net burn / net new ARR | under 2x; under 1x is excellent |
-| Price / ARR | post-money / ARR | under 30x at seed, under 20x at Series A |
+| Burn multiple | net burn / net new ARR; n/a when ARR shrank | under 2x; under 1x is excellent |
+| Price / ARR | post-money / ARR | under 30x at seed, under 20x from Series A (`deck.stage`) |
 | Growth | ARR year on year | 2-3x a year early on |
 | Gross margin | (revenue - cost of revenue) / revenue | 70 %+ for software, 40 %+ for hardware |
 | LTV / CAC | (monthly revenue per account x gross margin / monthly churn) / CAC | 3x+ |
