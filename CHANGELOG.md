@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmacourse`: a program measures a persona (small-word score, 8-word copy count); no model judge or agent grades it.
+
 ## [0.27.3] — 2026-11-18
 
 ### Changed
