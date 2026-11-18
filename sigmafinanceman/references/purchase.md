@@ -25,7 +25,7 @@ Bear: rent prices 30 % lower and half the resale value (a new generation arrives
 
 | Input | Where it comes from |
 |---|---|
-| `price` | today's street price: a retailer page, with the date. Fetch it; never use a remembered price. |
+| `price` | today's street price: a retailer page, with the date. Fetch it; a remembered price is the last resort and is labelled as one. |
 | `rent_per_use` | for a GPU, set `gpu` (for example `"RTX 5090"`) and leave this out: the median of live single-GPU offers on vast.ai (public search, no key). Otherwise a rental quote. |
 | `running_per_use` | power: watts / 1000 x hours x price per kWh (the utility bill); fuel: litres per km x price |
 | `fixed_monthly` | insurance, storage, rack space, servicing |
