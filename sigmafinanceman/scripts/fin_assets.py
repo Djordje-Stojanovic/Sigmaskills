@@ -176,7 +176,7 @@ def dividend(f, h, o=None):
     ebitda = (last("ebit") or 0) + (last("da") or 0)
     fcf = (last("cfo") or 0) - (last("capex") or 0)
     divs, buys, ni = last("dividends") or 0, last("buybacks") or 0, last("net_income")
-    shares = last("shares_diluted")
+    shares = F.shares_now(f)[0]
     mcap = v("price") * shares if shares else None
     safety = [("Dividend under 75 % of free cash flow", div(divs, fcf), lambda x: 0 <= x <= 0.75, pct),
               ("Dividend under 75 % of net income", div(divs, ni), lambda x: 0 <= x <= 0.75, pct),

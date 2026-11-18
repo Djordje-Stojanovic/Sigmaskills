@@ -110,11 +110,12 @@ def inputs_sheet(book, a, name="Inputs"):
     title(ws, 1, "Inputs", "Blue = typed input. Change a value here and every sheet moves.")
     header(ws, 3, ["Input", "Value", "Source"])
     refs = {}
-    pcts = {"growth_y1", "ebit_margin", "tax_rate", "da_pct", "capex_pct_y0", "nwc_pct", "rf", "erp", "kd", "terminal_g", "premium", "rate",
-            "fees", "sweep", "cogs_pct", "opex_pct", "interest_rate", "payout"}
+    pcts = {"growth_y1", "ebit_margin", "tax_rate", "da_pct", "capex_pct_y0", "ppe_pct", "nwc_pct", "rf", "erp", "kd", "terminal_g", "premium",
+            "rate", "fees", "sweep", "cogs_pct", "opex_pct", "interest_rate", "payout"}
     for i, (k, v) in enumerate(a.items(), start=4):
         fmt = "pct" if k in pcts else "x" if k in ("entry_multiple", "exit_multiple", "leverage") else "num2" if k == "beta" else \
-            "ps" if k == "price" else "num1" if k in ("dso", "dio", "dpo") else "int" if k == "years" else "money"
+            "ps" if k == "price" else "num1" if k in ("dso", "dio", "dpo") else "int" if k == "years" else \
+            "0.000" if k.startswith("years_to") else "money"
         put(ws, f"A{i}", F.LABELS.get(k, k))
         put(ws, f"B{i}", v["value"], "input", fmt, comment="Source: " + v["source"])
         put(ws, f"C{i}", v["source"], "muted")
@@ -132,7 +133,7 @@ def links(ws, refs, keys, row, label_col="A", val_col="B"):
         put(ws, f"{val_col}{r}", "=" + refs[k], "link", "pct" if "pct" in k or k in ("growth_y1", "ebit_margin", "tax_rate", "terminal_g", "rf", "erp", "kd",
                                                                                      "rate", "fees", "sweep", "premium", "payout", "cogs_pct", "opex_pct", "interest_rate")
             else "x" if k in ("entry_multiple", "exit_multiple", "leverage") else "num2" if k == "beta" else "ps" if k == "price"
-            else "num1" if k in ("dso", "dio", "dpo") else "int" if k == "years" else "money")
+            else "num1" if k in ("dso", "dio", "dpo") else "int" if k == "years" else "0.000" if k.startswith("years_to") else "money")
         out[k] = f"${val_col}${r}"
     return out
 
@@ -158,13 +159,16 @@ def history_sheet(book, f, name="Historicals"):
 # ---------- DCF ----------
 
 def dcf_book(f, a, path):
+    """The DCF as formulas. The projection has one column per year of the `years` input, fixed when the file is written:
+    rerun with --set years=N for another horizon (a Checks line ties the input to the columns)."""
     b = Book()
     refs = inputs_sheet(b, a)
     history_sheet(b, f)
-    ws = b.sheet("DCF", (34, 15, 15, 15, 15, 15, 15, 4, 15))
+    n = int(a["years"]["value"])
+    ws = b.sheet("DCF", (40,) + (15,) * (n + 1) + (4, 15))
     title(ws, 1, f"{f['name']} ({f['ticker']}) DCF", "Green = link to Inputs. Black = formula. $ millions.")
-    keys = ["revenue_base", "growth_y1", "terminal_g", "ebit_margin", "tax_rate", "da_pct", "capex_pct_y0", "nwc_pct", "rf", "beta", "erp", "kd",
-            "debt", "cash", "minority", "shares", "price", "years"]
+    keys = ["revenue_base", "growth_y1", "terminal_g", "ebit_margin", "tax_rate", "da_pct", "capex_pct_y0", "ppe_pct", "nwc_pct", "rf", "beta",
+            "erp", "kd", "debt", "cash", "minority", "preferred", "investments", "shares", "price", "years", "years_to_bs", "years_to_price"]
     header(ws, 3, ["Assumption", "Value"])
     k = links(ws, refs, keys, 4)
     r = 4 + len(keys) + 1   # WACC block
@@ -174,11 +178,14 @@ def dcf_book(f, a, path):
     put(ws, f"A{r + 3}", "After-tax cost of debt"); put(ws, f"B{r + 3}", f"={k['kd']}*(1-{k['tax_rate']})", "calc", "pct")
     put(ws, f"A{r + 4}", "WACC", bold=True)
     put(ws, f"B{r + 4}", f"=(B{r + 2}*B{r + 1}+{k['debt']}*B{r + 3})/(B{r + 2}+{k['debt']})", "calc", "pct", bold=True)
+    put(ws, f"A{r + 5}", "Steady-state capex % of revenue (D&A + PP&E % x g / (1 + g))")
+    put(ws, f"B{r + 5}", f"={k['da_pct']}+{k['ppe_pct']}*{k['terminal_g']}/(1+{k['terminal_g']})", "calc", "pct")
     total(ws, r + 4, 1, 2)
-    wacc = f"$B${r + 4}"
-    p = r + 6   # projection
-    yrs = ["C", "D", "E", "F", "G"]
-    header(ws, p, ["Projection", "Year 0", "Y1", "Y2", "Y3", "Y4", "Y5"])
+    wacc, ke, steady = f"$B${r + 4}", f"$B${r + 1}", f"$B${r + 5}"
+    p = r + 7   # projection
+    yrs = [L(3 + i) for i in range(n)]
+    first, lastc = yrs[0], yrs[-1]
+    header(ws, p, ["Projection", "Year 0"] + [f"Y{i}" for i in range(1, n + 1)])
     lines = ["Year", "Revenue growth", "Revenue", "EBIT", "NOPAT", "D&A", "Capex % of revenue", "Capex", "Change in working capital",
              "Unlevered free cash flow", "Discount period", "Discount factor", "PV of free cash flow"]
     R = {name: p + 1 + i for i, name in enumerate(lines)}
@@ -194,7 +201,7 @@ def dcf_book(f, a, path):
         put(ws, f"{col}{R['EBIT']}", f"={col}{R['Revenue']}*{k['ebit_margin']}", "calc", "money")
         put(ws, f"{col}{R['NOPAT']}", f"={col}{R['EBIT']}*(1-{k['tax_rate']})", "calc", "money")
         put(ws, f"{col}{R['D&A']}", f"={col}{R['Revenue']}*{k['da_pct']}", "calc", "money")
-        put(ws, f"{col}{R['Capex % of revenue']}", f"={k['capex_pct_y0']}+({k['da_pct']}-{k['capex_pct_y0']})*{y}/{k['years']}", "calc", "pct")
+        put(ws, f"{col}{R['Capex % of revenue']}", f"={k['capex_pct_y0']}+({steady}-{k['capex_pct_y0']})*{y}/{k['years']}", "calc", "pct")
         put(ws, f"{col}{R['Capex']}", f"={col}{R['Revenue']}*{col}{R['Capex % of revenue']}", "calc", "money")
         put(ws, f"{col}{R['Change in working capital']}", f"={k['nwc_pct']}*({col}{R['Revenue']}-{prev}{R['Revenue']})", "calc", "money")
         put(ws, f"{col}{R['Unlevered free cash flow']}",
@@ -202,49 +209,63 @@ def dcf_book(f, a, path):
         put(ws, f"{col}{R['Discount period']}", f"={y}-0.5", "calc", "num1")
         put(ws, f"{col}{R['Discount factor']}", f"=1/(1+{wacc})^{col}{R['Discount period']}", "calc", "num2")
         put(ws, f"{col}{R['PV of free cash flow']}", f"={col}{R['Unlevered free cash flow']}*{col}{R['Discount factor']}", "calc", "money")
-    total(ws, R["Unlevered free cash flow"], 1, 7)
+    total(ws, R["Unlevered free cash flow"], 1, 2 + n)
     v = R["PV of free cash flow"] + 2
     header(ws, v, ["Valuation", "Value"])
-    fcf, per = R["Unlevered free cash flow"], R["Discount period"]
-    val = [("Sum of PV of free cash flows", f"=SUM(C{R['PV of free cash flow']}:G{R['PV of free cash flow']})", "money"),
-           ("Terminal value (growth method)", f"=G{fcf}*(1+{k['terminal_g']})/({wacc}-{k['terminal_g']})", "money"),
-           ("PV of terminal value", f"=B{v + 2}/(1+{wacc})^G{per}", "money"),
-           ("Enterprise value", f"=B{v + 1}+B{v + 3}", "money"),
+    fcf, per, rev = R["Unlevered free cash flow"], R["Discount period"], R["Revenue"]
+    nopat_m = f"{k['ebit_margin']}*(1-{k['tax_rate']})"
+    term = lambda g: f"({lastc}{rev}*(1+{g})*{nopat_m}-{g}*{lastc}{rev}*({k['ppe_pct']}+{k['nwc_pct']}))"   # next year's NOPAT less growth capital
+    val = [("Sum of PV of free cash flows", f"=SUM({first}{R['PV of free cash flow']}:{lastc}{R['PV of free cash flow']})", "money"),
+           ("Terminal free cash flow (NOPAT less the capital growth needs)", "=" + term(k["terminal_g"]), "money"),
+           ("Terminal value (growth method)", f"=B{v + 2}/({wacc}-{k['terminal_g']})", "money"),
+           ("PV of terminal value", f"=B{v + 3}/(1+{wacc})^{lastc}{per}", "money"),
+           ("Enterprise value at the fiscal year-end", f"=B{v + 1}+B{v + 4}", "money"),
+           ("Enterprise value at the balance-sheet date", f"=B{v + 5}*(1+{wacc})^{k['years_to_bs']}-{k['years_to_bs']}*{first}{fcf}", "money"),
            ("Less debt", f"=-{k['debt']}", "money"),
            ("Plus cash and investments", f"={k['cash']}", "money"),
            ("Less minority interest", f"=-{k['minority']}", "money"),
-           ("Equity value", f"=SUM(B{v + 4}:B{v + 7})", "money"),
-           ("Diluted shares (m)", f"={k['shares']}", "money"),
-           ("Value per share", f"=B{v + 8}/B{v + 9}", "ps"),
-           ("Upside vs price", f"=B{v + 10}/{k['price']}-1", "pct"),
-           ("Terminal value share of EV", f"=B{v + 3}/B{v + 4}", "pct")]
+           ("Less preferred stock", f"=-{k['preferred']}", "money"),
+           ("Plus equity-method stakes (book)", f"={k['investments']}", "money"),
+           ("Equity value at the balance-sheet date", f"=SUM(B{v + 6}:B{v + 11})", "money"),
+           ("Equity value at the price date", f"=B{v + 12}*(1+{ke})^{k['years_to_price']}", "money"),
+           ("Diluted shares today (m)", f"={k['shares']}", "money"),
+           ("Value per share", f"=B{v + 13}/B{v + 14}", "ps"),
+           ("Upside vs price", f"=B{v + 15}/{k['price']}-1", "pct"),
+           ("Terminal value share of EV", f"=B{v + 4}/B{v + 5}", "pct")]
     for i, (lab, fm, fmt) in enumerate(val, start=1):
         put(ws, f"A{v + i}", lab)
         put(ws, f"B{v + i}", fm, "calc", fmt)
-    total(ws, v + 4, 1, 2)
-    total(ws, v + 8, 1, 2)
-    total(ws, v + 10, 1, 2, double=True)
-    vps = f"$B${v + 10}"
-    s = v + len(val) + 2   # sensitivity: WACC rows x terminal growth columns, every cell a full DCF
-    put(ws, f"A{s}", "Value per share: WACC (rows) by terminal growth (columns)", bold=True)
-    header(ws, s + 1, ["WACC \\ g", "", "", "", "", ""])
+    total(ws, v + 5, 1, 2)
+    total(ws, v + 12, 1, 2)
+    total(ws, v + 15, 1, 2, double=True)
+    vps = f"$B${v + 15}"
+    s_ = v + len(val) + 2   # sensitivity: WACC rows x terminal growth columns, every cell a full DCF
+    put(ws, f"A{s_}", "Value per share: WACC (rows) by terminal growth (columns)", bold=True)
+    header(ws, s_ + 1, ["WACC \\ g", "", "", "", "", ""])
     steps = [-0.01, -0.005, 0, 0.005, 0.01]
     for j, d in enumerate(steps):
-        put(ws, f"{L(2 + j)}{s + 1}", f"={k['terminal_g']}+({d})", "calc", "pct", bold=True, fill="navy").font = Font(name=FONT, bold=True, color="FFFFFFFF")
+        put(ws, f"{L(2 + j)}{s_ + 1}", f"={k['terminal_g']}+({d})", "calc", "pct", bold=True, fill="navy").font = Font(name=FONT, bold=True, color="FFFFFFFF")
     for i, d in enumerate(steps):
-        row = s + 2 + i
+        row = s_ + 2 + i
         put(ws, f"A{row}", f"={wacc}+({d})", "calc", "pct", bold=True)
         for j in range(5):
             col = L(2 + j)
-            fm = (f"=(SUMPRODUCT($C${fcf}:$G${fcf}/(1+$A{row})^$C${per}:$G${per})+$G${fcf}*(1+{col}${s + 1})/($A{row}-{col}${s + 1})"
-                  f"/(1+$A{row})^$G${per}-{k['debt']}+{k['cash']}-{k['minority']})/{k['shares']}")
+            w, g = f"$A{row}", f"{col}${s_ + 1}"
+            fm = (f"=IF({w}<={g},\"n/a\",((SUMPRODUCT(${first}${fcf}:${lastc}${fcf}/(1+{w})^${first}${per}:${lastc}${per})"
+                  f"+{term(g).replace(lastc + str(rev), '$' + lastc + '$' + str(rev))}/({w}-{g})/(1+{w})^${lastc}${per})*(1+{w})^{k['years_to_bs']}"
+                  f"-{k['years_to_bs']}*${first}${fcf}-{k['debt']}+{k['cash']}-{k['minority']}-{k['preferred']}+{k['investments']})"
+                  f"*(1+{ke})^{k['years_to_price']}/{k['shares']})")
             put(ws, f"{col}{row}", fm, "calc", "ps", bold=(i == 2 and j == 2), fill="center" if (i == 2 and j == 2) else None)
     ws.freeze_panes = "B4"
-    b.checks += [("Sensitivity centre equals the value per share", f"=ABS(DCF!D{s + 4}-DCF!{vps})<0.01", "the grid is wired to the model"),
+    b.checks += [("Sensitivity centre equals the value per share", f"=ABS(DCF!D{s_ + 4}-DCF!{vps})<0.01", "the grid is wired to the model"),
                  ("WACC above terminal growth", f"=DCF!{wacc}>DCF!{k['terminal_g']}", "the growth formula is finite"),
-                 ("Free cash flow formula ties", f"=ABS(DCF!G{fcf}-(DCF!G{R['NOPAT']}+DCF!G{R['D&A']}-DCF!G{R['Capex']}-DCF!G{R['Change in working capital']}))<0.01",
-                  "NOPAT + D&A - capex - change in working capital")]
-    return b.save(path), {"value_per_share": f"DCF!B{v + 10}", "ev": f"DCF!B{v + 4}", "center": f"DCF!D{s + 4}"}
+                 ("Projection columns match the years input", f"=DCF!{k['years']}={n}", "rerun with --set years=N to change the horizon"),
+                 ("Free cash flow formula ties", f"=ABS(DCF!{lastc}{fcf}-(DCF!{lastc}{R['NOPAT']}+DCF!{lastc}{R['D&A']}-DCF!{lastc}{R['Capex']}"
+                  f"-DCF!{lastc}{R['Change in working capital']}))<0.01", "NOPAT + D&A - capex - change in working capital")]
+    res = F.dcf(a)
+    cells = {"value_per_share": f"DCF!B{v + 15}", "ev": f"DCF!B{v + 6}", "center": f"DCF!D{s_ + 4}"}
+    cells["expect"] = {cells["value_per_share"]: res["value_per_share"], cells["ev"]: res["ev"], f"DCF!{lastc}{fcf}": res["rows"][-1]["fcf"]}
+    return b.save(path), cells
 
 
 # ---------- LBO ----------
@@ -252,83 +273,98 @@ def dcf_book(f, a, path):
 def lbo_book(f, a, path):
     b = Book()
     refs = inputs_sheet(b, a)
-    ws = b.sheet("LBO", (34, 15, 15, 15, 15, 15, 15, 4, 15))
+    n = int(a["years"]["value"])
+    ws = b.sheet("LBO", (34,) + (15,) * (n + 1) + (4, 15))
     title(ws, 1, f"{f['name']} ({f['ticker']}) LBO", "Green = link to Inputs. Black = formula. $ millions.")
-    keys = ["ebitda_ltm", "entry_multiple", "exit_multiple", "leverage", "rate", "fees", "sweep", "revenue_base", "growth_y1", "terminal_g",
-            "ebit_margin", "tax_rate", "da_pct", "capex_pct_y0", "nwc_pct", "years"]
+    keys = ["ebitda_ltm", "entry_multiple", "exit_multiple", "leverage", "rate", "fees", "sweep", "minority", "revenue_base", "growth_y1", "terminal_g",
+            "ebit_margin", "tax_rate", "da_pct", "capex_pct_y0", "ppe_pct", "nwc_pct", "years"]
     header(ws, 3, ["Assumption", "Value"])
     k = links(ws, refs, keys, 4)
     su = 4 + len(keys) + 1
     header(ws, su, ["Sources and uses", "Value"])
     rows = [("Entry enterprise value", f"={k['entry_multiple']}*{k['ebitda_ltm']}"), ("Fees", f"=B{su + 1}*{k['fees']}"),
             ("Total uses", f"=B{su + 1}+B{su + 2}"), ("Senior debt", f"={k['leverage']}*{k['ebitda_ltm']}"),
-            ("Sponsor equity", f"=B{su + 3}-B{su + 4}"), ("Total sources", f"=B{su + 4}+B{su + 5}")]
+            ("Minority interest (stays)", f"={k['minority']}"),
+            ("Sponsor equity", f"=B{su + 3}-B{su + 4}-B{su + 5}"), ("Total sources", f"=B{su + 4}+B{su + 5}+B{su + 6}")]
     for i, (lab, fm) in enumerate(rows, start=1):
         put(ws, f"A{su + i}", lab)
         put(ws, f"B{su + i}", fm, "calc", "money")
     total(ws, su + 3, 1, 2)
-    total(ws, su + 6, 1, 2, double=True)
-    eq0, debt0 = f"$B${su + 5}", f"$B${su + 4}"
-    p = su + 8
-    yrs = ["C", "D", "E", "F", "G"]
-    header(ws, p, ["Projection", "Entry", "Y1", "Y2", "Y3", "Y4", "Y5"])
+    total(ws, su + 7, 1, 2, double=True)
+    eq0, debt0 = f"$B${su + 6}", f"$B${su + 4}"
+    p = su + 9
+    yrs = [L(3 + i) for i in range(n)]
+    lastc = yrs[-1]
+    header(ws, p, ["Projection", "Entry"] + [f"Y{i}" for i in range(1, n + 1)])
     lines = ["Year", "Revenue growth", "Revenue", "EBIT", "D&A", "EBITDA", "Capex", "Change in working capital", "Interest (on opening debt)",
-             "Tax", "Free cash flow", "Debt repaid", "Debt at year end", "Cash at year end"]
-    R = {n: p + 1 + i for i, n in enumerate(lines)}
-    for n, row in R.items():
-        put(ws, f"A{row}", n)
+             "Tax", "Free cash flow", "Debt repaid", "Revolver drawn", "Debt at year end", "Cash at year end"]
+    R = {nm: p + 1 + i for i, nm in enumerate(lines)}
+    for nm, row in R.items():
+        put(ws, f"A{row}", nm)
     put(ws, f"B{R['Revenue']}", f"={k['revenue_base']}", "calc", "money")
     put(ws, f"B{R['Debt at year end']}", f"={debt0}", "calc", "money")
     put(ws, f"B{R['Cash at year end']}", 0, "input", "money", comment="Source: the deal starts with no cash on the balance sheet")
+    steady = f"({k['da_pct']}+{k['ppe_pct']}*{k['terminal_g']}/(1+{k['terminal_g']}))"
     for i, col in enumerate(yrs, start=1):
         prev = "B" if i == 1 else yrs[i - 2]
         y = f"{col}${R['Year']}"
-        put(ws, f"{col}{R['Year']}", i, "input", "int")
-        put(ws, f"{col}{R['Revenue growth']}", f"={k['growth_y1']}-({k['growth_y1']}-{k['terminal_g']})*({y}-1)/{k['years']}", "calc", "pct")
-        put(ws, f"{col}{R['Revenue']}", f"={prev}{R['Revenue']}*(1+{col}{R['Revenue growth']})", "calc", "money")
-        put(ws, f"{col}{R['EBIT']}", f"={col}{R['Revenue']}*{k['ebit_margin']}", "calc", "money")
-        put(ws, f"{col}{R['D&A']}", f"={col}{R['Revenue']}*{k['da_pct']}", "calc", "money")
-        put(ws, f"{col}{R['EBITDA']}", f"={col}{R['EBIT']}+{col}{R['D&A']}", "calc", "money")
-        put(ws, f"{col}{R['Capex']}", f"={col}{R['Revenue']}*({k['capex_pct_y0']}+({k['da_pct']}-{k['capex_pct_y0']})*{y}/{k['years']})", "calc", "money")
-        put(ws, f"{col}{R['Change in working capital']}", f"={k['nwc_pct']}*({col}{R['Revenue']}-{prev}{R['Revenue']})", "calc", "money")
-        put(ws, f"{col}{R['Interest (on opening debt)']}", f"={prev}{R['Debt at year end']}*{k['rate']}", "calc", "money")
-        put(ws, f"{col}{R['Tax']}", f"=MAX(0,{col}{R['EBIT']}-{col}{R['Interest (on opening debt)']})*{k['tax_rate']}", "calc", "money")
-        put(ws, f"{col}{R['Free cash flow']}", f"={col}{R['EBITDA']}-{col}{R['Capex']}-{col}{R['Change in working capital']}"
-                                               f"-{col}{R['Interest (on opening debt)']}-{col}{R['Tax']}", "calc", "money")
-        put(ws, f"{col}{R['Debt repaid']}", f"=MIN({prev}{R['Debt at year end']},MAX(0,{col}{R['Free cash flow']})*{k['sweep']})", "calc", "money")
-        put(ws, f"{col}{R['Debt at year end']}", f"={prev}{R['Debt at year end']}-{col}{R['Debt repaid']}", "calc", "money")
-        put(ws, f"{col}{R['Cash at year end']}", f"={prev}{R['Cash at year end']}+{col}{R['Free cash flow']}-{col}{R['Debt repaid']}", "calc", "money")
-    total(ws, R["Free cash flow"], 1, 7)
+        c = lambda nm, cc=col: f"{cc}{R[nm]}"
+        pv = lambda nm: f"{prev}{R[nm]}"
+        put(ws, c("Year"), i, "input", "int")
+        put(ws, c("Revenue growth"), f"={k['growth_y1']}-({k['growth_y1']}-{k['terminal_g']})*({y}-1)/{k['years']}", "calc", "pct")
+        put(ws, c("Revenue"), f"={pv('Revenue')}*(1+{c('Revenue growth')})", "calc", "money")
+        put(ws, c("EBIT"), f"={c('Revenue')}*{k['ebit_margin']}", "calc", "money")
+        put(ws, c("D&A"), f"={c('Revenue')}*{k['da_pct']}", "calc", "money")
+        put(ws, c("EBITDA"), f"={c('EBIT')}+{c('D&A')}", "calc", "money")
+        put(ws, c("Capex"), f"={c('Revenue')}*({k['capex_pct_y0']}+({steady}-{k['capex_pct_y0']})*{y}/{k['years']})", "calc", "money")
+        put(ws, c("Change in working capital"), f"={k['nwc_pct']}*({c('Revenue')}-{pv('Revenue')})", "calc", "money")
+        put(ws, c("Interest (on opening debt)"), f"={pv('Debt at year end')}*{k['rate']}", "calc", "money")
+        put(ws, c("Tax"), f"=MAX(0,{c('EBIT')}-{c('Interest (on opening debt)')})*{k['tax_rate']}", "calc", "money")
+        put(ws, c("Free cash flow"), f"={c('EBITDA')}-{c('Capex')}-{c('Change in working capital')}-{c('Interest (on opening debt)')}-{c('Tax')}",
+            "calc", "money")
+        put(ws, c("Debt repaid"), f"=MIN({pv('Debt at year end')},MAX(0,{c('Free cash flow')})*{k['sweep']})", "calc", "money")
+        put(ws, c("Revolver drawn"), f"=MAX(0,-({pv('Cash at year end')}+{c('Free cash flow')}-{c('Debt repaid')}))", "calc", "money")
+        put(ws, c("Debt at year end"), f"={pv('Debt at year end')}-{c('Debt repaid')}+{c('Revolver drawn')}", "calc", "money")
+        put(ws, c("Cash at year end"), f"={pv('Cash at year end')}+{c('Free cash flow')}-{c('Debt repaid')}+{c('Revolver drawn')}", "calc", "money")
+    total(ws, R["Free cash flow"], 1, 2 + n)
     rr = R["Cash at year end"] + 2
     header(ws, rr, ["Returns", "Value"])
-    ret = [("Exit EV (exit multiple x Y5 EBITDA)", f"={k['exit_multiple']}*G{R['EBITDA']}", "money"),
-           ("Less debt at exit", f"=-G{R['Debt at year end']}", "money"), ("Plus cash at exit", f"=G{R['Cash at year end']}", "money"),
-           ("Exit equity", f"=B{rr + 1}+B{rr + 2}+B{rr + 3}", "money"), ("Sponsor equity in", f"={eq0}", "money"),
-           ("Money multiple (MOIC)", f"=B{rr + 4}/B{rr + 5}", "x"), ("IRR", f"=B{rr + 6}^(1/{k['years']})-1", "pct")]
+    ret = [(f"Exit EV (exit multiple x Y{n} EBITDA)", f"={k['exit_multiple']}*{lastc}{R['EBITDA']}", "money"),
+           ("Less debt at exit", f"=-{lastc}{R['Debt at year end']}", "money"), ("Plus cash at exit", f"={lastc}{R['Cash at year end']}", "money"),
+           ("Less minority interest", f"=-{k['minority']}", "money"),
+           ("Exit equity (never below zero)", f"=MAX(0,SUM(B{rr + 1}:B{rr + 4}))", "money"), ("Sponsor equity in", f"={eq0}", "money"),
+           ("Money multiple (MOIC)", f"=B{rr + 5}/B{rr + 6}", "x"), ("IRR", f"=B{rr + 7}^(1/{k['years']})-1", "pct")]
     for i, (lab, fm, fmt) in enumerate(ret, start=1):
         put(ws, f"A{rr + i}", lab)
         put(ws, f"B{rr + i}", fm, "calc", fmt)
-    total(ws, rr + 4, 1, 2)
-    total(ws, rr + 7, 1, 2, double=True)
-    s = rr + len(ret) + 2
-    put(ws, f"A{s}", "IRR: entry multiple (rows) by exit multiple (columns)", bold=True)
-    header(ws, s + 1, ["Entry \\ exit", "", "", "", "", ""])
+    total(ws, rr + 5, 1, 2)
+    total(ws, rr + 8, 1, 2, double=True)
+    s_ = rr + len(ret) + 2
+    put(ws, f"A{s_}", "IRR: entry multiple (rows) by exit multiple (columns)", bold=True)
+    header(ws, s_ + 1, ["Entry \\ exit", "", "", "", "", ""])
     steps = [-2, -1, 0, 1, 2]
     for j, d in enumerate(steps):
-        put(ws, f"{L(2 + j)}{s + 1}", f"={k['exit_multiple']}+({d})", "calc", "x", bold=True, fill="navy").font = Font(name=FONT, bold=True, color="FFFFFFFF")
+        put(ws, f"{L(2 + j)}{s_ + 1}", f"={k['exit_multiple']}+({d})", "calc", "x", bold=True, fill="navy").font = Font(name=FONT, bold=True, color="FFFFFFFF")
     for i, d in enumerate(steps):
-        row = s + 2 + i
+        row = s_ + 2 + i
         put(ws, f"A{row}", f"={k['entry_multiple']}+({d})", "calc", "x", bold=True)
         for j in range(5):
             col = L(2 + j)
-            fm = (f"=(({col}${s + 1}*$G${R['EBITDA']}-$G${R['Debt at year end']}+$G${R['Cash at year end']})"
-                  f"/($A{row}*{k['ebitda_ltm']}*(1+{k['fees']})-{debt0}))^(1/{k['years']})-1")
+            fm = (f"=(MAX(0,{col}${s_ + 1}*${lastc}${R['EBITDA']}-${lastc}${R['Debt at year end']}+${lastc}${R['Cash at year end']}-{k['minority']})"
+                  f"/($A{row}*{k['ebitda_ltm']}*(1+{k['fees']})-{debt0}-{k['minority']}))^(1/{k['years']})-1")
             put(ws, f"{col}{row}", fm, "calc", "pct", bold=(i == 2 and j == 2), fill="center" if (i == 2 and j == 2) else None)
     ws.freeze_panes = "B4"
-    b.checks += [("Sensitivity centre equals the IRR", f"=ABS(LBO!D{s + 4}-LBO!B{rr + 7})<0.0001", "the grid is wired to the model"),
-                 ("Sources equal uses", f"=ABS(LBO!B{su + 6}-LBO!B{su + 3})<0.01", "sources and uses balance"),
-                 ("Debt never negative", f"=MIN(LBO!C{R['Debt at year end']}:G{R['Debt at year end']})>=0", "the sweep stops at zero")]
-    return b.save(path), {"irr": f"LBO!B{rr + 7}", "moic": f"LBO!B{rr + 6}", "center": f"LBO!D{s + 4}"}
+    b.checks += [("Sensitivity centre equals the IRR", f"=ABS(LBO!D{s_ + 4}-LBO!B{rr + 8})<0.0001", "the grid is wired to the model"),
+                 ("Sources equal uses", f"=ABS(LBO!B{su + 7}-LBO!B{su + 3})<0.01", "sources and uses balance"),
+                 ("Projection columns match the years input", f"=LBO!{k['years']}={n}", "rerun with --set years=N to change the horizon"),
+                 ("Debt and cash never negative", f"=AND(MIN(LBO!{yrs[0]}{R['Debt at year end']}:{lastc}{R['Debt at year end']})>=0,"
+                  f"MIN(LBO!{yrs[0]}{R['Cash at year end']}:{lastc}{R['Cash at year end']})>=-0.001)", "shortfalls draw the revolver")]
+    res = F.lbo(a)
+    cells = {"irr": f"LBO!B{rr + 8}", "moic": f"LBO!B{rr + 7}", "center": f"LBO!D{s_ + 4}"}
+    cells["expect"] = {cells["moic"]: res["moic"], f"LBO!{lastc}{R['Debt at year end']}": res["rows"][-1]["debt"]}
+    if res["irr"] is not None:
+        cells["expect"][cells["irr"]] = res["irr"]
+    return b.save(path), cells
 
 
 # ---------- comps ----------
@@ -339,8 +375,8 @@ def comps_book(c, path):
     t = c["target"]
     title(ws, 1, f"{t['name']} ({t['ticker']}) trading comparables", "Blue = filed or market input. Black = formula. $ millions, LTM.")
     cols = ["Ticker", "Price", "Shares (m)", "Debt", "Cash", "LTM revenue", "LTM EBITDA", "LTM EBIT", "LTM net income", "Revenue growth",
-            "Market cap", "EV", "EV/Revenue", "EV/EBITDA", "EV/EBIT", "P/E", "EBIT margin", "Minority interest"]
-    for i, w in enumerate((10, 11, 11, 11, 11, 13, 13, 13, 13, 10, 13, 13, 11, 11, 11, 11, 11, 12), start=1):
+            "Market cap", "EV", "EV/Revenue", "EV/EBITDA", "EV/EBIT", "P/E", "EBIT margin", "Minority interest", "Preferred", "Equity-method stakes"]
+    for i, w in enumerate((10, 11, 11, 11, 11, 13, 13, 13, 13, 10, 13, 13, 11, 11, 11, 11, 11, 12, 12, 12), start=1):
         ws.column_dimensions[L(i)].width = w
     header(ws, 3, cols)
     first = 4
@@ -353,8 +389,10 @@ def comps_book(c, path):
                               ("J", "growth", "pct")):
             put(ws, f"{col}{row}", r[key], "input", fmt, comment=f"Source: SEC company facts LTM to {r['ltm_asof']}; Yahoo price" if col in "BF" else None)
         put(ws, f"R{row}", r["minority"], "input", "money", comment="Source: us-gaap:MinorityInterest, last balance sheet (0 when not filed)")
+        put(ws, f"S{row}", r["preferred"], "input", "money", comment="Source: us-gaap:PreferredStockValue, last balance sheet (0 when not filed)")
+        put(ws, f"T{row}", r["investments"], "input", "money", comment="Source: us-gaap:EquityMethodInvestments at book: their profit is outside EBITDA")
         put(ws, f"K{row}", f"=B{row}*C{row}", "calc", "money")
-        put(ws, f"L{row}", f"=K{row}+D{row}-E{row}+R{row}", "calc", "money")
+        put(ws, f"L{row}", f"=K{row}+D{row}-E{row}+R{row}+S{row}-T{row}", "calc", "money")
         put(ws, f"M{row}", f"=IFERROR(L{row}/F{row},\"n/a\")", "calc", "x")
         put(ws, f"N{row}", f"=IFERROR(IF(G{row}>0,L{row}/G{row},\"n/a\"),\"n/a\")", "calc", "x")
         put(ws, f"O{row}", f"=IFERROR(IF(H{row}>0,L{row}/H{row},\"n/a\"),\"n/a\")", "calc", "x")
@@ -370,10 +408,10 @@ def comps_book(c, path):
         put(ws, f"A{row}", lab, bold=True)
         for col in "MNOP":
             put(ws, f"{col}{row}", "=" + fn.format(r=f"{col}{first}:{col}{last}"), "calc", "x", bold=True)
-    total(ws, st, 1, 18)
+    total(ws, st, 1, 20)
     trow = st + 6
     company_row(t, trow, bold=True)
-    total(ws, trow, 1, 18, double=True)
+    total(ws, trow, 1, 20, double=True)
     im = trow + 2
     put(ws, f"A{im}", "Implied value per share of the target", bold=True)
     header(ws, im + 1, ["Method", "", "25th", "Median", "75th"])
@@ -381,14 +419,18 @@ def comps_book(c, path):
     put(ws, f"A{im + 3}", "P/E")
     put(ws, f"A{im + 4}", "EV/Revenue")
     for col, srow in (("C", st + 3), ("D", st + 2), ("E", st + 1)):
-        put(ws, f"{col}{im + 2}", f"=(N{srow}*G{trow}-D{trow}+E{trow}-R{trow})/C{trow}", "calc", "ps")
-        put(ws, f"{col}{im + 3}", f"=P{srow}*I{trow}/C{trow}", "calc", "ps")
-        put(ws, f"{col}{im + 4}", f"=(M{srow}*F{trow}-D{trow}+E{trow}-R{trow})/C{trow}", "calc", "ps")
+        bridge = f"-D{trow}+E{trow}-R{trow}-S{trow}+T{trow}"
+        put(ws, f"{col}{im + 2}", f"=IF(G{trow}>0,(N{srow}*G{trow}{bridge})/C{trow},\"n/a\")", "calc", "ps")
+        put(ws, f"{col}{im + 3}", f"=IF(I{trow}>0,P{srow}*I{trow}/C{trow},\"n/a\")", "calc", "ps")
+        put(ws, f"{col}{im + 4}", f"=IF(F{trow}>0,(M{srow}*F{trow}{bridge})/C{trow},\"n/a\")", "calc", "ps")
     ws.freeze_panes = "B4"
     b.checks += [("Median between the quartiles", f"=AND(Comps!N{st + 2}>=Comps!N{st + 3},Comps!N{st + 2}<=Comps!N{st + 1})", "the statistics are ordered"),
-                 ("Target EV = market cap + debt - cash + minority interest",
-                  f"=ABS(Comps!L{trow}-(Comps!K{trow}+Comps!D{trow}-Comps!E{trow}+Comps!R{trow}))<0.01", "the EV bridge")]
-    return b.save(path), {"median_ev_ebitda": f"Comps!N{st + 2}", "implied_median": f"Comps!D{im + 2}"}
+                 ("Target EV = market cap + debt - cash + minority + preferred - equity-method stakes",
+                  f"=ABS(Comps!L{trow}-(Comps!K{trow}+Comps!D{trow}-Comps!E{trow}+Comps!R{trow}+Comps!S{trow}-Comps!T{trow}))<0.01", "the EV bridge")]
+    cells = {"median_ev_ebitda": f"Comps!N{st + 2}", "implied_median": f"Comps!D{im + 2}"}
+    if (c["stats"]["ev_ebitda"] or {}).get("median") is not None:
+        cells["expect"] = {cells["median_ev_ebitda"]: c["stats"]["ev_ebitda"]["median"]}
+    return b.save(path), cells
 
 
 # ---------- ratios, analysis, scorecard ----------
@@ -397,10 +439,10 @@ RATIO_ROWS = [  # (label, formula with {c} = column and H(x) = Historicals row o
     ("Gross margin", "={g}{gross_profit}/{g}{revenue}", "pct"), ("EBIT margin", "={g}{ebit}/{g}{revenue}", "pct"),
     ("Net margin", "={g}{net_income}/{g}{revenue}", "pct"), ("Return on equity", "={g}{net_income}/{g}{equity}", "pct"),
     ("Return on assets", "={g}{net_income}/{g}{assets}", "pct"),
-    ("Return on invested capital", "={g}{ebit}*(1-MIN(0.4,MAX(0,{g}{tax}/{g}{pretax})))/({g}{equity}+{debt}-{g}{cash})", "pct"),
+    ("Return on invested capital", "={g}{ebit}*(1-MIN(0.4,MAX(0,{g}{tax}/{g}{pretax})))/({g}{equity}+{debt}-N({g}{cash_all}))", "pct"),
     ("Current ratio", "={g}{current_assets}/{g}{current_liabilities}", "x"),
     ("Quick ratio", "=({g}{current_assets}-N({g}{inventory}))/{g}{current_liabilities}", "x"),
-    ("Debt / equity", "=({debt})/{g}{equity}", "x"), ("Debt / EBITDA", "=({debt})/({g}{ebit}+{g}{da})", "x"),
+    ("Debt / equity", "=({debt})/{g}{equity}", "x"), ("Debt / EBITDA", "=IF({g}{ebit}+N({g}{da})>0,({debt})/({g}{ebit}+N({g}{da})),\"n/a\")", "x"),
     ("Interest cover", "=IFERROR({g}{ebit}/{g}{interest},\"n/a\")", "x"), ("Asset turnover", "={g}{revenue}/{g}{assets}", "x"),
     ("Receivable days", "=N({g}{receivables})*365/{g}{revenue}", "num1"), ("Payable days", "=N({g}{payables})*365/{g}{cogs}", "num1"),
     ("Free cash flow", "={g}{cfo}-{g}{capex}", "money"), ("FCF margin", "=({g}{cfo}-{g}{capex})/{g}{revenue}", "pct"),
@@ -417,7 +459,7 @@ def ratio_sheet(b, f, hrows, cols, name="Ratios"):
         put(ws, f"A{i}", lab)
         for col_i, hc in enumerate(cols):
             g = f"Historicals!{hc}"
-            debt = f"N({g}{hrows['debt_current']})+N({g}{hrows['debt_noncurrent']})+N({g}{hrows['short_borrowings']})"
+            debt = f"{g}{hrows['debt']}"
             text = fm.replace("{debt}", debt).replace("{g}", g)
             text = text.format(**{k: v for k, v in hrows.items()})
             put(ws, f"{L(2 + col_i)}{i}", f"=IFERROR({text[1:]},\"n/a\")", "calc", fmt)
@@ -458,14 +500,16 @@ def analysis_book(f, flags, path):
     a, p = cols[-1], cols[-2]
     H = lambda c, col: f"Historicals!{col}{hrows[c]}"
     gr = lambda c: f"({H(c, a)}/{H(c, p)}-1)"
-    debt = lambda col: f"(N({H('debt_current', col)})+N({H('debt_noncurrent', col)})+N({H('short_borrowings', col)}))"
-    formulas = [f"=IFERROR({gr('receivables')}>{gr('revenue')}+0.1,FALSE)",
-                f"=IFERROR(AND({H('inventory', a)}>0.02*{H('revenue', a)},{gr('inventory')}>{gr('revenue')}+0.1),FALSE)",
-                f"=IFERROR(({H('net_income', a)}-{H('cfo', a)})/{H('assets', a)}>0.1,FALSE)",
-                f"=IFERROR({H('gross_profit', p)}/{H('revenue', p)}-{H('gross_profit', a)}/{H('revenue', a)}>0.03,FALSE)",
-                f"=IFERROR(N({H('sbc', a)})/{H('revenue', a)}>0.1,FALSE)",
-                f"=IFERROR(AND({debt(a)}/{debt(p)}-1>0.25,{gr('revenue')}<0.05),FALSE)",
-                f"=IFERROR(AND({H('net_income', a)}>0,{H('cfo', a)}/{H('net_income', a)}<0.8),FALSE)"]
+    need = lambda cells, expr: f"=IF(COUNT({','.join(cells)})<{len(cells)},\"n/a\",IFERROR({expr},\"n/a\"))"   # missing input: n/a, not clear
+    two = lambda *cs: [H(c, col) for c in cs for col in (a, p)]
+    formulas = [need(two("receivables", "revenue"), f"{gr('receivables')}>{gr('revenue')}+0.1"),
+                f"=IF(N({H('inventory', a)})<=0.02*{H('revenue', a)},FALSE,"
+                + need(two("inventory", "revenue"), f"{gr('inventory')}>{gr('revenue')}+0.1")[1:] + ")",
+                need([H("net_income", a), H("cfo", a), H("assets", a)], f"({H('net_income', a)}-{H('cfo', a)})/{H('assets', a)}>0.1"),
+                need(two("gross_profit", "revenue"), f"{H('gross_profit', p)}/{H('revenue', p)}-{H('gross_profit', a)}/{H('revenue', a)}>0.03"),
+                need([H("sbc", a), H("revenue", a)], f"{H('sbc', a)}/{H('revenue', a)}>0.1"),
+                need(two("debt", "revenue"), f"AND({gr('debt')}>0.25,{gr('revenue')}<0.05)"),
+                need([H("net_income", a), H("cfo", a)], f"AND({H('net_income', a)}>0,{H('cfo', a)}/{H('net_income', a)}<0.8)")]
     for i, (fl, fm) in enumerate(zip(flags, formulas), start=4):
         put(fs, f"A{i}", fl["check"])
         put(fs, f"B{i}", fm, "calc")
@@ -481,9 +525,10 @@ def score_book(f, sc, dcf_value, path):
     ws = b.sheet("Scorecard", (44, 16, 16, 12))
     title(ws, 1, "Value-investing scorecard", "Blue = market input. The tests read the Ratios and Historicals sheets.")
     put(ws, "A3", "Price"); put(ws, "B3", f["market"]["price"], "input", "ps", comment="Source: " + f["market"]["source"])
-    put(ws, "A4", "DCF value per share (base case)"); put(ws, "B4", dcf_value, "input", "ps", comment="Source: the DCF workbook of this run")
+    put(ws, "A4", "DCF value per share (base case)"); put(ws, "B4", dcf_value if dcf_value is not None else "n/a", "input", "ps", comment="Source: the DCF workbook of this run")
     put(ws, "A5", "10-year Treasury"); put(ws, "B5", f.get("rf"), "input", "pct", comment="Source: " + f.get("rf_source", ""))
-    put(ws, "A6", "Diluted shares (m)"); put(ws, "B6", f"=Historicals!{cols[-1]}{hrows['shares_diluted']}", "link", "money")
+    sh, sh_src = F.shares_now(f)
+    put(ws, "A6", "Diluted shares today (m)"); put(ws, "B6", sh, "input", "money", comment="Source: " + sh_src)
     header(ws, 8, ["Test", "Measured", "Threshold", "Pass"])
     a, first = cols[-1], cols[0]
     H = lambda c, col=None: f"Historicals!{col or a}{hrows[c]}"
@@ -492,22 +537,22 @@ def score_book(f, sc, dcf_value, path):
     eps = [f"Historicals!{c}{hrows['eps']}" for c in cols]
     eps_up = "+".join(f"N({b2}>{a2})" for a2, b2 in zip(eps, eps[1:]))
     fcfs = ",".join(f"{H('cfo', c)}-{H('capex', c)}" for c in cols)
-    debt = f"(N({H('debt_current')})+N({H('debt_noncurrent')})+N({H('short_borrowings')}))"
+    debt = H("debt")
     tests = [("Return on equity 15 %+ (average)", f"=AVERAGE({rng('Return on equity')})", 0.15, ">=", "pct"),
              ("Return on invested capital 12 %+", f"=Ratios!{L(1 + len(cols))}{rr['Return on invested capital']}", 0.12, ">=", "pct"),
              ("Gross margin 40 %+ (moat)", f"=Ratios!{L(1 + len(cols))}{rr['Gross margin']}", 0.40, ">=", "pct"),
              ("Net margin 10 %+", f"=Ratios!{L(1 + len(cols))}{rr['Net margin']}", 0.10, ">=", "pct"),
              ("Revenue CAGR 5 %+", f"=({H('revenue')}/{H('revenue', first)})^(1/{n})-1", 0.05, ">=", "pct"),
              ("EPS up in most years", f"=({eps_up})/{n}", 0.6, ">=", "pct"),
-             ("Debt / EBITDA 2.0x or less", f"={debt}/({H('ebit')}+{H('da')})", 2.0, "<=", "x"),
+             ("Debt / EBITDA 2.0x or less", f"=IF({H('ebit')}+N({H('da')})>0,{debt}/({H('ebit')}+N({H('da')})),\"n/a\")", 2.0, "<=", "x"),
              ("Free cash flow positive every year", f"=MIN({fcfs})", 0, ">", "money"),
              ("Owner-earnings yield above the 10-year", f"=({H('net_income')}+{H('da')}-{H('capex')})/($B$3*$B$6)", "=$B$5", ">=", "pct"),
-             ("Price at least 25 % under DCF value", "=$B$3/$B$4", 0.75, "<=", "pct")]
+             ("Price at least 25 % under DCF value", "=IF($B$4>0,$B$3/$B$4,\"n/a\")", 0.75, "<=", "pct")]
     for i, (lab, fm, thr, op, fmt) in enumerate(tests, start=9):
         put(ws, f"A{i}", lab)
         put(ws, f"B{i}", f"=IFERROR({fm[1:]},\"n/a\")", "calc", fmt)
         put(ws, f"C{i}", thr, "input" if not str(thr).startswith("=") else "link", fmt)
-        put(ws, f"D{i}", f"=IFERROR(B{i}{op}C{i},FALSE)", "calc")
+        put(ws, f"D{i}", f"=IF(ISNUMBER(B{i}),B{i}{op}C{i},FALSE)", "calc")   # text such as n/a compares above any number: never a pass
     put(ws, "A19", "Tests passed", bold=True)
     put(ws, "B19", "=COUNTIF(D9:D18,TRUE)", "calc", "int", bold=True)
     total(ws, 19, 1, 4, double=True)
@@ -586,13 +631,15 @@ def budget_book(bd, path):
     put(ws, f"A{s + 5}", "Months of needs the fund covers")
     put(ws, f"C{s + 5}", f"=$C$4/C{s + 1}", "calc", "num1")
     pth = s + 7
-    header(ws, pth, ["Month", "", "Fund"])
+    header(ws, pth, ["Month", "", "Emergency cash"])
     for m in range(13):
         r = pth + 1 + m
         put(ws, f"A{r}", m, "input", "int")
-        put(ws, f"C{r}", "=$C$4" if m == 0 else f"=C{r - 1}+$C${s + 3}+MAX(0,$C${s + 4})", "calc", "money")
+        put(ws, f"C{r}", "=$C$4" if m == 0 else f"=C{r - 1}+$C${s + 4}", "calc", "money")   # savings lines leave the account
     b.checks.append(("Lines add up to pay", f"=ABS(SUM(Budget!C{first}:C{last})+Budget!C{s + 4}-Budget!C3)<0.01", "needs + wants + savings + left over = net pay"))
-    return b.save(path), {"left": f"Budget!C{s + 4}", "fund12": f"Budget!C{pth + 13}"}
+    cells = {"left": f"Budget!C{s + 4}", "fund12": f"Budget!C{pth + 13}"}
+    cells["expect"] = {cells["left"]: bd["left"], cells["fund12"]: bd["path"][-1]}
+    return b.save(path), cells
 
 
 # ---------- three-statement ----------
@@ -603,7 +650,8 @@ def three_book(f, a, m, path):
     h, p = m["history"], m["projection"]
     ws = b.sheet("Model", (30,) + (14,) * (len(h) + len(p)))
     title(ws, 1, f"{f['name']} ({f['ticker']}) three-statement model", "Filed years in blue, projected years as formulas. Cash is the plug. $ millions.")
-    keys = ["growth_y1", "terminal_g", "cogs_pct", "opex_pct", "interest_rate", "tax_rate", "da_pct", "capex_pct_y0", "dso", "dio", "dpo", "payout", "years"]
+    keys = ["growth_y1", "terminal_g", "cogs_pct", "opex_pct", "interest_rate", "tax_rate", "da_pct", "capex_pct_y0", "ppe_pct", "dso", "dio", "dpo",
+            "payout", "years"]
     k = links(ws, refs, keys, 3, "A", "B")
     top = 3 + len(keys) + 1
     hc = [L(2 + i) for i in range(len(h))]
@@ -611,22 +659,23 @@ def three_book(f, a, m, path):
     header(ws, top, ["Line"] + [r["year"] for r in h] + [r["year"] for r in p])
     lines = ["Year index", "Revenue", "Cost of revenue", "Operating costs", "Operating income", "Interest", "Tax", "Net income", "",
              "Cash and investments", "Receivables", "Inventory", "PP&E", "Other assets", "Total assets", "Payables", "Debt", "Other liabilities",
-             "Equity", "Liabilities and equity", "Balance check", "", "D&A", "Capex", "Dividends and buybacks", "Operating cash flow", "Change in cash"]
+             "Equity (incl. minority)", "Liabilities and equity", "Balance check", "", "D&A", "Capex", "Dividends and buybacks", "Operating cash flow",
+             "Change in cash"]
     R = {n: top + 1 + i for i, n in enumerate(lines) if n}
     for n, r in R.items():
         put(ws, f"A{r}", n, bold=n in ("Operating income", "Net income", "Total assets", "Liabilities and equity", "Balance check"))
     hk = {"Revenue": "revenue", "Cost of revenue": "cogs", "Operating costs": "opex", "Operating income": "ebit", "Interest": "interest", "Tax": "tax",
           "Net income": "net_income", "Cash and investments": "cash", "Receivables": "receivables", "Inventory": "inventory", "PP&E": "ppe",
           "Other assets": "other_assets", "Payables": "payables", "Debt": "debt", "Other liabilities": "other_liabilities", "D&A": "da",
-          "Capex": "capex", "Dividends and buybacks": "dividends"}
+          "Capex": "capex", "Dividends and buybacks": "dividends", "Equity (incl. minority)": "equity"}
     for j, row in enumerate(h):
         col = hc[j]
         for lab, key in hk.items():
             put(ws, f"{col}{R[lab]}", row[key], "input", "money", comment=f"Source: SEC 10-K, fiscal {row['year']}" if lab == "Revenue" else None)
         put(ws, f"{col}{R['Total assets']}", f"=SUM({col}{R['Cash and investments']}:{col}{R['Other assets']})", "calc", "money")
-        put(ws, f"{col}{R['Equity']}", f"={col}{R['Total assets']}-{col}{R['Payables']}-{col}{R['Debt']}-{col}{R['Other liabilities']}", "calc", "money")
-        put(ws, f"{col}{R['Liabilities and equity']}", f"=SUM({col}{R['Payables']}:{col}{R['Equity']})", "calc", "money")
+        put(ws, f"{col}{R['Liabilities and equity']}", f"=SUM({col}{R['Payables']}:{col}{R['Equity (incl. minority)']})", "calc", "money")
         put(ws, f"{col}{R['Balance check']}", f"={col}{R['Total assets']}-{col}{R['Liabilities and equity']}", "calc", "money")
+    steady = f"({k['da_pct']}+{k['ppe_pct']}*{k['terminal_g']}/(1+{k['terminal_g']}))"
     for i, col in enumerate(pc, start=1):
         prev = hc[-1] if i == 1 else pc[i - 2]
         g = lambda lab, c=col: f"{c}{R[lab]}"
@@ -640,8 +689,8 @@ def three_book(f, a, m, path):
         put(ws, g("Tax"), f"=MAX(0,{g('Operating income')}-{g('Interest')})*{k['tax_rate']}", "calc", "money")
         put(ws, g("Net income"), f"={g('Operating income')}-{g('Interest')}-{g('Tax')}", "calc", "money")
         put(ws, g("D&A"), f"={g('Revenue')}*{k['da_pct']}", "calc", "money")
-        put(ws, g("Capex"), f"={g('Revenue')}*({k['capex_pct_y0']}+({k['da_pct']}-{k['capex_pct_y0']})*{g('Year index')}/{k['years']})", "calc", "money")
-        put(ws, g("Dividends and buybacks"), f"={g('Net income')}*{k['payout']}", "calc", "money")
+        put(ws, g("Capex"), f"={g('Revenue')}*({k['capex_pct_y0']}+({steady}-{k['capex_pct_y0']})*{g('Year index')}/{k['years']})", "calc", "money")
+        put(ws, g("Dividends and buybacks"), f"=MAX(0,{g('Net income')})*{k['payout']}", "calc", "money")
         put(ws, g("Receivables"), f"={g('Revenue')}*{k['dso']}/365", "calc", "money")
         put(ws, g("Inventory"), f"={g('Cost of revenue')}*{k['dio']}/365", "calc", "money")
         put(ws, g("Payables"), f"={g('Cost of revenue')}*{k['dpo']}/365", "calc", "money")
@@ -654,8 +703,8 @@ def three_book(f, a, m, path):
         put(ws, g("Total assets"), f"=SUM({col}{R['Cash and investments']}:{col}{R['Other assets']})", "calc", "money")
         put(ws, g("Debt"), f"={pv('Debt')}", "calc", "money")
         put(ws, g("Other liabilities"), f"={pv('Other liabilities')}", "calc", "money")
-        put(ws, g("Equity"), f"={pv('Equity')}+{g('Net income')}-{g('Dividends and buybacks')}", "calc", "money")
-        put(ws, g("Liabilities and equity"), f"=SUM({col}{R['Payables']}:{col}{R['Equity']})", "calc", "money")
+        put(ws, g("Equity (incl. minority)"), f"={pv('Equity (incl. minority)')}+{g('Net income')}-{g('Dividends and buybacks')}", "calc", "money")
+        put(ws, g("Liabilities and equity"), f"=SUM({col}{R['Payables']}:{col}{R['Equity (incl. minority)']})", "calc", "money")
         put(ws, g("Balance check"), f"={g('Total assets')}-{g('Liabilities and equity')}", "calc", "money")
     for lab in ("Operating income", "Net income", "Total assets"):
         total(ws, R[lab], 1, 1 + len(h) + len(p))
@@ -663,4 +712,6 @@ def three_book(f, a, m, path):
     ws.freeze_panes = f"B{top + 1}"
     b.checks.append(("Balance sheet balances every year", f"=SUMPRODUCT(ABS(Model!B{R['Balance check']}:{pc[-1]}{R['Balance check']}))<0.01",
                      "total assets = liabilities + equity"))
-    return b.save(path), {"ni_last": f"Model!{pc[-1]}{R['Net income']}", "check": f"Model!{pc[-1]}{R['Balance check']}"}
+    cells = {"ni_last": f"Model!{pc[-1]}{R['Net income']}", "check": f"Model!{pc[-1]}{R['Balance check']}"}
+    cells["expect"] = {cells["ni_last"]: p[-1]["net_income"], f"Model!{pc[-1]}{R['Cash and investments']}": p[-1]["cash"]}
+    return b.save(path), cells

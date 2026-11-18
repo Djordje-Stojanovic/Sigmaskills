@@ -24,7 +24,7 @@ def sample(flat=False):
            "dividends": k(r(0.03)), "buybacks": k([0] * 5), "cash": k([200] * 5), "st_investments": k([0] * 5), "receivables": k(r(0.1)),
            "inventory": k(r(0.05)), "current_assets": k(r(0.5)), "ppe": k(r(0.6)), "assets": k(r(1.5)), "payables": k(r(0.05)),
            "current_liabilities": k(r(0.25)), "debt_current": k([20] * 5), "debt_noncurrent": k([180] * 5), "short_borrowings": k([0] * 5),
-           "liabilities": k(r(0.7)), "equity": k(r(0.8)), "retained_earnings": k(r(0.5))}
+           "liabilities": k(r(0.7)), "equity": k(r(0.8)), "retained_earnings": k(r(0.5)), "debt": k([200] * 5), "cash_all": k([200] * 5)}
     if flat:
         ann["capex"] = ann["da"]
     f = {"ticker": "SMPL", "name": "Sample Co", "cik": 0, "source": "fixture", "fiscal_year_ends": ENDS, "annual": ann,
@@ -252,6 +252,199 @@ def asset_review_cases():
     return ok
 
 
+def stop_text(fn):
+    try:
+        fn()
+    except SystemExit as e:
+        return str(e)
+    return None
+
+
+def facts_fixture():
+    """A company-facts file with the review's traps: KO debt lines (CommercialPaper inside NotesAndLoansPayable), trade payables
+    only, no total liabilities, MCD share counts in millions and a part-line D&A first, restricted cash, a Q1 for LTM, and the
+    10-K revenue on the second tag."""
+    fy = lambda s, e, v, form="10-K", filed="2026-02-20": {"start": s, "end": e, "val": v, "form": form, "filed": filed}
+    bs = lambda e, v, form="10-K": {"end": e, "val": v, "form": form, "filed": "2026-02-20"}
+    usd = lambda *es: {"units": {"USD": list(es)}}
+    m = 1e6
+    gaap = {
+        "Revenues": usd(fy("2024-01-01", "2024-12-31", 90 * m), fy("2025-01-01", "2025-12-31", 100 * m),
+                        fy("2025-01-01", "2025-03-31", 20 * m, "10-Q"), fy("2026-01-01", "2026-03-31", 35 * m, "10-Q")),
+        "OperatingIncomeLoss": usd(fy("2025-01-01", "2025-12-31", 20 * m)),
+        "WeightedAverageNumberOfDilutedSharesOutstanding": {"units": {"shares": [fy("2025-01-01", "2025-12-31", 716.4)]}},
+        "DepreciationDepletionAndAmortization": usd(fy("2025-01-01", "2025-12-31", 457 * m)),
+        "DepreciationAndAmortization": usd(fy("2025-01-01", "2025-12-31", 2199 * m)),
+        "LongTermDebtAndCapitalLeaseObligations": usd(bs("2025-12-31", 42119 * m)),
+        "LongTermDebtAndCapitalLeaseObligationsCurrent": usd(bs("2025-12-31", 1822 * m)),
+        "NotesAndLoansPayable": usd(bs("2025-12-31", 1551 * m)),
+        "CommercialPaper": usd(bs("2025-12-31", 1495 * m)),
+        "AccountsPayableTradeCurrent": usd(bs("2025-12-31", 5649 * m)),
+        "Assets": usd(bs("2025-12-31", 104816 * m)), "LiabilitiesAndStockholdersEquity": usd(bs("2025-12-31", 104816 * m)),
+        "StockholdersEquity": usd(bs("2025-12-31", 32169 * m)), "MinorityInterest": usd(bs("2025-12-31", 2106 * m)),
+        "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": usd(bs("2025-12-31", 100 * m)),
+        "RestrictedCashAndCashEquivalents": usd(bs("2025-12-31", 70 * m)),
+    }
+    gaap["Revenues"]["units"]["USD"][1]["form"] = "10-K"
+    gaap = {"RevenueFromContractWithCustomerExcludingAssessedTax": usd(fy("2023-01-01", "2023-12-31", 80 * m, filed="2024-02-01")), **gaap}
+    dei = {"EntityCommonStockSharesOutstanding": {"units": {"shares": [{"end": "2026-01-31", "val": 705.8, "filed": "2026-02-20", "form": "10-K"}]}}}
+    return {"facts": {"us-gaap": gaap, "dei": dei}}
+
+
+def company_fixes(out, lo):
+    """The company-side review findings (Astra 6.2, Fable 5.2), each with the reviewer's own numbers."""
+    import finman
+    import fin_data as D
+    import fin_xlsx as X
+    ok = True
+    # data layer: debt, cash, payables, liabilities, shares, D&A, LTM, 10-K date
+    ko = {"debt_noncurrent": 42119, "debt_current": 1822, "short_borrowings": 1551, "commercial_paper": 1495, "debt_total": 43941}
+    ok &= check("KO debt: 42,119 + 1,822 + 1,551 = 45,492; commercial paper inside notes and loans is not added again",
+                D.debt_of(ko.get) == 45492)
+    pep = {"debt_noncurrent": 42321, "debt_current_all": 6861, "short_borrowings": 6861, "debt_total": 46351}
+    pep_q = {"debt_noncurrent": 42612, "debt_current": 1600, "short_borrowings": 10602, "commercial_paper": 6100}
+    ok &= check("PEP debt: 49,182 on the 10-K; the 10-Q short-term line already holds current maturities (53,214)",
+                D.debt_of(pep.get) == 49182 and D.debt_of(pep_q.get) == 53214)
+    ok &= check("No debt line filed reads unavailable, not 0", D.debt_of({}.get) is None and D.cash_of({}.get) is None)
+    real = D.company_facts
+    D.company_facts = lambda t, cik=None: (facts_fixture(), "fixture", 1, "Fixture Co")
+    try:
+        fx = D.fundamentals("FIX")
+    finally:
+        D.company_facts = real
+    A, e = fx["annual"], "2025-12-31"
+    ok &= check("Fixture debt 45,492m, payables 5,649m (trade tag), liabilities 70,541m (L&E - equity incl. minority)",
+                A["debt"][e] == 45492e6 and A["payables"][e] == 5649e6 and A["liabilities"][e] == 70541e6,
+                f"{A['debt'][e] / 1e6:,.0f} / {A['payables'][e] / 1e6:,.0f} / {A['liabilities'][e] / 1e6:,.0f}")
+    ok &= check("Restricted cash comes off: 100 incl. restricted - 70 restricted = 30", A["cash"][e] == 30e6)
+    ok &= check("MCD files shares in millions: 716.4 reads as 716.4m; cover 705.8 as 705.8m",
+                A["shares_diluted"][e] == 716.4e6 and fx["shares_cover"] == 705.8e6)
+    ok &= check("D&A takes the largest line (MCD 2,199, not the part-line 457)", A["da"][e] == 2199e6)
+    ok &= check("LTM counts a new Q1: FY 100 + Q1 35 - prior Q1 20 = 115", fx["ltm"]["revenue"] == 115e6 and fx["ltm"]["_asof"] == "2026-03-31")
+    ok &= check("10-K filing date read from any revenue tag (KO showed 'filed None')", fx["last_10k"] == "2026-02-20")
+    # beta: returns pair by date
+    idx = {f"{2020 + k // 12}-{k % 12 + 1:02d}": 100 * 1.01 ** k for k in range(40)}
+    asset = {m_: v * (1.5 if m_ >= "2021-01" else 1.0) for m_, v in idx.items() if m_ != "2020-12"}   # a 50 % jump across a missing month
+    beta, months = D.beta_of(asset, idx)
+    ok &= check("Beta skips returns across a missing month instead of pairing them with an index month", months == 37 and beta is not None,
+                f"{months} months")
+    # shares today, preferred, the valuation date
+    f = sample()
+    f["annual"]["shares_basic"] = {e_: 90e6 for e_ in ENDS}
+    f["annual"]["shares_diluted"] = {e_: 90e6 for e_ in ENDS}
+    f["shares_cover"], f["shares_cover_date"] = 80e6, "2027-01-31"
+    ok &= check("Shares today: a buyback to 80m after the year counts (weighted 90m would show $8.89, not $10, on $800m)",
+                abs(F.shares_now(f)[0] - 80) < 1e-9 and abs(800 / F.shares_now(f)[0] - 10) < 1e-9)
+    f = sample()
+    a = F.dcf_inputs(f)
+    base = F.dcf(a)
+    pr = F.dcf({**a, "preferred": {"value": 100.0, "source": ""}})
+    ok &= check("Preferred stock comes off equity: $100m on 100m shares = $1.00 a share before the roll",
+                abs(base["equity_bs"] - pr["equity_bs"] - 100) < 1e-9)
+    days = {**a, "years_to_price": {"value": 321 / 365, "source": ""}, "years_to_bs": {"value": 0.0, "source": ""}}
+    r0 = F.dcf({**days, "years_to_price": {"value": 0.0, "source": ""}})
+    r1 = F.dcf(days)
+    ok &= check("Valuation date: equity rolls to the price date by (1 + ke)^(321/365) (KO 2025-12-31 to 2026-11-17)",
+                abs(r1["equity"] / r0["equity"] - (1 + r1["ke"]) ** (321 / 365)) < 1e-12)
+    s_ = 0.75
+    r2 = F.dcf({**a, "years_to_bs": {"value": s_, "source": ""}, "years_to_price": {"value": 0.0, "source": ""}})
+    ok &= check("Balance-sheet roll: EV x (1 + WACC)^s - s x year-1 cash", abs(r2["ev"] - (r2["ev_fye"] * (1 + r2["wacc"]) ** s_ - s_ * r2["rows"][0]["fcf"])) < 1e-9)
+    # terminal value pays for growth; WACC > g
+    tv = F.terminal_fcf(1000, 0.10, 0.03, 103 / 0.12 / 1000) / (0.08 - 0.03)
+    ok &= check("Terminal value pays for growth: NOPAT 103, g 3 %, return on new capital 12 %, WACC 8 % -> 1,545 (not 2,060)",
+                abs(tv - 1545) < 1e-9, f"{tv:,.2f}")
+    eq = F.dcf(a, wacc=0.05, g=0.05)
+    ws, gs, grid = F.dcf_grid({**a, "terminal_g": {"value": base["wacc"] - 0.004, "source": ""}})
+    ok &= check("WACC = g = 5 % gives no value (was a division by zero); grid cells with WACC <= g are blank",
+                eq["value_per_share"] is None and any(x is None for row in grid for x in row))
+    iw = F.implied_rate(a)
+    ok &= check("Reverse DCF: the implied discount rate gives back the price",
+                iw is not None and abs(F.dcf(a, wacc=iw)["value_per_share"] - a["price"]["value"]) < 1e-6, F.pct(iw))
+    # overrides
+    ok &= check("An unknown --set name stops the run instead of being ignored", stop_text(lambda: F.dcf_inputs(f, {"betta": 1.0})) is not None)
+    gb = sample()
+    gb["market"] = dict(gb["market"], currency="GBP")
+    ok &= check("A price in GBP against USD filings stops and names --set price=", "--set price=" in (stop_text(lambda: F.dcf_inputs(gb)) or ""))
+    low = sample()
+    low["annual"]["debt"] = {e_: 15e6 for e_ in ENDS}   # KO before the fix: 1,654m interest on 1,495m of commercial paper
+    ok &= check("Debt far below what the interest implies stops and names --set debt=", "--set debt=" in (stop_text(lambda: F.dcf_inputs(low)) or "")
+                and stop_text(lambda: F.dcf_inputs(low, {"debt": 200.0})) is None)
+    # LBO: premium before the entry EV; minority; revolver; limited liability
+    la = F.lbo_inputs(f, {"premium": 0.75})
+    ok &= check("LBO: a 75 % premium sets entry EV 3,500 = 12.73x EBITDA 275, and exit follows", abs(la["entry_multiple"]["value"] - 3500 / 275) < 1e-9
+                and la["exit_multiple"]["value"] == la["entry_multiple"]["value"], F.mult(la["entry_multiple"]["value"]))
+    bad = F.lbo({**la, "ebit_margin": {"value": -0.10, "source": ""}})
+    ok &= check("LBO: a cash shortfall draws the revolver; cash never goes negative; exit equity never below 0",
+                min(x["cash"] for x in bad["rows"]) >= -1e-9 and bad["rows"][0]["draw"] > 0 and bad["exit_equity"] >= 0)
+    mi = F.lbo({**la, "minority": {"value": 30.0, "source": ""}})
+    ok &= check("LBO: minority interest is not bought at entry and stays at exit", abs(F.lbo(la)["equity0"] - mi["equity0"] - 30) < 1e-9)
+    # three statements: a loss pays nothing out; filed equity includes minority
+    t = F.three_inputs(f, {"opex_pct": 0.9})
+    m3 = F.three_statement(f, t)
+    ok &= check("Three statements: a loss with 60 % payout pays 0 (it never adds cash)",
+                all(r["dividends"] == 0 for r in m3["projection"] if r["net_income"] < 0) and m3["projection"][0]["net_income"] < 0)
+    nci = sample()
+    nci["annual"]["minority"] = {e_: 30e6 for e_ in ENDS}
+    hh = F.three_statement(nci, F.three_inputs(nci))["history"][-1]
+    ok &= check("Three statements: filed years check assets against liabilities + equity incl. minority (a gap shows)", abs(hh["check"] + 30) < 1e-9,
+                f"gap {hh['check']:.1f}")
+    # scorecard, comps, flags: a missing or negative denominator is never a pass
+    neg = sample()
+    neg["annual"]["ebit"] = {e_: -100e6 for e_ in ENDS}
+    sc = {x["test"]: x for x in F.scorecard(neg, -20.0)}
+    ok &= check("Scorecard: negative EBITDA and a negative DCF value are n/a, not passes",
+                not sc["Debt / EBITDA 2.0x or less"]["pass"] and sc["Debt / EBITDA 2.0x or less"]["value"] is None
+                and not sc["Price at least 25 % under DCF value"]["pass"])
+    neg["annual"]["da"] = {e_: 0.0 for e_ in ENDS}
+    neg["ltm"] = dict(neg["ltm"], ebit=-100e6, da=0.0, net_income=-80e6)
+    cp = F.comps(neg, [sample(), sample()])
+    ok &= check("Comps: no EV/EBITDA or P/E value for a loss-making target", "ev_ebitda" not in cp["implied"] and "pe" not in cp["implied"])
+    gap = sample()
+    gap["annual"]["cfo"][ENDS[-1]] = None
+    gap["annual"]["receivables"][ENDS[-1]] = None
+    fl = {x["check"]: x["flag"] for x in F.red_flags(gap)}
+    ok &= check("Red flags: unknown CFO and receivables read n/a, never a flag or a crash",
+                fl["Profit not backed by cash (Sloan accruals)"] is None and fl["Receivables grow faster than revenue"] is None)
+    nod = sample()
+    nod["annual"]["debt_noncurrent"] = {e_: None for e_ in ENDS}
+    pf = dict(F.piotroski(nod)[1])
+    ok &= check("Piotroski: missing debt in both years is n/a, not a point", pf["Long-term debt / assets down"] is None)
+    # quarters: EPS is not subtracted
+    qf = sample()
+    qr = F.quarter_table(qf, 5)
+    ok &= check("Earnings: a fiscal-Q4 EPS is not derived by subtraction (100,100,100,50 shares: 1.571 vs the true 2)",
+                all(r["eps"] is None for r in qr if r["end"] in ENDS) and any(r["revenue"] for r in qr if r["end"] in ENDS))
+    # budget: deficits spend the cash
+    bd = F.budget({"net_income_monthly": 1000, "emergency_fund": 3000, "lines": [
+        {"name": "Needs", "amount": 1100, "bucket": "needs"}, {"name": "ETF", "amount": 200, "bucket": "savings"}]})
+    ok &= check("Budget: 1,000 in, 1,100 needs, 200 ETF, 3,000 fund: cash is gone in month 10 (was 5,400 after a year)",
+                bd["path"][10] == 0 and bd["gap_month"] == 11 and bd["path"][12] == -600)
+    # the report bridge draws every step; the workbook follows the horizon and audit compares cells
+    rep = RP.dcf_report(f, a, base, F.dcf_grid(a))
+    wf = rep["charts"][0]["steps"]
+    ok &= check("Waterfall: the steps after EV (minority included) add up to the equity bar",
+                any(n_ == "Minority interest" for n_, _, _ in wf) and abs(wf[2][1] + sum(x for _, x, k in wf[3:-1]) - wf[-1][1]) < 1e-6)
+    a3 = F.dcf_inputs(f, {"years": 3})
+    p3 = out / "smpl-dcf-3y.xlsx"
+    _, cells = X.dcf_book(f, a3, str(p3))
+    ok &= check("Workbook models the same horizon as Python: 3 years -> value cell expected at Python's 3-year value",
+                abs(cells["expect"][cells["value_per_share"]] - F.dcf(a3)["value_per_share"]) < 1e-12 and len(F.dcf(a3)["rows"]) == 3)
+    if lo:
+        p3.with_suffix(".cells.json").write_text(json.dumps(cells), encoding="utf-8")
+        good, lines = finman.audit(p3)
+        ok &= check("Audit compares the 3-year workbook's cells with Python", good and sum(1 for x in lines if x.startswith("cell PASS")) >= 3, lines[0])
+    # --set values are read before any fetch
+    seen = {}
+    real_company = D.company
+    D.company = lambda t, years=5, with_market=True, with_rf=True, cik=None: seen.update(market=with_market, rf=with_rf) or sample()
+    try:
+        finman.main(["dcf", "SMPL", "--set", "price=100", "--set", "beta=1", "--set", "rf=0.04", "--formats", "html", "--out", str(out / "sets")])
+    finally:
+        D.company = real_company
+    ok &= check("dcf with --set price, beta and rf fetches neither Yahoo nor FRED", seen == {"market": False, "rf": False})
+    return ok
+
+
 def check(name, ok, detail=""):
     print(f"{'PASS' if ok else 'FAIL'}  {name}{('  ' + detail) if detail else ''}")
     return ok
@@ -281,7 +474,7 @@ def run():
     sc = [x["value_per_share"] for x in F.scenarios(a)]
     ok &= check("Scenarios: bear < base < bull, base = the model", sc[0] < sc[1] < sc[2] and abs(sc[1] - base["value_per_share"]) < 1e-9)
     mi = F.dcf({**a, "minority": {"value": 50.0, "source": ""}})
-    ok &= check("Minority interest comes off the equity value", abs(base["equity"] - mi["equity"] - 50.0) < 1e-9)
+    ok &= check("Minority interest comes off the equity value", abs(base["equity_bs"] - mi["equity_bs"] - 50.0) < 1e-9)
     # 2. LBO
     la = F.lbo_inputs(f)
     lr = F.lbo(la)
@@ -333,17 +526,11 @@ def run():
             if x.endswith(".svg"):
                 xml.dom.minidom.parse(x)
         ok &= check(f"{kind}: xlsx, pptx, svg and html written", good, f"{len(files)} files")
-        if lo and xl:
-            cells = json.loads((out / f"smpl-{kind}.cells.json").read_text())
-            expect = {}
-            if kind == "dcf":
-                expect = {cells["value_per_share"]: cache["dcf"][1]["value_per_share"]}
-            if kind == "lbo":
-                expect = {cells["irr"]: lr["irr"]}
-            if kind == "three":
-                expect = {cells["ni_last"]: m["projection"][-1]["net_income"]}
-            good, lines = finman.audit(out / f"smpl-{kind}.xlsx", expect)
-            ok &= check(f"{kind}: workbook recalculates with no errors, checks TRUE, cells = Python", good, lines[0])
+        if lo and xl:   # audit reads the Python numbers from the cells.json the writer saved beside the workbook
+            good, lines = finman.audit(out / f"smpl-{kind}.xlsx")
+            compared = sum(1 for x in lines if x.startswith("cell "))
+            ok &= check(f"{kind}: workbook recalculates with no errors, checks TRUE, cells = Python", good,
+                        f"{lines[0]}, {compared} cells compared")
     rep = RP.budget_report(b)
     files = finman.write_outputs(rep, "budget", out, {"xlsx", "pptx", "svg", "html"}, lambda p: X.budget_book(b, p))
     ok &= check("budget: files written", len(files) >= 4)
@@ -354,6 +541,7 @@ def run():
         print("SKIP  workbook recalculation (LibreOffice not installed)")
     ok &= assets(out)
     ok &= asset_review_cases()
+    ok &= company_fixes(out, lo)
     page = (out / "smpl-dcf.html").read_text(encoding="utf-8")
     ok &= check("HTML leads with the answer", page.index('class="hero"') < page.index("<table"))
     ok &= check("HTML walks the method step by step before the tables",

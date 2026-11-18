@@ -4,16 +4,16 @@
 
 | Data | Route | Notes |
 |---|---|---|
-| Filed numbers (10-K, 10-Q) | `https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json` | one JSON per company; `fin_data.CONCEPTS` lists the us-gaap tags tried per line; per period the first tag with a value wins (companies change tags over the years), a tuple is summed (D&A split over two tags). Annual = a 10-K period of 350-380 days; the newest filing wins per period. SEC wants `SEC_USER_AGENT` with a contact and at most 10 requests a second. |
+| Filed numbers (10-K, 10-Q) | `https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json` | one JSON per company; `fin_data.CONCEPTS` lists the us-gaap tags tried per line; per period the first tag with a value wins (companies change tags over the years); D&A takes the largest; a tuple is summed (D&A split over two tags). Debt lines are disjoint balances (a component such as commercial paper only fills a date no wider tag covers); `debt` and `cash_all` are read once per date. Share counts filed in millions are scaled. The newest balance sheet may be a 10-Q. Annual = a 10-K period of 350-380 days; the newest filing wins per period. SEC wants `SEC_USER_AGENT` with a contact and at most 10 requests a second. |
 | Ticker to CIK | `https://www.sec.gov/files/company_tickers.json` | US filers only; a foreign filer without XBRL facts has no data here |
-| Price, 52-week range, beta | `https://query1.finance.yahoo.com/v8/finance/chart/<TICKER>` | monthly closes over 5 years against `^GSPC` give the beta |
+| Price, 52-week range, beta | `https://query1.finance.yahoo.com/v8/finance/chart/<TICKER>` | monthly closes over 5 years against `^GSPC`, paired by month, give the beta; the 52-week range is the unadjusted daily highs and lows; a quote currency other than USD stops the company models (`--set price=` in USD per ordinary share; an ADR: divide by the ordinary shares per ADR) |
 | Risk-free rate | `https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10` | FRED refuses browser user agents and stalls on unknown ones; the reader sends `curl/8.0` |
-| Dividends, adjusted closes, any price history | `https://query1.finance.yahoo.com/v8/finance/chart/<TICKER>?range=20y&interval=1mo&events=div` | `range=max` returns a thinned, broken sample: the reader asks for 20 years |
+| Dividends, adjusted closes, any price history | `https://query1.finance.yahoo.com/v8/finance/chart/<TICKER>?period1=0&period2=<now>&interval=1mo&events=div` | `range=max` returns a thinned sample; `period1=0` returns every month |
 | US CPI, mortgage rates, Treasury curve | FRED `CPIAUCSL`, `MORTGAGE30US`, `DGS1`-`DGS30` (same CSV route) | |
 | GPU rent prices | `https://console.vast.ai/api/v0/bundles/?q=...` | public search, no key; median of live single-GPU offers |
 | Pokémon card prices | `https://api.pokemontcg.io/v2/cards?q=...` | no key; TCGplayer listings and the sales-based market price |
 
-Every answer is cached for 24 h (6 h for prices) in `~/.cache/sigmafinanceman` (`SIGMAFIN_CACHE` moves it). When a route fails: the company facts have no line for a concept (a missing tag shows `n/a`; name the tag in the reply and ask for the number from the filing), Yahoo blocks (pass the price with `--set price=...`), FRED fails (pass `--set rf=...`).
+Every answer is cached for 24 h (6 h for prices) in `~/.cache/sigmafinanceman` (`SIGMAFIN_CACHE` moves it). When a route fails: the company facts have no line for a concept (a missing tag shows `n/a`; a missing debt, cash or share count stops with the `--set debt=`, `--set cash=` or `--set shares=` to pass from the filing; no 10-K under the ticker's CIK: `--set cik=` of the predecessor), Yahoo blocks (pass the price with `--set price=...`), FRED fails (pass `--set rf=...`).
 
 ## What was folded in, and from where
 

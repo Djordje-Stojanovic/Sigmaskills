@@ -20,8 +20,9 @@ SEC_UA = os.environ.get("SEC_USER_AGENT") or "sigmafinanceman research admin@exa
 WEB_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 FRED_UA = "curl/8.0"   # FRED refuses browser agents and stalls on unknown ones
 
-# Concept -> the us-gaap tags that carry it; per period the first tag that has a value wins. A tuple of tags is summed
-# (MSFT reports D&A in two tags).
+# Concept -> the us-gaap tags that carry it; per period the first tag that has a value wins (MAX_OF: the largest wins, as a
+# part-line can come first). A tuple of tags is summed (MSFT reports D&A in two tags). Debt tags are disjoint balances: a
+# component (CommercialPaper inside KO's NotesAndLoansPayable) only fills a period no wider tag covers.
 CONCEPTS = {
     "revenue": ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet",
                 "RevenueFromContractWithCustomerIncludingAssessedTax"],
@@ -37,6 +38,7 @@ CONCEPTS = {
     "net_income": ["NetIncomeLoss", "ProfitLoss"],
     "eps": ["EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted"],
     "shares_diluted": ["WeightedAverageNumberOfDilutedSharesOutstanding"],
+    "shares_basic": ["WeightedAverageNumberOfSharesOutstandingBasic"],
     "da": ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization",
            ("Depreciation", "AmortizationOfIntangibleAssets"), "Depreciation"],
     "sbc": ["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense"],
@@ -44,25 +46,39 @@ CONCEPTS = {
     "capex": ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
     "dividends": ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
     "buybacks": ["PaymentsForRepurchaseOfCommonStock"],
-    "cash": ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
-    "st_investments": ["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesDebtSecuritiesCurrent"],
+    "cash": ["CashAndCashEquivalentsAtCarryingValue"],
+    "cash_st": ["CashCashEquivalentsAndShortTermInvestments"],
+    "cash_restricted_incl": ["CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
+    "restricted_cash": ["RestrictedCashAndCashEquivalents", "RestrictedCashAndCashEquivalentsAtCarryingValue", "RestrictedCash"],
+    "st_investments": ["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+                       "OtherShortTermInvestments"],
     "receivables": ["AccountsReceivableNetCurrent", "ReceivablesNetCurrent"],
     "inventory": ["InventoryNet"],
     "current_assets": ["AssetsCurrent"],
     "ppe": ["PropertyPlantAndEquipmentNet"],
     "assets": ["Assets"],
-    "payables": ["AccountsPayableCurrent"],
+    "payables": ["AccountsPayableCurrent", "AccountsPayableTradeCurrent"],
     "current_liabilities": ["LiabilitiesCurrent"],
-    "debt_current": ["LongTermDebtCurrent", "DebtCurrent"],
-    "debt_noncurrent": ["LongTermDebtNoncurrent"],
-    "short_borrowings": ["CommercialPaper", "ShortTermBorrowings"],
+    "debt_current": ["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent"],
+    "debt_noncurrent": ["LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations"],
+    "short_borrowings": ["ShortTermBorrowings", "NotesAndLoansPayable", "CommercialPaper"],
+    "commercial_paper": ["CommercialPaper"],
+    "debt_current_all": ["DebtCurrent"],
+    "debt_total": ["LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities", "DebtLongtermAndShorttermCombinedAmount",
+                   "LongTermDebt", "DebtAndCapitalLeaseObligations"],
     "liabilities": ["Liabilities"],
+    "liab_equity": ["LiabilitiesAndStockholdersEquity"],
     "equity": ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
+    "equity_total": ["StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
+    "investments": ["EquityMethodInvestments"],
+    "preferred": ["PreferredStockValue"],
     "retained_earnings": ["RetainedEarningsAccumulatedDeficit"],
     "minority": ["MinorityInterest"],
 }
 FLOWS = {"revenue", "cogs", "gross_profit", "rnd", "sga", "ebit", "interest", "pretax", "tax", "net_income", "eps", "shares_diluted",
-         "da", "sbc", "cfo", "capex", "dividends", "buybacks"}
+         "shares_basic", "da", "sbc", "cfo", "capex", "dividends", "buybacks"}
+MAX_OF = {"da"}                                   # MCD: DepreciationDepletionAndAmortization 457 is a part; D&A 2,199 is the line
+NOT_ADDITIVE = {"eps", "shares_diluted", "shares_basic"}   # averages and ratios: never summed or subtracted across periods
 
 
 def _get(url, headers, ttl=86400, binary=False, timeout=40, tries=3):
@@ -99,8 +115,8 @@ def cik_of(ticker):
     raise SystemExit(f"{ticker}: no SEC CIK found (a US filer's ticker is needed; check the spelling)")
 
 
-def company_facts(ticker):
-    cik, title = cik_of(ticker)
+def company_facts(ticker, cik=None):
+    cik, title = (cik, ticker.upper()) if cik else cik_of(ticker)
     url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
     return json.loads(_get(url, {"User-Agent": SEC_UA})), url, cik, title
 
@@ -138,7 +154,7 @@ def _pick(gaap, tag, kind):
                 continue
             if kind == "q" and not (80 <= d <= 100):
                 continue
-            if kind == "ytd" and not (170 <= d <= 290):
+            if kind == "ytd" and not (80 <= d <= 290):   # Q1 is a year to date too
                 continue
             key = (start, end) if kind == "ytd" else end
         if key not in out or e.get("filed", "") >= out[key][1]:
@@ -150,6 +166,7 @@ def series(gaap, concept, kind):
     """{key: value} for a concept and the tags used. Each period takes the first tag in CONCEPTS order that has it, so a company
     that moved to a new tag (MSFT interest, 2024) keeps every year. A tuple of tags is summed over the periods all its tags share."""
     out, used = {}, []
+    big = concept in MAX_OF
     for tag in CONCEPTS[concept]:
         if isinstance(tag, tuple):
             parts = [_pick(gaap, t, kind) for t in tag]
@@ -157,20 +174,52 @@ def series(gaap, concept, kind):
             got, name = {k: sum(p[k][0] for p in parts) for k in keys}, "+".join(tag)
         else:
             got, name = {k: v[0] for k, v in _pick(gaap, tag, kind).items()}, tag
-        new = {k: v for k, v in got.items() if k not in out}
+        new = {k: v for k, v in got.items() if k not in out or (big and v > out[k])}
         if new:
             out.update(new)
             used.append(name)
     return out, (", ".join(used) or None)
 
 
-def fundamentals(ticker, years=5):
-    """The normalized facts of one company: annual values per fiscal-year end, the latest quarters, LTM sums, and their tags."""
-    raw, url, cik, title = company_facts(ticker)
+DEBT_PARTS = ("debt_noncurrent", "debt_current", "short_borrowings", "commercial_paper", "debt_current_all", "debt_total")
+
+
+def debt_of(get):
+    """Total debt on one balance-sheet date from disjoint lines; None when no debt line is filed. get(concept) -> value or None.
+    The larger of the parts and a filed total wins, as a total tag holds at least the long-term debt."""
+    nc, cur, stb, cp, dc, tot = (get(c) for c in DEBT_PARTS)
+    if all(x is None for x in (nc, cur, stb, dc, tot)):
+        return None
+    if dc is not None:
+        current = dc                  # DebtCurrent already holds short borrowings and current maturities (PEP 10-K)
+    elif stb is not None and cur is not None and cp is not None and stb >= cur + cp:
+        current = stb                 # PEP 10-Q: the short-term line already holds the current long-term debt and the paper
+    else:
+        current = (cur or 0) + (stb or 0)
+    return max((nc or 0) + current, tot or 0)
+
+
+def cash_of(get):
+    """Cash and short-term investments on one date: the combined line when filed, else cash + short-term investments."""
+    both = get("cash_st")
+    if both is not None:
+        return both
+    c = get("cash")
+    return None if c is None else c + (get("st_investments") or 0)
+
+
+def fundamentals(ticker, years=5, cik=None):
+    """The normalized facts of one company: annual values per fiscal-year end, the latest quarters, LTM sums, and their tags.
+    cik: read this SEC filer instead of the ticker's (a predecessor that holds the 10-K history)."""
+    raw, url, cik, title = company_facts(ticker, cik)
     gaap = raw["facts"].get("us-gaap") or raw["facts"].get("ifrs-full") or {}
     rev, _ = series(gaap, "revenue", "fy")
     if not rev:
-        raise SystemExit(f"{ticker}: no annual revenue in the SEC company facts")
+        qs = sorted(series(gaap, "revenue", "ytd")[0])
+        raise SystemExit(f"{ticker}: the SEC company facts for CIK {cik} hold no 10-K revenue" +
+                         (f", only 10-Q periods from {qs[0][0]} to {qs[-1][1]}: a new registrant (such as a new holding company) "
+                          "has its 10-K history under the predecessor's CIK" if qs else "") + f". Pass that filer's number with --set cik=<CIK> "
+                         f"(EDGAR company search lists it), or check the facts at {url}")
     ends = sorted(rev)[-years:]
     annual, tags, quarters, ytd = {}, {}, {}, {}
     for c in CONCEPTS:
@@ -185,7 +234,27 @@ def fundamentals(ticker, years=5):
             ytd[c] = series(gaap, c, "ytd")[0]
         else:
             quarters[c] = vals
+    for c in ("shares_diluted", "shares_basic"):   # MCD files share counts in millions (716.4): scale them to shares
+        for d in (annual[c], quarters[c], ytd[c]):
+            for k, v in d.items():
+                if v is not None and 0 < v < 1e5:
+                    d[k] = v * 1e6
     # a missing gross profit is revenue - cost of revenue; a missing cost of revenue is revenue - gross profit
+    for d in (annual, quarters):   # a missing line read from lines that are filed
+        for e in set(d["assets"]) | set(d["liab_equity"]):
+            tot = d["equity_total"].get(e)
+            if tot is None and d["equity"].get(e) is not None:
+                tot = d["equity"][e] + (d["minority"].get(e) or 0)
+            if d["liabilities"].get(e) is None and d["liab_equity"].get(e) is not None and tot is not None:
+                d["liabilities"][e] = d["liab_equity"][e] - tot   # never assets - parent equity: that hides minority interest
+            if d["cash"].get(e) is None and d["cash_restricted_incl"].get(e) is not None:
+                d["cash"][e] = d["cash_restricted_incl"][e] - (d["restricted_cash"].get(e) or 0)
+    for d in (annual, quarters):   # one total debt and one cash line per date, so every model and the workbook read the same number
+        dates = set().union(*(d[c] for c in DEBT_PARTS + ("cash", "cash_st"))) & (set(ends) if d is annual else set(d["assets"]) | set(ends))
+        d["debt"] = {e: debt_of(lambda c: d[c].get(e)) for e in sorted(dates)}
+        d["cash_all"] = {e: cash_of(lambda c: d[c].get(e)) for e in sorted(dates)}
+    tags["debt"] = "; ".join(t for t in (tags[c] for c in DEBT_PARTS) if t) or None
+    tags["cash_all"] = "; ".join(t for t in (tags[c] for c in ("cash_st", "cash", "st_investments")) if t) or None
     for e in ends:
         r, g, k = annual["revenue"].get(e), annual["gross_profit"].get(e), annual["cogs"].get(e)
         if g is None and r is not None and k is not None:
@@ -195,58 +264,81 @@ def fundamentals(ticker, years=5):
     dei = raw["facts"].get("dei", {})
     so = [x for x in (dei.get("EntityCommonStockSharesOutstanding", {}).get("units", {}).get("shares") or [])]
     cover = max(so, key=lambda x: (x.get("filed", ""), x["end"])) if so else None
+    if cover and 0 < cover["val"] < 1e5:
+        cover = dict(cover, val=cover["val"] * 1e6)
+    tenk = [e for t in CONCEPTS["revenue"] for e in _entries(gaap, t) if e.get("form", "").startswith("10-K") and e["end"] == ends[-1]]
+    bs_dates = sorted(set(quarters["assets"]) & set(quarters["liab_equity"])) or sorted(quarters["assets"])
     out = {"ticker": ticker.upper(), "name": title, "cik": cik, "source": url, "fiscal_year_ends": ends, "annual": annual, "tags": tags,
            "quarters": {c: {k: v for k, v in sorted(q.items())[-12:]} for c, q in quarters.items()},
-           "ytd": {c: {f"{k[0]}..{k[1]}": v for k, v in sorted(q.items())[-8:]} for c, q in ytd.items()},
+           "ytd": {c: {f"{k[0]}..{k[1]}": v for k, v in sorted(q.items(), key=lambda kv: kv[0][1])[-16:]} for c, q in ytd.items()},
            "shares_cover": cover["val"] if cover else None, "shares_cover_date": cover["end"] if cover else None,
-           "last_10k": max((e for e in _entries(gaap, CONCEPTS["revenue"][0]) if e.get("form", "").startswith("10-K")),
-                           key=lambda e: e.get("filed", ""), default={}).get("filed")}
+           "bs_date": max(bs_dates[-1], ends[-1]) if bs_dates else ends[-1],
+           "last_10k": max((e.get("filed", "") for e in tenk), default=None)}
     out["ltm"] = ltm(out)
     return out
 
 
 def ltm(f):
-    """Last twelve months per flow concept: the latest fiscal year plus the newer year-to-date minus the year-ago year-to-date."""
+    """Last twelve months per flow concept: the latest fiscal year plus the newer year-to-date (Q1 included) minus the year-ago
+    year-to-date. EPS and share counts are not additive: they keep the fiscal-year value. `_asof` is revenue's date; `_asof_of`
+    holds each line's own."""
     fy_end = f["fiscal_year_ends"][-1]
-    out = {}
+    out, dates = {}, {}
     for c in FLOWS:
         fy = f["annual"][c].get(fy_end)
         if fy is None:
             continue
         val, asof = fy, fy_end
-        newer = sorted((k for k in f["ytd"].get(c, {}) if k.split("..")[1] > fy_end), key=lambda k: k.split("..")[1])
-        if newer and c != "eps":
+        newer = sorted((k for k in f["ytd"].get(c, {}) if k.split("..")[1] > fy_end and 0 < _days(fy_end, k.split("..")[0]) <= 10),
+                       key=lambda k: k.split("..")[1])   # a year to date of the new fiscal year starts the day after its end
+        if newer and c not in NOT_ADDITIVE:
             cur = newer[-1]
             s, e = cur.split("..")
             prior = next((k for k in f["ytd"][c] if abs(_days(k.split("..")[0], s) - 365) < 15 and abs(_days(k.split("..")[1], e) - 365) < 15), None)
             if prior:
                 val, asof = fy + f["ytd"][c][cur] - f["ytd"][c][prior], e
-        out[c] = val
-        out.setdefault("_asof", asof)
+        out[c], dates[c] = val, asof
+    out["_asof"], out["_asof_of"] = dates.get("revenue", fy_end), dates
     return out
 
 
 def price_history(ticker, rng="5y", interval="1mo"):
+    """(meta, {month 'YYYY-MM': adjusted close}, unadjusted quote dict, url)."""
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?range={rng}&interval={interval}"
     d = json.loads(_get(url, {"User-Agent": WEB_UA}, ttl=6 * 3600))["chart"]["result"][0]
-    closes = d["indicators"].get("adjclose", [{}])[0].get("adjclose") or d["indicators"]["quote"][0]["close"]
-    return d["meta"], [c for c in closes if c is not None], url
+    q = d["indicators"]["quote"][0]
+    closes = (d["indicators"].get("adjclose") or [{}])[0].get("adjclose") or q["close"]
+    month = lambda t: (dt.date(1970, 1, 1) + dt.timedelta(seconds=t)).strftime("%Y-%m")
+    return d["meta"], {month(t): c for t, c in zip(d.get("timestamp", []), closes) if c is not None}, q, url
+
+
+def beta_of(asset, index):
+    """Monthly beta from two {month: close} maps. A return counts only when both months exist in both series, so a gap never
+    pairs a two-month move with a one-month one. (beta, months used); beta None under 24 months or a flat index."""
+    nxt = lambda m: f"{int(m[:4]) + int(m[5:]) // 12}-{int(m[5:]) % 12 + 1:02d}"
+    pairs = [(asset[nxt(m)] / asset[m] - 1, index[nxt(m)] / index[m] - 1) for m in sorted(asset)
+             if m in index and nxt(m) in asset and nxt(m) in index]
+    if len(pairs) < 24:
+        return None, len(pairs)
+    a, b = zip(*pairs)
+    ma, mb = sum(a) / len(a), sum(b) / len(b)
+    var = sum((y - mb) ** 2 for y in b)
+    if var <= 0:
+        return None, len(pairs)
+    return round(sum((x - ma) * (y - mb) for x, y in pairs) / var, 2), len(pairs)
 
 
 def market(ticker):
-    """Price, 52-week range and 5-year monthly beta against the S&P 500 (Yahoo chart data)."""
-    meta, monthly, url = price_history(ticker)
-    _, idx, _ = price_history("^GSPC")
-    _, daily, _ = price_history(ticker, "1y", "1d")
-    n = min(len(monthly), len(idx))
-    a = [monthly[-n:][i + 1] / monthly[-n:][i] - 1 for i in range(n - 1)]
-    b = [idx[-n:][i + 1] / idx[-n:][i] - 1 for i in range(n - 1)]
-    ma, mb = sum(a) / len(a), sum(b) / len(b)
-    cov = sum((x - ma) * (y - mb) for x, y in zip(a, b)) / (len(a) - 1)
-    var = sum((y - mb) ** 2 for y in b) / (len(b) - 1)
+    """Price, 52-week range (unadjusted daily highs and lows) and 5-year monthly beta against the S&P 500 (Yahoo chart data)."""
+    meta, monthly, _, url = price_history(ticker)
+    _, idx, _, _ = price_history("^GSPC")
+    _, _, daily, _ = price_history(ticker, "1y", "1d")
+    beta, months = beta_of(monthly, idx)
+    lows, highs = [x for x in daily.get("low") or [] if x], [x for x in daily.get("high") or [] if x]
     return {"price": meta["regularMarketPrice"], "currency": meta.get("currency", "USD"),
             "price_time": dt.datetime.fromtimestamp(meta["regularMarketTime"], dt.timezone.utc).strftime("%Y-%m-%d"),
-            "low_52w": min(daily), "high_52w": max(daily), "beta": round(cov / var, 2), "beta_months": len(a), "source": url}
+            "low_52w": min(lows) if lows else None, "high_52w": max(highs) if highs else None, "beta": beta, "beta_months": months,
+            "source": url}
 
 
 def risk_free():
@@ -268,11 +360,13 @@ def risk_free():
     return meta["regularMarketPrice"] / 100, day, url
 
 
-def company(ticker, years=5, with_market=True):
-    """Fundamentals plus market data and the risk-free rate: the one input every model reads."""
-    f = fundamentals(ticker, years)
+def company(ticker, years=5, with_market=True, with_rf=True, cik=None):
+    """Fundamentals plus market data and the risk-free rate: the one input every model reads. A caller that has the price and beta
+    (or the rate) from --set skips that fetch."""
+    f = fundamentals(ticker, years, cik)
     if with_market:
         f["market"] = market(ticker)
+    if with_rf:
         f["rf"], f["rf_date"], f["rf_source"] = risk_free()
     return f
 
@@ -283,9 +377,10 @@ def is_num(x):
 
 # ---------- readers for the other asset classes ----------
 
-def history(ticker, rng="20y", interval="1mo"):   # Yahoo thins "max" to a broken sample
+def history(ticker, interval="1mo"):   # range=max thins the months; period1=0 returns every month (504 for KO vs 241 at 20y)
     """Dated closes and paid dividends from the Yahoo chart: {"dates", "closes", "dividends": [(date, amount)], "meta", "source"}."""
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(ticker)}?range={rng}&interval={interval}&events=div"
+    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(ticker)}?period1=0"
+           f"&period2={int(time.time()) // 86400 * 86400}&interval={interval}&events=div")   # day-rounded: the 6 h cache still hits
     d = json.loads(_get(url, {"User-Agent": WEB_UA}, ttl=6 * 3600))["chart"]["result"][0]
     day = lambda t: (dt.date(1970, 1, 1) + dt.timedelta(seconds=t)).isoformat()   # Windows refuses pre-1970 timestamps
     q = d["indicators"]["quote"][0]["close"]   # price closes; the dividends are counted on their own
