@@ -36,24 +36,18 @@ export function windowRows(total, cursor, limit) {
   return { start, end: start + limit };
 }
 
-/** The heading each pack sits under, in screen order. A pack not named here goes under More. */
-const PACK_GROUPS = [
-  ['Core', ['sigma', 'mattpocock', 'tstack']],
-  ['Design and taste', ['impeccable', 'taste-skill', 'hallmark', 'design-md', 'diagram-design', 'anatomy']],
-  ['Engineering', ['superpowers', 'ponytail', 'security-audit', 'anthropic']],
-  ['Media and 3D', ['hyperframes', 'minimax-h3', 'threejs', 'blender']],
-  ['Research and finance', ['last30days', 'financial-services']],
-];
-const GROUP_OF = new Map(PACK_GROUPS.flatMap(([name, ids], rank) => ids.map((id, at) => [id, { name, rank, at }])));
-const MORE = { name: 'More', rank: PACK_GROUPS.length, at: 0 };
-
-/** The packs the wizard shows, grouped and in group order. An available pack with no skills is hidden. */
+/**
+ * The packs the wizard shows: every pack as itself, in registry order, then the one-skill
+ * sources together under their own heading. An available pack with no skills is hidden.
+ */
 export function orderPacks(packs) {
-  return packs
-    .filter((pack) => !pack.available || pack.skills.length > 0)
-    .map((pack, index) => ({ pack, place: GROUP_OF.get(pack.id) || { ...MORE, at: index } }))
-    .sort((a, b) => a.place.rank - b.place.rank || a.place.at - b.place.at)
-    .map(({ pack, place }) => ({ ...pack, group: place.name }));
+  const shown = packs.filter((pack) => !pack.available || pack.skills.length > 0);
+  // A folder pack (Local) stays a pack, however few skills its folder holds.
+  const single = (pack) => pack.available && pack.skills.length === 1 && !(pack.sources || []).some((source) => source.type === 'dir');
+  return [
+    ...shown.filter((pack) => !single(pack)).map((pack) => ({ ...pack, group: 'Packs' })),
+    ...shown.filter(single).map((pack) => ({ ...pack, group: 'Single skills' })),
+  ];
 }
 
 /** Build the rows of the "what" screen: a heading per group, one row per pack, skill rows under an open pack. */

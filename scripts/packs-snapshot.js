@@ -23,10 +23,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // The HyperFrames skills change shape often (14 were folded into `hyperframes` at once). The pack
 // is pinned to one release tag; to move it, clone that tag, change this line, and re-run.
-const HYPERFRAMES_RELEASE = 'v0.9.30';
+const HYPERFRAMES_RELEASE = 'v0.9.65';
 
 // Theo Browne's tstack (MIT) is pinned to one commit. To move it, clone that commit, change this line, and re-run.
-const TSTACK_COMMIT = '1085050f3baed1ac724caa4a8166145fb2ac88af';
+const TSTACK_COMMIT = '11e37a74d0a6868c121cd0910ab2b3bd9873b92a';
 
 const PACKS = [
   {
@@ -41,7 +41,7 @@ const PACKS = [
     title: 'Matt Pocock',
     blurb: 'Skills for real engineers: grill, spec, TDD, triage, deep modules.',
     aliases: ['matt', 'pocock'],
-    sources: [{ repo: 'mattpocock/skills', clone: 'matt', path: 'skills', ref: '4ae2317ddb22b046e26455e4f9c9b3aaaf62212d' }],
+    sources: [{ repo: 'mattpocock/skills', clone: 'matt', path: 'skills', ref: '5863806dd4e15c63174bee4e7515a4256792ecfa' }],
   },
   {
     id: 'threejs',
@@ -49,14 +49,6 @@ const PACKS = [
     blurb: 'Geometry, materials, lighting, shaders, loaders, post-processing, R3F.',
     aliases: ['three'],
     sources: [{ repo: 'CloudAI-X/threejs-skills', clone: 'threejs-skills', path: 'skills', ref: '0e181866f095b5f06d005133876e926515390d95' }],
-  },
-  // Blender: 94 specialist skills from arjun988, pinned to one commit (2026-11-10).
-  {
-    id: 'blender',
-    title: 'Blender',
-    blurb: 'Drive Blender 5 from code: modeling, rigging, shaders, physics, rendering, camera, lighting, VFX, styles and game export.',
-    aliases: ['blender3d'],
-    sources: [{ repo: 'arjun988/blender-skills', clone: 'blender-skills', path: '.claude/skills', ref: '904f095d8f36a6e72adaebb08d07f884a074743d' }],
   },
   {
     id: 'hyperframes',
@@ -102,7 +94,7 @@ const PACKS = [
     title: 'Impeccable',
     blurb: "Paul Bakaus's design vocabulary for agents: one skill with commands to audit, polish, critique and restyle a frontend.",
     aliases: ['pbakaus'],
-    sources: [{ repo: 'pbakaus/impeccable', clone: 'impeccable', path: 'plugin/skills', ref: 'ec229b48547f24685ffb22aa51c462c5ae27908c' }],
+    sources: [{ repo: 'pbakaus/impeccable', clone: 'impeccable', path: 'plugin/skills', ref: 'd41d9860b0094dcb68030657da63461212835aaa' }],
   },
   {
     id: 'security-audit',
@@ -124,7 +116,7 @@ const PACKS = [
     title: 'Diagram Design',
     blurb: "Cathryn Lavery's editorial diagrams: architecture, flow, sequence and more as clean HTML and SVG.",
     aliases: ['diagram', 'diagrams'],
-    sources: [{ repo: 'cathrynlavery/diagram-design', clone: 'diagram-design', path: 'skills', ref: 'f2496acbde9f45ccb55c24d4f75210c8a1355df8' }],
+    sources: [{ repo: 'cathrynlavery/diagram-design', clone: 'diagram-design', path: 'skills', ref: 'f6db0decea96de66b901331a0f79a8d4b147ebae' }],
   },
   {
     id: 'taste-skill',
@@ -138,7 +130,7 @@ const PACKS = [
     title: 'Hallmark',
     blurb: 'A design skill that refuses the AI look: new pages, audits, redesigns and design extraction.',
     aliases: ['nutlope'],
-    sources: [{ repo: 'Nutlope/hallmark', clone: 'hallmark', path: 'skills', ref: '407fa689f4a276f2fd389208d271d0fef08f5058' }],
+    sources: [{ repo: 'Nutlope/hallmark', clone: 'hallmark', path: 'skills', ref: '04977e15f3dfd6ee4b74c887dac3eb52665d6c92' }],
   },
   {
     id: 'ponytail',

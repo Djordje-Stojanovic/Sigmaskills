@@ -24,7 +24,7 @@ test('packs: the registry lists the bundled Sigma pack and the nineteen outside 
   const box = createSandbox();
   try {
     const packs = load(box);
-    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'blender', 'local']);
+    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'local']);
     const sigma = findPack(packs, 'sigma');
     assert.equal(sigma.skills.length, catalog.skills.length);
     assert.ok(sigma.skills.every((skill) => skill.kind === 'bundled'));
@@ -213,7 +213,6 @@ test('packs: the per-project packs are registered and every outside source is pi
       assert.ok(pack.skills.length > 0, `${id} lists skills`);
       for (const source of pack.sources) assert.match(source.ref, /^([0-9a-f]{40}|v\d[\w.]*)$/, `${id} ${source.repo} is pinned`);
     }
-    assert.equal(findPack(packs, 'blender').skills.length, 94, 'Blender holds the 94 arjun988 skills');
   } finally {
     box.cleanup();
   }

@@ -35,6 +35,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Changed
 
 - `sigmacourse`: a program measures a persona (small-word score, 8-word copy count); no model judge or agent grades it.
+- The wizard's first step (What) no longer sorts packs under topic headings (Core, Design and taste, Engineering, Media and 3D, Research and finance, More). That grouping shipped in 0.27.3 and is withdrawn: a pack stays its own pack (#338).
+- The first step now has two headings. Packs lists every pack with more than one skill, in the registry's order (Sigma, Matt Pocock, Three.js, HyperFrames, MiniMax H3, Anthropic, Design.md, Financial Services, tstack, Superpowers, Ponytail), then Local and any pack from your own `~/.sigmaskills/packs.json`. Single skills lists every source that ships one skill (Last 30 Days, Impeccable, Security Audit, Anatomy, Diagram Design, Taste, Hallmark). Local always sits under Packs, however few skills its folder holds. The cursor skips the headings, empty packs stay hidden, and the number keys follow screen order (#338).
+- The installer no longer offers the Blender pack. Skills you already installed from it stay where they are until you uninstall them (`sigmaskills uninstall --skill <name>`) (#338).
+- Every pinned pack moves to its newest upstream version. Matt Pocock, Anthropic, Design.md, Financial Services, tstack, Impeccable, Diagram Design and Hallmark move to their newest commits. HyperFrames moves to tag v0.9.65 (was v0.9.30) and Last 30 Days to tag v4.3.2 (was v3.33.1). Three.js, Superpowers, Security Audit, Anatomy, Taste and the HyperFrames student kit were already current. Ponytail stays on v5.3.3, its newest release. No pack gains or loses a skill (#338).
 
 ## [0.27.3] — 2026-11-18
 
