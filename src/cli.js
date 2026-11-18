@@ -492,13 +492,14 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeErr('sigmaskills error: uninstall requires --yes to apply, or --dry-run to preview');
         return 1;
       }
-      // Every Sigma skill is core, so --non-core only touches pack skills.
+      // --non-core removes what CORE_PACKS does not name: pack skills, and the Sigma skills too once `sigma` leaves that line.
+      const sigmaOut = Boolean(opts.nonCore) && !CORE_PACKS.includes('sigma');
       const externalIds = opts.nonCore
         ? packStatus(stateParams()).filter((row) => !CORE_PACKS.includes(row.pack)).map((row) => row.id)
         : externalIdsOf(opts.skillIds);
-      if (opts.nonCore && externalIds.length === 0 && !opts.json) writeOut('Nothing outside the core is installed.');
+      if (opts.nonCore && !sigmaOut && externalIds.length === 0 && !opts.json) writeOut('Nothing outside the core is installed.');
       const sigmaIds = opts.skillIds.filter((id) => !externalIds.includes(id));
-      const runSigma = opts.all || sigmaIds.length > 0;
+      const runSigma = opts.all || sigmaOut || sigmaIds.length > 0;
       const result = runSigma ? executeUninstall({
         catalog,
         projectRoot: opts.projectRoot || process.cwd(),
@@ -509,10 +510,10 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         dryRun: opts.dryRun,
         env,
         skillIds: sigmaIds,
-        all: opts.all,
+        all: opts.all || sigmaOut,
         yes: opts.yes,
         clean: opts.clean || (opts.yes || opts.all ? 'remove' : undefined),
-        changed: opts.changed || (opts.all ? 'backup' : undefined),
+        changed: opts.changed || (opts.all || sigmaOut ? 'backup' : undefined),
         exportDir: opts.exportDir || undefined,
       }) : null;
       let packEntries = [];
