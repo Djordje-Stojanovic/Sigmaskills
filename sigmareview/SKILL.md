@@ -5,7 +5,7 @@ description: Use when the user asks for SigmaReview or a full review. Find and p
 
 # SigmaReview
 
-Find what is wrong, prove it, and write it down so well that any engineer or LLM can fix every problem without rediscovering it. You fix nothing yourself. "Wrong" means the system breaks a promise it already makes: its goals, docs, specs, tests, interfaces, budgets, or the plain intent of its code. Bugs, security holes, slow paths, wasted resources, broken rendering and tests that would miss a real failure all go in one review file.
+Find what is wrong, prove it, and write it down so well that any engineer or LLM can fix every problem without rediscovering it. You fix nothing yourself. "Wrong" means the system breaks a promise it already makes: its goals, docs, specs, tests, interfaces, budgets, or the plain intent of its code. Bugs, security holes, slow paths, wasted resources, broken rendering and tests that would miss a real failure all go in one review file. Invoked together with a skill that builds (SigmaShip), its lenses check that run's own work and the builder fixes what they find: no review file, no separate PR.
 
 An idea about what the system *should become* (a missing feature, a weak design) belongs to SigmaImprove: name strong ones in one line at the end. Code that is only large or repetitive, with no defect, belongs to SigmaMusk.
 

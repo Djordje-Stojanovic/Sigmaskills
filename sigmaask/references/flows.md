@@ -29,7 +29,7 @@ Each example shows the reasoning, so read for the method more than the answer.
 - SigmaImprove compares the product with the world's top 1-3 and keeps one living issue per category. Each entry has a `Done when:` line, so SigmaShip can ship it.
 - Several entries at once go through SigmaBrief, or through SigmaLoop for an unattended run.
 
-**SigmaShip** is the end of both loops. It ships one issue with acceptance criteria: a test-first PR, review rounds, then the merge. `sigmaship stop` ends at a ready PR. Without criteria, its own table sends you to `to-spec`/`to-tickets`, to `grilling`, or to SigmaReview/SigmaImprove.
+**SigmaShip** is the end of both loops. It ships one issue with acceptance criteria: a test-first PR, a self-review (a second-agent review only on request), then the merge. `sigmaship stop` ends at a ready PR. Without criteria, its own table sends you to `to-spec`/`to-tickets`, to `grilling`, or to SigmaReview/SigmaImprove.
 
 ## On-ramps
 

@@ -53,7 +53,7 @@ Each skill has one job. Say its name to start it.
 | `sigmareview` | Finds and proves what is wrong in a repo (bugs, security, slow paths) and publishes one review PR. Never changes your code. | `gh` to push and open the PR |
 | `sigmaimprove` | Compares a product with the top 1-3 in its field and keeps one living issue of ideas per category. Never edits the product. | |
 | `sigmabrief` | Writes copy-pastable agent briefs from issues or plans, in safe parallel waves. Only when you ask by name. | |
-| `sigmaship` | Ships one GitHub issue with checkable acceptance criteria: test-first PR, review rounds, merge, clean up. | `gh` with push rights |
+| `sigmaship` | Ships one GitHub issue with checkable acceptance criteria: test-first PR, self-review (a reviewer only on request), merge, clean up. | `gh` with push rights |
 | `sigmadebug` | Lists every open question, grills one topic at a time, plans each fix and ships it in a background agent. | |
 | `sigmacorrect` | Turns a correction you gave twice into a type, a check or a test that fails on the real mistake; docs last. | |
 | `sigmamusk` | Runs Musk's five-step Algorithm on a plan, a codebase (`cut`) or a whole setup (`reset`): measure, delete first, you decide what stays. | |

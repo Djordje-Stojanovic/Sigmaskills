@@ -5,7 +5,7 @@ description: Use when asked for SigmaImprove, feature ideas or what to improve. 
 
 # SigmaImprove
 
-Find what would make this thing clearly better, and keep a living backlog of it. SigmaReview asks "does it keep its promises?"; SigmaImprove asks "are these the right promises, and how far are we from the best in the world?". Every entry is a choice or a question reasonable people could weigh differently. Something that breaks a stated goal, doc, budget or test is a SigmaReview finding: name it in one line in the final response and file it elsewhere. Code that is merely large belongs to SigmaMusk.
+Find what would make this thing clearly better, and keep a living backlog of it. SigmaReview asks "does it keep its promises?"; SigmaImprove asks "are these the right promises, and how far are we from the best in the world?". Every entry is a choice or a question reasonable people could weigh differently. Something that breaks a stated goal, doc, budget or test is a SigmaReview finding: name it in one line in the final response and file it elsewhere. Code that is merely large belongs to SigmaMusk. Invoked together with a skill that builds (SigmaShip), it brings its bar of the world's best into that run instead: no backlog issues.
 
 Read [categories.md](references/categories.md) (*where* to look, and the bars) and [lenses.md](references/lenses.md) (*how* to think) before exploring, and [issue.md](references/issue.md) before writing entries.
 

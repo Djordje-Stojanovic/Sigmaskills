@@ -1,13 +1,13 @@
 ---
 name: sigmaship
-description: 'Use when asked for sigmaship, ship #123 or ship this ready ticket; sigmaship stop ends at a ready PR. Ships a GitHub issue: test-first PR, review rounds, merge. Do not use without acceptance criteria.'
+description: 'Use when asked for sigmaship, ship #123 or ship this ready ticket; sigmaship stop ends at a ready PR. Ships a GitHub issue: test-first PR, self-review, merge; a second-agent review only on request. Do not use without acceptance criteria.'
 ---
 
 # SigmaShip
 
 Take one measurable ticket and ship it: built, reviewed, merged, deployed, and cleaned up. The ticket is the contract. Every step ends on a check you can observe.
 
-**Two endings.** By default SigmaShip merges (step 6). When the user says `sigmaship stop`, `no merge` or `stop before merge`, run steps 1 to 5 the same way, then stop at a green, reviewed PR marked ready: skip step 6, keep the branch and the worktree, and report what the owner should check before merging.
+**Two endings.** By default SigmaShip merges (step 6). When the user says `sigmaship stop`, `no merge` or `stop before merge`, run steps 1 to 5 the same way, then stop at a green, self-reviewed PR marked ready: skip step 6, keep the branch and the worktree, and report what the owner should check before merging.
 
 Read [review-round.md](references/review-round.md) at step 5, and [land.md](references/land.md) at step 6. Use the shell native to the machine that runs you.
 
@@ -29,7 +29,7 @@ Make a first commit (`git commit --allow-empty`: GitHub refuses a PR with no com
 
 - links: `Closes #<issue>`, the spec, and the parent map;
 - one checkbox per acceptance criterion;
-- sections for rulings, follow-ups, known reds, and review rounds.
+- sections for rulings, follow-ups, known reds, and review (the self-review row, plus any rounds the user asked for).
 
 To resume, read the ledger and `git log`, then continue at the first unchecked criterion.
 
@@ -48,25 +48,25 @@ Keep the change inside the ticket. Put anything else you notice under *Follow-up
 
 Decide ambiguities yourself and record each as `Ruling: <decision> — <reason> — <cost if wrong>`. Stop and ask only for irreversible or destructive actions, security-sensitive choices, side effects outside this branch, or a spec that contradicts itself.
 
-**Done when:** every criterion is ticked with evidence, the full suite and the type check pass locally, run once now (no red except the named known reds), and you have read your own full diff (`git diff origin/<base>...HEAD`) once, as a reviewer would. Update docs or changelog if the repository expects it. Then mark the PR ready.
+**Done when:** every criterion is ticked with evidence, the full suite and the type check pass locally, run once now (no red except the named known reds). Update docs or changelog if the repository expects it. Then mark the PR ready.
 
-## 5. Review rounds
+## 5. Self-review
 
-Each round, a fresh agent with no memory of this work checks the branch against the spec and the SigmaReview lenses, fixes what it finds, and reports back.
+SigmaShip is built to be faster than a full-send flow at the same quality. The builder reviews its own work; no second agent is started.
 
-**Who reviews.** Start the reviewer as a sub-agent of the harness you run in, one model up from the builder when the harness has a stronger one, else its default sub-agent model; do not ask first. Your own tools tell you the harness. When you do not know how it starts a sub-agent or sends a follow-up, read its docs (context7, a web search) before you guess. Round 2 goes to the same reviewer by a follow-up message when the harness has one, so its context stays.
+1. **Read** your full diff (`git diff origin/<base>...HEAD`) against the ticket, as [review-round.md](references/review-round.md#self-review) lists: anything no criterion needs is reverted; every criterion has its test; the risky files are read in full.
+2. **Run** the change: the full checks, and the app, page or command itself, the way a user meets it. A result you only read is not a result you saw.
+3. Fix every P0–P2 finding with a test first, push, and record the self-review as one row in the ledger's *Review rounds* table (round `self`).
 
-If the user names a reviewer model ("SigmaShip reviewer: <model>"), every round uses it. When the harness cannot run it, find 2-3 other routes to that model (an orchestrator that runs other providers, the model's own CLI, its API) and take one: [review-round.md](references/review-round.md#reaching-a-named-reviewer) has one that worked. When none reaches it, say so in one line and use the default reviewer.
+**A second agent only when the user asks** ("with review", "reviewer: <model>", "SigmaShip reviewer: <model>"). Then run up to 2 rounds by [review-round.md](references/review-round.md#when-the-user-asks-for-a-reviewer): a fresh sub-agent of your harness, or the named model by any route that reaches it.
 
-A standing rule of the user or repository about reviewers wins. If it forbids sub-agents, your own full-diff read against the handoff checklist is the round.
-
-**Done when:** a round reports zero P0–P2 findings. CI is checked once, at land. At most 2 rounds: when round 2 still finds P0–P2 problems, stop and ask the user, because the ticket or the design may need rethinking.
+**Done when:** the self-review (and any round the user asked for) found zero P0–P2 left open. CI is checked once, at land.
 
 ## 6. Land and clean up
 
 Under `sigmaship stop`, end here: the PR is ready, and the merge is the owner's.
 
-Otherwise you have the owner's standing permission to merge once the land checks pass: do not ask again. After a clean round, merge and clean up as [land.md](references/land.md) describes.
+Otherwise you have the owner's standing permission to merge once the land checks pass: do not ask again. After a clean self-review, merge and clean up as [land.md](references/land.md) describes.
 
 After the merge, finish the repository's own follow-through with proof: its deploy step (`<deploy command>`) and one live result, the tracker tick (date, PR number, evidence), and the docs sync when guides changed.
 
@@ -76,7 +76,7 @@ Under a run-to-done loop (a `/goal`), the goal line names the printed proof: the
 
 ## Final response
 
-Five lines at most: PR link, criteria met, review rounds and findings fixed, follow-ups and known reds, and cleanup and deploy verified. Under `sigmaship stop`, the last line says the PR is ready and what to check before merging.
+Five lines at most: PR link, criteria met, self-review (what you read and ran) and findings fixed, plus any review round the user asked for, follow-ups and known reds, and cleanup and deploy verified. Under `sigmaship stop`, the last line says the PR is ready and what to check before merging.
 
 ## Personal instructions
 
