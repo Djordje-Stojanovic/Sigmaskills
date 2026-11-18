@@ -113,6 +113,11 @@
       "id": "sigmafinanceman",
       "title": "SigmaFinanceMan",
       "needsReferences": true
+    },
+    {
+      "id": "sigmasetup",
+      "title": "SigmaSetup",
+      "needsReferences": true
     }
   ],
   "retired": [
@@ -121,7 +126,6 @@
     "sigmafork",
     "sigmarefactor",
     "sigmareset",
-    "sigmasetup",
     "sigmadesign",
     "sigmaspeedloop"
   ]

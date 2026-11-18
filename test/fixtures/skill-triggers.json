@@ -364,5 +364,15 @@
   "prompt": "Help me plan a monthly budget from my income and spending",
   "skill": "sigmafinanceman",
   "near": "sigmahuman"
+ },
+ {
+  "prompt": "Sync the house files: bring ENGINEERING.md and DESIGN.md in this repo up to date with my masters",
+  "skill": "sigmasetup",
+  "near": "sigmamusk"
+ },
+ {
+  "prompt": "Set up this repo after the Sigma installer for the packs I installed",
+  "skill": "sigmasetup",
+  "near": "sigmaship"
  }
 ]
