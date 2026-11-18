@@ -280,18 +280,18 @@ export async function runWizard(params) {
     return `${scopeName()} · .agents/skills${hosts ? ` + ${plural(hosts, 'host folder')}, ${state.method === 'link' ? 'linked' : 'copied'}` : ''}`;
   };
   const packOf = (id) => packCatalog.packs.find((pack) => pack.skills.some((skill) => skill.id === id));
-  const stateParams = () => ({ scope: state.scope, projectRoot, homeDir, customStateDir });
+  const stateParams = (scope = state.scope) => ({ scope, projectRoot, homeDir, customStateDir });
   const installedByScope = new Map();
-  const installedNow = () => {
-    if (!installedByScope.has(state.scope)) {
+  const installedNow = (scope = state.scope) => {
+    if (!installedByScope.has(scope)) {
       try {
-        const sigma = state.scope === 'global' ? loadGlobalState(path.resolve(homeDir), customStateDir) : loadProjectState(path.resolve(projectRoot), customStateDir);
-        installedByScope.set(state.scope, new Set([...packStatus(stateParams()).map((row) => row.id), ...Object.keys(sigma.skills || {})]));
+        const sigma = scope === 'global' ? loadGlobalState(path.resolve(homeDir), customStateDir) : loadProjectState(path.resolve(projectRoot), customStateDir);
+        installedByScope.set(scope, new Set([...packStatus(stateParams(scope)).map((row) => row.id), ...Object.keys(sigma.skills || {})]));
       } catch {
-        installedByScope.set(state.scope, new Set());
+        installedByScope.set(scope, new Set());
       }
     }
-    return installedByScope.get(state.scope);
+    return installedByScope.get(scope);
   };
   /** The slots a limited pack holds now: what is installed (minus drops) and what is picked. */
   const slotsOf = (pack) => {
@@ -319,13 +319,19 @@ export async function runWizard(params) {
       const focus = rows[cursor];
       const installed = [...installedNow()];
       const updatable = installed.filter((id) => packOf(id));
+      const other = state.scope === 'global' ? 'project' : 'global';
+      // The other scope is counted too, so a forgotten Global Installation shows up from any project.
+      const elsewhere = installedNow(other).size;
       const countWidth = Math.max(...packs.map((pack) => `${pack.skills.length}/${pack.skills.length}`.length));
       const paint = () => {
         const lines = screen.header(0);
         lines.push(screen.rail([[scopeName(), C.ink, true], ['  ', C.mute], [scopeRoot(), C.mute]], [`s switch to ${scopeName(state.scope === 'global' ? 'project' : 'global')}`, C.mute]));
-        lines.push(screen.rail(installed.length
-          ? [[`${installed.length} installed here`, C.ok], [`   u update ${updatable.length === installed.length ? 'them' : updatable.length} · x uninstall them`, C.mute]]
-          : [['Nothing installed here yet', C.mute]]));
+        lines.push(screen.rail([
+          ...(installed.length
+            ? [[`${installed.length} installed here`, C.ok], [`   u update ${updatable.length === installed.length ? 'them' : updatable.length} · x uninstall them`, C.mute]]
+            : [['Nothing installed here yet', C.mute]]),
+          [elsewhere ? `   ${elsewhere} more in ${scopeName(other)}: s to see them` : '', C.warn],
+        ]));
         lines.push(screen.rail(searching || query ? [['Filter  ', C.mute], [`${query}${searching ? '▏' : ''}`, C.ink]] : []));
         const footer = 8;
         const room = Math.max(3, screen.height - lines.length - footer);
