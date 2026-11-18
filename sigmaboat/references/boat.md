@@ -6,7 +6,7 @@ the docs page that holds it (https://docs.boat.dev/PAGE.md).
 ## One-time setup: the two environments
 
 ```sh
-boat env new base-empty && boat env set base-empty --github false --secrets false --boat-credentials false --agents-credentials false
+boat env new base-empty && boat env set base-empty --safe-for-third-parties true     # injects nothing at all
 boat env new boxes && boat env set boxes --github false --secrets true --boat-credentials true --agents-credentials true
 boat env set-file boxes .config/keys.txt < keys.txt     # stdin, never an argument; again whenever a key changes
 ```
