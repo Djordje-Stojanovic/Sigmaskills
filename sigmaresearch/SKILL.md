@@ -20,7 +20,7 @@ It reads `reddit`, `hn`, `github`, `stackoverflow`, `youtube`, `x` (a post URL, 
 Places to try per platform (the notes hold the commands; say which route answered):
 
 - **Reddit:** [reddit.md](references/reddit.md). The `.json` of any old.reddit listing or thread, the Arctic Shift archive (full comment tree, often removed posts too), RSS, then a search engine with `site:reddit.com` or a Wayback copy; beyond the reader, a real browser, another address, more archives.
-- **X:** [x.md](references/x.md). A post URL reads without a login (FxTwitter, the embed JSON, vxTwitter, then oEmbed); search and replies through the owner's signed-in browser.
+- **X:** [x.md](references/x.md). A post URL reads without a login (FxTwitter, the embed JSON, vxTwitter, then oEmbed); search and replies through the owner's signed-in browser; a user's newest posts through the X API with the user's own key.
 - **GitHub, Hacker News, Stack Overflow, YouTube, arXiv, SEC EDGAR, Hugging Face:** [public-sources.md](references/public-sources.md). Their official APIs first (GitHub REST and code search, HN Algolia, the Stack Exchange API, EDGAR full-text search, the Hub API).
 - **Video** (YouTube, Bilibili, Rumble and others): the subtitles the site gives without a login, else download the audio and run a local speech-to-text: [access-ladder.md](references/access-ladder.md).
 - **Another language:** fetch the original page, translate inline, keep the original quote and URL. A local site often has the story first.
