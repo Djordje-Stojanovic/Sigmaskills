@@ -378,6 +378,7 @@ Rules during the run:
 
 - Each path is checked again with `lstat`. A link is deleted itself, never its target.
 - Canonical content stays until its recorded dependents are gone.
+- A skill folder that git tracks belongs to the repo. No uninstall deletes it: `--skill` stops with `git-tracked`, `--all` skips it, a pack skill is kept. Remove it with `git rm`.
 - With `--skill`, a missing path, stale state, an unowned replacement, a managed copy that differs, or a link to the wrong target stops the run. Ownership does not change.
 - With `--all`, those cases skip that one skill. The rest continue, and the result lists it as skipped.
 - If the run is interrupted or fails, a recovery journal (`uninstall-journal.json`) stays in the private state folder. The failed skill is restored, so no partial links remain.

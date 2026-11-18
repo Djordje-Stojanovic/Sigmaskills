@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { acquireConcurrencyLock } from './transaction.js';
-import { createSkillLink, pathExists, removeManagedPath } from './links.js';
+import { createSkillLink, gitTracked, pathExists, removeManagedPath } from './links.js';
 import { UNIVERSAL_PROJECT_DESTINATION, resolveGlobalSkillPath, resolveSkillPath } from './destinations.js';
 import { findSkillDirs, hashDirectory } from './pack-source.js';
 import { assertSafeSkillId } from './paths.js';
@@ -302,6 +302,10 @@ export function uninstallPackSkills(params) {
       const edited = pathExists(canonical.destination) && safeHash(canonical.destination) !== record.hash;
       const destinations = [canonical, ...(record.roots || []).map((root) => ctx.resolve(root, id))]
         .map((dest) => ({ relativeDestination: dest.relativeDestination, destination: dest.destination }));
+      if (gitTracked(canonical.destination)) {
+        results.push({ id, pack: record.pack, status: 'edited', note: 'committed in git; the repo owns it, kept', destinations });
+        continue;
+      }
       if (edited && !force) {
         results.push({ id, pack: record.pack, status: 'edited', note: 'local edits found; kept (use --force to back up and remove)', destinations });
         continue;
