@@ -1,54 +1,103 @@
 ---
 name: sigmaboat
-description: 'Use when asked for sigmaboat or to run authorized work (loop file, ship issue, spec) on boat.dev sandboxes: base once, fork per worker, delete. Do not use to plan work (SigmaLoop) or by default.'
+description: 'Use when asked for sigmaboat or a cloud box: work a task of any repo on a boat.dev box, watch, delete or update boxes and the base, preview a dev server from a box, or run authorized work (loop file, ship issue, spec) on boat workers. Do not use to plan work (SigmaLoop) or for GPU jobs (SigmaVast).'
 ---
 
 # SigmaBoat
 
-Give work the user already authorized extra machines: [boat.dev](https://boat.dev) sandboxes (Ubuntu VMs, no GPU). SigmaBoat keeps one stopped base per repo, forks one worker per item, runs each item's gate there, lands the result by the work's own rules, and deletes every worker it started.
+Cloud machines on [boat.dev](https://boat.dev): Linux sandboxes, no GPU, rented by the second. Three kinds, told apart by name:
+
+| Kind | Name | Life |
+|---|---|---|
+| **base** | `base` | stays stopped; holds tools, agent setup and repos, **no key**; only copied |
+| **box** | `box-REPO` | a copy of the base for one task; ends merged and deleted |
+| **worker** | `worker-REPO` | a copy of the base for one command; deleted when it ends |
+
+SigmaBoat makes them, watches them, keeps the base current, and leaves nothing running that nobody needs.
 
 ## Operating contract
 
-- **Explicit only.** Start a sandbox only when the user's message or the spec names boat. No size has a GPU: GPU work goes to `lacompute` (SigmaVast). Sizes are `small` (half the price), `default` and `large`: a worker has the size of its base, and `laboat fork <repo> --type small` picks another.
-- **Authorized work only.** The input is a loop file, an issue with acceptance criteria or a spec. SigmaBoat writes no plan; the host runs the work with its own subagents, threads or `/goal`. SigmaBoat supplies the machines and cleans them up.
-- **Through `laboat` only.** `laboat` signs in from the keys file of the machine it runs on, on every run, and passes keys on stdin. Use it for every boat call, not the raw `boat` CLI. `lahelp laboat` is the command list; read it once.
-- **Secrets.** Never print a key or token. `laboat checkout` and `laboat job --key NAME` pass them on stdin.
-- **Delete what you start.** At the end, and after any failure, every worker is gone. Keep only stopped bases.
-- **Docs.** Live: https://docs.boat.dev (page list: https://docs.boat.dev/llms.txt; add `.md` to a page address for plain text). The machines also keep a copy that `lasynctoolkit` refreshes: `docs/vendor/Boat_docs/` in the toolkit checkout that holds `laboat` and its guide. Read `cli-reference.md`, `pricing.md` and `limits.md` there before you guess a flag, a price or a limit. When you brief a worker agent, paste these two addresses and the `docs/vendor/Boat_docs/` path into its brief.
+- **Explicit only.** Start a box or a worker only when the user's message or the spec asks for a cloud machine or names boat.
+- **The lab's wrapper first.** Before the first command, look for the lab's boat guide, if this machine has one: search the agent
+  instructions (`AGENTS.md`, `CLAUDE.md`) for "boat" and run the wrapper they name with `-h` (a lab may wrap boat in one command,
+  such as `laboat`). The wrapper and the guide win over this skill: they hold the account, the repos, the machines and the
+  commands. With no wrapper, use the boat CLI as in [references/boat.md](references/boat.md).
+- **Keys live in a boat environment, never on the base.** boat injects an environment's variables and secret files into each
+  sandbox at its start; the base runs in an environment that injects nothing, so its disk and snapshot hold no secret and no fork
+  inherits one. A login (Claude, Codex, `gh`) is a secret too. Pass keys on stdin; print none; write none into a repo, a log, a
+  pull request or a report.
+- **Your sandboxes only.** A sandbox whose name is none of the three kinds belongs to the owner: never stop, change or delete it.
+- **Pushed before deleted.** A box is deleted only after step 4 of the box flow passes.
+- **Docs.** https://docs.boat.dev (page list `https://docs.boat.dev/llms.txt`; add `.md` to a page for plain text). Read the page
+  before you guess a flag, a price or a limit.
 
-## Where it runs
+## Branches
 
-- `laboat` runs on the machine you type it on. `laboat --on <machine> ...` (a name from the hosts file) runs it on another. There, a machine failure stops with exit 75 and does not hand over.
-- A **machine** failure (no CLI, no key, no network, a refused key) prints one line and hands the command to the next machine. A **job** failure inside a sandbox is never retried elsewhere: report its exit code.
-- Every command on one sandbox takes its `bx_` id. Auto-stop ends a sandbox at its `--ttl` (trial maximum 2 h): split longer items.
-- A fork is a start. boat counts starts per minute, hour and day and never queues one: start workers one at a time, and read `limits.md` for today's numbers.
+| The user wants | Go to |
+|---|---|
+| a task done on a box ("a box for this repo", "work issue 12 on boat") | The box flow |
+| to try a running app before the merge | Preview |
+| what runs, what costs, what to clean up | Watch |
+| the base current, a repo added to it | The base |
+| a loop file, ship issue or spec run on parallel workers | Workers |
 
-## Steps
+## The box flow
 
-```sh
-laboat limits --all                 # per account: sandboxes running of its cap, starts left today; workers = min(free slots, starts left, ready items)
-laboat base <repo>                  # build or refresh the stopped base (clone, install)
-laboat job <repo> <branch> [--key NAME]... -- '<command>'   # one whole item: fork, branch, run, bring the branch home, delete
-```
+1. **Make it.** Copy the base into the keys environment, with an auto-stop (boat's deadline, the safety net: 8 hours is a good
+   default), pull the repo to the newest main, make the task's branch (`issue-N` for an issue). If the lab links boxes into an
+   agent UI (T3 Code and similar), the wrapper does it here.
+2. **Work.** In the repo on the box: the change, the repo's own checks, the docs the change touches, commits.
+3. **Open the pull request.** Push the branch; the body says `Closes #N` for an issue. Send the preview (below) when there is one.
+4. **Check.** On the box, `git status --porcelain` is empty and `git log --branches --not --remotes --oneline` prints only the
+   task's branch, pushed as it is. Any other output: push it, or ask the owner.
+5. **Land.** Merge by the repo's rules (squash unless it says otherwise; SigmaShip when the work came as a ship issue), delete
+   the branch, then delete the box. The issue closes with the merge. Report the box id as deleted.
 
-By hand, the same item:
+A pause: stop the box, later start it again (the disk stays). Starting it again also moves its auto-stop.
 
-```sh
-laboat fork <repo>                                  # prints the worker's bx_ id
-laboat exec <id> --cwd <repo> -- git switch -c <branch>
-laboat exec <id> --cwd <repo> -- <the item's work, committed>
-laboat exec <id> --cwd <repo> -- <gate command>     # keeps the exit code
-laboat pull <id> <repo> <branch>                    # the branch into your checkout
-laboat delete <id>                                  # usage saved, then deleted
-```
+## Preview
 
-Then land by the rules of the work that was invoked (loop file, SigmaShip, spec): push, open the pull request, merge only if that work allows it. Last: `laboat clean` deletes only the sandboxes `laboat` made (named `worker-*`; exit 1 names one it could not delete), then `laboat list` shows only `base-*` and the sandboxes of other tools, which stay. `laboat clean --all` also deletes the other tools' sandboxes: run it only when the owner asks.
+Run the app on the box bound to `0.0.0.0` and give the owner the box's private network address and port (a tailnet name when
+the lab joins boxes to Tailscale; boat's own `boat host` URL otherwise, which is public: ask first). Send it before the merge, so
+the owner tries the change first.
+
+## Watch
+
+List every sandbox at the start and at the end of every boat task, and whenever the user asks what runs. Then act on each row:
+
+| Row | Do |
+|---|---|
+| box, its pull request merged or closed | step 4, then delete it |
+| box you cannot tie to an open task | warn the owner: id, repo, age, state; delete only on the owner's word |
+| box running for hours with no work | warn the owner: it bills until it stops |
+| base, running | an update failed or is running: finish it, or stop the base |
+| worker | delete it (workers live one command) |
+| any other name | nothing: it is the owner's |
+
+The final report lists every box still running, with its task.
+
+## The base
+
+- **Update it** when the owner says "update the base", after a change to the agent setup, or when it is a month old: start it,
+  copy the agent setup, pull and install every repo in it, stop it, save its snapshot again (the backup). Nobody works on it
+  between updates.
+- **Add a repo:** clone it during an update. Each repo installs from its own files (`.boat/setup.sh`, else its lockfiles), so
+  nobody keeps a repo list.
+- **A key changed:** save the keys again into the keys environment; the base stays as it is. New boxes get the new keys.
+- The base never joins a private network or serves an agent UI: every copy would share that identity.
+
+## Workers
+
+For a loop file, an issue with acceptance criteria or a spec that the user already authorized. SigmaBoat writes no plan; the host
+runs the work and SigmaBoat supplies the machines. Workers = min(free slots, starts left today, ready items). Start them one at a
+time (boat never queues a start), each a copy of the base with a 2-hour auto-stop and one command on its own branch. Fetch each
+branch back, land it by the rules of the work that was invoked, and delete every worker at the end.
 
 ## Final response
 
-1. A table: worker id (`bx_...`), item, gate exit code, minutes, cost, deleted (yes).
-2. The base: id, revision, state (stopped).
-3. The pull requests the landing produced, and each item that did not finish, with its reason.
+1. Every sandbox SigmaBoat made or touched: id, kind, repo, task, state (deleted, stopped, running with its reason).
+2. The pull requests, and each item that did not finish, with its reason.
+3. The warnings from Watch, if any.
 
 ## Personal instructions
 
