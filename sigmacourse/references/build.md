@@ -27,7 +27,7 @@ A job is a batch of units: lessons, guide sections or scenes. Size it so one rev
 - Every quote is checked word for word against a stored source; read the passage around it.
 - An "as of" setting lets a persona speak from a case's decision date.
 - A persona the learner can ask inside the course cites its sources, says when it does not know, and opens no answer before the attempt.
-- Run rules: `hosts.md`. Realism: `lessons.md`, the blind mix.
+- Run rules: `hosts.md`. Realism: `lessons.md`, the persona numbers.
 
 ## Media
 
