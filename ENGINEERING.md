@@ -16,7 +16,7 @@ The Algorithm, in Musk's own words (Lex Fridman podcast; the whole passage, Jobs
 
 What it looks like: Raptor 1 was a tangle of outside pipes; Raptor 3 moved them inside the metal, lost about 90 % of its welds and got lighter and stronger. Steve Jobs (1997): focus "means saying no to the hundred other good ideas"; "innovation is saying no to 1,000 things". Stefan, about a guide for a tool he does not use: as little as possible should be written down.
 
-Simpler never means worse: we cut parts, steps and words, never what the viewer or user gets. So: the best part is no part. Every addition deletes something else. AI loves to add; say plainly what goes. Find the root cause and fix it once; a lesson becomes one line where the agent already reads; a correction the owner gave twice becomes a check that fails, through SigmaCorrect. Say what to do, not what to avoid ("make it 10-12 min", not "fail below 10"). Ship small and often, measure, then decide. The person who builds it runs it and fixes it.
+Simpler never means worse: we cut parts, steps and words, never what the viewer or user gets. So: the best part is no part. Every addition deletes something else. AI loves to add; say plainly what goes. Find the root cause and fix it once; a lesson becomes one line where the agent already reads, never a new check or test. Say what to do, not what to avoid ("make it 10-12 min", not "fail below 10"). Ship small and often, measure, then decide. The person who builds it runs it and fixes it.
 
 ## 2. How we write code (Karpathy)
 
