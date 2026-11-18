@@ -34,6 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
+- `sigmahuman`: takes the rest of blader/humanizer v4.0.0 outside the patterns: prompt-injection examples, the *weak alone* rule, the ranking and same-time checks the fact script misses, a whole-file read and partial-pass report in file mode, and voice-detail examples. One upstream line stays out: "add a specific detail you know to be true" breaks the facts-from-source rule.
 - `sigmacourse`: a program measures a persona (small-word score, 8-word copy count); no model judge or agent grades it.
 - The wizard's first step (What) no longer sorts packs under topic headings (Core, Design and taste, Engineering, Media and 3D, Research and finance, More). That grouping shipped in 0.27.3 and is withdrawn: a pack stays its own pack (#338).
 - The first step now has two headings. Packs lists every pack with more than one skill, in the registry's order (Sigma, Matt Pocock, Three.js, HyperFrames, MiniMax H3, Anthropic, Design.md, Financial Services, tstack, Superpowers, Ponytail), then Local and any pack from your own `~/.sigmaskills/packs.json`. Single skills lists every source that ships one skill (Last 30 Days, Impeccable, Security Audit, Anatomy, Diagram Design, Taste, Hallmark). Local always sits under Packs, however few skills its folder holds. The cursor skips the headings, empty packs stay hidden, and the number keys follow screen order (#338).
