@@ -96,6 +96,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaCreate** | `sigmacreate` | Makes a new skill, public or local, and proves an agent picks it up |
 | **SigmaCourse** | `sigmacourse` | Plans and builds teaching of any size; the course decides its own process |
 | **SigmaFinanceMan** | `sigmafinanceman` | Values a public company from free data: DCF, comps, LBO, live Excel |
+| **SigmaSetup** | `sigmasetup` | Sets up a repo for the installed packs and syncs your house rule files |
 | **SigmaCreateArena** | `sigmacreatearena` | Ranks any options blind, by Elo |
 | **SigmaResearch** | `sigmaresearch` | Reads public sources and counts those read in full |
 | **SigmaDeepLook** | `sigmadeeplook` | Reads what agents cannot: video, speech, scans, binaries |
@@ -165,6 +166,10 @@ Plans and builds teaching of any size, subject, audience and medium. It first wr
 ### SigmaFinanceMan
 
 Values a public company from free data it fetches itself: SEC filings, the share price and the 10-year Treasury rate. It runs a DCF, comps, an LBO, a three-statement model, ratios, red flags, a value scorecard and an earnings review, or a household budget from your own file. The DCF gives a bear, base and bull value and what the share price implies (a reverse DCF: the growth the market is betting on). Each run writes an Excel workbook with live formulas, a deck, charts and one page that walks through the method in ten plain steps. Use the Financial Services pack instead when you have your own model template or a paid data feed.
+
+### SigmaSetup
+
+Run it once per repo after the installer, and again when your master rule files change. It brings the repo's copies of your house files (`ENGINEERING.md`, `DESIGN.md`, a shared `AGENTS.md` section) up to date from the folder or repo where you keep the masters. It also sets up what each installed pack needs here: tracker files, labels, tools, keys by name, Ponytail and a git guard. It reports first, asks once, and gives an undo for every change.
 
 ### SigmaCreateArena
 
@@ -513,6 +518,7 @@ $sigmacorrect Stop hardcoding: make it a check
 $sigmacreate Turn what we just did into a skill for this repo
 $sigmacourse A one-page guide to reading a balance sheet
 $sigmafinanceman DCF and comps for MSFT against AAPL, GOOGL and META
+$sigmasetup
 $sigmacreatearena Rank these 8 thumbnail ideas blind
 $sigmaresearch Research recent discussions about local language models
 $sigmadeeplook What happens at 2:10 in D:\clips\demo.mp4?
@@ -546,6 +552,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 /skill:sigmacreate Turn what we just did into a skill for this repo
 /skill:sigmacourse Plan a 10-hour course that makes me fluent in SQL
 /skill:sigmafinanceman What does the price of KO assume?
+/skill:sigmasetup Sync the house files
 /skill:sigmacreatearena Rank these 8 thumbnail ideas blind
 /skill:sigmaresearch Research recent discussions about local language models
 /skill:sigmadeeplook What happens at 2:10 in ~/clips/demo.mp4?
@@ -578,6 +585,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmacreate` | what the skill should do · public or local | Public skills pass a personal-data search; ends when a fresh agent lists it |
 | `sigmacourse` | a subject · the learner · a size (optional) | Prints a step table showing which process steps the course needed and why; never starts the loop |
 | `sigmafinanceman` | a ticker and peers · or a budget file | One question round; reads public data; writes files only to the output folder |
+| `sigmasetup` | (no input) · or "sync the house files" | Masters from `SIGMASETUP_HOUSE` or a `house:` line in its personal instructions; nothing is written before your yes |
 | `sigmadebug` | (no input) · or a list of topics | Writes a topic .txt and a plan .md; one background SigmaShip worker per clear topic |
 | `sigmacreatearena` | what to rank (options, groups, metrics) | Grills first; never ranks for you; you decide when it is enough |
 | `sigmaresearch` | topic · date range · depth or a source count | Reports sources actually read and access gaps |

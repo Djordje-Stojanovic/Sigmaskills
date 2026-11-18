@@ -1,0 +1,12 @@
+interface:
+  display_name: SigmaSetup
+  short_description: Set up a repo for the installed packs and sync your house rule files
+  default_prompt: Use $sigmasetup to compare this repo's house files with my masters, find what the
+    installed packs need here, ask one round of questions, and set up what I say yes to, with an undo
+    for every change.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

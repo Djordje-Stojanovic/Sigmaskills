@@ -11,7 +11,7 @@
 
 
 
-You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaimprove`, `sigmabrief`, `sigmaship`, `sigmawrite`, `sigmaresearch`, `sigmadeeplook`, `sigmadebug`, `sigmacorrect`, `sigmacreate`, `sigmacreatearena`, `sigmacourse`, `sigmafinanceman`, `sigmafreedom`, `sigmaloop`, `sigmataste`, `sigmahuman`, `sigmatour`, `sigmaclimb`, `sigmamusk`, `sigmaboat`, `sigmavast`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
+You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaimprove`, `sigmabrief`, `sigmaship`, `sigmawrite`, `sigmaresearch`, `sigmadeeplook`, `sigmadebug`, `sigmacorrect`, `sigmacreate`, `sigmacreatearena`, `sigmacourse`, `sigmafinanceman`, `sigmasetup`, `sigmafreedom`, `sigmaloop`, `sigmataste`, `sigmahuman`, `sigmatour`, `sigmaclimb`, `sigmamusk`, `sigmaboat`, `sigmavast`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
 
 **Agent memory is off** (owner 2026-11-10, `autoMemoryEnabled` in `.claude/settings.json`): a lesson is one line in this file, not a private note on one machine.
 
@@ -26,11 +26,11 @@ You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) 
 | [`docs/maintainers.md`](docs/maintainers.md) | Maintainer guide: layout, tests, releases, registry automation |
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history (`[Unreleased]` for WIP) |
 | [`DESIGN.md`](DESIGN.md) | The one design file for every site and app UI (tokens, type, layout, components): read it before any UI work. |
-| `sigmareview/` · `sigmaimprove/` · `sigmabrief/` · `sigmaship/` · `sigmawrite/` · `sigmaresearch/` · `sigmadeeplook/` · `sigmadebug/` · `sigmacorrect/` · `sigmacreate/` · `sigmacreatearena/` · `sigmacourse/` · `sigmafinanceman/` · `sigmafreedom/` · `sigmaloop/` · `sigmataste/` · `sigmahuman/` · `sigmatour/` · `sigmaclimb/` · `sigmamusk/` · `sigmaboat/` · `sigmavast/` | The skills |
+| `sigmareview/` · `sigmaimprove/` · `sigmabrief/` · `sigmaship/` · `sigmawrite/` · `sigmaresearch/` · `sigmadeeplook/` · `sigmadebug/` · `sigmacorrect/` · `sigmacreate/` · `sigmacreatearena/` · `sigmacourse/` · `sigmafinanceman/` · `sigmasetup/` · `sigmafreedom/` · `sigmaloop/` · `sigmataste/` · `sigmahuman/` · `sigmatour/` · `sigmaclimb/` · `sigmamusk/` · `sigmaboat/` · `sigmavast/` | The skills |
 | [`test/repo-invariants.test.js`](test/repo-invariants.test.js) | `KNOWN_SKILLS` registry + `npm test` guards |
 | `.github/` | Issue forms, PR template, Release and Registry sync workflows |
 
-When you add a skill (or rename/remove one): update `KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js) together with README, the per-skill install lines in `docs/installer.md`, and CHANGELOG, or `npm test` fails on purpose. Folder name = frontmatter `name` = `--skill` id. Then run `npm test`.
+When you add a skill (or rename/remove one): update `KNOWN_SKILLS` in [`test/repo-invariants.test.js`](test/repo-invariants.test.js) together with README, the per-skill install lines in `docs/installer.md`, and CHANGELOG, or `npm test` fails on purpose. Folder name = frontmatter `name` = `--skill` id. Every installer pack also needs a setup guide in `sigmasetup/references/packs/<pack>.md`, and every Sigma skill a `### <id>` section in `sigma.md` there; `test/sigmasetup.test.js` fails until both exist. Then run `npm test`.
 
 **Merging (like T3 Code):** squash only, the PR title becomes the commit title (`title (#N)`). After the merge, close the linked issue, delete the remote and local branch and remove the worktree; `sigmaship/references/land.md` has the commands. The repo deletes the remote branch on merge by itself. The land step also runs `git -C /work/Thinkcenter_Setup pull -q --ff-only && python3 /work/Thinkcenter_Setup/scripts/project_skills.py --global` once (dev box; the pull makes sure the script is current): it installs `main` on the PC, the dev box and the Spark and prints one line each. If a machine is off, its line says FAIL and the other machines still update. It catches up by itself: its repo timer pulls Sigmaskills, and a post-merge hook in that clone runs the install. Or run the command again when it is back on.
 
