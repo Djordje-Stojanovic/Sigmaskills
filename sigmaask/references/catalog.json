@@ -1,6 +1,6 @@
 {
  "generatedBy": "scripts/sigmaask-catalog.js",
- "release": "0.29.0",
+ "release": "0.29.1",
  "retired": {
   "sigmaperformance": "sigmareview",
   "sigmawritegui": "sigmawrite",
