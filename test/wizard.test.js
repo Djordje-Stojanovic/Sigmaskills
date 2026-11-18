@@ -98,8 +98,8 @@ test('wizard: a pack from outside installs, and the review names the download', 
   try {
     createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
     writeUserConfig(box.home, { packs: [ACME_PACK] });
-    // Acme is the 13th pack: twelve built-in packs come first, the one-skill sources after it.
-    const { code, io } = await wizard(box, `${DOWN.repeat(12)} ${ENTER}${ENTER}${ENTER}`);
+    // Acme is the 21st pack: twenty built-in packs come first, the one-skill sources after it.
+    const { code, io } = await wizard(box, `${DOWN.repeat(20)} ${ENTER}${ENTER}${ENTER}`);
     assert.equal(code, 0, io.err());
     assert.ok(io.frames().some((frame) => /Downloads\s+acme\/skills/.test(frame)));
     assert.match(io.text(), /2 skills installed/);
@@ -194,21 +194,23 @@ test('wizard helpers: windowRows keeps the cursor in view and buildPackRows nest
   assert.deepEqual(buildPackRows(packs, new Set(), 'berry').map((row) => row.skill.id), ['three'], 'a pack name matches its skills');
 
   const grouped = orderPacks([
-    { id: 'taste', title: 'Taste', available: true, skills: [{ id: 'x' }] },
+    { id: 'taste', title: 'Taste', category: 'Design', available: true, skills: [{ id: 'x' }] },
+    { id: 'audit', title: 'Audit', category: 'Engineering', available: true, skills: [{ id: 'w' }] },
     { id: 'empty', title: 'Empty', available: true, skills: [] },
     { id: 'matt', title: 'Matt', available: true, skills: [{ id: 'y' }, { id: 'z' }] },
     { id: 'off', title: 'Off', available: false, note: 'set a folder', skills: [] },
   ]);
-  assert.deepEqual(grouped.map((pack) => pack.id), ['matt', 'off', 'taste'], 'packs keep their order, one-skill sources go last, an empty pack is hidden, an unavailable pack keeps its note');
-  assert.deepEqual(buildPackRows(grouped, new Set(), '').map((row) => row.group || row.pack.id), ['Packs', 'matt', 'off', 'Single skills', 'taste']);
+  assert.deepEqual(grouped.map((pack) => pack.id), ['matt', 'off', 'audit', 'taste'], 'packs keep their order, one-skill sources go last by category, an empty pack is hidden, an unavailable pack keeps its note');
+  assert.deepEqual(buildPackRows(grouped, new Set(), '').map((row) => row.group || row.pack.id), ['Packs', 'matt', 'off', 'Engineering', 'audit', 'Design', 'taste']);
+  assert.deepEqual(buildPackRows(grouped, new Set(), 'design').map((row) => row.skill.id), ['x'], 'the filter matches a category name');
 });
 
-test('wizard: packs stay packs, single skills sit together, and a long name never runs into its count', async () => {
+test('wizard: packs stay packs, single skills sit under their category, and a long name never runs into its count', async () => {
   const box = createSandbox();
   try {
     const { io } = await wizard(box, CTRL_C, [], { columns: 80, rows: 60 });
     const first = io.frames().find((frame) => frame.includes('Pick packs'));
-    assert.match(first, /\n│ {2}Packs ─+\n[\s\S]*Matt Pocock[\s\S]*\n│ {2}Single skills ─+\n[\s\S]*Taste/);
+    assert.match(first, /\n│ {2}Packs ─+\n[\s\S]*Matt Pocock[\s\S]*\n│ {2}Design ─+\n[\s\S]*Taste/);
     assert.doesNotMatch(first, /[a-z]\d+\/\d+/, 'a space always separates name and count');
   } finally {
     box.cleanup();

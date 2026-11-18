@@ -7,7 +7,7 @@ import { runCli } from '../src/cli.js';
 import { findPackageRoot, getCatalog } from '../src/catalog.js';
 import { createSourceFetcher } from '../src/pack-source.js';
 import { buildTransform } from '../src/pack-transform.js';
-import { findPack, loadPackCatalog } from '../src/packs.js';
+import { CATEGORIES, findPack, loadPackCatalog } from '../src/packs.js';
 import {
   commitFiles, createEmptyRemote, createMockIo, createSandbox, writeUserConfig,
 } from './pack-fixtures.js';
@@ -238,7 +238,7 @@ const pack = (id) => registry.packs.find((entry) => entry.id === id);
 
 test('registry: the four new sets are pinned and listed, before Local', () => {
   const ids = registry.packs.map((entry) => entry.id);
-  assert.deepEqual(ids, ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'local']);
+  assert.deepEqual(ids, ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'anthropic-engineering', 'agent-skills', 'caveman', 'claude-red', 'dev-browser', 'emil-kowalski', 'marketingskills', 'linkedin', 'i-have-adhd', 'baoyu', 'local']);
   for (const id of ['anthropic', 'design-md', 'last30days', 'financial-services', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail']) {
     for (const source of pack(id).sources) assert.match(source.ref, /^([0-9a-f]{40}|v\d+\.\d+\.\d+)$/, `${id} is pinned`);
   }
@@ -251,10 +251,20 @@ test('registry: the four new sets are pinned and listed, before Local', () => {
   assert.equal(design.limit.max, 3);
   assert.equal(design.sources[0].transform, 'design-md');
   assert.ok(design.sources[0].skills.every((skill) => skill.description.length <= 200 && skill.group));
+  // The owner's November 2026 list (#338): each pinned to a commit, baoyu to the English fork.
+  for (const id of ['anthropic-engineering', 'agent-skills', 'caveman', 'claude-red', 'dev-browser', 'emil-kowalski', 'marketingskills', 'linkedin', 'i-have-adhd', 'baoyu']) {
+    for (const source of pack(id).sources) assert.match(source.ref, /^[0-9a-f]{40}$/, `${id} is pinned`);
+  }
+  assert.equal(pack('baoyu').sources[0].repo, 'Djordje-Stojanovic/baoyu-skills');
+  assert.ok(!pack('caveman').sources[0].skills.some((skill) => ['caveman-setup', 'caveman-stats', 'cavecrew'].includes(skill.id)), 'caveman ships only the skills that work as plain files');
   const finance = pack('financial-services').sources[0];
   assert.equal(finance.path, 'plugins');
   assert.equal(finance.transform, 'financial-services');
   assert.ok(finance.skills.length >= 62 + 10);
+});
+
+test('registry: every pack has one category from the fixed list', () => {
+  for (const entry of registry.packs) assert.ok(CATEGORIES.includes(entry.category), `${entry.id} has category ${entry.category}`);
 });
 
 test('registry: no skill name is listed by two registry packs, and none shadows a Sigma skill', () => {

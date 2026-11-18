@@ -171,7 +171,7 @@ export function formatPackList(styler, packCatalog) {
   const lines = [''];
   for (const pack of packCatalog.packs) {
     const flag = pack.available ? '' : s(`  (not available: ${pack.note})`, C.warn);
-    lines.push(`${s(pack.title, C.primary, true)} ${s(`${pack.skills.length} skills`, C.mute)}${flag}`);
+    lines.push(`${s(pack.title, C.primary, true)} ${s(`${pack.skills.length} skills · ${pack.category || 'Other'}`, C.mute)}${flag}`);
     lines.push(`  ${s('preset', C.mute)} ${s(`--preset ${pack.id}`, C.ink)}${pack.aliases.length ? s(`   aliases ${pack.aliases.join(', ')}`, C.mute) : ''}`);
     if (pack.blurb) lines.push(`  ${s(pack.blurb, C.mute)}`);
     lines.push(`  ${s('source', C.mute)} ${s(packSourceLabels(pack).join(' + '), C.ink)}`);

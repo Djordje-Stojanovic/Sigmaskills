@@ -17,6 +17,7 @@ import { executeUninstall } from './uninstall.js';
 import { loadGlobalState, loadProjectState } from './state.js';
 import { formatSummary } from './report.js';
 import { isSearchChar } from './destination-items.js';
+import { CATEGORIES } from './packs.js';
 
 /**
  * The full-screen installer: what to install (groups and presets), where (Agent Hosts), a
@@ -38,16 +39,17 @@ export function windowRows(total, cursor, limit) {
 }
 
 /**
- * The packs the wizard shows: every pack as itself, in registry order, then the one-skill
- * sources together under their own heading. An available pack with no skills is hidden.
+ * The packs the wizard shows: every multi-skill pack as itself, in registry order, under Packs,
+ * then the one-skill sources under their category (Design, Engineering...). An available pack with no skills is hidden.
  */
 export function orderPacks(packs) {
   const shown = packs.filter((pack) => !pack.available || pack.skills.length > 0);
   // A folder pack (Local) stays a pack, however few skills its folder holds.
   const single = (pack) => pack.available && pack.skills.length === 1 && !(pack.sources || []).some((source) => source.type === 'dir');
+  const rank = (pack) => (CATEGORIES.includes(pack.category) ? CATEGORIES.indexOf(pack.category) : CATEGORIES.length);
   return [
     ...shown.filter((pack) => !single(pack)).map((pack) => ({ ...pack, group: 'Packs' })),
-    ...shown.filter(single).map((pack) => ({ ...pack, group: 'Single skills' })),
+    ...shown.filter(single).sort((a, b) => rank(a) - rank(b)).map((pack) => ({ ...pack, group: pack.category || 'Other' })),
   ];
 }
 
@@ -58,7 +60,7 @@ export function buildPackRows(packs, expanded, query) {
   if (needle) {
     for (const pack of packs) {
       for (const skill of pack.skills) {
-        if (skill.id.includes(needle) || (skill.description || '').toLowerCase().includes(needle) || (skill.group || '').toLowerCase().includes(needle) || pack.title.toLowerCase().includes(needle)) {
+        if (skill.id.includes(needle) || (skill.description || '').toLowerCase().includes(needle) || (skill.group || '').toLowerCase().includes(needle) || pack.title.toLowerCase().includes(needle) || (pack.category || '').toLowerCase().includes(needle)) {
           rows.push({ type: 'skill', pack, skill });
         }
       }
