@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.27.3] — 2026-11-18
+
 ### Changed
 
 - The wizard's first step (What) sorts packs under group headings: Core (Sigma, Matt Pocock, tstack); Design and taste (Impeccable, Taste, Hallmark, Design.md, Diagram Design, Anatomy); Engineering (Superpowers, Ponytail, Security Audit, Anthropic); Media and 3D (HyperFrames, MiniMax H3, Three.js, Blender); Research and finance (Last 30 Days, Financial Services). Any other pack, such as Local or a pack from your own `~/.sigmaskills/packs.json`, goes under More. The cursor skips the headings. The name column is as wide as the longest pack name, so "Financial Services" no longer runs into its count (#338).
@@ -858,7 +860,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.2...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.3...HEAD
+[0.27.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.2...v0.27.3
 [0.27.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.1...v0.27.2
 [0.27.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.0...v0.27.1
 [0.27.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.26.2...v0.27.0
