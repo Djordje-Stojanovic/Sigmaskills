@@ -20,7 +20,8 @@ if (files.length === 0) {
 const packDir = mkdtempSync(join(tmpdir(), 'sigma-test-pack-'));
 // Slow real-tool checks (LibreOffice, media tools) run only with SIGMA_SLOW_TESTS=1.
 const started = Date.now();
-const env = { ...process.env, ...(process.env.SIGMA_SLOW_TESTS ? {} : { FINMAN_NO_SOFFICE: '1' }) };
+// No __pycache__: a Python test writing one races the tests that hash the same skill tree.
+const env = { ...process.env, PYTHONDONTWRITEBYTECODE: '1', ...(process.env.SIGMA_SLOW_TESTS ? {} : { FINMAN_NO_SOFFICE: '1' }) };
 const pack = spawnSync('npm pack --silent --pack-destination "' + packDir + '"', { cwd: root, shell: true, encoding: 'utf8' });
 const tarball = pack.status === 0 ? pack.stdout.trim().split(/\r?\n/).pop().trim() : '';
 if (tarball && spawnSync('tar', ['-xzf', tarball], { cwd: packDir }).status === 0) {

@@ -100,6 +100,10 @@ Needs: Python 3 and a target it can measure or the owner can judge. Uses `/grill
 
 Needs: the `vastai` CLI with a vast.ai account and credit, and a rental wrapper when the machine has one. Keys stay in the environment or `secrets/`. Setup: `vastai set api-key` once per machine.
 
+### sigmaask
+
+Needs: Node 22 for `scripts/ask.mjs` (standard library only). Setup: none. It reads the skill folders of every host and the installer's state, and asks npm for the newest release; `--offline` skips that.
+
 ### sigmasetup
 
 Needs: Node (the installer already needs it); git to read a house source that is a repo. Setup: none; it is the setup. Point it at the owner's masters once: `../house-files.md`.
