@@ -1,6 +1,6 @@
 ---
 name: sigmafinanceman
-description: 'Use when asked for sigmafinanceman or to value or judge any investment: a stock (DCF, reverse DCF, dividends, comps, LBO, a 10-K), a startup or venture deal (cap table, SAFEs, exit waterfall), a purchase such as a GPU or a car (buy, lease or rent), a home (rent or buy, mortgage), gold, commodities or crypto, a collectible, a bond or fund, or a budget. Fetches free live data and runs the model. Do not use to trade or file taxes.'
+description: 'Use when asked for sigmafinanceman or to value or judge any investment: a stock (DCF, reverse DCF, dividends, comps, LBO, a 10-K), a startup or venture deal (cap table, SAFEs, exit waterfall), a purchase such as a GPU or a car (buy, lease or rent), a home (rent or buy, mortgage), gold, commodities or crypto, a collectible, a bond or fund, or a budget; also any other money question: a trade, options, taxes, a loan, a pension. Fetches free live data and runs the model, or works it by hand where no code runs. Do not use for questions with no money in them.'
 ---
 
 # SigmaFinanceMan
@@ -9,7 +9,8 @@ Values any investment from free public data: the answer first, the model behind 
 
 ## Operating contract
 
-- **Numbers come from sources, never from memory.** The scripts fetch SEC EDGAR filings, Yahoo prices and dividends, FRED rates and CPI, vast.ai GPU rents and TCGplayer card prices themselves. Each input carries its source on the page and in the workbook. A number no source gives (a street price, a sold list, a term sheet) is fetched by you with its URL and date, asked for, or marked as an assumption.
+- **Any finance question gets a full answer.** Trades, entries and exits, position sizes, options, leverage, shorting, tax on the user's own rules: work it out and give the verdict in numbers. The user decides; no hedging, no "consult a professional", no refusal.
+- **Numbers come from sources first.** The scripts fetch SEC EDGAR filings, Yahoo prices and dividends, FRED rates and CPI, vast.ai GPU rents and TCGplayer card prices themselves. Each input carries its source on the page and in the workbook. A number no source gives (a street price, a sold list, a term sheet) is fetched by you with its URL and date, asked for, or marked as an assumption.
 - **The answer leads.** Every output opens with one hero number and one sentence that says what it means.
 - **Ranges, not points.** Every model shows bear, base and bull and, where the answer turns on two inputs, a grid that crosses them.
 - **Defaults are honest.** Each names where it came from; the user's word overrides any default (`--set name=value`, fractions for percentages, or the input file).
@@ -17,7 +18,12 @@ Values any investment from free public data: the answer first, the model behind 
 - **The user's own numbers stay on the machine.** Input files are read locally; nothing is uploaded.
 - **Looking is the test.** Open the page at desktop and phone width, and render the workbook and the deck, before you report.
 
-Plain Python 3.10+ with `openpyxl` and `python-pptx` (`pip install openpyxl python-pptx`); LibreOffice is optional and powers `audit` and `render`. Run `python scripts/finman.py selftest` once on a new machine: it must print PASS. Set `SEC_USER_AGENT="Name email@domain"` for SEC.
+Plain Python 3.10+ with `openpyxl` and `python-pptx` (`pip install openpyxl python-pptx`); LibreOffice is optional and powers `audit` and `render`. Run `python scripts/finman.py selftest` once on a new machine: it must print PASS. Set `SEC_USER_AGENT="Name email@domain"` for SEC. Any OS (Windows, macOS, Linux) and any agent host.
+
+**No code, no web, or a chat window only.** The method still holds; only the tools change.
+- No code: work the model by hand from the formulas in the class file. Show each step as a table row (input, source, result), keep the bear, base and bull cases, and say the result is hand-computed.
+- No web: ask for the few inputs that move the answer most, in one message, each with where to find it (the 10-K page, the broker screen, the payslip line). If the user cannot give them, use what you know, label each such number "from memory, as of <date>, check it", and answer anyway.
+- No files: put the outputs in the reply (the hero line, the case table, the grid) instead of a page and a workbook.
 
 ## 1. Route: what are you valuing, and what decision does it serve?
 
@@ -34,7 +40,7 @@ Ask that one question when the request leaves it open. The answer picks the clas
 | A bond, a fund or ETF | [bonds-funds.md](references/bonds-funds.md) | `finman.py bond bond.json`, `fund VOO --peers ^SP500TR --set fee=0.0003` | yield, duration, spread; tracking difference and fee drag |
 | A household's money | [budget.md](references/budget.md) | `finman.py budget household.json` | 50/30/20, left over, emergency fund |
 
-Something that fits two rows takes both: a GPU rented out is a purchase with `income_monthly`; a flat bought to let is real estate as a rental; a business bought whole is the buyout and "Buying a business" playbooks in strategy.md with `lbo` or `dcf`. Something in no row (wine, farmland, a royalty) takes the nearest method: cash flows → the DCF logic in purchase or real estate; no cash flows → noyield.md; sold-price markets → collectibles.md.
+Something that fits two rows takes both: a GPU rented out is a purchase with `income_monthly`; a flat bought to let is real estate as a rental; a business bought whole is the buyout and "Buying a business" playbooks in strategy.md with `lbo` or `dcf`. Something in no row (wine, farmland, a royalty) takes the nearest method: cash flows → the DCF logic in purchase or real estate; no cash flows → noyield.md; sold-price markets → collectibles.md. A trade or an option takes the class file of what it is on plus strategy.md (size, entry, sell rule; an option's payoff at expiry at each case's price). A tax question takes the user's country, account and rates, and the tax goes on the cash-flow date it is paid.
 
 ## 2. Ask once
 
