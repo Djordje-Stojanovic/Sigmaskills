@@ -46,6 +46,14 @@ Sizing decides the result more than picking does. Set a loss budget per idea, th
 
 Position size = loss budget / loss in the bad case. Ackman accepts losing 5-6% of capital in one investment (Ackman P3). If the bad case loses 40% of the position, then 5% / 40% gives a position of 12.5% of capital. If the bad case is a total loss, the position is 5%.
 
+**Weigh the cases.** Bear, base and bull are three numbers until each has a chance. Give each a probability, write why, then compute:
+
+- Expected value = the sum of probability x value. Compare it with the price, not the base case alone.
+- Break-even odds: the bear-case probability at which the expected value equals the price. Example, all numbers assumed: bear 35, base 45, bull 56, price 40. Weights of 30/50/20 give 44.2. Keep base and bull in the same 5 : 2 proportion, and the expected value falls to the price at a bear chance of 62 %. If you would not bet against those odds, the margin is thin.
+- A cap on size (Kelly): for a bet that wins b times the stake with probability p, the fraction of capital that grows wealth fastest is p - (1 - p) / b. At a 40 % chance of doubling (b = 1) it is negative: do not bet. At 60 % it is 20 %. Your p is a guess, so stake half of that at most, and never more than the loss budget allows.
+
+The page's bear-to-bull range is not a probability range: each model moves one or two inputs by a fixed step (methods.md). Say so when you quote it.
+
 Concentration needs a reason you can state. Druckenmiller and Thiel back few bets (Druckenmiller P1, Thiel P2). Buffett and Munger wait for the rare mispriced bet and then load up (Munger P2). All of them size by how sure they are and how much they can lose, not by how much they want. Diversify when you lack an edge, when you cannot tell the winners in advance, or when the downside of any one holding is ruin.
 
 ### 5. Funding, liquidity and leverage
@@ -94,6 +102,37 @@ The classic mistakes, for every kind:
 - Selling winners early and holding losers for hope.
 - Following a crowd in a bubble, or fighting one without a reason or a limit.
 - Skipping the exit: not knowing how to get out and what it costs.
+
+## One cash-flow sheet, one yardstick
+
+Step 3 compares options. Put them on one sheet in one unit first, or the comparison lies.
+
+**The sheet.** Name the two actions open today. One row per payment date, one column per option, receipts positive, payments negative; the last column is A minus B. For a thing already owned, the cost of keeping it is the cash a sale would bring today, after selling costs and tax. The price once paid only sets the tax on the gain. A refundable deposit costs the use of the money while it is tied up, not its face value. When the options end on different dates, extend both to the same decision date and say what the earlier cash does in the gap.
+
+**Money, not percent.** Discount the A-minus-B column at the user's hurdle: `sum(cash / (1 + r)^(days from today / 365))`, today's payment at time zero. Report the answer in money. Percent and money can rank two deals in opposite order. Example, hurdle assumed at 10 %: pay 100 for 140 in a year, or 1,000 for 1,250. The first earns 40 % and adds 27 today; the second earns 25 % and adds 136. The second wins only if the user has the 1,000. Some cash flows have two IRRs: pay 100, get 230 in a year, pay 132 a year later, and both 10 % and 20 % fit. Report the present value at the hurdle then, not an IRR.
+
+**The same yardstick for every option:** the return a year after costs, after tax, after inflation, in the currency the user spends.
+
+- Costs. Some come off every year (fund fee, storage, insurance, upkeep), some once (spread, agent, selling fee). Spread a one-off over the hold: a 13 % selling fee on a 3-year hold costs about 4.5 points a year.
+- Tax. Book it on the event that creates it: income when paid, the gain when sold. Example, rates assumed: buy at 100, a dividend of 4 taxed at 25 %, sell at 110 a year later with 20 % tax on the gain. The cash back is 3 + 110 - 2 = 111, an 11 % return after tax. An asset never sold compounds untaxed (Munger P3). Ask the user's country, account type and rates, compute the tax, and put each payment on its date. When the tax decides the answer, also give the tax bill that would flip it.
+- Inflation. Real = (1 + nominal) / (1 + inflation) - 1: 7 % at 3 % inflation is 3.9 %. Real cash flows take a real hurdle.
+- Currency. Convert each receipt at the rate on its date, or at a hedge rate with the hedge's cost. An asset up 10 % in its own currency while that currency falls 15 % against the user's returns 1.10 x 0.85 - 1 = -6.5 %. Yahoo `EURUSD=X` is dollars per euro; say which currency each number is in.
+- Debt. Return on your own money = asset return + (asset return - cost of debt) x debt / equity. A flat that returns 4 % a year, bought with a 5 % loan at 4x debt to equity, returns 0 % to its owner.
+
+Then set the result against three hurdles, each fetched on the day: the real 10-year Treasury yield (FRED `DFII10`), which is what doing nothing safe pays; a broad index fund (bonds-funds.md, "What an index can return"); and the user's dearest debt, since paying it off is a sure return at its rate.
+
+## The outside view: base rates first
+
+Before the story of this one asset, ask what usually happens to assets like it. Start from the base rate, move away only as far as your evidence carries, and put the base rate in the reply beside your own number. A case that needs the asset to beat its base rate by a wide margin needs an edge (step 1).
+
+| Question | What usually happens | Source |
+|---|---|---|
+| Will this stock beat cash? | Only 42.6 % of US common stocks beat one-month Treasury bills over their listed life; slightly more than 4 % of them made all the market's net wealth (CRSP, 1926-2016, about 25,300 companies) | Bessembinder, "Do Stocks Outperform Treasury Bills?", Journal of Financial Economics, 2018 |
+| Will this fund manager beat the index? | 89.9 % of US large-cap funds trailed the S&P 500 over the 15 years to 2025, and 85.6 % over 10 years | S&P SPIVA U.S. Scorecard, Year-End 2025, report 1a; fetch the newest edition |
+| What do asset classes pay after inflation? | 16 rich countries, 1870-2015, average real return a year (arithmetic): bills 1.0 %, bonds 2.5 %, equity 6.9 %, housing 7.1 % with its rent | Jordà, Knoll, Kuvshinov, Schularick and Taylor, "The Rate of Return on Everything", Quarterly Journal of Economics, 2019, Table II |
+| Will a home's price outrun inflation? | US real home prices rose 0.57 % a year from 1890 to 2025; a home's return is mostly the rent it saves or earns | Shiller, US home price index (Irrational Exuberance data, Fig3-1) |
+| Will fast growth last? | Growth fades toward the economy's rate, and high margins draw rivals (Thiel P4). A forecast of 20 %+ growth for 10 years needs a named reason | the company's own 10-year record: `finman.py ratios` |
+| Does gold hedge inflation? | "Gold may be an effective hedge if the investment horizon is measured in centuries. Over practical investment horizons, gold is an unreliable inflation hedge." | Erb and Harvey, "The Golden Dilemma", NBER working paper 18706, 2013 |
 
 ## Where the masters disagree, and how the method decides
 
