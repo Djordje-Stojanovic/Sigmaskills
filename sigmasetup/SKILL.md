@@ -5,13 +5,13 @@ description: 'Use when asked for sigmasetup, to set up a repo after the Sigma in
 
 # SigmaSetup
 
-The installer puts skills on the machine. A repo still needs its own setup before they work well: tracker files, labels, tools, keys in the environment, a git guard, Ponytail. It also needs current **house files**: the copies of your master rule files (an `ENGINEERING.md`, a `DESIGN.md`, a shared section of `AGENTS.md`) that drift as the masters change. SigmaSetup finds what this repo lacks, asks once, sets up what you say yes to, and reports every change with its undo.
+The installer puts skills on the machine; a repo still needs its own setup (tracker files, labels, tools, keys, a git guard, Ponytail) and current **house files**, the copies of your master rule files (`ENGINEERING.md`, `DESIGN.md`, a shared `AGENTS.md` section) that drift as the masters change. SigmaSetup finds what this repo lacks, asks once, sets up what you say yes to, and reports every change with its undo.
 
 ## Operating contract
 
-- **Per repo.** Every write lands in the current repo; hooks go in its `.claude/`. User-level config (`~/.claude/settings.json`, `~/.codex`) stays as it is.
-- **Report, then ask once, then act.** One list covers house-file drift and every pack, each item with a recommended yes or no. Write nothing before the owner answers.
-- **Every change has an undo.** Each item names its undo command or the files to delete. The final report repeats them.
+- **Per repo.** Every write lands in the current repo, hooks in the repo's own config folder of each agent (`.claude/` for Claude Code). The user-level config of every agent stays as it is.
+- **Ask once, then act.** Write nothing before the owner answers the one list (step 3).
+- **Every change has an undo:** a command or the files to delete, repeated in the final report.
 - **Keys by name only.** Keys go in the environment or an ignored `secrets/` folder. Never print a key.
 - **The guides are the source.** `references/packs/<pack>.md` says what a pack needs; where a guide is silent, write "not stated".
 
@@ -25,11 +25,11 @@ The installer puts skills on the machine. A repo still needs its own setup befor
 
 ## Ponytail
 
-Offer it for every repo where agents write code: `npx @djordje-stojanovic/sigmaskills ponytail --project .` turns on [Ponytail](https://github.com/DietrichGebert/ponytail) (the smallest code that works) for this repo in Claude Code, Codex and Pi. Check: `ponytail --check --project .`. Undo: `ponytail --remove --project .`.
+Offer it where agents write code: `npx @djordje-stojanovic/sigmaskills ponytail --project .` turns on [Ponytail](https://github.com/DietrichGebert/ponytail) (the smallest code that works) for this repo. Check: `ponytail --check --project .`. Undo: `ponytail --remove --project .`.
 
 ## Git guard
 
-An optional Claude Code hook for this repo only: it blocks force push, `reset --hard`, `clean -f`, `stash clear` and anything that throws away uncommitted changes (`checkout .`, `checkout -f`, `restore .`), and allows branch deletes. Offer it with the Matt Pocock pack or when the owner asks for git safety. On, off and check: [git-guard.md](references/git-guard.md).
+An optional hook for this repo only: it blocks force push, `reset --hard`, `clean -f`, `stash clear` and anything that throws away uncommitted changes (`checkout .`, `checkout -f`, `restore .`), and allows branch deletes. Offer it with the Matt Pocock pack or when the owner asks for git safety. The bundled one is a Claude Code hook ([git-guard.md](references/git-guard.md)); for another agent, find its pre-command hook in its docs and port the block list.
 
 ## Personal instructions
 

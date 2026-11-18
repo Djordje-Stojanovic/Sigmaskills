@@ -26,7 +26,17 @@ Source: Lex Fridman podcast, clip by @jaynitx (x.com/jaynitx/status/206650653525
 - The $65 million rocket whose materials cost about 2 %. Price the raw inputs, then ask where the rest goes.
 - Jobs, 1997: "innovation is saying no to 1,000 things."
 
-Karpathy's account of Musk's companies (Sequoia AI Ascent 2024, youtube.com/watch?v=c3b-JASoPi0, about 30:00) is in SKILL.md step 2.
+## Karpathy on how Musk runs it
+
+Sequoia AI Ascent 2024, youtube.com/watch?v=c3b-JASoPi0, about 30:00, his words: "He likes very small, strong, highly technical teams." "If the team is small and strong, then engineers and the code are the source of truth, not some manager." "He talks directly to the engineers. He doesn't want to talk just to the VPs and the directors." "He wants it to be a vibrant place." An engineer says there are not enough GPUs: "Okay, double the cluster right now."
+
+## Worked moves
+
+- Resource bottleneck: double it now, or name what stops it. When money is the stop, find it cheaper, free or another way.
+- Something wrong: who owns it? A name, not a team.
+- "Impossible in 3 days": which law of physics forbids it? None means a human constraint; set a short check-in until done.
+- "We did a lot": show the commits, the landed output, the measured gain.
+- Budget is a human construct: compare value with cost from first principles and fund it from something dumber.
 
 ## Quote anchors
 

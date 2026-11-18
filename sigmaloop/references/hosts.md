@@ -1,6 +1,6 @@
 # Host facts and prompt skeletons
 
-Checked 2026-10-20. Hosts change fast: when a fact matters, check the linked source. Each host file marks every fact **ran** (run by the author on Windows 11), **doc** (host documentation or its own bundled guide), or **source** (host source code); a step not run says "live run pending". A host not listed gets the plain instruction (last section).
+Checked 2026-10-20. Hosts change fast: when a fact matters, check the linked source. Each host file marks every fact **ran** (run by the author on Windows 11), **doc** (host documentation or its own bundled guide), or **source** (host source code); a step not run says "live run pending". These are the harnesses met so far, not the whole world. For any other, read its docs (SKILL.md step 2) and write the prompt from what it can do; a harness with no loop of its own gets the plain instruction (last section).
 
 Every prompt carries the done command or stop line, the loop file path to re-read each turn, and the 2-3 limits that must hold. The loop file holds the rest (order, roles, failure and speed rules, landing). Default on every host that has it: native `/goal`, driven by completion notices, with no wake task and no cron.
 
@@ -21,11 +21,11 @@ A prompt that needs a tool the host lacks stalls the run. Pick the row for the h
 Invoke SigmaLoop the host's way (`/sigmaloop` in Claude Code, `$sigmaloop` in Codex, `/skill:sigmaloop` in pi). Skill folders in the table come from the installer registry, except `agy`, whose global folder is proven by a run (the installer overrides the registry) and must be a real copy, not a junction (ran). Windows: in Git Bash a leading `/word` argument is rewritten to a path (ran, Claude Code and `agy`); use PowerShell or `MSYS_NO_PATHCONV=1` (ran: it fixed `/loop`).
 
 
-Per-host facts and the prompt skeleton: Claude Code (`host-claude-code.md`), Codex (`host-codex.md`), Antigravity and Gemini CLI (`host-antigravity.md`), pi and lapi (`host-pi.md`), T3 Code (`host-t3-code.md`). Read only the one file for the host the user named.
+Per-host facts and the prompt skeleton: [Claude Code](host-claude-code.md), [Codex](host-codex.md), [Antigravity and Gemini CLI](host-antigravity.md), [pi and lapi](host-pi.md), [T3 Code](host-t3-code.md) and its [scheduler](host-t3-scheduler.md). Read only the file for the user's harness.
 
 ## Other hosts: plain instruction
 
-For a host with no loop command, one long instruction. The agent is the loop; "wake" means the start of each item.
+For a harness whose docs show no loop command, one long instruction. The agent is the loop; "wake" means the start of each item.
 
 ```text
 Work unattended until <time, zone>. You are the orchestrator. Rules and order live in <loop file path>: read it now and re-read it at the start of every item; edits apply on the next re-read.

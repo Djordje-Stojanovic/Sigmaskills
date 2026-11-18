@@ -7,50 +7,20 @@ description: Use when asked for sigmabrief, briefs, handoffs or spawn prompts. W
 
 Turn actionable work into short, paste-ready briefs for other agents. SigmaBrief is a prompt factory: research lightly, emit dispatch lines and fenced briefs, stop. The executing agent implements, validates once at the end, and opens a PR for review.
 
-Read [brief-method.md](references/brief-method.md) before researching. Read [prompt-contract.md](references/prompt-contract.md) before writing briefs.
+Read [brief-method.md](references/brief-method.md) before researching and [prompt-contract.md](references/prompt-contract.md) before writing briefs.
 
 ## Operating contract
 
-Apply these invariants throughout the run:
-
-- **Explicit-only.** Invoke this skill only when the user asks for briefs, handoffs, spawn/dispatch prompts, or parallel agent prompts. Never treat ambient chat, implement requests, or audit requests as SigmaBrief work even if the host allows implicit skill invocation.
-- **Brief factory only.** Do not implement, branch, commit, push, or open fix pull requests in the *target* product repository. Do not create `SIGMABRIEF-*.md` or other files there.
-- **One shot for briefing.** When work items are present, research → synthesize → return briefs in chat. Do not pause for taste questions.
-- **Ask at most one question** when no work target can be resolved: which issue URL(s), work statement, or repo for `all open`. Do not run a full `/grilling` session unless the user explicitly asks SigmaBrief to grill them. Set isolation yourself: on for parallel writers, off for one sequential task.
-- **Accept anything actionable:** issue URLs, `#N`, `all open` (optionally filtered), a SigmaReview report or one of its waves, SigmaImprove category issues or chosen entries, features, upgrades, bugs, plain English work, or `this session`, plus optional constraints (`do not merge`, skip N, max agents, `approval: auto`).
-- **Waves before parallelism.** Items that touch the same files, schema, or shared state run one after another in the same lane. Only independent items run in parallel. Honor `Depends on` lines from SigmaReview. The dispatch list is ranked by value: the next free agent takes the most valuable ready brief, never a fixed lane per agent.
-- **Light research then emit.** Read local standards when present (`CLAUDE.md`, `AGENTS.md`, `README`, `CONTRIBUTING`, LEARNINGS, version pins). If the repo has `ENGINEERING.md`, read it before you change code and follow it closely: it is the owner's engineering standard (simplest change, delete before adding, a lesson becomes one line, never a new check). `DESIGN.md` for anything people see. Each brief tells its worker to follow it. For GitHub work, inspect issues and open PRs so an in-flight PR becomes a finish brief, never a second greenfield. Use the web only when needed.
-- **Simple briefs.** Short fenced `text` blocks. No collision-matrix novels. Still mark overlaps and out-of-scope boundaries when obvious.
-- **Flow in every brief:** execute in big steps (one job in 10-20 tool calls, inputs by path) → commit as each part is done → validate once at the end → update docs only when needed → self-review → push → open PR (`Closes #N` when applicable) → report back in the fixed format.
-- **Approval modes.** `approval: auto` (default) lets the agent decide ambiguities itself, record each decision as a ruling in the PR body, and stop only for irreversible or destructive actions, security-sensitive actions, or side effects outside its branch. `approval: plan` (only when the user asks) makes it post a plan and wait for approval first.
-- **Do not merge. Keep any worktree while the PR is open. Cleanup only after human merge or user cancel/abandon.**
-- **Shell native to the executing machine:** use the shell of the machine that runs the agent: PowerShell and Windows paths on Windows, POSIX shell elsewhere. Do not assume WSL.
-- **No secrets** in briefs. Redact tokens, keys, and credentials from issue bodies or notes.
-- **Three questions and the honesty rule.** Every brief carries invariants 14 and 15 of [prompt-contract.md](references/prompt-contract.md).
-
-## Resolve inputs
-
-Resolve work items in this order:
-
-1. Explicit issue URLs, numbers, `all open`, or plain work statements in the invocation.
-2. Otherwise the current Git repository’s open issues when the user asked for `all open` / dispatch without listing IDs.
-3. Otherwise ask only for the missing work target.
-
-Apply user constraints already present (skip N, do not merge, max agents) without re-asking.
-
-## Execute
-
-Follow [brief-method.md](references/brief-method.md). Emit the chat output required by [prompt-contract.md](references/prompt-contract.md).
+- **Brief factory only.** Briefs go to chat. The target repo stays as it was: no code, branch, commit, push, PR or file (no `SIGMABRIEF-*.md`).
+- **One shot.** Work items present: research, write, return. No target at all: ask one question (which issues, which work, which repo for `all open`). Grill only when the user asks for it.
+- **Anything actionable is input:** issue URLs, `#N`, `all open` (filtered or not), a SigmaReview report or wave, chosen SigmaImprove entries, plain-English work, or `this session`, with constraints already given (`do not merge`, skip N, max agents, `approval: auto|plan`) applied without asking again.
+- **Waves before parallelism.** Items that touch the same files, schema or shared state run one after another in one lane; only independent items run in parallel. Honor `Depends on` lines. Rank the dispatch list by value: the next free agent takes the most valuable ready brief. An in-flight PR becomes a finish brief, never a second greenfield one.
+- **Write for the worker's harness.** It is the one the user named, else the one you run in. Use its own tools where they help (a native worktree tool, sub-agents); when you do not know them, read its docs (context7, a web search) or write plain git and shell steps that work anywhere.
+- **Every brief carries the invariants** in [prompt-contract.md](references/prompt-contract.md#2-invariants-every-brief-must-carry): approval mode, do not merge, keep the worktree while the PR is open, the native shell, no secrets, the three questions and the honesty rule. If the repo has `ENGINEERING.md` or `DESIGN.md`, each brief tells its worker to read and follow them.
 
 ## Final response
 
-Return in chat only:
-
-1. A short dispatch list (one line per brief).
-2. Paste-ready fenced `text` briefs.
-3. Brief notes when needed (collisions, upstream waits, already fixed, human-only tests).
-
-Do not paste long research dumps.
+Return in chat only: a short dispatch list (one line per brief), the paste-ready fenced `text` briefs, and notes when needed (collisions, upstream waits, already fixed, human-only tests). No research dumps.
 
 ## Personal instructions
 
