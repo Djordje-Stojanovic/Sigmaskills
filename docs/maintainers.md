@@ -63,7 +63,7 @@ To run the skills themselves on a small fixture game, use `node scripts/eval-ski
 
 No GitHub workflow runs tests (owner 2026-11-08: the failure mails). Run `npm test` locally before every merge; `package.json` requires Node.js 22 or newer (`engines.node`). Only the Release and Registry sync workflows remain, both started by hand.
 
-The land step of a pull request ends with one line in the toolkit checkout: pull it, then run `python3 scripts/project_skills.py --global` (AGENTS.md has the exact line). It installs `main` on the PC, the dev box and the Spark. If a machine is off, its line says FAIL and the other machines still update. It catches up by itself: its repo timer pulls Sigmaskills, and a post-merge hook in that clone runs the install. Or run the command again when it is back on.
+The land step of a pull request ends with one line in the toolkit checkout: pull it, then run `python3 scripts/project_skills.py --global` (AGENTS.md has the exact line). It installs `main` on the PC, the dev box and the Spark. If a machine is off, its line says FAIL and the other machines still update. This line is the only install of a merge: no hook or timer installs skills. A machine that was off, or a PC whose owner was logged off, catches up at the next land step, or when you run the command again.
 
 ### Adding, renaming, or removing a skill
 
