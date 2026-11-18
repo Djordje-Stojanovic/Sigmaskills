@@ -40,7 +40,7 @@ Use more than one engine; each ranks differently and none shows everything. Try 
 ## 4. Documents, filings and transcripts
 
 - **PDFs and decks:** download and read the text (`pdftotext`, or the host's PDF reader). Count a PDF as read in full only when you read the pages that carry the claim, and say which pages.
-- **Company and government filings:** SEC EDGAR full-text search `https://efts.sec.gov/LATEST/search-index?q=%22PHRASE%22&forms=10-K`; national registers, court dockets, patent offices (Google Patents, Espacenet, WIPO), procurement portals, parliament and council minutes.
+- **Company and government filings:** SEC EDGAR (the `sec` reader: full-text search and XBRL facts; the filing index `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=CIK`); raw full-text search `https://efts.sec.gov/LATEST/search-index?q=%22PHRASE%22&forms=10-K`; national registers, court dockets, patent offices (Google Patents, Espacenet, WIPO), procurement portals, parliament and council minutes.
 - **Transcripts:** YouTube and podcast captions through `yt-dlp` (video sites (`access-ladder.md`)); conference talk pages often hold slides and a transcript; earnings-call and hearing transcripts sit on the host's site or in the archive.
 - **Books and long reports:** the publisher's sample, the Internet Archive full-text search (`https://archive.org/advancedsearch.php?q=WORDS&output=json`), Google Books search inside a book.
 
@@ -54,7 +54,7 @@ Use more than one engine; each ranks differently and none shows everything. Try 
 
 ## 6. Academic and standards sources
 
-arXiv `https://export.arxiv.org/api/query?search_query=all:WORDS`; OpenAlex `https://api.openalex.org/works?search=WORDS`; Crossref `https://api.crossref.org/works?query=WORDS`; Semantic Scholar `https://api.semanticscholar.org/graph/v1/paper/search?query=WORDS`; Europe PMC and PubMed for medicine; the author's own page, the university repository, CORE, and the preprint or accepted-manuscript copy that the DOI landing page links. Wikipedia and Wikidata (`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=WORDS&format=json`) are good for their reference lists, which lead to primary sources. Standards bodies and regulators publish drafts and minutes.
+arXiv (the `arxiv` reader, or `https://export.arxiv.org/api/query?search_query=all:WORDS`); OpenAlex `https://api.openalex.org/works?search=WORDS`; Crossref `https://api.crossref.org/works?query=WORDS`; Semantic Scholar `https://api.semanticscholar.org/graph/v1/paper/search?query=WORDS`; Europe PMC and PubMed for medicine; the author's own page, the university repository, CORE, and the preprint or accepted-manuscript copy that the DOI landing page links. Wikipedia and Wikidata (`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=WORDS&format=json`) are good for their reference lists, which lead to primary sources. Standards bodies and regulators publish drafts and minutes.
 
 ## 7. Other languages and regions
 

@@ -34,6 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
+- `sigmaresearch` reads two new sources and has two more X routes. `arxiv` searches papers or reads one by id through the arXiv API, and falls back to the abstract page. `sec` reads a company's latest filed numbers by ticker, or searches the text of every EDGAR filing. It sends a generic contact; `SEC_USER_AGENT` sets your own. An X post now also reads through vxTwitter and X's oEmbed when FxTwitter and the embed JSON fail. Reddit keeps its order: the mirrors and archives tested on 2026-11-18 were blocked or rate-limited (#338).
 - `sigmahuman`: takes the rest of blader/humanizer v4.0.0 outside the patterns: prompt-injection examples, the *weak alone* rule, the ranking and same-time checks the fact script misses, a whole-file read and partial-pass report in file mode, and voice-detail examples. One upstream line stays out: "add a specific detail you know to be true" breaks the facts-from-source rule.
 - `sigmacourse`: a program measures a persona (small-word score, 8-word copy count); no model judge or agent grades it.
 - The wizard's first step (What) no longer sorts packs under topic headings (Core, Design and taste, Engineering, Media and 3D, Research and finance, More). That grouping shipped in 0.27.3 and is withdrawn: a pack stays its own pack (#338).

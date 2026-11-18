@@ -3,6 +3,7 @@
 A reader that is blocked reports the status as a gap and takes the next documented route for that
 platform. Browser, session and network routes (references/reddit.md, references/x.md) sit after these.
 """
+import html
 import time
 import json
 import os
@@ -556,15 +557,37 @@ def parse_x_syndication(doc, url):
                  "full post (embed JSON); replies not included", replies=doc.get("conversation_count"))]
 
 
+def parse_x_vx(doc, url):
+    """api.vxtwitter.com/USER/status/ID: flat JSON (text, likes, replies, retweets, date_epoch, user_screen_name)."""
+    if not doc.get("text"):
+        return []
+    return [item("x", url, "", doc["text"], doc.get("likes"), doc.get("date_epoch"), doc.get("user_screen_name", ""),
+                 "x.com", "post", "full post (vxTwitter JSON); replies not included", replies=doc.get("replies"),
+                 reposts=doc.get("retweets"))]
+
+
+def parse_x_oembed(doc, url):
+    """publish.twitter.com/oembed: the post as a <blockquote>; text in <p>, date in the last link. No counts."""
+    m = re.search(r"(?s)<p[^>]*>(.*?)</p>", doc.get("html") or "")
+    if not m:
+        return []
+    d = re.findall(r">([A-Z][a-z]+ \d{1,2}, \d{4})</a>", doc["html"])
+    date = time.strftime("%Y-%m-%d", time.strptime(d[-1], "%B %d, %Y")) if d else ""
+    return [item("x", url, "", strip_html(m.group(1)), None, date, doc.get("author_name", ""), "x.com", "post",
+                 "full post text (oEmbed); no counts, replies not included")]
+
+
 def read_x_status(target):
-    """One post by URL, no login: the FxTwitter API, then the embed (syndication) JSON."""
+    """One post by URL, no login: FxTwitter, the embed (syndication) JSON, vxTwitter, then oEmbed."""
     m = X_STATUS.match(target.strip())
     user, sid = m.group(1), m.group(2)
     url = f"https://x.com/{user}/status/{sid}"
     gaps = []
     for route, api, parse in (("fxtwitter", f"https://api.fxtwitter.com/status/{sid}", parse_x_fx),
                               ("syndication", f"https://cdn.syndication.twimg.com/tweet-result?id={sid}&token=a",
-                               parse_x_syndication)):
+                               parse_x_syndication),
+                              ("vxtwitter", f"https://api.vxtwitter.com/{user}/status/{sid}", parse_x_vx),
+                              ("oembed", f"https://publish.twitter.com/oembed?url={_q(url)}&omit_script=1", parse_x_oembed)):
         r = core.get(api)
         if r.ok:
             try:
@@ -599,11 +622,142 @@ def read_x(target, limit=10, depth=3, threads=0, from_json=None):
     return res
 
 
+# ============================ arXiv ============================
+
+ARXIV_ID = re.compile(r"(?:arxiv\.org/(?:abs|pdf|html)/|^arxiv:|^)(\d{4}\.\d{4,5}|[a-z-]+(?:\.[A-Z]{2})?/\d{7})(v\d+)?(?:\.pdf)?/?$", re.I)
+
+
+def parse_arxiv_atom(xml_text):
+    """export.arxiv.org/api/query Atom feed -> one item per paper: abstract as text, PDF link alongside."""
+    out = []
+    for e in ET.fromstring(xml_text).iter(ATOM + "entry"):
+        abs_url = (e.findtext(ATOM + "id") or "").strip().replace("http://", "https://")
+        if "/abs/" not in abs_url:  # an API error comes back as an entry without a paper id
+            continue
+        pdf = next((ln.get("href") for ln in e.findall(ATOM + "link") if ln.get("title") == "pdf"), "")
+        authors = [a.findtext(ATOM + "name") or "" for a in e.findall(ATOM + "author")]
+        cats = [c.get("term") for c in e.findall(ATOM + "category")]
+        out.append(item("arxiv", re.sub(r"v\d+$", "", abs_url), re.sub(r"\s+", " ", e.findtext(ATOM + "title") or ""),
+                        re.sub(r"\s+", " ", e.findtext(ATOM + "summary") or ""), None, e.findtext(ATOM + "published"),
+                        authors[0] if authors else "", "arxiv.org/" + (cats[0] if cats else "?"), "paper",
+                        "abstract + metadata (arXiv API); full text in the PDF", pdf=pdf, authors=len(authors),
+                        categories=cats, updated=e.findtext(ATOM + "updated")))
+    return out
+
+
+def parse_arxiv_abs(html_text, url):
+    """arxiv.org/abs/ID page: the citation_* meta tags carry title, date, PDF and abstract."""
+    meta = dict(re.findall(r'<meta name="(citation_\w+)" content="([^"]*)"', html_text))
+    if not meta.get("citation_title"):
+        return []
+    return [item("arxiv", url, html.unescape(meta["citation_title"]), html.unescape(meta.get("citation_abstract", "")), None,
+                 meta.get("citation_date", "").replace("/", "-"), meta.get("citation_author", ""), "arxiv.org", "paper",
+                 "abstract + metadata (abs page); full text in the PDF", pdf=meta.get("citation_pdf_url", ""))]
+
+
+def read_arxiv(target, limit=10, depth=3, threads=0):
+    """An arXiv id or URL reads that paper; anything else searches all fields, most relevant first."""
+    api = "https://export.arxiv.org/api/query?"
+    m = ARXIV_ID.search(target.strip())
+    if m:
+        url = f"https://arxiv.org/abs/{m.group(1)}"
+        r = core.get(api + "id_list=" + m.group(1))
+    else:
+        url = ""
+        words = "+AND+".join(f"all:{_q(w)}" for w in query_terms(target))
+        r = core.get(f"{api}search_query={words}&sortBy=relevance&max_results={limit}")
+    gaps = []
+    if r.ok:
+        try:
+            found = parse_arxiv_atom(r.text)
+            if found:
+                return _result(found[:limit], gaps, "api")
+        except ET.ParseError:
+            pass
+        gaps.append("export.arxiv.org: no paper in the answer")
+    else:
+        gaps.append(_blocked("export.arxiv.org", r))
+    if url:  # the API is down or slow: the abstract page holds the same metadata
+        page = core.get(url)
+        if page.ok and (found := parse_arxiv_abs(page.text, url)):
+            return _result(found, gaps, "abs-page")
+        gaps.append(_blocked("arxiv.org abs page", page) if not page.ok else "arxiv.org abs page: no citation meta")
+    return _result([], gaps, "none")
+
+
+# ============================ SEC EDGAR ============================
+
+# SEC asks every script for a User-Agent with a contact. This generic one works; set SEC_USER_AGENT
+# to "Name email@domain" to use your own.
+SEC_UA_DEFAULT = "sigmaresearch research-script admin@example.com"
+SEC_FACTS = ("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "NetIncomeLoss", "Assets",
+             "Liabilities", "StockholdersEquity", "CashAndCashEquivalentsAtCarryingValue", "EarningsPerShareDiluted")
+
+
+def _sec_headers():
+    return {"User-Agent": os.environ.get("SEC_USER_AGENT") or SEC_UA_DEFAULT}
+
+
+def parse_sec_search(doc):
+    """efts.sec.gov full-text search hits -> one item per filed document."""
+    out = []
+    for h in (doc.get("hits") or {}).get("hits", []):
+        s, (adsh, _, fname) = h.get("_source") or {}, (h.get("_id") or "").partition(":")
+        cik = (s.get("ciks") or ["0"])[0].lstrip("0")
+        url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{adsh.replace('-', '')}/{fname}"
+        name = (s.get("display_names") or [""])[0]
+        out.append(item("sec", url, f"{s.get('form')} {name}".strip(), s.get("file_description") or s.get("file_type") or "",
+                        None, s.get("file_date"), "", "sec.gov/" + re.sub(r"\s*\(.*$", "", name), "filing",
+                        "full-text search hit; the matching passage is in the document", form=s.get("form"),
+                        period=s.get("period_ending")))
+    return out
+
+
+def parse_sec_facts(doc, cik):
+    """data.sec.gov companyfacts -> one item per headline concept: its latest 10-K or 10-Q value."""
+    gaap = (doc.get("facts") or {}).get("us-gaap") or {}
+    name, out = doc.get("entityName", ""), []
+    for concept in SEC_FACTS:
+        units = (gaap.get(concept) or {}).get("units") or {}
+        vals = [{**v, "unit": u} for u, vs in units.items() for v in vs if v.get("form") in ("10-K", "10-Q")]
+        if not vals:
+            continue
+        v = max(vals, key=lambda v: (v.get("end", ""), v.get("filed", "")))
+        out.append(item("sec", f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={cik}&type=10-K",
+                        f"{name}: {concept}", f"{concept} = {v['val']:,} {v['unit']} for the period ending {v.get('end')} "
+                        f"({v.get('form')} FY{v.get('fy')} {v.get('fp')}, accession {v.get('accn')})", None, v.get("filed"),
+                        "", "sec.gov/" + name, "fact", "XBRL company facts (data.sec.gov), as filed",
+                        concept=concept, value=v["val"], unit=v["unit"], end=v.get("end")))
+    return out
+
+
+def read_sec(target, limit=10, depth=3, threads=0):
+    """A ticker (AAPL) or CIK (320193) reads that company's XBRL facts; anything else is an EDGAR full-text search."""
+    h, t, gaps = _sec_headers(), target.strip(), []
+    m = re.fullmatch(r"(?i)(?:cik)?(\d{1,10})", t)
+    cik = m.group(1).lstrip("0") if m else ""
+    if not cik and re.fullmatch(r"[A-Za-z][A-Za-z.\-]{0,5}", t):
+        r = core.get("https://www.sec.gov/files/company_tickers.json", h)
+        if r.ok:
+            cik = next((str(c["cik_str"]) for c in r.json().values() if c.get("ticker", "").upper() == t.upper()), "")
+        else:
+            gaps.append(_blocked("sec.gov tickers", r))
+    if cik:
+        r = core.get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{int(cik):010d}.json", h)
+        if r.ok:
+            return _result(parse_sec_facts(r.json(), cik), gaps, "xbrl")
+        gaps.append(_blocked("data.sec.gov companyfacts", r))
+    r = core.get(f"https://efts.sec.gov/LATEST/search-index?q={_q(t)}", h)
+    if not r.ok:
+        return _result([], gaps + [_blocked("efts.sec.gov", r)], "full-text")
+    return _result(parse_sec_search(r.json())[:limit], gaps, "full-text")
+
+
 READERS = {"reddit": read_reddit, "hn": read_hn, "github": read_github, "stackoverflow": read_stackoverflow,
-           "youtube": read_youtube, "x": read_x}
-ALIASES = {"so": "stackoverflow", "yt": "youtube", "hackernews": "hn", "twitter": "x", "gh": "github"}
+           "youtube": read_youtube, "x": read_x, "arxiv": read_arxiv, "sec": read_sec}
+ALIASES = {"so": "stackoverflow", "yt": "youtube", "hackernews": "hn", "twitter": "x", "gh": "github", "edgar": "sec"}
 
 # One fixed query per platform for the self-test; pass = at least N items parsed.
 SELFTEST = {"reddit": ("r/programming python", 3), "hn": ("sqlite", 3), "github": ("yt-dlp/yt-dlp", 3),
             "stackoverflow": ("python asyncio", 3), "youtube": ("https://www.youtube.com/watch?v=jNQXAC9IVRw", 2),
-            "x": ("https://x.com/jack/status/20", 1)}
+            "x": ("https://x.com/jack/status/20", 1), "arxiv": ("attention transformer", 3), "sec": ("AAPL", 3)}
