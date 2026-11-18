@@ -15,6 +15,8 @@ No size named: take it from the request ("shrink this repo": one codebase; "bloa
 
 **Modes for one thing.** `/sigmamusk <target>` is **Review**: steps 1 to 4, then ask before shipping. `/sigmamusk` alone is **Grill**: one message of 3 to 5 questions (target, the problem in one line, what done looks like, what is off-limits, ship or report only), recommended answer first; then Review, and hand the result to the installed skill that fits it (one change to a ship flow such as SigmaShip, several to a brief writer, a long run to a loop writer, defects to a reviewer, a big size cut to the codebase size). `--fast "<problem>"` is **Fast**: the problem is the brief; run steps 1 and 2 on the code it touches and measure only what the change moves. Sure (checkable result, no owner decision open, a two-way door, one PR): file the issue and ship it end to end, no page; not sure: ask only what blocks. `--demon` turns the voice up ([voice.md](references/voice.md)). With no ship skill installed, do its steps yourself in a fresh worktree: tests first, review, squash merge, branch and worktree deleted.
 
+**Combined with other skills** (the user invokes several, or says "work across all skill principles"): SigmaMusk is a lens on that run, not a run of its own. Bring steps 1 and 2 of the Algorithm, `ENGINEERING.md` and the repo's How we work rules to the work as it ships: question a requirement in a line when one comes up, delete what is not needed, and keep going. No extra step, issue, page, question or hand-off. Alone, SigmaMusk keeps the flow below.
+
 ## Rules
 
 - Every number comes from a command you ran, shown next to it. A guess is labelled a guess.

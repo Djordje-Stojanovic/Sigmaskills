@@ -72,8 +72,10 @@ pass; after 3 passes without a win in one idea category, the loop changes catego
 
 ## The held-out check
 
-Off by default: the same quality check and score on inputs the loop never tuned to. `required` mode only when the
-owner opts in, in his own words; his word promotes in every mode. When he has his own machine, his run there is the
+Off by default: the same quality check and score on inputs the loop never tuned to, on the same machine as the
+candidates. Modes: `off`, `advisory` (it reports, never blocks) and `required` (only when the owner opts in, in his
+own words). It self-tests on the unchanged champion before first use: a check that fails the champion is broken, not
+strict. His word promotes in every mode. When he has his own machine, his run there is the
 held-out check: say that first. Modes, self-test and the check script: [held-out.md](references/held-out.md).
 
 ## The phases

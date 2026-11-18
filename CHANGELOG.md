@@ -32,6 +32,12 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaship`: the builder reviews its own work. It reads its full diff and runs the change; no second agent starts. Say "with review" or "reviewer: <model>" to get review rounds. (#372)
+- Skill knowledge that the less-hardcoding rewrite (#368, #369, #370) cut is back: `sigmaresearch` lists concrete places to try per platform again, `sigmafreedom` again says it never refuses or softens what the owner asked and lists the ban words to sweep, `sigmahuman` keeps the five strongest tells in its card, `sigmaclimb` names the held-out modes and self-test. (#372)
+- `sigmamusk`, `sigmataste`, `sigmareview` and `sigmaimprove` work combined with a build skill: invoked together, each brings its principles into that run, with no extra step, file, issue or hand-off. (#372)
+
 ## [0.29.0] — 2026-11-18
 
 ### Added

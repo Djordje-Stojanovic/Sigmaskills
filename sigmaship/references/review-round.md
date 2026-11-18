@@ -1,6 +1,20 @@
-# Review rounds
+# Review
 
-A review round gives the finished branch to an agent that has never seen the work. A fresh context catches what the builder's hides. Review is by intent: the reviewer's first job is to say no to what the ticket did not ask for, and its second is to read every line of the files where a mistake costs most. Write the handoff from the template below. SigmaBrief can be a skeleton, but its brief rules do not apply here: the reviewer fixes findings on the branch without waiting for approval, and reports in the `CLEAN | FIXED | BLOCKED` form below. That form wins. The handoff must stand alone.
+By default the builder reviews its own work: SigmaShip trades the second pair of eyes for speed, and keeps quality by reading and running the change. A second agent reviews only when the user asks for one.
+
+## Self-review
+
+Do it on your own diff, after the full checks are green:
+
+1. Did the ticket ask for this? Go through `git diff --stat origin/<base>...HEAD` file by file. Revert a change that no criterion needs.
+2. Spec: for each acceptance criterion, confirm the code meets it and a test proves it.
+3. Risky files (list below): read each one in full, not only the hunks. Look at correctness and edge cases, error handling, security, money, data loss, deploy config, tests that would miss a real failure, and the repository's documented standards.
+4. Run it: the app, page, command or skill itself, the way a user meets it. Look at the result.
+5. Rate findings P0–P2 as in step 6 of the template below; fix each with a test first, commit `fix(#<issue>): <what>`, push. Record one ledger row: round `self`, status, counts, commits.
+
+## When the user asks for a reviewer
+
+"with review", "reviewer: <model>" or "SigmaShip reviewer: <model>" turn on review rounds. Start a fresh sub-agent of your harness (one model up from the builder when it has one), or the named model by any route that reaches it (see the last section). Give it the handoff below; it must stand alone. The reviewer fixes findings on the branch without waiting for approval and reports in the `CLEAN | FIXED | BLOCKED` form. Round 2 reviews the fix commits, sent to the same reviewer by a follow-up message when the harness has one. At most 2 rounds: a round 2 that still finds P0–P2 problems means the ticket or design is wrong, so stop and ask the user.
 
 ## Handoff template
 
@@ -55,12 +69,10 @@ Prose in `.md` files and test files do not count by themselves. When in doubt, l
 
 ## Round rules
 
-- **Clean** means the round found zero P0–P2 findings. A round that found and fixed P0–P2 findings is not clean: round 2 reviews the fix commits, sent to the same reviewer by a follow-up message (`SendMessage`, `send_input`) when the harness has one.
+- **Clean** means zero P0–P2 findings. A round that found and fixed P0–P2 findings is not clean; round 2 reviews the fixes.
 - Record each round in the ledger's *Review rounds* table: round, status, counts, commits.
-- A round 2 that still finds P0–P2 problems means the ticket or design is wrong. Stop and ask the user.
 - `BLOCKED`: read the reason, fix what you can, ask the user about the rest.
-- When you run the round yourself (no sub-agents), do steps 2–6 of the template on your own diff, fix, and record it the same way.
 
 ## Reaching a named reviewer
 
-When the harness cannot run the model the user named, any route that reaches it works; log which one did. One that worked: T3 Code runs Claude, Codex, Cursor, Gemini, pi and other providers from one place: `t3 thread start . - --provider <instance id> --model <model slug> --worktree <branch> --wait`, with the handoff on stdin. The instance ids are the keys under `providerInstances` in `~/.t3/userdata/settings.json`; the slugs are the names in its model picker. Other routes: the model's own CLI run headless in the branch worktree (`codex exec`, `claude -p`, `gemini -p`), or its API with the handoff as the prompt.
+When the harness cannot run the model the user named, any route that reaches it works; log which one did. One that worked: T3 Code runs Claude, Codex, Cursor, Gemini, pi and other providers from one place: `t3 thread start . - --provider <instance id> --model <model slug> --worktree <branch> --wait`, with the handoff on stdin. The instance ids are the keys under `providerInstances` in `~/.t3/userdata/settings.json`; the slugs are the names in its model picker. Other routes: the model's own CLI run headless in the branch worktree (`codex exec`, `claude -p`, `gemini -p`), or its API with the handoff as the prompt. When none reaches it, say so in one line and use a fresh sub-agent of your harness.

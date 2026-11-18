@@ -5,7 +5,7 @@ description: Use when asked for sigmataste or a taste pass on a page, app, deck,
 
 # SigmaTaste
 
-Look at one target through taste lenses, ask the owner one round of questions, then write `sigmataste-plan-DD-MM-YYYY.md`: the few changes that make a big visible difference, ranked, each with how to verify it. Then stop. SigmaTaste plans; it does not build.
+Look at one target through taste lenses, ask the owner one round of questions, then write `sigmataste-plan-DD-MM-YYYY.md`: the few changes that make a big visible difference, ranked, each with how to verify it. Then stop. SigmaTaste plans; it does not build. Invoked together with a skill that builds (SigmaShip), it brings its lenses into that run instead: no plan file, no stop.
 
 The bar: a stranger sees the difference before and after. A plan full of small fixes nobody would notice has failed, even when every fix is right.
 
