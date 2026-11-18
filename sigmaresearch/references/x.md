@@ -6,7 +6,7 @@ X has three jobs with different routes: one post by URL (no login), search (a si
 
 `python scripts/read.py x "https://x.com/USER/status/ID"`
 
-The reader takes the post from the FxTwitter API (`api.fxtwitter.com/status/ID`: full text, likes, reply and repost counts, date, author), then from X's own embed JSON (`cdn.syndication.twimg.com/tweet-result?id=ID&token=a`). Links from `twitter.com`, `fxtwitter.com`, `fixupx.com` and mirrors work too. Replies are not in these answers: take route 3 for them.
+The reader takes the post from the FxTwitter API (`api.fxtwitter.com/status/ID`: full text, likes, reply and repost counts, date, author), then from X's own embed JSON (`cdn.syndication.twimg.com/tweet-result?id=ID&token=a`), then vxTwitter (`api.vxtwitter.com/USER/status/ID`: text and counts), then X's oEmbed (`publish.twitter.com/oembed?url=URL`: text and date, no counts). The route that answered is in `stats.routes`. Links from `twitter.com`, `fxtwitter.com`, `fixupx.com` and mirrors work too. Replies are not in these answers: take route 3 for them.
 
 ## 2. Search: a signed-in browser
 
@@ -33,7 +33,7 @@ Open the status permalink, scroll three or four times (the page loads replies as
 ## When a route closes
 
 - **A browser without a session** (any Chromium, also a stealth one on a server) shows a post page: its `<title>` holds the author and the full post text. Replies and search need the session.
-- **Mirrors:** nitter-style front ends come and go. On 2026-10-21 `xcancel.com` was suspended and `nitter.net` answered 410. Try one, log the result, do not count on it.
+- **Mirrors:** nitter-style front ends come and go. On 2026-10-21 `xcancel.com` was suspended and `nitter.net` answered 410. On 2026-11-18 all four reader routes answered for `x.com/jack/status/20`. Try one, log the result, do not count on it.
 - **The data the page loads:** in the signed-in browser, `read_network_requests` shows the GraphQL calls behind search and replies; their JSON holds the same posts with exact counts.
 - **On a bot check, a 403 or a 429:** follow the rate limits in access ladder (`access-ladder.md`), use the routes above, and try the archives in deep routes (`deep-routes.md`). If every route fails, finish with an X access gap, the route list and the other platforms.
 

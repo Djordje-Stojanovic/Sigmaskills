@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SigmaResearch reader: read.py <platform[,platform...]|all> <query|url> [options]
 
-Platforms: reddit, hn, github, stackoverflow (so), youtube (yt), x.  Read-only, stdlib only.
+Platforms: reddit, hn, github, stackoverflow (so), youtube (yt), x, arxiv, sec (edgar).  Read-only, stdlib only.
 Other commands: read.py selftest [--platforms a,b]   (live check, one fixed query per platform)
 """
 import argparse
@@ -91,7 +91,7 @@ def selftest(platforms):
 def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("platform", help="reddit | hn | github | stackoverflow | youtube | x | comma list | all | selftest")
+    ap.add_argument("platform", help="reddit | hn | github | stackoverflow | youtube | x | arxiv | sec | comma list | all | selftest")
     ap.add_argument("target", nargs="?", default="", help="query or URL")
     ap.add_argument("--limit", type=int, default=10, help="items per platform (comments: top N by score)")
     ap.add_argument("--depth", type=int, default=3, help="comment depth")
@@ -106,7 +106,7 @@ def main(argv=None):
         return selftest((a.platforms.split(",") if a.platforms else list(rd.SELFTEST)))
     if not a.target and not a.from_json:
         ap.error("target (query or URL) is required")
-    plats = list(rd.SELFTEST) + ["x"] if a.platform == "all" else a.platform.split(",")
+    plats = list(rd.SELFTEST) if a.platform == "all" else a.platform.split(",")
     doc = run(plats, a.target, a.limit, a.depth, a.threads, a.from_json)
     print(json.dumps(doc, indent=2, ensure_ascii=False) if a.json else render(doc))
     return 0

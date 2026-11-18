@@ -22,7 +22,8 @@ UA = "sigmaresearch/2.1 (read-only research script; +https://github.com/Djordje-
 CACHE_TTL = 24 * 3600
 # Minimum seconds between two requests to one host (shared by all threads).
 HOST_GAP = {"reddit.com": 6.0, "duckduckgo.com": 3.0, "archive.org": 1.0, "stackexchange.com": 0.5,
-            "photon-reddit.com": 2.0, "fxtwitter.com": 1.0, "twimg.com": 1.0}
+            "photon-reddit.com": 2.0, "fxtwitter.com": 1.0, "twimg.com": 1.0,
+            "arxiv.org": 3.0, "sec.gov": 0.15}  # arXiv asks for 3 s between calls; SEC allows 10 per second
 DEFAULT_GAP = 0.25
 MAX_TRIES = 3  # 429 only: waits 2 s, 4 s (or Retry-After, capped), then gives up
 MAX_WAIT = 20.0
