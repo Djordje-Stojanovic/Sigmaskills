@@ -150,6 +150,8 @@ Domain documentation uses the single-context layout. See `docs/agents/domain.md`
 
 ## How we work
 
+- A cloud box for one task (boat.dev), only when the owner or a spec asks: `laboat box <repo> [issue]` copies the base with the repo at the newest main on a new branch and links it into T3; work and commit there, `laboat pr <id>`, then `laboat land <id>` (merge, delete the branch and the box). Skill `sigmaboat`; guide Thinkcenter_Setup `docs/guides/BOAT.md`.
+
 - No new timer, cron job or alert (owner, 2026-11-17): a job runs when its cause happens (a merge, a deploy, a publish) or as a setting of the tool. A timer stays only where no such setting exists, with one line why. What is left: [`docs/reference/scheduled-jobs.md`](docs/reference/scheduled-jobs.md).
 
 - When a skill and the owner's message conflict, the message wins.
