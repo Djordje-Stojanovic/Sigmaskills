@@ -74,7 +74,7 @@ test('wizard: a found host gets its folder, linked; m switches to a full copy', 
     fs.mkdirSync(path.join(box.home, '.claude'));
     const linked = await wizard(box, `1${ENTER}${ENTER}${ENTER}`);
     assert.equal(linked.code, 0, linked.io.err());
-    assert.match(linked.io.frames().find((frame) => frame.includes('2 Where') && frame.includes('Method')), /Claude Code\s+\.claude\/skills\s+linked\s+found here/);
+    assert.match(linked.io.frames().find((frame) => frame.includes('Pick where they go')), /Claude Code\s+\.claude\/skills\s+linked\s+found here/);
     const link = path.join(box.project, '.claude', 'skills', 'sigmawrite');
     assert.ok(fs.lstatSync(link).isSymbolicLink());
 
@@ -119,7 +119,7 @@ test('wizard: open a pack, pick single skills, and filter', async () => {
     // Filter for "beta", keep it, go to the last hit (Acme) and toggle it with space, then walk the three steps.
     const { code, io } = await wizard(box, `/beta${ENTER}${UP} ${ENTER}${ENTER}${ENTER}`);
     assert.equal(code, 0, io.err());
-    assert.ok(io.frames().some((frame) => /Filter: beta/.test(frame)));
+    assert.ok(io.frames().some((frame) => /Filter {2}beta/.test(frame)));
     assert.match(io.text(), /1 skill installed/);
     assert.ok(fs.existsSync(skillPath(box, 'beta')));
     assert.ok(!fs.existsSync(skillPath(box, 'alpha')));
@@ -208,7 +208,7 @@ test('wizard: packs stay packs, single skills sit together, and a long name neve
   try {
     const { io } = await wizard(box, CTRL_C, [], { columns: 80, rows: 60 });
     const first = io.frames().find((frame) => frame.includes('Pick packs'));
-    assert.match(first, /\n {2}Packs +\n[\s\S]*Matt Pocock[\s\S]*\n {2}Single skills +\n[\s\S]*Taste/);
+    assert.match(first, /\n│ {2}Packs ─+\n[\s\S]*Matt Pocock[\s\S]*\n│ {2}Single skills ─+\n[\s\S]*Taste/);
     assert.doesNotMatch(first, /[a-z]\d+\/\d+/, 'a space always separates name and count');
   } finally {
     box.cleanup();
@@ -225,7 +225,7 @@ test('wizard: u picks every installed skill for an update, x marks them all for 
 
     const update = await wizard(box, `u${ENTER}${ENTER}${ENTER}`);
     assert.equal(update.code, 0, update.io.err());
-    assert.ok(update.io.frames().some((frame) => /u update 2 installed · x uninstall them/.test(frame)), 'the first screen offers both');
+    assert.ok(update.io.frames().some((frame) => /2 installed here {3}u update them · x uninstall them/.test(frame)), 'the first screen offers both');
     assert.ok(update.io.frames().some((frame) => frame.includes('Update 2 skills')));
 
     const remove = await wizard(box, `x${ENTER}${ENTER}`);
@@ -283,7 +283,7 @@ test('wizard: p shows the text of a pack skill, and a clear line when the source
     fs.rmSync(path.join(box.remotes, 'acme'), { recursive: true, force: true });
     const down = await wizard(box, `/beta${ENTER}${UP}pq${CTRL_C}`);
     assert.ok(down.io.frames().some((frame) => frame.includes('Could not load the text of beta')));
-    assert.ok(down.io.frames().at(-1).includes('Filter: beta'), 'the wizard is still usable');
+    assert.ok(/Filter {2}beta/.test(down.io.frames().at(-1)), 'the wizard is still usable');
   } finally {
     box.cleanup();
   }
@@ -303,7 +303,7 @@ test('wizard: unticking installed skills lists them under Remove, and the confir
     const { code, io } = await wizard(box, `${RIGHT}${DOWN} /alpha${ENTER}${UP} ${ENTER}${ENTER}`);
     assert.equal(code, 0, io.err());
     const frames = io.frames();
-    assert.ok(frames.some((frame) => new RegExp(`\\[ \\]  ${first}.*will remove`).test(frame)), 'the unticked skill says what will happen');
+    assert.ok(frames.some((frame) => new RegExp(`○ ${first}.*will remove`).test(frame)), 'the unticked skill says what will happen');
     const review = frames.find((frame) => frame.includes('Remove 2 skills'));
     assert.ok(review, 'the review lists the removals');
     assert.ok(review.includes(first) && review.includes('alpha') && !/Install \d|Update \d/.test(review));
@@ -328,10 +328,33 @@ test('wizard: an installed skill picked again is an update, apart from the insta
     const { code, io } = await wizard(box, `/alpha${ENTER}${UP}  /beta${ENTER}${UP} ${ENTER}${ENTER}${ENTER}`);
     assert.equal(code, 0, io.err());
     const frames = io.frames();
-    assert.ok(frames.some((frame) => /\[x\] {2}alpha.*will update/.test(frame)));
+    assert.ok(frames.some((frame) => /● alpha.*will update/.test(frame)));
     const review = frames.find((frame) => frame.includes('Update 1 skill'));
     assert.ok(review && review.includes('Install 1 skill') && !review.includes('Remove'), 'installs and updates are listed apart');
     assert.ok(fs.existsSync(skillPath(box, 'alpha')) && fs.existsSync(skillPath(box, 'beta')));
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('wizard: the first screen names its scope, and s switches it, so u and x act on what is shown', async () => {
+  const box = createSandbox();
+  try {
+    createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
+    writeUserConfig(box.home, { packs: [ACME_PACK] });
+    const setup = createMockIo(box.env);
+    assert.equal(await runCli(['install', 'alpha', '--yes', '--project', box.project], setup), 0, setup.getStderr());
+
+    // Switch to Global, press x: nothing is installed there, so nothing is marked and enter asks for a pick.
+    const { io } = await wizard(box, `sx${ENTER}${CTRL_C}`, [], { columns: 80 });
+    const frames = io.frames().filter((frame) => frame.includes('Pick packs'));
+    assert.match(frames[0], /│ {2}Project {2}.*s switch to Global/);
+    assert.match(frames[0], /1 installed here/);
+    const global = frames.find((frame) => /│ {2}Global {2}.*s switch to Project/.test(frame));
+    assert.ok(global && global.includes('Nothing installed here yet'), 'after s the screen shows the global scope');
+    assert.ok(frames.at(-1).includes('Select at least one skill.'), 'x in an empty scope marks nothing');
+    assert.ok(frames.every((frame) => frame.split('\n').every((line) => line.length < 80)), 'no line runs past 80 columns');
+    assert.ok(fs.existsSync(skillPath(box, 'alpha')), 'the project skill is untouched');
   } finally {
     box.cleanup();
   }
