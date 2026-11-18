@@ -1,6 +1,6 @@
 # Installer guide
 
-This guide covers the Sigma Installer (`npx @djordje-stojanovic/sigmaskills`) and the other ways to install SigmaSkills. For a first install, the [README one-line install](../README.md#install-in-one-line) is enough.
+This guide covers the Sigma Installer (`npx @djordje-stojanovic/sigmaskills`) and the other ways to install SigmaSkills. For a first install, the [README install](../README.md#install) is enough.
 
 The Sigma Installer needs Node.js 22 or newer.
 
@@ -154,7 +154,7 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `design-pack` | the design pair for one repo with a page: `impeccable` and `taste-skill`, at their pinned commits. `sigmataste` is a Sigma skill, so `core` has it already. `frontend-design` is in the `anthropic` pack (19 skills): add it alone with `install frontend-design`. Research: [`docs/research/design-pack.md`](research/design-pack.md) |
 | `all` | every pack that is available on this machine |
 
-What each pack does, its skills, source, licence and needs: [Packs in the README](../README.md#packs). `local` is a folder of your own skills; see [Your own packs](#your-own-packs).
+What each pack does, its source and its pin: [Packs in the README](../README.md#packs). What it needs: its guide in [`sigmasetup/references/packs/`](../sigmasetup/references/packs/). `local` is a folder of your own skills; see [Your own packs](#your-own-packs).
 
 ```bash
 npx @djordje-stojanovic/sigmaskills install --preset threejs --agent claude --project .
