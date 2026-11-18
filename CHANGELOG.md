@@ -36,62 +36,37 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Added
 
-- The installer knows one more agent host: Grok Build (`.grok/skills`), from the upstream host list (#361).
-- `sigmafinanceman` (SigmaFinanceMan) is back in the pack (#338). It values a public company from data it fetches itself (SEC filings, Yahoo prices, the FRED 10-year rate) and runs the model, which the Financial Services pack leaves to a paid feed or your own template. Its DCF now gives a bear, base and bull value (year-1 growth 5 points and the EBIT margin 3 points either side of the base) and a reverse DCF: the year-1 growth and the EBIT margin at which the value equals the share price. Minority interest comes off the equity value, in the workbook too. The page walks through the method in ten numbered steps with the run's own numbers, and it now wears the DESIGN.md look: dark by default, light on a light system and in print. The workbook and the deck keep the banker colours. The sanity checks flag a terminal value under 40 % of EV and an implied growth far above the filed growth. Each addition has a check in `finman.py selftest`. It was retired in 0.24.0; an installed copy is now updated like any other Sigma skill.
-- `sigmafinanceman` answers any money question, a trade, an option or a tax bill included, with no hedging and no "consult a professional". It works on any OS and any agent host, and as a plain prompt: with no code it works the model by hand, with no web it asks once for the inputs that matter and labels remembered numbers.
-- `sigmasetup` (SigmaSetup) is back in the pack (#338). New: it keeps a repo's house files current. You keep master rule files in one folder or repo (an `ENGINEERING.md`, a `DESIGN.md`, a shared section of `AGENTS.md`, guides, templates). `scripts/house.mjs check` lists each copy in the repo as current, drift or missing; `apply` brings them all up to date in one go; `undo` puts back what the last apply changed. A shared file is copied whole. A section is replaced inside `AGENTS.md` or `CLAUDE.md` and the rest of the file stays; lines only the repo has stay at the section's end and are listed (`--exact` drops them). The skill reads where the masters live from `SIGMASETUP_HOUSE` or a `house:` line in its personal instructions, and asks once when neither is set. As before 0.24.0, it reads a setup guide per pack (tracker files, labels, tools, keys by name), offers Ponytail and the per-repo git guard, asks one round, and reports every change with its undo. New guides cover the ten packs below; a repo's `DESIGN.md` setup, which `sigmadesign` did, is part of the house files. `test/sigmasetup.test.js` fails when a pack has no guide or a Sigma skill has no section. It was retired in 0.24.0; an installed copy is now updated like any other Sigma skill.
-- Ten new packs (#338):
-  - Anthropic Engineering (`anthropic-engineering`): Anthropic's engineering plugin, 9 skills.
-  - Agent Skills (`agent-skills`): Addy Osmani's engineering workflow, 24 skills.
-  - Caveman (`caveman`): terse answers plus lean build and verify skills, 14 skills. It installs as plain files: no hooks, no settings changes.
-  - Claude Red (`claude-red`): offensive security for authorized tests, 79 skills.
-  - Dev Browser (`dev-browser`): the agent drives a real Chrome, 1 skill.
-  - Emil Kowalski (`emil-kowalski`): animation and design engineering, 19 skills.
-  - Marketing Skills (`marketingskills`): Corey Haines's marketing skills, 53 skills.
-  - LinkedIn (`linkedin`): posts, comments and analytics, 12 skills.
-  - I Have ADHD (`i-have-adhd`): answers shaped for a reader with ADHD, 1 skill.
-  - Baoyu (`baoyu`): cover images, infographics, comics, slides and posting, 21 skills. It installs from an English fork of JimLiu/baoyu-skills, which is written in Chinese.
-- Three skill names stay with the pack that had them first: `code-review` (Matt Pocock, not Anthropic Engineering), `test-driven-development` (Superpowers, not Agent Skills) and `prototype` (Matt Pocock, not Emil Kowalski).
+- `sigmafinanceman` is back (#349). Its DCF gives a bear, base and bull value and a reverse DCF (the growth and margin the share price implies), and each run writes a page in the DESIGN.md look that walks through the method in ten steps.
+- `sigmafinanceman` values any investment, not only a listed company: dividends, startups and cap tables, purchases (buy, lease or rent), homes, gold and crypto, collectibles, bonds and funds (#353).
+- `sigmafinanceman` answers any money question, trades, options and taxes included, on any OS and host; with no code it works the model by hand (#355).
+- `sigmasetup` is back (#351). It syncs your house files (`ENGINEERING.md`, `DESIGN.md`, an `AGENTS.md` section) from your masters with `house.mjs check`, `apply` and `undo`, and sets up each installed pack from its guide.
+- Ten new packs: Anthropic Engineering, Agent Skills, Caveman, Claude Red, Dev Browser, Emil Kowalski, Marketing Skills, LinkedIn, I Have ADHD and Baoyu (#350).
+- Every pack has a category (Engineering, Design, Media, Research, Marketing, Finance, Productivity). `/design` in the wizard filters by it, and `list --packs --json` carries it (#350).
+- `sigmaresearch` reads arXiv and SEC EDGAR, and reads an X post through vxTwitter and oEmbed when the first routes fail (#347).
+- A new agent host: Grok Build (`.grok/skills`) (#361).
 
 ### Changed
 
-- `sigmaboat` names no lab wrapper and no key file. The base and every copy run with boat's `--no-env`; a box gets its keys when it starts, over stdin, or from a boat environment when the API key may write one (`references/boat.md`).
-- `sigmafinanceman` now values any investment, not only a listed company (#338). One question routes the run: what are you valuing, and what decision does it serve? Each answer loads one reference file and runs one command:
-  - Stocks: a dividend discount model, dividend safety, owner earnings, buybacks, quality checks and the margin of safety (`dividend`), beside the DCF family.
-  - Startups: a cap table with SAFEs, notes and the option pool, priced rounds, the exit waterfall, the VC method, power-law portfolio maths and a pitch deck's numbers (`venture`).
-  - Purchases such as a GPU or a car: buy, lease or rent, payback, NPV and IRR, and resale (`purchase`). GPU rent prices come live from vast.ai.
-  - Homes: rent or buy, the mortgage, cap rate and cash-on-cash (`property`). The mortgage rate comes from FRED.
-  - Gold, commodities and crypto: real return after US inflation, drawdowns and the range of past holds (`asset`). These pay nothing, so the page gives no fair value and says why.
-  - Collectibles: sold comparables, the grading premium, fees and liquidity (`collectible`). Pokémon card prices come live from pokemontcg.io.
-  - Bonds and funds: yield, duration and spread, tracking difference and fee drag (`bond`, `fund`).
-- `sigmafinanceman` comps count minority interest in EV and take it off the implied value per share. The workbook has a column for it.
-- `sigmafinanceman` reads FRED again. FRED stopped answering the skill's own user agent, so the 10-year rate had been falling back to Yahoo.
-- SKILL.md and its reference files total 41,424 tokens on the OpenAI tokenizer (o200k_base). A test keeps them at 50,000 or fewer.
-- `sigmafinanceman` was checked by two independent expert reviews, and every error they proved is fixed. Each fix has a self-test built from the reviewer's numbers (#356, #358, #359, #360):
-  - Company data ties out to the filing. Debt reads every common tag; Coca-Cola's debt was $1.5bn and is now $41.6bn from the latest 10-Q. Cash includes short-term investments, trade payables are read, and equity-method stakes and preferred stock sit in the bridge. A run whose debt looks incomplete stops and names `--set debt=`.
-  - Shares are today's: the latest cover-page count, scaled when a company files in millions. McDonald's was valued at $923 million a share and is now $247.93.
-  - The DCF is dated today, takes the newest balance sheet, and makes growth cost reinvestment. The reverse DCF also gives the discount rate the price implies. The workbook models the same years as Python, and `audit` compares its cells with Python's numbers.
-  - A missing input reads `n/a` and names the input that fills it, never zero or a pass.
-  - Venture: unissued options get nothing at an exit, a cap-only SAFE never converts above the round price, and the default outcome shape follows Correlation Ventures. In the proof deal the founders get $132.7m at a $250m exit, not $116.8m.
-  - Buy vs rent: NPV, IRR, payback and the winner come from one cash-flow series. A rental's IRR no longer charges a paid-off mortgage. An IRR with no root or several says so.
-  - Gold and commodities count calendar months and winners after costs, and say how many independent windows the history holds. A bond takes fractional years and accrued interest, and a bond held to maturity returns its yield. A collectible is priced for one condition from sold prices or listings, never an ask called a sale. Rates and money print in their own units.
-  - New reference sections, each figure checked against its source: one cash-flow sheet and one yardstick, base rates, weighing the cases, an exit to each holder's cash, a bond the user can buy, what an index can return, where the holder lives, how much history supports a range, tokens, loans that reset, bill-cutting purchases, tying out five numbers, and making the forecast pay for growth.
-- `guardrail_lint` passes on the whole repo again. One line in `sigmareview` was a ban on what the owner may probe; it now asks for his confirm before a payload that can destroy shared data (#357).
-- `sigmaresearch` reads two new sources and has two more X routes. `arxiv` searches papers or reads one by id through the arXiv API, and falls back to the abstract page. `sec` reads a company's latest filed numbers by ticker, or searches the text of every EDGAR filing. It sends a generic contact; `SEC_USER_AGENT` sets your own. An X post now also reads through vxTwitter and X's oEmbed when FxTwitter and the embed JSON fail. Reddit keeps its order: the mirrors and archives tested on 2026-11-18 were blocked or rate-limited (#338).
-- `sigmahuman`: takes the rest of blader/humanizer v4.0.0 outside the patterns: prompt-injection examples, the *weak alone* rule, the ranking and same-time checks the fact script misses, a whole-file read and partial-pass report in file mode, and voice-detail examples. One upstream line stays out: "add a specific detail you know to be true" breaks the facts-from-source rule.
-- `sigmacourse`: a program measures a persona (small-word score, 8-word copy count); no model judge or agent grades it.
-- The wizard's first step (What) no longer sorts packs under topic headings (Core, Design and taste, Engineering, Media and 3D, Research and finance, More). That grouping shipped in 0.27.3 and is withdrawn: a pack stays its own pack (#338).
-- The first step lists Packs first: every pack with more than one skill, each whole, in the registry's order, then Local and any pack from your own `~/.sigmaskills/packs.json`. The sources that ship one skill follow under their category, so a Design single skill sits under Design. Local always sits under Packs, however few skills its folder holds. The cursor skips the headings, empty packs stay hidden, and the number keys follow screen order (#338).
-- Every pack has one category from a fixed list: Engineering, Design, Media, Research, Marketing, Finance, Productivity. The wizard's `/` filter matches category names, so `/design` lists every Design skill across packs and single skills. `sigmaskills packs` and the README show each pack's category, and `list --packs --json` carries it as `category` (#338).
-- The wizard's first screen counts the skills installed in the other scope: `N more in Global: s to see them` (#344).
-- The README's pack sections show the pins the registry uses; seven of them still named older commits (#338).
-- `scripts/packs-snapshot.js` drops a skill name that an earlier pack already lists, and prints each drop (#338).
-- The wizard has a new look, taken from Matt Pocock's installer (`npx skills add`). Each screen reads top to bottom along a rail on the left; a finished step folds into one line, and the active step opens below it. Dots replace the `[x]` boxes, an open pack draws its skills as a tree, a line counts the rows above and below the screen, and the whole screen takes the canvas colour (#338).
-- The wizard shows what you have (#338). A pack row reads `✓ 22 installed`, `● 22/22 picked`, `will update` or `✕ will remove`, not `○ 0/22`; a pack that is none of these shows `○` and no count. `u` goes straight to an `Update N skills` review and `x` to a `Remove N skills` review, with `enter update` and `enter remove`; neither asks where. Where shows one row for `.agents/skills` and the hosts that read it, then only the hosts with their own folder, and Review uses the same words (`files`, `linked`, `copied`). The screen ends under its content, the rail is drawn in mute so it shows on the canvas, and the brand is an emerald badge, the one loud thing; the hints are mute. The Local pack hides until its folder is set. Notices get their own line, the highlighted description is one colour, and the blurb column shows only at 100 columns and wider. Removals are listed per pack, and the summary fits 80 columns and ends with the command to come back.
-- The wizard's first screen names its scope (Project or Global) and that folder, and says how many skills are installed there. `s` switches the scope on that screen, so `u` (update) and `x` (uninstall) act on the scope you see. Paths under your home folder show as `~` (#338).
-- The installer no longer offers the Blender pack. Skills you already installed from it stay where they are until you uninstall them (`sigmaskills uninstall --skill <name>`) (#338).
-- Every pinned pack moves to its newest upstream version. Matt Pocock, Anthropic, Design.md, Financial Services, tstack, Impeccable, Diagram Design and Hallmark move to their newest commits. HyperFrames moves to tag v0.9.65 (was v0.9.30) and Last 30 Days to tag v4.3.2 (was v3.33.1). Three.js, Superpowers, Security Audit, Anatomy, Taste and the HyperFrames student kit were already current. Ponytail stays on v5.3.3, its newest release. No pack gains or loses a skill (#338).
-- `sigmaboat` is the one skill for boat.dev machines, and it is generic. One base holds tools, agent setup and repos, with no key, and is only copied; a box is a copy for one task (branch, pull request, merge, delete); workers run one command. Keys live in a boat environment that boat injects into each box at its start, never on the base. Boxes stop themselves (boat auto-stop) as a safety net. The skill watches every sandbox, keeps the base current and sends a preview before the merge. A lab wrapper and boat guide on the machine, when there is one, win over the skill. The plain boat commands moved to `sigmaboat/references/boat.md`.
+- The wizard has a new look: one vertical flow, a finished step folds into one line, an open pack draws its skills as a tree, and the summary fits 80 columns (#343, #354).
+- The wizard's first screen shows the scope (Project or Global), what is installed there, and how many skills the other scope holds; `s` switches the scope (#343, #344).
+- A pack row says what you have: `✓ installed`, `● picked`, `will update` or `✕ will remove`. `u` and `x` go straight to an update or removal review (#354).
+- The first step lists whole packs, then the one-skill sources under their category. The topic headings from 0.27.3 are gone (#342, #350).
+- When two packs ship the same skill name, the earlier pack keeps it: `code-review` and `prototype` stay with Matt Pocock, `test-driven-development` with Superpowers (#350).
+- Every pinned pack moves to its newest upstream version; HyperFrames to `v0.9.65`, Last 30 Days to `v4.3.2`. The README shows the pins the registry uses (#342, #350).
+- `sigmaboat` is one generic skill: a keyless base that is only copied, one box per task, keys injected at the box's start (#345, #352).
+- `sigmahuman` takes the rest of blader/humanizer v4.0.0, except the line that would add facts (#346).
+- `sigmacourse` measures a persona with a program, never a model judge (#341).
+
+### Fixed
+
+- `sigmafinanceman` fixes every error two expert reviews proved, each with a self-test (#356, #358, #359, #360). Company data ties out to the filings (Coca-Cola's debt was $1.5bn, now $41.6bn), shares are today's count, the workbook matches Python, a missing input reads `n/a`, and the venture, buy-vs-rent, gold and bond models give the right numbers.
+- `sigmafinanceman` reads FRED again, and comps take minority interest off the value per share (#353).
+- A test keeps `sigmafinanceman`'s SKILL.md and references under 50,000 tokens (#353). Without tiktoken it estimates bytes / 3.5, not bytes / 3, so it no longer fails a skill that is under the cap (#363).
+- `guardrail_lint` passes on the whole repo again. `sigmareview` now asks for a confirm before a payload that can destroy shared data, instead of banning the probe (#357).
+
+### Removed
+
+- The Blender pack. Skills you installed from it stay until you uninstall them (#342).
 
 ## [0.27.3] — 2026-11-18
 

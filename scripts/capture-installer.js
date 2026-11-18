@@ -16,8 +16,8 @@ import { runCli } from '../src/cli.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.resolve(process.argv[2] || path.join(ROOT, 'docs', 'images'));
-const COLS = 100;
-const ROWS = 24;
+const COLS = 120;
+const ROWS = 30;
 const ANSI = /\x1b\[([0-9;?]*)([A-Za-z])/g;
 const DEFAULT_FG = '#d4d4d8';
 const CANVAS = '#09090b';
