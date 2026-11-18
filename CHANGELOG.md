@@ -32,8 +32,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.28.0] — 2026-11-18
+
 ### Added
 
+- The installer knows one more agent host: Grok Build (`.grok/skills`), from the upstream host list (#361).
 - `sigmafinanceman` (SigmaFinanceMan) is back in the pack (#338). It values a public company from data it fetches itself (SEC filings, Yahoo prices, the FRED 10-year rate) and runs the model, which the Financial Services pack leaves to a paid feed or your own template. Its DCF now gives a bear, base and bull value (year-1 growth 5 points and the EBIT margin 3 points either side of the base) and a reverse DCF: the year-1 growth and the EBIT margin at which the value equals the share price. Minority interest comes off the equity value, in the workbook too. The page walks through the method in ten numbered steps with the run's own numbers, and it now wears the DESIGN.md look: dark by default, light on a light system and in print. The workbook and the deck keep the banker colours. The sanity checks flag a terminal value under 40 % of EV and an implied growth far above the filed growth. Each addition has a check in `finman.py selftest`. It was retired in 0.24.0; an installed copy is now updated like any other Sigma skill.
 - `sigmafinanceman` answers any money question, a trade, an option or a tax bill included, with no hedging and no "consult a professional". It works on any OS and any agent host, and as a plain prompt: with no code it works the model by hand, with no web it asks once for the inputs that matter and labels remembered numbers.
 - `sigmasetup` (SigmaSetup) is back in the pack (#338). New: it keeps a repo's house files current. You keep master rule files in one folder or repo (an `ENGINEERING.md`, a `DESIGN.md`, a shared section of `AGENTS.md`, guides, templates). `scripts/house.mjs check` lists each copy in the repo as current, drift or missing; `apply` brings them all up to date in one go; `undo` puts back what the last apply changed. A shared file is copied whole. A section is replaced inside `AGENTS.md` or `CLAUDE.md` and the rest of the file stays; lines only the repo has stay at the section's end and are listed (`--exact` drops them). The skill reads where the masters live from `SIGMASETUP_HOUSE` or a `house:` line in its personal instructions, and asks once when neither is set. As before 0.24.0, it reads a setup guide per pack (tracker files, labels, tools, keys by name), offers Ponytail and the per-repo git guard, asks one round, and reports every change with its undo. New guides cover the ten packs below; a repo's `DESIGN.md` setup, which `sigmadesign` did, is part of the house files. `test/sigmasetup.test.js` fails when a pack has no guide or a Sigma skill has no section. It was retired in 0.24.0; an installed copy is now updated like any other Sigma skill.
@@ -63,7 +66,17 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
   - Bonds and funds: yield, duration and spread, tracking difference and fee drag (`bond`, `fund`).
 - `sigmafinanceman` comps count minority interest in EV and take it off the implied value per share. The workbook has a column for it.
 - `sigmafinanceman` reads FRED again. FRED stopped answering the skill's own user agent, so the 10-year rate had been falling back to Yahoo.
-- SKILL.md and its reference files total 33,738 tokens on the OpenAI tokenizer (o200k_base). A test keeps them at 50,000 or fewer.
+- SKILL.md and its reference files total 41,424 tokens on the OpenAI tokenizer (o200k_base). A test keeps them at 50,000 or fewer.
+- `sigmafinanceman` was checked by two independent expert reviews, and every error they proved is fixed. Each fix has a self-test built from the reviewer's numbers (#356, #358, #359, #360):
+  - Company data ties out to the filing. Debt reads every common tag; Coca-Cola's debt was $1.5bn and is now $41.6bn from the latest 10-Q. Cash includes short-term investments, trade payables are read, and equity-method stakes and preferred stock sit in the bridge. A run whose debt looks incomplete stops and names `--set debt=`.
+  - Shares are today's: the latest cover-page count, scaled when a company files in millions. McDonald's was valued at $923 million a share and is now $247.93.
+  - The DCF is dated today, takes the newest balance sheet, and makes growth cost reinvestment. The reverse DCF also gives the discount rate the price implies. The workbook models the same years as Python, and `audit` compares its cells with Python's numbers.
+  - A missing input reads `n/a` and names the input that fills it, never zero or a pass.
+  - Venture: unissued options get nothing at an exit, a cap-only SAFE never converts above the round price, and the default outcome shape follows Correlation Ventures. In the proof deal the founders get $132.7m at a $250m exit, not $116.8m.
+  - Buy vs rent: NPV, IRR, payback and the winner come from one cash-flow series. A rental's IRR no longer charges a paid-off mortgage. An IRR with no root or several says so.
+  - Gold and commodities count calendar months and winners after costs, and say how many independent windows the history holds. A bond takes fractional years and accrued interest, and a bond held to maturity returns its yield. A collectible is priced for one condition from sold prices or listings, never an ask called a sale. Rates and money print in their own units.
+  - New reference sections, each figure checked against its source: one cash-flow sheet and one yardstick, base rates, weighing the cases, an exit to each holder's cash, a bond the user can buy, what an index can return, where the holder lives, how much history supports a range, tokens, loans that reset, bill-cutting purchases, tying out five numbers, and making the forecast pay for growth.
+- `guardrail_lint` passes on the whole repo again. One line in `sigmareview` was a ban on what the owner may probe; it now asks for his confirm before a payload that can destroy shared data (#357).
 - `sigmaresearch` reads two new sources and has two more X routes. `arxiv` searches papers or reads one by id through the arXiv API, and falls back to the abstract page. `sec` reads a company's latest filed numbers by ticker, or searches the text of every EDGAR filing. It sends a generic contact; `SEC_USER_AGENT` sets your own. An X post now also reads through vxTwitter and X's oEmbed when FxTwitter and the embed JSON fail. Reddit keeps its order: the mirrors and archives tested on 2026-11-18 were blocked or rate-limited (#338).
 - `sigmahuman`: takes the rest of blader/humanizer v4.0.0 outside the patterns: prompt-injection examples, the *weak alone* rule, the ranking and same-time checks the fact script misses, a whole-file read and partial-pass report in file mode, and voice-detail examples. One upstream line stays out: "add a specific detail you know to be true" breaks the facts-from-source rule.
 - `sigmacourse`: a program measures a persona (small-word score, 8-word copy count); no model judge or agent grades it.
@@ -908,7 +921,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.3...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.28.0...HEAD
+[0.28.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.3...v0.28.0
 [0.27.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.2...v0.27.3
 [0.27.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.1...v0.27.2
 [0.27.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.0...v0.27.1
