@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.29.0] — 2026-11-18
+
 ### Added
 
 - `sigmaask`: ask which skill fits a job and what comes next. It answers with a flow, such as `SigmaImprove → issues → SigmaShip`, and the exact thing to type. It looks at your machine first: which hosts you have, where skills are installed, what is out of date, retired or installed twice. Then it gives the install line for anything missing. It knows every pack in the registry and searches the web for the rest.
@@ -907,7 +909,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.28.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.0...HEAD
+[0.29.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.3...v0.28.0
 [0.27.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.2...v0.27.3
 [0.27.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.1...v0.27.2
