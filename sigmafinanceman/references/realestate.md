@@ -34,6 +34,15 @@ A cap rate below the mortgage rate means the debt costs more than the building e
 
 Buying costs (transfer tax, notary, agent: 2-10 % by country), selling costs (agent and fees: 5-7 %), property tax, insurance, upkeep (1-2 % a year; more for old buildings), owners' association fees, vacancy (5-8 %), management (8-10 % of rent), and capital items (roof, heating) as a reserve.
 
+## Loans that reset
+
+The model prices a loan whose rate is fixed for its whole life. In many countries the rate is fixed for 5 to 15 years and then reset on the balance left.
+
+- Set `loan_years` to the full repayment time and `horizon_years` to the fixed-rate term. Repayment time n in years, from the rate r and the starting repayment t (both a year): n = ln((r + t) / t) / ln(1 + r). A 2 % starting repayment at a 4 % rate runs 28 years.
+- Stress the reset: take the balance left at the end of the term (the Mortgage table) as a new loan over the years left, at the rate + 2 and + 4 points, with the payment formula above. A payment the household cannot carry at + 2 points makes the loan a floating-rate bet with a delay.
+
+**One line to check the price.** The yearly cost of owning, as a share of the price = mortgage rate x share borrowed + the return given up on the cash put in x share paid in cash + property tax + upkeep - expected price growth. Set it against rent / price. Example, assumed: owning costs 6 % of the price a year, and the same home rents for 4 % of its price. The buyer pays 2 points a year for owning, and only price growth above the assumed rate closes the gap.
+
 ## Free data
 
 FRED: `MORTGAGE30US` (30-year fixed), `MORTGAGE15US`, `CSUSHPINSA` (Case-Shiller US home prices), `CUSR0000SEHA` (US rent of primary residence, CPI). Local rents and prices: listing sites (asking prices; discount them), land-registry sold prices where public (UK Land Registry, many EU registries). Tax rates: the local authority.

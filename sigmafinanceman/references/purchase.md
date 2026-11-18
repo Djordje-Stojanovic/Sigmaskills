@@ -48,6 +48,10 @@ Every input can be a number or `{"value": ..., "source": "..."}`; give the sourc
 - Leaving out power, cooling, insurance or your own time.
 - Buying at the top of a shortage, when rent prices are about to fall.
 - Comparing a 4-year purchase with a 1-year rental quote: the same use over the same life, always.
+- Comparing a part with a service: a rented GPU-hour includes the server around the card, the power supply, the network and someone who replaces a failed part. Put the whole machine in `price`, or only the share of a PC you would not own otherwise.
+- The default `discount_rate` (the 10-year Treasury) when the purchase goes on a card or a loan: set it to that rate.
+
+A thing that cuts a bill (solar panels, a heat pump, insulation) is a purchase too. `rent_per_use` is the price of the unit you stop buying (the grid price per kWh); `uses_per_month` is the units you really replace, not the units produced, averaged over the life; `resale_value` is zero unless it raises the sale price of the house. Solar output falls about 0.5 % a year (median of about 2,000 measured rates, [Jordan and Kurtz, NREL, 2013](https://docs.nlr.gov/docs/fy12osti/51664.pdf)), so over 20 years the average use is about 95 % of year one. Test a lower grid price as the bear case.
 
 ## Playbook
 

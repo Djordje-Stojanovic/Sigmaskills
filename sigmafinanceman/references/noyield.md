@@ -28,6 +28,18 @@ These pay nothing: no dividend, no rent, no coupon. All the return is the next b
 
 It can tell you the range a holder lived through and what each hold length returned. It cannot tell you a fair value, a future return or a "cheap" price. A commodity future's price also includes the cost of rolling contracts (contango and backwardation), so a fund can lag the spot price for years. Crypto has 10-15 years of history: one cycle of hold windows, so the bull case rests on a very young sample.
 
+## How much history supports the range
+
+**Name what the series measures** in one line: a spot price, one futures contract, a rolling futures strategy, an ETF share after its fee, or a total-return index. A continuous futures chart (`GC=F`, `CL=F`) jumps when the vendor switches contracts; nobody earned that jump. For a futures holding, use the index provider's excess-return or total-return series (total return = excess return + interest on Treasury bills; [S&P commodity index mathematics](https://www.spglobal.com/spdji/en/documents/methodologies/methodology-commodity-index-math.pdf)) or rebuild the contracts held, the roll dates and the interest on the collateral. For an ETF, use the share the user can buy and add only the costs its price has not already paid.
+
+**Check the dates first.** State the first and last month, the months expected, the months present, and the longest gap. Real returns run only to the last month with both a price and a CPI print. A price that can fall below zero (the May 2020 WTI future settled at -$37.63 on 20 April 2020, [CFTC](https://www.cftc.gov/PressRoom/PressReleases/8315-20)) has no log return there: use the change in money on the position.
+
+**Count the independent periods.** Twenty years of monthly prices give 121 overlapping ten-year windows, but only two that do not overlap; two neighbouring windows share 119 of their 120 months. So "positive in 90 % of windows" is a share of starting months, not the odds for a buyer today. Beside the percentiles, give the worst month to have bought and to have sold, and what that holder got.
+
+**Count costs before winners.** Example, all assumed: a 2 % round-trip spread and a 0.4 % yearly fee turn a real ten-year multiple of 1.05 into 1.05 x 0.98 x 0.996^10 = 0.99. The holder beat inflation before costs and lost to it after. For metal already owned, the cash a sale brings today is the starting value.
+
+**A hedge is tested against what it hedges.** Name the loss it should offset and test both in the same months: the change in the user's combined holdings in that loss window, and the cash on hand to meet the bill. A metal that rose over twenty years can still have fallen in the month the cash was needed.
+
 ## Gold and commodities
 
 Hold for a reason the model can name: a hedge against a falling currency or a crisis, a small part of a portfolio (5-10 % is a common range). Physical metal: buy from a dealer that buys back, at a spread you know, and insure the storage. Funds: check that the fund holds metal (allocated) and the fee. Commodity futures funds: read the roll cost.
@@ -35,6 +47,14 @@ Hold for a reason the model can name: a hedge against a falling currency or a cr
 ## Crypto
 
 Custody is part of the investment: an exchange that fails takes the coins (FTX, 2022). Self-custody moves the risk to you: a lost key is a lost coin. Count fees and tax on every swap. Volatility above 60 % a year means a fall of three-quarters is normal, not a tail.
+
+Tokens other than bitcoin need three more checks:
+
+- **Supply.** Market value = price x tokens in circulation; fully diluted value = price x every token that will exist. When the second is several times the first, locked tokens (team, investors, treasury) reach the market on a schedule: find the unlock dates before you buy.
+- **Yield.** A staking yield paid in new tokens is mostly dilution. Real yield = (1 + staking yield) / (1 + supply growth) - 1: 5 % paid while supply grows 6 % is about -1 %.
+- **Cash flows.** If the protocol earns fees that are burned or paid to holders, the token has a cash flow and this file no longer fits: value the fees like owner earnings (stocks.md) and say how much of them reach the holder.
+
+**In the holder's currency.** `finman.py asset GC=F --peers EURUSD=X` adds a ratio table that is the gold price in euros (Yahoo `EURUSD=X` is dollars per euro): now, median, range and percentile. Every return on the page stays in US dollars and US CPI; say so.
 
 ## Traps
 

@@ -49,6 +49,28 @@ The `exits` list sets the waterfall's columns; the low, middle and high exits ar
 
 A down round triggers anti-dilution and often a new pool: run the deal file twice, before and after, and read the founders' line. Secondary sales (founders or early staff sell some shares in a round) take cash off the table without new dilution; they count in the cap table as a transfer, not as new shares.
 
+## From the exit price to each holder's cash
+
+**What the price buys.** An EV/revenue multiple prices the business before debt and cash. A signed offer may price the shares instead. From an EV: add the cash the buyer takes over, subtract the debt to repay and the seller's deal costs, then apply the working-capital adjustment the offer names. Read how the offer defines cash, debt and normal working capital: one customer deposit must not cut the proceeds twice. The waterfall splits whatever number sits in `exits` among the holders, so put the equity there, not the EV.
+
+**When it arrives.** Cash at closing, escrow, earn-outs and buyer shares each get their own date, condition and amount. Put an earn-out only in the case where its target is met. Follow the merger agreement on how later payments meet the preferences. Example, terms assumed: an offer of 100m EV, 4m cash taken over, 20m debt repaid, 4m seller costs leaves 80m for the holders. An investor with 20 % on conversion and a 20m non-participating preference takes the 20m preference (conversion pays 16m); common splits 60m. A 40m earn-out raises the total to 120m. If the agreement measures the choice on all proceeds, the investor now converts, takes 24m in all, and the earn-out pays it 4m. Paying the 20m preference again on the second payment would count it twice.
+
+**An option grant or a job offer.** An employee asks the investor's question with three changes: common sits under every preference, options cost the strike to exercise, and the cash given up is salary.
+
+1. Ownership = options / fully diluted shares. A count of options with no share total cannot be valued: ask for the total.
+2. Common's price per share at each exit = a founder's take in the waterfall / that founder's shares. The grant is worth options x max(0, that price - strike). In a modest exit the preference stack can leave common with nothing.
+3. Later rounds dilute the grant too: multiply the ownership by (1 - `future_dilution`).
+4. Weight the exits by their odds (strategy.md, "Weigh the cases"); most outcomes are zero.
+5. Set it against the cash given up: the salary gap over the vesting years, plus the exercise cost and its tax.
+
+Ask for the strike, the latest preferred price, the latest common valuation (a 409A in the US), the vesting terms, the exercise window after leaving (a short one forces a cash decision on the way out) and whether early exercise is allowed. At an exit, read which awards accelerate, get cashed out or lapse. Tax on exercise: ask the user's country, the option type and the rates, compute it (for US non-qualified options, common's value when vested - the strike paid is income at exercise: [IRS Publication 525](https://www.irs.gov/publications/p525)), and put it on the date it is paid, often before any sale.
+
+**Anti-dilution in numbers.** Broad-based weighted average: new conversion price = old price x (A + B) / (A + C). A = fully diluted shares before the down round, B = the shares the new money would buy at the old price, C = the shares it really buys. A full ratchet sets the conversion price to the new price.
+
+**What a fund's investors get.** A company that returns ten times one cheque says little about the fund. Follow the limited partner's cash by date: capital calls, fees, distributions and the holdings left. The partnership agreement sets carry, the preferred return, any catch-up, and whether carry is paid deal by deal or on the whole fund. Example, all assumed: 85 % of the fund invested, 20 % carry on the whole fund's profit, no hurdle. A gross 3.0x on invested money is then 1 + (3.0 x 0.85 - 1) x 0.8 = 2.24x net.
+
+Report three multiples on one date. DPI = cash distributed / cash paid in. RVPI = net asset value left / cash paid in. TVPI = DPI + RVPI. Example, assumed: paid in 10m, received 3m, the rest marked at 9m: DPI 0.3x, RVPI 0.9x, TVPI 1.2x. Halve the mark and TVPI falls to 0.75x while DPI stays 0.3x. Late in a fund's life, a high TVPI with a low DPI is a mark, not a return. Compute the net IRR on the real call and distribution dates, and say how much of it rests on the mark ([ILPA Performance Template definitions, 2025](https://ilpa.org/wp-content/uploads/2025/04/ILPA-Performance-Template-Definitions-Granular-Methodology-v1.1.pdf)).
+
 ## Power-law portfolio maths
 
 Venture returns follow a power law: a few companies return the fund, most return little or nothing (Thiel P1, Leone P5). The `fund` block gives:
