@@ -17,6 +17,7 @@ export const SIGMA_PALETTE = Object.freeze({
   base: '#09090b',
   surface: '#111113',
   hairline: '#27272a',
+  hairlineStrong: '#3f3f46',
   ink: '#f4f4f5',
   text: '#d4d4d8',
   mute: '#a1a1aa',
@@ -40,6 +41,7 @@ const ANSI16_FG = Object.freeze({
   '#09090b': 30,
   '#111113': 30,
   '#27272a': 90,
+  '#3f3f46': 90,
   '#f4f4f5': 97,
   '#d4d4d8': 37,
   '#a1a1aa': 90,
@@ -263,7 +265,8 @@ export class TerminalRenderer {
     if (!this.dynamic && this.lastStaticScreen === content) return;
     if (!this.dynamic) this.lastStaticScreen = content;
     if (this.dynamic) {
-      this.stdout.write(`${CLEAR}${this.fill()}${content}${RESET}\n`);
+      // Fill first: the clear then paints the whole screen in the canvas colour, not only the written cells.
+      this.stdout.write(`${this.fill()}${CLEAR}${content}${RESET}\n`);
     } else {
       this.stdout.write(`${content}\n`);
     }

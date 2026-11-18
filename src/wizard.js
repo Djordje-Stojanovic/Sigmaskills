@@ -27,6 +27,7 @@ import { isSearchChar } from './destination-items.js';
 
 const RESET = '\x1b[0m';
 const STEPS = ['What', 'Where', 'Review'];
+const TITLES = ['Pick packs to install', 'Pick where they go', 'Review and confirm'];
 
 /** Which rows scroll into view. Pure, so tests can check it. */
 export function windowRows(total, cursor, limit) {
@@ -87,7 +88,7 @@ export function previewFrame(text, width, height, offset) {
 }
 
 function checkbox(state) {
-  return state === 'all' ? '[x]' : state === 'some' ? '[-]' : '[ ]';
+  return state === 'all' ? '●' : state === 'some' ? '◐' : '○';
 }
 
 function packState(pack, selected) {
@@ -96,9 +97,14 @@ function packState(pack, selected) {
   return { state: count === pack.skills.length ? 'all' : 'some', count };
 }
 
+/**
+ * One screen of the wizard, drawn as one vertical flow (the clack layout of `npx skills`): a rail
+ * on the left, finished steps folded into one line each, the active step open, and `└` at the end.
+ */
 class Screen {
-  constructor(renderer) {
+  constructor(renderer, version) {
     this.renderer = renderer;
+    this.version = version;
   }
 
   get width() {
@@ -109,17 +115,26 @@ class Screen {
     return Math.max(8, this.renderer.height - 1);
   }
 
-  /** One row from `[text, hex, bold]` parts, clipped to the width and padded with the canvas. */
-  row(parts) {
+  /**
+   * One row from `[text, hex, bold]` parts, clipped to the width and padded with the canvas.
+   * `right` is one more part, set against the right edge when it fits.
+   */
+  row(parts, right) {
     let used = 0;
     let out = '';
+    // The right part keeps its room; a long left part is clipped instead.
+    const limit = right?.[0] ? this.width - right[0].length - 2 : this.width;
     for (const part of parts) {
       const [text, hex = C.text, bold = false] = typeof part === 'string' ? [part] : part;
-      const room = this.width - used;
+      const room = limit - used;
       if (room <= 0) break;
       const clipped = text.length > room ? `${text.slice(0, Math.max(0, room - 1))}…` : text;
       out += this.renderer.style(clipped, hex, bold);
       used += clipped.length;
+    }
+    if (right && right[0] && used + right[0].length + 2 <= this.width) {
+      out += ' '.repeat(this.width - used - right[0].length) + this.renderer.style(right[0], right[1] || C.mute, right[2]);
+      used = this.width;
     }
     return out + ' '.repeat(Math.max(0, this.width - used));
   }
@@ -128,20 +143,36 @@ class Screen {
     return this.row(['']);
   }
 
-  rule() {
-    return this.row([['─'.repeat(this.width), C.hairline]]);
+  /** A line on the rail. */
+  rail(parts = [], right) {
+    return this.row([['│  ', C.hairlineStrong], ...parts], right);
   }
 
-  header(step, version, scopeLabel) {
-    const crumbs = STEPS.flatMap((name, index) => {
-      const active = index === step;
-      return [[`${index + 1} ${name}`, active ? C.primary : C.mute, active], ['   ', C.mute]];
-    });
-    return [
-      this.row([[this.renderer.ascii ? 'SIGMA SKILLS' : 'Σ SIGMA SKILLS', C.primary, true], [`  v${version}`, C.mute], [`   ${scopeLabel}`, C.mute]]),
-      this.row(crumbs),
-      this.rule(),
-    ];
+  /** A list row on the rail: the cursor mark, then the parts. */
+  item(here, parts) {
+    return this.row([['│ ', C.hairlineStrong], here ? ['❯ ', C.primary, true] : ['  ', C.mute], ...parts]);
+  }
+
+  /** A group title with a hairline to the edge. */
+  heading(title) {
+    return this.rail([[title, C.ink, true], [` ${'─'.repeat(Math.max(0, this.width - title.length - 4))}`, C.hairline]]);
+  }
+
+  /** The top of every screen: the brand, each finished step on one line, then the active step. */
+  header(step, done = []) {
+    const lines = [this.row([['┌  ', C.hairlineStrong], ['Σ SIGMA SKILLS', C.primary, true], [`  v${this.version}`, C.mute]]), this.rail()];
+    done.forEach((text, index) => lines.push(this.row([['◇  ', C.primary], [STEPS[index].padEnd(8), C.mute], [text, C.text]])));
+    if (done.length) lines.push(this.rail());
+    lines.push(this.row([['◆  ', C.primary, true], [TITLES[step], C.ink, true]], [`step ${step + 1} of ${STEPS.length}`, C.mute]));
+    return lines;
+  }
+
+  /** Fill the rail down to the footer, then the footer: hint lines on the rail and the closing `└` line. */
+  footer(lines, hints, last) {
+    while (lines.length < this.height - hints.length - 1) lines.push(this.rail());
+    for (const hint of hints) lines.push(typeof hint === 'string' ? hint : this.rail(hint));
+    lines.push(this.row([['└  ', C.hairlineStrong], ...last]));
+    return lines;
   }
 
   paint(lines) {
@@ -197,7 +228,7 @@ export async function runWizard(params) {
     return null;
   }
   const input = new KeyInput(io.stdin, false);
-  const screen = new Screen(renderer);
+  const screen = new Screen(renderer, version);
   const registry = loadHostRegistry(packageRoot);
 
   const state = {
@@ -224,7 +255,30 @@ export async function runWizard(params) {
   };
   resetRoots();
 
-  const scopeLabel = () => (state.scope === 'global' ? 'Global Installation' : 'Project Installation');
+  const scopeName = (scope = state.scope) => (scope === 'global' ? 'Global' : 'Project');
+  // A path under the home folder shows as ~, so the scope line fits.
+  const tilde = (dir) => (dir === homeDir || dir.startsWith(homeDir + path.sep) ? `~${dir.slice(homeDir.length)}` : dir);
+  const scopeRoot = () => tilde(state.scope === 'global' ? homeDir : projectRoot);
+  /** u, x, the installed marks and the install itself all act on this one scope; both steps can switch it. */
+  const switchScope = () => {
+    state.scope = state.scope === 'project' ? 'global' : 'project';
+    groups = groupsFor(state.scope);
+    resetRoots();
+    state.drop.clear();
+  };
+  const plural = (n, word = 'skill') => `${n} ${word}${n === 1 ? '' : 's'}`;
+  /** The finished steps, one line each, for the header of a later step. */
+  const doneWhat = () => {
+    const picked = state.selected.size;
+    const packs = packCatalog.packs.filter((pack) => pack.skills.some((skill) => state.selected.has(skill.id))).length;
+    const parts = picked ? [`${plural(picked)} from ${plural(packs, 'pack')}`] : [];
+    if (state.drop.size) parts.push(`${state.drop.size} to remove`);
+    return parts.join(', ');
+  };
+  const doneWhere = () => {
+    const hosts = state.roots.size;
+    return `${scopeName()} · .agents/skills${hosts ? ` + ${plural(hosts, 'host folder')}, ${state.method === 'link' ? 'linked' : 'copied'}` : ''}`;
+  };
   const packOf = (id) => packCatalog.packs.find((pack) => pack.skills.some((skill) => skill.id === id));
   const stateParams = () => ({ scope: state.scope, projectRoot, homeDir, customStateDir });
   const installedByScope = new Map();
@@ -265,67 +319,70 @@ export async function runWizard(params) {
       const focus = rows[cursor];
       const installed = [...installedNow()];
       const updatable = installed.filter((id) => packOf(id));
+      const countWidth = Math.max(...packs.map((pack) => `${pack.skills.length}/${pack.skills.length}`.length));
       const paint = () => {
-        const lines = screen.header(0, version, scopeLabel());
-        const footer = 6;
-        lines.push(screen.row(searching || query
-          ? [[`Filter: ${query}${searching ? '▏' : ''}`, C.mute]]
-          : [['Pick packs to install, or open one for single skills.', C.mute], [installed.length ? `   u update ${updatable.length} installed · x uninstall them` : '', C.primary]]));
+        const lines = screen.header(0);
+        lines.push(screen.rail([[scopeName(), C.ink, true], ['  ', C.mute], [scopeRoot(), C.mute]], [`s switch to ${scopeName(state.scope === 'global' ? 'project' : 'global')}`, C.mute]));
+        lines.push(screen.rail(installed.length
+          ? [[`${installed.length} installed here`, C.ok], [`   u update ${updatable.length === installed.length ? 'them' : updatable.length} · x uninstall them`, C.mute]]
+          : [['Nothing installed here yet', C.mute]]));
+        lines.push(screen.rail(searching || query ? [['Filter  ', C.mute], [`${query}${searching ? '▏' : ''}`, C.ink]] : []));
+        const footer = 8;
         const room = Math.max(3, screen.height - lines.length - footer);
         const view = windowRows(rows.length, cursor, room);
         for (let index = view.start; index < view.end; index += 1) {
           const item = rows[index];
           const here = index === cursor;
-          const cursorMark = here ? [renderer.ascii ? '> ' : '› ', C.primary, true] : ['  ', C.mute];
           if (item.type === 'group') {
-            lines.push(screen.row([['  ', C.mute], [item.group, C.info, true]]));
+            lines.push(screen.heading(item.group));
           } else if (item.type === 'pack') {
             const ordinal = packs.indexOf(item.pack);
             const { state: boxState, count } = packState(item.pack, state.selected);
             const slots = item.pack.limit ? slotsOf(item.pack).size : 0;
             const open = state.expanded.has(item.pack.id);
-            const nameColor = !item.pack.available ? C.mute : here ? C.ink : C.text;
-            lines.push(screen.row([
-              cursorMark,
-              [item.pack.available ? checkbox(boxState) : '[!]', boxState === 'none' ? C.mute : C.primary, true],
-              ['  ', C.mute],
-              [ordinal < 10 ? `${(ordinal + 1) % 10} ` : '  ', C.mute],
-              [item.pack.title.padEnd(nameWidth), nameColor, true],
-              [(!item.pack.available ? 'n/a' : item.pack.limit ? `${slots}/${item.pack.limit.max}` : `${count}/${item.pack.skills.length}`).padEnd(8), item.pack.limit && slots >= item.pack.limit.max ? C.warn : C.mute],
+            const full = item.pack.limit && slots >= item.pack.limit.max;
+            lines.push(screen.item(here, [
+              [item.pack.available ? checkbox(boxState) : '!', !item.pack.available ? C.warn : boxState === 'none' ? C.mute : C.primary],
+              [ordinal < 10 ? ` ${(ordinal + 1) % 10} ` : '   ', C.hairlineStrong],
+              [item.pack.title.padEnd(nameWidth), !item.pack.available ? C.mute : here ? C.ink : C.text, here],
+              [`${(!item.pack.available ? 'n/a' : item.pack.limit ? `${slots}/${item.pack.limit.max}` : `${count}/${item.pack.skills.length}`).padStart(countWidth)}  `, full ? C.warn : count ? C.primary : C.mute],
+              [open ? '▾ ' : '', C.mute],
               [item.pack.available ? item.pack.blurb : item.pack.note, item.pack.available ? C.mute : C.warn],
-              [open ? '  ▾' : '', C.mute],
             ]));
           } else {
             const chosen = state.selected.has(item.skill.id);
             const have = installedNow().has(item.skill.id);
             const going = state.drop.has(item.skill.id);
-            lines.push(screen.row([
-              cursorMark,
-              [query ? '' : '    ', C.mute],
-              [chosen || (have && !going) ? '[x]' : '[ ]', chosen ? C.primary : C.mute, chosen],
-              ['  ', C.mute],
+            const last = rows[index + 1]?.type !== 'skill' || rows[index + 1].pack !== item.pack;
+            lines.push(screen.item(here, [
+              [query ? '' : last ? '  └─ ' : '  ├─ ', C.hairlineStrong],
+              [chosen || (have && !going) ? '●' : '○', chosen ? C.primary : have && !going ? C.ok : C.mute],
+              [' ', C.mute],
               [item.skill.id.padEnd(30), here ? C.ink : C.text, here],
-              [(query ? `${item.pack.title}${item.skill.group ? ` · ${item.skill.group}` : ''}` : (item.skill.group || '')).padEnd(query ? 0 : 28), C.mute],
+              [(query ? `${item.pack.title}${item.skill.group ? ` · ${item.skill.group}` : ''}` : (item.skill.group || '')).padEnd(query ? 0 : 24), C.mute],
               [have ? (going ? '  will remove' : chosen ? '  will update' : '  installed') : '', going ? C.warn : C.ok],
             ]));
           }
         }
-        if (rows.length === 0) lines.push(screen.row([['  Nothing matches that filter.', C.warn]]));
-        while (lines.length < screen.height - footer) lines.push(screen.blank());
-        lines.push(screen.rule());
+        if (rows.length === 0) lines.push(screen.rail([['Nothing matches that filter.', C.warn]]));
+        const hidden = [view.start ? `↑ ${view.start} more` : '', view.end < rows.length ? `↓ ${rows.length - view.end} more` : ''].filter(Boolean).join('  ');
+        lines.push(screen.rail([[hidden, C.mute]]));
         const chosenCount = state.selected.size;
         const chosenPacks = packCatalog.packs.filter((pack) => pack.skills.some((skill) => state.selected.has(skill.id))).length;
-        lines.push(screen.row([
-          [`${chosenCount} skill${chosenCount === 1 ? '' : 's'}`, chosenCount ? C.primary : C.mute, true],
-          [` selected from ${chosenPacks} pack${chosenPacks === 1 ? '' : 's'}`, C.mute],
-          [state.notice ? `   ${state.notice}` : '', C.warn],
-        ]));
         const about = focus ? (focus.type === 'pack' ? focus.pack.blurb : focus.skill.description) : '';
-        const wrapped = wrapWords(about || '', screen.width - 2);
-        lines.push(screen.row([[wrapped[0] || '', C.text]]));
-        lines.push(screen.row([[wrapped[1] || '', C.mute]]));
-        lines.push(screen.row([[searching ? 'type to filter · enter keep · esc clear' : '↑↓ move · space select · →← open or close · p read the skill · 1-0 pick a pack · a all · / filter', C.mute]]));
-        lines.push(screen.row([['enter next · esc cancel', C.mute]]));
+        const wrapped = wrapWords(about || '', screen.width - 4);
+        screen.footer(lines, [
+          [[wrapped[0] || '', C.text]],
+          [[wrapped[1] || '', C.mute]],
+          [],
+          [
+            [plural(chosenCount), chosenCount ? C.primary : C.mute, true],
+            [` selected from ${plural(chosenPacks, 'pack')}`, C.mute],
+            [state.drop.size ? ` · ${state.drop.size} to remove` : '', C.warn],
+            [state.notice ? `   ${state.notice}` : '', C.warn],
+          ],
+          [[searching ? 'type to filter · enter keep · esc clear' : '↑↓ move · space pick · → open · p read · / filter · a all · 1-0 packs', C.mute]],
+        ], [['enter', C.primary, true], [' next · esc cancel', C.mute]]);
         screen.paint(lines);
       };
       renderer.paint = paint;
@@ -372,6 +429,9 @@ export async function runWizard(params) {
       } else if (/^[0-9]$/.test(key.name) && !query) {
         const pack = packs[(Number(key.name) + 9) % 10];
         if (pack) togglePack(pack);
+      } else if (key.name === 's') {
+        switchScope();
+        state.notice = `Now in ${scopeName()}: u and x act on what is installed here.`;
       } else if (key.name === 'u' && installed.length) {
         for (const id of updatable) { state.drop.delete(id); state.selected.add(id); }
         state.notice = `${updatable.length} installed skill${updatable.length === 1 ? '' : 's'} will update. Enter to review.`;
@@ -413,19 +473,17 @@ export async function runWizard(params) {
     let text = null;
     while (true) {
       const room = Math.max(3, screen.height - 7);
-      const frame = text === null ? { lines: ['Loading the text…'], top: 0, total: 0 } : previewFrame(text, screen.width - 2, room, offset);
+      const frame = text === null ? { lines: ['Loading the text…'], top: 0, total: 0 } : previewFrame(text, screen.width - 4, room, offset);
       offset = frame.top;
       const paint = () => {
-        const lines = screen.header(0, version, scopeLabel());
-        lines.push(screen.row([
+        const lines = screen.header(0);
+        lines.push(screen.rail([
           [skill.id, C.ink, true],
           ['  SKILL.md', C.mute],
           [frame.total ? `   lines ${frame.top + 1}-${frame.top + frame.lines.length} of ${frame.total}` : '', C.mute],
         ]));
-        for (const line of frame.lines) lines.push(screen.row([[` ${line}`, C.text]]));
-        while (lines.length < screen.height - 2) lines.push(screen.blank());
-        lines.push(screen.rule());
-        lines.push(screen.row([['↑↓ scroll · PgUp PgDn page · esc close', C.mute]]));
+        for (const line of frame.lines) lines.push(screen.rail([[line, C.text]]));
+        screen.footer(lines, [], [['↑↓ scroll · PgUp PgDn page · ', C.mute], ['esc close', C.primary, true]]);
         screen.paint(lines);
       };
       renderer.paint = paint;
@@ -501,21 +559,18 @@ export async function runWizard(params) {
     let cursor = 0;
     while (true) {
       const paint = () => {
-        const lines = screen.header(0, version, scopeLabel());
-        lines.push(screen.row([[`${pack.title} holds ${pack.limit.max} skills at a time.`, C.warn, true]]));
-        lines.push(screen.row([[`To add ${id}, drop one:`, C.text]]));
-        lines.push(screen.blank());
+        const lines = screen.header(0);
+        lines.push(screen.rail([[`${pack.title} holds ${pack.limit.max} skills at a time.`, C.warn, true]]));
+        lines.push(screen.rail([[`To add ${id}, drop one:`, C.text]]));
+        lines.push(screen.rail());
         held.forEach((heldId, index) => {
           const here = index === cursor;
-          lines.push(screen.row([
-            here ? [renderer.ascii ? '> ' : '› ', C.primary, true] : ['  ', C.mute],
+          lines.push(screen.item(here, [
             [heldId.padEnd(30), here ? C.ink : C.text, here],
             [installed.has(heldId) ? 'installed' : 'picked in this run', C.mute],
           ]));
         });
-        while (lines.length < screen.height - 3) lines.push(screen.blank());
-        lines.push(screen.rule());
-        lines.push(screen.row([['↑↓ move · enter drop this one and add the new pick · esc keep all three', C.mute]]));
+        screen.footer(lines, [[['↑↓ move · enter drop this one and add the new pick', C.mute]]], [['esc keep all three', C.primary, true]]);
         screen.paint(lines);
       };
       renderer.paint = paint;
@@ -545,16 +600,14 @@ export async function runWizard(params) {
       cursor = rows.length ? Math.min(cursor, rows.length - 1) : 0;
       const universalNames = describeRoots(groups).get(UNIVERSAL_PROJECT_DESTINATION) || '';
       const paint = () => {
-        const lines = screen.header(1, version, scopeLabel());
-        const footer = 6;
-        lines.push(screen.row([
-          ['Scope  ', C.mute],
-          [state.scope === 'project' ? '(•) Project' : '( ) Project', state.scope === 'project' ? C.primary : C.mute, state.scope === 'project'],
-          ['   ', C.mute],
-          [state.scope === 'global' ? '(•) Global' : '( ) Global', state.scope === 'global' ? C.primary : C.mute, state.scope === 'global'],
-          [state.scope === 'project' ? `   ${projectRoot}` : `   ${homeDir}`, C.mute],
-        ]));
-        lines.push(screen.row([[searching || query ? `Search all hosts: ${query}${searching ? '▏' : ''}` : 'Agent Hosts. Everything lands in .agents/skills; a host with its own folder links to it.', C.mute]]));
+        const lines = screen.header(1, [doneWhat()]);
+        const scopeDot = (scope) => [state.scope === scope ? `● ${scopeName(scope)}` : `○ ${scopeName(scope)}`, state.scope === scope ? C.primary : C.mute, state.scope === scope];
+        lines.push(screen.rail([['Scope   ', C.mute], scopeDot('project'), ['   ', C.mute], scopeDot('global'), ['   ', C.mute], [scopeRoot(), C.mute]]));
+        lines.push(screen.rail(searching || query
+          ? [['Search  ', C.mute], [`${query}${searching ? '▏' : ''}`, C.ink]]
+          : [['Everything lands in .agents/skills; a host you pick gets it too.', C.mute]]));
+        lines.push(screen.heading('Agent Hosts'));
+        const footer = 7;
         const room = Math.max(3, screen.height - lines.length - footer);
         const view = windowRows(rows.length, cursor, room);
         for (let index = view.start; index < view.end; index += 1) {
@@ -562,30 +615,28 @@ export async function runWizard(params) {
           const here = index === cursor;
           const covered = item.universal;
           const on = covered || state.roots.has(item.root);
-          lines.push(screen.row([
-            here ? [renderer.ascii ? '> ' : '› ', C.primary, true] : ['  ', C.mute],
-            [on ? '[x]' : '[ ]', covered ? C.mute : on ? C.primary : C.mute, on && !covered],
-            ['  ', C.mute],
+          lines.push(screen.item(here, [
+            [on ? '●' : '○', covered ? C.mute : on ? C.primary : C.mute],
+            [' ', C.mute],
             [item.host.displayName.padEnd(18), here ? C.ink : C.text, here],
             [item.root.padEnd(22), C.mute],
             [covered ? 'reads .agents/skills' : on ? (state.method === 'link' ? 'linked' : 'copy') : '', C.mute],
             [item.found ? '  found here' : '', C.ok],
           ]));
         }
-        while (lines.length < screen.height - footer) lines.push(screen.blank());
-        lines.push(screen.rule());
-        lines.push(screen.row([
-          ['.agents/skills', C.ink, true],
-          [`  always on, read by ${universalNames}`, C.mute],
-        ]));
+        const hidden = [view.start ? `↑ ${view.start} more` : '', view.end < rows.length ? `↓ ${rows.length - view.end} more` : ''].filter(Boolean).join('  ');
+        lines.push(screen.rail([[hidden, C.mute]]));
         const hostCount = state.roots.size;
-        lines.push(screen.row([
-          ['Method  ', C.mute],
-          [state.method === 'link' ? 'Link (recommended)' : 'Copy', C.primary, true],
-          [hostCount ? (state.method === 'link' ? `  one copy, linked into ${hostCount} host folder${hostCount === 1 ? '' : 's'}` : `  a full copy in ${hostCount} host folder${hostCount === 1 ? '' : 's'}`) : '  only matters once a host folder is chosen', C.mute],
-        ]));
-        lines.push(screen.row([[searching ? 'type to search · enter keep · esc clear' : '↑↓ move · space toggle · s scope · m method · / search all hosts', C.mute]]));
-        lines.push(screen.row([['enter next · b back · esc cancel', C.mute]]));
+        screen.footer(lines, [
+          [['.agents/skills', C.ink, true], [`  always on, read by ${universalNames}`, C.mute]],
+          [
+            ['Method  ', C.mute],
+            [state.method === 'link' ? 'Link (recommended)' : 'Copy', C.primary, true],
+            [hostCount ? (state.method === 'link' ? `  one copy, linked into ${plural(hostCount, 'host folder')}` : `  a full copy in ${plural(hostCount, 'host folder')}`) : '  only matters once a host folder is chosen', C.mute],
+          ],
+          [],
+          [[searching ? 'type to search · enter keep · esc clear' : '↑↓ move · space pick · s scope · m method · / search all hosts', C.mute]],
+        ], [['enter', C.primary, true], [' next · b back · esc cancel', C.mute]]);
         screen.paint(lines);
       };
       renderer.paint = paint;
@@ -612,9 +663,7 @@ export async function runWizard(params) {
       else if (key.name === 'down') cursor = (cursor + 1) % Math.max(1, rows.length);
       else if (key.name === 'space' && rows[cursor] && !rows[cursor].universal) flipRoot(rows[cursor].root);
       else if (key.name === 's') {
-        state.scope = state.scope === 'project' ? 'global' : 'project';
-        groups = groupsFor(state.scope);
-        resetRoots();
+        switchScope();
         cursor = 0;
       } else if (key.name === 'm') state.method = state.method === 'link' ? 'copy' : 'link';
       else if (key.name === '/' || key.ch === '/') { searching = true; query = ''; cursor = 0; }
@@ -653,50 +702,50 @@ export async function runWizard(params) {
     while (true) {
       const needsChoice = plan.pending > 0 && !state.resolution;
       const paint = () => {
-        const lines = screen.header(2, version, scopeLabel());
-        const plural = (n) => `${n} skill${n === 1 ? '' : 's'}`;
+        const lines = screen.header(2, skills.length ? [doneWhat(), doneWhere()] : [doneWhat()]);
+        const titleWidth = Math.max(16, ...packCatalog.packs.map((pack) => pack.title.length + 2));
         const fresh = skills.filter((skill) => !installedNow().has(skill.id));
         const updates = skills.filter((skill) => installedNow().has(skill.id));
-        if (fresh.length || (!updates.length && !state.drop.size)) lines.push(screen.row([[`Install ${plural(fresh.length)}`, C.ink, true]]));
+        if (fresh.length || (!updates.length && !state.drop.size)) lines.push(screen.rail([[`Install ${plural(fresh.length)}`, C.ink, true]]));
         for (const pack of packCatalog.packs) {
           const inPack = fresh.filter((skill) => skill.pack === pack.id).length;
-          if (inPack) lines.push(screen.row([['  ', C.mute], [pack.title.padEnd(16), C.text], [`${inPack}`, C.primary, true], [` of ${pack.skills.length}`, C.mute]]));
+          if (inPack) lines.push(screen.rail([['  ', C.mute], [pack.title.padEnd(titleWidth), C.text], [`${inPack}`, C.primary, true], [` of ${pack.skills.length}`, C.mute]]));
         }
         if (updates.length) {
-          lines.push(screen.row([[`Update ${plural(updates.length)}`, C.ink, true], ['  already installed', C.mute]]));
-          lines.push(screen.row([['  ', C.mute], [updates.map((skill) => skill.id).join(', '), C.text]]));
+          lines.push(screen.rail([[`Update ${plural(updates.length)}`, C.ink, true], ['  already installed', C.mute]]));
+          lines.push(screen.rail([['  ', C.mute], [updates.map((skill) => skill.id).join(', '), C.text]]));
         }
         if (state.drop.size) {
-          lines.push(screen.row([[`Remove ${plural(state.drop.size)}`, C.warn, true], ['  an edited skill gets a private backup first', C.mute]]));
-          lines.push(screen.row([['  ', C.mute], [[...state.drop].join(', '), C.text]]));
+          lines.push(screen.rail([[`Remove ${plural(state.drop.size)}`, C.warn, true], ['  an edited skill gets a private backup first', C.mute]]));
+          lines.push(screen.rail([['  ', C.mute], [[...state.drop].join(', '), C.text]]));
         }
-        lines.push(screen.blank());
-        lines.push(screen.row([[state.scope === 'global' ? 'Global  ' : 'Project ', C.primary, true], [state.scope === 'global' ? homeDir : projectRoot, C.mute]]));
-        if (skills.length) lines.push(screen.row([['  ', C.mute], ['.agents/skills'.padEnd(22), C.ink], ['copy'.padEnd(8), C.mute], [names.get(UNIVERSAL_PROJECT_DESTINATION) || '', C.mute]]));
+        lines.push(screen.rail());
+        lines.push(screen.rail([[state.scope === 'global' ? 'Global  ' : 'Project ', C.primary, true], [scopeRoot(), C.mute]]));
+        if (skills.length) lines.push(screen.rail([['  ', C.mute], ['.agents/skills'.padEnd(22), C.ink], ['copy'.padEnd(8), C.mute], [names.get(UNIVERSAL_PROJECT_DESTINATION) || '', C.mute]]));
         for (const root of skills.length ? state.roots : []) {
-          lines.push(screen.row([['  ', C.mute], [root.padEnd(22), C.ink], [(state.method === 'link' ? 'linked' : 'copy').padEnd(8), C.mute], [names.get(root) || '', C.mute]]));
+          lines.push(screen.rail([['  ', C.mute], [root.padEnd(22), C.ink], [(state.method === 'link' ? 'linked' : 'copy').padEnd(8), C.mute], [names.get(root) || '', C.mute]]));
         }
         if (sources.length) {
-          lines.push(screen.blank());
-          lines.push(screen.row([['Downloads  ', C.info, true], [sources.join(', '), C.mute]]));
+          lines.push(screen.rail());
+          lines.push(screen.rail([['Downloads  ', C.info, true], [sources.join(', '), C.mute]]));
         }
         if (state.scope === 'global') {
-          lines.push(screen.blank());
-          lines.push(screen.row([['Global Installation writes skills for every project of this user.', C.warn, true]]));
+          lines.push(screen.rail());
+          lines.push(screen.rail([['Global Installation writes skills for every project of this user.', C.warn, true]]));
         }
         if (plan.error) {
-          lines.push(screen.blank());
-          lines.push(screen.row([[`Cannot install: ${plan.error}`, C.err, true]]));
+          lines.push(screen.rail());
+          lines.push(screen.rail([[`Cannot install: ${plan.error}`, C.err, true]]));
         } else if (needsChoice) {
-          lines.push(screen.blank());
-          lines.push(screen.row([[`${plan.pending} skill${plan.pending === 1 ? '' : 's'} already exist with different content.`, C.warn, true]]));
-          lines.push(screen.row([['r replace after a private backup · s skip them · e export the old copies', C.mute]]));
+          lines.push(screen.rail());
+          lines.push(screen.rail([[`${plan.pending} skill${plan.pending === 1 ? '' : 's'} already exist with different content.`, C.warn, true]]));
+          lines.push(screen.rail([['r replace after a private backup · s skip them · e export the old copies', C.mute]]));
         }
-        while (lines.length < screen.height - 3) lines.push(screen.blank());
-        lines.push(screen.rule());
         const ready = !plan.error && !needsChoice;
         const verb = skills.length ? 'install' : 'remove';
-        lines.push(screen.row([[ready ? (state.scope === 'global' ? `y ${verb} · b back · esc cancel` : `enter or y ${verb} · b back · esc cancel`) : 'b back · esc cancel', ready ? C.primary : C.mute, ready]]));
+        screen.footer(lines, [], ready
+          ? [[state.scope === 'global' ? `y ${verb}` : `enter or y ${verb}`, C.primary, true], [' · b back · esc cancel', C.mute]]
+          : [['b back · esc cancel', C.mute]]);
         screen.paint(lines);
       };
       renderer.paint = paint;
