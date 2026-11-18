@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaresearch` reads a user's newest X posts through the X API with the user's own key (app-only bearer, paged by `next_token`). A logged-out profile page shows no posts, also in a stealth browser, so the old routes could not list a timeline.
+
 ## [0.29.1] — 2026-11-18
 
 ### Changed

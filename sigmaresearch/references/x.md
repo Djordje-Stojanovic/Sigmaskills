@@ -1,6 +1,6 @@
 # X
 
-X has three jobs with different routes: one post by URL (no login), search (a signed-in browser), and replies (a signed-in browser). Follow [Access and persistence](../SKILL.md#access-and-persistence) and write each route on the route list.
+X has four jobs with different routes: one post by URL (no login), search (a signed-in browser), replies (a signed-in browser), and a user's newest posts (the X API with the user's own key). Follow [Access and persistence](../SKILL.md#access-and-persistence) and write each route on the route list.
 
 ## 1. One post by URL: no login
 
@@ -30,8 +30,19 @@ JSON.stringify([...document.querySelectorAll('article')].map(a => ({
 
 Open the status permalink, scroll three or four times (the page loads replies as you scroll and drops the ones far above), run the same snippet after each scroll, and merge the lists by `url`. Replies the page did not render are unread: label the thread partial. Like counts come from X's rounded labels (`1.2K` becomes 1200).
 
+## 4. A user's newest posts: the X API with the user's own key
+
+Ask whether the user has an X developer app (an API key and secret), or look for one in their key store by name (`X_API_KEY`, `X_API_SECRET`, `X_BEARER_TOKEN`). Never print a key.
+
+1. Bearer token, app-only: `POST https://api.x.com/oauth2/token` with `grant_type=client_credentials` and HTTP Basic auth of `urlencode(key):urlencode(secret)`. A bearer the user already has skips this.
+2. User id: `GET https://api.x.com/2/users/by/username/NAME`.
+3. Posts: `GET https://api.x.com/2/users/ID/tweets?max_results=100&exclude=retweets&tweet.fields=created_at,referenced_tweets&expansions=referenced_tweets.id&start_time=YYYY-MM-DDTHH:MM:SSZ`, then follow `meta.next_token` as `pagination_token`. `includes.tweets` holds the text of quoted posts. On 2026-11-18 this read 487 posts of one account over 8 days in five calls.
+
+A post's kind is in `referenced_tweets` (`replied_to`, `quoted`, none for an original). A reply that does not start with `@` continues the author's own thread.
+
 ## When a route closes
 
+- **A logged-out profile page** (`x.com/NAME`) renders no posts, also in a stealth browser: X hides timelines from visitors. Take route 4, or a signed-in browser.
 - **A browser without a session** (any Chromium, also a stealth one on a server) shows a post page: its `<title>` holds the author and the full post text. Replies and search need the session.
 - **Mirrors:** nitter-style front ends come and go. On 2026-10-21 `xcancel.com` was suspended and `nitter.net` answered 410. On 2026-11-18 all four reader routes answered for `x.com/jack/status/20`. Try one, log the result, do not count on it.
 - **The data the page loads:** in the signed-in browser, `read_network_requests` shows the GraphQL calls behind search and replies; their JSON holds the same posts with exact counts.
