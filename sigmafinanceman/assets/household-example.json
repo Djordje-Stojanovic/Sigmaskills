@@ -1,0 +1,16 @@
+{
+  "currency": "EUR",
+  "net_income_monthly": 3600,
+  "emergency_fund": 5000,
+  "lines": [
+    {"name": "Rent", "amount": 1200, "bucket": "needs"},
+    {"name": "Groceries", "amount": 450, "bucket": "needs"},
+    {"name": "Transport", "amount": 150, "bucket": "needs"},
+    {"name": "Insurance", "amount": 120, "bucket": "needs"},
+    {"name": "Phone and internet", "amount": 60, "bucket": "needs"},
+    {"name": "Going out", "amount": 220, "bucket": "wants"},
+    {"name": "Subscriptions", "amount": 100, "bucket": "wants"},
+    {"name": "Hobbies", "amount": 0, "bucket": "wants"},
+    {"name": "Savings plan (ETF)", "amount": 600, "bucket": "savings"}
+  ]
+}

@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaFinanceMan
+  short_description: Company models and budgets as live Excel, slides and charts
+  default_prompt: Use $sigmafinanceman to ask the short question round, read the filings, build the models
+    with live-formula Excel, a deck and charts, audit every workbook, and report the answer first.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false
