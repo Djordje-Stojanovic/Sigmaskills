@@ -19,12 +19,12 @@ SigmaBoat makes them, watches them, keeps the base current, and leaves nothing r
 
 - **Explicit only.** Start a box or a worker only when the user's message or the spec asks for a cloud machine or names boat.
 - **The lab's wrapper first.** Before the first command, look for the lab's boat guide, if this machine has one: search the agent
-  instructions (`AGENTS.md`, `CLAUDE.md`) for "boat" and run the wrapper they name with `-h` (a lab may wrap boat in one command,
-  such as `laboat`). The wrapper and the guide win over this skill: they hold the account, the repos, the machines and the
+  instructions (`AGENTS.md`, `CLAUDE.md`) for "boat" and run the wrapper they name with `-h`. The wrapper and the guide win over
+  this skill: they hold the account, the repos, the machines and the
   commands. With no wrapper, use the boat CLI as in [references/boat.md](references/boat.md).
-- **Keys live in a boat environment, never on the base.** boat injects an environment's variables and secret files into each
-  sandbox at its start; the base runs in an environment that injects nothing, so its disk and snapshot hold no secret and no fork
-  inherits one. A login (Claude, Codex, `gh`) is a secret too. Pass keys on stdin; print none; write none into a repo, a log, a
+- **No key on the base.** The base runs with nothing of the owner's injected (`--no-env`), so its disk and snapshot hold no secret
+  and no copy inherits one. A box gets its keys when it starts: over stdin, or from a boat environment when the API key may write
+  one. A login (Claude, Codex, `gh`) is a secret too. Pass keys on stdin; print none; write none into a repo, a log, a
   pull request or a report.
 - **Your sandboxes only.** A sandbox whose name is none of the three kinds belongs to the owner: never stop, change or delete it.
 - **Pushed before deleted.** A box is deleted only after step 4 of the box flow passes.
@@ -43,7 +43,7 @@ SigmaBoat makes them, watches them, keeps the base current, and leaves nothing r
 
 ## The box flow
 
-1. **Make it.** Copy the base into the keys environment, with an auto-stop (boat's deadline, the safety net: 8 hours is a good
+1. **Make it.** Copy the base, give the copy its keys, set an auto-stop (boat's deadline, the safety net: 8 hours is a good
    default), pull the repo to the newest main, make the task's branch (`issue-N` for an issue). If the lab links boxes into an
    agent UI (T3 Code and similar), the wrapper does it here.
 2. **Work.** In the repo on the box: the change, the repo's own checks, the docs the change touches, commits.
@@ -83,7 +83,8 @@ The final report lists every box still running, with its task.
   between updates.
 - **Add a repo:** clone it during an update. Each repo installs from its own files (`.boat/setup.sh`, else its lockfiles), so
   nobody keeps a repo list.
-- **A key changed:** save the keys again into the keys environment; the base stays as it is. New boxes get the new keys.
+- **A key changed:** the base stays as it is. A box gets the new keys at its next start (stdin), or new boxes get them once the
+  keys environment is saved again.
 - The base never joins a private network or serves an agent UI: every copy would share that identity.
 
 ## Workers
