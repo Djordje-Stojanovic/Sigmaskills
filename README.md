@@ -210,12 +210,13 @@ Gives work you already authorized more machines: boat.dev cloud sandboxes (full 
 
 ## Packs
 
-A pack is a named group of skills from one source. `--preset <id>` installs a whole pack, a skill id installs one skill, and `--preset all` installs every pack. A pack skill is downloaded from its source, at the pinned point, when you install it. In the wizard, `p` shows the full `SKILL.md` of the highlighted skill before you pick it. `list --packs` prints the same list in a terminal.
+A pack is a named group of skills from one source. `--preset <id>` installs a whole pack, a skill id installs one skill, and `--preset all` installs every pack. A pack skill is downloaded from its source, at the pinned point, when you install it. In the wizard, `p` shows the full `SKILL.md` of the highlighted skill before you pick it. `list --packs` prints the same list in a terminal. Every pack has one category: Engineering, Design, Media, Research, Marketing, Finance or Productivity. The wizard shows the packs first, then the one-skill sources under their category, and `/design` (or any category name) filters to every skill in that category.
 
 ### Sigma (`sigma`)
 
 Review, improve, ship, research and write. The first-party Sigma skills.
 
+- **Category:** Engineering.
 - **Skills:** every skill under [The skills](#the-skills).
 - **Source:** this package. Licence: MIT. Also answers to: `sigmaskills`.
 - **Needs:** Python 3 for the skills that ship a script; see [Requirements](#requirements).
@@ -224,6 +225,7 @@ Review, improve, ship, research and write. The first-party Sigma skills.
 
 Skills for real engineers: grill, spec, TDD, triage, deep modules.
 
+- **Category:** Engineering.
 - **Skills (39):** `ask-matt`, `chief-of-staff`, `claude-handoff`, `code-review`, `codebase-design`, `diagnosing-bugs`, `domain-modeling`, `git-guardrails-claude-code`, `grill-me`, `grill-with-docs`, `grilling`, `handoff`, `implement`, `implement-spec`, `improve-codebase-architecture`, `loop-me`, `migrate-to-shoehorn`, `pr`, `prototype`, `research`, `retro`, `scaffold-exercises`, `setup-matt-pocock-skills`, `setup-pre-commit`, `setup-ts-deep-modules`, `software-factory`, `tdd`, `teach`, `to-questionnaire`, `to-spec`, `to-tickets`, `triage`, `wait-what`, `wayfinder`, `wizard`, `writing-beats`, `writing-for-agents`, `writing-fragments`, `writing-shape`.
 - **Source:** [mattpocock/skills](https://github.com/mattpocock/skills). Licence: MIT. Also answers to: `matt`, `pocock`.
 - **Needs:** run `/setup-matt-pocock-skills` once per repo (it asks where issues live and writes `docs/agents/`); the issue skills use `gh` or `glab`.
@@ -232,6 +234,7 @@ Skills for real engineers: grill, spec, TDD, triage, deep modules.
 
 Geometry, materials, lighting, shaders, loaders, post-processing, R3F.
 
+- **Category:** Media.
 - **Skills (13):** `threejs-animation`, `threejs-asset-pipeline`, `threejs-fundamentals`, `threejs-geometry`, `threejs-interaction`, `threejs-lighting`, `threejs-loaders`, `threejs-materials`, `threejs-performance`, `threejs-postprocessing`, `threejs-react-three-fiber`, `threejs-shaders`, `threejs-textures`.
 - **Source:** [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills). Licence: MIT. Also answers to: `three`.
 - **Needs:** the skills target `three@0.186`, React Three Fiber 9.8 and drei 10.7; `threejs-asset-pipeline` runs `npx @gltf-transform/cli`, so it needs Node.
@@ -240,6 +243,7 @@ Geometry, materials, lighting, shaders, loaders, post-processing, R3F.
 
 HTML to video: the HyperFrames skill, CLI, registry, media and slideshows, plus the student kit.
 
+- **Category:** Media.
 - **Skills (20):** `figma`, `hyperframes`, `hyperframes-cli`, `hyperframes-registry`, `media-use`, `remotion-to-hyperframes`, `reverse-any-video`, `slideshow`, `style-sampling`, `cut-mistakes`, `cut-silences`, `edit-video`, `gsap`, `hyperframes-video-beats`, `make-a-video`, `motion-showreel`, `short-form-edit`, `style-library`, `video-storytelling`, `website-to-hyperframes`.
 - **Source:** [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes), pinned to tag `v0.9.65` and [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit), pinned to commit `10511e5`. Licence: Apache-2.0 (HyperFrames); the student kit has its own licence file. Also answers to: `hf`.
 - **Needs:** Node.js 22+, FFmpeg and Chrome. Optional keys: `GEMINI_API_KEY`, `HEYGEN_API_KEY`, `FIGMA_TOKEN`.
@@ -248,6 +252,7 @@ HTML to video: the HyperFrames skill, CLI, registry, media and slideshows, plus 
 
 Prompt writing and eight video recipes for the MiniMax H3 model.
 
+- **Category:** Media.
 - **Skills (9):** `3d-animation-short-generator`, `brand-promo-video-generator`, `co-op-game-intro-generator`, `h3-prompt-writing`, `handdrawn-live-video-generator`, `minimalist-product-ad-generator`, `music-video-subtitle-generator`, `paper-collage-explainer-generator`, `papercraft-stop-motion-explainer`.
 - **Source:** [MiniMax-AI/MiniMax-H3](https://github.com/MiniMax-AI/MiniMax-H3). Licence: no licence that GitHub reports. Also answers to: `minimax`, `h3`.
 - **Needs:** `h3-prompt-writing` works in any agent; the other 8 skills need the MiniMax Hub agent and its image and video tools.
@@ -256,22 +261,25 @@ Prompt writing and eight video recipes for the MiniMax H3 model.
 
 Anthropic's skills: document skills (docx, pdf, pptx, xlsx), Claude API reference, MCP builder, skill creator and more.
 
+- **Category:** Productivity.
 - **Skills (19):** `academy-guide`, `algorithmic-art`, `brand-guidelines`, `canvas-design`, `claude-api`, `discernment-nudge`, `doc-coauthoring`, `docx`, `frontend-design`, `internal-comms`, `mcp-builder`, `pdf`, `pptx`, `skill-creator`, `slack-gif-creator`, `theme-factory`, `web-artifacts-builder`, `webapp-testing`, `xlsx`.
-- **Source:** [anthropics/skills](https://github.com/anthropics/skills), pinned to commit `2c5958e`. Licence: no repo-wide licence that GitHub reports; check each skill folder. Also answers to: `anthropics`.
+- **Source:** [anthropics/skills](https://github.com/anthropics/skills), pinned to commit `e4bb5d9`. Licence: no repo-wide licence that GitHub reports; check each skill folder. Also answers to: `anthropics`.
 - **Needs:** `docx`, `pdf`, `pptx` and `xlsx` need Python or Node libraries and LibreOffice; `webapp-testing` needs Playwright; `mcp-builder` needs `ANTHROPIC_API_KEY` for evaluations. The rest need nothing.
 
 ### Design.md (`design-md`)
 
 84 brand DESIGN.md files, each one a skill. Pick up to 3 at a time.
 
+- **Category:** Design.
 - **Skills (84):** `design-1win`, `design-airbnb`, `design-airtable`, `design-aljazeera`, `design-apple`, `design-binance` and 78 more; `list --packs --json` prints all of them.
-- **Source:** [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), pinned to commit `3b60532`. Licence: MIT. Also answers to: `design`, `awesome-design-md`.
+- **Source:** [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), pinned to commit `fcc7028`. Licence: MIT. Also answers to: `design`, `awesome-design-md`.
 - **Needs:** nothing to install. Put the chosen look in the project root as `DESIGN.md`. **At most 3 installed at a time**; the wizard asks which one to drop for a fourth.
 
 ### Last 30 Days (`last30days`)
 
 Research what people say about any topic in the last 30 days, across Reddit, X, YouTube, Hacker News and more.
 
+- **Category:** Research.
 - **Skills (1):** `last30days`.
 - **Source:** [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill), pinned to tag `v4.3.2`. Licence: MIT. Also answers to: `last30`.
 - **Needs:** Python 3.12+ and Node 22+. One-time `scripts/last30days.py setup`, run by you. Every key is optional.
@@ -280,22 +288,25 @@ Research what people say about any topic in the last 30 days, across Reddit, X, 
 
 Anthropic finance plugins as skills: DCF, LBO, comps, pitch decks, earnings, fund admin, KYC.
 
+- **Category:** Finance.
 - **Skills (99):** `3-statement-model`, `accrual-schedule`, `ai-readiness`, `analyze-bond-basis`, `analyze-bond-rv`, `analyze-fx-carry` and 93 more; `list --packs --json` prints all of them.
-- **Source:** [anthropics/financial-services](https://github.com/anthropics/financial-services), pinned to commit `6056506`. Licence: Apache-2.0. Also answers to: `fsi`, `finance`.
+- **Source:** [anthropics/financial-services](https://github.com/anthropics/financial-services), pinned to commit `3e32c22`. Licence: Apache-2.0. Also answers to: `fsi`, `finance`.
 - **Needs:** the data comes through MCP servers (Daloopa, Morningstar, S&P Global, FactSet and more); each may need a subscription. Without one, the skills work on numbers you give.
 
 ### tstack (`tstack`)
 
 Theo Browne's agent skills for shipping PRs: full-send, council, babysit-pr, file-pr and more.
 
+- **Category:** Engineering.
 - **Skills (9):** `babysit-pr`, `council`, `file-pr`, `full-send`, `full-stop`, `leaving-pr-comments`, `modernize`, `sol-loop`, `takeover`.
-- **Source:** [t3dotgg/tstack](https://github.com/t3dotgg/tstack), pinned to commit `1085050`. Licence: MIT. Also answers to: `theo`.
+- **Source:** [t3dotgg/tstack](https://github.com/t3dotgg/tstack), pinned to commit `11e37a7`. Licence: MIT. Also answers to: `theo`.
 - **Needs:** `gh`, signed in. `babysit-pr` needs `python3`. `council` and `sol-loop` ask reviewers on other providers' models, so they need a host that can run those.
 
 ### Superpowers (`superpowers`)
 
 Jesse Vincent's workflow skills: brainstorm, write a plan, execute it, TDD, debug, review, finish the branch.
 
+- **Category:** Engineering.
 - **Skills (15):** `brainstorming`, `diagnosing-superpowers`, `dispatching-parallel-agents`, `executing-plans`, `finishing-a-development-branch`, `receiving-code-review`, `requesting-code-review`, `subagent-driven-development`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `using-superpowers`, `verification-before-completion`, `writing-plans`, `writing-skills`.
 - **Source:** [obra/superpowers](https://github.com/obra/superpowers), pinned to commit `22f0b46`. Licence: MIT. Also answers to: `obra`.
 - **Needs:** nothing to install. Upstream loads `using-superpowers` at session start through its plugin hook; a plain skill install has no hook, so call the skills by name.
@@ -304,14 +315,16 @@ Jesse Vincent's workflow skills: brainstorm, write a plan, execute it, TDD, debu
 
 Paul Bakaus's design vocabulary for agents: one skill with commands to audit, polish, critique and restyle a frontend.
 
+- **Category:** Design.
 - **Skills (1):** `impeccable`.
-- **Source:** [pbakaus/impeccable](https://github.com/pbakaus/impeccable), pinned to commit `ec229b4`. Licence: Apache-2.0. Also answers to: `pbakaus`.
+- **Source:** [pbakaus/impeccable](https://github.com/pbakaus/impeccable), pinned to commit `d41d986`. Licence: Apache-2.0. Also answers to: `pbakaus`.
 - **Needs:** Node, for its `npx impeccable` detector. Run `/impeccable init` once per project; it writes `PRODUCT.md`. Scanning a rendered page uses your installed Chrome or Edge.
 
 ### Security Audit (`security-audit`)
 
 Cloudflare's security audit skill: find vulnerabilities and verify each finding before it is reported.
 
+- **Category:** Engineering.
 - **Skills (1):** `security-audit`.
 - **Source:** [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill), pinned to commit `c1c8a8c`. Licence: MIT. Also answers to: `cloudflare`, `audit`.
 - **Needs:** an agent with tool use and parallel sub-agents, and Node.js for the two validators (no dependencies).
@@ -320,6 +333,7 @@ Cloudflare's security audit skill: find vulnerabilities and verify each finding 
 
 Detailed, interactive isometric illustrations of real machines and how they work.
 
+- **Category:** Design.
 - **Skills (1):** `anatomy`.
 - **Source:** [wheresryan22/anatomy](https://github.com/wheresryan22/anatomy), pinned to commit `1482e84`. Licence: MIT. Also answers to: `isometric`.
 - **Needs:** Node 20.10 or later. No API keys and nothing to `npm install`.
@@ -328,14 +342,16 @@ Detailed, interactive isometric illustrations of real machines and how they work
 
 Cathryn Lavery's editorial diagrams: architecture, flow, sequence and more as clean HTML and SVG.
 
+- **Category:** Design.
 - **Skills (1):** `diagram-design`.
-- **Source:** [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design), pinned to commit `f2496ac`. Licence: MIT. Also answers to: `diagram`, `diagrams`.
+- **Source:** [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design), pinned to commit `f6db0de`. Licence: MIT. Also answers to: `diagram`, `diagrams`.
 - **Needs:** nothing to install: a diagram is plain HTML and SVG, with no build step.
 
 ### Taste (`taste-skill`)
 
 Art direction for coding agents: reference images, a visual brief and a browser check, so a page does not look generated.
 
+- **Category:** Design.
 - **Skills (1):** `taste-skill`.
 - **Source:** [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill), pinned to commit `f6b7657`. Licence: MIT. Also answers to: `taste`, `leonxlnx`.
 - **Needs:** Node 22+ and an installed Chrome, Edge or Chromium (`CHROME_PATH` for an unusual place). ffmpeg is optional. No API keys.
@@ -344,21 +360,119 @@ Art direction for coding agents: reference images, a visual brief and a browser 
 
 A design skill that refuses the AI look: new pages, audits, redesigns and design extraction.
 
+- **Category:** Design.
 - **Skills (1):** `hallmark`.
-- **Source:** [Nutlope/hallmark](https://github.com/Nutlope/hallmark), pinned to commit `407fa68`. Licence: MIT. Also answers to: `nutlope`.
+- **Source:** [Nutlope/hallmark](https://github.com/Nutlope/hallmark), pinned to commit `04977e1`. Licence: MIT. Also answers to: `nutlope`.
 - **Needs:** Node 18 or later. The browser checks also need `npm i -g puppeteer-core` and Chrome; without them the static checks still run.
 
 ### Ponytail (`ponytail`)
 
 The lazy senior developer: the smallest change that fully works, plus audit, review, debt and gain reports.
 
+- **Category:** Engineering.
 - **Skills (6):** `ponytail`, `ponytail-audit`, `ponytail-debt`, `ponytail-gain`, `ponytail-help`, `ponytail-review`.
 - **Source:** [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail), pinned to tag `v5.3.3`. Licence: MIT. Also answers to: `lazy`.
 - **Needs:** nothing. The [per-project plugin command](#ponytail-per-project) stays as an extra for agents that load plugins.
 
+### Anthropic Engineering (`anthropic-engineering`)
+
+Anthropic's engineering plugin as skills: architecture, code review, debugging, incidents, standups, system design, tech debt, testing.
+
+- **Category:** Engineering.
+- **Skills (9):** `architecture`, `debug`, `deploy-checklist`, `documentation`, `incident-response`, `standup`, `system-design`, `tech-debt`, `testing-strategy`.
+- **Source:** [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins), pinned to commit `e91a134`. Licence: Apache-2.0. Also answers to: `anthropic-eng`.
+- **Needs:** nothing to install. Some skills ask for a connector (source control, issue tracker, monitoring); without one they work on what you paste. `code-review` is left out: Matt Pocock's pack has that name.
+
+### Agent Skills (`agent-skills`)
+
+Addy Osmani's engineering workflow: spec, plan, build in small steps, test, review, harden and ship.
+
+- **Category:** Engineering.
+- **Skills (24):** `api-and-interface-design`, `browser-testing-with-devtools`, `ci-cd-and-automation`, `code-review-and-quality`, `code-simplification`, `constraint-driven-development`, `context-engineering`, `debugging-and-error-recovery`, `deprecation-and-migration`, `documentation-and-adrs`, `doubt-driven-development`, `frontend-ui-engineering`, `git-workflow-and-versioning`, `idea-refine`, `incremental-implementation`, `interview-me`, `observability-and-instrumentation`, `performance-optimization`, `planning-and-task-breakdown`, `security-and-hardening`, `shipping-and-launch`, `source-driven-development`, `spec-driven-development`, `using-agent-skills`.
+- **Source:** [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills), pinned to commit `39b723c`. Licence: MIT. Also answers to: `addy`, `addyosmani`.
+- **Needs:** nothing to install. `browser-testing-with-devtools` needs the Chrome DevTools MCP server. Some skills link to checklists in the repo's `references/` folder, which a skill install does not copy. `test-driven-development` is left out: Superpowers has that name.
+
+### Caveman (`caveman`)
+
+Terse answers that keep every fact, plus lean build, patch, refactor and verify skills.
+
+- **Category:** Engineering.
+- **Skills (14):** `caveman`, `caveman-commit`, `caveman-compress`, `caveman-explore`, `caveman-help`, `caveman-review`, `investigate-first`, `lean-build`, `megacave`, `migration`, `safe-refactor`, `surgical-patch`, `ultracave`, `verify-and-stop`.
+- **Source:** [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman), pinned to commit `a192894`. Licence: Apache-2.0. Also answers to: `cave`.
+- **Needs:** nothing. The pack is plain skill files: no hooks, no settings changes, no edits to `CLAUDE.md`. `caveman-compress` needs Python 3 and sends the file you name to your model provider. Left out because they need more than a skill folder: `cavecrew` (its plugin's sub-agents), `caveman-stats` (its hook), `caveman-learn` (its CLI) and the five Caveman Cloud skills.
+
+### Claude Red (`claude-red`)
+
+Offensive security for authorized tests: web, API, cloud, Active Directory, wireless, exploit development and reports.
+
+- **Category:** Engineering.
+- **Skills (79):** `offensive-active-directory`, `offensive-advanced-redteam`, `offensive-ai-security`, `offensive-anti-forensics`, `offensive-api-abuse`, `offensive-api-security` and 73 more; `list --packs --json` prints all of them.
+- **Source:** [SnailSploit/Claude-Red](https://github.com/SnailSploit/Claude-Red), pinned to commit `6196ba7`. Licence: MIT. Also answers to: `red`, `snailsploit`.
+- **Needs:** the tools each skill names (for example `nmap` or Burp Suite), installed by you. Use it only on systems you are authorized to test.
+
+### Dev Browser (`dev-browser`)
+
+The agent drives a real Chrome through short scripts, with named pages that persist between runs.
+
+- **Category:** Engineering.
+- **Skills (1):** `dev-browser`.
+- **Source:** [SawyerHood/dev-browser](https://github.com/SawyerHood/dev-browser), pinned to commit `520ba5c`. Licence: MIT. Also answers to: `sawyerhood`.
+- **Needs:** `npm install -g dev-browser`, and Chrome (`dev-browser install` fetches one if none is found).
+
+### Emil Kowalski (`emil-kowalski`)
+
+Design engineering from the maker of Sonner: animation, gestures, Apple-style design, taste and UI reviews.
+
+- **Category:** Design.
+- **Skills (19):** `animate`, `animate-expo`, `animation-performance`, `animation-vocabulary`, `apple-design`, `ask-emil`, `ask-sonner`, `break-ui`, `choreograph`, `emil-design-eng`, `find-animation-opportunities`, `gestures`, `improve-animations`, `learn-taste`, `mobile-native`, `pick-ui-library`, `remove-animations`, `review-animations`, `write-swift`.
+- **Source:** [emilkowalski/skills](https://github.com/emilkowalski/skills), pinned to commit `64eb3de`. Licence: MIT. Also answers to: `emil`.
+- **Needs:** nothing to install. `prototype` is left out: Matt Pocock's pack has that name.
+
+### Marketing Skills (`marketingskills`)
+
+Corey Haines's marketing skills: copy, SEO, CRO, ads, email, pricing, launches, analytics and more.
+
+- **Category:** Marketing.
+- **Skills (53):** `ab-testing`, `ad-creative`, `ads`, `ai-seo`, `analytics`, `aso` and 47 more; `list --packs --json` prints all of them.
+- **Source:** [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills), pinned to commit `73573e9`. Licence: MIT. Also answers to: `corey`, `coreyhaines`.
+- **Needs:** nothing to install. Run `product-marketing` first: the other skills read the context file it writes (`.agents/product-marketing.md`). Some skills mention optional tools (Ahrefs, PostHog and others) that need their own accounts.
+
+### LinkedIn (`linkedin`)
+
+LinkedIn posts, comments, replies, hooks, profiles and analytics, each drafted for your approval.
+
+- **Category:** Marketing.
+- **Skills (12):** `linkedin-comment-drafter`, `linkedin-content-planner`, `linkedin-employee-advocacy`, `linkedin-engager-analytics`, `linkedin-hook-extractor`, `linkedin-humanizer`, `linkedin-interviewer`, `linkedin-post-writer`, `linkedin-profile-optimizer`, `linkedin-reply-handler`, `linkedin-repurposer`, `linkedin-thread-monitor`.
+- **Source:** [sergebulaev/linkedin-skills](https://github.com/sergebulaev/linkedin-skills), pinned to commit `8f8bc4b`. Licence: MIT. Also answers to: `linkedin-skills`.
+- **Needs:** nothing to draft. Publishing goes through a Publora account; without one, you post the approved text yourself.
+
+### I Have ADHD (`i-have-adhd`)
+
+Answers shaped for a reader with ADHD: next action first, numbered steps, no tangents, visible wins.
+
+- **Category:** Productivity.
+- **Skills (1):** `i-have-adhd`.
+- **Source:** [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd), pinned to commit `1ecea19`. Licence: MIT. Also answers to: `adhd`.
+- **Needs:** nothing. Turn it on with `/i-have-adhd`; it stays on until you say "stop adhd mode".
+
+### Baoyu (`baoyu`)
+
+Baoyu's content skills: cover images, infographics, comics, slides, diagrams, translation and posting to X, WeChat and Weibo.
+
+- **Category:** Media.
+- **Skills (21):** `baoyu-article-illustrator`, `baoyu-comic`, `baoyu-compress-image`, `baoyu-cover-image`, `baoyu-danger-gemini-web`, `baoyu-danger-x-to-markdown`, `baoyu-diagram`, `baoyu-electron-extract`, `baoyu-format-markdown`, `baoyu-image-gen`, `baoyu-infographic`, `baoyu-markdown-to-html`, `baoyu-post-to-wechat`, `baoyu-post-to-weibo`, `baoyu-post-to-x`, `baoyu-slide-deck`, `baoyu-translate`, `baoyu-url-to-markdown`, `baoyu-wechat-summary`, `baoyu-xhs-images`, `baoyu-youtube-transcript`.
+- **Source:** [Djordje-Stojanovic/baoyu-skills](https://github.com/Djordje-Stojanovic/baoyu-skills), pinned to commit `1b7fb3f`. This is an English fork of [JimLiu/baoyu-skills](https://github.com/JimLiu/baoyu-skills), which is written in Chinese; Chinese stays only for trigger phrases, labels on Chinese sites and text that goes into an image. Licence: MIT. Also answers to: `baoyu-skills`, `jimliu`.
+- **Needs:** Node.js (the scripts run with `npx bun`). The image skills need a key for an image API (OpenAI, Google and others). The posting skills drive your own Chrome and ask you to log in once.
+
 **`local`** is a folder of your own skills (`SIGMA_LOCAL_SKILLS_DIR` or `~/.sigmaskills/packs.json`). **`all`** is every pack that is available on this machine.
 
 **Graphify is not a pack:** its repo ships no `SKILL.md`. Its skill comes from its own tool: `uv tool install graphifyy && graphify install`.
+
+Three more sources were checked and are not packs, because their skills break when copied out of their repo:
+
+- **[gstack](https://github.com/garrytan/gstack):** almost every skill runs tools from its own install folder, built by `./setup` with Bun. Install it the way its README says.
+- **[Agent Reach](https://github.com/Panniantong/Agent-Reach):** one templated skill that drives the `agent-reach` Python CLI. SigmaResearch already reads Reddit, X, YouTube and GitHub.
+- **[Academic Research Skills](https://github.com/Imbad0202/academic-research-skills):** its five skills read shared folders at the repo root (`shared/`, `scripts/`, `agents/`). Install it as the Claude Code plugin it ships as.
 
 ---
 ## Install

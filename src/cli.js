@@ -600,7 +600,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         writeOut(JSON.stringify({
           schemaVersion: 1,
           packs: packs.packs.map((pack) => ({
-            id: pack.id, title: pack.title, aliases: pack.aliases, available: pack.available, note: pack.note, limit: pack.limit, sources: packSourceLabels(pack),
+            id: pack.id, title: pack.title, category: pack.category, aliases: pack.aliases, available: pack.available, note: pack.note, limit: pack.limit, sources: packSourceLabels(pack),
             skills: pack.skills.map((skill) => ({ id: skill.id, description: skill.description, ...(skill.group ? { group: skill.group } : {}) })),
           })),
         }, null, 2));

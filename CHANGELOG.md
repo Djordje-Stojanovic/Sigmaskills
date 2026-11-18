@@ -35,6 +35,18 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Added
 
 - `sigmafinanceman` (SigmaFinanceMan) is back in the pack (#338). It values a public company from data it fetches itself (SEC filings, Yahoo prices, the FRED 10-year rate) and runs the model, which the Financial Services pack leaves to a paid feed or your own template. Its DCF now gives a bear, base and bull value (year-1 growth 5 points and the EBIT margin 3 points either side of the base) and a reverse DCF: the year-1 growth and the EBIT margin at which the value equals the share price. Minority interest comes off the equity value, in the workbook too. The page walks through the method in ten numbered steps with the run's own numbers, and it now wears the DESIGN.md look: dark by default, light on a light system and in print. The workbook and the deck keep the banker colours. The sanity checks flag a terminal value under 40 % of EV and an implied growth far above the filed growth. Each addition has a check in `finman.py selftest`. It was retired in 0.24.0; an installed copy is now updated like any other Sigma skill.
+- Ten new packs (#338):
+  - Anthropic Engineering (`anthropic-engineering`): Anthropic's engineering plugin, 9 skills.
+  - Agent Skills (`agent-skills`): Addy Osmani's engineering workflow, 24 skills.
+  - Caveman (`caveman`): terse answers plus lean build and verify skills, 14 skills. It installs as plain files: no hooks, no settings changes.
+  - Claude Red (`claude-red`): offensive security for authorized tests, 79 skills.
+  - Dev Browser (`dev-browser`): the agent drives a real Chrome, 1 skill.
+  - Emil Kowalski (`emil-kowalski`): animation and design engineering, 19 skills.
+  - Marketing Skills (`marketingskills`): Corey Haines's marketing skills, 53 skills.
+  - LinkedIn (`linkedin`): posts, comments and analytics, 12 skills.
+  - I Have ADHD (`i-have-adhd`): answers shaped for a reader with ADHD, 1 skill.
+  - Baoyu (`baoyu`): cover images, infographics, comics, slides and posting, 21 skills. It installs from an English fork of JimLiu/baoyu-skills, which is written in Chinese.
+- Three skill names stay with the pack that had them first: `code-review` (Matt Pocock, not Anthropic Engineering), `test-driven-development` (Superpowers, not Agent Skills) and `prototype` (Matt Pocock, not Emil Kowalski).
 
 ### Changed
 
@@ -42,7 +54,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - `sigmahuman`: takes the rest of blader/humanizer v4.0.0 outside the patterns: prompt-injection examples, the *weak alone* rule, the ranking and same-time checks the fact script misses, a whole-file read and partial-pass report in file mode, and voice-detail examples. One upstream line stays out: "add a specific detail you know to be true" breaks the facts-from-source rule.
 - `sigmacourse`: a program measures a persona (small-word score, 8-word copy count); no model judge or agent grades it.
 - The wizard's first step (What) no longer sorts packs under topic headings (Core, Design and taste, Engineering, Media and 3D, Research and finance, More). That grouping shipped in 0.27.3 and is withdrawn: a pack stays its own pack (#338).
-- The first step now has two headings. Packs lists every pack with more than one skill, in the registry's order (Sigma, Matt Pocock, Three.js, HyperFrames, MiniMax H3, Anthropic, Design.md, Financial Services, tstack, Superpowers, Ponytail), then Local and any pack from your own `~/.sigmaskills/packs.json`. Single skills lists every source that ships one skill (Last 30 Days, Impeccable, Security Audit, Anatomy, Diagram Design, Taste, Hallmark). Local always sits under Packs, however few skills its folder holds. The cursor skips the headings, empty packs stay hidden, and the number keys follow screen order (#338).
+- The first step lists Packs first: every pack with more than one skill, each whole, in the registry's order, then Local and any pack from your own `~/.sigmaskills/packs.json`. The sources that ship one skill follow under their category, so a Design single skill sits under Design. Local always sits under Packs, however few skills its folder holds. The cursor skips the headings, empty packs stay hidden, and the number keys follow screen order (#338).
+- Every pack has one category from a fixed list: Engineering, Design, Media, Research, Marketing, Finance, Productivity. The wizard's `/` filter matches category names, so `/design` lists every Design skill across packs and single skills. `sigmaskills packs` and the README show each pack's category, and `list --packs --json` carries it as `category` (#338).
+- The wizard's first screen counts the skills installed in the other scope: `N more in Global: s to see them` (#344).
+- The README's pack sections show the pins the registry uses; seven of them still named older commits (#338).
+- `scripts/packs-snapshot.js` drops a skill name that an earlier pack already lists, and prints each drop (#338).
 - The wizard has a new look, taken from Matt Pocock's installer (`npx skills add`). Each screen reads top to bottom along a rail on the left; a finished step folds into one line, and the active step opens below it. Dots replace the `[x]` boxes, an open pack draws its skills as a tree, a line counts the rows above and below the screen, and the whole screen takes the canvas colour (#338).
 - The wizard's first screen names its scope (Project or Global) and that folder, and says how many skills are installed there. `s` switches the scope on that screen, so `u` (update) and `x` (uninstall) act on the scope you see. Paths under your home folder show as `~` (#338).
 - The installer no longer offers the Blender pack. Skills you already installed from it stay where they are until you uninstall them (`sigmaskills uninstall --skill <name>`) (#338).

@@ -9,6 +9,9 @@ const USER_CONFIG_FILE = 'packs.json';
 /** The packs a Global Installation holds: every Sigma skill, Matt Pocock and tstack. Every other pack is per project. */
 export const CORE_PACKS = ['sigma', 'mattpocock', 'tstack'];
 
+/** The fixed category list. Every pack has one; the wizard groups one-skill sources by it and `/` matches it. */
+export const CATEGORIES = ['Engineering', 'Design', 'Media', 'Research', 'Marketing', 'Finance', 'Productivity'];
+
 /** Presets that name several packs at once. `core` is the global default; `design-pack` is the per-project design pair. */
 export const BUNDLES = { core: CORE_PACKS, 'design-pack': ['impeccable', 'taste-skill'] };
 
@@ -58,7 +61,7 @@ function discoverFolderSkills(source, env, dirs, packId) {
  * Every pack the installer knows: the bundled Sigma skills, the snapshot packs from
  * registry/packs.json, and the owner's own packs from the user config.
  *
- * A pack is `{ id, title, blurb, aliases, bundled, available, note, sources, skills }`.
+ * A pack is `{ id, title, blurb, category, aliases, bundled, available, note, sources, skills }`.
  * Each skill is `{ id, title, description, pack, kind, source }`. `kind` is `bundled` or
  * `external`; `source` is the source object an external skill is fetched from.
  *
@@ -89,6 +92,8 @@ export function loadPackCatalog({ catalog, packageRoot, homeDir, env = process.e
       id: def.id,
       title: def.title || def.id,
       blurb: def.blurb || '',
+      // A user pack without a known category still shows, under Other.
+      category: CATEGORIES.includes(def.category) ? def.category : 'Other',
       aliases: def.aliases || [],
       bundled: Boolean(def.bundled),
       available: true,

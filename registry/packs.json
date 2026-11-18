@@ -6,6 +6,7 @@
       "id": "sigma",
       "title": "Sigma",
       "blurb": "Review, improve, ship, research and write. The first-party Sigma skills.",
+      "category": "Engineering",
       "aliases": [
         "sigmaskills"
       ],
@@ -15,6 +16,7 @@
       "id": "mattpocock",
       "title": "Matt Pocock",
       "blurb": "Skills for real engineers: grill, spec, TDD, triage, deep modules.",
+      "category": "Engineering",
       "aliases": [
         "matt",
         "pocock"
@@ -190,6 +192,7 @@
       "id": "threejs",
       "title": "Three.js",
       "blurb": "Geometry, materials, lighting, shaders, loaders, post-processing, R3F.",
+      "category": "Media",
       "aliases": [
         "three"
       ],
@@ -260,6 +263,7 @@
       "id": "hyperframes",
       "title": "HyperFrames",
       "blurb": "HTML to video: the HyperFrames skill, CLI, registry, media and slideshows, plus the student kit.",
+      "category": "Media",
       "aliases": [
         "hf"
       ],
@@ -366,6 +370,7 @@
       "id": "minimax-h3",
       "title": "MiniMax H3",
       "blurb": "Prompt writing and eight video recipes for the MiniMax H3 model.",
+      "category": "Media",
       "aliases": [
         "minimax",
         "h3"
@@ -420,6 +425,7 @@
       "id": "anthropic",
       "title": "Anthropic",
       "blurb": "Anthropic's skills: document skills (docx, pdf, pptx, xlsx), Claude API reference, MCP builder, skill creator and more.",
+      "category": "Productivity",
       "aliases": [
         "anthropics"
       ],
@@ -514,6 +520,7 @@
       "id": "design-md",
       "title": "Design.md",
       "blurb": "84 brand DESIGN.md files, each one a skill. Pick up to 3 at a time.",
+      "category": "Design",
       "aliases": [
         "design",
         "awesome-design-md"
@@ -959,6 +966,7 @@
       "id": "last30days",
       "title": "Last 30 Days",
       "blurb": "Research what people say about any topic in the last 30 days, across Reddit, X, YouTube, Hacker News and more.",
+      "category": "Research",
       "aliases": [
         "last30"
       ],
@@ -981,6 +989,7 @@
       "id": "financial-services",
       "title": "Financial Services",
       "blurb": "Anthropic finance plugins as skills: DCF, LBO, comps, pitch decks, earnings, fund admin, KYC.",
+      "category": "Finance",
       "aliases": [
         "fsi",
         "finance"
@@ -1496,6 +1505,7 @@
       "id": "tstack",
       "title": "tstack",
       "blurb": "Theo Browne's agent skills for shipping PRs: full-send, council, babysit-pr, file-pr and more.",
+      "category": "Engineering",
       "aliases": [
         "theo"
       ],
@@ -1550,6 +1560,7 @@
       "id": "superpowers",
       "title": "Superpowers",
       "blurb": "Jesse Vincent's workflow skills: brainstorm, write a plan, execute it, TDD, debug, review, finish the branch.",
+      "category": "Engineering",
       "aliases": [
         "obra"
       ],
@@ -1628,6 +1639,7 @@
       "id": "impeccable",
       "title": "Impeccable",
       "blurb": "Paul Bakaus's design vocabulary for agents: one skill with commands to audit, polish, critique and restyle a frontend.",
+      "category": "Design",
       "aliases": [
         "pbakaus"
       ],
@@ -1650,6 +1662,7 @@
       "id": "security-audit",
       "title": "Security Audit",
       "blurb": "Cloudflare's security audit skill: find vulnerabilities and verify each finding before it is reported.",
+      "category": "Engineering",
       "aliases": [
         "cloudflare",
         "audit"
@@ -1673,6 +1686,7 @@
       "id": "anatomy",
       "title": "Anatomy",
       "blurb": "Detailed, interactive isometric illustrations of real machines and how they work.",
+      "category": "Design",
       "aliases": [
         "isometric"
       ],
@@ -1696,6 +1710,7 @@
       "id": "diagram-design",
       "title": "Diagram Design",
       "blurb": "Cathryn Lavery's editorial diagrams: architecture, flow, sequence and more as clean HTML and SVG.",
+      "category": "Design",
       "aliases": [
         "diagram",
         "diagrams"
@@ -1719,6 +1734,7 @@
       "id": "taste-skill",
       "title": "Taste",
       "blurb": "Art direction for coding agents: reference images, a visual brief and a browser check, so a page does not look generated.",
+      "category": "Design",
       "aliases": [
         "taste",
         "leonxlnx"
@@ -1742,6 +1758,7 @@
       "id": "hallmark",
       "title": "Hallmark",
       "blurb": "A design skill that refuses the AI look: new pages, audits, redesigns and design extraction.",
+      "category": "Design",
       "aliases": [
         "nutlope"
       ],
@@ -1764,6 +1781,7 @@
       "id": "ponytail",
       "title": "Ponytail",
       "blurb": "The lazy senior developer: the smallest change that fully works, plus audit, review, debt and gain reports.",
+      "category": "Engineering",
       "aliases": [
         "lazy"
       ],
@@ -1803,9 +1821,1136 @@
       ]
     },
     {
+      "id": "anthropic-engineering",
+      "title": "Anthropic Engineering",
+      "blurb": "Anthropic's engineering plugin as skills: architecture, code review, debugging, incidents, standups, system design, tech debt, testing.",
+      "category": "Engineering",
+      "aliases": [
+        "anthropic-eng"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "anthropics/knowledge-work-plugins",
+          "path": "engineering/skills",
+          "ref": "e91a134584eb798bac7fb0379358006a2b63b965",
+          "skills": [
+            {
+              "id": "architecture",
+              "description": "Create or evaluate an architecture decision record (ADR)."
+            },
+            {
+              "id": "debug",
+              "description": "Structured debugging session \u2014 reproduce, isolate, diagnose, and fix."
+            },
+            {
+              "id": "deploy-checklist",
+              "description": "Pre-deployment verification checklist."
+            },
+            {
+              "id": "documentation",
+              "description": "Write and maintain technical documentation."
+            },
+            {
+              "id": "incident-response",
+              "description": "Run an incident response workflow \u2014 triage, communicate, and write postmortem."
+            },
+            {
+              "id": "standup",
+              "description": "Generate a standup update from recent activity."
+            },
+            {
+              "id": "system-design",
+              "description": "Design systems, services, and architectures."
+            },
+            {
+              "id": "tech-debt",
+              "description": "Identify, categorize, and prioritize technical debt."
+            },
+            {
+              "id": "testing-strategy",
+              "description": "Design test strategies and test plans."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agent-skills",
+      "title": "Agent Skills",
+      "blurb": "Addy Osmani's engineering workflow: spec, plan, build in small steps, test, review, harden and ship.",
+      "category": "Engineering",
+      "aliases": [
+        "addy",
+        "addyosmani"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "addyosmani/agent-skills",
+          "path": "skills",
+          "ref": "39b723ceebf81474d0557c1fecd01eddab585563",
+          "skills": [
+            {
+              "id": "api-and-interface-design",
+              "description": "Guides stable API and interface design."
+            },
+            {
+              "id": "browser-testing-with-devtools",
+              "description": "Tests in real browsers via Chrome DevTools MCP."
+            },
+            {
+              "id": "ci-cd-and-automation",
+              "description": "Automates CI/CD pipeline setup."
+            },
+            {
+              "id": "code-review-and-quality",
+              "description": "Conducts multi-axis code review."
+            },
+            {
+              "id": "code-simplification",
+              "description": "Simplifies code for clarity."
+            },
+            {
+              "id": "constraint-driven-development",
+              "description": "Establishes a project's quality bar as a written contract and stops agents quietly lowering it."
+            },
+            {
+              "id": "context-engineering",
+              "description": "Optimizes agent context setup."
+            },
+            {
+              "id": "debugging-and-error-recovery",
+              "description": "Guides systematic root-cause debugging."
+            },
+            {
+              "id": "deprecation-and-migration",
+              "description": "Manages deprecation and migration."
+            },
+            {
+              "id": "documentation-and-adrs",
+              "description": "Records decisions and documentation, and detects when documentation has drifted from the code it describes."
+            },
+            {
+              "id": "doubt-driven-development",
+              "description": "Subjects every non-trivial decision to a fresh-context adversarial review before it stands."
+            },
+            {
+              "id": "frontend-ui-engineering",
+              "description": "Builds production-quality, accessible, responsive user-facing UIs."
+            },
+            {
+              "id": "git-workflow-and-versioning",
+              "description": "Structures git workflow practices."
+            },
+            {
+              "id": "idea-refine",
+              "description": "Refines raw ideas into sharp, actionable concepts through structured divergent and convergent thinking."
+            },
+            {
+              "id": "incremental-implementation",
+              "description": "Delivers changes incrementally in thin, verifiable slices."
+            },
+            {
+              "id": "interview-me",
+              "description": "Extracts what the user actually wants instead of what they think they should want."
+            },
+            {
+              "id": "observability-and-instrumentation",
+              "description": "Instruments code so production behavior is visible and diagnosable."
+            },
+            {
+              "id": "performance-optimization",
+              "description": "Optimizes application performance across frontend, backend, queries, and databases."
+            },
+            {
+              "id": "planning-and-task-breakdown",
+              "description": "Breaks work into ordered tasks."
+            },
+            {
+              "id": "security-and-hardening",
+              "description": "Hardens code against vulnerabilities."
+            },
+            {
+              "id": "shipping-and-launch",
+              "description": "Prepares production launches."
+            },
+            {
+              "id": "source-driven-development",
+              "description": "Grounds every implementation decision in official documentation."
+            },
+            {
+              "id": "spec-driven-development",
+              "description": "Creates specs before coding."
+            },
+            {
+              "id": "using-agent-skills",
+              "description": "Discovers and invokes agent skills."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "caveman",
+      "title": "Caveman",
+      "blurb": "Terse answers that keep every fact, plus lean build, patch, refactor and verify skills.",
+      "category": "Engineering",
+      "aliases": [
+        "cave"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "JuliusBrussee/caveman",
+          "path": "skills",
+          "ref": "a192894723a8f47e7f504c7b5041967ff1f18e55",
+          "skills": [
+            {
+              "id": "caveman",
+              "description": "Terse caveman voice: answer first, fluff gone, every technical fact kept."
+            },
+            {
+              "id": "caveman-commit",
+              "description": "Write a Conventional Commits message compressed to intent only."
+            },
+            {
+              "id": "caveman-compress",
+              "description": "Compress a memory file such as CLAUDE.md or a todo list into caveman format to save input tokens, keeping a readable backup."
+            },
+            {
+              "id": "caveman-explore",
+              "description": "Read-only repository explorer for cold-start orientation, broad cross-file localization, or when a direct search failed."
+            },
+            {
+              "id": "caveman-help",
+              "description": "Quick-reference card for the three caveman skills and their commands."
+            },
+            {
+              "id": "caveman-review",
+              "description": "Compressed code review - one line per finding with location, problem and fix."
+            },
+            {
+              "id": "investigate-first",
+              "description": "Diagnose ambiguous failures before editing."
+            },
+            {
+              "id": "lean-build",
+              "description": "Build feature work with high overbuilding risk."
+            },
+            {
+              "id": "megacave",
+              "description": "Caveman in Classical Chinese: \u6587\u8a00\u6587 register, far fewer characters, technical terms verbatim."
+            },
+            {
+              "id": "migration",
+              "description": "Implement reversible compatibility-safe transitions."
+            },
+            {
+              "id": "safe-refactor",
+              "description": "Restructure code while preserving behavior."
+            },
+            {
+              "id": "surgical-patch",
+              "description": "Fix bugs and small behavior changes at the narrowest responsible layer."
+            },
+            {
+              "id": "ultracave",
+              "description": "Caveman at maximum compression: fragments, one word when one word is enough, each fact once."
+            },
+            {
+              "id": "verify-and-stop",
+              "description": "Prove existing work meets acceptance conditions without expanding scope."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-red",
+      "title": "Claude Red",
+      "blurb": "Offensive security for authorized tests: web, API, cloud, Active Directory, wireless, exploit development and reports.",
+      "category": "Engineering",
+      "aliases": [
+        "red",
+        "snailsploit"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "SnailSploit/Claude-Red",
+          "path": "Skills",
+          "ref": "6196ba7464662de34e8744d359f175d1a7bca530",
+          "skills": [
+            {
+              "id": "offensive-active-directory",
+              "description": "Active Directory attack methodology for internal network red team engagements."
+            },
+            {
+              "id": "offensive-advanced-redteam",
+              "description": "Comprehensive red team operations methodology covering full engagement lifecycle from planning through reporting."
+            },
+            {
+              "id": "offensive-ai-security",
+              "description": "AI/LLM security offensive checklist: prompt injection, jailbreaking, model extraction, training data poisoning, adversarial inputs, LLM-assisted at..."
+            },
+            {
+              "id": "offensive-anti-forensics",
+              "description": "Anti-forensics and evidence destruction techniques for red team operators conducting authorized engagements."
+            },
+            {
+              "id": "offensive-api-abuse",
+              "description": "Advanced API exploitation methodology focused on business logic abuse and sophisticated attack patterns that bypass traditional security controls."
+            },
+            {
+              "id": "offensive-api-security",
+              "description": "Comprehensive API security testing methodology covering REST, gRPC, and WebSocket attack surfaces."
+            },
+            {
+              "id": "offensive-basic-exploitation",
+              "description": "Week 5 exploit development curriculum."
+            },
+            {
+              "id": "offensive-bluetooth-ble",
+              "description": "Bluetooth Low Energy (BLE) attack methodology \u2014 GATT enumeration, characteristic read/write without auth, pairing downgrade (Just Works forced), LE..."
+            },
+            {
+              "id": "offensive-bluetooth-classic",
+              "description": "Bluetooth Classic (BR/EDR) attack methodology \u2014 device discovery, service enumeration via SDP, LMP/L2CAP layer attacks, legacy PIN cracking (BlueBo..."
+            },
+            {
+              "id": "offensive-bug-identification",
+              "description": "Systematic bug identification methodology: source code review patterns, black-box testing strategies, taint analysis, dangerous function hunting, d..."
+            },
+            {
+              "id": "offensive-business-logic",
+              "description": "Business logic vulnerability testing for web/mobile/API engagements."
+            },
+            {
+              "id": "offensive-c2-frameworks",
+              "description": "Command and Control framework deployment, configuration, and operational tradecraft for red team engagements."
+            },
+            {
+              "id": "offensive-cicd-pipeline",
+              "description": "Comprehensive CI/CD pipeline exploitation methodology covering GitHub Actions injection vectors (expression injection via PR titles and issue bodie..."
+            },
+            {
+              "id": "offensive-cicd-secrets",
+              "description": "Comprehensive secrets extraction methodology targeting CI/CD environments across all major platforms."
+            },
+            {
+              "id": "offensive-cloud",
+              "description": "Cloud security attack methodology covering AWS, Azure, and GCP."
+            },
+            {
+              "id": "offensive-container-escape",
+              "description": "Container escape and breakout techniques targeting Docker, containerd, and Podman runtimes."
+            },
+            {
+              "id": "offensive-crash-analysis",
+              "description": "Week 4 exploit development curriculum."
+            },
+            {
+              "id": "offensive-crypto-attacks",
+              "description": "Systematic methodology for identifying and exploiting cryptographic implementation weaknesses in real-world applications."
+            },
+            {
+              "id": "offensive-data-exfiltration",
+              "description": "Dense methodology covering DNS exfiltration (dnscat2, iodine, dns2tcp), HTTPS tunneling (domain fronting, CDN abuse, legitimate service channels),..."
+            },
+            {
+              "id": "offensive-deauth-disassoc",
+              "description": "Deauthentication and disassociation attacks against 802.11 networks \u2014 targeted single-client deauth for handshake capture, broadcast deauth for DoS..."
+            },
+            {
+              "id": "offensive-dependency-confusion",
+              "description": "Deep-dive offensive methodology for dependency confusion and namespace attacks across all major package ecosystems."
+            },
+            {
+              "id": "offensive-deserialization",
+              "description": "Insecure deserialization exploitation across Java, PHP, .NET, Python, Node.js, and Ruby."
+            },
+            {
+              "id": "offensive-edr-evasion",
+              "description": "EDR evasion offensive checklist: hook unhooking (user/kernel), direct syscalls, PPID spoofing, process injection variants, AMSI bypass, ETW patchin..."
+            },
+            {
+              "id": "offensive-evil-twin",
+              "description": "Evil Twin / KARMA / Mana access point methodology \u2014 rogue AP construction with hostapd-mana / wifiphisher / airgeddon, KARMA universal probe respon..."
+            },
+            {
+              "id": "offensive-exploit-dev-course",
+              "description": "Full exploit development course roadmap and syllabus: weekly topics, recommended reading, lab setup, and learning path from vulnerability classes t..."
+            },
+            {
+              "id": "offensive-exploit-development",
+              "description": "Exploit development operational guide: environment setup, debugging workflow, PoC development lifecycle, writing reliable exploits, using pwntools/..."
+            },
+            {
+              "id": "offensive-fast-checking",
+              "description": "Speed-optimized offensive checklist for rapid assessment: quick-win vulnerability patterns, fast recon shortcuts, automated scanner configurations,..."
+            },
+            {
+              "id": "offensive-file-upload",
+              "description": "File upload vulnerability checklist: MIME type bypass, extension bypass, magic byte manipulation, path traversal in filenames, stored XSS via SVG/H..."
+            },
+            {
+              "id": "offensive-fuzzing",
+              "description": "Practical offensive fuzzing methodology covering target identification, fuzzer selection (AFL++, libFuzzer, Honggfuzz, Boofuzz, syzkaller), harness..."
+            },
+            {
+              "id": "offensive-fuzzing-course",
+              "description": "Week 2 of the exploit development curriculum."
+            },
+            {
+              "id": "offensive-graphql",
+              "description": "Offensive methodology for attacking GraphQL APIs during penetration tests and bug bounty engagements."
+            },
+            {
+              "id": "offensive-idor",
+              "description": "IDOR (Insecure Direct Object Reference) testing checklist: object ID enumeration, horizontal/vertical privilege escalation, GUID predictability, in..."
+            },
+            {
+              "id": "offensive-initial-access",
+              "description": "Initial access techniques checklist: phishing (spear/smishing), credential stuffing, exposed service exploitation, supply chain attacks, watering h..."
+            },
+            {
+              "id": "offensive-iot",
+              "description": "IoT and embedded device security testing methodology."
+            },
+            {
+              "id": "offensive-jwt",
+              "description": "JWT attack methodology for penetration testers."
+            },
+            {
+              "id": "offensive-k8s-attacks",
+              "description": "Kubernetes cluster attack techniques covering the full attack lifecycle from initial foothold in a pod to cluster-wide compromise."
+            },
+            {
+              "id": "offensive-keylogger-arch",
+              "description": "Low-level keylogger architecture design: kernel driver hooks (WH_KEYBOARD_LL, SetWindowsHookEx), ETW-based input capture, user-mode vs kernel-mode..."
+            },
+            {
+              "id": "offensive-krack-fragattacks",
+              "description": "KRACK (CVE-2017-13077..082) and FragAttacks (CVE-2020-24586..588 + 26139-26147) \u2014 key reinstallation, fragmentation, and aggregation attacks agains..."
+            },
+            {
+              "id": "offensive-lateral-movement",
+              "description": "Comprehensive lateral movement tradecraft for authorized red team engagements covering credential-based movement (pass-the-hash, pass-the-ticket, o..."
+            },
+            {
+              "id": "offensive-linux-privesc",
+              "description": "Comprehensive Linux privilege escalation methodology for offensive security engagements."
+            },
+            {
+              "id": "offensive-lorawan-sub-ghz",
+              "description": "LoRaWAN and sub-GHz (433 / 868 / 915 MHz) attack methodology \u2014 LoRaWAN ABP/OTAA join attack, network/session key reuse, frame counter replay, downl..."
+            },
+            {
+              "id": "offensive-mitigations",
+              "description": "Security mitigation reference and bypass catalog: ASLR, DEP/NX, RELRO, stack canaries, CFI, sandboxing, seccomp."
+            },
+            {
+              "id": "offensive-mobile",
+              "description": "Mobile (Android + iOS) application penetration testing methodology."
+            },
+            {
+              "id": "offensive-netexec",
+              "description": "Use this skill whenever the user asks about NetExec (nxc) \u2014 a network exploitation and post-exploitation tool for Active Directory environments."
+            },
+            {
+              "id": "offensive-network-attacks",
+              "description": "Dense description covering ARP spoofing, LLMNR/NBT-NS/mDNS poisoning, DNS poisoning, MITM attacks, VLAN hopping, DHCP attacks, 802.1X/NAC bypass, I..."
+            },
+            {
+              "id": "offensive-oauth",
+              "description": "OAuth 2.0 attack checklist: authorization code interception, redirect_uri bypass, CSRF on OAuth flow, state parameter abuse, open redirector chaini..."
+            },
+            {
+              "id": "offensive-open-redirect",
+              "description": "Open redirect vulnerability checklist: parameter identification, bypass techniques (URL encoding, double slashes, CRLF injection, protocol handlers..."
+            },
+            {
+              "id": "offensive-osint",
+              "description": "Comprehensive OSINT methodology skill for offensive security, red team intelligence gathering, and bug bounty reconnaissance."
+            },
+            {
+              "id": "offensive-osint-methodology",
+              "description": "Structured OSINT methodology framework: target definition, source selection, collection workflows, data correlation, timeline reconstruction, and r..."
+            },
+            {
+              "id": "offensive-parameter-pollution",
+              "description": "HTTP parameter pollution (HPP) checklist: duplicate parameter injection, backend vs frontend parsing differences, WAF bypass via HPP, server-side v..."
+            },
+            {
+              "id": "offensive-persistence",
+              "description": "Comprehensive persistence tradecraft for authorized red team engagements covering Windows and Linux mechanisms."
+            },
+            {
+              "id": "offensive-phishing",
+              "description": "Phishing campaign execution methodology for authorized red team engagements."
+            },
+            {
+              "id": "offensive-race-condition",
+              "description": "Race condition (TOCTOU) testing checklist: identifying timing windows, Burp Suite Turbo Intruder, Last-Byte sync technique, rate limit bypass, doub..."
+            },
+            {
+              "id": "offensive-rce",
+              "description": "Remote Code Execution testing checklist: OS command injection, SSTI-to-RCE, deserialization RCE, file upload RCE, XXE with SSRF to RCE, RCE via dep..."
+            },
+            {
+              "id": "offensive-reporting",
+              "description": "Penetration test and red team report writing methodology."
+            },
+            {
+              "id": "offensive-request-smuggling",
+              "description": "HTTP request smuggling checklist: CL.TE, TE.CL, TE.TE variants, detection with timing and differential responses, WAF bypass, cache poisoning, cred..."
+            },
+            {
+              "id": "offensive-shellcode",
+              "description": "Shellcode development reference for offensive security engagements."
+            },
+            {
+              "id": "offensive-social-engineering",
+              "description": "Social engineering attack techniques beyond email phishing for authorized red team and physical penetration testing engagements."
+            },
+            {
+              "id": "offensive-sqli",
+              "description": "SQL injection testing skill for offensive security assessments and bug bounty hunting."
+            },
+            {
+              "id": "offensive-ssrf",
+              "description": "Server-Side Request Forgery testing checklist: SSRF discovery, blind SSRF with out-of-band, cloud metadata endpoints (AWS/GCP/Azure), SSRF filter b..."
+            },
+            {
+              "id": "offensive-ssti",
+              "description": "Dense description covering Server-Side Template Injection across Jinja2, Twig, Freemarker, Velocity, Pebble, Smarty, Mako, Handlebars, ERB, Thymele..."
+            },
+            {
+              "id": "offensive-supply-chain",
+              "description": "Comprehensive offensive methodology for software supply chain attacks covering the full kill chain from reconnaissance through exploitation."
+            },
+            {
+              "id": "offensive-tls-attacks",
+              "description": "Comprehensive methodology for auditing and exploiting TLS/SSL implementations and misconfigurations across network services and mobile applications."
+            },
+            {
+              "id": "offensive-toctou",
+              "description": "Time-of-Check / Time-of-Use (TOCTOU) race condition exploitation methodology across binary, kernel, filesystem, web, and container layers."
+            },
+            {
+              "id": "offensive-vuln-classes",
+              "description": "Exploit development curriculum covering core vulnerability classes with real-world CVE case studies: stack/heap buffer overflows, use-after-free, i..."
+            },
+            {
+              "id": "offensive-waf-bypass",
+              "description": "WAF bypass techniques checklist: encoding bypass (URL/HTML/Unicode/double encoding), case variation, comment injection, HTTP header manipulation, c..."
+            },
+            {
+              "id": "offensive-wifi",
+              "description": "Wireless / 802.11 attack methodology for red team engagements and wireless security assessments."
+            },
+            {
+              "id": "offensive-wifi-recon",
+              "description": "Wi-Fi reconnaissance methodology \u2014 adapter selection, monitor mode and packet injection setup, regulatory domain handling, multi-band airspace mapp..."
+            },
+            {
+              "id": "offensive-windows-boundaries",
+              "description": "Windows security boundary taxonomy and attack surface enumeration: kernel/user boundary, sandbox boundaries (LPAC, AppContainer), COM/RPC boundarie..."
+            },
+            {
+              "id": "offensive-windows-mitigations",
+              "description": "Deep-dive on Windows exploit mitigations: ASLR, DEP/NX, CFG, CET/Shadow Stack, SEHOP, Heap Guard, ACG, Arbitrary Code Guard."
+            },
+            {
+              "id": "offensive-windows-privesc",
+              "description": "Comprehensive Windows privilege escalation methodology for offensive security engagements."
+            },
+            {
+              "id": "offensive-wpa-enterprise",
+              "description": "WPA/WPA2/WPA3-Enterprise (802.1X / EAP) attack methodology \u2014 EAP method identification (PEAP-MSCHAPv2, EAP-TTLS, EAP-TLS, EAP-GTC, EAP-PWD, EAP-FAS..."
+            },
+            {
+              "id": "offensive-wpa2-psk",
+              "description": "WPA/WPA2-PSK attack methodology \u2014 four-way handshake capture via targeted deauthentication, PMKID attacks (no client required), hcxdumptool / hcxpc..."
+            },
+            {
+              "id": "offensive-wpa3-sae",
+              "description": "WPA3 / SAE (Simultaneous Authentication of Equals) attack methodology \u2014 transition-mode (mixed WPA2/WPA3) downgrade, Dragonblood side-channel attac..."
+            },
+            {
+              "id": "offensive-wps",
+              "description": "WPS (Wi-Fi Protected Setup) PIN attack methodology \u2014 Pixie Dust offline attack against vulnerable chipsets (Ralink, Realtek, Broadcom, MediaTek), o..."
+            },
+            {
+              "id": "offensive-xss",
+              "description": "Cross-Site Scripting testing checklist: stored/reflected/DOM/blind XSS discovery, polyglot payloads, CSP bypass, XSS filter bypass, event handler i..."
+            },
+            {
+              "id": "offensive-xxe",
+              "description": "XML External Entity injection testing checklist: classic XXE, blind XXE (out-of-band), XXE via file upload (SVG/docx), XXE in SOAP/REST, error-base..."
+            },
+            {
+              "id": "offensive-z-wave",
+              "description": "Z-Wave attack methodology \u2014 sniffing with Z-Force / EZ-Wave / RTL-SDR + ZniffMobile, S0 (legacy) network-key derivation flaw and key reuse, S2 (mod..."
+            },
+            {
+              "id": "offensive-zigbee-thread-matter",
+              "description": "Zigbee, Thread, and Matter mesh-protocol attack methodology \u2014 IEEE 802.15.4 sniffing with TI CC2531 / CC2540 / Sonoff Zigbee Dongle E, KillerBee to..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dev-browser",
+      "title": "Dev Browser",
+      "blurb": "The agent drives a real Chrome through short scripts, with named pages that persist between runs.",
+      "category": "Engineering",
+      "aliases": [
+        "sawyerhood"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "SawyerHood/dev-browser",
+          "path": "skills",
+          "ref": "520ba5cb4fa2856a501376cd8a62fe54a6576549",
+          "skills": [
+            {
+              "id": "dev-browser",
+              "description": "Browser automation with persistent named pages via the dev-browser CLI."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "emil-kowalski",
+      "title": "Emil Kowalski",
+      "blurb": "Design engineering from the maker of Sonner: animation, gestures, Apple-style design, taste and UI reviews.",
+      "category": "Design",
+      "aliases": [
+        "emil"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "emilkowalski/skills",
+          "path": "skills",
+          "ref": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+          "skills": [
+            {
+              "id": "animate",
+              "description": "Build an animation from scratch, making the decisions in the order that determines whether it feels right \u2014 should it animate at all, what purpose,..."
+            },
+            {
+              "id": "animate-expo",
+              "description": "Build animations in React Native and Expo, making the decisions in the order that determines whether they feel right \u2014 should it animate, which thr..."
+            },
+            {
+              "id": "animation-performance",
+              "description": "Keep web animations inside the frame budget \u2014 animate composite-only properties, keep motion off the main thread when the page is busy, and find th..."
+            },
+            {
+              "id": "animation-vocabulary",
+              "description": "Reverse-lookup glossary that turns a vague description of a web animation or motion effect into its exact term (\"the bouncy thing when a popover op..."
+            },
+            {
+              "id": "apple-design",
+              "description": "Apple's approach to interface design and fluid, physical motion, translated for the web."
+            },
+            {
+              "id": "ask-emil",
+              "description": "Ask which skill or flow fits your situation."
+            },
+            {
+              "id": "ask-sonner",
+              "description": "Guide to Sonner, the React toast library \u2014 install and wire up the Toaster, pick the right toast() call, promise and loading toasts, updating, dism..."
+            },
+            {
+              "id": "break-ui",
+              "description": "Try to break a piece of UI by feeding it worst-case data \u2014 long names, unbreakable emails, one-letter names, missing fields, huge counts, zero item..."
+            },
+            {
+              "id": "choreograph",
+              "description": "Coordinate several elements that animate together \u2014 decide what moves, in what order, how much they overlap, and what stays still \u2014 so a group read..."
+            },
+            {
+              "id": "emil-design-eng",
+              "description": "Emil Kowalski's design-engineering philosophy for UI polish, component design, animation decisions, and the invisible details that make software fe..."
+            },
+            {
+              "id": "find-animation-opportunities",
+              "description": "Search a codebase or UI for places that don't animate but should, and reject everything that shouldn't."
+            },
+            {
+              "id": "gestures",
+              "description": "Build drag, swipe, and sheet interactions that track the finger 1:1 and stay interruptible."
+            },
+            {
+              "id": "improve-animations",
+              "description": "Survey a codebase's animation and motion code as a senior motion advisor, then produce a prioritized audit and self-contained implementation plans..."
+            },
+            {
+              "id": "learn-taste",
+              "description": "Turn a session's design corrections into rules, with their why, in DESIGN.md, a project skill, or a lint check."
+            },
+            {
+              "id": "mobile-native",
+              "description": "Make a web app feel native on a phone \u2014 the small CSS and meta-tag fixes that separate \"a website in a browser\" from something that feels installed."
+            },
+            {
+              "id": "pick-ui-library",
+              "description": "Pick the library for a frontend task from a curated list \u2014 primitives, toasts, drawers, command menus, OTP, numbers, charts, virtualization, drag a..."
+            },
+            {
+              "id": "remove-animations",
+              "description": "Find the animations an interface doesn't need and remove them \u2014 motion on keyboard actions, high-frequency surfaces, functional data, and decoratio..."
+            },
+            {
+              "id": "review-animations",
+              "description": "Reviews animation and motion code against a high craft bar derived from Emil Kowalski's design engineering philosophy."
+            },
+            {
+              "id": "write-swift",
+              "description": "How to write modern Swift well \u2014 modeling with value types, Swift 6 data-race safety and approachable concurrency (@concurrent, main-actor-by-defau..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "marketingskills",
+      "title": "Marketing Skills",
+      "blurb": "Corey Haines's marketing skills: copy, SEO, CRO, ads, email, pricing, launches, analytics and more.",
+      "category": "Marketing",
+      "aliases": [
+        "corey",
+        "coreyhaines"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "coreyhaines31/marketingskills",
+          "path": "skills",
+          "ref": "73573e94a06a39965978b3fa1f9c1eace8cebc7c",
+          "skills": [
+            {
+              "id": "ab-testing",
+              "description": "When the user wants to plan, run, or read A/B tests, or asks a judgement call on one: is the result real, can we stop, which version won, is this w..."
+            },
+            {
+              "id": "ad-creative",
+              "description": "When the user wants to write or judge ad creative, or asks which ad, hook, or angle to run or kill: headlines, primary text, and variations for Goo..."
+            },
+            {
+              "id": "ads",
+              "description": "When the user wants to plan, run, or fix paid ads on Google, Meta, and LinkedIn, or asks a judgement call on them: are ads worth it, which channel..."
+            },
+            {
+              "id": "ai-seo",
+              "description": "When the user wants to get cited and recommended in AI answers (ChatGPT, Perplexity, AI Overviews), or asks why AI cites a competitor, which conten..."
+            },
+            {
+              "id": "analytics",
+              "description": "When the user wants to set up or audit analytics, or asks whether a metric or number is calculated right, what to track, or how to name events: tra..."
+            },
+            {
+              "id": "aso",
+              "description": "When the user wants to audit or optimize an App Store or Google Play listing, or asks which title, keywords, or screenshots to pick or why download..."
+            },
+            {
+              "id": "attribution",
+              "description": "When the user wants to work out which marketing drives revenue, or asks whether a channel is really working, which numbers to trust, or how to cred..."
+            },
+            {
+              "id": "churn-prevention",
+              "description": "When the user wants to reduce churn, or asks why customers cancel, whether to offer a discount or pause: cancellation flows, exit surveys, save off..."
+            },
+            {
+              "id": "co-marketing",
+              "description": "When the user wants co-marketing partners or joint campaigns, or asks whether a partner fits, a size mismatch matters, or how to split work and lea..."
+            },
+            {
+              "id": "cold-email",
+              "description": "When the user wants to write or run B2B cold outbound, or asks whether an opener, reason to reach out, or email works or why nobody replies: cold e..."
+            },
+            {
+              "id": "community-marketing",
+              "description": "When the user wants to build or grow an online community, or asks whether a community is worth it, where to host it, or why members stay quiet: Dis..."
+            },
+            {
+              "id": "competitor-profiling",
+              "description": "When the user wants to research competitors into dated profiles, or asks what a rival charges, claims, or is doing, or whether a conclusion about t..."
+            },
+            {
+              "id": "competitors",
+              "description": "When the user wants to create or audit comparison and alternative pages ('X vs Y', 'X alternative', 'best X alternatives'), or asks what a public p..."
+            },
+            {
+              "id": "content-strategy",
+              "description": "When the user wants to plan content, or asks which topic or piece to prioritize, what to write about, or why posts bring no customers: topic cluste..."
+            },
+            {
+              "id": "conversion-tracking",
+              "description": "When the user wants to set up, audit, or fix conversion tracking to Google Ads, Meta, GA4, LinkedIn, and TikTok, or asks why conversions are missin..."
+            },
+            {
+              "id": "copy-editing",
+              "description": "When the user wants to edit, tighten, proofread, or refresh existing copy, or asks whether to keep, cut, or change a line in it, without rewriting..."
+            },
+            {
+              "id": "copywriting",
+              "description": "When the user wants to write or rewrite page copy (homepage, landing, pricing, feature), or asks which headline, promise, or message to lead with."
+            },
+            {
+              "id": "cro",
+              "description": "When the user wants more conversions from a page or form, or asks why a page isn't converting, what to change first, or whether to add or remove a..."
+            },
+            {
+              "id": "customer-research",
+              "description": "When the user wants to run or synthesize customer research, or asks what customer quotes, reviews, or feedback really mean, what is safe to conclud..."
+            },
+            {
+              "id": "directory-submissions",
+              "description": "When the user wants to list a product in startup, SaaS, AI, MCP, and review directories, or asks which directories are worth it or whether listings..."
+            },
+            {
+              "id": "emails",
+              "description": "When the user wants to create or improve automated email sequences, or asks what to send, when, or whether an email or flow is working: welcome, on..."
+            },
+            {
+              "id": "events",
+              "description": "When the user wants to plan, run, sponsor, or speak at events, or asks whether an event or booth is worth the money: webinars, conferences, booths,..."
+            },
+            {
+              "id": "free-tools",
+              "description": "When the user wants to plan or build a free tool as marketing, or asks whether a tool idea is worth building or which one to pick: calculators, gra..."
+            },
+            {
+              "id": "image",
+              "description": "When the user wants to create, generate, edit, or optimize marketing images, or asks which approach to take (generate, design, or photograph): blog..."
+            },
+            {
+              "id": "influencer-marketing",
+              "description": "When the user wants creator, influencer, or ambassador partnerships, or asks which creators fit, what to pay, which rights to buy, or whether a spo..."
+            },
+            {
+              "id": "launch",
+              "description": "When the user wants to plan a product or feature launch, or asks whether it's ready, when to announce, or how to get noticed: Product Hunt, beta an..."
+            },
+            {
+              "id": "lead-magnets",
+              "description": "When the user wants to plan or improve a lead magnet, or asks what to give away for emails or how much to ask in return (gating, form fields): chec..."
+            },
+            {
+              "id": "link-building",
+              "description": "When the user wants backlinks and mentions that lift rankings and AI citations, or asks how to get sites to link or whether a link tactic is safe:..."
+            },
+            {
+              "id": "marketing-council",
+              "description": "When the user wants several expert takes on a marketing decision, or asks what a famous marketer would say about it: a simulated board (Seth Godin,..."
+            },
+            {
+              "id": "marketing-ideas",
+              "description": "When the user wants marketing ideas or growth tactics for a software product, or asks what to try to get attention or the next customers with littl..."
+            },
+            {
+              "id": "marketing-loops",
+              "description": "When the user wants a recurring marketing job an AI agent runs on a cadence or trigger, or asks what a weekly or daily automated check should do, r..."
+            },
+            {
+              "id": "marketing-plan",
+              "description": "When the user wants a full marketing or go-to-market plan for a client, an advised company, or their own product, or asks how to sequence or priori..."
+            },
+            {
+              "id": "marketing-psychology",
+              "description": "When the user wants to apply psychology to marketing, or asks why buyers behave or value things as they do, or whether a persuasion tactic is hones..."
+            },
+            {
+              "id": "offers",
+              "description": "When the user wants to design or improve the offer itself, or asks why it isn't selling or how to add urgency honestly: value stacking, bonuses, gu..."
+            },
+            {
+              "id": "onboarding",
+              "description": "When the user wants better onboarding and activation, or asks why new users don't stick or what the first session should do: first-run experience,..."
+            },
+            {
+              "id": "paywalls",
+              "description": "When the user wants to create or improve in-app paywalls and upgrade moments, or asks when or how hard to ask free users to pay (after they've seen..."
+            },
+            {
+              "id": "popups",
+              "description": "When the user wants to create or improve popups, modals, slide-ins, sticky bars, and banners, or asks whether one will help or annoy and when to sh..."
+            },
+            {
+              "id": "pricing",
+              "description": "When the user wants to set pricing and packaging, or asks what to charge, whether to raise prices, or how to move existing customers: tiers, value..."
+            },
+            {
+              "id": "product-marketing",
+              "description": "When the user wants to create or update the product marketing context doc (.agents/product-marketing.md), or asks what belongs in it or whether pos..."
+            },
+            {
+              "id": "programmatic-seo",
+              "description": "When the user wants SEO pages at scale from templates and data, or asks whether a page set will rank or look thin: location, integration, compariso..."
+            },
+            {
+              "id": "prospecting",
+              "description": "When the user wants to find and qualify prospects for outbound, or asks who to target first, which signal to prioritize, or where to spot buyers wi..."
+            },
+            {
+              "id": "public-relations",
+              "description": "When the user wants press and media coverage, or asks what to say to a reporter, whether a story is newsworthy, or how to handle a crisis: pitches,..."
+            },
+            {
+              "id": "referrals",
+              "description": "When the user wants referral and affiliate programs or word of mouth, or asks what to reward, how much to pay, or which loop to start with: refer-a..."
+            },
+            {
+              "id": "reverse-engineer-marketing",
+              "description": "When the user wants to know how another company grew and what to copy, or asks what a competitor did and when: a dated log of their moves against t..."
+            },
+            {
+              "id": "revops",
+              "description": "When the user wants to design revenue operations, or asks when a lead is ready for sales or why sales and marketing disagree on lead quality: lifec..."
+            },
+            {
+              "id": "sales-enablement",
+              "description": "When the user wants sales collateral, or asks what to give a champion or rep, or how to answer an objection or make the case: decks, one-pagers, ob..."
+            },
+            {
+              "id": "schema",
+              "description": "When the user wants to add, fix, or validate schema markup (JSON-LD), or asks which type fits a page or whether some markup is allowed: product, re..."
+            },
+            {
+              "id": "seo-audit",
+              "description": "When the user wants to audit or diagnose SEO, or asks why traffic dropped, a page won't rank, or whether a setup like canonicals, hreflang, or redi..."
+            },
+            {
+              "id": "signup",
+              "description": "When the user wants better signup, registration, and trial start flows, or asks which fields or steps to cut or whether to require a card: SSO and..."
+            },
+            {
+              "id": "site-architecture",
+              "description": "When the user wants to plan or restructure a website, or asks which pages they need or where something belongs: hierarchy, navigation, URL structur..."
+            },
+            {
+              "id": "sms",
+              "description": "When the user wants SMS, MMS, or WhatsApp marketing, or asks whether texting is worth it or a message is allowed: abandoned cart, win-back, and pro..."
+            },
+            {
+              "id": "social",
+              "description": "When the user wants organic social content for LinkedIn, X, Instagram, TikTok, or Facebook, or asks what to post, which format to favor, or from wh..."
+            },
+            {
+              "id": "video",
+              "description": "When the user wants to create video with AI tools or code, or asks which approach to use (screen recording, AI avatar, generated, or templated) or..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "linkedin",
+      "title": "LinkedIn",
+      "blurb": "LinkedIn posts, comments, replies, hooks, profiles and analytics, each drafted for your approval.",
+      "category": "Marketing",
+      "aliases": [
+        "linkedin-skills"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "sergebulaev/linkedin-skills",
+          "path": "skills",
+          "ref": "8f8bc4b40a2d5419b2dcf898772b85712cfbdf41",
+          "skills": [
+            {
+              "id": "linkedin-comment-drafter",
+              "description": "Draft a LinkedIn comment on someone else's post from its URL, or reshare (repost) it to your feed with optional commentary."
+            },
+            {
+              "id": "linkedin-content-planner",
+              "description": "Generate a 7-day LinkedIn content plan from a theme, audience, and pillars."
+            },
+            {
+              "id": "linkedin-employee-advocacy",
+              "description": "Stand up and run a LinkedIn employee advocacy program for a marketing or sales team."
+            },
+            {
+              "id": "linkedin-engager-analytics",
+              "description": "Pull the people who liked or commented on any LinkedIn post and segment them by ICP fit (peer / aspirational / prospect / other)."
+            },
+            {
+              "id": "linkedin-hook-extractor",
+              "description": "Reverse-engineer the hook formula from a viral LinkedIn post URL."
+            },
+            {
+              "id": "linkedin-humanizer",
+              "description": "Remove AI tells from LinkedIn posts/comments: 2026 vocabulary density, reveal bridges, staccato fragments, stacked triads, performed sincerity."
+            },
+            {
+              "id": "linkedin-interviewer",
+              "description": "Interview the user for the raw material their posts are made of."
+            },
+            {
+              "id": "linkedin-post-writer",
+              "description": "Draft a new LinkedIn post from scratch using one of 20 2026 hook formulas (anaphora, R.I.P., time-anchor, curiosity-gap, contrarian, controlled A/B..."
+            },
+            {
+              "id": "linkedin-profile-optimizer",
+              "description": "Audit and rewrite a LinkedIn profile end-to-end for 2026: headline, About 7-step, Featured, banner, photo, Experience metrics, Skills, custom URL,..."
+            },
+            {
+              "id": "linkedin-reply-handler",
+              "description": "Draft a reply to one LinkedIn comment from its URL, or sweep a whole thread from just the post URL and draft a reply to every comment worth answeri..."
+            },
+            {
+              "id": "linkedin-repurposer",
+              "description": "Repurpose existing content into a native LinkedIn post."
+            },
+            {
+              "id": "linkedin-thread-monitor",
+              "description": "Track which of your LinkedIn comments earned author replies."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "i-have-adhd",
+      "title": "I Have ADHD",
+      "blurb": "Answers shaped for a reader with ADHD: next action first, numbered steps, no tangents, visible wins.",
+      "category": "Productivity",
+      "aliases": [
+        "adhd"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "ayghri/i-have-adhd",
+          "path": "skills",
+          "ref": "1ecea1993b7fce257ffbd686c070948b5e07eda6",
+          "skills": [
+            {
+              "id": "i-have-adhd",
+              "description": "Shape output for a reader with ADHD: lead with the next action, number multi-step work, restate state across turns, suppress tangents, give specifi..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "baoyu",
+      "title": "Baoyu",
+      "blurb": "Baoyu's content skills: cover images, infographics, comics, slides, diagrams, translation and posting to X, WeChat and Weibo.",
+      "category": "Media",
+      "aliases": [
+        "baoyu-skills",
+        "jimliu"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "Djordje-Stojanovic/baoyu-skills",
+          "path": "skills",
+          "ref": "1b7fb3f8bd010cb84503bfe60c9049166b0dc7f5",
+          "skills": [
+            {
+              "id": "baoyu-article-illustrator",
+              "description": "Analyzes article structure, identifies positions requiring visual aids, generates illustrations with Type \u00d7 Style \u00d7 Palette three-dimension approach."
+            },
+            {
+              "id": "baoyu-comic",
+              "description": "Knowledge comic creator supporting multiple art styles and tones."
+            },
+            {
+              "id": "baoyu-compress-image",
+              "description": "Compresses images to WebP (default) or PNG with automatic tool selection."
+            },
+            {
+              "id": "baoyu-cover-image",
+              "description": "Generates article cover images with 5 dimensions (type, palette, rendering, text, mood) combining 11 color palettes and 7 rendering styles."
+            },
+            {
+              "id": "baoyu-danger-gemini-web",
+              "description": "Generates images and text via reverse-engineered Gemini Web API."
+            },
+            {
+              "id": "baoyu-danger-x-to-markdown",
+              "description": "Converts X (Twitter) tweets and articles to markdown with YAML front matter."
+            },
+            {
+              "id": "baoyu-diagram",
+              "description": "Create professional diagrams with configurable dark/light theme via CSS custom properties."
+            },
+            {
+              "id": "baoyu-electron-extract",
+              "description": "Extracts resources and JavaScript from any installed Electron app (`.asar` bundle), restoring original sources from `.js.map` files when available..."
+            },
+            {
+              "id": "baoyu-format-markdown",
+              "description": "Formats plain text or markdown files with frontmatter, titles, summaries, headings, bold, lists, and code blocks."
+            },
+            {
+              "id": "baoyu-image-gen",
+              "description": "AI image generation with OpenAI GPT Image 2.5, Azure OpenAI, Google, OpenRouter, DashScope, Z.AI GLM-Image, MiniMax, Jimeng, Seedream, Replicate an..."
+            },
+            {
+              "id": "baoyu-infographic",
+              "description": "Generate professional infographics with 21 layout types and 22 visual styles."
+            },
+            {
+              "id": "baoyu-markdown-to-html",
+              "description": "Converts Markdown to styled HTML with WeChat-compatible themes."
+            },
+            {
+              "id": "baoyu-post-to-wechat",
+              "description": "Posts content to WeChat Official Account (\u5fae\u4fe1\u516c\u4f17\u53f7, \"WeChat Official Account\") via API or Chrome CDP."
+            },
+            {
+              "id": "baoyu-post-to-weibo",
+              "description": "Posts content to Weibo (\u5fae\u535a, \"Weibo\")."
+            },
+            {
+              "id": "baoyu-post-to-x",
+              "description": "Posts content and articles to X (Twitter)."
+            },
+            {
+              "id": "baoyu-slide-deck",
+              "description": "Generates professional slide deck images from content."
+            },
+            {
+              "id": "baoyu-translate",
+              "description": "This skill should be used when the user asks to \"translate\", \"\u7ffb\u8bd1\" (translate), \"\u7cbe\u7ffb\" (refined translation), \"translate article\", \"translate to Chine..."
+            },
+            {
+              "id": "baoyu-url-to-markdown",
+              "description": "Fetch any URL and convert to markdown using baoyu-fetch CLI (Chrome CDP with site-specific adapters)."
+            },
+            {
+              "id": "baoyu-wechat-summary",
+              "description": "Summarizes WeChat group chat highlights into a structured digest using the local wx-cli binary (https://github.com/jackwener/wx-cli)."
+            },
+            {
+              "id": "baoyu-xhs-images",
+              "description": "Generates infographic image card series with 12 visual styles, 8 layouts, and 3 color palettes."
+            },
+            {
+              "id": "baoyu-youtube-transcript",
+              "description": "Downloads YouTube video transcripts/subtitles and cover images by URL or video ID."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "local",
       "title": "Local",
       "blurb": "A folder of your own skills on this machine.",
+      "category": "Productivity",
       "aliases": [
         "own"
       ],

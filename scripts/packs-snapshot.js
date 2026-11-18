@@ -33,6 +33,7 @@ const PACKS = [
     id: 'sigma',
     title: 'Sigma',
     blurb: 'Review, improve, ship, research and write. The first-party Sigma skills.',
+    category: 'Engineering',
     aliases: ['sigmaskills'],
     bundled: true,
   },
@@ -40,6 +41,7 @@ const PACKS = [
     id: 'mattpocock',
     title: 'Matt Pocock',
     blurb: 'Skills for real engineers: grill, spec, TDD, triage, deep modules.',
+    category: 'Engineering',
     aliases: ['matt', 'pocock'],
     sources: [{ repo: 'mattpocock/skills', clone: 'matt', path: 'skills', ref: '5863806dd4e15c63174bee4e7515a4256792ecfa' }],
   },
@@ -47,6 +49,7 @@ const PACKS = [
     id: 'threejs',
     title: 'Three.js',
     blurb: 'Geometry, materials, lighting, shaders, loaders, post-processing, R3F.',
+    category: 'Media',
     aliases: ['three'],
     sources: [{ repo: 'CloudAI-X/threejs-skills', clone: 'threejs-skills', path: 'skills', ref: '0e181866f095b5f06d005133876e926515390d95' }],
   },
@@ -54,6 +57,7 @@ const PACKS = [
     id: 'hyperframes',
     title: 'HyperFrames',
     blurb: 'HTML to video: the HyperFrames skill, CLI, registry, media and slideshows, plus the student kit.',
+    category: 'Media',
     aliases: ['hf'],
     sources: [
       { repo: 'heygen-com/hyperframes', clone: 'hyperframes', path: 'skills', ref: HYPERFRAMES_RELEASE },
@@ -71,6 +75,7 @@ const PACKS = [
     id: 'minimax-h3',
     title: 'MiniMax H3',
     blurb: 'Prompt writing and eight video recipes for the MiniMax H3 model.',
+    category: 'Media',
     aliases: ['minimax', 'h3'],
     sources: [{ repo: 'MiniMax-AI/MiniMax-H3', clone: 'MiniMax-H3', path: 'skills' }],
   },
@@ -78,6 +83,7 @@ const PACKS = [
     id: 'tstack',
     title: 'tstack',
     blurb: "Theo Browne's agent skills for shipping PRs: full-send, council, babysit-pr, file-pr and more.",
+    category: 'Engineering',
     aliases: ['theo'],
     sources: [{ repo: 't3dotgg/tstack', clone: 'tstack', path: 'skills', ref: TSTACK_COMMIT }],
   },
@@ -86,6 +92,7 @@ const PACKS = [
     id: 'superpowers',
     title: 'Superpowers',
     blurb: "Jesse Vincent's workflow skills: brainstorm, write a plan, execute it, TDD, debug, review, finish the branch.",
+    category: 'Engineering',
     aliases: ['obra'],
     sources: [{ repo: 'obra/superpowers', clone: 'superpowers', path: 'skills', ref: '22f0b463e7a5e579904dd6211a520321035526f7' }],
   },
@@ -93,6 +100,7 @@ const PACKS = [
     id: 'impeccable',
     title: 'Impeccable',
     blurb: "Paul Bakaus's design vocabulary for agents: one skill with commands to audit, polish, critique and restyle a frontend.",
+    category: 'Design',
     aliases: ['pbakaus'],
     sources: [{ repo: 'pbakaus/impeccable', clone: 'impeccable', path: 'plugin/skills', ref: 'd41d9860b0094dcb68030657da63461212835aaa' }],
   },
@@ -100,6 +108,7 @@ const PACKS = [
     id: 'security-audit',
     title: 'Security Audit',
     blurb: "Cloudflare's security audit skill: find vulnerabilities and verify each finding before it is reported.",
+    category: 'Engineering',
     aliases: ['cloudflare', 'audit'],
     sources: [{ repo: 'cloudflare/security-audit-skill', clone: 'security-audit-skill', path: 'skills', ref: 'c1c8a8c1471069fb0e188eeaff69b8e8db6564a8' }],
   },
@@ -107,6 +116,7 @@ const PACKS = [
     id: 'anatomy',
     title: 'Anatomy',
     blurb: 'Detailed, interactive isometric illustrations of real machines and how they work.',
+    category: 'Design',
     aliases: ['isometric'],
     // The skill is the repo root itself: its SKILL.md sits at the top, so the source names the skill id.
     sources: [{ repo: 'wheresryan22/anatomy', clone: 'anatomy', path: '', rootSkill: 'anatomy', ref: '1482e8469b0a9e0d8cc18ea2740a01423d29ae80' }],
@@ -115,6 +125,7 @@ const PACKS = [
     id: 'diagram-design',
     title: 'Diagram Design',
     blurb: "Cathryn Lavery's editorial diagrams: architecture, flow, sequence and more as clean HTML and SVG.",
+    category: 'Design',
     aliases: ['diagram', 'diagrams'],
     sources: [{ repo: 'cathrynlavery/diagram-design', clone: 'diagram-design', path: 'skills', ref: 'f6db0decea96de66b901331a0f79a8d4b147ebae' }],
   },
@@ -122,6 +133,7 @@ const PACKS = [
     id: 'taste-skill',
     title: 'Taste',
     blurb: 'Art direction for coding agents: reference images, a visual brief and a browser check, so a page does not look generated.',
+    category: 'Design',
     aliases: ['taste', 'leonxlnx'],
     sources: [{ repo: 'Leonxlnx/taste-skill', clone: 'taste-skill', path: 'skills', ref: 'f6b76575f949707b4e3c37cd86cb44b0b98643e8' }],
   },
@@ -129,6 +141,7 @@ const PACKS = [
     id: 'hallmark',
     title: 'Hallmark',
     blurb: 'A design skill that refuses the AI look: new pages, audits, redesigns and design extraction.',
+    category: 'Design',
     aliases: ['nutlope'],
     sources: [{ repo: 'Nutlope/hallmark', clone: 'hallmark', path: 'skills', ref: '04977e15f3dfd6ee4b74c887dac3eb52665d6c92' }],
   },
@@ -136,13 +149,106 @@ const PACKS = [
     id: 'ponytail',
     title: 'Ponytail',
     blurb: 'The lazy senior developer: the smallest change that fully works, plus audit, review, debt and gain reports.',
+    category: 'Engineering',
     aliases: ['lazy'],
     sources: [{ repo: 'DietrichGebert/ponytail', clone: 'ponytail', path: 'skills', ref: 'v5.3.3' }],
+  },
+  // The owner's November 2026 list (#338). Each is pinned to one commit.
+  {
+    id: 'anthropic-engineering',
+    title: 'Anthropic Engineering',
+    blurb: "Anthropic's engineering plugin as skills: architecture, code review, debugging, incidents, standups, system design, tech debt, testing.",
+    category: 'Engineering',
+    aliases: ['anthropic-eng'],
+    sources: [{ repo: 'anthropics/knowledge-work-plugins', clone: 'knowledge-work-plugins', path: 'engineering/skills', ref: 'e91a134584eb798bac7fb0379358006a2b63b965' }],
+  },
+  {
+    id: 'agent-skills',
+    title: 'Agent Skills',
+    blurb: "Addy Osmani's engineering workflow: spec, plan, build in small steps, test, review, harden and ship.",
+    category: 'Engineering',
+    aliases: ['addy', 'addyosmani'],
+    sources: [{ repo: 'addyosmani/agent-skills', clone: 'agent-skills', path: 'skills', ref: '39b723ceebf81474d0557c1fecd01eddab585563' }],
+  },
+  {
+    id: 'caveman',
+    title: 'Caveman',
+    blurb: 'Terse answers that keep every fact, plus lean build, patch, refactor and verify skills.',
+    category: 'Engineering',
+    aliases: ['cave'],
+    // Only the skills that work as plain files. Left out: cavecrew (needs its plugin's sub-agents), caveman-stats
+    // (needs its hook), caveman-learn (needs its CLI) and the five Caveman Cloud skills (setup, manage, optimize, discover, evidence-review).
+    sources: [{
+      repo: 'JuliusBrussee/caveman',
+      clone: 'caveman',
+      path: 'skills',
+      ref: 'a192894723a8f47e7f504c7b5041967ff1f18e55',
+      only: ['caveman', 'caveman-commit', 'caveman-compress', 'caveman-explore', 'caveman-help', 'caveman-review', 'investigate-first',
+        'lean-build', 'megacave', 'migration', 'safe-refactor', 'surgical-patch', 'ultracave', 'verify-and-stop'],
+    }],
+  },
+  {
+    id: 'claude-red',
+    title: 'Claude Red',
+    blurb: 'Offensive security for authorized tests: web, API, cloud, Active Directory, wireless, exploit development and reports.',
+    category: 'Engineering',
+    aliases: ['red', 'snailsploit'],
+    sources: [{ repo: 'SnailSploit/Claude-Red', clone: 'Claude-Red', path: 'Skills', ref: '6196ba7464662de34e8744d359f175d1a7bca530' }],
+  },
+  {
+    id: 'dev-browser',
+    title: 'Dev Browser',
+    blurb: 'The agent drives a real Chrome through short scripts, with named pages that persist between runs.',
+    category: 'Engineering',
+    aliases: ['sawyerhood'],
+    sources: [{ repo: 'SawyerHood/dev-browser', clone: 'dev-browser', path: 'skills', ref: '520ba5cb4fa2856a501376cd8a62fe54a6576549' }],
+  },
+  {
+    id: 'emil-kowalski',
+    title: 'Emil Kowalski',
+    blurb: 'Design engineering from the maker of Sonner: animation, gestures, Apple-style design, taste and UI reviews.',
+    category: 'Design',
+    aliases: ['emil'],
+    sources: [{ repo: 'emilkowalski/skills', clone: 'emil-skills', path: 'skills', ref: '64eb3deb9a5fbfa041faf783e0bc3fd635872e9c' }],
+  },
+  {
+    id: 'marketingskills',
+    title: 'Marketing Skills',
+    blurb: "Corey Haines's marketing skills: copy, SEO, CRO, ads, email, pricing, launches, analytics and more.",
+    category: 'Marketing',
+    aliases: ['corey', 'coreyhaines'],
+    sources: [{ repo: 'coreyhaines31/marketingskills', clone: 'marketingskills', path: 'skills', ref: '73573e94a06a39965978b3fa1f9c1eace8cebc7c' }],
+  },
+  {
+    id: 'linkedin',
+    title: 'LinkedIn',
+    blurb: 'LinkedIn posts, comments, replies, hooks, profiles and analytics, each drafted for your approval.',
+    category: 'Marketing',
+    aliases: ['linkedin-skills'],
+    sources: [{ repo: 'sergebulaev/linkedin-skills', clone: 'linkedin-skills', path: 'skills', ref: '8f8bc4b40a2d5419b2dcf898772b85712cfbdf41' }],
+  },
+  {
+    id: 'baoyu',
+    title: 'Baoyu',
+    blurb: "Baoyu's content skills: cover images, infographics, comics, slides, diagrams, translation and posting to X, WeChat and Weibo.",
+    category: 'Media',
+    aliases: ['baoyu-skills', 'jimliu'],
+    // JimLiu/baoyu-skills is written in Chinese; this fork's `english` branch is the same skills in plain English.
+    sources: [{ repo: 'Djordje-Stojanovic/baoyu-skills', clone: 'baoyu-skills', path: 'skills', ref: '1b7fb3f8bd010cb84503bfe60c9049166b0dc7f5' }],
+  },
+  {
+    id: 'i-have-adhd',
+    title: 'I Have ADHD',
+    blurb: 'Answers shaped for a reader with ADHD: next action first, numbered steps, no tangents, visible wins.',
+    category: 'Productivity',
+    aliases: ['adhd'],
+    sources: [{ repo: 'ayghri/i-have-adhd', clone: 'i-have-adhd', path: 'skills', ref: '1ecea1993b7fce257ffbd686c070948b5e07eda6' }],
   },
   {
     id: 'local',
     title: 'Local',
     blurb: 'A folder of your own skills on this machine.',
+    category: 'Productivity',
     aliases: ['own'],
     sources: [{ type: 'dir', env: 'SIGMA_LOCAL_SKILLS_DIR' }],
   },
@@ -174,7 +280,7 @@ if (!clones) {
 
 const out = { schemaVersion: 1, generatedBy: 'scripts/packs-snapshot.js', packs: [] };
 for (const pack of PACKS) {
-  const entry = { id: pack.id, title: pack.title, blurb: pack.blurb, aliases: pack.aliases };
+  const entry = { id: pack.id, title: pack.title, blurb: pack.blurb, category: pack.category, aliases: pack.aliases };
   if (pack.bundled) {
     entry.bundled = true;
   } else {
@@ -213,6 +319,18 @@ const fresh = new Map(out.packs.map((pack) => [pack.id, pack]));
 const merged = before.map((pack) => fresh.get(pack.id) || pack);
 for (const pack of out.packs) if (!merged.some((entry) => entry.id === pack.id)) merged.splice(Math.max(merged.length - 1, 0), 0, pack);
 out.packs = merged;
+// First owner keeps a name (a Sigma skill first, then registry order): a later pack drops it, and the run says so.
+const owners = new Map(fs.readdirSync(ROOT).filter((dir) => fs.existsSync(path.join(ROOT, dir, 'SKILL.md'))).map((id) => [id, 'sigma']));
+for (const pack of out.packs) {
+  for (const source of pack.sources || []) {
+    if (!source.skills) continue;
+    source.skills = source.skills.filter((skill) => {
+      if (!owners.has(skill.id)) return owners.set(skill.id, pack.id);
+      console.error(`${pack.id}: ${skill.id} dropped, ${owners.get(skill.id)} has it`);
+      return false;
+    });
+  }
+}
 // The file stays plain ASCII (non-ASCII as \uXXXX), as the hand-curated packs were pasted in.
 const ascii = (text) => text.replace(/[\u0080-￿]/g, (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`);
 fs.writeFileSync(file, `${ascii(JSON.stringify(out, null, 2))}\n`);
