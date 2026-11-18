@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { isPathInside } from './paths.js';
@@ -24,6 +25,20 @@ export function pathExists(destPath) {
   } catch (err) {
     if (err.code === 'ENOENT' || err.code === 'ENOTDIR') return false;
     throw err;
+  }
+}
+
+/**
+ * Whether git tracks a file under `dir`. A skill the repo commits belongs to the repo, so no command of the installer deletes it.
+ *
+ * @param {string} dir
+ * @returns {boolean}
+ */
+export function gitTracked(dir) {
+  try {
+    return execFileSync('git', ['ls-files', '--', '.'], { cwd: dir, stdio: ['ignore', 'pipe', 'ignore'], encoding: 'utf8' }).trim() !== '';
+  } catch {
+    return false; // no git, no repo, or no folder: nothing is committed there
   }
 }
 

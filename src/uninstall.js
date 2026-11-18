@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { commitSkillBackup, copySkillTree, exportSkillTree, getBackupRoot, pruneOlderBackups } from './backup.js';
 import { resolveHomeDir } from './destinations.js';
-import { createSkillLink, inspectManagedPath, pathExists, removeManagedPath } from './links.js';
+import { createSkillLink, gitTracked, inspectManagedPath, pathExists, removeManagedPath } from './links.js';
 import { FOREIGN_LOCK_NOTICE, isForeignProjectLock, loadProjectLock, removeProjectLockSkill, saveProjectLock } from './project-lock.js';
 import {
   getGlobalStateDir,
@@ -159,6 +159,7 @@ function classifyUninstallSkill(options, skillId) {
     if (dest.unownedReplacement) blockedReasons.push('unowned');
     if ((dest.classifications || []).includes('copy-disagreement')) blockedReasons.push('copy-disagreement');
     if ((dest.classifications || []).includes('stale-state')) blockedReasons.push('stale-state');
+    if (!dest.missing && dest.method === 'copy' && gitTracked(dest.absolutePath)) blockedReasons.push('git-tracked');
   }
 
   const uniqueReasons = [...new Set(blockedReasons)];
@@ -371,6 +372,7 @@ function applyOneUninstall(options, skill) {
       || reason === 'missing-destination'
       || reason === 'stale-state'
       || reason === 'broken-link'
+      || reason === 'git-tracked'
       || (reason === 'copy-disagreement' && skill.reviewKind === 'clean')
     ));
     if (hard.length > 0) {

@@ -36,6 +36,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 - `sigmaresearch` reads a user's newest X posts through the X API with the user's own key (app-only bearer, paged by `next_token`). A logged-out profile page shows no posts, also in a stealth browser, so the old routes could not list a timeline.
 
+### Fixed
+
+- `uninstall`, `uninstall --all` and the wizard's remove step keep a skill folder that git tracks: the repo commits it, so the repo owns it. On 18 Nov an `uninstall --changed backup` deleted five committed skills from a course repo. `--skill` stops with `git-tracked`, `--all` skips that skill, and a pack skill reports `committed in git; kept`. A test installs three packs into one repo and shows another repo and the global skills folders unchanged byte for byte.
+
 ## [0.29.1] — 2026-11-18
 
 ### Changed
