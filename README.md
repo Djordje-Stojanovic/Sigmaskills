@@ -39,7 +39,7 @@ SigmaSkills is a set of skills for coding agents. A skill is a folder with one `
 npx @djordje-stojanovic/sigmaskills
 ```
 
-The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm. The first screen names the scope it works in, Project or Global, and `s` switches it. There, `u` updates every skill installed in that scope and `x` uninstalls them all. For a script, one line does it all: `npx @djordje-stojanovic/sigmaskills install --preset core --global --yes`. `core` is every Sigma skill plus the whole Matt Pocock pack and Theo Browne's whole tstack pack, and a bare `install --global --yes` means `--preset core`. Every other pack goes into one repo at a time: `install --pack threejs --project .` (`--pack` is the same flag as `--preset`).
+The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm. The first screen names the scope it works in, Project or Global, and `s` switches it. Each pack row says whether it is installed there. `u` opens an update review of every skill installed in that scope, and `x` a removal review; neither asks where. For a script, one line does it all: `npx @djordje-stojanovic/sigmaskills install --preset core --global --yes`. `core` is every Sigma skill plus the whole Matt Pocock pack and Theo Browne's whole tstack pack, and a bare `install --global --yes` means `--preset core`. Every other pack goes into one repo at a time: `install --pack threejs --project .` (`--pack` is the same flag as `--preset`).
 
 ## Stay current
 

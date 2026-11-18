@@ -93,14 +93,15 @@ function detectColorMode(stdout, env, options) {
   return 'plain';
 }
 
-function paint(colorMode, value, hex, bold) {
+function paint(colorMode, value, hex, bold, bg) {
   if (colorMode === 'plain') return value;
-  if (colorMode === 'truecolor') return `${truecolorFg(hex, bold)}${value}${RESET}`;
+  if (colorMode === 'truecolor') return `${bg ? truecolorBg(bg) : ''}${truecolorFg(hex, bold)}${value}${RESET}`;
   if (colorMode === 'ansi256') {
-    const [red, green, blue] = hexToRgb(hex);
-    return `\x1b[${bold ? '1;' : ''}38;5;${rgbTo256(red, green, blue)}m${value}${RESET}`;
+    const code = (color) => rgbTo256(...hexToRgb(color));
+    return `${bg ? `\x1b[48;5;${code(bg)}m` : ''}\x1b[${bold ? '1;' : ''}38;5;${code(hex)}m${value}${RESET}`;
   }
-  return `\x1b[${bold ? '1;' : ''}${ANSI16_FG[hex] || 37}m${value}${RESET}`;
+  // Only the emerald brand badge has a background, so 16 colours use green.
+  return `${bg ? '\x1b[42m' : ''}\x1b[${bold ? '1;' : ''}${ANSI16_FG[hex] || 37}m${value}${RESET}`;
 }
 
 /**
@@ -207,8 +208,8 @@ export class TerminalRenderer {
     return this.ascii ? 'SIGMA SKILLS' : 'Σ SIGMA SKILLS';
   }
 
-  style(value, hex, bold = false) {
-    return paint(this.colorMode, value, hex, bold);
+  style(value, hex, bold = false, bg = '') {
+    return paint(this.colorMode, value, hex, bold, bg);
   }
 
   fill() {

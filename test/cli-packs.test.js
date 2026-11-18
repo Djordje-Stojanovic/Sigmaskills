@@ -112,7 +112,7 @@ test('install: --global --agent agy writes a real copy in ~/.gemini/config/skill
   try {
     const { code, out, err } = await run(box, ['install', 'sigmawrite', '--global', '--yes', '--agent', 'agy']);
     assert.equal(code, 0, err);
-    assert.match(out, /\.gemini\/config\/skills\s+copy\s+Antigravity CLI/);
+    assert.match(out, /\.gemini\/config\/skills\s+copied\s+Antigravity CLI/);
     const folder = path.join(box.home, '.gemini', 'config', 'skills', 'sigmawrite');
     assert.ok(fs.existsSync(path.join(folder, 'SKILL.md')));
     assert.ok(!fs.lstatSync(folder).isSymbolicLink(), 'a real folder, not a link');
