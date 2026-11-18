@@ -1,0 +1,10 @@
+{
+  "item": "Two-bedroom flat (example)",
+  "currency": "USD",
+  "price": {"value": 420000, "source": "example listing"},
+  "rent_monthly": {"value": 2100, "source": "example: rent for the same flat nearby"},
+  "down_pct": 0.2, "loan_years": 30, "horizon_years": 10,
+  "closing_buy_pct": 0.03, "closing_sell_pct": 0.06, "tax_pct": 0.011, "upkeep_pct": 0.01,
+  "insurance_yearly": 1500, "hoa_monthly": 250, "appreciation": 0.03, "rent_growth": 0.03,
+  "invest_return": 0.06, "vacancy": 0.05, "management": 0.08
+}

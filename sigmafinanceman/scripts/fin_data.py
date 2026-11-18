@@ -11,12 +11,14 @@ import json
 import math
 import os
 import time
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
 CACHE = Path(os.environ.get("SIGMAFIN_CACHE") or Path.home() / ".cache" / "sigmafinanceman")
 SEC_UA = os.environ.get("SEC_USER_AGENT") or "sigmafinanceman research admin@example.com"
 WEB_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+FRED_UA = "curl/8.0"   # FRED refuses browser agents and stalls on unknown ones
 
 # Concept -> the us-gaap tags that carry it; per period the first tag that has a value wins. A tuple of tags is summed
 # (MSFT reports D&A in two tags).
@@ -254,7 +256,7 @@ def risk_free():
     """
     url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10&cosd=" + (dt.date.today() - dt.timedelta(days=30)).isoformat()
     try:
-        rows = [r.split(",") for r in _get(url, {"User-Agent": "sigmafinanceman/0.1"}, ttl=6 * 3600, timeout=15, tries=1).strip().splitlines()[1:]]
+        rows = [r.split(",") for r in _get(url, {"User-Agent": FRED_UA}, ttl=6 * 3600, timeout=15, tries=1).strip().splitlines()[1:]]
         rows = [r for r in rows if len(r) == 2 and r[1] not in (".", "")]
         if rows:
             return float(rows[-1][1]) / 100, rows[-1][0], url
@@ -277,3 +279,39 @@ def company(ticker, years=5, with_market=True):
 
 def is_num(x):
     return isinstance(x, (int, float)) and not (isinstance(x, float) and math.isnan(x))
+
+
+# ---------- readers for the other asset classes ----------
+
+def history(ticker, rng="20y", interval="1mo"):   # Yahoo thins "max" to a broken sample
+    """Dated closes and paid dividends from the Yahoo chart: {"dates", "closes", "dividends": [(date, amount)], "meta", "source"}."""
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(ticker)}?range={rng}&interval={interval}&events=div"
+    d = json.loads(_get(url, {"User-Agent": WEB_UA}, ttl=6 * 3600))["chart"]["result"][0]
+    day = lambda t: (dt.date(1970, 1, 1) + dt.timedelta(seconds=t)).isoformat()   # Windows refuses pre-1970 timestamps
+    q = d["indicators"]["quote"][0]["close"]   # price closes; the dividends are counted on their own
+    adj = (d["indicators"].get("adjclose") or [{}])[0].get("adjclose") or q   # dividends reinvested: the total-return line
+    rows = [(day(t), c, a) for t, c, a in zip(d.get("timestamp", []), q, adj) if c is not None and a is not None]
+    divs = sorted((day(v["date"]), v["amount"]) for v in (d.get("events") or {}).get("dividends", {}).values())
+    return {"dates": [r[0] for r in rows], "closes": [r[1] for r in rows], "adj": [r[2] for r in rows], "dividends": divs,
+            "meta": d["meta"], "source": url}
+
+
+def fred(series_id, start="1900-01-01"):
+    """One FRED series as [(date, value)]; FRED marks a missing day with '.'."""
+    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}&cosd={start}"
+    rows = [r.split(",") for r in _get(url, {"User-Agent": FRED_UA}, ttl=6 * 3600, timeout=30).strip().splitlines()[1:]]
+    return [(r[0], float(r[1])) for r in rows if len(r) == 2 and r[1] not in (".", "")], url
+
+
+def gpu_rent(gpu_name):
+    """Live single-GPU rental offers on vast.ai (public search, no key): dollars per GPU-hour, sorted."""
+    q = json.dumps({"gpu_name": {"eq": gpu_name}, "rentable": {"eq": True}, "num_gpus": {"eq": 1}})
+    url = "https://console.vast.ai/api/v0/bundles/?q=" + urllib.parse.quote(q)
+    offers = json.loads(_get(url, {"User-Agent": "sigmafinanceman/0.1"}, ttl=3600)).get("offers", [])
+    return sorted(o["dph_total"] for o in offers if o.get("dph_total")), url
+
+
+def card_price(query):
+    """TCGplayer prices of Pokemon cards (pokemontcg.io, no key), e.g. 'name:charizard set.id:base1'. Market = recent sales."""
+    url = "https://api.pokemontcg.io/v2/cards?select=id,name,set,rarity,tcgplayer&q=" + urllib.parse.quote(query)
+    return json.loads(_get(url, {"User-Agent": "sigmafinanceman/0.1"}, ttl=6 * 3600)).get("data", []), url

@@ -170,7 +170,7 @@ def comps_report(c, dcf_range=None):
                    {"kind": "hbars", "title": "EV/EBITDA by company", "rows": sorted([(r["ticker"], r["ev_ebitda"]) for r in peers + [t]
                                                                                        if r["ev_ebitda"]], key=lambda x: -x[1]), "fmt": "x",
                     "highlight": t["ticker"]}],
-        "notes": ["EV = market cap + debt - cash and short-term investments; leases are left out.",
+        "notes": ["EV = market cap + debt - cash and short-term investments + minority interest; leases are left out.",
                   "Quartiles are Excel QUARTILE.INC over the peers only; the target is not in its own statistics."],
         "sources": ["SEC company facts per ticker (data.sec.gov)", "Yahoo chart prices"],
     }

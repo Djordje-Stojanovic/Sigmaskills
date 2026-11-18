@@ -339,8 +339,8 @@ def comps_book(c, path):
     t = c["target"]
     title(ws, 1, f"{t['name']} ({t['ticker']}) trading comparables", "Blue = filed or market input. Black = formula. $ millions, LTM.")
     cols = ["Ticker", "Price", "Shares (m)", "Debt", "Cash", "LTM revenue", "LTM EBITDA", "LTM EBIT", "LTM net income", "Revenue growth",
-            "Market cap", "EV", "EV/Revenue", "EV/EBITDA", "EV/EBIT", "P/E", "EBIT margin"]
-    for i, w in enumerate((10, 11, 11, 11, 11, 13, 13, 13, 13, 10, 13, 13, 11, 11, 11, 11, 11), start=1):
+            "Market cap", "EV", "EV/Revenue", "EV/EBITDA", "EV/EBIT", "P/E", "EBIT margin", "Minority interest"]
+    for i, w in enumerate((10, 11, 11, 11, 11, 13, 13, 13, 13, 10, 13, 13, 11, 11, 11, 11, 11, 12), start=1):
         ws.column_dimensions[L(i)].width = w
     header(ws, 3, cols)
     first = 4
@@ -352,8 +352,9 @@ def comps_book(c, path):
                               ("F", "revenue", "money"), ("G", "ebitda", "money"), ("H", "ebit", "money"), ("I", "net_income", "money"),
                               ("J", "growth", "pct")):
             put(ws, f"{col}{row}", r[key], "input", fmt, comment=f"Source: SEC company facts LTM to {r['ltm_asof']}; Yahoo price" if col in "BF" else None)
+        put(ws, f"R{row}", r["minority"], "input", "money", comment="Source: us-gaap:MinorityInterest, last balance sheet (0 when not filed)")
         put(ws, f"K{row}", f"=B{row}*C{row}", "calc", "money")
-        put(ws, f"L{row}", f"=K{row}+D{row}-E{row}", "calc", "money")
+        put(ws, f"L{row}", f"=K{row}+D{row}-E{row}+R{row}", "calc", "money")
         put(ws, f"M{row}", f"=IFERROR(L{row}/F{row},\"n/a\")", "calc", "x")
         put(ws, f"N{row}", f"=IFERROR(IF(G{row}>0,L{row}/G{row},\"n/a\"),\"n/a\")", "calc", "x")
         put(ws, f"O{row}", f"=IFERROR(IF(H{row}>0,L{row}/H{row},\"n/a\"),\"n/a\")", "calc", "x")
@@ -369,10 +370,10 @@ def comps_book(c, path):
         put(ws, f"A{row}", lab, bold=True)
         for col in "MNOP":
             put(ws, f"{col}{row}", "=" + fn.format(r=f"{col}{first}:{col}{last}"), "calc", "x", bold=True)
-    total(ws, st, 1, 17)
+    total(ws, st, 1, 18)
     trow = st + 6
     company_row(t, trow, bold=True)
-    total(ws, trow, 1, 17, double=True)
+    total(ws, trow, 1, 18, double=True)
     im = trow + 2
     put(ws, f"A{im}", "Implied value per share of the target", bold=True)
     header(ws, im + 1, ["Method", "", "25th", "Median", "75th"])
@@ -380,12 +381,13 @@ def comps_book(c, path):
     put(ws, f"A{im + 3}", "P/E")
     put(ws, f"A{im + 4}", "EV/Revenue")
     for col, srow in (("C", st + 3), ("D", st + 2), ("E", st + 1)):
-        put(ws, f"{col}{im + 2}", f"=(N{srow}*G{trow}-D{trow}+E{trow})/C{trow}", "calc", "ps")
+        put(ws, f"{col}{im + 2}", f"=(N{srow}*G{trow}-D{trow}+E{trow}-R{trow})/C{trow}", "calc", "ps")
         put(ws, f"{col}{im + 3}", f"=P{srow}*I{trow}/C{trow}", "calc", "ps")
-        put(ws, f"{col}{im + 4}", f"=(M{srow}*F{trow}-D{trow}+E{trow})/C{trow}", "calc", "ps")
+        put(ws, f"{col}{im + 4}", f"=(M{srow}*F{trow}-D{trow}+E{trow}-R{trow})/C{trow}", "calc", "ps")
     ws.freeze_panes = "B4"
     b.checks += [("Median between the quartiles", f"=AND(Comps!N{st + 2}>=Comps!N{st + 3},Comps!N{st + 2}<=Comps!N{st + 1})", "the statistics are ordered"),
-                 ("Target EV = market cap + debt - cash", f"=ABS(Comps!L{trow}-(Comps!K{trow}+Comps!D{trow}-Comps!E{trow}))<0.01", "the EV bridge")]
+                 ("Target EV = market cap + debt - cash + minority interest",
+                  f"=ABS(Comps!L{trow}-(Comps!K{trow}+Comps!D{trow}-Comps!E{trow}+Comps!R{trow}))<0.01", "the EV bridge")]
     return b.save(path), {"median_ev_ebitda": f"Comps!N{st + 2}", "implied_median": f"Comps!D{im + 2}"}
 
 

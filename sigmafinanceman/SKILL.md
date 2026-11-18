@@ -1,74 +1,68 @@
 ---
 name: sigmafinanceman
-description: 'Use when asked for sigmafinanceman, to value a public company (DCF, reverse DCF, comps, LBO, three-statement), read a 10-K or plan a budget. Fetches SEC filings, prices and rates itself and runs the model: live Excel, deck, one page. Do not use to trade or file taxes.'
+description: 'Use when asked for sigmafinanceman or to value or judge any investment: a stock (DCF, reverse DCF, dividends, comps, LBO, a 10-K), a startup or venture deal (cap table, SAFEs, exit waterfall), a purchase such as a GPU or a car (buy, lease or rent), a home (rent or buy, mortgage), gold, commodities or crypto, a collectible, a bond or fund, or a budget. Fetches free live data and runs the model. Do not use to trade or file taxes.'
 ---
 
 # SigmaFinanceMan
 
-Turn a ticker or a household's numbers into a finished analysis: the answer first, the model behind it, every input traced to its source. One run gives the same numbers in four forms: an Excel workbook with live formulas (change an input, the model moves), a 16:9 deck, SVG charts and one HTML page that walks a non-expert through the method step by step. The bar is a model a banker would accept: blue inputs, black formulas, green links, a balanced balance sheet, a sensitivity grid whose centre is the base case, and a Checks sheet that says TRUE.
+Values any investment from free public data: the answer first, the model behind it, every number traced to its source. Every run writes one HTML page that walks a non-expert through the method step by step, SVG charts and a 16:9 deck; the company models also write an Excel workbook with live formulas that a banker would accept (blue inputs, black formulas, green links, a Checks sheet that says TRUE).
 
 ## Operating contract
 
-- **Numbers come from sources, never from memory.** Company figures come from SEC EDGAR company facts (the 10-K and 10-Q XBRL), prices and beta from Yahoo chart data, the risk-free rate from FRED. Each input carries its source in the workbook (cell comment) and on the page. A number the sources do not give is asked for or marked as an assumption.
-- **Formulas over typed numbers.** Only filed figures, market data and assumptions are typed (blue). Every calculation is a formula. The Python maths and the workbook formulas are two builds of one model; `audit` proves they agree.
-- **The answer leads.** Every output opens with one hero number, one sentence that says what it means, then the detail.
-- **Defaults are honest.** Each default says where it came from (for example "3-year revenue CAGR, held 0-25 %"). The user's word overrides any default.
-- **The user's own numbers stay on the machine.** A budget is read from a local file; nothing is uploaded.
-- **Looking is the test.** An exit code is not proof: render the workbook and the deck and look at the pages before you report.
+- **Numbers come from sources, never from memory.** The scripts fetch SEC EDGAR filings, Yahoo prices and dividends, FRED rates and CPI, vast.ai GPU rents and TCGplayer card prices themselves. Each input carries its source on the page and in the workbook. A number no source gives (a street price, a sold list, a term sheet) is fetched by you with its URL and date, asked for, or marked as an assumption.
+- **The answer leads.** Every output opens with one hero number and one sentence that says what it means.
+- **Ranges, not points.** Every model shows bear, base and bull and, where the answer turns on two inputs, a grid that crosses them.
+- **Defaults are honest.** Each names where it came from; the user's word overrides any default (`--set name=value`, fractions for percentages, or the input file).
+- **Say what a method cannot tell.** An asset that pays nothing has no fair value; history is not a forecast; a private company's numbers are the founders' until checked.
+- **The user's own numbers stay on the machine.** Input files are read locally; nothing is uploaded.
+- **Looking is the test.** Open the page at desktop and phone width, and render the workbook and the deck, before you report.
 
-Route to the Financial Services pack (`dcf-model`, `comps-analysis`, `3-statement-model`) when the user brings their own model template or an institutional data feed (FactSet, S&P, Daloopa); this skill owns the run from free public data.
+Plain Python 3.10+ with `openpyxl` and `python-pptx` (`pip install openpyxl python-pptx`); LibreOffice is optional and powers `audit` and `render`. Run `python scripts/finman.py selftest` once on a new machine: it must print PASS. Set `SEC_USER_AGENT="Name email@domain"` for SEC.
 
-The helper is plain Python 3.10+ with `openpyxl` and `python-pptx` (`pip install openpyxl python-pptx`). LibreOffice is optional and powers `audit` and `render`. Run `python scripts/finman.py selftest` once on a new machine: it must print PASS.
+## 1. Route: what are you valuing, and what decision does it serve?
 
-## 1. Ask once
+Ask that one question when the request leaves it open. The answer picks the class; read only that class's file, then run its command.
 
-Read what the user gave: tickers, a filing, a spreadsheet, a budget. Then ask one numbered round, at most 7 questions, each with `Recommended:` and a few words of why. Skip what is already answered; log each answer you took for the user as `Ruling:`. A question that ends in a buy, size or sell call (any investment, not only a listed company) first goes through the method in section 4. The questions and their defaults: [grill.md](references/grill.md). When the user is away or says "just run it", take every default and list them in the final response.
+| The user is valuing | Read | Command | Method |
+|---|---|---|---|
+| A listed company's shares | [stocks.md](references/stocks.md) | `finman.py dcf`, `dividend`, `comps`, `all TICKER` | DCF and reverse DCF, dividend discount and safety, owner earnings, buybacks, quality, comps, LBO, margin of safety |
+| A startup, a SAFE, a venture fund cheque | [venture.md](references/venture.md) | `finman.py venture deal.json` | VC method, cap table with SAFEs, notes and pool, exit waterfall, power-law portfolio, pitch-deck numbers |
+| A thing to buy for use: GPU, car, machine | [purchase.md](references/purchase.md) | `finman.py purchase item.json` | buy vs lease vs rent, total cost, payback, NPV and IRR, depreciation and resale |
+| A home or a rental property | [realestate.md](references/realestate.md) | `finman.py property home.json` | rent vs buy, mortgage, cap rate, cash-on-cash, the 1 % rule as a screen |
+| Gold, silver, oil, bitcoin | [noyield.md](references/noyield.md) | `finman.py asset GC=F --peers SI=F` | real return, drawdowns, hold-length ranges, carry, ratios |
+| A card, watch, artwork | [collectibles.md](references/collectibles.md) | `finman.py collectible item.json` | sold comparables, grading premium, fees, liquidity, population |
+| A bond, a fund or ETF | [bonds-funds.md](references/bonds-funds.md) | `finman.py bond bond.json`, `fund VOO --peers ^SP500TR --set fee=0.0003` | yield, duration, spread; tracking difference and fee drag |
+| A household's money | [budget.md](references/budget.md) | `finman.py budget household.json` | 50/30/20, left over, emergency fund |
 
-## 2. Pick the models
+Something that fits two rows takes both: a GPU rented out is a purchase with `income_monthly`; a flat bought to let is real estate as a rental; a business bought whole is the buyout and "Buying a business" playbooks in strategy.md with `lbo` or `dcf`. Something in no row (wine, farmland, a royalty) takes the nearest method: cash flows → the DCF logic in purchase or real estate; no cash flows → noyield.md; sold-price markets → collectibles.md.
 
-| The user wants | Command | Main output |
-|---|---|---|
-| What is it worth (intrinsic) | `finman.py dcf TICKER` | value per share, bear/base/bull, what the price implies (reverse DCF), WACC x growth grid, the method in 10 steps |
-| Could a buyout work | `finman.py lbo TICKER` | IRR and money multiple, entry x exit grid |
-| Cheap or dear against peers | `finman.py comps TICKER --peers A,B,C` | multiples table, quartiles, football field |
-| The full model | `finman.py three TICKER` | income statement, balance sheet, cash flow, 5 years out |
-| Health over time | `finman.py ratios TICKER` | 22 ratios over 5 fiscal years |
-| Anything wrong in the books | `finman.py analyze TICKER` | red flags, common-size, Altman Z, Piotroski F |
-| Would Buffett buy it | `finman.py score TICKER` | 10 pass/fail tests |
-| How was the quarter | `finman.py earnings TICKER` | latest quarter vs a year ago and the prior quarter |
-| Where does my money go | `finman.py budget FILE.json` | 50/30/20 split, left over, 12-month fund path |
-| Everything on one company | `finman.py all TICKER --peers A,B,C` | all of the above except budget |
+## 2. Ask once
 
-Peers for comps: 4 to 8 companies with the same business model and a similar size; say why each one is in. Override any input with `--set name=value` (fractions for percentages, for example `--set terminal_g=0.02`). The input names, every formula and the defaults: [methods.md](references/methods.md). The budget file format: [budget.md](references/budget.md).
+One numbered round, at most 7 questions, each with `Recommended:` and a few words of why; skip what is answered and log each default you took as `Ruling:`. The questions: [grill.md](references/grill.md). When the user is away or says "just run it", take every default and list them in the final response.
 
-## 3. Run and audit
+## 3. Run and look
 
-1. Set `SEC_USER_AGENT="Name email@domain"` (SEC asks for a contact). Run the commands with `--out <folder>`; the default formats are `xlsx,pptx,svg,html`.
-2. Run `finman.py audit <file>.xlsx` on every workbook. It recalculates the file in LibreOffice and lists formula errors and the Checks sheet. Done means `0 errors` and `PASS` for each workbook.
-3. Run `finman.py render <file>` on each workbook and deck, and open the PNG pages. Open the HTML page at desktop and phone width. Look for: cut-off labels, `n/a` where a number should be, a hero number that contradicts a table, a sensitivity centre that is not highlighted.
-4. Read the numbers like an analyst. Terminal value above 75 % of EV, a WACC under the risk-free rate, an IRR above 40 %, a negative EBITDA multiple: each needs a sentence in the reply or a changed input. Set the reverse DCF against history: an implied growth far above the filed 3-year growth is the market's bet, and the reply names it. The checks per model: [methods.md](references/methods.md) "Sanity checks".
+1. Run the command with `--out <folder>`. Fill each input file from the class file's table of sources; fetch live prices (web search or the scripts) with the date.
+2. Every workbook: `finman.py audit <file>.xlsx`. Done means `0 errors` and `PASS`.
+3. `finman.py render <file>` for each workbook and deck; open the PNG pages. Open the HTML page at desktop and phone width. Look for cut-off labels, `n/a` where a number should be, a hero number that contradicts a table, a grid centre that is not highlighted.
+4. Read the numbers like an analyst: each sanity flag in [methods.md](references/methods.md) "Sanity checks" and each trap in the class file needs a sentence in the reply or a changed input.
 
 ## 4. Judge the investment
 
-For any buy, size or sell call, and for any model that backs one, apply the one method that merges 14 investors and run the playbook for the kind of investment (growth or dividend stocks, index funds, macro and trading, private equity and venture, real estate, crypto, an asset rented out such as GPUs, reselling goods, cars, buying a business).
-
-- [strategy.md](references/strategy.md): read first. Nine steps (thesis and edge, downside, numbers, sizing, funding, entry, hold, sell, review), where the masters disagree and how the method decides, and a playbook per kind.
-- [masters.md](references/masters.md): read when a claim needs the investor's own words, or to cite a principle by tag. Ten sourced quotes and the principles of Musk, Buffett, Huang, Ackman, Munger, Jobs, Altman, Bezos, Zuckerberg, Druckenmiller, Horowitz, Leone, Thiel and Andreessen.
-
-Pass `--principles "Buffett P1,Munger P5"` to every `finman.py` run so the workbook (Method sheet), deck, page and report name the principles applied. Unknown tags stop the run.
+For any buy, size or sell call, run the nine steps in [strategy.md](references/strategy.md) (thesis and edge, downside, numbers, sizing, funding, entry, hold, sell, review) and the playbook at the end of the class file. [masters.md](references/masters.md) holds the sourced principles of 14 investors; cite them by tag and pass `--principles "Buffett P1,Munger P5"` to every run so each output names them (unknown tags stop the run).
 
 ## 5. Report
 
-The look of every output (the Ledger system: tokens, banker colours, number formats, chart rules) is in [outputs.md](references/outputs.md). Where the data and the folded-in methods come from: [sources.md](references/sources.md).
+The look of every output: [outputs.md](references/outputs.md). Where the data and the methods come from: [sources.md](references/sources.md).
 
 ## Final response
 
-1. The hero line of each model, one per line, with the folder path; for a DCF also the bear-to-bull range and the growth the price implies.
-2. The principles applied (tags from masters.md), the edge, the worst case in money and the sell rule when the question was an investment call.
-3. The defaults you took (`Ruling:` lines) and the inputs the user set.
+1. The hero line of each model, one per line, with the folder path; the bear-to-bull range, and what the price implies where a reverse model exists.
+2. For an investment call: the verdict, the principles applied (tags), the edge, the worst case in money and the sell rule.
+3. The defaults taken (`Ruling:` lines), the inputs the user set, and every input marked as an assumption.
 4. The audit result per workbook (`N formulas, 0 errors, checks PASS`).
-5. What you looked at, and anything a reader should question (the sanity flags).
-6. One next step: the input whose change moves the answer most, with the command to try it.
+5. What you looked at, and what a reader should question (sanity flags, traps, what the method cannot tell).
+6. One next step: the input that moves the answer most, with the command to try it.
 
 ## Personal instructions
 

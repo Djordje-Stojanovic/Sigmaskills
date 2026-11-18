@@ -304,10 +304,12 @@ def comp_row(f):
     shares = (f.get("shares_cover") or 0) / M or last("shares_diluted")
     price = f.get("market", {}).get("price")
     mcap = price * shares if price and shares else None
-    ev = mcap + debt - cash if mcap is not None else None
+    minority = last("minority", 0) or 0   # outside owners of subsidiaries: their claim is in EV, as consolidated EBITDA counts all of it
+    ev = mcap + debt - cash + minority if mcap is not None else None
     ebitda = (L.get("ebit") or 0) + (L.get("da") or 0) if L.get("ebit") is not None else None
     rev = hist("revenue")
-    return {"ticker": f["ticker"], "name": f["name"], "price": price, "shares": shares, "mcap": mcap, "debt": debt, "cash": cash, "ev": ev,
+    return {"ticker": f["ticker"], "name": f["name"], "price": price, "shares": shares, "mcap": mcap, "debt": debt, "cash": cash,
+            "minority": minority, "ev": ev,
             "revenue": L.get("revenue"), "ebitda": ebitda, "ebit": L.get("ebit"), "net_income": L.get("net_income"),
             "ev_rev": div(ev, L.get("revenue")), "ev_ebitda": div(ev, ebitda), "ev_ebit": div(ev, L.get("ebit")),
             "pe": div(mcap, L.get("net_income")), "growth": div(rev[-1], rev[-2]) - 1 if len(rev) > 1 and rev[-2] else None,
@@ -337,7 +339,7 @@ def comps(target, peers):
     for m, base in (("ev_ebitda", t["ebitda"]), ("ev_rev", t["revenue"])):
         s = stats[m]
         if s and base:
-            implied[m] = {k: (s[k] * base - t["debt"] + t["cash"]) / t["shares"] for k in ("q1", "median", "q3")}
+            implied[m] = {k: (s[k] * base - t["debt"] + t["cash"] - t["minority"]) / t["shares"] for k in ("q1", "median", "q3")}
     if stats["pe"] and t["net_income"]:
         implied["pe"] = {k: stats["pe"][k] * t["net_income"] / t["shares"] for k in ("q1", "median", "q3")}
     return {"target": t, "peers": rows, "stats": stats, "implied": implied}

@@ -44,6 +44,95 @@ def sample(flat=False):
     return f
 
 
+def history_fixture(start=2005, years=20, growth=0.10, div0=0.0):
+    """A monthly price series growing `growth` a year, with quarterly dividends growing 5 % a year when div0 > 0."""
+    dates, closes, divs = [], [], []
+    for k in range(years * 12 + 1):
+        y, m = start + k // 12, k % 12 + 1
+        dates.append(f"{y}-{m:02d}-01")
+        closes.append(100 * (1 + growth) ** (k / 12))
+        if div0 and m in (3, 6, 9, 12):
+            divs.append((f"{y}-{m:02d}-15", div0 * 1.05 ** (y - start) / 4))
+    return {"dates": dates, "closes": closes, "adj": closes, "dividends": divs,
+            "meta": {"currency": "USD", "regularMarketPrice": closes[-1]}, "source": "fixture"}
+
+
+def assets(out):
+    """Every asset-class model against an answer worked out by hand, and its report through every writer."""
+    import fin_assets as A
+    import finman
+    ok = True
+    ok &= check("IRR of -100 then +110 is 10 %", abs(A.irr([-100, 110]) - 0.10) < 1e-9)
+    ok &= check("Mortgage payment: 100,000 at 6 % over 30 years = 599.55", abs(A.mortgage(100000, 0.06, 30)[0] - 599.55) < 0.01)
+    ok &= check("Mortgage is repaid at the end", A.mortgage(100000, 0.06, 30)[1][-1]["balance"] < 1e-6)
+    ok &= check("DDM with one growth rate equals Gordon D1 / (ke - g)", abs(A.ddm_value(2.0, 0.08, 0.03, 0.03) - 2.0 * 1.03 / 0.05) < 1e-9)
+    # dividend model on Sample Co with a dividend history
+    f = sample()
+    f["history"] = history_fixture(2007, 20, 0.05, 1.0)
+    f["market"] = dict(f["market"], price_time="2027-03-01")
+    r = A.dividend(f, f["history"])
+    back = A.ddm_value(r["a"]["dps_ttm"]["value"], r["a"]["ke"]["value"], r["implied_g1"], r["a"]["g2"]["value"])
+    ok &= check("Dividend model: the implied growth gives back the price", abs(back - 20.0) < 1e-6, F.pct(r["implied_g1"]))
+    ok &= check("Dividend history: 5 % growth and no cut read back", abs(r["d"]["g5"] - 0.05) < 1e-9 and r["d"]["streak"] == 19)
+    # comps: minority interest belongs in EV
+    p = sample()
+    p["annual"]["minority"] = {e: 30e6 for e in ENDS}
+    ok &= check("Comps EV adds minority interest", abs(F.comp_row(p)["ev"] - F.comp_row(sample())["ev"] - 30) < 1e-9)
+    # venture: post-money SAFE, pool top-up, two rounds, waterfall
+    deal = {"founders": [{"name": "F", "shares": 9e6}], "pool": 1e6,
+            "safes": [{"name": "SAFE", "amount": 1e6, "cap": 10e6, "type": "post"}],
+            "rounds": [{"name": "Seed", "pre_money": 16e6, "amount": 4e6, "pool_target": 0.10},
+                       {"name": "A", "pre_money": 60e6, "amount": 15e6, "pool_target": 0.10}], "exits": [5e6, 500e6]}
+    v = A.venture(deal)
+    seed = v["tables"][1][1]
+    tot = sum(h["shares"] for h in seed.values())
+    ok &= check("Post-money SAFE owns amount / cap before the new money and the pool top-up",
+                abs(seed["SAFE"]["shares"] / (9e6 + 1e6 + seed["SAFE"]["shares"]) - 0.10) < 1e-9)
+    ok &= check("Seed: post-money = pre + raised; new money owns raised / post; pool = target",
+                abs(v["rounds"][0]["post_money"] - 20e6) < 1e-3 and abs(seed["Seed"]["shares"] / tot - 0.2) < 1e-9
+                and abs(seed["Option pool"]["shares"] / tot - 0.10) < 1e-9)
+    low, high = v["falls"][0][1], v["falls"][1][1]
+    last = v["tables"][2][1]
+    ok &= check("Waterfall pays out exactly the exit", abs(sum(low.values()) - 5e6) < 1e-3 and abs(sum(high.values()) - 500e6) < 1e-3)
+    ok &= check("Low exit: preferences first, founders get nothing", low["F"] < 1e-6)
+    ok &= check("High exit: every investor converts, payout = ownership",
+                abs(high["A"] / 500e6 - last["A"]["shares"] / sum(h["shares"] for h in last.values())) < 1e-9)
+    # purchase: at the break-even use, buying and renting cost the same
+    gp = {"price": 2000, "life_years": 4, "resale_value": 500, "uses_per_month": 200, "rent_per_use": 0.6, "running_per_use": 0.15,
+          "fixed_monthly": 5, "discount_rate": 0.05}
+    pr = A.purchase(gp)
+    ok &= check("Purchase: at the break-even use, buy = rent", abs(A.purchase(gp, uses=pr["breakeven_uses"])["npv_buy_vs_rent"]) < 1e-6)
+    pm = A.property_model({"price": 300000, "rent_monthly": 1500, "mortgage_rate": 0.06, "horizon_years": 10})
+    ok &= check("Property: cap rate = NOI / price", abs(pm["cap_rate"] - pm["noi"] / 300000) < 1e-12)
+    # no cash flows: 10 % a year, flat prices, no carry -> 10 % real, no fall
+    cpi = [(d, 100.0) for d in history_fixture()["dates"]]
+    ny = A.no_yield(history_fixture(), cpi, {"carry": 0, "spread": 0})
+    ok &= check("No-yield asset: 10 % a year reads back, real = nominal at flat CPI, no drawdown",
+                abs(ny["nominal_cagr"] - 0.10) < 1e-9 and abs(ny["real_cagr"] - 0.10) < 1e-9 and ny["max_dd_real"] == 0
+                and abs(ny["cases"][1][1] - 0.10) < 1e-9)
+    cd = {"sales": [{"date": f"2026-0{i}-01", "price": x, "grade": "raw"} for i, x in enumerate((100, 110, 120, 130, 140), start=1)],
+          "fees": {"sell_pct": 0.1, "shipping": 5}, "buy_price": 90}
+    co = A.collectible(cd)
+    ok &= check("Collectible: base = median sale x (1 - fees) - shipping", abs(co["cases"][1][1] - (120 * 0.9 - 5)) < 1e-9)
+    ok &= check("Bond at a yield equal to its coupon prices at par", abs(A.bond_price(100, 0.05, 10, 0.05) - 100) < 1e-9)
+    bd = A.bond({"coupon": 0.05, "years": 10, "price": 95})
+    ok &= check("Bond yield to maturity gives back the price", abs(A.bond_price(100, 0.05, 10, bd["ytm"]) - 95) < 1e-6)
+    fd = A.fund(history_fixture(), history_fixture(), 0.001)
+    ok &= check("Fund that matches its benchmark: no tracking difference", abs(fd["diff"]) < 1e-12 and fd["te"] < 1e-12)
+    reps = [("dividend", A.dividend_report(f, r)), ("venture", A.venture_report(deal, v)), ("purchase", A.purchase_report(gp, pr)),
+            ("property", A.property_report({"price": 300000, "rent_monthly": 1500, "mortgage_rate": 0.06}, pm)),
+            ("asset", A.no_yield_report("TEST", history_fixture(), "fixture", ny)), ("collectible", A.collectible_report(cd, co)),
+            ("bond", A.bond_report({"coupon": 0.05, "years": 10}, bd)), ("fund", A.fund_report("F", "B", history_fixture(), fd))]
+    for name, rep in reps:
+        files = finman.write_outputs(rep, f"asset-{name}", out, {"pptx", "svg", "html"})
+        for x in files:
+            if x.endswith(".svg"):
+                xml.dom.minidom.parse(x)
+        page = (out / f"asset-{name}.html").read_text(encoding="utf-8")
+        ok &= check(f"{name}: page, charts and deck written; the page walks the method", len(files) >= 2 and 'class="steps"' in page)
+    return ok
+
+
 def check(name, ok, detail=""):
     print(f"{'PASS' if ok else 'FAIL'}  {name}{('  ' + detail) if detail else ''}")
     return ok
@@ -113,6 +202,8 @@ def run():
         p["ticker"], p["market"] = f"PEER{i}", dict(p["market"], price=20.0 * scale)
         peers.append(p)
     args = type("A", (), {"set": None})()
+    f["history"] = history_fixture(2007, 20, 0.05, 1.0)
+    f["market"] = dict(f["market"], price_time="2027-03-01")
     cache = {}
     lo = finman.soffice()
     for kind in finman.KINDS:
@@ -123,7 +214,7 @@ def run():
             if x.endswith(".svg"):
                 xml.dom.minidom.parse(x)
         ok &= check(f"{kind}: xlsx, pptx, svg and html written", good, f"{len(files)} files")
-        if lo:
+        if lo and xl:
             cells = json.loads((out / f"smpl-{kind}.cells.json").read_text())
             expect = {}
             if kind == "dcf":
@@ -142,6 +233,7 @@ def run():
         ok &= check("budget: workbook recalculates, left over = 700", good, lines[0])
     else:
         print("SKIP  workbook recalculation (LibreOffice not installed)")
+    ok &= assets(out)
     page = (out / "smpl-dcf.html").read_text(encoding="utf-8")
     ok &= check("HTML leads with the answer", page.index('class="hero"') < page.index("<table"))
     ok &= check("HTML walks the method step by step before the tables",

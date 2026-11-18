@@ -4,6 +4,13 @@
   python finman.py dcf MSFT [--set growth_y1=0.12 --set terminal_g=0.02] [--out DIR] [--formats xlsx,pptx,svg,html]
   python finman.py lbo CROX | comps MSFT --peers AAPL,GOOGL,META | three MSFT | ratios MSFT | analyze MSFT | score MSFT | earnings MSFT
   python finman.py budget household.json           a personal monthly budget (format: references/budget.md)
+  python finman.py dividend KO                     dividend discount model, dividend safety, owner earnings, buybacks, quality
+  python finman.py venture deal.json               cap table with SAFEs, notes and pool; rounds; exit waterfall; VC method; power law
+  python finman.py purchase gpu.json               buy vs lease vs rent, total cost, payback, NPV/IRR, depreciation (vast.ai rent live)
+  python finman.py property flat.json              rent vs buy, mortgage, cap rate, cash-on-cash, the 1 % rule (FRED mortgage rate)
+  python finman.py asset GC=F --peers SI=F         gold, commodities, crypto: real return, drawdowns, hold ranges, a ratio
+  python finman.py collectible card.json           sold comparables, grading premium, fees, liquidity (pokemontcg.io prices live)
+  python finman.py bond bond.json | fund VOO --peers ^SP500TR --set fee=0.0003
   python finman.py all MSFT --peers AAPL,GOOGL     every company model in one go
   add --principles "Buffett P1,Munger P3"          names the masters' principles the run applied in every output
   python finman.py audit FILE.xlsx                 recalculate in LibreOffice, list formula errors and the Checks sheet
@@ -33,7 +40,9 @@ import fin_svg as S  # noqa: E402
 
 PRINCIPLES = []   # tags such as "Buffett P1", set by --principles; every writer prints them
 
-KINDS = ("dcf", "lbo", "comps", "three", "ratios", "analyze", "score", "earnings")
+KINDS = ("dcf", "lbo", "comps", "three", "ratios", "analyze", "score", "earnings", "dividend")
+FILE_KINDS = ("venture", "purchase", "property", "collectible", "bond")   # read a JSON file of inputs
+TICKER_KINDS = ("asset", "fund")                                         # price history only, no filings
 
 
 def parse_sets(items):
@@ -117,7 +126,77 @@ def run_company(kind, f, args, peers=None, cache=None):
     if kind == "earnings":
         e = F.earnings(f)
         return RP.earnings_report(f, e), lambda p: X.earnings_book(f, e, p)
+    if kind == "dividend":
+        import fin_assets as A
+        if "history" not in f:
+            import fin_data as D
+            f["history"] = D.history(f["ticker"])
+        return A.dividend_report(f, A.dividend(f, f["history"], o)), None
     raise SystemExit(f"unknown model: {kind}")
+
+
+def live(x, value, source):
+    """An input the user left out, filled from a live source."""
+    return x if x is not None else {"value": value, "source": source}
+
+
+def run_asset(cmd, args):
+    """One model for an asset class that has no SEC filings. Returns (report, file stem)."""
+    import fin_assets as A
+    import fin_data as D
+    o = parse_sets(args.set)
+    if cmd in FILE_KINDS:
+        data = json.loads(Path(args.target).read_text(encoding="utf-8"))
+        stem = Path(args.target).stem
+    if cmd == "venture":
+        return A.venture_report(data, A.venture(data)), stem
+    if cmd == "purchase":
+        if data.get("discount_rate") is None:
+            rf, day, url = D.risk_free()
+            data["discount_rate"] = {"value": rf, "source": f"US 10-year Treasury {day} ({url.split('&')[0]})"}
+        if data.get("rent_per_use") is None and data.get("gpu"):
+            prices, url = D.gpu_rent(data["gpu"])
+            if not prices:
+                raise SystemExit(f"vast.ai lists no {data['gpu']} offers: set rent_per_use in {args.target}")
+            data["rent_per_use"] = {"value": A.pctile(prices, 0.5), "source": f"median of {len(prices)} live vast.ai offers for one "
+                                    f"{data['gpu']}, $/GPU-hour ({url.split('?')[0]})"}
+        for k, v in o.items():
+            data[k] = {"value": v, "source": "set by the user"}
+        return A.purchase_report(data, A.purchase(data)), stem
+    if cmd == "property":
+        if data.get("mortgage_rate") is None:
+            rows, url = D.fred("MORTGAGE30US", "2025-01-01")
+            data["mortgage_rate"] = {"value": rows[-1][1] / 100, "source": f"Freddie Mac 30-year fixed, FRED MORTGAGE30US {rows[-1][0]}"}
+        for k, v in o.items():
+            data[k] = {"value": v, "source": "set by the user"}
+        return A.property_report(data, A.property_model(data)), stem
+    if cmd == "collectible":
+        ref = None
+        if data.get("pokemon"):
+            cards, url = D.card_price(data["pokemon"])
+            ref = [(f"{c['name']} {c['set']['name']} {k} {lab} ({c['tcgplayer'].get('updatedAt', '')})", v)
+                   for c in cards for k, p in c.get("tcgplayer", {}).get("prices", {}).items()
+                   for lab, v in p.items() if lab in ("low", "mid", "high", "market") and v]
+            data.setdefault("sources", []).append(url.split("&q=")[0] + " (TCGplayer prices)")
+        return A.collectible_report(data, A.collectible(data, ref)), stem
+    if cmd == "bond":
+        if data.get("treasury") is None:
+            n = min((1, 2, 3, 5, 7, 10, 20, 30), key=lambda x: abs(x - data["years"]))
+            rows, url = D.fred(f"DGS{n}", "2025-01-01")
+            data["treasury"], data["treasury_source"] = rows[-1][1] / 100, f"FRED DGS{n} ({n}-year Treasury) {rows[-1][0]}"
+        return A.bond_report(data, A.bond(data)), stem
+    h = D.history(args.target)
+    if cmd == "asset":
+        cpi, url = D.fred("CPIAUCSL")
+        ratio = D.history(args.peers) if args.peers else None
+        r = A.no_yield(h, cpi, o, ratio)
+        return A.no_yield_report(args.target, h, f"FRED CPIAUCSL to {cpi[-1][0]}", r, args.peers or None, o), args.target.lower()
+    if cmd == "fund":
+        if not args.peers or "fee" not in o:
+            raise SystemExit("fund needs --peers BENCHMARK and --set fee=0.0003 (the expense ratio from the fact sheet)")
+        b = D.history(args.peers)
+        return A.fund_report(args.target, args.peers, h, A.fund(h, b, o["fee"])), args.target.lower() + "-fund"
+    raise SystemExit(f"unknown asset class: {cmd}")
 
 
 def soffice():
@@ -192,7 +271,7 @@ def render(path, outdir=None):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=KINDS + ("all", "budget", "fetch", "audit", "render", "selftest"))
+    ap.add_argument("cmd", choices=KINDS + FILE_KINDS + TICKER_KINDS + ("all", "budget", "fetch", "audit", "render", "selftest"))
     ap.add_argument("target", nargs="?")
     ap.add_argument("--peers", default="")
     ap.add_argument("--set", action="append", help="override an input: name=value (fractions for percentages)")
@@ -222,6 +301,12 @@ def main(argv=None):
         files = write_outputs(RP.budget_report(b), "budget", out, formats, lambda p: X.budget_book(b, p))
         print("\n".join(files))
         return 0
+    if args.cmd in FILE_KINDS + TICKER_KINDS:
+        rep, stem = run_asset(args.cmd, args)
+        files = write_outputs(rep, re.sub(r"[^a-z0-9-]+", "-", stem.lower()).strip("-"), out, formats - {"xlsx"})
+        print(f"{args.cmd}: {rep['hero']['value']} {rep['hero']['label']}")
+        print("  " + "\n  ".join(files))
+        return 0
     import fin_data as D
     f = D.company(args.target, args.years)
     if args.cmd == "fetch":
@@ -233,6 +318,8 @@ def main(argv=None):
         if args.cmd == "comps":
             raise SystemExit("comps needs --peers A,B,C")
         kinds = tuple(k for k in kinds if k != "comps")
+    if args.cmd == "all" and not F.view(f)[2]("dividends"):   # no dividend paid: nothing for the dividend model to value
+        kinds = tuple(k for k in kinds if k != "dividend")
     cache = {}
     for kind in kinds:
         rep, xl = run_company(kind, f, args, peers, cache)

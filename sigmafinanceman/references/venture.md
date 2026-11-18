@@ -1,0 +1,93 @@
+# Startups and venture
+
+A startup has no cash flows to discount, so its value is the share of one exit you will own. Three questions decide a cheque: what the company can be worth at the exit, how much of it you still own then, and how often an outcome like that comes. `finman.py venture deal.json` answers all three. The input format, with every key used: [assets/venture-example.json](../assets/venture-example.json). Made-up numbers are fine for a private company; mark them as such in `source`.
+
+## The VC method
+
+Work back from the exit.
+
+1. Exit value = exit revenue x exit multiple, or a direct `exit_value`.
+2. Ownership you keep = 1 - the dilution of the later rounds (`future_dilution`; 40-60 % from seed to exit is common).
+3. Ownership needed today = investment x target multiple / (exit value x ownership kept).
+4. Most the post-money can be = exit value x ownership kept / target multiple.
+
+Target multiples: 10-30x at seed, 5-10x at Series A, 3-5x later, as a fund needs its few winners to pay for the rest. The page sets the round's real post-money against the maximum.
+
+## The cap table
+
+Fully diluted shares: founders, the option pool (granted and free), converted SAFEs and notes, and each round's preferred shares.
+
+- **Option pool shuffle.** The pool top-up a round asks for (`pool_target`, a share of the post-money) sits in the pre-money. The earlier holders pay for it, not the new money. A 10 % pool in the pre-money cuts the real pre-money by about that much.
+- **Post-money SAFE** (YC form, `"type": "post"`). Before the round's new money, the holder owns amount / cap of the company with every SAFE and note counted in. Converts at the cap price or the discount price (round price x (1 - discount)), whichever is lower.
+- **Pre-money SAFE** (`"type": "pre"`) and **convertible note.** The cap price is the cap over the shares before them, pool included. A note converts principal plus interest (simple, `rate` x `months` / 12).
+- **Priced round.** Price per share = pre-money / (shares before + pool top-up + converted shares). The new money gets amount / price shares. The model solves the loop (the conversions depend on the price, the price on the conversions) by iteration.
+- SAFEs and notes convert into the first priced round's preferred, with a liquidation preference equal to the cash they paid.
+
+Check after each round: post-money = pre-money + amount, the new money owns amount / post-money, and the pool is at its target. The selftest proves all three.
+
+## Liquidation preferences and the waterfall
+
+At an exit, preferred holders choose: take their preference (1x = their money back, `liq_pref` sets the multiple) or convert to common and share by ownership.
+
+- **Non-participating** (the norm): the larger of the two. The model converts the cheapest preference first and repeats until no holder gains by switching.
+- **Participating** (`"participating": true`): the preference and then a share as common. Expensive for founders in a modest exit.
+- Preferences here are pari passu (paid side by side). A senior stack pays the newest round first; say so when a term sheet has it.
+- Every option counts as granted and exercised at a zero strike, a small overstatement of the common's take.
+
+The `exits` list sets the waterfall's columns; the low, middle and high exits are the bear, base and bull cases. Read the low exit first: that is where preferences bite.
+
+## Term-sheet clauses that move the money
+
+| Clause | What it does | Founder-friendly default |
+|---|---|---|
+| Anti-dilution | in a down round, re-prices the investor's conversion. Full ratchet: to the new low price. Broad-based weighted average: part of the way, weighted by the new shares. | broad-based weighted average |
+| Pro rata | the right to buy into later rounds to keep the ownership | for lead investors only |
+| Liquidation preference | 1x non-participating is the market norm; above 1x or participating shifts a modest exit to the investors | 1x non-participating |
+| Option pool | sized in the pre-money; a pool larger than the next 18 months of hires costs the founders for nothing | the hiring plan, not a round number |
+| Vesting | founders' and staff shares earn over 4 years with a 1-year cliff; acceleration on a sale (single or double trigger) | double trigger |
+| Board | who controls the company between rounds | founders hold the majority at seed |
+
+A down round triggers anti-dilution and often a new pool: run the deal file twice, before and after, and read the founders' line. Secondary sales (founders or early staff sell some shares in a round) take cash off the table without new dilution; they count in the cap table as a transfer, not as new shares.
+
+## Power-law portfolio maths
+
+Venture returns follow a power law: a few companies return the fund, most return little or nothing (Thiel P1, Leone P5). The `fund` block gives:
+
+- First cheque = fund size x (1 - fees share) x (1 - reserve) / cheques. Hold back about half for follow-ons.
+- The exit that returns the fund = fund size / ownership at exit. If no plausible exit of this company does it, the cheque cannot carry the fund.
+- Chance of at least one outlier = 1 - (1 - p)^n, with p from the outcome shape (default: 50 % return nothing, 20 % 1x, 18 % 3x, 9 % 10x, 3 % 50x; set your own under `fund.outcomes`).
+- Expected gross multiple, and the multiple if no outlier comes. The gap between them is the case for more shots.
+
+Check sizing: a cheque you can lose in full (strategy.md step 4); spread over enough companies that the outlier odds are high; size each by the exit that would return the fund, not by conviction alone.
+
+## Reading a pitch deck's numbers
+
+The `deck` block recomputes what a deck claims and sets each against the usual bar:
+
+| Number | How | Bar |
+|---|---|---|
+| Runway | cash / net monthly burn | 18+ months after the round |
+| Burn multiple | net burn / net new ARR | under 2x; under 1x is excellent |
+| Price / ARR | post-money / ARR | under 30x at seed, under 20x at Series A |
+| Growth | ARR year on year | 2-3x a year early on |
+| Gross margin | (revenue - cost of revenue) / revenue | 70 %+ for software, 40 %+ for hardware |
+| LTV / CAC | (monthly revenue per account x gross margin / monthly churn) / CAC | 3x+ |
+| CAC payback | CAC / (monthly revenue per account x gross margin) | under 18 months |
+
+Ask for the raw table behind every chart: bookings are not revenue, GMV is not revenue, and "ARR" from one month of a seasonal business is a guess. Check the use of funds against the runway.
+
+## Free data
+
+Private companies publish nothing. SEC Form D (EDGAR full-text search) shows that a round was raised and its size; state registries show the founding date and officers; the company's own numbers come from the data room. Public comparables for the exit multiple come from `finman.py comps`.
+
+## Traps
+
+- Valuing by the last round's price: the last round priced one share class with its preferences, not the company.
+- Forgetting the pool shuffle and the SAFE stack when you quote the founders' share.
+- A high valuation with a 2x participating preference: the headline number hides the founder's real take.
+- Too few cheques to hit an outlier.
+- Uncapped SAFEs: the holder's share is unknown until the round.
+
+## Playbook
+
+Check: market size and risk layers (Andreessen P1, P4), founders, the cap table, the price, and the path to a sale or listing. Numbers: ownership after dilution, the return needed to be worth the fund's lock-up, and a 10x gain on invested capital in four to six years (Andreessen P2). Returns come from a few outliers (Thiel P1, Leone P5). Size: many small cheques, with money held back for follow-ons, and no cash you need. Sell: when a buyer offers a price above your hold case, or by a founder's 10-20% partial sale (Leone P1). Mistakes: too few shots, chasing a hot round, ignoring dilution and fees, and pricing by the last round (Leone calls protecting the last round's price a mistake).

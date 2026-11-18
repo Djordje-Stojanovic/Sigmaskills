@@ -1,0 +1,13 @@
+{
+  "item": "GeForce RTX 5090",
+  "gpu": "RTX 5090",
+  "unit": "GPU-hour",
+  "currency": "USD",
+  "price": {"value": 2000, "source": "NVIDIA list price (Founders Edition); replace with today's street price"},
+  "life_years": 4,
+  "resale_value": {"value": 700, "source": "assumption: about a third of the price after 4 years"},
+  "uses_per_month": {"value": 300, "source": "the user's plan: 10 hours a day"},
+  "running_per_use": {"value": 0.17, "source": "575 W x 1.0 (with the rest of the PC) at 0.30 $/kWh"},
+  "fixed_monthly": {"value": 0, "source": "no extra insurance or rack fee at home"},
+  "lease": {"monthly": 160, "months": 24, "upfront": 0}
+}
