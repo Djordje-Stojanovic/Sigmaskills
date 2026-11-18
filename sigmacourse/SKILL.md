@@ -5,13 +5,13 @@ description: 'Use when asked for sigmacourse or to plan or build a tutorial, gui
 
 # SigmaCourse
 
-Plan and build teaching of any size, on any subject, for any audience, in any medium. The course decides how much process it gets. Nothing here sorts a course by length: a one-pager ends with almost no process and a program of a thousand hours with a lot, because each step below runs only when the course itself needs it. When a local skill builds courses with your own stack, use it to build; it runs steps 1 to 3 here first.
+Plan and build teaching of any size, on any subject, for any audience, in any medium. The course decides how much process it gets: a one-pager ends with almost no process and a program of a thousand hours with a lot, because each step below runs only when the course needs it. When a local skill builds courses with your own stack, it builds; it runs steps 1 to 3 here first.
 
 ## Operating contract
 
-- **The user decides.** Subject, size, depth, voice, media, real people as teachers, generated likenesses: all the user's call. Add no limits of your own. The newest word wins over every default here; when it clashes with a rule, say once what it costs, then do it. The only confirm: an action that deletes the repo or publishes a secret. Save the user's words verbatim.
+- **The user decides.** Subject, size, depth, voice, media, real people as teachers, generated likenesses: all the user's call. The newest word wins over every default here; when it clashes with a rule, say once what it costs, then do it. The only confirm: an action that deletes the repo or publishes a secret. Save the user's words verbatim.
 - **Find the real need, then align.** One question at a time, your pick first, only while a wrong guess costs more than the question ([grill.md](references/grill.md)). Before the build, play the plan back in the user's words and wait for a yes; after the first built part, ask what is off and fix the plan, not only the part. "Just build it": guess every answer and ask for corrections once.
-- **Realism.** Every number has a source or a stated assumption. Every promised result sits next to how often comparable learners reach it. Counts and sums run in a script, never in prose. No secrets in any file, brief or prompt. Plain words: short sentences, one idea each, active voice.
+- **Realism.** Every number has a source or a stated assumption. Every promised result sits next to how often comparable learners reach it. Counts and sums run in a script, never in prose. No secrets in any file, brief or prompt.
 
 ## 1. The end state
 
@@ -27,7 +27,7 @@ Write one line per separate ability the learner must have at the end: "At the en
 
 ## 3. The process the map needs
 
-Read the map, then run each step whose condition is true. Write the result as a short table: step, true or false, the fact from the map that decided it. That table is the proof that the course, not a size, chose the process. Read a named skill before its step; when it is not installed, do the step yourself and say which was missing.
+Read the map, then run each step whose condition is true. Write the result as a short table: step, true or false, the fact from the map that decided it. That table is the proof that the course, not a size, chose the process. A named skill or tool is the known route: read it before its step; when it is missing, do the step another way and say which.
 
 | Step | Run it when | Tool |
 |---|---|---|
@@ -40,10 +40,10 @@ Read the map, then run each step whose condition is true. Write the result as a 
 | Research | the course states a fact the user's sources do not hold | [research-and-books.md](references/research-and-books.md) |
 | Fresh review by an agent that did not write it | always; its size follows the map (one read for one node, a batch review per part for many) | SigmaReview lenses |
 | Spec, done list, user sign-off | the build needs more than one agent session, so others must work from a written contract | [repo-setup.md](references/repo-setup.md) |
-| Queue, check script, run file, goal prompt | the build needs more sessions than the user will watch | [repo-setup.md](references/repo-setup.md), [build.md](references/build.md), SigmaLoop ([hosts.md](references/hosts.md)); a decision map (`wayfinder` or `docs/course/map.md`) when open decisions block later parts |
+| Queue, check script, run file, goal prompt | the build needs more sessions than the user will watch | [repo-setup.md](references/repo-setup.md), [build.md](references/build.md), SigmaLoop for the user's harness ([hosts.md](references/hosts.md)); a decision map (`wayfinder` or `docs/course/map.md`) when open decisions block later parts |
 | Personas | the user names real or invented teachers | [build.md](references/build.md#personas) |
 | Variety draw | more than one lesson per ability, or the same task type would repeat | [variety.md](references/variety.md) |
-| Design system, interface, performance budget | the course has screens, pages or media a learner opens | step 5 |
+| Delivery checks | the course has screens, pages or media a learner opens | step 5 |
 
 Before any unattended run, read [lessons.md](references/lessons.md): what a real long build learned.
 
@@ -62,15 +62,7 @@ An item that cannot apply (a one-page reference has no spacing) is written "not 
 
 ## 5. Delivery: design, interface, performance, accessibility
 
-Run this for anything a learner opens: a page, an app, a deck, a video, a print file. Items 2 to 4 and 7 apply to screens and media; a print file gets items 1, 5 and 6, checked on a printed or PDF proof.
-
-1. **One design file before the first screen.** Colour, type, spacing and components as tokens; light and dark. Use the project's existing design file when it has one. Else a design skill when installed (`impeccable`, Anthropic `frontend-design`, a Design.md look); else write the tokens yourself. Check: every screen uses only the tokens.
-2. **The learner's path.** The first sitting ends with one real task done. Every screen shows where the learner is, how far they are against the end lines, the one next action and where to get help. The learner can reach any finished part, leave, and resume with a recap of what the next part needs. Answers open after the learner commits. Check: walk one learner from the first page to the last proof task with no dead end.
-3. **Phone and desktop.** The layout works at the narrowest and widest screens the learner uses, by touch and by keyboard. Check: screenshots at both widths, no sideways scroll, no hidden action.
-4. **A performance budget, written before the build.** Three numbers from the learner's slowest device and network (the grill asks): time until the first lesson is readable or playable, the weight of a page, the start time of a video. Check: measure each page type in the built course (Lighthouse or the browser's own tools); a miss is a defect. To climb a missed budget, SigmaClimb.
-5. **Accessibility to WCAG 2.2 AA** (the common web standard). Contrast, readable text size, keyboard use, visible focus, alt text, captions and a transcript for every video and audio, reduced motion honoured. Check: an automatic checker (axe or the browser's own) with zero errors, plus one pass by keyboard only.
-6. **Taste.** SigmaTaste on the first screen, chart, film or deck of each kind; act on its top items. Load `dataviz` (or the host's chart skill) before any chart. Video through HyperFrames when installed.
-7. **Check the real thing.** Open the rendered course in a browser (`webapp-testing` when installed), play the media, read the console. Check: zero console errors, every page and media file loads, and the screenshots go into the review. A check that reads only source files does not count.
+For anything a learner opens (a page, an app, a deck, a video, a print file), run the seven checks in [delivery.md](references/delivery.md): one design file first, the learner's path, phone and desktop, a performance budget, WCAG 2.2 AA, taste, and a check of the rendered thing. **Done when** each check that applies has its proof (screenshots, measurements, zero checker errors).
 
 ## Final response
 

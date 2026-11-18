@@ -60,3 +60,7 @@ Prose in `.md` files and test files do not count by themselves. When in doubt, l
 - A round 2 that still finds P0–P2 problems means the ticket or design is wrong. Stop and ask the user.
 - `BLOCKED`: read the reason, fix what you can, ask the user about the rest.
 - When you run the round yourself (no sub-agents), do steps 2–6 of the template on your own diff, fix, and record it the same way.
+
+## Reaching a named reviewer
+
+When the harness cannot run the model the user named, any route that reaches it works; log which one did. One that worked: T3 Code runs Claude, Codex, Cursor, Gemini, pi and other providers from one place: `t3 thread start . - --provider <instance id> --model <model slug> --worktree <branch> --wait`, with the handoff on stdin. The instance ids are the keys under `providerInstances` in `~/.t3/userdata/settings.json`; the slugs are the names in its model picker. Other routes: the model's own CLI run headless in the branch worktree (`codex exec`, `claude -p`, `gemini -p`), or its API with the handoff as the prompt.
