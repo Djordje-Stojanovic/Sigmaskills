@@ -37,6 +37,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - `sigmaask`: ask which skill fits a job and what comes next. It answers with a flow, such as `SigmaImprove → issues → SigmaShip`, and the exact thing to type. It looks at your machine first: which hosts you have, where skills are installed, what is out of date, retired or installed twice. Then it gives the install line for anything missing. It knows every pack in the registry and searches the web for the rest.
 - `manifest.json` names the skill that replaced each retired one (`replacedBy`).
 
+### Changed
+
+- Skills that read or reach something now treat access as an open question, not a closed list. When a known route fails, `sigmaresearch` finds 2-3 other ways to the same facts and logs which one answered. Its route catalogue is a source of ideas, and the owner's signed-in browser works through any browser tool your host has. `sigmadeeplook` falls back to the tools you already have when `look.py` cannot read a file. `sigmaboat` and `sigmavast` try other routes when a command or a provider fails, and read the docs through context7, a web search or `--help`. The four cards are 2,029 o200k tokens smaller. (#PR)
+
 ## [0.28.0] — 2026-11-18
 
 ### Added
