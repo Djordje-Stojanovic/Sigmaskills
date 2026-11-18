@@ -352,6 +352,7 @@ test('wizard: the first screen names its scope, and s switches it, so u and x ac
     assert.match(frames[0], /1 installed here/);
     const global = frames.find((frame) => /│ {2}Global {2}.*s switch to Project/.test(frame));
     assert.ok(global && global.includes('Nothing installed here yet'), 'after s the screen shows the global scope');
+    assert.match(global, /1 more in Project: s to see them/, 'from Global, the project install is still counted');
     assert.ok(frames.at(-1).includes('Select at least one skill.'), 'x in an empty scope marks nothing');
     assert.ok(frames.every((frame) => frame.split('\n').every((line) => line.length < 80)), 'no line runs past 80 columns');
     assert.ok(fs.existsSync(skillPath(box, 'alpha')), 'the project skill is untouched');
