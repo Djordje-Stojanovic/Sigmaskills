@@ -43,7 +43,7 @@ Value = every future dividend, discounted at the cost of equity. Two stages: the
 | `g2` | 2.5 %, never above the risk-free rate | convention |
 | `ke` | rf + beta x 5 % (CAPM) | FRED DGS10, Yahoo beta |
 
-Bear and bull move `g1` by 3 points. The grid crosses `ke` with `g2`. The reverse model finds the `g1` that gives the price, and the one-stage Gordon form gives `g = ke - D0 / P`: the growth for ever that the price assumes. Override with `--set g1=0.06 --set ke=0.08`.
+Bear and bull move `g1` by 3 points. The grid crosses `ke` with `g2`. The reverse model finds the `g1` that gives the price, and the one-stage Gordon form gives `g = (ke x P - D0) / (P + D0)`, from P = D0 (1 + g) / (ke - g): the growth for ever that the price assumes. Override with `--set g1=0.06 --set ke=0.08`.
 
 The DDM undervalues a company that returns cash through buybacks: read it beside shareholder yield and the DCF.
 

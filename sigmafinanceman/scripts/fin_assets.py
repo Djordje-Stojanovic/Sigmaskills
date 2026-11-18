@@ -39,8 +39,28 @@ def bisect(fn, lo, hi, n=100):
     return (lo + hi) / 2
 
 
-def irr(flows, lo=-0.99, hi=10.0):
-    return bisect(lambda r: npv(r, flows), lo, hi)
+def irr_roots(flows):
+    """Every rate per period from -99 % to +100,000 % at which the NPV is zero.
+    shortcut: two roots closer than one grid step (5 % apart in 1 + rate) can hide; fine for money flows."""
+    grid = [-0.99 + 0.01 * i for i in range(99)] + [0.001 * 1.05 ** k for k in range(300)]
+    f = lambda r: npv(r, flows)
+    return [x for a, b in zip(grid, grid[1:]) if (x := bisect(f, a, b)) is not None and (f(a) != 0 or a == grid[0])]
+
+
+def irr(flows, lo=None, hi=None):
+    """The IRR when exactly one rate solves the flows; None when none or several do (irr_note says which)."""
+    roots = irr_roots(flows)
+    return roots[0] if len(roots) == 1 else None
+
+
+def irr_note(flows, per_year=1):
+    """'' when the IRR is unique; otherwise the reason it is blank, for the report."""
+    roots = [(1 + x) ** per_year - 1 for x in irr_roots(flows)]
+    if len(roots) == 1:
+        return ""
+    if not roots:
+        return "IRR n/a: no rate makes these cash flows worth zero; read the NPV."
+    return "IRR n/a: " + " and ".join(pct(x) for x in roots) + " both solve these cash flows; read the NPV."
 
 
 def pmt(rate, n, pv):
@@ -69,27 +89,36 @@ def sources_table(inputs, title="Inputs and where they come from"):
 
 # ---------- 1. dividend stocks: DDM, dividend safety, owner earnings, capital return, quality, margin of safety ----------
 
-def annual_dps(dividends, today):
-    """Dividends per share by calendar year, complete years only, plus the trailing twelve months."""
+def annual_dps(dividends, today, first_day=None):
+    """Dividends per share by calendar year, plus the trailing twelve months. Every complete year from the first payment (or the
+    first full year of the price history) to last year is listed; a year with no payment is 0, a suspension."""
     by = {}
     for d, a in dividends:
         by[int(d[:4])] = by.get(int(d[:4]), 0.0) + a
     year = int(today[:4])
-    full = {y: v for y, v in sorted(by.items()) if y < year}
+    start = min(by) if by else year
+    if first_day:   # a history that opens mid-year has a partial first year
+        start = max(start, int(first_day[:4]) + (first_day[5:7] != "01"))
+    full = {y: by.get(y, 0.0) for y in range(start, year)}
     y0 = f"{year - 1}{today[4:]}"
-    ttm = sum(a for d, a in dividends if d > y0)
+    ttm = sum(a for d, a in dividends if y0 < d <= today)
     return full, ttm
 
 
 def streak(full):
-    """Years in a row, counted back from the last full year, in which the dividend was not cut (1 % slack for rounding)."""
+    """Years in a row, counted back from the last full year, in which the dividend was paid and not cut (1 % slack for rounding)."""
     ys = sorted(full)
     n = 0
     for a, b in zip(reversed(ys[:-1]), reversed(ys[1:])):
-        if b != a + 1 or full[b] < full[a] * 0.99:
+        if full[b] <= 0 or full[b] < full[a] * 0.99:
             break
         n += 1
     return n
+
+
+def gordon_g(ke, d0, price):
+    """Growth for ever that the price implies: price = d0 (1 + g) / (ke - g) solved for g."""
+    return (ke * price - d0) / (price + d0) if price else None
 
 
 def ddm_value(d0, ke, g1, g2, years=5):
@@ -106,7 +135,7 @@ def ddm_value(d0, ke, g1, g2, years=5):
 def dividend_inputs(f, h, o=None):
     o = o or {}
     _, hist, last = F.view(f)
-    full, ttm = annual_dps(h["dividends"], f["market"]["price_time"])
+    full, ttm = annual_dps(h["dividends"], f["market"]["price_time"], (h.get("dates") or [None])[0])
     ys = sorted(full)
     g5 = F.cagr(full[ys[-6]], full[ys[-1]], 5) if len(ys) >= 6 else None
     g10 = F.cagr(full[ys[-11]], full[ys[-1]], 10) if len(ys) >= 11 else None
@@ -139,7 +168,7 @@ def dividend(f, h, o=None):
     kes, g2s = F.axis(v("ke"), 0.005), F.axis(v("g2"), 0.005)
     grid = [[ddm_value(v("dps_ttm"), k, v("g1"), g, int(v("years"))) for g in g2s] for k in kes]
     implied_g1 = bisect(lambda g: ddm_value(v("dps_ttm"), v("ke"), g, v("g2"), int(v("years"))) - v("price"), -0.5, 0.6)
-    implied_g = v("ke") - v("dps_ttm") / v("price") if v("price") else None   # Gordon: g = ke - D/P (one stage, D0 basis)
+    implied_g = gordon_g(v("ke"), v("dps_ttm"), v("price"))
     # dividend safety from the 10-K cash-flow statement
     ends, hist, last = F.view(f)
     R = F.ratios(f)
@@ -271,8 +300,8 @@ def dividend_report(f, r):
                         "series": [("Dividend per share", [full[y] for y in ys], "total")], "fmt": "ps"},
                        {"kind": "bars", "title": "Dividends and buybacks ($m)", "labels": [x[0] for x in r["cap_rows"]],
                         "series": [("Dividends", [x[1] for x in r["cap_rows"]], "total"), ("Buybacks", [x[2] for x in r["cap_rows"]], "part")]}],
-            "notes": ["The dividend model values only the cash paid out; a company that buys back shares instead looks cheap on it "
-                      "unless you add the buybacks (see shareholder yield) or use the DCF.",
+            "notes": ["The dividend model values only the cash paid out. Omitting future distributions through buybacks can understate "
+                      "the payout value: read shareholder yield and the DCF beside it.",
                       "A yield far above the company's own history usually means the market expects a cut: read the safety table first.",
                       "Maintenance capex is not filed; the smaller of capex and D&A stands in for it, and the strict line counts all capex."],
             "sources": [f["source"], f["market"]["source"], f.get("rf_source", "")]}
@@ -288,7 +317,7 @@ def _convert_price(sec, P, S0, X, C):
     if sec.get("cap"):
         base = S0 + C if sec.get("type", "post") == "post" and sec["kind"] == "safe" else S0 + X
         capp = sec["cap"] / base
-        return min(capp, disc) if disc else capp
+        return min(P, capp, disc or P)   # YC: the holder gets the greater share count, so never above the round price
     return disc or P
 
 
@@ -305,9 +334,14 @@ def priced_round(S0, pool_free, rnd, converting=()):
         X_new = max(0.0, rnd.get("pool_target", 0) * post - pool_free)
         conv = {s["name"]: s["owed"] / _convert_price(s, P, S0, X, C) for s in converting}
         C_new = sum(conv.values())
-        if abs(X_new - X) < 1e-6 and abs(C_new - C) < 1e-6:
+        if abs(X_new - X) < 1e-9 * post and abs(C_new - C) < 1e-9 * post:
             break
         X, C = X_new, C_new
+    else:
+        raise SystemExit(f"{rnd['name']}: the SAFE, note and pool terms have no solution at {rnd['pre_money']:,.0f} pre-money "
+                         "(a cap below the money it holds?); check the terms")
+    if abs(P * (S0 + X + C + N) - rnd["pre_money"] - rnd["amount"]) > 1e-6 * rnd["pre_money"]:
+        raise SystemExit(f"{rnd['name']}: post-money is not pre-money + amount; check the terms")
     return {"price": P, "new_shares": N, "pool_add": X, "converted": conv, "post_shares": S0 + X + C + N,
             "post_money": P * (S0 + X + C + N), "pool_free": pool_free + X}
 
@@ -326,32 +360,70 @@ def venture(data):
     tables, history = [], []
     snap = lambda label: tables.append((label, {k: dict(h) for k, h in holders.items()}))
     snap("Founding")
+    def grant(n, when):
+        if n > pool_free + 1e-6:
+            raise SystemExit(f"options_granted {when} is more than the free pool ({pool_free:,.0f})")
+        return n
     for i, rnd in enumerate(data["rounds"]):
+        pool_free -= grant(rnd.get("options_granted", 0), f"before {rnd['name']}")
         S0 = sum(h["shares"] for h in holders.values())
-        r = priced_round(S0, pool_free, rnd, converting if i == 0 else ())
+        prot = {k: h for k, h in holders.items() if h.get("anti_dilution")}
+        extra = dict.fromkeys(prot, 0.0)
+        for _ in range(200):   # anti-dilution: protected series get more shares, which lowers the price, which ...
+            r = priced_round(S0 + sum(extra.values()), pool_free, rnd, converting if i == 0 else ())
+            cp = {k: h["price"] if r["price"] >= h["price"] else r["price"] if h["anti_dilution"] == "full" else
+                  h["price"] * (S0 + rnd["amount"] / h["price"]) / (S0 + r["new_shares"]) for k, h in prot.items()}   # broad-based average
+            new = {k: h["invested"] / cp[k] - h["shares"] for k, h in prot.items()}
+            if all(abs(new[k] - extra[k]) < 1e-9 * S0 for k in prot):
+                break
+            extra = new
+        else:
+            raise SystemExit(f"{rnd['name']}: the anti-dilution adjustment does not settle")
+        for k, h in prot.items():
+            h["shares"] += extra[k]
+            h["price"] = cp[k]
         pref_mult, part = rnd.get("liq_pref", 1.0), rnd.get("participating", False)
         holders["Option pool"]["shares"] += r["pool_add"]
         pool_free = r["pool_free"]
         for s in (converting if i == 0 else ()):
             sh = r["converted"][s["name"]]   # a SAFE or note converts into the round's preferred (shadow series), preference = cash paid
-            holders[s["name"]] = {"shares": sh, "class": rnd["name"], "invested": float(s["amount"]), "pref": float(s["amount"]) * pref_mult,
+            basis = s["owed"] if s.get("pref_basis") == "balance" else float(s["amount"])   # the contract says which
+            holders[s["name"]] = {"shares": sh, "class": rnd["name"], "invested": float(s["amount"]), "pref": basis * pref_mult,
                                   "participating": part, "price": s["owed"] / sh}
         holders[rnd["name"]] = {"shares": r["new_shares"], "class": rnd["name"], "invested": float(rnd["amount"]),
-                                "pref": float(rnd["amount"]) * pref_mult, "participating": part, "price": r["price"]}
+                                "pref": float(rnd["amount"]) * pref_mult, "participating": part, "price": r["price"],
+                                "anti_dilution": rnd.get("anti_dilution")}
         history.append(dict(r, name=rnd["name"], pre_money=rnd["pre_money"], amount=rnd["amount"]))
         snap(rnd["name"])
     exits = sorted(data.get("exits") or [data.get("exit", 0) * f for f in (0.25, 1, 4)])
-    falls = [(e, waterfall(holders, e)) for e in exits]
-    return {"holders": holders, "tables": tables, "rounds": history, "falls": falls, "exits": exits,
+    pool_free -= grant(data.get("options_granted", 0), "after the last round")
+    at_exit = {k: dict(h) for k, h in holders.items()}   # the free pool is cancelled at a sale: only granted options share
+    at_exit["Option pool"].update(shares=holders["Option pool"]["shares"] - pool_free, strike=float(data.get("option_strike", 0)))
+    falls = [(e, waterfall(at_exit, e)) for e in exits]
+    return {"holders": holders, "pool_free": pool_free, "tables": tables, "rounds": history, "falls": falls, "exits": exits,
             "vc": vc_method(data, holders), "portfolio": portfolio(data.get("fund")) if data.get("fund") else None,
             "deck": deck_numbers(data.get("deck"), history[-1]["post_money"] if history else None) if data.get("deck") else None}
 
 
 def waterfall(holders, exit_value):
-    """Exit proceeds per holder. Preferred classes are paid pari passu up to their preference; a non-participating class
-    converts to common when that pays more; participating classes take the preference and then share as common.
-    shortcut: every option counts as granted and exercised at a zero strike, no participation caps, pari passu seniority;
-    upgrade when a term sheet says otherwise."""
+    """Exit proceeds per holder, net of what option holders pay to exercise. Options with a `strike` exercise when the price per
+    common share beats it; their strike cash joins the exit money."""
+    live = dict(holders)
+    for _ in range(len(holders) + 1):
+        cash = sum(h["strike"] * h["shares"] for h in live.values() if h.get("strike"))
+        out = _waterfall(live, exit_value + cash)
+        dead = [k for k, h in live.items() if h.get("strike") and h["shares"] and out[k] < h["strike"] * h["shares"]]
+        if not dead:
+            break
+        for k in dead:
+            del live[k]
+    return {k: out[k] - live[k].get("strike", 0) * live[k]["shares"] if k in live else 0.0 for k in holders}
+
+
+def _waterfall(holders, exit_value):
+    """Preferred classes are paid pari passu up to their preference; a non-participating class converts to common when that pays
+    more; participating classes take the preference and then share as common.
+    shortcut: no participation caps, pari passu seniority; upgrade when a term sheet says otherwise."""
     pref = {k: h for k, h in holders.items() if h["pref"] > 0}
     converted = set()
     for _ in range(len(pref) + 1):
@@ -380,7 +452,8 @@ def vc_method(data, holders):
     vc = data.get("vc")
     if not vc:
         return None
-    exit_v = vc.get("exit_value") or vc["exit_revenue"] * vc["exit_multiple"]
+    # exit_value is equity; revenue x an EV multiple is enterprise value, so the net debt comes off first
+    exit_v = vc.get("exit_value") or vc["exit_revenue"] * vc["exit_multiple"] - vc.get("exit_net_debt", 0)
     keep = 1 - vc.get("future_dilution", 0.0)
     inv = vc["investment"]
     post_max = exit_v * keep / vc["target_multiple"]
@@ -390,7 +463,9 @@ def vc_method(data, holders):
             "irr": vc["target_multiple"] ** (1 / vc.get("years", 6)) - 1}
 
 
-POWER_LAW = [(0.50, 0.0), (0.20, 1.0), (0.18, 3.0), (0.09, 10.0), (0.03, 50.0)]   # (share of cheques, multiple): a common seed-stage shape
+# (share of financings, multiple): Correlation Ventures, 21,640 US financings 2004-2013 (65 % under 1x, 25 % 1-5x, 6 % 5-10x,
+# 4 % 10x+). The multiple in each band is assumed: 0.2x, the midpoints 3x and 7.5x, and 20x for 10x+.
+POWER_LAW = [(0.65, 0.2), (0.25, 3.0), (0.06, 7.5), (0.04, 20.0)]
 
 
 def portfolio(fund):
@@ -400,9 +475,11 @@ def portfolio(fund):
     first = invest * (1 - fund.get("reserve", 0.5)) / n
     own = fund.get("ownership_at_exit", 0.08)
     dist = [tuple(x) for x in fund.get("outcomes", POWER_LAW)]
+    if abs(sum(p for p, _ in dist) - 1) > 1e-6:
+        raise SystemExit("fund.outcomes: the shares of cheques must add up to 1")
     exp_mult = sum(p * m for p, m in dist)
-    p_out = sum(p for p, m in dist if m >= fund.get("outlier_multiple", 50))
-    no_outlier = sum(p * m for p, m in dist if m < fund.get("outlier_multiple", 50))
+    p_out = sum(p for p, m in dist if m >= fund.get("outlier_multiple", 10))
+    no_outlier = sum(p * m for p, m in dist if m < fund.get("outlier_multiple", 10)) / (1 - p_out) if p_out < 1 else None   # given no outlier
     return {"size": size, "cheques": n, "invest": invest, "first_cheque": first, "return_fund_exit": size / own, "ownership": own,
             "p_one_outlier": 1 - (1 - p_out) ** n, "p_outlier": p_out, "expected_multiple": exp_mult,
             "multiple_without_outliers": no_outlier, "dist": dist}
@@ -411,11 +488,15 @@ def portfolio(fund):
 def deck_numbers(d, post_money):
     """The numbers a pitch deck shows, recomputed and set against the usual bars."""
     rows = []
-    add = lambda name, x, bar, ok, fm: rows.append({"test": name, "value": x, "shown": fm(x) if x is not None else "n/a",
-                                                     "bar": bar, "pass": bool(x is not None and ok(x))})
+    add = lambda name, x, bar, ok, fm, why="n/a": rows.append({"test": name, "value": x, "shown": fm(x) if x is not None else why,
+                                                               "bar": bar, "pass": None if x is None else bool(ok(x))})
     add("Runway (months of cash at the net burn)", div(d.get("cash"), d.get("burn_monthly")), "18+ months", lambda x: x >= 18, lambda x: f"{x:.0f}")
-    add("Burn multiple (net burn / net new ARR)", div(d.get("burn_monthly", 0) * 12, d.get("net_new_arr")), "under 2x", lambda x: x < 2, F.mult)
-    add("Price / ARR (post-money / ARR)", div(post_money, d.get("arr")), "under 30x at seed, under 20x at A", lambda x: x < 30, F.mult)
+    grew = (d.get("net_new_arr") or 0) > 0
+    add("Burn multiple (net burn / net new ARR)", div(d.get("burn_monthly", 0) * 12, d.get("net_new_arr")) if grew else None, "under 2x",
+        lambda x: x < 2, F.mult, "n/a: ARR did not grow")
+    seed = str(d.get("stage", "seed")).lower() in ("seed", "pre-seed")
+    add("Price / ARR (post-money / ARR)", div(post_money, d.get("arr")), "under 30x at seed" if seed else "under 20x at Series A",
+        lambda x: x < (30 if seed else 20), F.mult)
     add("Revenue growth, year on year", d.get("growth"), "2-3x a year early on", lambda x: x >= 1.0, pct)
     add("Gross margin", d.get("gross_margin"), "70 %+ for software", lambda x: x >= 0.7, pct)
     ltv = div((d.get("arpa_monthly") or 0) * (d.get("gross_margin") or 0), d.get("churn_monthly"))
@@ -448,7 +529,8 @@ def venture_report(data, r):
                note="The pool top-up and the converting SAFEs and notes sit in the pre-money, so they dilute the earlier holders, not the new money.")
     fall_rows = [[k] + [f[k] for _, f in r["falls"]] for k in names]
     fall_t = T(f"Exit waterfall ({cur_})", ["Holder"] + [f"Exit {m(e)}" for e in r["exits"]], fall_rows, ["text"] + ["money"] * len(r["exits"]),
-               note="Preferences are paid first, pari passu; a non-participating holder converts to common when that pays more.")
+               note=f"Preferences are paid first, pari passu; a non-participating holder converts to common when that pays more. The option "
+                    f"pool is paid only for granted options, net of the strike; {m(r['pool_free'])} ungranted options are cancelled at the sale.")
     moic = T("Multiple on money by exit", ["Investor"] + [f"Exit {m(e)}" for e in r["exits"]],
              [[k] + [div(f[k], last[k]["invested"]) for _, f in r["falls"]] for k in names if last[k]["invested"]],
              ["text"] + ["x"] * len(r["exits"]))
@@ -472,7 +554,7 @@ def venture_report(data, r):
     vc = r["vc"]
     if vc:
         tables.append(T("VC method", ["Line", "Value"],
-                        [["Exit value", vc["exit_value"]], ["Kept after later dilution", vc["keep"]], ["Target multiple", vc["target_multiple"]],
+                        [["Exit equity value (EV less net debt)", vc["exit_value"]], ["Kept after later dilution", vc["keep"]], ["Target multiple", vc["target_multiple"]],
                          ["Investment", vc["investment"]], ["Ownership needed today", vc["ownership_needed"]],
                          ["Most the post-money can be", vc["post_max"]], ["Most the pre-money can be", vc["pre_max"]],
                          ["Target multiple as a yearly return", vc["irr"]]], ["text", "money"]))
@@ -489,16 +571,18 @@ def venture_report(data, r):
                          ["First cheque (rest held for follow-ons)", p["first_cheque"]], ["Ownership at exit per company", p["ownership"]],
                          ["Exit one company needs to return the fund", p["return_fund_exit"]], ["Chance one cheque is an outlier", p["p_outlier"]],
                          ["Chance the portfolio holds at least one", p["p_one_outlier"]], ["Expected gross multiple", p["expected_multiple"]],
-                         ["Multiple if no outlier comes", p["multiple_without_outliers"]]], ["text", "money"]))
+                         ["Expected multiple of a cheque that is not an outlier", p["multiple_without_outliers"]]], ["text", "money"]))
         tables[-1]["row_formats"] = {1: "int", 4: "pct", 6: "pct", 7: "pct", 8: "x", 9: "x"}
         tables.append(T("Outcome shape used", ["Share of cheques", "Multiple"], [[a, b] for a, b in p["dist"]], ["pct", "x"],
-                        note="A common seed-stage shape: half return nothing, a few percent return 50x. Set your own under fund.outcomes."))
+                        note="Correlation Ventures, 21,640 US financings 2004-2013: 65 % returned under 1x, 4 % 10x or more. The multiple "
+                             "inside each band is assumed. Set your own under fund.outcomes."))
         steps.append(f"Portfolio: with {p['cheques']} cheques and a {pct(p['p_outlier'])} chance each of an outlier, the odds of holding at "
-                     f"least one are {pct(p['p_one_outlier'])}. Without one, the fund makes {F.mult(p['multiple_without_outliers'])}: the "
+                     f"least one are {pct(p['p_one_outlier'])}. A cheque that is not an outlier makes {F.mult(p['multiple_without_outliers'])} on average, gross: the "
                      "outliers are the return.")
     if r["deck"]:
         t = T("Pitch-deck numbers against the usual bars", ["Number", "Value", "Bar", "Result"],
-              [[x["test"], x["shown"], x["bar"], "pass" if x["pass"] else "fail"] for x in r["deck"]], ["text", "text", "text", "text"])
+              [[x["test"], x["shown"], x["bar"], "n/a" if x["pass"] is None else "pass" if x["pass"] else "fail"] for x in r["deck"]],
+              ["text", "text", "text", "text"])
         t["status_col"] = 3
         tables.append(t)
     return {"kind": "venture", "title": f"{data.get('company', 'Startup')} cap table and exit waterfall",
@@ -513,7 +597,8 @@ def venture_report(data, r):
                        {"kind": "bars", "title": f"Proceeds by exit value ({cur_})", "labels": [m(e) for e in r["exits"]],
                         "series": [("Founders", [sum(f[k] for k in founders) for _, f in r["falls"]], "total"),
                                    ("Investors", [sum(v for k, v in f.items() if last[k]["invested"]) for _, f in r["falls"]], "part")]}],
-            "notes": ["Every option counts as granted and exercised; unexercised options and strike prices would raise everyone else's share a little.",
+            "notes": ["Only granted options (options_granted) share in an exit, net of option_strike; the free pool is cancelled. The cap "
+                      "tables count the whole pool, as fully diluted tables do.",
                       "Preferences are pari passu (all preferred holders paid side by side); a senior stack pays the newest round first.",
                       "Post-money SAFEs (YC form) convert on the capitalization that includes every SAFE and note; pre-money SAFEs and notes on the shares before them."],
             "sources": [data.get("source", "the user's term sheets")]}
@@ -532,24 +617,29 @@ def purchase(p, uses=None, rent=None, resale=None):
     resale = val(p, "resale_value") if resale is None else resale
     run_use = val(p, "running_per_use", 0) or 0         # power per hour, fuel per km: paid by the owner, inside the rent price
     fixed = val(p, "fixed_monthly", 0) or 0             # insurance, storage, upkeep: paid by the owner
+    income = val(p, "income_monthly", 0) or 0           # earned only by owning (renting it out): it lowers the cost of buying
     annuity = sum(1 / (1 + r_m) ** t for t in range(1, life + 1))
     disc_end = 1 / (1 + r_m) ** life
-    buy = price + (run_use * uses + fixed) * annuity - resale * disc_end
+    # one monthly series, buy minus rent: NPV, IRR, payback, break-even and the winner all read it
+    saving = rent * uses - run_use * uses - fixed + income
+    flows = [-price] + [saving] * (life - 1) + [saving + resale]
     rent_cost = rent * uses * annuity
+    buy = rent_cost - npv(r_m, flows)
     lease = p.get("lease")
     lease_cost = None
     if lease:
-        n = min(life, int(lease["months"]))
+        n, months = min(life, int(lease["months"])), int(lease["months"])
         lease_cost = lease.get("upfront", 0) + sum((lease["monthly"] + run_use * uses + fixed) / (1 + r_m) ** t for t in range(1, n + 1))
         lease_cost += sum(rent * uses / (1 + r_m) ** t for t in range(n + 1, life + 1))   # after the lease ends, rent covers the rest
-    saving = rent * uses - run_use * uses - fixed + (val(p, "income_monthly", 0) or 0)
-    flows = [-price] + [saving] * (life - 1) + [saving + resale]
-    m_irr = irr(flows, -0.9, 2.0)
+        if months > life:   # still owed after the use ends: the quoted exit fee, or every remaining payment
+            lease_cost += lease["termination_fee"] * disc_end if "termination_fee" in lease else                 sum(lease["monthly"] / (1 + r_m) ** t for t in range(life + 1, months + 1))
+    m_irr = irr(flows)
     payback = next((t for t in range(1, life + 1) if saving * t >= price), None) if saving > 0 else None
     margin = rent - run_use
-    breakeven = (price + fixed * annuity - resale * disc_end) / (margin * annuity) if margin > 0 else None
-    return {"buy": buy, "rent": rent_cost, "lease": lease_cost, "npv_buy_vs_rent": rent_cost - buy, "saving": saving,
-            "irr": (1 + m_irr) ** 12 - 1 if m_irr is not None else None, "payback_months": payback, "breakeven_uses": breakeven,
+    breakeven = (price + (fixed - income) * annuity - resale * disc_end) / (margin * annuity) if margin > 0 else None
+    return {"buy": buy, "rent": rent_cost, "lease": lease_cost, "npv_buy_vs_rent": npv(r_m, flows), "saving": saving,
+            "irr": (1 + m_irr) ** 12 - 1 if m_irr is not None else None, "irr_note": irr_note(flows, 12),
+            "payback_months": payback, "breakeven_uses": breakeven,
             "per_use_buy": buy / (uses * life) if uses else None, "life": life, "uses": uses, "rent_rate": rent, "resale": resale}
 
 
@@ -594,7 +684,7 @@ def purchase_report(p, r):
              + (f", leasing {money0(r['lease'])}." if r["lease"] is not None else "."),
              f"So {best} is cheapest. " + (f"The savings repay the price in {r['payback_months']} months" if r["payback_months"] else
                                           f"The savings alone do not repay the price within {r['life']} months; the resale does")
-             + f". Buying returns {pct(r['irr'])} a year against renting.",
+             + (f". Buying returns {pct(r['irr'])} a year against renting." if r["irr"] is not None else ". " + r["irr_note"]),
              f"Break-even use: buying wins above {r['breakeven_uses']:,.0f} {unit}s a month." if r["breakeven_uses"] else
              "Renting costs less per use than running your own: buying never wins on use alone."]
     return {"kind": "purchase", "title": f"Buy, lease or rent: {p.get('item', 'the purchase')}",
@@ -614,7 +704,7 @@ def purchase_report(p, r):
                         "series": [("Value", [v for _, v in dep], "total")]}],
             "notes": ["Buy and rent deliver the same use; a rent price already includes the owner's power, upkeep and margin.",
                       "Tax (depreciation write-offs, VAT) is left out; add it with income_monthly or a lower price when it applies.",
-                      "The resale value is the biggest unknown for fast-moving hardware: read the bear case."],
+                      "The resale value is the biggest unknown for fast-moving hardware: read the bear case."] + ([r["irr_note"]] if r["irr_note"] else []),
             "sources": [v["source"] for v in p.values() if isinstance(v, dict) and "source" in v]}
 
 
@@ -664,12 +754,14 @@ def property_model(p, appreciation=None, rate=None):
         owner = home * (1 - v("closing_sell_pct", 0.06)) - bal + owner_side
         rows.append({"year": y, "home": home, "balance": bal, "owner": owner, "renter": renter, "rent": rent_y, "own_cost": own_y})
     sale = rows[-1]["home"] * (1 - v("closing_sell_pct", 0.06)) - rows[-1]["balance"]
-    flows = [-cash_in] + [noi * (1 + v("rent_growth", 0.03)) ** (y - 1) - debt_service for y in range(1, horizon + 1)]
+    # each year: collected rent less that year's costs, less the loan payments only while the loan runs
+    noi_y = lambda y: rent0 * 12 * (1 + v("rent_growth", 0.03)) ** (y - 1) * (1 - v("vacancy", 0.05) - v("management", 0.08))         - yearly_own * (1 + g) ** (y - 1)
+    flows = [-cash_in] + [noi_y(y) - (debt_service if y <= len(sched) else 0.0) for y in range(1, horizon + 1)]
     flows[-1] += sale
     return {"price": price, "down": down, "loan": loan, "payment": pay, "sched": sched, "noi": noi, "cap_rate": noi / price,
             "coc": (noi - debt_service) / cash_in, "dscr": div(noi, debt_service), "one_pct": rent0 / price, "grm": price / gross,
             "gross_yield": gross / price, "cash_in": cash_in, "rows": rows, "advantage": rows[-1]["owner"] - rows[-1]["renter"],
-            "breakeven_year": next((x["year"] for x in rows if x["owner"] >= x["renter"]), None), "irr": irr(flows),
+            "breakeven_year": next((x["year"] for x in rows if x["owner"] >= x["renter"]), None), "irr": irr(flows), "irr_note": irr_note(flows),
             "rate": rate, "appreciation": g, "yearly_own": yearly_own, "total_interest": sum(s["interest"] for s in sched)}
 
 
@@ -731,7 +823,7 @@ def property_report(p, r):
                                   ("Tax, insurance, upkeep", -r["yearly_own"], "delta"), ("Net operating income", r["noi"], "total"),
                                   ("Mortgage", -r["payment"] * 12, "delta"), ("Cash flow", r["noi"] - r["payment"] * 12, "total")]}],
             "notes": ["Tax on rent and on the sale, and mortgage-interest deductions, depend on the country and are left out.",
-                      "Price growth is the biggest assumption: read the grid before the hero number."],
+                      "Price growth is the biggest assumption: read the grid before the hero number."] + ([r["irr_note"]] if r["irr_note"] else []),
             "sources": [x["source"] for x in p.values() if isinstance(x, dict) and "source" in x]}
 
 
@@ -751,33 +843,33 @@ def no_yield(h, cpi, o=None, ratio=None):
     px = monthly(h["dates"], h["closes"])
     cp = dict((d[:7], v) for d, v in cpi)
     last_cpi = cpi[-1][1]
-    real = [(m, c * last_cpi / cp[m]) for m, c in px if m in cp] + [(m, c) for m, c in px if m > cpi[-1][0][:7]]
+    real = [(m, c * last_cpi / cp[m]) for m, c in px if m in cp]   # ends at the last CPI month
     mi = lambda m: int(m[:4]) * 12 + int(m[5:7])   # months count by the calendar: Yahoo skips some months
     span = lambda a, b: (mi(b) - mi(a)) / 12
     yrs = span(px[0][0], px[-1][0])
     nom_cagr = (px[-1][1] / px[0][1]) ** (1 / yrs) - 1
     real_cagr = (real[-1][1] / real[0][1]) ** (1 / span(real[0][0], real[-1][0])) - 1
-    rets = [math.log(b[1] / a[1]) for a, b in zip(px, px[1:])]
-    vol = statistics.stdev(rets) * math.sqrt(12)
-    peak, mdd, under, longest, start = 0, 0, 0, 0, None
+    rets = [math.log(b[1] / a[1]) for a, b in zip(px, px[1:]) if mi(b[0]) - mi(a[0]) == 1]   # consecutive months only
+    vol = statistics.stdev(rets) * math.sqrt(12) if len(rets) > 1 else None
+    gaps = mi(px[-1][0]) - mi(px[0][0]) + 1 - len(px)
+    peak, mdd, longest = 0, 0, 0
     for i, (m, c) in enumerate(real):
         if c >= real[peak][1]:
             peak = i
-            under = 0
         else:
-            under += 1
-            longest = max(longest, under)
+            longest = max(longest, mi(m) - mi(real[peak][0]))   # calendar months since the peak
             mdd = min(mdd, c / real[peak][1] - 1)
     hz = int(o.get("horizon", 10 if yrs >= 15 else 5))
     rd = {mi(m): c for m, c in real}
-    roll = [(rd[k + hz * 12] / c) ** (1 / hz) - 1 for k, c in rd.items() if k + hz * 12 in rd]
-    carry = o.get("carry", 0.004)    # storage and insurance, or an ETF fee, a year
+    carry = o.get("carry", 0 if h["meta"].get("instrumentType") == "ETF" else 0.004)   # an ETF's price is already after its fee
     spread = o.get("spread", 0.02)   # buy-sell spread, paid once over the holding
-    cases = [(n, pctile(roll, q) - carry - spread / hz) for n, q in (("Bear (10th percentile)", 0.1), ("Base (median)", 0.5), ("Bull (90th percentile)", 0.9))] if roll else []
+    roll = [((rd[k + hz * 12] / c) ** (1 / hz)) * (1 - carry) * (1 - spread) ** (1 / hz) - 1 for k, c in rd.items() if k + hz * 12 in rd]
+    cases = [(n, pctile(roll, q)) for n, q in (("Bear (10th percentile)", 0.1), ("Base (median)", 0.5), ("Bull (90th percentile)", 0.9))] if roll else []
     pd = {mi(m): c for m, c in px}
     yr = lambda n: (px[-1][1] / pd[mi(px[-1][0]) - 12 * n]) ** (1 / n) - 1 if mi(px[-1][0]) - 12 * n in pd else None
     out = {"px": px, "real": real, "years": yrs, "nominal_cagr": nom_cagr, "real_cagr": real_cagr, "vol": vol, "max_dd_real": mdd,
-           "longest_under_months": longest, "horizon": hz, "roll": roll, "cases": cases, "carry": carry, "spread": spread,
+           "longest_under_months": longest, "horizon": hz, "roll": roll, "cases": cases, "carry": carry, "spread": spread, "gaps": gaps,
+           "independent": int(span(real[0][0], real[-1][0]) // hz), "futures": h["meta"].get("instrumentType") == "FUTURE",
            "price": h["meta"].get("regularMarketPrice", px[-1][1]), "y1": yr(1), "y5": yr(5), "y10": yr(10),
            "share_positive": sum(1 for x in roll if x > 0) / len(roll) if roll else None}
     if ratio:
@@ -798,21 +890,25 @@ def no_yield_report(ticker, h, cpi_src, r, ratio_ticker=None, o=None):
     risk = T("Risk", ["Measure", "Value"],
              [["Volatility (a year)", r["vol"]], ["Worst fall from a peak, real", r["max_dd_real"]],
               ["Longest time below a real peak (months)", r["longest_under_months"]],
-              [f"Share of {r['horizon']}-year holds that made money, real", r["share_positive"]]], ["text", "auto"])
+              [f"Share of {r['horizon']}-year holds that made money, real, after costs", r["share_positive"]]], ["text", "auto"],
+             note=f"Volatility uses back-to-back months only; {r['gaps']} months are missing from the price history." if r["gaps"] else None)
     risk["row_formats"] = {0: "pct", 1: "pct", 2: "int", 3: "pct"}
     cases = T(f"Bear, base and bull: real return a year over any {r['horizon']}-year hold, after costs", ["Case", "Real return a year"],
-              [[n, x] for n, x in r["cases"]], ["text", "pct"],
-              note=f"From every {r['horizon']}-year window in the history, less {pct(r['carry'])} a year carry and a {pct(r['spread'])} round-trip "
-                   "spread. History, not a forecast: no cash flow anchors the price.")
+              [[n, x] for n, x in r["cases"]] or [[f"No complete {r['horizon']}-year hold in the history", None]], ["text", "pct"],
+              note=f"From {len(r['roll'])} overlapping {r['horizon']}-year windows, each after {pct(r['carry'])} a year carry and a "
+                   f"{pct(r['spread'])} round-trip spread. They share most of their months: the history holds only {r['independent']} "
+                   "separate holds back to back. A share of past start dates, not the odds for a buyer today.")
     tables = [cases, ret, risk]
     steps = [f"The price now: {cur(r['price'], '')} {cur_} ({h['source'].split('?')[0]}).",
-             f"Over {r['years']:.0f} years it compounded {pct(r['nominal_cagr'])} a year; after US inflation, {pct(r['real_cagr'])}.",
+             ("These are continuous front-month futures prices: the quoted price change, not what a holder earned after rolling "
+              "contracts and holding collateral. " if r["futures"] else "") + f"Over {r['years']:.0f} years it compounded {pct(r['nominal_cagr'])} a year; after US inflation, {pct(r['real_cagr'])}.",
              f"It pays nothing: no rent, no dividend, no coupon. All the return is the next buyer's price, so there is no DCF and no fair value.",
              f"The ride: {pct(r['vol'])} volatility a year; the worst real fall was {pct(r['max_dd_real'])}, and it once stayed below a real "
-             f"peak for {r['longest_under_months']} months.",
+             f"peak for {r['longest_under_months']} calendar months.",
              f"Holding costs: about {pct(r['carry'])} a year to store and insure (or the fund fee), and {pct(r['spread'])} to buy and sell.",
              f"Across every {r['horizon']}-year hold in the history, the real yearly return after costs ran from {pct(r['cases'][0][1])} "
-             f"(bear) to {pct(r['cases'][2][1])} (bull), median {pct(r['cases'][1][1])}." if r["cases"] else "The history is too short for a hold window."]
+             f"(bear) to {pct(r['cases'][2][1])} (bull), median {pct(r['cases'][1][1])}; only {r['independent']} of those holds fit back to back."
+             if r["cases"] else f"The history has no complete {r['horizon']}-year hold."]
     kpis = [("Real return a year", pct(r["real_cagr"])), ("Volatility", pct(r["vol"])), ("Worst real fall", pct(r["max_dd_real"])),
             (f"{r['horizon']}y holds that made money", pct(r["share_positive"]))]
     charts = [{"kind": "bars", "title": f"Real price by year ({cur_}, today's money)",
@@ -831,13 +927,18 @@ def no_yield_report(ticker, h, cpi_src, r, ratio_ticker=None, o=None):
     return {"kind": "asset", "title": f"{name}: what history says",
             "subtitle": f"Monthly closes from Yahoo chart data, deflated by US CPI (FRED CPIAUCSL). Prices in {cur_}.",
             "hero": {"value": pct(r["cases"][1][1]) if r["cases"] else pct(r["real_cagr"]),
-                     "label": f"median real return a year over a {r['horizon']}-year hold, after costs",
+                     "label": f"median real return a year over a {r['horizon']}-year hold, after costs" if r["cases"] else
+                              f"real return a year from {r['real'][0][0]} to {r['real'][-1][0]}, before costs",
                      "line": f"Bear {pct(r['cases'][0][1])}, bull {pct(r['cases'][2][1])}; {pct(r['share_positive'], 0)} of past "
-                             f"{r['horizon']}-year holds beat inflation. No cash flow, so no fair value: this is a range, not a target." if r["cases"] else ""},
+                             f"{r['horizon']}-year holds beat inflation after costs, but the windows overlap: the history fits only {r['independent']} "
+                             f"back to back. "
+                             "No cash flow, so no fair value: this is a range, not a target." if r["cases"] else
+                             f"No complete {r['horizon']}-year hold in the history, so no range."},
             "kpis": kpis, "steps": steps, "tables": tables, "charts": charts,
             "notes": ["What this can tell you: how the price has moved, how deep and long the falls were, and what a hold of this length has returned.",
                       "What it cannot tell you: a fair value or a future return. Nothing pays the holder, so the price is whatever the next buyer pays.",
-                      "Futures prices (GC=F, SI=F) roll each month; a coin, a bar or an ETF tracks them closely but not exactly."],
+                      "Futures prices (GC=F, SI=F) are the front contract's quote; rolling costs and collateral income are left out, so a "
+                      "coin, a bar or an ETF can earn more or less. For an ETF's own ticker the fee is already in the price: carry 0."],
             "sources": [h["source"], cpi_src]}
 
 
@@ -870,21 +971,27 @@ def collectible(data, live=None):
         g["premium"] = div(g["median"], raw["median"]) if raw else None
     odds = data.get("grade_odds")
     grade_ev = None
-    if odds and raw:
-        exp = sum(p * net(G[k]["median"]) for k, p in odds.items() if k in G)
+    if odds and raw and abs(sum(odds.values()) - 1) < 1e-6 and all(k in G for k, p in odds.items() if p):   # a grade with no sales has no price: no answer
+        exp = sum(p * net(G[k]["median"]) for k, p in odds.items() if p)
         grade_ev = {"expected_net": exp, "cost": fees.get("grading_cost", 0) + ship, "raw_net": net(raw["median"]),
                     "gain": exp - fees.get("grading_cost", 0) - ship - net(raw["median"])}
-    key = G.get(data.get("grade")) or (grades[0] if grades else None)
+    key = G.get(data.get("grade", "raw")) if data.get("grade") or "raw" in G else (grades[0] if grades else None)
     buy = data.get("buy_price")
     cases = [(n, net(key[q])) for n, q in (("Bear (25th percentile sale)", "q1"), ("Base (median sale)", "median"), ("Bull (75th percentile sale)", "q3"))] if key else []
-    if not key and live:   # no sold list: TCGplayer's sales-based market price is the base, the low and mid listings the range
-        first = lambda kind: next((p for lab, p in live if lab.split(" (")[0].endswith(kind)), None)
+    unavailable = f"Price unavailable: add sold comparables graded {data['grade']} to sales." if grades and not key else ""
+    if not grades and live:   # no sold list: one variant's TCGplayer prices; low and mid are asks, market mixes conditions
+        variants = sorted({lab.rsplit(" (", 1)[0].rsplit(" ", 2)[-2] for lab, _ in live})
+        pick = data.get("variant") or (variants[0] if len(variants) == 1 else None)
+        if pick not in variants:
+            unavailable = f'Price unavailable: set "variant" to one of {", ".join(variants)}; their prices differ.'
+        live = [(lab, p) for lab, p in live if lab.rsplit(" (", 1)[0].rsplit(" ", 2)[-2] == pick]
+        first = lambda kind: next((p for lab, p in live if lab.rsplit(" (", 1)[0].endswith(kind)), None)
         mk, lo, mid = first("market"), first("low"), first("mid")
-        if mk:
-            cases = [("Bear (lowest listing)", net(min(lo or mk, mk))), ("Base (market price, from recent sales)", net(mk)),
-                     ("Bull (middle listing)", net(mid)) if mid and mid > mk else ("Bull (no listing above the market price: base)", net(mk))]
+        if mid:   # an ask is what a seller hopes for; the market line mixes conditions, so it never sits above the asks as the base
+            cases = [("Bear (undercut the lowest ask)", net(lo or mid)), ("Base (sell at the middle ask)", net(min(mid, mk or mid))),
+                     ("Bull (TCGplayer market: recent sales, conditions mixed)", net(max(mid, mk or mid)))]
     pop = data.get("population") or {}
-    return {"grades": grades, "key": key, "cases": cases, "buy": buy, "grade_ev": grade_ev, "live": live or [], "pop": pop,
+    return {"unavailable": unavailable, "grades": grades, "key": key, "asks_only": bool(cases) and not grades, "cases": cases, "buy": buy, "grade_ev": grade_ev, "live": live or [], "pop": pop,
             "pop_total": sum(pop.values()), "fees": {"sell_pct": sell_pct, "shipping": ship, **fees},
             "mos": 1 - buy / cases[1][1] if buy and cases and cases[1][1] > 0 else None,
             "hold": data.get("hold_years"), "net": net}
@@ -904,7 +1011,8 @@ def collectible_report(data, r):
                         ["text", "int", "ps", "ps", "ps", "ps", "num1", "pct", "x"], note="Sold prices only; asking prices are what sellers hope for."))
     if r["live"]:
         tables.append(T(f"Live reference prices ({c})", ["Source line", "Price"], [[k, v] for k, v in r["live"]], ["text", "ps"],
-                        note="TCGplayer via pokemontcg.io: 'market' is built from recent sales; low, mid and high are current listings."))
+                        note="TCGplayer via pokemontcg.io: 'market' is built from recent sales of any condition; low, mid and high are "
+                             "current asks."))
     if r["grade_ev"]:
         e = r["grade_ev"]
         tables.append(T(f"Grade it or sell it raw? ({c})", ["Line", "Value"],
@@ -916,10 +1024,13 @@ def collectible_report(data, r):
     k = r["key"]
     base = r["cases"][1][1] if r["cases"] else None
     steps = [f"Find what it sells for, not what it is listed at: {k['n']} sold {k['grade']} copies from {k['first']} to {k['last']}, median "
-             f"{cur(k['median'])}." if k else "No sold list was given, so live reference prices stand in; add sold listings to tighten the range.",
+             f"{cur(k['median'])}." if k else r["unavailable"] if r["unavailable"] else
+             "No sold list was given, so one variant's TCGplayer asks stand in: what sellers ask, not what buyers paid. Add sold "
+             "listings for your condition to price it.",
              f"Take off the cost of selling: {pct(r['fees']['sell_pct'])} in fees and {cur(r['fees']['shipping'])} shipping leave {cur(base)} in the base case.",
              (f"Read the spread: the middle half of sales runs from {cur(r['cases'][0][1])} to {cur(r['cases'][2][1])} net." if k else
-              f"Read the spread: from {cur(r['cases'][0][1])} (a quick sale against the lowest listing) to {cur(r['cases'][2][1])} net.")
+              f"Read the spread: from {cur(r['cases'][0][1])} (if you undercut the lowest ask) to {cur(r['cases'][2][1])} net; no bid "
+              "is known, so a quick sale may fetch less.")
              if r["cases"] else "",
              f"Liquidity: about {k['per_month']:.1f} sales a month; a thin market means a wide spread and a long wait." if k else "",
              f"Margin of safety at your price of {cur(r['buy'])}: {pct(r['mos'])}." if r["buy"] else "",
@@ -927,15 +1038,16 @@ def collectible_report(data, r):
              "population report is not growing fast."]
     return {"kind": "collectible", "title": f"{data.get('item', 'Collectible')}: sold comparables",
             "subtitle": f"Prices in {c}. Sources: {', '.join(data.get('sources', ['the user']))}.",
-            "hero": {"value": cur(base), "label": "net to you in the base case, after fees",
+            "hero": {"value": cur(base), "label": "net to you if it sells at the middle ask, after fees (an ask, not a sale)" if r["asks_only"]
+                     else "net to you in the base case, after fees",
                      "line": f"Range {cur(r['cases'][0][1])} to {cur(r['cases'][2][1])}"
-                             + (f"; margin of safety {pct(r['mos'])} at {cur(r['buy'])}." if r["buy"] else ".") if r["cases"] else ""},
+                             + (f"; margin of safety {pct(r['mos'])} at {cur(r['buy'])}." if r["buy"] else ".") if r["cases"] else r["unavailable"]},
             "kpis": [("Median sale", cur(k["median"]) if k else "n/a"), ("Sales a month", f"{k['per_month']:.1f}" if k else "n/a"),
                      ("Selling fees", pct(r["fees"]["sell_pct"]))],
             "steps": [s for s in steps if s], "tables": tables,
             "charts": [{"kind": "football", "title": f"Net to you after fees ({c})",
                         "rows": [(g["grade"], r["net"](g["q1"]), r["net"](g["q3"])) for g in r["grades"]]
-                        + ([("Live: low listing to market", r["cases"][0][1], r["cases"][1][1])] if r["live"] and not r["grades"] else []),
+                        + ([("Live: lowest to middle ask", r["cases"][0][1], r["cases"][1][1])] if r["asks_only"] else []),
                         "marker": ("Your price" if r["buy"] else "Base", r["buy"] or base)}] if r["cases"] else [],
             "notes": ["Collectibles pay nothing while held: the return is the next buyer's price less fees, storage and insurance.",
                       "One record sale is not a market: use the median and the spread, and drop outliers (the trimmed mean drops the top and bottom 10 %)."],
@@ -944,28 +1056,41 @@ def collectible_report(data, r):
 
 # ---------- 7. bonds and funds ----------
 
+def bond_flows(face, coupon, years, freq=2):
+    """[(periods from today, cash)] and the accrued interest. Settlement between coupon dates: the first coupon comes in a
+    fraction a of a period, and the seller has earned (1 - a) of it."""
+    n = math.ceil(years * freq - 1e-9)
+    a, c = years * freq - (n - 1), face * coupon / freq
+    return [(a + k, c + (face if k == n - 1 else 0)) for k in range(n)], c * (1 - a)
+
+
 def bond_price(face, coupon, years, y, freq=2):
-    n, c, r = int(round(years * freq)), face * coupon / freq, y / freq
-    return sum(c / (1 + r) ** t for t in range(1, n + 1)) + face / (1 + r) ** n
+    """Clean price: the value of the payments less the accrued interest the buyer pays the seller on top."""
+    flows, acc = bond_flows(face, coupon, years, freq)
+    return sum(cf / (1 + y / freq) ** t for t, cf in flows) - acc
 
 
 def bond(b):
+    """b["price"] is a clean quote per 100 of face; the cash paid is quote x face / 100 plus accrued interest."""
     face, cpn, yrs, freq = b.get("face", 100), b["coupon"], b["years"], b.get("freq", 2)
     if "price" in b:
-        ytm = bisect(lambda y: bond_price(face, cpn, yrs, y, freq) - b["price"], -0.05, 1.0)
-        price = b["price"]
+        clean = b["price"] * face / 100
+        ytm = bisect(lambda y: bond_price(face, cpn, yrs, y, freq) - clean, -0.05, 1.0)
     else:
-        ytm, price = b["yield"], bond_price(face, cpn, yrs, b["yield"], freq)
-    n, r, c = int(round(yrs * freq)), ytm / freq, face * cpn / freq
-    cfs = [(t, c + (face if t == n else 0)) for t in range(1, n + 1)]
-    mac = sum(t / freq * cf / (1 + r) ** t for t, cf in cfs) / price
+        ytm = b["yield"]
+        clean = bond_price(face, cpn, yrs, ytm, freq)
+    cfs, acc = bond_flows(face, cpn, yrs, freq)
+    dirty, r = clean + acc, ytm / freq
+    mac = sum(t / freq * cf / (1 + r) ** t for t, cf in cfs) / dirty
     mod = mac / (1 + r)
-    conv = sum(cf * t * (t + 1) / (1 + r) ** (t + 2) for t, cf in cfs) / (price * freq ** 2)
-    shocks = [(d, bond_price(face, cpn, yrs, ytm + d, freq) / price - 1) for d in (-0.02, -0.01, 0, 0.01, 0.02)]
-    # one-year total return if rates move by d at once: coupons + the price a year later
-    one_year = [(d, (face * cpn + bond_price(face, cpn, max(yrs - 1, 1 / freq), ytm + d, freq)) / price - 1) for d in (0.01, 0, -0.01)]
-    return {"price": price, "ytm": ytm, "current_yield": face * cpn / price, "macaulay": mac, "modified": mod, "convexity": conv,
-            "shocks": shocks, "one_year": one_year, "spread": ytm - b["treasury"] if b.get("treasury") is not None else None}
+    conv = sum(cf * t * (t + 1) / (1 + r) ** (t + 2) for t, cf in cfs) / (dirty * freq ** 2)
+    shocks = [(d, (bond_price(face, cpn, yrs, ytm + d, freq) + acc) / dirty - 1) for d in (-0.02, -0.01, 0, 0.01, 0.02)]
+    # one-year total return if rates move by d at once: payments received in the year (kept as cash) + the rest priced a year on
+    hold = lambda d: (sum(cf for t, cf in cfs if t <= freq) + sum(cf / (1 + (ytm + d) / freq) ** (t - freq) for t, cf in cfs if t > freq)) / dirty - 1
+    one_year = [(d, hold(d)) for d in (0.01, 0, -0.01)]
+    return {"price": 100 * clean / face, "accrued": 100 * acc / face, "ytm": ytm, "current_yield": face * cpn / clean, "macaulay": mac,
+            "modified": mod, "convexity": conv, "shocks": shocks, "one_year": one_year,
+            "spread": ytm - b["treasury"] if b.get("treasury") is not None else None}
 
 
 def bond_report(b, r):
@@ -975,14 +1100,16 @@ def bond_report(b, r):
     m = T("The bond", ["Measure", "Value"],
           [["Price (per 100 face)", r["price"]], ["Yield to maturity", r["ytm"]], ["Current yield (coupon / price)", r["current_yield"]],
            ["Spread over the Treasury of the same length", r["spread"]], ["Macaulay duration (years)", r["macaulay"]],
-           ["Modified duration", r["modified"]], ["Convexity", r["convexity"]]], ["text", "auto"])
-    m["row_formats"] = {0: "num1", 1: "pct", 2: "pct", 3: "pct", 4: "num1", 5: "num1", 6: "num1"}
+           ["Modified duration", r["modified"]], ["Convexity", r["convexity"]], ["Accrued interest paid to the seller (per 100 face)", r["accrued"]]],
+          ["text", "auto"])
+    m["row_formats"] = {0: "num", 1: "pct", 2: "pct", 3: "pct", 4: "num1", 5: "num1", 6: "num1", 7: "num"}
     steps = [f"The bond pays {pct(b['coupon'], 2)} a year on its face for {b['years']} years and costs {r['price']:.2f} per 100.",
              f"The one rate that makes the payments worth the price is the yield to maturity: {pct(r['ytm'], 2)}.",
              (f"Against the Treasury of the same length ({pct(b['treasury'], 2)}, {b.get('treasury_source', 'FRED')}), that is "
               f"{pct(r['spread'], 2)} extra for the credit risk and the lower liquidity.") if r["spread"] is not None else "",
              f"Rate risk: a 1-point rise in yields cuts the price about {pct(-r['shocks'][3][1])} (modified duration {r['modified']:.1f}).",
-             f"Held a year: {pct(r['one_year'][1][1])} if yields stay, {pct(r['one_year'][0][1])} if they rise a point."]
+             f"Held a year: {pct(r['one_year'][1][1])} if yields stay, {pct(r['one_year'][0][1])} if they rise a point (payments in the "
+             "year kept as cash; a bond that matures inside the year returns its yield whatever rates do)."]
     return {"kind": "bond", "title": f"Bond: {b.get('name', 'the bond')}", "subtitle": "Prices per 100 of face value; yields a year.",
             "hero": {"value": pct(r["ytm"], 2), "label": "yield to maturity", "line": f"Duration {r['modified']:.1f}: each point of yield moves the price about "
                                                                                      f"{r['modified']:.1f} %. Spread over Treasuries {pct(r['spread'], 2)}."},
@@ -994,22 +1121,27 @@ def bond_report(b, r):
 
 def fund(h, bench, fee):
     """Tracking difference and tracking error against a benchmark, and what the fee costs over time."""
+    bare = [x["source"].split("?")[0].rsplit("/", 1)[-1] for x in (h, bench) if x["dividends"] and x["adj"] == x["closes"]]
+    unavailable = (f"Total return unavailable for {', '.join(bare)}: no adjusted closes, so these are price returns without dividends. "
+                   "Fill it with a series that reinvests dividends.") if bare else ""
     a, b = dict(monthly(h["dates"], h["adj"])), dict(monthly(bench["dates"], bench["adj"]))
     ms = sorted(set(a) & set(b))
-    ra = [a[y] / a[x] - 1 for x, y in zip(ms, ms[1:])]
-    rb = [b[y] / b[x] - 1 for x, y in zip(ms, ms[1:])]
-    yrs = len(ra) / 12
+    mi = lambda m: int(m[:4]) * 12 + int(m[5:7])
+    pairs = [(x, y) for x, y in zip(ms, ms[1:]) if mi(y) - mi(x) == 1]   # tracking error on back-to-back months only
+    ra = [a[y] / a[x] - 1 for x, y in pairs]
+    rb = [b[y] / b[x] - 1 for x, y in pairs]
+    yrs = (mi(ms[-1]) - mi(ms[0])) / 12   # calendar time
     ca, cb = (a[ms[-1]] / a[ms[0]]) ** (1 / yrs) - 1, (b[ms[-1]] / b[ms[0]]) ** (1 / yrs) - 1
-    te = statistics.stdev(x - y for x, y in zip(ra, rb)) * math.sqrt(12)
+    te = statistics.stdev(x - y for x, y in zip(ra, rb)) * math.sqrt(12) if len(ra) > 1 else None
     drag = [(n, 10000 * ((1 + cb) ** n - (1 + cb - fee) ** n)) for n in (10, 20, 30)]
-    return {"fund_cagr": ca, "bench_cagr": cb, "diff": ca - cb, "te": te, "years": yrs, "drag": drag, "fee": fee, "from": ms[0]}
+    return {"unavailable": unavailable, "fund_cagr": ca, "bench_cagr": cb, "diff": ca - cb, "te": te, "years": yrs, "drag": drag, "fee": fee, "from": ms[0]}
 
 
 def fund_report(ticker, bench_t, h, r):
     t = T("Fund against its benchmark (total return a year)", ["Measure", "Value"],
           [["Fund", r["fund_cagr"]], ["Benchmark", r["bench_cagr"]], ["Tracking difference (fund - benchmark)", r["diff"]],
            ["Tracking error (st. dev. of the monthly gap, a year)", r["te"]], ["Fee (expense ratio)", r["fee"]]], ["text", "pct"],
-          note=f"From {r['from']}, {r['years']:.1f} years of Yahoo adjusted closes (dividends reinvested).")
+          note=r["unavailable"] or f"From {r['from']}, {r['years']:.1f} years of Yahoo adjusted closes (dividends reinvested).")
     d = T("What the fee costs on 10,000 at the benchmark's return", ["Years", "Cost of the fee"], [[f"{n} years", x] for n, x in r["drag"]], ["text", "money"])
     return {"kind": "fund", "title": f"{ticker} against {bench_t}", "subtitle": "Total return from Yahoo adjusted closes.",
             "hero": {"value": pct(r["diff"], 2), "label": "tracking difference a year (fund minus benchmark)",

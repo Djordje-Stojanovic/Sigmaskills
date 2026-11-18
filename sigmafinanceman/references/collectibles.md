@@ -15,7 +15,7 @@ One record sale is not a market. Drop lots that bundle items, damaged items and 
 
 ## Grading
 
-A grade (PSA, BGS, CGC for cards; certificates for watches) can multiply the price. The grading premium is the median sale of a grade over the median raw sale. Grade or sell raw: give `grade_odds` (your honest odds of each grade, for example PSA 10: 0.1, PSA 9: 0.5, PSA 8: 0.4) and the model sets the expected net graded value, less grading and shipping, against the raw net. Most cards do not pay for grading.
+A grade (PSA, BGS, CGC for cards; certificates for watches) can multiply the price. The grading premium is the median sale of a grade over the median raw sale. Grade or sell raw: give `grade_odds` (your honest odds of each grade, for example PSA 10: 0.1, PSA 9: 0.5, PSA 8: 0.4) and the model sets the expected net graded value, less grading and shipping, against the raw net. The odds must add up to 1 and each grade needs sales; otherwise the answer is unavailable and names the missing grade. A `grade` with no sales of its own is unavailable too: it never borrows another grade's prices. Most cards do not pay for grading.
 
 Population reports (PSA, BGS, CGC publish them per card) count the graded copies of each grade: `population`. A grade's price rests on how few exist; a fast-rising count pushes it down.
 
@@ -23,7 +23,7 @@ Population reports (PSA, BGS, CGC publish them per card) count the graded copies
 
 | Item | Source |
 |---|---|
-| Pokémon cards | pokemontcg.io (no key): TCGplayer low, mid and high listings and the market price built from recent sales. Set `"pokemon": "name:charizard set.id:base1"`. With no sold list, market is the base case, the lowest listing the bear case and the middle listing the bull case. |
+| Pokémon cards | pokemontcg.io (no key): TCGplayer low, mid and high listings and the market price built from recent sales. Set `"pokemon": "name:charizard set.id:base1"`. With no sold list: `variant` (holofoil, reverseHolofoil, 1stEditionHolofoil) picks one price line; low and mid are asks and market mixes conditions. Bear = undercut the lowest ask, base = the middle ask (or market if lower), bull = the higher of the two, all labelled as asks. |
 | Magic cards | Scryfall API (`api.scryfall.com/cards/named?exact=...`): daily TCGplayer and Cardmarket prices |
 | Any item | eBay sold listings (filter "Sold items"); PriceCharting for cards and games; auction results (Heritage, Sotheby's, Christie's, Phillips) for art and watches |
 

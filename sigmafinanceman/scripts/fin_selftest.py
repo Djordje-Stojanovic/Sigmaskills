@@ -95,8 +95,8 @@ def assets(out):
     last = v["tables"][2][1]
     ok &= check("Waterfall pays out exactly the exit", abs(sum(low.values()) - 5e6) < 1e-3 and abs(sum(high.values()) - 500e6) < 1e-3)
     ok &= check("Low exit: preferences first, founders get nothing", low["F"] < 1e-6)
-    ok &= check("High exit: every investor converts, payout = ownership",
-                abs(high["A"] / 500e6 - last["A"]["shares"] / sum(h["shares"] for h in last.values())) < 1e-9)
+    ok &= check("High exit: every investor converts, payout = ownership of the shares left after the free pool is cancelled",
+                abs(high["A"] / 500e6 - last["A"]["shares"] / (sum(h["shares"] for h in last.values()) - v["pool_free"])) < 1e-9)
     # purchase: at the break-even use, buying and renting cost the same
     gp = {"price": 2000, "life_years": 4, "resale_value": 500, "uses_per_month": 200, "rent_per_use": 0.6, "running_per_use": 0.15,
           "fixed_monthly": 5, "discount_rate": 0.05}
@@ -130,6 +130,125 @@ def assets(out):
                 xml.dom.minidom.parse(x)
         page = (out / f"asset-{name}.html").read_text(encoding="utf-8")
         ok &= check(f"{name}: page, charts and deck written; the page walks the method", len(files) >= 2 and 'class="steps"' in page)
+    return ok
+
+
+def raises(fn):
+    try:
+        fn()
+    except SystemExit:
+        return True
+    return False
+
+
+def asset_review_cases():
+    """The counterexamples from the release reviews (Astra, Fable) for the non-company models: each failed before its fix."""
+    import fin_assets as A
+    ok = True
+    near = lambda a, b, tol=1e-6: a is not None and abs(a - b) <= tol
+    # IRR: several roots, and a root above the old bracket
+    ok &= check("IRR: -100, +230, -132 has two roots (10 %, 20 %): no single IRR, the note says so",
+                A.irr([-100, 230, -132]) is None and "10.0%" in A.irr_note([-100, 230, -132]) and "20.0%" in A.irr_note([-100, 230, -132]))
+    ok &= check("IRR: -100 then +1,200 is 1,100 %", near(A.irr([-100, 1200]), 11.0))
+    # dividends
+    ok &= check("Reverse Gordon: ke 10 %, D0 5, price 100 gives 4.7619 %", near(A.gordon_g(0.10, 5, 100), 0.047619, 1e-6))
+    divs = [(f"{y}-06-15", 1 + 0.1 * (y - 2010)) for y in range(2010, 2023)]
+    full, ttm = A.annual_dps(divs, "2026-03-01")
+    ok &= check("Dividend suspended 2023-25 after 12 raises: streak 0, not 12", A.streak(full) == 0 and full.get(2024) == 0 and ttm == 0)
+    # venture: cap-only SAFE never above the round price (10m shares, $1m SAFE, $20m cap, $5m pre, $1m new)
+    v = A.venture({"founders": [{"name": "F", "shares": 10e6}], "safes": [{"name": "S", "amount": 1e6, "cap": 20e6, "type": "post"}],
+                   "rounds": [{"name": "A", "pre_money": 5e6, "amount": 1e6}], "exits": [10e6]})
+    ok &= check("Cap-only SAFE above the round's cap price converts at the round price: 2.5m shares", near(v["holders"]["S"]["shares"], 2.5e6, 1))
+    ok &= check("SAFE terms with no solution stop the run ($1.2m capped at $1m)", raises(lambda: A.venture(
+        {"founders": [{"name": "F", "shares": 1e6}], "safes": [{"name": "S", "amount": 1.2e6, "cap": 1e6, "type": "post"}],
+         "rounds": [{"name": "A", "pre_money": 5e6, "amount": 1e6}]})))
+    # the startup proof: no grants, so the free pool takes nothing; founders get 132.676m at 250m (Astra)
+    deal = {"founders": [{"name": "Founder A", "shares": 4.5e6}, {"name": "Founder B", "shares": 4.5e6}], "pool": 1e6,
+            "safes": [{"name": "Angel SAFE", "amount": 750000, "cap": 8e6, "discount": 0.2, "type": "post"}],
+            "rounds": [{"name": "Seed", "pre_money": 14e6, "amount": 3.5e6, "pool_target": 0.10},
+                       {"name": "Series A", "pre_money": 45e6, "amount": 12e6, "pool_target": 0.12}], "exits": [250e6]}
+    base = A.venture(deal)
+    fall = base["falls"][0][1]
+    ok &= check("Exit: the ungranted pool gets nothing; founders take 132.676m of 250m; payouts add up to the exit",
+                fall["Option pool"] == 0 and near(fall["Founder A"] + fall["Founder B"], 132.676e6, 1e3) and near(sum(fall.values()), 250e6, 1e-3),
+                f"{(fall['Founder A'] + fall['Founder B']) / 1e6:.3f}m")
+    g = A.venture(dict(deal, options_granted=1e6, option_strike=1.0))
+    gf = g["falls"][0][1]
+    ok &= check("Granted options are paid net of the strike; payouts still add up to the exit",
+                gf["Option pool"] > 0 and near(sum(gf.values()), 250e6, 1e-3) and g["pool_free"] < base["pool_free"])
+    # anti-dilution: 100 preferred at $2, then a down round
+    for kind in ("full", "broad"):
+        d = A.venture({"founders": [{"name": "F", "shares": 900}], "rounds": [
+            {"name": "Seed", "pre_money": 1800, "amount": 200, "anti_dilution": kind}, {"name": "A", "pre_money": 500, "amount": 500}], "exits": [1]})
+        p2, sh = d["rounds"][1]["price"], d["holders"]["Seed"]["shares"]
+        want = 200 / p2 if kind == "full" else 200 / (2 * (1000 + 500 / 2) / (1000 + d["rounds"][1]["new_shares"]))
+        ok &= check(f"Down round, {kind} anti-dilution: the protected series gets its extra shares", p2 < 2 and sh > 100 and near(sh, want, 1e-6),
+                    f"{sh:.2f}")
+    nt = A.venture({"founders": [{"name": "F", "shares": 1e6}], "notes": [{"name": "N", "amount": 100, "rate": 0.10, "months": 12, "pref_basis": "balance"}],
+                    "rounds": [{"name": "A", "pre_money": 1e6, "amount": 1e5}], "exits": [1]})
+    ok &= check("Note with $10 interest on $100 and pref_basis balance: preference 110", near(nt["holders"]["N"]["pref"], 110))
+    vc = A.vc_method({"vc": {"investment": 3e6, "exit_revenue": 100e6, "exit_multiple": 4, "exit_net_debt": 100e6, "target_multiple": 10}}, {})
+    ok &= check("VC method: 4x revenue of 100m less 100m net debt, 10x target: post-money at most 30m", near(vc["post_max"], 30e6))
+    pf = A.portfolio({"size": 10, "cheques": 10, "outcomes": [[0.5, 0], [0.47, 2], [0.03, 50]], "outlier_multiple": 50})
+    ok &= check("Portfolio: the multiple without an outlier is conditional (0.94 / 0.97)", near(pf["multiple_without_outliers"], 0.94 / 0.97))
+    dk = {x["test"][:8]: x for x in A.deck_numbers({"arr": 1e6, "stage": "A", "burn_monthly": 1e6 / 12, "net_new_arr": -0.5e6}, 25e6)}
+    ok &= check("Deck: 25x ARR fails the Series A bar; shrinking ARR leaves the burn multiple n/a, not a pass",
+                dk["Price / "]["pass"] is False and dk["Burn mul"]["pass"] is None)
+    # purchase: one series (price 1,200, 12 months, ten $5 uses, $100 income, no costs)
+    pc = {"price": 1200, "life_years": 1, "resale_value": 0, "uses_per_month": 10, "rent_per_use": 5, "discount_rate": 0, "income_monthly": 100}
+    r = A.purchase(pc)
+    ok &= check("Purchase with income: buying leads by 600, pays back in 8 months, 121.84 % a year, and wins",
+                near(r["npv_buy_vs_rent"], 600) and r["payback_months"] == 8 and near(r["irr"], 1.2184, 1e-4) and r["buy"] < r["rent"],
+                f"{r['npv_buy_vs_rent']:.0f}, {F.pct(r['irr'], 2)}")
+    ok &= check("Purchase: income lowers the break-even use, and at it buy = rent",
+                r["breakeven_uses"] < A.purchase(dict(pc, income_monthly=0))["breakeven_uses"]
+                and near(A.purchase(pc, uses=r["breakeven_uses"])["npv_buy_vs_rent"], 0))
+    ls = A.purchase(dict(pc, income_monthly=0, lease={"monthly": 100, "months": 24}))
+    ok &= check("A 24-month lease used for 12 months still owes 2,400", near(ls["lease"], 2400))
+    # rental IRR stops the mortgage at payoff: 120k flat, 60k down, 1-year 0 % loan, 2-year hold, 12k net rent
+    pm = A.property_model({"price": 120000, "down_pct": 0.5, "mortgage_rate": 0, "loan_years": 1, "horizon_years": 2, "rent_monthly": 1000,
+                           "vacancy": 0, "management": 0, "tax_pct": 0, "upkeep_pct": 0, "insurance_yearly": 0, "appreciation": 0,
+                           "rent_growth": 0, "closing_buy_pct": 0, "closing_sell_pct": 0})
+    ok &= check("Rental IRR after the loan is repaid: +13.62 %", near(pm["irr"], 0.1362, 1e-4), F.pct(pm["irr"], 2))
+    # gold-like history: calendar months under water, net winners, independent windows, no window
+    hx = {"dates": ["2000-01-01", "2000-02-01", "2000-07-01", "2000-08-01"], "closes": [100, 90, 95, 110], "meta": {}, "source": "fixture"}
+    ny = A.no_yield(hx, [(d, 100.0) for d in hx["dates"]], {})
+    rep = A.no_yield_report("T", hx, "fixture", ny)
+    ok &= check("No-yield: 6 calendar months under water (not 2 observations); 4 missing months; no hold window, no hold label",
+                ny["longest_under_months"] == 6 and ny.get("gaps") == 4 and not ny["cases"] and "hold" not in rep["hero"]["label"])
+    slow = A.no_yield(history_fixture(growth=0.001), [(d, 100.0) for d in history_fixture()["dates"]], {})
+    ok &= check("No-yield: 0.1 % a year less 0.4 % carry wins in no window (net, not gross); 20 years hold 2 separate 10-year windows",
+                slow["share_positive"] == 0 and slow.get("independent") == 2)
+    # bonds: a one-year zero at 10 % returns 10.25 % whatever rates do; 7.3 years is not 7.5; quotes are per 100
+    z = A.bond({"coupon": 0, "years": 1, "price": 90.70295})
+    ok &= check("One-year zero bought at 90.70295 returns 10.25 % in every case", all(near(x, 0.1025, 1e-6) for _, x in z["one_year"]))
+    ok &= check("Bond with 7.3 years left prices off dated flows, not 7.5 years",
+                abs(A.bond_price(100, 0.05, 7.3, 0.08) - A.bond_price(100, 0.05, 7.5, 0.08)) > 0.1 and near(A.bond_price(100, 0.05, 7.0, 0.05), 100))
+    k = A.bond({"coupon": 0.06, "years": 5, "price": 98, "face": 1000})
+    ok &= check("Face 1,000 quoted at 98: price per 100 reads 98, the yield equals face 100's",
+                near(k["price"], 98) and near(k["ytm"], A.bond({"coupon": 0.06, "years": 5, "price": 98})["ytm"]))
+    # funds: calendar time; no adjusted closes stops
+    fh = {"dates": ["2020-01-01", "2020-02-01", "2022-01-01"], "closes": [100, 100, 121], "adj": [100, 100, 121], "dividends": [], "source": "f"}
+    ok &= check("Fund with prices in Jan 2020, Feb 2020 and Jan 2022 (100, 100, 121) earns 10 % a year", near(A.fund(fh, fh, 0)["fund_cagr"], 0.10))
+    ok &= check("Fund with dividends but no adjusted closes: total return marked unavailable",
+                "unavailable" in A.fund(dict(fh, dividends=[("2021-01-01", 5)]), fh, 0)["unavailable"])
+    # collectibles
+    one_raw = {"sales": [{"date": "2026-01-01", "price": 100, "grade": "raw"}], "grade": "PSA 10"}
+    ok &= check("PSA 10 asked with only a raw sale: unvalued", A.collectible(one_raw)["cases"] == [])
+    ok &= check("Grade odds with a grade that has no sales: no grading answer",
+                A.collectible(dict(one_raw, grade="raw", grade_odds={"PSA 9": 0.5, "raw": 0.5}))["grade_ev"] is None)
+    live = [("Charizard Base holofoil market (2026/10/15)", 954.65), ("Charizard Base holofoil low (2026/10/15)", 499.99),
+            ("Charizard Base holofoil mid (2026/10/15)", 587.98), ("Charizard Base 1stEditionHolofoil market (2026/10/15)", 9999.0)]
+    ok &= check("Live prices from two variants: price unavailable until \"variant\" names one", A.collectible({}, live)["cases"] == [] and "variant" in A.collectible({}, live)["unavailable"])
+    cz = A.collectible({"variant": "holofoil", "fees": {"sell_pct": 0, "shipping": 0}}, live)
+    page = str(A.collectible_report({"variant": "holofoil"}, cz))
+    ok &= check("Charizard: base = the middle ask (587.98), not the 954.65 market; no 'quick sale' of an ask",
+                near(cz["cases"][1][1], 587.98) and "quick sale against" not in page and "ask" in cz["cases"][0][0])
+    # unit formats: $0.17 a GPU-hour is money, a beta is a number, a rate is a percent
+    t = A.sources_table({"running_per_use": A.I(0.17, "s"), "beta": A.I(0.6, "s"), "discount_rate": A.I(0.04, "s")})
+    html = S.table_html(t)
+    ok &= check("Input tables: 0.17 per GPU-hour and beta 0.6 print as numbers, a discount rate as a percent",
+                "0.17" in html and "17.0%" not in html and "60.0%" not in html and "4.0%" in html)
     return ok
 
 
@@ -234,6 +353,7 @@ def run():
     else:
         print("SKIP  workbook recalculation (LibreOffice not installed)")
     ok &= assets(out)
+    ok &= asset_review_cases()
     page = (out / "smpl-dcf.html").read_text(encoding="utf-8")
     ok &= check("HTML leads with the answer", page.index('class="hero"') < page.index("<table"))
     ok &= check("HTML walks the method step by step before the tables",
