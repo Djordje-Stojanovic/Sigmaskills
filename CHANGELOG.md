@@ -39,6 +39,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Fixed
 
 - `uninstall`, `uninstall --all` and the wizard's remove step keep a skill folder that git tracks: the repo commits it, so the repo owns it. On 18 Nov an `uninstall --changed backup` deleted five committed skills from a course repo. `--skill` stops with `git-tracked`, `--all` skips that skill, and a pack skill reports `committed in git; kept`. A test installs three packs into one repo and shows another repo and the global skills folders unchanged byte for byte.
+- The global set is one line, `CORE_PACKS` in `src/packs.js`. `uninstall --global --non-core --yes` follows it for the Sigma skills too: take `sigma` out of the line and it removes them. The installer guide says how to add, remove and level a global pack.
 
 ## [0.29.1] — 2026-11-18
 

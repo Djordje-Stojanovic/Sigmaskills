@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { runCli } from '../src/cli.js';
+import { CORE_PACKS } from '../src/packs.js';
 import { createMockIo, createRemote, createSandbox, writeSkills, writeUserConfig } from './pack-fixtures.js';
 
 const GIT = ['-c', 'user.email=test@example.com', '-c', 'user.name=Test', '-c', 'commit.gpgsign=false'];
@@ -90,6 +91,31 @@ test('per repo: uninstall keeps a skill folder the repo commits (the 18 Nov cour
     assert.equal((await run(['uninstall', '--skill', 'beta', '--yes'])).code, 0);
     assert.ok(!fs.existsSync(path.join(box.project, '.agents', 'skills', 'beta')));
   } finally {
+    box.cleanup();
+  }
+});
+
+test('global set: CORE_PACKS is the one line; --non-core keeps Sigma while it is listed and removes it once it is not', async () => {
+  const { box, others } = setup();
+  const runGlobal = async (args) => {
+    const io = createMockIo(box.env);
+    const code = await runCli([...args, '--global', '--no-color'], io);
+    return { code, out: io.getStdout(), err: io.getStderr() };
+  };
+  const sigmawrite = path.join(box.home, '.agents', 'skills', 'sigmawrite');
+  try {
+    assert.equal((await runGlobal(['install', 'sigmawrite', '--agent', 'claude', '--yes'])).code, 0);
+    const owner = others();
+    assert.equal((await runGlobal(['uninstall', '--non-core', '--yes'])).code, 0);
+    assert.ok(fs.existsSync(sigmawrite), 'sigma is in CORE_PACKS, so it stays');
+    CORE_PACKS.splice(CORE_PACKS.indexOf('sigma'), 1);
+    const r = await runGlobal(['uninstall', '--non-core', '--yes']);
+    assert.equal(r.code, 0, r.err + r.out);
+    assert.ok(!fs.existsSync(sigmawrite), 'sigma left the line, so --non-core removes it');
+    assert.deepEqual(others().B, owner.B);
+    assert.ok(fs.existsSync(path.join(box.home, '.claude', 'skills', 'owner-global', 'SKILL.md')), 'a folder the installer did not make stays');
+  } finally {
+    if (!CORE_PACKS.includes('sigma')) CORE_PACKS.unshift('sigma');
     box.cleanup();
   }
 });

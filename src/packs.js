@@ -6,7 +6,7 @@ import { findSkillDirs } from './pack-source.js';
 const USER_CONFIG_DIR = '.sigmaskills';
 const USER_CONFIG_FILE = 'packs.json';
 
-/** The packs a Global Installation holds: every Sigma skill, Matt Pocock and tstack. Every other pack is per project. */
+/** The packs a Global Installation holds; every other pack is per project. The one place: edit this line, then run the land step. */
 export const CORE_PACKS = ['sigma', 'mattpocock', 'tstack'];
 
 /** The fixed category list. Every pack has one; the wizard groups one-skill sources by it and `/` matches it. */
