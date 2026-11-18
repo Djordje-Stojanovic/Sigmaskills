@@ -12,6 +12,7 @@ import {
   parseChangeSet,
 } from './release-changelog.js';
 import { defaultPack } from './release-pack.js';
+import { buildCatalog, renderCatalog } from './sigmaask-catalog.js';
 import { defaultDispatch, defaultGit, defaultProbes, gitTagProbe } from './release-probes.js';
 import {
   RELEASE_DIST_TAG,
@@ -168,6 +169,9 @@ export function executeRelease(options = {}) {
 
   if (options.writeIdentities) {
     writeReleaseIdentities(rootDir, { now: options.now });
+    // sigmaask's catalog carries the release number, so the new version goes into it too.
+    const sigmaaskCatalog = path.join(rootDir, 'sigmaask', 'references', 'catalog.json');
+    if (fs.existsSync(sigmaaskCatalog)) fs.writeFileSync(sigmaaskCatalog, renderCatalog(buildCatalog(rootDir)));
   }
 
   const current = options.writeIdentities
