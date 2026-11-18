@@ -150,6 +150,8 @@ Domain documentation uses the single-context layout. See `docs/agents/domain.md`
 
 ## How we work
 
+- No new timer, cron job or alert (owner, 2026-11-17): a job runs when its cause happens (a merge, a deploy, a publish) or as a setting of the tool. A timer stays only where no such setting exists, with one line why. What is left: [`docs/reference/scheduled-jobs.md`](docs/reference/scheduled-jobs.md).
+
 - When a skill and the owner's message conflict, the message wins.
 
 - Plan content on https://schedule.geldtools.com, the owner's planner and the source of truth for what goes out when: `/planner` holds the plan to 2027-12-31 (which series on which day), `/calendar` every planned and live post, `/posts` and `/status` what went out. Look there before you pick a topic or a slot; plan nowhere else.
