@@ -55,7 +55,7 @@ Do not use to start the run.
 Do not use for an unattended rewrite or a performance audit.
 Do not use to build them or hunt bugs.
 Do not use to fork, review or improve it.
-Do not use to trade or file taxes.
+Do not use for questions with no money in them.
 Do not use to implement work or on ordinary chat.
 Do not use to critique a look (SigmaTaste).
 Do not use for bugs (SigmaReview).
@@ -74,3 +74,15 @@ description: 'Use when asked for sigmadebug, or to list and settle every open qu
 Do not use for one bug (SigmaReview).
 description: Use when asked for sigmawrite, easy talk, a SigmaWriteGUI board, an EASYTALK REPLY, less jargon, gibberish or outsider-clear text. Plain English and status boards. Do not use to rewrite code or APIs.
 description: 'Use when asked for sigmavast or to rent a GPU (vast.ai and other clouds) for one job through lacompute: pick the card, keep the spend cap, prove the teardown. Do not use for CPU sandboxes (SigmaBoat) or local GPUs.'
+Do not use to plan work (SigmaLoop) or for GPU jobs (SigmaVast).
+Do not use for live tutoring.
+Do not use for a correction given twice (SigmaCorrect).
+Do not use to install skills.
+Do not use to review it or plain git clone.
+Do not use to rewrite code or APIs.
+# keep (2026-11-18): the skill template's own scope slot, a broken check that must not score, a fresh-data rule, an offer the owner accepts, the doctrine quoting the banned words
+Do not use for <the nearest neighbour>
+and do not use it until it passes
+Never use a card or price from memory or from an older run.
+Offer it; do not run it unasked.
+allowed / we will not" line carries no weight.

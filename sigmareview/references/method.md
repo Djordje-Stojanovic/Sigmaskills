@@ -89,7 +89,7 @@ Model the assets, entry points, trust boundaries, and attacker capabilities firs
 - CI/CD: workflow token permissions, untrusted pull-request code, unpinned actions, dependency confusion, and artifact provenance.
 - AI features: prompt-injection paths to tools or data, output validation, and cost abuse.
 
-**Dynamic testing (authority B, local instance only):** follow `measure.md`. Test authorization with two users (can user A read or change user B's objects?), fuzz the main inputs, try the injection classes that the source review marked as plausible, and run the dependency-advisory and secret scanners that are already available. Never probe a system you did not start yourself, and never use payloads that can destroy shared data.
+**Dynamic testing (authority B, local instance only):** follow `measure.md`. Test authorization with two users (can user A read or change user B's objects?), fuzz the main inputs, try the injection classes that the source review marked as plausible, and run the dependency-advisory and secret scanners that are already available. Probe the systems the owner points you at. A payload that can destroy shared data waits for his one-line confirm.
 
 State preconditions and the data flow for every vulnerability. Never print a live secret. If a real credential was committed, rotation is part of the fix; deleting it from the tree is not enough. Use OWASP ASVS, the OWASP Top 10 lists (web, API, LLM), CWE, and language-specific secure-coding guides only where they apply. Repository evidence outranks checklist matching.
 
