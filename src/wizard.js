@@ -36,7 +36,27 @@ export function windowRows(total, cursor, limit) {
   return { start, end: start + limit };
 }
 
-/** Build the rows of the "what" screen: one row per pack, skill rows under an open pack. */
+/** The heading each pack sits under, in screen order. A pack not named here goes under More. */
+const PACK_GROUPS = [
+  ['Core', ['sigma', 'mattpocock', 'tstack']],
+  ['Design and taste', ['impeccable', 'taste-skill', 'hallmark', 'design-md', 'diagram-design', 'anatomy']],
+  ['Engineering', ['superpowers', 'ponytail', 'security-audit', 'anthropic']],
+  ['Media and 3D', ['hyperframes', 'minimax-h3', 'threejs', 'blender']],
+  ['Research and finance', ['last30days', 'financial-services']],
+];
+const GROUP_OF = new Map(PACK_GROUPS.flatMap(([name, ids], rank) => ids.map((id, at) => [id, { name, rank, at }])));
+const MORE = { name: 'More', rank: PACK_GROUPS.length, at: 0 };
+
+/** The packs the wizard shows, grouped and in group order. An available pack with no skills is hidden. */
+export function orderPacks(packs) {
+  return packs
+    .filter((pack) => !pack.available || pack.skills.length > 0)
+    .map((pack, index) => ({ pack, place: GROUP_OF.get(pack.id) || { ...MORE, at: index } }))
+    .sort((a, b) => a.place.rank - b.place.rank || a.place.at - b.place.at)
+    .map(({ pack, place }) => ({ ...pack, group: place.name }));
+}
+
+/** Build the rows of the "what" screen: a heading per group, one row per pack, skill rows under an open pack. */
 export function buildPackRows(packs, expanded, query) {
   const needle = String(query || '').trim().toLowerCase();
   const rows = [];
@@ -50,7 +70,8 @@ export function buildPackRows(packs, expanded, query) {
     }
     return rows;
   }
-  for (const pack of packs) {
+  for (const [index, pack] of packs.entries()) {
+    if (pack.group && pack.group !== packs[index - 1]?.group) rows.push({ type: 'group', group: pack.group });
     rows.push({ type: 'pack', pack });
     if (expanded.has(pack.id)) for (const skill of pack.skills) rows.push({ type: 'skill', pack, skill });
   }
@@ -237,23 +258,35 @@ export async function runWizard(params) {
   // ---- step 1: what ------------------------------------------------------------------------
   async function stepWhat() {
     let cursor = 0;
+    let move = 1;
     let query = '';
     let searching = false;
+    const packs = orderPacks(packCatalog.packs);
+    const nameWidth = Math.max(14, ...packs.map((pack) => pack.title.length + 2));
     while (true) {
-      const rows = buildPackRows(packCatalog.packs, state.expanded, query);
+      const rows = buildPackRows(packs, state.expanded, query);
       cursor = rows.length ? Math.min(cursor, rows.length - 1) : 0;
+      // A heading is not a stop: the cursor walks past it in the direction it was moving.
+      while (rows[cursor]?.type === 'group') cursor = (cursor + move + rows.length) % rows.length;
       const focus = rows[cursor];
+      const installed = [...installedNow()];
+      const updatable = installed.filter((id) => packOf(id));
       const paint = () => {
         const lines = screen.header(0, version, scopeLabel());
         const footer = 6;
-        lines.push(screen.row([[searching || query ? `Filter: ${query}${searching ? '▏' : ''}` : 'Pick packs, or open one to pick single skills.', C.mute]]));
+        lines.push(screen.row(searching || query
+          ? [[`Filter: ${query}${searching ? '▏' : ''}`, C.mute]]
+          : [['Pick packs to install, or open one for single skills.', C.mute], [installed.length ? `   u update ${updatable.length} installed · x uninstall them` : '', C.primary]]));
         const room = Math.max(3, screen.height - lines.length - footer);
         const view = windowRows(rows.length, cursor, room);
         for (let index = view.start; index < view.end; index += 1) {
           const item = rows[index];
           const here = index === cursor;
           const cursorMark = here ? [renderer.ascii ? '> ' : '› ', C.primary, true] : ['  ', C.mute];
-          if (item.type === 'pack') {
+          if (item.type === 'group') {
+            lines.push(screen.row([['  ', C.mute], [item.group, C.info, true]]));
+          } else if (item.type === 'pack') {
+            const ordinal = packs.indexOf(item.pack);
             const { state: boxState, count } = packState(item.pack, state.selected);
             const slots = item.pack.limit ? slotsOf(item.pack).size : 0;
             const open = state.expanded.has(item.pack.id);
@@ -262,8 +295,8 @@ export async function runWizard(params) {
               cursorMark,
               [item.pack.available ? checkbox(boxState) : '[!]', boxState === 'none' ? C.mute : C.primary, true],
               ['  ', C.mute],
-              [`${index < 10 && !query ? `${(index + 1) % 10} ` : '  '}`, C.mute],
-              [item.pack.title.padEnd(14), nameColor, true],
+              [ordinal < 10 ? `${(ordinal + 1) % 10} ` : '  ', C.mute],
+              [item.pack.title.padEnd(nameWidth), nameColor, true],
               [(!item.pack.available ? 'n/a' : item.pack.limit ? `${slots}/${item.pack.limit.max}` : `${count}/${item.pack.skills.length}`).padEnd(8), item.pack.limit && slots >= item.pack.limit.max ? C.warn : C.mute],
               [item.pack.available ? item.pack.blurb : item.pack.note, item.pack.available ? C.mute : C.warn],
               [open ? '  ▾' : '', C.mute],
@@ -313,6 +346,7 @@ export async function runWizard(params) {
         if (key.name === 'return') { searching = false; continue; }
         if (key.name === 'backspace') { query = query.slice(0, -1); cursor = 0; continue; }
         if (key.name === 'down' || key.name === 'up') {
+          move = key.name === 'down' ? 1 : -1;
           cursor = (cursor + (key.name === 'down' ? 1 : rows.length - 1)) % Math.max(1, rows.length);
           continue;
         }
@@ -328,24 +362,30 @@ export async function runWizard(params) {
         if (query) { query = ''; cursor = 0; continue; }
         return 'cancel';
       }
-      if (key.name === 'up') cursor = (cursor + rows.length - 1) % Math.max(1, rows.length);
-      else if (key.name === 'down') cursor = (cursor + 1) % Math.max(1, rows.length);
+      if (key.name === 'up') { move = -1; cursor = (cursor + rows.length - 1) % Math.max(1, rows.length); }
+      else if (key.name === 'down') { move = 1; cursor = (cursor + 1) % Math.max(1, rows.length); }
       else if (key.name === 'right' && focus?.type === 'pack') state.expanded.add(focus.pack.id);
       else if (key.name === 'left' && focus) {
         const id = focus.pack.id;
         if (state.expanded.has(id)) {
           state.expanded.delete(id);
-          if (focus.type === 'skill') cursor = buildPackRows(packCatalog.packs, state.expanded, query).findIndex((row) => row.type === 'pack' && row.pack.id === id);
+          if (focus.type === 'skill') cursor = buildPackRows(packs, state.expanded, query).findIndex((row) => row.type === 'pack' && row.pack.id === id);
         }
       } else if (key.name === 'space' && focus) {
         if (focus.type === 'pack') togglePack(focus.pack);
         else toggleSkill(focus.skill.id);
         if (state.pendingDrop) await chooseDrop();
       } else if (/^[0-9]$/.test(key.name) && !query) {
-        const pack = packCatalog.packs[(Number(key.name) + 9) % 10];
+        const pack = packs[(Number(key.name) + 9) % 10];
         if (pack) togglePack(pack);
+      } else if (key.name === 'u' && installed.length) {
+        for (const id of updatable) { state.drop.delete(id); state.selected.add(id); }
+        state.notice = `${updatable.length} installed skill${updatable.length === 1 ? '' : 's'} will update. Enter to review.`;
+      } else if (key.name === 'x' && installed.length) {
+        for (const id of installed) { state.selected.delete(id); state.drop.add(id); }
+        state.notice = `${installed.length} installed skill${installed.length === 1 ? '' : 's'} will be removed. Enter to review.`;
       } else if (key.name === 'a') {
-        const all = packCatalog.packs.filter((pack) => pack.available && !pack.limit).flatMap((pack) => pack.skills);
+        const all = packs.filter((pack) => pack.available && !pack.limit).flatMap((pack) => pack.skills);
         if (all.every((skill) => state.selected.has(skill.id))) state.selected.clear();
         else all.forEach((skill) => state.selected.add(skill.id));
       } else if (key.name === '/' || key.ch === '/') {

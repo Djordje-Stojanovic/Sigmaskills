@@ -39,7 +39,7 @@ SigmaSkills is a set of skills for coding agents. A skill is a folder with one `
 npx @djordje-stojanovic/sigmaskills
 ```
 
-The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm. For a script, one line does it all: `npx @djordje-stojanovic/sigmaskills install --preset core --global --yes`. `core` is every Sigma skill plus the whole Matt Pocock pack and Theo Browne's whole tstack pack, and a bare `install --global --yes` means `--preset core`. Every other pack goes into one repo at a time: `install --pack blender --project .` (`--pack` is the same flag as `--preset`).
+The wizard has three steps: **What**, **Where**, **Review**. It writes nothing until you confirm. On the first screen, `u` updates every installed skill and `x` uninstalls them all. For a script, one line does it all: `npx @djordje-stojanovic/sigmaskills install --preset core --global --yes`. `core` is every Sigma skill plus the whole Matt Pocock pack and Theo Browne's whole tstack pack, and a bare `install --global --yes` means `--preset core`. Every other pack goes into one repo at a time: `install --pack blender --project .` (`--pack` is the same flag as `--preset`).
 
 ## Stay current
 

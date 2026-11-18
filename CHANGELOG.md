@@ -32,6 +32,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- The wizard's first step (What) sorts packs under group headings: Core (Sigma, Matt Pocock, tstack); Design and taste (Impeccable, Taste, Hallmark, Design.md, Diagram Design, Anatomy); Engineering (Superpowers, Ponytail, Security Audit, Anthropic); Media and 3D (HyperFrames, MiniMax H3, Three.js, Blender); Research and finance (Last 30 Days, Financial Services). Any other pack, such as Local or a pack from your own `~/.sigmaskills/packs.json`, goes under More. The cursor skips the headings. The name column is as wide as the longest pack name, so "Financial Services" no longer runs into its count (#338).
+- The wizard hides a pack with no skills. A pack that cannot be used yet (for example, its folder is not set) still shows, with its note (#338).
+- The number keys `1`-`0` pick the first ten packs in screen order, and the number next to each pack matches its key (#338).
+- The wizard can update or uninstall everything at once. When skills are installed in the current scope, the first screen says `u update N installed · x uninstall them`. `u` picks every installed skill for an update; `x` marks every installed skill for removal. Enter then goes to Review, which lists them under Update or Remove. Before, this took the CLI (`sigmaskills update`, `sigmaskills uninstall`) or one skill at a time in the wizard (#338).
+
 ## [0.27.2] — 2026-11-17
 
 ### Changed

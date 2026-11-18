@@ -4,7 +4,7 @@ import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import test from 'node:test';
 import { runCli } from '../src/cli.js';
-import { buildPackRows, previewFrame, windowRows } from '../src/wizard.js';
+import { buildPackRows, orderPacks, previewFrame, windowRows } from '../src/wizard.js';
 import { getCatalog } from '../src/catalog.js';
 import {
   ACME_PACK, createMockIo, createRemote, createSandbox, writeUserConfig,
@@ -192,6 +192,49 @@ test('wizard helpers: windowRows keeps the cursor in view and buildPackRows nest
   assert.deepEqual(buildPackRows(packs, new Set(['a']), '').map((row) => row.skill?.id || row.pack.id), ['a', 'one', 'two', 'b']);
   assert.deepEqual(buildPackRows(packs, new Set(), 'sec').map((row) => row.skill.id), ['two']);
   assert.deepEqual(buildPackRows(packs, new Set(), 'berry').map((row) => row.skill.id), ['three'], 'a pack name matches its skills');
+
+  const grouped = orderPacks([
+    { id: 'blender', title: 'Blender', available: true, skills: [{ id: 'x' }] },
+    { id: 'empty', title: 'Empty', available: true, skills: [] },
+    { id: 'sigma', title: 'Sigma', available: true, skills: [{ id: 'y' }] },
+    { id: 'off', title: 'Off', available: false, note: 'set a folder', skills: [] },
+  ]);
+  assert.deepEqual(grouped.map((pack) => pack.id), ['sigma', 'blender', 'off'], 'Core first, an empty pack hidden, an unavailable pack kept for its note');
+  assert.deepEqual(buildPackRows(grouped, new Set(), '').map((row) => row.group || row.pack.id), ['Core', 'sigma', 'Media and 3D', 'blender', 'More', 'off']);
+});
+
+test('wizard: packs sit under group headings, and a long name never runs into its count', async () => {
+  const box = createSandbox();
+  try {
+    const { io } = await wizard(box, CTRL_C, [], { columns: 80, rows: 60 });
+    const first = io.frames().find((frame) => frame.includes('Pick packs'));
+    assert.match(first, /\n {2}Core +\n[\s\S]*\n {2}Design and taste +\n/);
+    assert.doesNotMatch(first, /[a-z]\d+\/\d+/, 'a space always separates name and count');
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('wizard: u picks every installed skill for an update, x marks them all for removal', async () => {
+  const box = createSandbox();
+  try {
+    createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
+    writeUserConfig(box.home, { packs: [ACME_PACK] });
+    const setup = createMockIo(box.env);
+    assert.equal(await runCli(['install', 'alpha', 'beta', '--yes', '--project', box.project], setup), 0, setup.getStderr());
+
+    const update = await wizard(box, `u${ENTER}${ENTER}${ENTER}`);
+    assert.equal(update.code, 0, update.io.err());
+    assert.ok(update.io.frames().some((frame) => /u update 2 installed · x uninstall them/.test(frame)), 'the first screen offers both');
+    assert.ok(update.io.frames().some((frame) => frame.includes('Update 2 skills')));
+
+    const remove = await wizard(box, `x${ENTER}${ENTER}`);
+    assert.equal(remove.code, 0, remove.io.err());
+    assert.ok(remove.io.frames().some((frame) => frame.includes('Remove 2 skills')));
+    assert.ok(!fs.existsSync(skillPath(box, 'alpha')) && !fs.existsSync(skillPath(box, 'beta')));
+  } finally {
+    box.cleanup();
+  }
 });
 
 const RIGHT = '\x1b[C';
