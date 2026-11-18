@@ -58,7 +58,8 @@ function pad(text, width) {
 function hostLines(styler, destinations, hostNames) {
   const rows = [];
   for (const dest of destinations) {
-    const how = dest.method === 'link' || dest.method === 'junction' || dest.method === 'symlink' ? 'linked' : 'copy';
+    // The same words as the wizard: the base folder holds the files, a host folder is linked or copied.
+    const how = dest.method === 'link' || dest.method === 'junction' || dest.method === 'symlink' ? 'linked' : dest.root === '.agents/skills' ? 'files' : 'copied';
     const names = hostNames.get(dest.root) || '';
     rows.push(`  ${styler.style(pad(dest.root, 22), C.ink)} ${styler.style(pad(how, 7), C.mute)} ${styler.style(names, C.mute)}`);
   }
@@ -146,7 +147,11 @@ export function formatSummary({
   if (!dryRun && action === 'Install' && done > 0) {
     const sample = entries.find((entry) => GOOD.has(entry.status))?.id;
     lines.push('');
-    lines.push(`  ${s('Use', C.primary, true)}   ${s(`/${sample}`, C.ink)} ${s('in Claude Code', C.mute)}   ${s(`$${sample}`, C.ink)} ${s('in Codex', C.mute)}   ${s(`/skill:${sample}`, C.ink)} ${s('in Pi', C.mute)}`);
+    // One host per line, so the block fits 80 columns.
+    const width = `/skill:${sample}`.length + 2;
+    lines.push(`  ${s('Use', C.primary, true)}   ${s(pad(`/${sample}`, width), C.ink)}${s('in Claude Code', C.mute)}`);
+    lines.push(`        ${s(pad(`$${sample}`, width), C.ink)}${s('in Codex', C.mute)}`);
+    lines.push(`        ${s(pad(`/skill:${sample}`, width), C.ink)}${s('in Pi', C.mute)}`);
     lines.push(`  ${s('Next', C.primary, true)}  ${s('sigmaskills status', C.ink)} ${s('·', C.mute)} ${s('sigmaskills update', C.ink)} ${s('·', C.mute)} ${s('sigmaskills uninstall', C.ink)}`);
   }
   lines.push('');

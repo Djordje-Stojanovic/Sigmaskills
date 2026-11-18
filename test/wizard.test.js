@@ -98,8 +98,8 @@ test('wizard: a pack from outside installs, and the review names the download', 
   try {
     createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
     writeUserConfig(box.home, { packs: [ACME_PACK] });
-    // Acme is the 21st pack: twenty built-in packs come first, the one-skill sources after it.
-    const { code, io } = await wizard(box, `${DOWN.repeat(20)} ${ENTER}${ENTER}${ENTER}`);
+    // Acme is the 20th pack: nineteen built-in packs come first (Local hides with no folder set), the one-skill sources after it.
+    const { code, io } = await wizard(box, `${DOWN.repeat(19)} ${ENTER}${ENTER}${ENTER}`);
     assert.equal(code, 0, io.err());
     assert.ok(io.frames().some((frame) => /Downloads\s+acme\/skills/.test(frame)));
     assert.match(io.text(), /2 skills installed/);
@@ -199,9 +199,10 @@ test('wizard helpers: windowRows keeps the cursor in view and buildPackRows nest
     { id: 'empty', title: 'Empty', available: true, skills: [] },
     { id: 'matt', title: 'Matt', available: true, skills: [{ id: 'y' }, { id: 'z' }] },
     { id: 'off', title: 'Off', available: false, note: 'set a folder', skills: [] },
+    { id: 'lost', title: 'Lost', available: false, note: 'folder not found', sources: [{ type: 'dir', path: '/nowhere' }], skills: [] },
   ]);
-  assert.deepEqual(grouped.map((pack) => pack.id), ['matt', 'off', 'audit', 'taste'], 'packs keep their order, one-skill sources go last by category, an empty pack is hidden, an unavailable pack keeps its note');
-  assert.deepEqual(buildPackRows(grouped, new Set(), '').map((row) => row.group || row.pack.id), ['Packs', 'matt', 'off', 'Engineering', 'audit', 'Design', 'taste']);
+  assert.deepEqual(grouped.map((pack) => pack.id), ['matt', 'lost', 'audit', 'taste'], 'packs keep their order, one-skill sources go last by category, an empty or unset pack is hidden, a set folder that fails keeps its note');
+  assert.deepEqual(buildPackRows(grouped, new Set(), '').map((row) => row.group || row.pack.id), ['Packs', 'matt', 'lost', 'Engineering', 'audit', 'Design', 'taste']);
   assert.deepEqual(buildPackRows(grouped, new Set(), 'design').map((row) => row.skill.id), ['x'], 'the filter matches a category name');
 });
 
@@ -225,14 +226,23 @@ test('wizard: u picks every installed skill for an update, x marks them all for 
     const setup = createMockIo(box.env);
     assert.equal(await runCli(['install', 'alpha', 'beta', '--yes', '--project', box.project], setup), 0, setup.getStderr());
 
-    const update = await wizard(box, `u${ENTER}${ENTER}${ENTER}`);
+    // u is its own short flow: one key lands on the update review, with no Where step, and enter updates.
+    const update = await wizard(box, `u${ENTER}`);
     assert.equal(update.code, 0, update.io.err());
-    assert.ok(update.io.frames().some((frame) => /2 installed here {3}u update them · x uninstall them/.test(frame)), 'the first screen offers both');
-    assert.ok(update.io.frames().some((frame) => frame.includes('Update 2 skills')));
+    const frames = update.io.frames();
+    assert.ok(frames.some((frame) => /2 installed here {3}u update them · x uninstall them/.test(frame)), 'the first screen offers both');
+    assert.ok(!frames.some((frame) => frame.includes('Pick where they go')), 'an update never asks where');
+    // A frame ends at its └ line; the run's own output follows it once the screen closes.
+    const screenOf = (frame) => frame && frame.slice(0, frame.indexOf('\n', frame.indexOf('└')));
+    const review = screenOf(frames.find((frame) => frame.includes('◆  Update 2 skills')));
+    assert.ok(review && /└ {2}enter update · b back/.test(review) && !review.includes('install'), 'the review names the update');
+    assert.match(review, /Acme\s+2 of 2/, 'the update lists its skills per pack');
 
-    const remove = await wizard(box, `x${ENTER}${ENTER}`);
+    // x says remove, never install.
+    const remove = await wizard(box, `x${ENTER}`);
     assert.equal(remove.code, 0, remove.io.err());
-    assert.ok(remove.io.frames().some((frame) => frame.includes('Remove 2 skills')));
+    const gone = screenOf(remove.io.frames().find((frame) => frame.includes('◆  Remove 2 skills')));
+    assert.ok(gone && /└ {2}enter remove · b back/.test(gone) && !/install/i.test(gone), 'the review names the removal');
     assert.ok(!fs.existsSync(skillPath(box, 'alpha')) && !fs.existsSync(skillPath(box, 'beta')));
   } finally {
     box.cleanup();
@@ -305,11 +315,11 @@ test('wizard: unticking installed skills lists them under Remove, and the confir
     const { code, io } = await wizard(box, `${RIGHT}${DOWN} /alpha${ENTER}${UP} ${ENTER}${ENTER}`);
     assert.equal(code, 0, io.err());
     const frames = io.frames();
-    assert.ok(frames.some((frame) => new RegExp(`○ ${first}.*will remove`).test(frame)), 'the unticked skill says what will happen');
+    assert.ok(frames.some((frame) => new RegExp(`✕ ${first}.*will remove`).test(frame)), 'the unticked skill says what will happen');
     const review = frames.find((frame) => frame.includes('Remove 2 skills'));
     assert.ok(review, 'the review lists the removals');
     assert.ok(review.includes(first) && review.includes('alpha') && !/Install \d|Update \d/.test(review));
-    assert.match(io.text(), /removed .*alpha/);
+    assert.match(io.text(), /removed 2 skills\n\s+Sigma\s+\S+\n\s+Acme\s+alpha\n/, 'removals are listed per pack');
     assert.ok(!fs.existsSync(skillPath(box, first)));
     assert.ok(!fs.existsSync(skillPath(box, 'alpha')));
     assert.ok(fs.existsSync(skillPath(box, 'beta')), 'a skill that stayed ticked is kept');
@@ -358,6 +368,89 @@ test('wizard: the first screen names its scope, and s switches it, so u and x ac
     assert.ok(frames.at(-1).includes('Select at least one skill.'), 'x in an empty scope marks nothing');
     assert.ok(frames.every((frame) => frame.split('\n').every((line) => line.length < 80)), 'no line runs past 80 columns');
     assert.ok(fs.existsSync(skillPath(box, 'alpha')), 'the project skill is untouched');
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('wizard: an installed pack says so on its row, not 0/N', async () => {
+  const box = createSandbox();
+  try {
+    createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
+    writeUserConfig(box.home, { packs: [ACME_PACK] });
+    const setup = createMockIo(box.env);
+    assert.equal(await runCli(['install', 'alpha', 'beta', '--yes', '--project', box.project], setup), 0, setup.getStderr());
+    const { io } = await wizard(box, CTRL_C, [], { columns: 80, rows: 60 });
+    const first = io.frames().find((frame) => frame.includes('Pick packs'));
+    assert.match(first, /✓ +Acme +2 installed/);
+    assert.doesNotMatch(first, /\b0\/\d+/, 'no pack row reads 0/N');
+    assert.match(first, /○ 2 Matt Pocock *\n/, 'a pack that is neither picked nor installed shows no count');
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('wizard: the screen ends where the content ends, on a rail the canvas shows', async () => {
+  const box = createSandbox();
+  try {
+    const { io } = await wizard(box, `1${ENTER}${ENTER}${CTRL_C}`, [], { columns: 80, rows: 40 });
+    const review = io.frames().find((frame) => frame.includes('Review and confirm')).split('\n');
+    const end = review.findIndex((line) => line.startsWith('└'));
+    assert.ok(end > 0 && end < 30, 'the footer sits under the content, not on the last row');
+    assert.ok(review[end - 1].trim() === '│' && review[end - 2].trim() !== '│', 'at most one blank rail row before └');
+    // The screen is 39 rows (one is kept free); the cancel line prints after it.
+    assert.ok(review.slice(end + 1, 39).every((line) => !line.trim()), 'the canvas below is bare');
+    assert.match(io.raw(), /\x1b\[38;2;161;161;170m│/, 'the rail is drawn in mute (#a1a1aa), not a hairline');
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('wizard: Where shows .agents/skills once, and the review uses the same words', async () => {
+  const box = createSandbox();
+  try {
+    fs.mkdirSync(path.join(box.home, '.claude'));
+    const { io } = await wizard(box, `1${ENTER}${ENTER}${CTRL_C}`, [], { columns: 80 });
+    const where = io.frames().find((frame) => frame.includes('Pick where they go'));
+    assert.equal(where.match(/\.agents\/skills +always on · read by /g)?.length, 1, 'one row for the shared folder');
+    assert.doesNotMatch(where, /reads \.agents\/skills/, 'no host row repeats it');
+    const ends = where.split('\n').filter((line) => /^│ [❯ ] [●○]/.test(line)).map((line) => line.trimEnd().split(/ {2,}/).at(-1));
+    assert.equal(new Set(ends).size, ends.length, 'no two rows end in the same text');
+    const review = io.frames().find((frame) => frame.includes('Review and confirm'));
+    assert.match(review, /\.agents\/skills +files /);
+    assert.match(review, /\.claude\/skills +linked /);
+    assert.doesNotMatch(review, /\bcopy\b/);
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('wizard: nothing on the first screen at 80 columns looks broken', async () => {
+  const box = createSandbox();
+  try {
+    // s posts a notice; it gets its own line, wrapped, never clipped.
+    const { io } = await wizard(box, `s${CTRL_C}`, [], { columns: 80, rows: 40 });
+    const frames = io.frames().filter((frame) => frame.includes('Pick packs'));
+    for (const frame of frames) {
+      const lines = frame.split('\n').map((line) => line.trimEnd());
+      assert.ok(lines.every((line) => !line.endsWith('…')), `no line is clipped:\n${lines.filter((line) => line.endsWith('…')).join('\n')}`);
+      assert.ok(!lines.some((line) => /^│ [❯ ] !/.test(line) || line.includes('n/a')), 'no unset folder pack row');
+    }
+    assert.match(frames.at(-1), /\n│ {2}Now in Global: u and x act on what is installed here\.\s*\n/, 'the notice has its own line');
+    assert.doesNotMatch(io.raw(), /Review, improve, ship[^\n]*\x1b\[38;2;161;161;170m/, 'the description is one colour');
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('wizard: the done screen fits 80 columns and says how to come back', async () => {
+  const box = createSandbox();
+  try {
+    const { code, io } = await wizard(box, `1${ENTER}${ENTER}${ENTER}`, [], { columns: 80 });
+    assert.equal(code, 0, io.err());
+    const done = io.frames().at(-1).split('\n').slice(io.frames().at(-1).split('\n').findIndex((line) => line.startsWith('└')) + 1);
+    assert.ok(done.every((line) => line.trimEnd().length <= 80), done.filter((line) => line.trimEnd().length > 80).join('\n'));
+    assert.match(done.join('\n'), /Run it again to update or remove: npx @djordje-stojanovic\/sigmaskills/);
   } finally {
     box.cleanup();
   }

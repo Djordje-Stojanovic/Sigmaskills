@@ -46,16 +46,22 @@ function escapeXml(text) {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-/** One ANSI line to SVG tspans. Only foreground color and bold matter on this canvas. */
+/** One ANSI line to SVG tspans, plus the runs that have a background (the brand badge). */
 function lineToTspans(line) {
   let fg = DEFAULT_FG;
+  let bg = '';
   let bold = false;
   let last = 0;
+  let col = 0;
   let out = '';
+  const fills = [];
   const emit = (text) => {
     if (!text) return;
+    if (bg) fills.push({ col, len: text.length, fill: bg });
+    col += text.length;
     out += `<tspan fill="${fg}"${bold ? ' font-weight="700"' : ''}>${escapeXml(text)}</tspan>`;
   };
+  const hex = (codes) => `#${codes.map((value) => value.toString(16).padStart(2, '0')).join('')}`;
   for (const match of line.matchAll(ANSI)) {
     emit(line.slice(last, match.index));
     last = match.index + match[0].length;
@@ -63,17 +69,19 @@ function lineToTspans(line) {
     const codes = match[1].split(';').map(Number);
     for (let index = 0; index < codes.length; index += 1) {
       const code = codes[index];
-      if (code === 0) { fg = DEFAULT_FG; bold = false; }
+      if (code === 0) { fg = DEFAULT_FG; bg = ''; bold = false; }
       else if (code === 1) bold = true;
-      else if (code === 38 && codes[index + 1] === 2) {
-        const [red, green, blue] = codes.slice(index + 2, index + 5);
-        fg = `#${[red, green, blue].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
+      else if ((code === 38 || code === 48) && codes[index + 1] === 2) {
+        const color = hex(codes.slice(index + 2, index + 5));
+        // The canvas colour is the SVG background already.
+        if (code === 38) fg = color;
+        else bg = color === CANVAS ? '' : color;
         index += 4;
       }
     }
   }
   emit(line.slice(last));
-  return out;
+  return { tspans: out, fills };
 }
 
 export function framesToSvg(lines, title) {
@@ -83,9 +91,12 @@ export function framesToSvg(lines, title) {
   const bar = 34;
   const width = Math.ceil(COLS * cw + pad * 2);
   const height = Math.ceil(lines.length * lh + pad * 2 + bar);
-  const rows = lines.map((line, index) => (
-    `<text x="${pad}" y="${bar + pad + (index + 0.8) * lh}" xml:space="preserve">${lineToTspans(line)}</text>`
-  )).join('\n  ');
+  const rows = lines.map((line, index) => {
+    const { tspans, fills } = lineToTspans(line);
+    const y = bar + pad + index * lh;
+    const rects = fills.map(({ col, len, fill }) => `<rect x="${(pad + col * cw).toFixed(1)}" y="${y + 1}" width="${(len * cw).toFixed(1)}" height="${lh - 1}" fill="${fill}"/>`).join('');
+    return `${rects}<text x="${pad}" y="${y + 0.8 * lh}" xml:space="preserve">${tspans}</text>`;
+  }).join('\n  ');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeXml(title)}">
   <title>${escapeXml(title)}</title>
   <rect width="${width}" height="${height}" rx="10" fill="${CANVAS}" stroke="#27272a"/>
@@ -126,7 +137,12 @@ async function main() {
   // 3. Done: install Sigma and Three.js for Claude Code, then print the summary.
   const done = await simulate('', env, ['install', '--preset', 'sigma', '--preset', 'threejs', '--agent', 'claude', '--project', project], { tty: true });
 
-  const trim = (frame) => frame.replace(/\x1b\[\?[0-9]+[hl]/g, '').split('\n').map((line) => line.replace(/\s+$/, '')).slice(0, ROWS - 1);
+  // The wizard ends where its content ends; the bare canvas under it is cut.
+  const trim = (frame) => {
+    const lines = frame.replace(/\x1b\[\?[0-9]+[hl]/g, '').split('\n').map((line) => line.replace(/\s+$/, '')).slice(0, ROWS - 1);
+    while (lines.length && !lines.at(-1).replace(ANSI, '').trim()) lines.pop();
+    return lines;
+  };
   const summary = done.replace(/\x1b\[\?[0-9]+[hl]/g, '').split('\n').map((line) => line.replace(/\s+$/, ''));
   while (summary.length && !summary[0].trim()) summary.shift();
   while (summary.length && !summary.at(-1).trim()) summary.pop();
