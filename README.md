@@ -104,7 +104,7 @@ Each skill has one job. Say its name to start it.
 | **SigmaTour** | `sigmatour` | Shows how a repo works in one visual page; copies it first, isolated, when you ask |
 | **SigmaClimb** | `sigmaclimb` | Improves anything measurable, one judged change at a time (was SigmaSpeedLoop) |
 | **SigmaMusk** | `sigmamusk` | Runs Musk's Algorithm on one thing, one codebase or a whole setup: measure, delete first |
-| **SigmaBoat** | `sigmaboat` | Runs authorized work on boat.dev cloud sandboxes |
+| **SigmaBoat** | `sigmaboat` | Works tasks on boat.dev boxes copied from one base; watches, deletes and updates them |
 | **SigmaVast** | `sigmavast` | Rents a GPU for one job through `lacompute`, inside the cap, and proves the teardown |
 
 ### Which one do I need?
@@ -466,7 +466,7 @@ $sigmaboat Run .scratch/loops/2026-11-05-x.md on boat, two workers
 | `sigmatour` | a repo path or URL · a length · a destination to copy it first | One question round (8 grill questions when it copies); reads the original only; runs its examples |
 | `sigmaclimb` | a target and a way to score or judge it (a script, or you picking between two versions) · a host and a budget | Interviews you first; rents a box (when the target needs one) after your yes; never changes what you protect or the locked scorer |
 | `sigmamusk` | a repo, plan, issue or process · nothing (grills first) · `--fast "<problem>"` · `--demon` · `cut <repo>` · `reset` | Measures before it judges; files one issue; ships after your yes, or at once in fast mode when the request is sure |
-| `sigmaboat` | a loop file, ship issue, speed-loop project or spec · the repo | Starts sandboxes only when you name boat; no plan of its own; deletes every worker |
+| `sigmaboat` | a task or issue of any repo · a loop file or spec for workers · "update the base" | Starts a box only when you ask for one; deletes a box only after its work is pushed; never touches a sandbox it did not make |
 | `sigmavast` | a GPU job · its memory need | Rents only through `lacompute`, never above the cap; proves `[]` after the teardown |
 
 ### Requirements
