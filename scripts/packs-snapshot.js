@@ -23,7 +23,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // The HyperFrames skills change shape often (14 were folded into `hyperframes` at once). The pack
 // is pinned to one release tag; to move it, clone that tag, change this line, and re-run.
-const HYPERFRAMES_RELEASE = 'v0.9.65';
+const HYPERFRAMES_RELEASE = 'v0.9.70';
 
 // Theo Browne's tstack (MIT) is pinned to one commit. To move it, clone that commit, change this line, and re-run.
 const TSTACK_COMMIT = '11e37a74d0a6868c121cd0910ab2b3bd9873b92a';

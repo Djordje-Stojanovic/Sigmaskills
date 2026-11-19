@@ -360,7 +360,7 @@
     "nateherkai/hyperframes-student-kit": "10511e5af86fc47756ea89803b397422e2d89284"
    },
    "sources": [
-    "heygen-com/hyperframes@v0.9.65/skills",
+    "heygen-com/hyperframes@v0.9.70/skills",
     "nateherkai/hyperframes-student-kit@10511e5af86fc47756ea89803b397422e2d89284/.agents/skills"
    ],
    "skills": [
@@ -374,7 +374,7 @@
     ],
     [
      "hyperframes-cli",
-     "The HyperFrames CLI by job - scaffold, check, look at frames, edit the timeline, preview, render locally or in the cloud, publish, project history..."
+     "HyperFrames CLI - scaffold, check frames, edit timelines, preview, render, share and project history; read JSON and recover from failures."
     ],
     [
      "hyperframes-registry",

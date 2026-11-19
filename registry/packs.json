@@ -272,7 +272,7 @@
           "type": "git",
           "repo": "heygen-com/hyperframes",
           "path": "skills",
-          "ref": "v0.9.65",
+          "ref": "v0.9.70",
           "skills": [
             {
               "id": "figma",
@@ -284,7 +284,7 @@
             },
             {
               "id": "hyperframes-cli",
-              "description": "The HyperFrames CLI by job - scaffold, check, look at frames, edit the timeline, preview, render locally or in the cloud, publish, project history..."
+              "description": "HyperFrames CLI - scaffold, check frames, edit timelines, preview, render, share and project history; read JSON and recover from failures."
             },
             {
               "id": "hyperframes-registry",
