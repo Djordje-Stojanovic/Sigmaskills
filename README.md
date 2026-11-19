@@ -106,7 +106,7 @@ A pack is a group of skills from one source, downloaded at its pinned version wh
 | Sigma | `sigma` | Engineering | 23 | The skills above | this package |
 | Matt Pocock | `mattpocock` | Engineering | 39 | Grill, spec, TDD, triage, deep modules | [mattpocock/skills](https://github.com/mattpocock/skills) @ `5863806` |
 | Three.js | `threejs` | Media | 13 | Geometry, materials, lighting, shaders, R3F | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) @ `0e18186` |
-| HyperFrames | `hyperframes` | Media | 20 | HTML to video, plus the student kit | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) @ `v0.9.65`, [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit) @ `10511e5` |
+| HyperFrames | `hyperframes` | Media | 20 | HTML to video, plus the student kit | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) @ `v0.9.70`, [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit) @ `10511e5` |
 | MiniMax H3 | `minimax-h3` | Media | 9 | Prompt writing and video recipes for MiniMax H3 | [MiniMax-AI/MiniMax-H3](https://github.com/MiniMax-AI/MiniMax-H3) @ newest commit |
 | Anthropic | `anthropic` | Productivity | 19 | docx, pdf, pptx, xlsx, Claude API, MCP builder, skill creator | [anthropics/skills](https://github.com/anthropics/skills) @ `e4bb5d9` |
 | Design.md | `design-md` | Design | 84 | One brand `DESIGN.md` per skill, at most 3 installed | [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) @ `fcc7028` |

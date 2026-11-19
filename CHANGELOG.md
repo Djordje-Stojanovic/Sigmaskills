@@ -34,6 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
+- The HyperFrames pack moves to the newest release, `v0.9.70` (was `v0.9.65`); the Three.js pack is already at its newest commit, `0e18186`. Both stay optional: `install --pack hyperframes --project .` and `install --pack threejs --project .` put them into one repo, and neither is in the global set (N521).
 - `sigmaresearch` reads a user's newest X posts through the X API with the user's own key (app-only bearer, paged by `next_token`). A logged-out profile page shows no posts, also in a stealth browser, so the old routes could not list a timeline.
 
 ### Fixed
