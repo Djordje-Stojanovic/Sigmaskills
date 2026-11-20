@@ -30,7 +30,7 @@ version when it starts (`environments/versions.md`).
 | run a command | `boat exec ID --timeout 0 -- CMD` (the default timeout is 30 s) |
 | move the auto-stop | `boat extend ID --ttl SECONDS` |
 | pause, come back | `boat stop ID`, `boat resume ID --ttl SECONDS` |
-| preview, public | `boat host ID PORT` (ask the owner first: anyone with the URL reaches it) |
+| preview | `boat host ID PORT` (token-gated `--private` by default; add `--public` only after asking the owner) |
 | watch | `boat list --all --json`, `boat limits --all` |
 | delete | `boat delete ID --yes` |
 
