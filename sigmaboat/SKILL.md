@@ -44,7 +44,8 @@ SigmaBoat makes them, watches them, keeps the base current, and leaves nothing r
 A pause: stop the box, start it later (the disk stays; the start moves its auto-stop).
 
 **Preview.** Run the app on the box bound to `0.0.0.0` and give the owner a private address and port (the lab's private network
-name when it joins boxes to one; else boat's `boat host` URL, which is public: ask first). Send it before the merge.
+name when it joins boxes to one; else boat's `boat host ID PORT` URL, which is token-gated `--private` by default; pass `--public`
+only after asking the owner). Send it before the merge.
 
 ## Watch
 
@@ -60,7 +61,9 @@ List every sandbox at the start and the end of every boat task, and whenever the
 ## The base
 
 - **Update it** when the owner asks, after a change to the agent setup, or when it is a month old: start it, copy the agent
-  setup, pull and install every repo in it, stop it, save its snapshot again. Nobody works on it between updates.
+  setup (pinning the coding agents to the host's live versions and carrying the agent settings; check `<wrapper> -h` if the lab
+  wrapper also has a `setup` command), pull and install every repo in it, stop it, save its snapshot again. Nobody works on it
+  between updates.
 - **Add a repo:** clone it during an update. Each repo installs from its own files (`.boat/setup.sh`, else its lockfiles).
 - **A key changed:** the base stays as it is; boxes get the new keys at their next start.
 - The base never joins a private network or serves an agent UI: every copy would share that identity.
