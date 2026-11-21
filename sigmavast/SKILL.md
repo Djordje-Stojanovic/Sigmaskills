@@ -30,20 +30,20 @@ Rent only when the job needs a GPU, or more GPU memory than the local machines h
 ## 3. Check before the start
 
 ```sh
-lacompute check     # can each provider rent now? one line each, with the fix
+lacompute check     # provider login and instance-list access
 lacompute config    # max_per_hour, max_per_day and where each came from
 lacompute cost      # money spent so far
 ```
 
 - The cap is the owner's; `lacompute` refuses a start above it. Never raise it yourself.
-- A provider that cannot rent: apply the fix `check` prints, or take another provider `lacompute` supports that fits the job.
+- `ready` confirms account access. A working GPU rental requires a job that returns its output and a follow-up list that shows the instance gone. Check the worker brief before using a route with an open incident.
 - **Login code.** When `check` says vast.ai needs 2FA, ask the owner for the code from his email and run the two `vastai tfa` steps in the guide (Owner steps). Never print the code back.
 
 ## 4. Run
 
 ```sh
-lacompute -t gpu -s <NN>gb --max <time> --get <outputs> -- '<job>'
-lacompute -t gpu -s <NN>gb --max <time> --detach -- '<job>'   # long job; lacompute logs -f follows it
+lacompute -t gpu -p vastai -s RTX4090 --max <time> --get <outputs> -- '<job>'
+lacompute -t gpu -p vastai -s L40S --max <time> --detach -- '<job>'   # lacompute logs -f follows it
 ```
 
 - The job fetches its own code and inputs. `--repo` would copy the GitHub token to the rented machine.
@@ -59,9 +59,9 @@ lacompute list --json | python3 -c 'import json,sys; print([m.get("name") for m 
 vastai show instances --raw | python3 -c 'import json,sys; print([i.get("id") for i in json.load(sys.stdin) if str(i.get("label","")).startswith("lc-")])'
 ```
 
-Both must print `[]`. A leftover: `lacompute kill-all`, then check again.
+Confirm your rental is absent from both lists. Rows belonging to other workers may still be present. Check the status of your own instance ID if a list call fails.
 
-**Never print a raw instance listing** (`vastai show instances --raw` whole): its `onstart` field holds an API key (a real run printed one). Filter to named fields every time. If a key was printed anyway, say so and ask the owner to rotate it.
+**Never print a raw instance listing.** Legacy instance rows can contain account credentials in their `onstart` field. Filter to named fields every time.
 
 ## Docs
 
@@ -71,7 +71,7 @@ Read before you guess a flag, a filter or a price: https://docs.vast.ai (page li
 
 1. The job, the card (GPU, memory, region), minutes and cost of this run.
 2. Spend to date against the cap, from `lacompute cost`.
-3. The teardown proof: both lists printed `[]`.
+3. The teardown proof: your instance was absent from both lists.
 4. The defaults you took (section 1), or "owner gave the details".
 5. What did not finish, with its reason.
 
