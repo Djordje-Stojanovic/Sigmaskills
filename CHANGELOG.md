@@ -32,6 +32,21 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- Three skills joined others, no feature lost: `sigmabrief` is now the briefs output of `sigmaloop` (`references/brief.md`), `sigmahuman` is the humanize mode of `sigmawrite` (`references/human.md`, with its patterns, lanes, fact check and upstream sync), and `sigmaboat` is the boat.dev part of `sigmacollab` (`references/boat.md`). Each old name is on the retired list and its words still start the new skill. The Sigma pack has 22 skills (#398).
+- `sigmaloop` is thin: the run file holds only the variables (stop line, crew, order, off-limits, landing) and points at `references/flow.md`, the one flow every run follows: four states (ready, working, reviewing, landed), the builder ticks its own box and fixes each finding, a reviewer is a role with no count and no queue, the planner merges, one feature branch and one PR by default (a PR per ticket as the second mode). Seven harness files became one `references/hosts.md` (#398).
+- A full `update` removes the retired skills it owns (an edited copy is backed up first) and drops the lock entry of one already deleted. A copy it has no record of, or a git-tracked one, stays and the output names the command that removes it. Before, update left retired skills in place, so old names stayed installed (#398).
+- `sigmacollab` may be loaded by other skills (`allow_implicit_invocation: true`); it still rents only when the owner or the spec asks (#398).
+- Old names left the skill texts: `sigmatour`, `sigmamusk` and `sigmaclimb` no longer answer to `sigmafork`, `sigmarefactor`, `sigmareset` or `sigmaspeedloop`. `sigmamusk cut` names duplicate pruning, the one step only `sigmarefactor` spelled out (#398).
+- Every pack moved to its source's newest version: 11 commit pins by `npm run packs:update`, hyperframes `v0.9.86` and last30days `v4.6.0` by hand (#398).
+- `sigmaask`'s catalog is written one line per skill with descriptions cut to 100 characters: 92 KB for 665 skills, was 110 KB for 578 (#398).
+
+### Added
+
+- Packs `gamedev` (gamedev-skills/awesome-gamedev-agent-skills: 79 game skills for 12 engines and a router, Apache-2.0) and `monorepo-doctor` (santoshyadavdev/monorepo-doctor: a read-only JS/TS monorepo audit and its cleanup flow, MIT, Node 22.5+) (#398).
+- A test holds the call rule: a skill the user types may call helper skills, never another typed skill (#398).
+
 ## [0.29.2] — 2026-11-23
 
 ### Changed

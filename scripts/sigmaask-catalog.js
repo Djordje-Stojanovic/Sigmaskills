@@ -48,7 +48,10 @@ export function buildCatalog(root = ROOT) {
         sources: pack.bundled ? ['Djordje-Stojanovic/Sigmaskills@main/'] : pack.sources.map((s) => `${s.repo}@${s.ref || 'HEAD'}/${s.path || ''}`),
         skills: pack.skills.map((skill) => {
           const i = pack.sources.indexOf(skill.source);
-          return i > 0 ? [skill.id, skill.description || '', i] : [skill.id, skill.description || ''];
+          // The scan prints 90 characters and SigmaAsk reads the SKILL.md before it recommends, so 100 carry the match words.
+          const text = skill.description || '';
+          const desc = text.length > 100 ? text.slice(0, 100).replace(/\s+\S*$/, '') : text;
+          return i > 0 ? [skill.id, desc, i] : [skill.id, desc];
         }),
       })),
     hosts: hosts.map((host) => ({
@@ -60,8 +63,11 @@ export function buildCatalog(root = ROOT) {
   };
 }
 
-export function renderCatalog(data) {
-  return JSON.stringify(data, null, 1) + '\n';
+// One line per skill and per host: a script reads the file, and one line per entry keeps the diff readable.
+export function renderCatalog({ packs, hosts, ...head }) {
+  const line = (value) => JSON.stringify(value);
+  const pack = ({ skills, ...rest }) => `  ${line(rest).slice(0, -1)},"skills":[\n${skills.map((skill) => `   ${line(skill)}`).join(',\n')}\n  ]}`;
+  return `${line(head).slice(0, -1)},"packs":[\n${packs.map(pack).join(',\n')}\n ],"hosts":[\n${hosts.map((host) => `  ${line(host)}`).join(',\n')}\n ]}\n`;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

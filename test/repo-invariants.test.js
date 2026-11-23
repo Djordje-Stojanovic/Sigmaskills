@@ -12,11 +12,9 @@ const KNOWN_SKILLS = [
   { id: 'sigmafreedom', title: 'SigmaFreedom', needsReferences: true },
   { id: 'sigmaloop', title: 'SigmaLoop', needsReferences: true },
   { id: 'sigmataste', title: 'SigmaTaste', needsReferences: true },
-  { id: 'sigmahuman', title: 'SigmaHuman', needsReferences: true },
   { id: 'sigmatour', title: 'SigmaTour', needsReferences: true },
   { id: 'sigmaclimb', title: 'SigmaClimb', needsReferences: true },
   { id: 'sigmamusk', title: 'SigmaMusk', needsReferences: true },
-  { id: 'sigmaboat', title: 'SigmaBoat', needsReferences: false },
   { id: 'sigmavast', title: 'SigmaVast', needsReferences: false },
   { id: 'sigmacollab', title: 'SigmaCollab', needsReferences: true },
   { id: 'sigmadebug', title: 'SigmaDebug', needsReferences: false },
@@ -35,11 +33,6 @@ const KNOWN_SKILLS = [
   {
     id: 'sigmaimprove',
     title: 'SigmaImprove',
-    needsReferences: true,
-  },
-  {
-    id: 'sigmabrief',
-    title: 'SigmaBrief',
     needsReferences: true,
   },
   {
@@ -71,6 +64,27 @@ function read(rel) {
 function exists(rel) {
   return fs.existsSync(path.join(ROOT, rel));
 }
+
+// A skill the user types (allow_implicit_invocation: false) may call helper skills, never another typed skill.
+test('call rule: a typed skill never loads, runs or uses another typed skill', () => {
+  const typed = KNOWN_SKILLS.map((s) => s.id)
+    .filter((id) => /allow_implicit_invocation:\s*false/.test(read(path.join(id, 'agents', 'openai.yaml'))));
+  const texts = (id) => [path.join(id, 'SKILL.md'), ...fs.readdirSync(path.join(ROOT, id), { recursive: true })
+    .map((rel) => path.join(id, rel))
+    .filter((rel) => rel.endsWith('.md') && rel.split(path.sep).includes('references'))];
+  const calls = [];
+  for (const id of typed) {
+    for (const rel of texts(id)) {
+      const lines = read(rel).replace(/^---[\s\S]*?\n---\n/, '').split('\n');
+      for (const other of typed.filter((t) => t !== id)) {
+        const call = new RegExp(String.raw`\b(load|run|invoke|call|start|use|follow)\b[^.\n]{0,40}?\b${other}\b`, 'i');
+        const hit = lines.find((line) => call.test(line));
+        if (hit) calls.push(`${rel} calls ${other}: ${hit.trim().slice(0, 120)}`);
+      }
+    }
+  }
+  assert.deepEqual(calls, [], `typed skills call typed skills:\n${calls.join('\n')}`);
+});
 
 function listSkillDirs() {
   return fs

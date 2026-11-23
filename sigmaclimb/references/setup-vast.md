@@ -54,7 +54,7 @@ Filters that matter:
 - `reliability>=0.98` (not a flaky host), `disk_space>=<weights + 2 x cache + 50 GB>`, `inet_down>=500` (Mbps, for
   weights), `rentable=true`, `dph` sort (price per hour; disk is billed separately and small).
 - Other GPUs: `gpu_name=H100_SXM num_gpus=1`, `RTX_5090`, etc. Check the exact names with a broad search first.
-- Seen GB10 prices: $0.28-0.42/h. Cost of a 40-minute experiment: about $0.20.
+- Prices: read them live (`-o dph`); seen ones live in SigmaCollab's `references/cards.md`.
 
 Rent rules:
 - Rent ONE instance. Never a second one.

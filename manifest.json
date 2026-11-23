@@ -15,11 +15,6 @@
       "needsReferences": true
     },
     {
-      "id": "sigmabrief",
-      "title": "SigmaBrief",
-      "needsReferences": true
-    },
-    {
       "id": "sigmaship",
       "title": "SigmaShip",
       "needsReferences": true
@@ -70,11 +65,6 @@
       "needsReferences": true
     },
     {
-      "id": "sigmahuman",
-      "title": "SigmaHuman",
-      "needsReferences": true
-    },
-    {
       "id": "sigmatour",
       "title": "SigmaTour",
       "needsReferences": true
@@ -88,11 +78,6 @@
       "id": "sigmamusk",
       "title": "SigmaMusk",
       "needsReferences": true
-    },
-    {
-      "id": "sigmaboat",
-      "title": "SigmaBoat",
-      "needsReferences": false
     },
     {
       "id": "sigmavast",
@@ -137,7 +122,10 @@
     "sigmarefactor",
     "sigmareset",
     "sigmadesign",
-    "sigmaspeedloop"
+    "sigmaspeedloop",
+    "sigmabrief",
+    "sigmahuman",
+    "sigmaboat"
   ],
   "replacedBy": {
     "sigmaperformance": "sigmareview",
@@ -146,6 +134,9 @@
     "sigmarefactor": "sigmamusk",
     "sigmareset": "sigmamusk",
     "sigmadesign": "frontend-design and the design-md pack, with sigmataste",
-    "sigmaspeedloop": "sigmaclimb"
+    "sigmaspeedloop": "sigmaclimb",
+    "sigmabrief": "sigmaloop",
+    "sigmahuman": "sigmawrite",
+    "sigmaboat": "sigmacollab"
   }
 }

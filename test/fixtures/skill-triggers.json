@@ -7,7 +7,7 @@
  {
   "prompt": "Read Hacker News and Hugging Face public sources for research",
   "skill": "sigmaresearch",
-  "near": "sigmabrief"
+  "near": "sigmaloop"
  },
  {
   "prompt": "Do a full review of this repository and find every bug",
@@ -41,28 +41,28 @@
  },
  {
   "prompt": "Write parallel agent briefs for these GitHub issues",
-  "skill": "sigmabrief",
+  "skill": "sigmaloop",
   "near": "sigmaship"
  },
  {
   "prompt": "Give me a handoff prompt so a fresh agent can continue",
-  "skill": "sigmabrief",
+  "skill": "sigmaloop",
   "near": "sigmaship"
  },
  {
   "prompt": "Implement and ship issue #12 end to end and merge the PR",
   "skill": "sigmaship",
-  "near": "sigmabrief"
+  "near": "sigmaloop"
  },
  {
   "prompt": "Build this ready ticket in a worktree with a draft PR",
   "skill": "sigmaship",
-  "near": "sigmabrief"
+  "near": "sigmaloop"
  },
  {
   "prompt": "Explain this in simplified technical English with less jargon",
   "skill": "sigmawrite",
-  "near": "sigmabrief"
+  "near": "sigmaloop"
  },
  {
   "prompt": "Rewrite this for an outsider: clear, no gibberish",
@@ -82,12 +82,12 @@
  {
   "prompt": "Easy talk: make an interactive status board with questions",
   "skill": "sigmawrite",
-  "near": "sigmabrief"
+  "near": "sigmaloop"
  },
  {
   "prompt": "Handle my EASYTALK REPLY and bring unread cards to the next board",
   "skill": "sigmawrite",
-  "near": "sigmabrief"
+  "near": "sigmaloop"
  },
  {
   "prompt": "SigmaWriteGUI board: show the status in easy talk",
@@ -117,31 +117,26 @@
  {
   "prompt": "Read config.json and tell me the port",
   "skill": null,
-  "avoid": "sigmadeeplook",
   "near": "sigmareview"
  },
  {
   "prompt": "Explain this Python file to me",
   "skill": null,
-  "avoid": "sigmadeeplook",
   "near": "sigmareview"
  },
  {
   "prompt": "Summarise README.md for the release notes",
   "skill": null,
-  "avoid": "sigmadeeplook",
   "near": "sigmareview"
  },
  {
   "prompt": "What is in package.json",
   "skill": null,
-  "avoid": "sigmadeeplook",
   "near": "sigmareview"
  },
  {
   "prompt": "Review this repo and list the biggest risks",
   "skill": null,
-  "avoid": "sigmadeeplook",
   "near": "sigmareview"
  },
  {
@@ -152,7 +147,6 @@
  {
   "prompt": "Total the amount column of this 2 GB CSV export",
   "skill": null,
-  "avoid": "sigmadeeplook",
   "near": "sigmareview"
  },
  {
@@ -188,7 +182,7 @@
  {
   "prompt": "Write a paste-ready loop prompt so an agent works through my open tickets overnight",
   "skill": "sigmaloop",
-  "near": "sigmabrief"
+  "near": "sigmaship"
  },
  {
   "prompt": "Make a Claude Code loop prompt for an unattended run until morning",
@@ -198,7 +192,7 @@
  {
   "prompt": "Write a Codex goal prompt that works the tracker after one question round",
   "skill": "sigmaloop",
-  "near": "sigmabrief"
+  "near": "sigmaship"
  },
  {
   "prompt": "Give my landing page a taste pass and write a ranked plan of big visible changes",
@@ -217,17 +211,17 @@
  },
  {
   "prompt": "Humanize this AI-sounding draft and de-slop it, keep every number",
-  "skill": "sigmahuman",
-  "near": "sigmawrite"
+  "skill": "sigmawrite",
+  "near": "sigmataste"
  },
  {
   "prompt": "Write a song chorus from my brief in a human voice",
-  "skill": "sigmahuman",
-  "near": "sigmawrite"
+  "skill": "sigmawrite",
+  "near": "sigmataste"
  },
  {
   "prompt": "Rewrite my video script for the ear so it sounds human, matching my voice sample",
-  "skill": "sigmahuman",
+  "skill": "sigmawrite",
   "near": "sigmataste"
  },
  {
@@ -277,12 +271,12 @@
  },
  {
   "prompt": "Run this loop file on boat.dev sandboxes with two workers",
-  "skill": "sigmaboat",
+  "skill": "sigmacollab",
   "near": "sigmaloop"
  },
  {
   "prompt": "Ship issue 42 on a boat cloud sandbox fork instead of this machine",
-  "skill": "sigmaboat",
+  "skill": "sigmacollab",
   "near": "sigmaship"
  },
  {
@@ -291,7 +285,7 @@
   "near": "sigmareview"
  },
  {
-  "prompt": "Run a sigmareset on this machine and its repos, then delete what I do not use",
+  "prompt": "Reset this machine and its repos: list what exists, then delete what I do not use",
   "skill": "sigmamusk",
   "near": "sigmareview"
  },
@@ -303,7 +297,7 @@
  {
   "prompt": "Sigmadebug: list every open question and settle them one topic at a time",
   "skill": "sigmadebug",
-  "near": "sigmabrief"
+  "near": "sigmaloop"
  },
  {
   "prompt": "Rent a 48 GB GPU on vast.ai for this voice model test, then tear it down",
@@ -313,7 +307,7 @@
  {
   "prompt": "Rent a vast.ai GPU for this job inside the spend cap, then destroy it",
   "skill": "sigmacollab",
-  "near": "sigmaboat"
+  "near": "sigmaclimb"
  },
  {
   "prompt": "Make this CUDA kernel faster, one change at a time, and prove the output stays correct on inputs I never see",
@@ -363,7 +357,7 @@
  {
   "prompt": "Help me plan a monthly budget from my income and spending",
   "skill": "sigmafinanceman",
-  "near": "sigmahuman"
+  "near": "sigmawrite"
  },
  {
   "prompt": "Sync the house files: bring ENGINEERING.md and DESIGN.md in this repo up to date with my masters",

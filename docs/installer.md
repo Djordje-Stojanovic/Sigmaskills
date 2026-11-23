@@ -149,6 +149,8 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `linkedin` | `linkedin-skills` |
 | `i-have-adhd` | `adhd` |
 | `baoyu` | `baoyu-skills`, `jimliu` |
+| `gamedev` | `games`, `game` |
+| `monorepo-doctor` | `monorepo` |
 | `local` | `own` |
 | `core` | the global default: every Sigma skill, the whole Matt Pocock pack and the whole tstack pack. `install --global --yes` with no pack, skill or `--all` installs it |
 | `design-pack` | the design pair for one repo with a page: `impeccable` and `taste-skill`, at their pinned commits. `sigmataste` is a Sigma skill, so `core` has it already. `frontend-design` is in the `anthropic` pack (19 skills): add it alone with `install frontend-design`. Research: [`docs/research/design-pack.md`](research/design-pack.md) |
@@ -434,16 +436,13 @@ npx skills add Djordje-Stojanovic/Sigmaskills --all -g -y
 # One skill at a time
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmareview -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaimprove -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmabrief -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaship -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmafreedom -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaloop -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmataste -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmahuman -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmatour -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaclimb -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmamusk -g
-npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaboat -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmavast -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmacollab -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
@@ -465,7 +464,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g -a cursor -a
 npx skills add Djordje-Stojanovic/Sigmaskills --list
 
 # The full GitHub URL also works
-npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmabrief -g
+npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmaloop -g
 ```
 
 ### Codex
@@ -473,16 +472,13 @@ npx skills add https://github.com/Djordje-Stojanovic/Sigmaskills --skill sigmabr
 ```text
 $skill-installer install sigmareview from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaimprove from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmabrief from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaship from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmafreedom from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaloop from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmataste from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmahuman from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmatour from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaclimb from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmamusk from https://github.com/Djordje-Stojanovic/Sigmaskills
-$skill-installer install sigmaboat from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmavast from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmacollab from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
@@ -509,16 +505,13 @@ git clone https://github.com/Djordje-Stojanovic/Sigmaskills.git
 mkdir -p ~/.agents/skills
 cp -R Sigmaskills/sigmareview ~/.agents/skills/sigmareview
 cp -R Sigmaskills/sigmaimprove ~/.agents/skills/sigmaimprove
-cp -R Sigmaskills/sigmabrief ~/.agents/skills/sigmabrief
 cp -R Sigmaskills/sigmaship ~/.agents/skills/sigmaship
 cp -R Sigmaskills/sigmafreedom ~/.agents/skills/sigmafreedom
 cp -R Sigmaskills/sigmaloop ~/.agents/skills/sigmaloop
 cp -R Sigmaskills/sigmataste ~/.agents/skills/sigmataste
-cp -R Sigmaskills/sigmahuman ~/.agents/skills/sigmahuman
 cp -R Sigmaskills/sigmatour ~/.agents/skills/sigmatour
 cp -R Sigmaskills/sigmaclimb ~/.agents/skills/sigmaclimb
 cp -R Sigmaskills/sigmamusk ~/.agents/skills/sigmamusk
-cp -R Sigmaskills/sigmaboat ~/.agents/skills/sigmaboat
 cp -R Sigmaskills/sigmavast ~/.agents/skills/sigmavast
 cp -R Sigmaskills/sigmacollab ~/.agents/skills/sigmacollab
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
@@ -541,16 +534,13 @@ git clone https://github.com/Djordje-Stojanovic/Sigmaskills.git
 New-Item -ItemType Directory -Force -Path "$HOME\.agents\skills" | Out-Null
 Copy-Item -Recurse Sigmaskills\sigmareview   "$HOME\.agents\skills\sigmareview"
 Copy-Item -Recurse Sigmaskills\sigmaimprove  "$HOME\.agents\skills\sigmaimprove"
-Copy-Item -Recurse Sigmaskills\sigmabrief    "$HOME\.agents\skills\sigmabrief"
 Copy-Item -Recurse Sigmaskills\sigmaship     "$HOME\.agents\skills\sigmaship"
 Copy-Item -Recurse Sigmaskills\sigmafreedom  "$HOME\.agents\skills\sigmafreedom"
 Copy-Item -Recurse Sigmaskills\sigmaloop     "$HOME\.agents\skills\sigmaloop"
 Copy-Item -Recurse Sigmaskills\sigmataste    "$HOME\.agents\skills\sigmataste"
-Copy-Item -Recurse Sigmaskills\sigmahuman    "$HOME\.agents\skills\sigmahuman"
 Copy-Item -Recurse Sigmaskills\sigmatour     "$HOME\.agents\skills\sigmatour"
 Copy-Item -Recurse Sigmaskills\sigmaclimb "$HOME\.agents\skills\sigmaclimb"
 Copy-Item -Recurse Sigmaskills\sigmamusk "$HOME\.agents\skills\sigmamusk"
-Copy-Item -Recurse Sigmaskills\sigmaboat "$HOME\.agents\skills\sigmaboat"
 Copy-Item -Recurse Sigmaskills\sigmavast "$HOME\.agents\skills\sigmavast"
 Copy-Item -Recurse Sigmaskills\sigmacollab "$HOME\.agents\skills\sigmacollab"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"

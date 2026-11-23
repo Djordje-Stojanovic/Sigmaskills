@@ -16,7 +16,7 @@ Read each of the five from start to end, with its callers, imports, exports, com
 
 ## 3. Agree
 
-Offer concrete choices per file: delete proven waste, simplify logic, extract one focused module, split responsibilities, add a test first, or leave it. For each choice give the expected line change, the lines only moved, the effect on public interfaces, the risk and the check. A smaller file is not the goal when it makes the design worse. Keep talking until the user has picked the files and one plan. No edit before that.
+Offer concrete choices per file: delete proven waste, prune duplicates (two copies of the same logic or file become one, the others are deleted), simplify logic, extract one focused module, split responsibilities, add a test first, or leave it. For each choice give the expected line change, the lines only moved, the effect on public interfaces, the risk and the check. A smaller file is not the goal when it makes the design worse. Keep talking until the user has picked the files and one plan. No edit before that.
 
 ## 4. Cut
 

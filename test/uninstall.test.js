@@ -120,17 +120,17 @@ test('uninstall: clean remove deletes owned paths and lock/state; keep leaves th
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-uninstall-clean-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     const keepPlan = executeUninstall({
       catalog: getCatalog(ROOT),
       projectRoot,
       packageRoot: ROOT,
-      skillIds: ['sigmabrief'],
+      skillIds: ['sigmataste'],
       clean: 'keep',
     });
     assert.equal(keepPlan.skills[0].action, 'keep');
-    assert.equal(pathExists(path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md')), true);
-    assert.ok(readState(projectRoot).skills.sigmabrief);
+    assert.equal(pathExists(path.join(skillDir(projectRoot, 'sigmataste'), 'SKILL.md')), true);
+    assert.ok(readState(projectRoot).skills.sigmataste);
 
     const result = executeUninstall({
       catalog: getCatalog(ROOT),
@@ -143,8 +143,8 @@ test('uninstall: clean remove deletes owned paths and lock/state; keep leaves th
     assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite')), false);
     assert.equal(readState(projectRoot).skills.sigmawrite, undefined);
     assert.equal(readLock(projectRoot).skills.sigmawrite, undefined);
-    assert.ok(readState(projectRoot).skills.sigmabrief);
-    assert.ok(readLock(projectRoot).skills.sigmabrief);
+    assert.ok(readState(projectRoot).skills.sigmataste);
+    assert.ok(readLock(projectRoot).skills.sigmataste);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -530,7 +530,7 @@ test('uninstall-all: dry-run reviews every recorded skill and writes nothing', a
       selectedRoots: [UNIVERSAL_PROJECT_DESTINATION, '.claude/skills'],
       method: 'link',
     });
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     const writeDest = skillDir(projectRoot, 'sigmawrite');
     fs.writeFileSync(path.join(writeDest, 'local-keep.txt'), 'outside', 'utf8');
     const before = snapshotOwned(projectRoot);
@@ -544,7 +544,7 @@ test('uninstall-all: dry-run reviews every recorded skill and writes nothing', a
     });
     assert.equal(plan.command, 'uninstall');
     assert.equal(plan.all, true);
-    assert.deepEqual(plan.skills.map((skill) => skill.id), ['sigmabrief', 'sigmawrite']);
+    assert.deepEqual(plan.skills.map((skill) => skill.id), ['sigmataste', 'sigmawrite']);
     assert.equal(plan.skills[0].reviewKind, 'clean');
     assert.equal(plan.skills[1].reviewKind, 'changed');
     assert.equal(plan.skills[0].choice, 'remove');
@@ -563,7 +563,7 @@ test('uninstall-all: dry-run reviews every recorded skill and writes nothing', a
     const code = await runCli(['uninstall', '--all', '--dry-run', '--project', projectRoot], io);
     assert.equal(code, 0);
     const human = io.getStdout();
-    assert.match(human, /sigmabrief/);
+    assert.match(human, /sigmataste/);
     assert.match(human, /sigmawrite/);
     assert.match(human, /Retained backup/i);
     assert.match(human, /Removed:|retained|skipped|failed/i);
@@ -579,7 +579,7 @@ test('uninstall-all: project scope never touches Global Installation; global nev
   const homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-uninstall-all-home-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     executeProjectInstall({
       catalog: getCatalog(ROOT),
       skillId: 'sigmawrite',
@@ -597,7 +597,7 @@ test('uninstall-all: project scope never touches Global Installation; global nev
     });
     const globalDest = path.join(homeDir, '.agents', 'skills', 'sigmawrite', 'SKILL.md');
     const projectWrite = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8');
-    const projectBrief = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md'), 'utf8');
+    const projectBrief = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmataste'), 'SKILL.md'), 'utf8');
 
     executeUninstall({
       catalog: getCatalog(ROOT),
@@ -610,9 +610,9 @@ test('uninstall-all: project scope never touches Global Installation; global nev
     });
     assert.equal(pathExists(path.join(homeDir, '.agents', 'skills', 'sigmawrite')), false);
     assert.equal(fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8'), projectWrite);
-    assert.equal(fs.readFileSync(path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md'), 'utf8'), projectBrief);
+    assert.equal(fs.readFileSync(path.join(skillDir(projectRoot, 'sigmataste'), 'SKILL.md'), 'utf8'), projectBrief);
     assert.ok(readState(projectRoot).skills.sigmawrite);
-    assert.ok(readState(projectRoot).skills.sigmabrief);
+    assert.ok(readState(projectRoot).skills.sigmataste);
 
     executeUninstall({
       catalog: getCatalog(ROOT),
@@ -623,7 +623,7 @@ test('uninstall-all: project scope never touches Global Installation; global nev
       yes: true,
     });
     assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite')), false);
-    assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), false);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmataste')), false);
     assert.equal(pathExists(globalDest), false);
     assert.equal(pathExists(path.join(projectRoot, '.agents', '.sigmaskills')), false);
   } finally {
@@ -639,7 +639,7 @@ test('uninstall-all: keep leaves shared state intact; default backup remains res
       selectedRoots: [UNIVERSAL_PROJECT_DESTINATION, '.claude/skills'],
       method: 'link',
     });
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     const writeDest = skillDir(projectRoot, 'sigmawrite');
     fs.writeFileSync(path.join(writeDest, 'local-keep.txt'), 'keep-me', 'utf8');
     const stranger = path.join(projectRoot, '.claude', 'skills', 'not-ours');
@@ -654,11 +654,11 @@ test('uninstall-all: keep leaves shared state intact; default backup remains res
       yes: true,
       clean: 'keep',
     });
-    assert.deepEqual(result.summary.retained, ['sigmabrief']);
+    assert.deepEqual(result.summary.retained, ['sigmataste']);
     assert.deepEqual(result.summary.removed, ['sigmawrite']);
-    assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), true);
-    assert.ok(readState(projectRoot).skills.sigmabrief);
-    assert.ok(readLock(projectRoot).skills.sigmabrief);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmataste')), true);
+    assert.ok(readState(projectRoot).skills.sigmataste);
+    assert.ok(readLock(projectRoot).skills.sigmataste);
     assert.equal(pathExists(writeDest), false);
     assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite', '.claude/skills')), false);
     assert.equal(fs.readFileSync(path.join(stranger, 'leave-me.txt'), 'utf8'), 'unrelated');
@@ -680,7 +680,7 @@ test('uninstall-all: keep leaves shared state intact; default backup remains res
 test('uninstall-all: failure writes a recovery journal and restores the failed skill', () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-uninstall-all-fail-'));
   try {
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     installWrite(projectRoot, 'sigmawrite');
     const writeDest = skillDir(projectRoot, 'sigmawrite');
     const before = fs.readFileSync(path.join(writeDest, 'SKILL.md'), 'utf8');
@@ -697,12 +697,12 @@ test('uninstall-all: failure writes a recovery journal and restores the failed s
         }
       },
     });
-    assert.deepEqual(result.summary.removed, ['sigmabrief']);
+    assert.deepEqual(result.summary.removed, ['sigmataste']);
     assert.deepEqual(result.summary.failed, ['sigmawrite']);
-    assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), false);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmataste')), false);
     assert.equal(fs.readFileSync(path.join(writeDest, 'SKILL.md'), 'utf8'), before);
     assert.ok(readState(projectRoot).skills.sigmawrite);
-    assert.ok(!readState(projectRoot).skills.sigmabrief);
+    assert.ok(!readState(projectRoot).skills.sigmataste);
     const journal = JSON.parse(
       fs.readFileSync(path.join(getProjectStateDir(projectRoot), UNINSTALL_JOURNAL_FILENAME), 'utf8'),
     );
@@ -710,7 +710,7 @@ test('uninstall-all: failure writes a recovery journal and restores the failed s
     assert.equal(journal.all, true);
     assert.equal(journal.status, 'failed');
     assert.equal(journal.scope, 'project');
-    assert.equal(journal.skills.find((skill) => skill.id === 'sigmabrief').outcome, 'removed');
+    assert.equal(journal.skills.find((skill) => skill.id === 'sigmataste').outcome, 'removed');
     assert.equal(journal.skills.find((skill) => skill.id === 'sigmawrite').outcome, 'failed');
     assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite', '.claude/skills')), false);
   } finally {
@@ -725,7 +725,7 @@ test('cli: uninstall --all reports removed, retained, skipped, and failed; refus
     assert.equal(await runCli(['uninstall', '--all', '--skill', 'sigmawrite', '--project', projectRoot], mix), 1);
     assert.match(mix.getStderr(), /--all/);
 
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     installWrite(projectRoot, 'sigmawrite', {
       selectedRoots: [UNIVERSAL_PROJECT_DESTINATION, '.claude/skills'],
       method: 'link',
@@ -744,10 +744,10 @@ test('cli: uninstall --all reports removed, retained, skipped, and failed; refus
     assert.equal(code, 0);
     const result = JSON.parse(jsonIo.getStdout());
     assert.equal(result.all, true);
-    assert.deepEqual(result.summary.removed, ['sigmabrief']);
+    assert.deepEqual(result.summary.removed, ['sigmataste']);
     assert.deepEqual(result.summary.skipped, ['sigmawrite']);
     assert.deepEqual(result.summary.failed, []);
-    assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), false);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmataste')), false);
     assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite', '.claude/skills')), true);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });

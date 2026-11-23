@@ -2991,6 +2991,373 @@
       ]
     },
     {
+      "id": "gamedev",
+      "title": "Game Dev",
+      "blurb": "Make games in the engine you use: 79 skills for 12 engines and a router that loads the right 2 or 3.",
+      "category": "Engineering",
+      "aliases": [
+        "games",
+        "game"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "gamedev-skills/awesome-gamedev-agent-skills",
+          "path": "",
+          "ref": "c6ca6c41c839b68319ffc08430b99ab768debc32",
+          "skills": [
+            {
+              "id": "ai-behavior-trees-utility-ai",
+              "description": "Engine-neutral behavior tree and utility AI code for NPCs in any language: Blackboard, reactive composites, decorators and response-curve scoring."
+            },
+            {
+              "id": "audio-design",
+              "description": "Engine-neutral game audio technique: bus layout, volume sliders in decibels, loudness, ducking music under dialogue, adaptive music and SFX variati..."
+            },
+            {
+              "id": "bevy-ecs",
+              "description": "Builds and debugs Bevy 0.20 games in Rust: components, Query and Commands systems, schedules, States, observers and headless tests."
+            },
+            {
+              "id": "camera-systems",
+              "description": "Builds and tunes game cameras, engine-neutral with Godot and Cinemachine 3 mappings: 2D follow with deadzone and look-ahead, third-person orbit, fi..."
+            },
+            {
+              "id": "card-game",
+              "description": "Designs card games and deckbuilders in any engine: cards as data with one effect interpreter, deck zones, a trigger stack and seeded shuffles."
+            },
+            {
+              "id": "create-game-assets",
+              "description": "Plans, generates or sources, and validates consistent game art: style guides, sprites, pixel art, tilesets, icons and textures, with QA and licence..."
+            },
+            {
+              "id": "defold-core",
+              "description": "Builds and debugs Defold 1.14 games in Lua: collections, game objects, input focus, msg.post messaging, factories, collection proxies and Bob builds."
+            },
+            {
+              "id": "dialogue-systems",
+              "description": "Builds engine-neutral branching dialogue with Ink, Yarn Spinner or a small JSON graph runner: lines, choices, conditions, variables and localizatio..."
+            },
+            {
+              "id": "ebitengine-game",
+              "description": "Creates, debugs and packages 2D games in Go with Ebitengine v2: a play-and-retry loop, input, pixel-art scaling, text, audio and desktop, WASM or m..."
+            },
+            {
+              "id": "fps-shooter",
+              "description": "Designs first-person shooter combat in any engine: hitscan vs projectiles, time-to-kill, damage falloff, recoil patterns, ADS sensitivity and lag-c..."
+            },
+            {
+              "id": "game-ai",
+              "description": "Designs engine-neutral enemy and NPC AI: picks FSM, behavior tree, utility or GOAP, and builds perception, steering and A* pathfinding."
+            },
+            {
+              "id": "game-docs",
+              "description": "Writes and maintains a game's design docs: a one-page GDD with a feature index and short feature notes, kept true to the code by a link and status..."
+            },
+            {
+              "id": "game-feel",
+              "description": "Adds engine-neutral juice to a working mechanic: trauma-based screen shake, hit-stop, eased tweens, squash and stretch, and knockback."
+            },
+            {
+              "id": "game-jam",
+              "description": "Plans and ships a game jam entry against a fixed deadline: reads the jam rules, scopes to the clock, keeps a cut list and checks the build before s..."
+            },
+            {
+              "id": "game-ui-ux",
+              "description": "Engine-neutral design rules for game HUDs and menus: anchors and containers, scaling, safe areas, gamepad focus, HUDs driven by events instead of p..."
+            },
+            {
+              "id": "godot-2d-movement",
+              "description": "Godot 4.7 CharacterBody2D movement in GDScript: platformer run and jump, top-down 8-direction motion, slopes and one-way platforms, with a headless..."
+            },
+            {
+              "id": "godot-3d-essentials",
+              "description": "Godot 4.7 3D scene setup: Camera3D, lights, WorldEnvironment (sky, ambient, tonemap, fog), StandardMaterial3D, GridMap and local vs global transfor..."
+            },
+            {
+              "id": "godot-animation",
+              "description": "Godot 4.7 animation APIs: AnimationPlayer, AnimationTree state machines, AnimatedSprite2D and create_tween() Tweens, with a headless state test."
+            },
+            {
+              "id": "godot-audio",
+              "description": "Godot 4.7 audio APIs: AudioStreamPlayer 2D and 3D, the bus layout, AudioServer volume and mute, polyphony, looping imports and playback position fo..."
+            },
+            {
+              "id": "godot-csharp",
+              "description": "C# and .NET in Godot 4.7: partial node classes, the PascalCase lifecycle, [Export] and [Signal], signals as C# events, the .csproj and calling GDSc..."
+            },
+            {
+              "id": "godot-export",
+              "description": "Exports Godot 4.7 projects: templates, export_presets.cfg for desktop, Web and Android, command-line exports and web COOP/COEP headers."
+            },
+            {
+              "id": "godot-gdscript",
+              "description": "GDScript 2.0 for Godot 4.7: static typing, @export and @onready, await and coroutines, and porting 3.x code."
+            },
+            {
+              "id": "godot-gdscript-headless-testing",
+              "description": "Runs Godot 4.7 GDScript tests with godot --headless and a SceneTree runner that exits non-zero on failure, so CI can gate merges."
+            },
+            {
+              "id": "godot-multiplayer",
+              "description": "Godot 4.7 high-level multiplayer: ENet host and join, @rpc with rpc_id(), MultiplayerSpawner and MultiplayerSynchronizer, with a two-instance headl..."
+            },
+            {
+              "id": "godot-nodes-scenes",
+              "description": "Godot 4.7 scene-tree structure: reusable .tscn scenes, instantiate(), autoloads and a checker for broken res:// paths and uids."
+            },
+            {
+              "id": "godot-physics",
+              "description": "Godot 4.7 physics API in 2D and 3D: body and Area types, collision_layer and mask bits, Area signals for hurtboxes, RayCast and space queries, and..."
+            },
+            {
+              "id": "godot-resources",
+              "description": "Godot 4.7 data-driven design with custom Resources: class_name and @export fields, .tres files, shared references vs duplicate_deep(), uids and thr..."
+            },
+            {
+              "id": "godot-shaders",
+              "description": "Godot 4.7 Shading Language syntax and pipeline: canvas_item, spatial and particle shaders, built-ins, ShaderMaterial wiring, a headless compile che..."
+            },
+            {
+              "id": "godot-signals-groups",
+              "description": "Godot 4.7 signals and node groups: typed signals, connect() with Callables, one-shot and deferred connections, event-bus autoloads and call_group b..."
+            },
+            {
+              "id": "godot-tilemap",
+              "description": "Godot 4.7 tile maps with TileMapLayer and TileSet: atlas sources, data layers, terrain autotiling and set_cell or local_to_map at runtime."
+            },
+            {
+              "id": "godot-ui-control",
+              "description": "Godot 4.7 Control-node API for menus and HUDs: anchors, Containers, Theme and StyleBox, focus neighbours and stretch settings, with a headless layo..."
+            },
+            {
+              "id": "input-systems",
+              "description": "Engine-neutral input architecture with Godot InputMap code: named actions, stick deadzones, buffered presses and rebinding with conflict checks."
+            },
+            {
+              "id": "itch-publish",
+              "description": "Publishes and updates games on itch.io with the butler CLI: butler push to user/game:channel, channel platform tags, HTML5 builds, --userversion an..."
+            },
+            {
+              "id": "level-design",
+              "description": "Engine-neutral level design with Godot checks: player metrics from the real controller, key and ability gating with a soft-lock check, and pacing."
+            },
+            {
+              "id": "love2d-core",
+              "description": "Builds and debugs L\u00d6VE (Love2D) 11.x games in Lua: main.lua callbacks, conf.lua, fixed steps, crisp pixel-art scaling, love.filesystem saves and a..."
+            },
+            {
+              "id": "performance-optimization",
+              "description": "Finds and fixes game frame-rate problems by measurement in Godot, Unity, Unreal or Roblox: CPU- vs GPU-bound, then the biggest fix (draw calls, poo..."
+            },
+            {
+              "id": "phaser-arcade-physics",
+              "description": "Phaser 4 Arcade Physics movement and collision: bodies, velocity, gravity, colliders vs overlaps, groups and bullet pools."
+            },
+            {
+              "id": "phaser-core",
+              "description": "Sets up and debugs Phaser 4 games (and pinned Phaser 3.90): Game config, Scene lifecycle, the loader, scene transitions and Phaser 3 to 4 migration."
+            },
+            {
+              "id": "physics-tuning",
+              "description": "Engine-neutral physics tuning with Godot checks: fixed timestep and interpolation, CCD against tunnelling, damping, solver iterations and collision..."
+            },
+            {
+              "id": "pixijs-rendering",
+              "description": "Builds and debugs 2D browser game rendering with PixiJS v8: async init, Assets loading, the Container and Sprite scene graph, pointer dragging and..."
+            },
+            {
+              "id": "platformer",
+              "description": "Designs 2D platformers in any engine: jump feel (coyote time, jump buffering, variable height, fall gravity, corner correction), wall jumps, hazard..."
+            },
+            {
+              "id": "procedural-gen",
+              "description": "Engine-neutral procedural generation in Python with Godot and Unity mappings: seeded RNG, dungeon layouts, wave function collapse, noise terrain an..."
+            },
+            {
+              "id": "prototype-fast",
+              "description": "Builds a throwaway playable prototype in about an hour to answer one question, usually \"is this mechanic fun?\": a one-question brief, a greybox, a..."
+            },
+            {
+              "id": "puzzle",
+              "description": "Designs grid and logic puzzle games in any engine: match-3 cascades, Sokoban pushing, unique-solution grids (nonogram, Sudoku), exact undo and solv..."
+            },
+            {
+              "id": "pygame-core",
+              "description": "Builds and debugs 2D games in Python with pygame-ce (imported as pygame): the event-update-draw loop, delta time, Surfaces and Rects, Sprite groups..."
+            },
+            {
+              "id": "roblox-characters",
+              "description": "Roblox player characters: CharacterAdded lifecycle, Humanoid and HumanoidRootPart, R6, R15 and custom rigs, respawn and Tools."
+            },
+            {
+              "id": "roblox-datastores",
+              "description": "Roblox DataStoreService persistence: load on join, save on leave and BindToClose, UpdateAsync vs SetAsync, session locking and OrderedDataStore lea..."
+            },
+            {
+              "id": "roblox-luau",
+              "description": "Roblox Luau scripting and code structure: services, Instances, Script vs LocalScript vs ModuleScript, the task library and typed Luau, with selene..."
+            },
+            {
+              "id": "roblox-networking",
+              "description": "Roblox client-server networking and anti-exploit: RemoteEvent and RemoteFunction contracts, server authority, rate limits, hit validation and repli..."
+            },
+            {
+              "id": "roblox-physics",
+              "description": "Roblox physics and spatial queries: assemblies, constraints, collision groups, Raycast and Shapecast, and network ownership."
+            },
+            {
+              "id": "roblox-simulator-economy",
+              "description": "Roblox simulator, tycoon and idle-game economies in Luau: upgrade cost curves, income per second, rebirth pacing, big-number formatting and paid-eg..."
+            },
+            {
+              "id": "roblox-studio-workflow",
+              "description": "Safely edits an existing Roblox place or Rojo project: finds the source of truth and proves changes with the right test mode or Studio MCP (execute..."
+            },
+            {
+              "id": "roblox-ui",
+              "description": "Roblox UI with ScreenGui and PlayerGui: ResetOnSpawn, UDim2 scale and offset, UIListLayout flex, safe areas, StyleSheet, gamepad selection and touc..."
+            },
+            {
+              "id": "roguelike",
+              "description": "Designs run-based roguelikes and roguelites in any engine: run structure, permadeath, meta-progression, seeded and daily runs, turn order and symme..."
+            },
+            {
+              "id": "router",
+              "description": "Routes any game-development request to the right skills: detects the engine (Godot, Unity, Unreal, Ebitengine, Bevy, Phaser, PixiJS, three.js, Defo..."
+            },
+            {
+              "id": "rpg",
+              "description": "Designs RPG progression and combat numbers in any engine: stats with a modifier stack, XP curves, damage formulas, items and equipment (slots, rari..."
+            },
+            {
+              "id": "save-systems",
+              "description": "Engine-neutral save and load with Godot and Python code: what to serialize, slots and autosave, atomic writes and versioned migration."
+            },
+            {
+              "id": "shader-programming",
+              "description": "Engine-neutral shader technique in GLSL with HLSL equivalents: how dissolve, outline, fresnel rim and post effects work, and porting GLSL to HLSL."
+            },
+            {
+              "id": "steam-publish",
+              "description": "Publishes or updates a game on Steam with Steamworks and SteamPipe: depots, app_build .vdf scripts, steamcmd uploads, beta branches, SetLive, store..."
+            },
+            {
+              "id": "survival-crafting",
+              "description": "Designs survival-crafting loops in any engine: gathering, recipes and tech trees, carry weight, spoilage, hunger and temperature, and base building."
+            },
+            {
+              "id": "threejs-gltf-loading",
+              "description": "Loads glTF/GLB models into three.js r187 and plays their animations: GLTFLoader, DRACO, Meshopt and KTX2 decoders, AnimationMixer cross-fades and S..."
+            },
+            {
+              "id": "threejs-materials-lighting",
+              "description": "Lights and shades three.js r187 scenes: standard, physical and unlit materials, lights, shadows, HDR environment lighting and tone mapping."
+            },
+            {
+              "id": "threejs-scene-setup",
+              "description": "Sets up and debugs a plain three.js r187 game or 3D scene: import maps, Scene, PerspectiveCamera and WebGLRenderer, setAnimationLoop with Timer, re..."
+            },
+            {
+              "id": "tower-defense",
+              "description": "Designs tower defense games in any engine: lane and maze pathing, wave pacing, targeting priorities, armoured and flying counters, and the gold eco..."
+            },
+            {
+              "id": "unity-animation",
+              "description": "Unity 6.3 LTS character animation with the Animator (Mecanim): states and transitions, blend trees, Avatar Mask layers, root motion and humanoid IK."
+            },
+            {
+              "id": "unity-build-pipeline",
+              "description": "Builds and ships Unity 6.3 LTS players: Build Profiles, IL2CPP vs Mono, managed stripping with link.xml, scripted BuildPlayer, Addressables and CI..."
+            },
+            {
+              "id": "unity-build-size",
+              "description": "Finds and shrinks what makes a Unity 6.3 LTS build too big: Build Report reading, uncompressed textures, glTFast models, PCM audio and per-platform..."
+            },
+            {
+              "id": "unity-csharp-scripting",
+              "description": "Writes and fixes Unity 6.3 LTS C# gameplay scripts: MonoBehaviour lifecycle, serialization, .meta/GUID discipline and command-line tests."
+            },
+            {
+              "id": "unity-input-system",
+              "description": "Wires Unity 6.3 LTS player input with the Input System package: .inputactions assets, action maps, PlayerInput and control schemes."
+            },
+            {
+              "id": "unity-navmesh",
+              "description": "Unity 6.3 LTS pathfinding with the AI Navigation package: NavMeshSurface baking, NavMeshAgent, NavMeshLink jumps and runtime rebakes."
+            },
+            {
+              "id": "unity-physics",
+              "description": "Unity 6.3 LTS physics in 3D and 2D: Rigidbody and Rigidbody2D, forces and linearVelocity, the layer collision matrix and raycasts."
+            },
+            {
+              "id": "unity-scriptableobjects",
+              "description": "Unity 6.3 LTS data and decoupling with ScriptableObjects: CreateAssetMenu config assets, shared runtime variables, event channels and .asset files..."
+            },
+            {
+              "id": "unity-tilemap-2d",
+              "description": "Unity 6.3 LTS 2D tilemaps: the Tile Palette, Tilemap Collider 2D with a Composite Collider, Rule Tiles and runtime SetTile."
+            },
+            {
+              "id": "unreal-behavior-trees",
+              "description": "Unreal Engine 5 (UE 5.8) NPC AI with Behavior Trees, Blackboards, EQS and StateTree: decorators with Observer Aborts, C++ BTTask nodes and running..."
+            },
+            {
+              "id": "unreal-blueprints",
+              "description": "Unreal Engine 5 (UE 5.8) Blueprint visual scripting: Blueprint Classes vs the Level Blueprint, Event Graph, and Cast, Interfaces and Event Dispatch..."
+            },
+            {
+              "id": "unreal-cpp-gameplay",
+              "description": "Unreal Engine 5 (UE 5.8) C++ gameplay code: UCLASS and UPROPERTY reflection, the Gameplay Framework, GC-safe pointers, Build.cs and command-line bu..."
+            },
+            {
+              "id": "unreal-enhanced-input",
+              "description": "Unreal Engine 5 (UE 5.8) player input with Enhanced Input: Input Actions (IA_), Mapping Contexts (IMC_), ETriggerEvent bindings and remappable keys."
+            },
+            {
+              "id": "unreal-niagara",
+              "description": "Unreal Engine 5 (UE 5.8) Niagara VFX: systems, emitters, User parameters, spawning from C++ or Blueprints, bounds and GPU vs CPU sim."
+            },
+            {
+              "id": "unreal-packaging",
+              "description": "Packages and ships Unreal Engine 5 (UE 5.8) projects: Shipping builds, cooking, pak/IoStore and RunUAT BuildCookRun with UAT and cook log reading."
+            },
+            {
+              "id": "visual-novel",
+              "description": "Builds visual novels and choice-driven stories in Ren'Py or any engine: routes and endings, save-anywhere, backlog, skip-read-only and typewriter t..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "monorepo-doctor",
+      "title": "Monorepo Doctor",
+      "blurb": "Read-only audit of a JS/TS monorepo (Nx, Turborepo, pnpm, yarn, npm, bun) and a cleanup flow for what it finds.",
+      "category": "Engineering",
+      "aliases": [
+        "monorepo"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "santoshyadavdev/monorepo-doctor",
+          "path": "skills",
+          "ref": "3cb32ea3f16cb7eabf9687d5aab76e358352b7ed",
+          "skills": [
+            {
+              "id": "monorepo-boundaries-cleanup",
+              "description": "Use when a monorepo boundary linter (turbo boundaries, Nx enforce-module-boundaries, dependency-cruiser, eslint-plugin-boundaries, Bazel visibility..."
+            },
+            {
+              "id": "monorepo-doctor",
+              "description": "Use when a user asks for a JS/TS monorepo audit, or Bazel target visibility or testonly issues in a JS or Java workspace."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "local",
       "title": "Local",
       "blurb": "A folder of your own skills on this machine.",

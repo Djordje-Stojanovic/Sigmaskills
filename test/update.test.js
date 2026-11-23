@@ -244,11 +244,11 @@ test('update: customization-only is unchanged; selected skip leaves the other sk
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-skip-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     const writeMd = path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md');
     const raw = '\r\nKeep CRLF  \n# heading\n<note>xml</note>\nno-final-newline';
     fs.writeFileSync(writeMd, injectRawCustomContent(fs.readFileSync(writeMd, 'utf8'), raw, 'sigmawrite'), 'utf8');
-    ageOfficial(projectRoot, 'sigmabrief');
+    ageOfficial(projectRoot, 'sigmataste');
 
     const plan = createUpdatePlan({
       catalog: getCatalog(ROOT),
@@ -256,14 +256,14 @@ test('update: customization-only is unchanged; selected skip leaves the other sk
       packageRoot: ROOT,
     });
     assert.equal(plan.unchanged.find((s) => s.id === 'sigmawrite').comparison, 'customization-only');
-    assert.equal(plan.changed.find((s) => s.id === 'sigmabrief').comparison, 'upstream-only');
+    assert.equal(plan.changed.find((s) => s.id === 'sigmataste').comparison, 'upstream-only');
 
     const io = createMockIo();
     const code = await runCli(['update', '--skill', 'sigmawrite', '--project', projectRoot], io);
     assert.equal(code, 0);
     assert.equal(extractRawCustomContent(fs.readFileSync(writeMd, 'utf8'), 'sigmawrite'), raw);
     assert.equal(
-      fs.readFileSync(path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md'), 'utf8').includes('<!-- sigma-older -->'),
+      fs.readFileSync(path.join(skillDir(projectRoot, 'sigmataste'), 'SKILL.md'), 'utf8').includes('<!-- sigma-older -->'),
       true,
     );
   } finally {
@@ -584,9 +584,9 @@ test('update: independent managed copies receive the canonical customization tog
 test('update: a failure on a later skill still reports the skills already updated (#67)', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-partial-'));
   try {
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     installWrite(projectRoot, 'sigmawrite');
-    ageOfficial(projectRoot, 'sigmabrief');
+    ageOfficial(projectRoot, 'sigmataste');
     const writeMd = path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md');
     fs.writeFileSync(writeMd, fs.readFileSync(writeMd, 'utf8').replace('<sigmaskills-custom>', '<sigmaskills-custom>\n<sigmaskills-custom>'), 'utf8');
 
@@ -596,20 +596,20 @@ test('update: a failure on a later skill still reports the skills already update
         projectRoot,
         packageRoot: ROOT,
         malformedMarkers: 'repair',
-        skillIds: ['sigmabrief', 'sigmawrite'],
+        skillIds: ['sigmataste', 'sigmawrite'],
       }),
       (err) => /invalid repair/.test(err.message)
         && err.updatedSkills.length === 1
-        && err.updatedSkills[0].id === 'sigmabrief'
+        && err.updatedSkills[0].id === 'sigmataste'
         && err.updatedSkills[0].success === true,
     );
 
-    ageOfficial(projectRoot, 'sigmabrief');
+    ageOfficial(projectRoot, 'sigmataste');
     const io = createMockIo();
     const code = await runCli(['update', '--yes', '--malformed-markers', 'repair', '--project', projectRoot], io);
     assert.equal(code, 1);
     assert.match(io.getStderr(), /invalid repair/);
-    assert.match(io.getStderr(), /Updated before the failure: sigmabrief/);
+    assert.match(io.getStderr(), /Updated before the failure: sigmataste/);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -806,14 +806,14 @@ test('packed CLI updates Project and Global Installation while preserving custom
     fs.mkdirSync(homeDir, { recursive: true });
     execFileSync(
       'node',
-      [installedBin, 'install', 'sigmabrief', '--global', '--yes'],
+      [installedBin, 'install', 'sigmataste', '--global', '--yes'],
       {
         cwd: appDir,
         encoding: 'utf8',
         env: { ...process.env, HOME: homeDir, USERPROFILE: homeDir },
       },
     );
-    const globalDest = path.join(homeDir, '.agents', 'skills', 'sigmabrief');
+    const globalDest = path.join(homeDir, '.agents', 'skills', 'sigmataste');
     const globalMd = path.join(globalDest, 'SKILL.md');
     fs.writeFileSync(
       globalMd,
@@ -826,8 +826,8 @@ test('packed CLI updates Project and Global Installation while preserving custom
     const globalHashes = computeSkillRevisionAndHashes(globalDest);
     const globalStatePath = path.join(homeDir, '.agents', '.sigmaskills', 'state.json');
     const globalState = JSON.parse(fs.readFileSync(globalStatePath, 'utf8'));
-    globalState.skills.sigmabrief.baseHashes = globalHashes.files;
-    globalState.skills.sigmabrief.revision = globalHashes.revision;
+    globalState.skills.sigmataste.baseHashes = globalHashes.files;
+    globalState.skills.sigmataste.revision = globalHashes.revision;
     fs.writeFileSync(globalStatePath, `${JSON.stringify(globalState, null, 2)}\n`);
     execFileSync(
       'node',

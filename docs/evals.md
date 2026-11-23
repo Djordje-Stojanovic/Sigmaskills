@@ -14,7 +14,7 @@ What each check requires:
 |---|---|---|
 | SigmaReview | `SIGMAREVIEW-YYYY-MM-DD.md` at the root | Title; sections Verdict, System and promises, Fix plan, Findings index, Findings, Coverage in order; verdict and wave tables; `SIG-001`… numbered in order, each in the index with priority, evidence class, broken promise, fix, proof test, and done-when |
 | SigmaImprove | `.scratch/sigmaimprove/*.md` (local tracker) | 1–20 category files titled `SigmaImprove · <ID> <name>`; Where we stand, Entries, History; entries table; each Idea has problem, recommendation, done-when; each Signal has what we see, gap, questions; at least 10 entries across 5 category groups |
-| SigmaBrief | Final chat reply | Dispatch lines `wave N \| … \| isolation: … \| type: …`; fenced `text` briefs that each say do not merge and end with the fixed report-back line; no fixture file added or changed (no `SIGMABRIEF-*.md`, no code edits) |
+| SigmaLoop (briefs, case `sigmaloop:briefs`) | Final chat reply | Dispatch lines `wave N \| … \| isolation: … \| type: …`; fenced `text` briefs that each say do not merge and end with the fixed report-back line; no fixture file added or changed (no `SIGMABRIEF-*.md`, no code edits) |
 | SigmaShip | `PR-BODY.md` and `CLEANUP.md` (the runner asks for them) | `Closes #N`, spec and map line, Acceptance with every box ticked, Rulings, Follow-ups, Review rounds table with at least one round; cleanup output shows `main in sync` and `tree clean` |
 | SigmaWrite (plain) | `docs/NOTES.md` in the fixture, rewritten | Code names `step`, `saveBest`, `src/scores.js` survive; the planted jargon is gone; no sentence over 30 words |
 | SigmaWrite (GUI option) | `status-board.html` and final chat reply | Installed template preserved outside its DATA block; valid JavaScript with PAGE, DO, ANS, FYI; reply links the saved board |
@@ -38,7 +38,7 @@ The fixture has seeded defects: the snake survives one cell past two walls, food
 
 Isolation: `--setting-sources project` drops the user's settings files, and with them the user's permissions and plugins. The `claude --help` text (2.1.283) does not say that it also hides personal skills in `~/.claude/skills/`, so a personal skill with the same name may still load; remove it before a run if you need a clean result. `--strict-mcp-config` loads no MCP servers; `gh`, WebFetch, and WebSearch are denied; Bash is limited to `git`, `node`, `npm test`, `ls`, and `wc`; edits are allowed only in the temp folder. The prompt tells each skill that the run is offline. Skills whose real output is a GitHub artifact write it to a file instead. Each run is capped at $4 and the whole run at $15. This is a guard, not a sandbox: the allowed `git` and `node` commands could still reach the network if a skill ignored the prompt.
 
-## First run: 2026-09-27
+## First run: 2026-09-27 (skill names as they were then; SigmaBrief is now SigmaLoop briefs)
 
 Model: `claude-opus-5-5` through Claude Code 2.1.283, on Windows 11. Total spend: $4.16 (the six-skill run, one earlier SigmaWrite trial, and one SigmaImprove re-run).
 

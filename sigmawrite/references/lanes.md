@@ -32,7 +32,7 @@ The listener hears each sentence once, at the narrator's speed, and cannot re-re
 - **Scene over summary.** Cut the line after a scene that says what it meant (§2) and the chapter end that sums up a lesson (§13). End on the last concrete moment.
 - **Dialogue sounds like people.** People interrupt, dodge and answer the wrong question. Use "said"; cut adverb tags.
 - **Fiction may invent; non-fiction may not.** In fiction, invented detail is the task. In non-fiction, memoir and history, every name, date and number comes from the author's notes or sources.
-- **Chapter by chapter.** On a long manuscript, work one chapter at a time and keep a short voice sheet (the sample notes from SKILL.md "Voice") so chapter 20 sounds like chapter 1.
+- **Chapter by chapter.** On a long manuscript, work one chapter at a time and keep a short voice sheet (the sample notes from human.md "Voice") so chapter 20 sounds like chapter 1.
 
 ## Song lyrics
 
@@ -72,7 +72,7 @@ The listener hears each sentence once, at the narrator's speed, and cannot re-re
 2. **Name the gaps.** If a fact the text needs is missing, ask for it once. If you cannot ask, write around it and name the gap in one line after the text.
 3. **Pick the lane** for the kind of text and the voice (a sample, or the lane's default).
 4. **Write the draft** in that voice from the start.
-5. **Run the SKILL.md steps on your own draft.** Mark the tells, fix them, check the facts against the brief, write the final version.
+5. **Run the human.md steps on your own draft.** Mark the tells, fix them, check the facts against the brief, write the final version.
 
 ## Working on a file
 

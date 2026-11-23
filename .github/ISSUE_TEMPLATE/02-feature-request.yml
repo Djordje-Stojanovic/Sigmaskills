@@ -101,7 +101,7 @@ body:
     attributes:
       label: Possible approach (optional)
       description: A guess at how to ship it — not a requirement.
-      placeholder: Mirror sigmabrief’s folder layout; keep output chat-only; document npx skills add --skill …
+      placeholder: Mirror sigmaloop’s folder layout; keep output chat-only; document npx skills add --skill …
 
   - type: textarea
     id: anything-else

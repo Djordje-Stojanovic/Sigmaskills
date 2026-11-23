@@ -52,7 +52,6 @@ Each skill has one job. Say its name to start it.
 | `sigmaask` | Tells you which skill to use and what comes next. It looks at what is installed on your machine first, and knows every pack. | Node.js 22 |
 | `sigmareview` | Finds and proves what is wrong in a repo (bugs, security, slow paths) and publishes one review PR. Never changes your code. | `gh` to push and open the PR |
 | `sigmaimprove` | Compares a product with the top 1-3 in its field and keeps one living issue of ideas per category. Never edits the product. | |
-| `sigmabrief` | Writes copy-pastable agent briefs from issues or plans, in safe parallel waves. Only when you ask by name. | |
 | `sigmaship` | Ships one GitHub issue with checkable acceptance criteria: test-first PR, self-review (a reviewer only on request), merge, clean up. | `gh` with push rights |
 | `sigmadebug` | Lists every open question, grills one topic at a time, plans each fix and ships it in a background agent. | |
 | `sigmacorrect` | Turns a correction you gave twice into a type, a check or a test that fails on the real mistake; docs last. | |
@@ -63,21 +62,19 @@ Each skill has one job. Say its name to start it.
 | `sigmaresearch` | Reads public sources (Reddit, X, Hacker News, GitHub, Stack Overflow, YouTube, arXiv, SEC EDGAR, other languages) and counts only those read in full. | Python 3 |
 | `sigmadeeplook` | Looks inside what an agent cannot read: video, audio, scans, hidden Excel sheets, SQLite, binaries. `--ask` gives one exact answer. | Python 3.10+; optional ffmpeg, tesseract and more (`look.py doctor`) |
 | `sigmafinanceman` | Values any investment (a stock, a startup, a purchase, a home, gold, a collectible, a bond, a budget) and answers any money question, trades, options and taxes included. Fetches free live data and runs the model, or works it by hand where no code runs. | Python 3.10+ with `openpyxl` and `python-pptx` for the files |
-| `sigmawrite` | Plain technical English for every reply, until you turn it off. "easy talk" adds an interactive status board. | |
-| `sigmahuman` | Rewrites text to read like a person wrote it, every fact kept, or writes new text from a brief. Built on [blader/humanizer](https://github.com/blader/humanizer). | Python 3 for the optional fact check |
+| `sigmawrite` | Plain technical English for every reply, until you turn it off. "humanize" rewrites a draft to read like a person wrote it, every fact kept ([blader/humanizer](https://github.com/blader/humanizer)); "easy talk" adds an interactive status board. | Python 3 for the optional fact check |
 | `sigmacourse` | Plans and builds a tutorial, guide or course of any size. It starts from what the learner can do at the end and derives the parts and the process from that. | |
 | `sigmacreate` | Makes a new skill, public (proven free of personal data) or local to one repo or machine, and ends with it installed and picked up. | |
 | `sigmacreatearena` | Ranks many options by your taste: blind pairs, Elo per metric. | Python 3, a browser |
-| `sigmaloop` | Writes a paste-ready prompt and loop file for an unattended run (Claude Code, Codex, Antigravity, pi, T3 Code). Never starts the run. | |
+| `sigmaloop` | Writes copy-pastable agent briefs in safe parallel waves, or a run file and prompt for an unattended run (Claude Code, Codex, Antigravity, pi, T3 Code). Never starts the run. | |
 | `sigmasetup` | Sets up a repo for the packs you installed and syncs your house files (`ENGINEERING.md`, `DESIGN.md`, `AGENTS.md` sections) from your masters. | Node.js |
 | `sigmafreedom` | Deletes model-written refusals and moral limits from a repo's agent docs; a lint keeps them out. | Python 3 |
-| `sigmaboat` | Works a task of any repo on a boat.dev cloud box copied from one base, and watches, updates and deletes the boxes. | A boat.dev account |
-| `sigmacollab` | Runs one job on a Google Colab runtime (CPU, GPU, TPU) or a vast.ai GPU with their own CLIs, shows the price first and proves the teardown. | The `colab` CLI and a Colab plan; the `vastai` CLI for Vast |
+| `sigmacollab` | Runs one job on rented compute: a boat.dev cloud box for repo work, a Google Colab runtime (CPU, GPU, TPU) or a vast.ai GPU. Shows the price first and proves the teardown. | The `boat`, `colab` or `vastai` CLI and its account |
 | `sigmavast` | Points to `sigmacollab`. | - |
 
 Every skill needs an agent that loads `SKILL.md`. Skills use the machine's own shell (PowerShell on Windows) and do not assume WSL.
 
-Not sure which? Wrong by a test, a doc or a budget: `sigmareview`. Could be better, and people could disagree: `sigmaimprove`. Too big, same behavior: `sigmamusk cut`. How one thing looks or reads: `sigmataste`. Text that must sound human: `sigmahuman`; plain technical English: `sigmawrite`.
+Not sure which? Wrong by a test, a doc or a budget: `sigmareview`. Could be better, and people could disagree: `sigmaimprove`. Too big, same behavior: `sigmamusk cut`. How one thing looks or reads: `sigmataste`. Text that must sound human, or plain technical English: `sigmawrite`.
 
 ## Run
 
@@ -86,7 +83,7 @@ Use your host's skill syntax: `$sigmareview` in Codex, `/sigmareview` in Claude 
 ```text
 $sigmareview https://github.com/owner/repo
 $sigmaship https://github.com/owner/repo/issues/42
-$sigmabrief all open
+$sigmaloop Write briefs for all open issues
 $sigmamusk Why does our test suite take 20 minutes?
 $sigmaresearch Recent discussions about local language models
 $sigmadeeplook What happens at 2:10 in demo.mp4?
@@ -94,7 +91,7 @@ $sigmafinanceman What does the price of KO assume?
 $sigmafinanceman Should I buy or rent an H100 for six months?
 $sigmatour Give me a 30 minute tour of this repo
 $sigmaclimb Make my vLLM model serve faster on a rented H100
-$sigmahuman Rewrite this announcement so it sounds like me
+$sigmawrite Humanize this announcement so it sounds like me
 $sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 ```
 
@@ -104,8 +101,8 @@ A pack is a group of skills from one source, downloaded at its pinned version wh
 
 | Pack | Id | Category | Skills | What it is | Source @ pin |
 |------|----|----------|-------:|------------|--------------|
-| Sigma | `sigma` | Engineering | 23 | The skills above | this package |
-| Matt Pocock | `mattpocock` | Engineering | 39 | Grill, spec, TDD, triage, deep modules | [mattpocock/skills](https://github.com/mattpocock/skills) @ `5863806` |
+| Sigma | `sigma` | Engineering | 22 | The skills above | this package |
+| Matt Pocock | `mattpocock` | Engineering | 39 | Grill, spec, TDD, triage, deep modules | [mattpocock/skills](https://github.com/mattpocock/skills) @ `abeeaf9` |
 | Three.js | `threejs` | Media | 13 | Geometry, materials, lighting, shaders, R3F | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) @ `0e18186` |
 | HyperFrames | `hyperframes` | Media | 20 | HTML to video, plus the student kit | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) @ `v0.9.86`, [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit) @ `10511e5` |
 | MiniMax H3 | `minimax-h3` | Media | 9 | Prompt writing and video recipes for MiniMax H3 | [MiniMax-AI/MiniMax-H3](https://github.com/MiniMax-AI/MiniMax-H3) @ newest commit |
@@ -115,23 +112,25 @@ A pack is a group of skills from one source, downloaded at its pinned version wh
 | Financial Services | `financial-services` | Finance | 99 | Anthropic's finance plugins: DCF, LBO, comps, decks, KYC | [anthropics/financial-services](https://github.com/anthropics/financial-services) @ `3e32c22` |
 | tstack | `tstack` | Engineering | 9 | Theo Browne's PR skills: full-send, council, babysit-pr | [t3dotgg/tstack](https://github.com/t3dotgg/tstack) @ `11e37a7` |
 | Superpowers | `superpowers` | Engineering | 15 | Brainstorm, plan, execute, TDD, debug, review | [obra/superpowers](https://github.com/obra/superpowers) @ `22f0b46` |
-| Impeccable | `impeccable` | Design | 1 | Audit, polish, critique and restyle a frontend | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) @ `d41d986` |
+| Impeccable | `impeccable` | Design | 1 | Audit, polish, critique and restyle a frontend | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) @ `b49177d` |
 | Security Audit | `security-audit` | Engineering | 1 | Find vulnerabilities and verify each one | [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill) @ `c1c8a8c` |
 | Anatomy | `anatomy` | Design | 1 | Interactive isometric drawings of real machines | [wheresryan22/anatomy](https://github.com/wheresryan22/anatomy) @ `1482e84` |
-| Diagram Design | `diagram-design` | Design | 1 | Editorial diagrams as HTML and SVG | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) @ `f6db0de` |
-| Taste | `taste-skill` | Design | 1 | Art direction so a page does not look generated | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) @ `f6b7657` |
+| Diagram Design | `diagram-design` | Design | 1 | Editorial diagrams as HTML and SVG | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) @ `0eeda75` |
+| Taste | `taste-skill` | Design | 1 | Art direction so a page does not look generated | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) @ `6c0b5c7` |
 | Hallmark | `hallmark` | Design | 1 | New pages, audits and redesigns without the AI look | [Nutlope/hallmark](https://github.com/Nutlope/hallmark) @ `04977e1` |
 | Ponytail | `ponytail` | Engineering | 6 | The smallest change that fully works, plus audits | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) @ `v5.3.3` |
-| Anthropic Engineering | `anthropic-engineering` | Engineering | 9 | Architecture, debugging, incidents, system design | [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) @ `e91a134` |
-| Agent Skills | `agent-skills` | Engineering | 24 | Addy Osmani's spec-to-ship workflow | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) @ `39b723c` |
-| Caveman | `caveman` | Engineering | 14 | Terse answers, lean build and verify skills | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) @ `a192894` |
+| Anthropic Engineering | `anthropic-engineering` | Engineering | 9 | Architecture, debugging, incidents, system design | [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) @ `2baf6d1` |
+| Agent Skills | `agent-skills` | Engineering | 25 | Addy Osmani's spec-to-ship workflow | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) @ `8c99fa3` |
+| Caveman | `caveman` | Engineering | 22 | Terse answers, lean build and verify skills | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) @ `b89752f` |
 | Claude Red | `claude-red` | Engineering | 79 | Offensive security for authorized tests | [SnailSploit/Claude-Red](https://github.com/SnailSploit/Claude-Red) @ `6196ba7` |
 | Dev Browser | `dev-browser` | Engineering | 1 | The agent drives a real Chrome | [SawyerHood/dev-browser](https://github.com/SawyerHood/dev-browser) @ `520ba5c` |
 | Emil Kowalski | `emil-kowalski` | Design | 19 | Animation, gestures and UI reviews | [emilkowalski/skills](https://github.com/emilkowalski/skills) @ `64eb3de` |
-| Marketing Skills | `marketingskills` | Marketing | 53 | Copy, SEO, CRO, ads, email, launches | [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) @ `73573e9` |
-| LinkedIn | `linkedin` | Marketing | 12 | Posts, comments and analytics, drafted for approval | [sergebulaev/linkedin-skills](https://github.com/sergebulaev/linkedin-skills) @ `8f8bc4b` |
+| Marketing Skills | `marketingskills` | Marketing | 53 | Copy, SEO, CRO, ads, email, launches | [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) @ `8a0c22d` |
+| LinkedIn | `linkedin` | Marketing | 12 | Posts, comments and analytics, drafted for approval | [sergebulaev/linkedin-skills](https://github.com/sergebulaev/linkedin-skills) @ `32083c0` |
 | I Have ADHD | `i-have-adhd` | Productivity | 1 | Answers shaped for a reader with ADHD | [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) @ `1ecea19` |
-| Baoyu | `baoyu` | Media | 21 | Covers, infographics, comics, slides, posting to X | [Djordje-Stojanovic/baoyu-skills](https://github.com/Djordje-Stojanovic/baoyu-skills) @ `1b7fb3f` (English fork of [JimLiu/baoyu-skills](https://github.com/JimLiu/baoyu-skills)) |
+| Baoyu | `baoyu` | Media | 21 | Covers, infographics, comics, slides, posting to X | [Djordje-Stojanovic/baoyu-skills](https://github.com/Djordje-Stojanovic/baoyu-skills) @ `5847f0a` (English fork of [JimLiu/baoyu-skills](https://github.com/JimLiu/baoyu-skills)) |
+| Game Dev | `gamedev` | Engineering | 79 | Games in 12 engines, with a router | [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) @ `c6ca6c4` |
+| Monorepo Doctor | `monorepo-doctor` | Engineering | 2 | Read-only JS/TS monorepo audit and cleanup | [santoshyadavdev/monorepo-doctor](https://github.com/santoshyadavdev/monorepo-doctor) @ `3cb32ea` |
 
 `local` is a folder of your own skills (`SIGMA_LOCAL_SKILLS_DIR` or `~/.sigmaskills/packs.json`). When two packs ship the same skill name, the earlier pack in this table keeps it. `npx @djordje-stojanovic/sigmaskills packs` prints every pack with its skills.
 

@@ -45,7 +45,7 @@ Kill rule: content the learner cannot apply to real material in the same part is
 
 ## Briefs
 
-Every brief names the task, the files, the done line, a scratch folder and the skills to read by path (SigmaBrief writes them). Data files go by path. Every agent ends with one report: files changed, checks run with results, what was not done. Every writing agent gets its own worktree.
+Every brief names the task, the files, the done line, a scratch folder and the skills to read by path (SigmaLoop writes them). Data files go by path. Every agent ends with one report: files changed, checks run with results, what was not done. Every writing agent gets its own worktree.
 
 ## Retro
 

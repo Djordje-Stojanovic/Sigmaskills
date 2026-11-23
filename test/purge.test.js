@@ -94,7 +94,7 @@ test('purge: dry-run enumerates the ownership plan and writes nothing', async ()
       selectedRoots: [UNIVERSAL_PROJECT_DESTINATION, '.claude/skills'],
       method: 'link',
     });
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     const backupDir = seedBackup(projectRoot, 'sigmawrite');
     const lookalike = path.join(projectRoot, '.agents', 'skills', 'not-recorded');
     fs.mkdirSync(lookalike, { recursive: true });
@@ -113,7 +113,7 @@ test('purge: dry-run enumerates the ownership plan and writes nothing', async ()
     const rels = plan.items.map((item) => item.relative).sort();
     assert.ok(rels.includes('.agents/skills/sigmawrite'));
     assert.ok(rels.includes('.claude/skills/sigmawrite'));
-    assert.ok(rels.includes('.agents/skills/sigmabrief'));
+    assert.ok(rels.includes('.agents/skills/sigmataste'));
     assert.ok(rels.includes('skills-lock.json'));
     assert.ok(rels.includes('state.json') || plan.items.some((item) => item.kind === 'manifest'));
     assert.ok(plan.items.some((item) => item.kind === 'backups'));
@@ -278,8 +278,8 @@ test('purge: complete purge removes owned trees, backups, journals, staging, and
       selectedRoots: [UNIVERSAL_PROJECT_DESTINATION, '.claude/skills'],
       method: 'link',
     });
-    installWrite(projectRoot, 'sigmabrief');
-    seedBackup(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
+    seedBackup(projectRoot, 'sigmataste');
     const stateDir = getProjectStateDir(projectRoot);
     fs.writeFileSync(path.join(stateDir, UNINSTALL_JOURNAL_FILENAME), '{}\n', 'utf8');
     fs.mkdirSync(path.join(stateDir, '.sigma-uninstall-staging', 'leftover'), { recursive: true });
@@ -298,7 +298,7 @@ test('purge: complete purge removes owned trees, backups, journals, staging, and
     assert.equal(result.command, 'purge');
     assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite')), false);
     assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite', '.claude/skills')), false);
-    assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), false);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmataste')), false);
     assert.equal(pathExists(getBackupRoot(stateDir)), false);
     assert.equal(pathExists(path.join(stateDir, UNINSTALL_JOURNAL_FILENAME)), false);
     assert.equal(pathExists(path.join(stateDir, PURGE_JOURNAL_FILENAME)), false);
@@ -316,9 +316,9 @@ test('purge: crash during quarantine restores live trees; crash after quarantine
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-purge-crash-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     const writeBefore = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8');
-    const briefBefore = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md'), 'utf8');
+    const briefBefore = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmataste'), 'SKILL.md'), 'utf8');
 
     assert.throws(
       () => executePurge({
@@ -333,7 +333,7 @@ test('purge: crash during quarantine restores live trees; crash after quarantine
       /injected purge quarantine crash/,
     );
     assert.equal(fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8'), writeBefore);
-    assert.equal(fs.readFileSync(path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md'), 'utf8'), briefBefore);
+    assert.equal(fs.readFileSync(path.join(skillDir(projectRoot, 'sigmataste'), 'SKILL.md'), 'utf8'), briefBefore);
     assert.ok(readState(projectRoot).skills.sigmawrite);
     assert.ok(readLock(projectRoot).skills.sigmawrite);
 
@@ -366,7 +366,7 @@ test('purge: crash during quarantine restores live trees; crash after quarantine
     });
     assert.equal(retried.resumed, true);
     assert.equal(pathExists(skillDir(projectRoot, 'sigmawrite')), false);
-    assert.equal(pathExists(skillDir(projectRoot, 'sigmabrief')), false);
+    assert.equal(pathExists(skillDir(projectRoot, 'sigmataste')), false);
     assert.equal(pathExists(path.join(stateDir, PURGE_QUARANTINE_DIRNAME)), false);
     assert.equal(pathExists(path.join(stateDir, 'state.json')), false);
     assert.equal(pathExists(path.join(projectRoot, 'skills-lock.json')), false);

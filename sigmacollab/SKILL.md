@@ -1,11 +1,16 @@
 ---
 name: sigmacollab
-description: 'Use when asked for sigmacollab, Colab, sigmavast or to rent compute for one job: a Google Colab runtime (CPU, High-RAM, GPU, TPU) paid in plan units, or a vast.ai GPU when Colab refuses. Drives the colab and vastai CLIs, shows the price, proves the teardown. Do not use for CPU dev boxes (SigmaBoat) or local GPUs.'
+description: 'Use when asked for sigmacollab, sigmaboat, sigmavast, Colab, a cloud box or to rent compute for one job: a boat.dev Linux box for a task of any repo (boxes, workers, the base, a preview), a Google Colab runtime (CPU, High-RAM, GPU, TPU) paid in plan units, or a vast.ai GPU when Colab refuses. Shows the price, proves the teardown. Do not use for local machines or local GPUs.'
 ---
 
 # SigmaCollab
 
-Run one job on rented compute, then prove the machine is gone. Google Colab comes first: a Google AI or Colab plan pays for its compute units, and its CPU costs less than a boat box. vast.ai is the second provider: for a card Colab refuses, or a job Colab's rules forbid. Both are driven by their own CLIs, `colab` and `vastai`; read `--help` and the docs before you guess a flag.
+Run one job on rented compute, then prove the machine is gone. Pick the provider from the job:
+
+- **boat.dev:** a Linux box with no GPU, for work on a repo (a task's box, workers for authorized work, a dev server preview). Read [references/boat.md](references/boat.md) and follow it; the sections below are for Colab and Vast.
+- **Colab, then Vast:** anything that needs a GPU, a TPU or High-RAM, or a CPU job that is not repo work.
+
+Google Colab comes first: a Google AI or Colab plan pays for its compute units, and its CPU costs less than a boat box. vast.ai is the second provider: for a card Colab refuses, or a job Colab's rules forbid. Both are driven by their own CLIs, `colab` and `vastai`; read `--help` and the docs before you guess a flag.
 
 No card, price or plan size is a rule here. Read them from the CLI and from [references/cards.md](references/cards.md).
 

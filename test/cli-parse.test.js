@@ -9,7 +9,7 @@ const FLAG_CASES = {
   '--version': [['--version'], { version: true }],
   '-h': [['-h'], { help: true }],
   '--help': [['--help'], { help: true }],
-  '--skill': [['update', '--skill', 'sigmawrite', '--skill=sigmabrief'], { skillIds: ['sigmawrite', 'sigmabrief'] }],
+  '--skill': [['update', '--skill', 'sigmawrite', '--skill=sigmataste'], { skillIds: ['sigmawrite', 'sigmataste'] }],
   '--all': [['uninstall', '--all'], { all: true }],
   '--dry-run': [['--dry-run'], { dryRun: true }],
   '--confirm-purge': [['purge', '--confirm-purge', 'purge SigmaSkills'], { confirmPurge: 'purge SigmaSkills' }],
@@ -81,9 +81,9 @@ test('parser: hidden aliases keep working', () => {
 });
 
 test('parser: install takes several positional skill ids and --skill values', () => {
-  const parsed = parseCliArgs(['install', 'sigmawrite', 'sigmareview', '--skill', 'sigmabrief', '--yes']);
+  const parsed = parseCliArgs(['install', 'sigmawrite', 'sigmareview', '--skill', 'sigmataste', '--yes']);
   assert.equal(parsed.command, 'install');
-  assert.deepEqual(parsed.skillIds, ['sigmawrite', 'sigmareview', 'sigmabrief']);
+  assert.deepEqual(parsed.skillIds, ['sigmawrite', 'sigmareview', 'sigmataste']);
   assert.deepEqual(parsed.unknown, []);
   assert.equal(parsed.yes, true);
 });

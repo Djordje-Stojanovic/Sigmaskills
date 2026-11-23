@@ -55,9 +55,9 @@ once when unclear, and read its docs (context7, a web search, a fast sigmaresear
 
 | Host | Loop command and stop check | Notes |
 |---|---|---|
-| Claude Code | `/goal`: a judge reads the transcript for the printed status line | The owner ends it with `/goal clear`. See `sigmaloop/references/host-claude-code.md`. |
-| Codex | `/goal`, with the status line as the done check | `sigmaloop/references/host-codex.md` |
-| pi, T3 Code, Antigravity | their own loop or goal mode | `sigmaloop/references/hosts.md` and the host file there |
+| Claude Code | `/goal`: a judge reads the transcript for the printed status line | The owner ends it with `/goal clear`. See `sigmaloop/references/hosts.md`. |
+| Codex | `/goal`, with the status line as the done check | `sigmaloop/references/hosts.md` |
+| pi, T3 Code, Antigravity | their own loop or goal mode | `sigmaloop/references/hosts.md` |
 | No loop mode | the owner re-sends "continue" | Every turn still starts by reading `GOAL.md` and ends with the status line. |
 
 - **"Every turn read GOAL.md":** an edit to that file steers the next turn. Put rulings there.

@@ -1,6 +1,6 @@
 ---
 name: sigmatour
-description: 'Use when asked for sigmatour or sigmafork, to walk through a codebase, or to copy it first, isolated, then learn it. Visual tour in one HTML page. Do not use to review it or plain git clone.'
+description: 'Use when asked for sigmatour, to walk through a codebase, or to copy it first, isolated, then learn it. Visual tour in one HTML page. Do not use to review it or plain git clone.'
 ---
 
 # SigmaTour

@@ -7,7 +7,7 @@ Machine-wide for the whole pack: `git`, Python 3, and `gh` signed in (`gh auth s
 ## Repo setup shared by several skills
 
 - **House files.** `ENGINEERING.md`, `DESIGN.md` and the shared sections of `AGENTS.md` come from the owner's masters: `../house-files.md`.
-- **Agent docs.** sigmareview, sigmabrief, sigmaship, sigmamusk and sigmaloop read `AGENTS.md` or `CLAUDE.md`. Offer to create `AGENTS.md` when neither exists.
+- **Agent docs.** sigmareview, sigmaship, sigmamusk and sigmaloop read `AGENTS.md` or `CLAUDE.md`. Offer to create `AGENTS.md` when neither exists.
 - **Issue tracker.** sigmaloop reads `docs/agents/issue-tracker.md`; sigmaimprove uses "the tracker named in the repository's agent docs". The Matt Pocock setup writes that file (see `mattpocock.md`). Without it, sigmaimprove falls back to `.scratch/sigmaimprove/`.
 - **Merge habit.** sigmaship squash-merges, closes the linked issue, deletes the local and remote branch, removes the worktree and syncs the base. Offer the GitHub settings that match: squash only, PR title as the commit title, delete the branch on merge:
   `gh api -X PATCH repos/<owner>/<repo> -F allow_squash_merge=true -F allow_merge_commit=false -F allow_rebase_merge=false -F delete_branch_on_merge=true -f squash_merge_commit_title=PR_TITLE`
@@ -20,17 +20,13 @@ Needs: push rights or a fork, `gh`. Reads the agent docs, README, contribution r
 
 Needs: `gh` and a named tracker. It uses labels only when they exist and never creates them. Setup: the tracker file above.
 
-### sigmabrief
-
-Needs: `gh`. Its briefs point to `/grilling` and `/tdd` (Matt Pocock pack). Setup: none.
-
 ### sigmaship
 
 Needs: an issue with acceptance criteria, git worktrees, `gh` with merge rights, the repo's test, type-check and lint commands. Optional: the `t3` CLI for a named reviewer model. Companions: `/to-spec`, `/to-tickets`, `/grilling`, `/tdd`. Setup: write the deploy command and the docs-sync step into `AGENTS.md`, so the land step has real commands; apply the merge habit above.
 
 ### sigmawrite
 
-Needs: nothing for plain use; the GUI option ("easy talk") needs a browser. Setup: optional, paste its system-prompt block into the host's instructions.
+Needs: nothing for plain use; the GUI option ("easy talk") needs a browser; the humanize mode optionally Python for `factcheck.py`. Setup: optional, paste its system-prompt block into the host's instructions.
 
 ### sigmaresearch
 
@@ -54,15 +50,11 @@ Needs: Python. Setup: it is the setup. On a yes it copies `guardrail_lint.py` in
 
 ### sigmaloop
 
-Needs: one long-run host (Claude Code, Codex, Antigravity, pi with lapi, or T3 Code). Reads `docs/agents/issue-tracker.md`. Setup: the tracker file above.
+Needs: one long-run host (Claude Code, Codex, Antigravity, pi with lapi, or T3 Code). Reads `docs/agents/issue-tracker.md`. Its briefs point to `/grilling` and `/tdd` (Matt Pocock pack). Setup: the tracker file above.
 
 ### sigmataste
 
 Needs: a browser or renderer for screenshots. Reads `DESIGN.md` when present. Setup: none.
-
-### sigmahuman
-
-Needs: nothing. Optional: Python for `factcheck.py`. Setup: none.
 
 ### sigmatour
 
@@ -75,10 +67,6 @@ Needs: Python 3.10+ and `pip install openpyxl python-pptx`. Optional: LibreOffic
 ### sigmacourse
 
 Needs: nothing beyond the agent host. The goal prompt it ends with needs `sigmaloop`; research steps use `sigmaresearch` and `sigmadeeplook` when installed. Setup: none; it sets up the course repo it plans.
-
-### sigmaboat
-
-Needs: the `boat` CLI (static download from boat.dev for Linux, macOS and Windows) and `BOAT_API_KEY` in the environment or a secrets file. A repo installs on a box from `.boat/setup.sh`, else its lockfiles. Setup: `boat login --key-stdin` once per machine; offer `.boat/setup.sh` when the lockfiles alone do not build the repo.
 
 ### sigmamusk
 
@@ -98,7 +86,7 @@ Needs: Python 3 and a target it can measure or the owner can judge. Uses `/grill
 
 ### sigmacollab
 
-Needs: the `colab` CLI (`uv tool install google-colab-cli`), the Google Cloud CLI for the sign-in, and a Google AI or Colab plan with units. For Vast: the `vastai` CLI with credit. Setup: `gcloud auth application-default login` once per machine (the skill names the scopes), then `colab --auth adc usage`; `vastai set api-key` once for Vast.
+Needs: the `colab` CLI (`uv tool install google-colab-cli`), the Google Cloud CLI for the sign-in, and a Google AI or Colab plan with units. For Vast: the `vastai` CLI with credit. Setup: `gcloud auth application-default login` once per machine (the skill names the scopes), then `colab --auth adc usage`; `vastai set api-key` once for Vast. For boat.dev boxes: the `boat` CLI (static download from boat.dev for Linux, macOS and Windows) and `BOAT_API_KEY` in the environment or a secrets file; `boat login --key-stdin` once per machine; a repo installs on a box from `.boat/setup.sh`, else its lockfiles.
 
 ### sigmavast
 

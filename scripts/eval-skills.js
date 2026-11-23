@@ -24,14 +24,14 @@ function prompts(out) {
   return {
     sigmareview: `/sigmareview Review this repository. ${OFFLINE} Write the report and commit it on branch sigmareview/${today} as the skill says, and push that branch to origin. Skip the pull request. Leave that branch checked out.`,
     sigmaimprove: `/sigmaimprove Improve this product. ${OFFLINE} Use the local-file tracker under .scratch/sigmaimprove/ and compare with the leaders from your own knowledge.`,
-    sigmabrief: `/sigmabrief Write briefs for the two local issues docs/issues/1-wall-collision.md and docs/issues/2-pause.md. approval: auto. ${OFFLINE} The issues are local files, not GitHub issues.`,
+    'sigmaloop:briefs': `/sigmaloop Write briefs for the two local issues docs/issues/1-wall-collision.md and docs/issues/2-pause.md. approval: auto. ${OFFLINE} The issues are local files, not GitHub issues.`,
     sigmaship: `/sigmaship Ship issue #1, described in docs/issues/1-wall-collision.md. ${OFFLINE} There is no pull request or CI: write the PR ledger body to ${out}/PR-BODY.md instead of opening a PR, keep it updated, and treat local \`npm test\` as CI. Do one review round yourself. Then merge the branch into main locally, push main to origin, clean up as land.md says, and write the output of the Verify commands to ${out}/CLEANUP.md.`,
     sigmadebug: `/sigmadebug Topics: T1 the snake survives one cell past two walls (docs/issues/1-wall-collision.md) and T2 there is no pause (docs/issues/2-pause.md). ${OFFLINE} Use the recommended answers and do not wait for the owner. Save the topic file and the plan file in the repository root. Do not start real workers: write the worker hand-off you would send and say it runs in the background with /sigmaship. Show topic T1 in the 5-part format with options A, B, C in the final reply.`,
     'sigmacreatearena': `/sigmacreatearena Build an arena that ranks these 4 caption styles on the metric Click: Punchy "One of them lied.", Question "Can $50 beat $5,000?", Stat "100x the price, 1x the punch", Plain "A boxing glove test.". One group, the thumbnail text for a boxing video. ${OFFLINE} Put the arena in the folder arena/ of the repository root, run its self-test and start its server, and give the local link in the final reply. Do not rank anything yourself.`,
     sigmawrite: `/sigmawrite Rewrite docs/NOTES.md in place so an outsider can follow it. Keep its meaning.`,
     sigmaresearch: `/sigmaresearch Research what these supplied records establish about community agreement. ${OFFLINE} Return the answer in chat. The only available source is an offline HN item: URL https://news.ycombinator.com/item?id=8863, published 2007-04-04, title My YC app: Dropbox - Throw away your USB drive, author dhouston, content: author announced a demo. No replies supplied. Access date ${today}. Reddit access log: https://www.reddit.com/r/LocalLLaMA/top/.rss?t=month returned 429; no body was read. Claude in Chrome is unavailable. Do not try live access or claim community consensus.`,
     sigmadeeplook: `/sigmadeeplook Look inside ${ROOT.replaceAll('\\', '/')}/test/sigmadeeplook/fixtures/clip.mp4. ${OFFLINE} Tell me when the screen goes black, what the subtitle says and what code is on screen near 0:08. Return the answer in chat.`,
-    sigmahuman: `/sigmahuman Rewrite docs/ANNOUNCE.md in place so it reads like a person wrote it. Keep every fact. ${OFFLINE} Change no other file and name the file in the final reply.`,
+    'sigmawrite:human': `/sigmawrite Rewrite docs/ANNOUNCE.md in place so it reads like a person wrote it. Keep every fact. ${OFFLINE} Change no other file and name the file in the final reply.`,
     sigmataste: `/sigmataste Taste pass on this terminal game. Lenses: first glance, only this one, type, colour, interface words. Use the recommended answers; do not ask the question round. ${OFFLINE} Write the plan at the repository root, change no other file, and name the plan file in the final reply.`,
     sigmatour: `/sigmatour Copy this repository to ${out}/copy as a plain local copy, isolated from the original, and give me a 15 minute tour of the copy for a new contributor. Use the recommended answers; do not ask the question round. Research depth 0, skill bundle none, no keys needed. ${OFFLINE} If python is not available, make the copy with git and check the paths by hand. Write the tour page into the copy, run the check, look at the page, and end with the final response the skill describes; there are no reader questions in this run.`,
     sigmaclimb: `/sigmaclimb Set up a speed loop for Qwen3-8B on vLLM on one rented RTX 4090 (Vast.ai), served as qwen. Use the recommended answers; do not ask the question round; do not rent a box. ${OFFLINE} Scaffold the project under Projects/Qwen3-8B-vLLM/ in the repository root from the skill's template, fill GOAL.md, SPEC_DRAFT.md, project.json and ideas.tsv, change no other file, and end with the final response the skill describes.`,
@@ -55,7 +55,7 @@ function readTree(dir, skip = new Set(['.git', '.claude', 'node_modules'])) {
 }
 
 function runSkill(skill, budget) {
-  const work = fs.mkdtempSync(path.join(os.tmpdir(), `sigma-eval-${skill}-`));
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), `sigma-eval-${skill.replace(':', '-')}-`));
   const repo = path.join(work, 'snake-lite');
   const out = path.join(work, 'out');
   fs.cpSync(FIXTURE, repo, { recursive: true });
@@ -68,7 +68,8 @@ function runSkill(skill, budget) {
   git(repo, 'commit', '-q', '-m', 'Snake Lite fixture');
   git(repo, 'remote', 'add', 'origin', path.join(work, 'origin.git'));
   git(repo, 'push', '-q', '-u', 'origin', 'main');
-  fs.cpSync(path.join(ROOT, skill), path.join(repo, '.claude', 'skills', skill), { recursive: true });
+  const folder = skill.split(':')[0]; // a case of a merged skill: sigmaloop:briefs runs sigmaloop
+  fs.cpSync(path.join(ROOT, folder), path.join(repo, '.claude', 'skills', folder), { recursive: true });
   fs.appendFileSync(path.join(repo, '.git', 'info', 'exclude'), '.claude/\n');
 
   const args = [

@@ -60,7 +60,7 @@ def _is_link(p: Path) -> bool:
     return p.is_symlink() or (hasattr(os.path, "isjunction") and os.path.isjunction(p))
 
 
-# ---------- copy it first: an isolated copy (the old sigmafork half) ----------
+# ---------- copy it first: an isolated copy (copy mode; older copies keep their log in .sigmafork) ----------
 
 NAME_CHAR = rb"[A-Za-z0-9_\-]"
 SKIP_SCAN_DIRS = HEAVY | {".git", LOG_DIR, ".sigmafork", ".hg", ".svn"}

@@ -29,7 +29,7 @@ body:
     attributes:
       label: Who feels it, and how bad is it?
       description: Which skill or host, how often, and how serious is it?
-      placeholder: Anyone running $sigmabrief on an issue. Happens every time; briefs are usable but the stop-condition is wrong.
+      placeholder: Anyone running $sigmaloop on an issue. Happens every time; briefs are usable but the stop-condition is wrong.
     validations:
       required: true
 
@@ -39,8 +39,8 @@ body:
       label: Steps to make it happen
       description: Smallest reliable sequence that triggers the problem.
       placeholder: |
-        1. Install sigmabrief from this repo
-        2. Invoke $sigmabrief on a public GitHub issue
+        1. Install sigmaloop from this repo
+        2. Invoke $sigmaloop on a public GitHub issue
         3. Read the “do not” / stop section of the emitted brief
     validations:
       required: true
@@ -66,7 +66,7 @@ body:
     attributes:
       label: Where it ran
       description: Agent host, OS, and how the skill was installed or invoked.
-      placeholder: Cursor / Windows 11 / npx skills add … --skill sigmabrief
+      placeholder: Cursor / Windows 11 / npx skills add … --skill sigmaloop
     validations:
       required: true
 
@@ -78,7 +78,7 @@ body:
       options:
         - sigmareview
         - sigmaimprove
-        - sigmabrief
+        - sigmaloop
         - sigmaship
         - sigmawrite
         - Sigma Installer (CLI)

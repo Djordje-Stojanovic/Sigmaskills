@@ -24,7 +24,7 @@ test('packs: the registry lists the bundled Sigma pack and the twenty-nine outsi
   const box = createSandbox();
   try {
     const packs = load(box);
-    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'anthropic-engineering', 'agent-skills', 'caveman', 'claude-red', 'dev-browser', 'emil-kowalski', 'marketingskills', 'linkedin', 'i-have-adhd', 'baoyu', 'local']);
+    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'anthropic-engineering', 'agent-skills', 'caveman', 'claude-red', 'dev-browser', 'emil-kowalski', 'marketingskills', 'linkedin', 'i-have-adhd', 'baoyu', 'gamedev', 'monorepo-doctor', 'local']);
     const sigma = findPack(packs, 'sigma');
     assert.equal(sigma.skills.length, catalog.skills.length);
     assert.ok(sigma.skills.every((skill) => skill.kind === 'bundled'));

@@ -1,6 +1,6 @@
 interface:
   display_name: SigmaWrite
-  short_description: Clear technical English, plus interactive status boards
+  short_description: Clear technical English, human-sounding text, and status boards
   default_prompt: Use $sigmawrite so explanations and summaries stay clear,
     technical, and free of jargon gibberish. Say easy talk for an interactive board.
 policy:

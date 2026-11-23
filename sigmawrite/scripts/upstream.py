@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Keep SigmaHuman on blader/humanizer: a vendored upstream copy plus our patch layer, one update command.
+"""Keep the humanize mode on blader/humanizer: a vendored upstream copy plus our patch layer, one update command.
 
 The upstream copy is upstream/humanizer-SKILL.md at the commit in upstream/UPSTREAM.json. Sections A to F of
 references/patterns.md (the 26 numbered patterns) are that file's "## A." block, byte for byte. Everything else is
-the patch layer and stays ours: SKILL.md, references/lanes.md, section G of patterns.md, scripts/factcheck.py.
+the patch layer and stays ours: references/human.md, references/lanes.md, section G of patterns.md, scripts/factcheck.py.
 
     python3 scripts/upstream.py check            offline: patterns.md A-F equals the vendored copy (exit 1 when not)
     python3 scripts/upstream.py status           online: is a newer upstream commit or release out? (exit 1 when behind)
@@ -32,7 +32,7 @@ UP_SKILL = UP_DIR / "humanizer-SKILL.md"
 UP_META = UP_DIR / "UPSTREAM.json"
 PATTERNS = SKILL / "references" / "patterns.md"
 LICENSE = SKILL / "references" / "LICENSE-humanizer.txt"
-VERSIONED = [SKILL / "SKILL.md", PATTERNS, SKILL / "references" / "sources.md"]
+VERSIONED = [SKILL / "references" / "human.md", PATTERNS, SKILL / "references" / "sources.md"]
 API = "https://api.github.com/repos/blader/humanizer"
 BLOCK_START = re.compile(r"^## A\. ", re.M)
 
@@ -56,7 +56,7 @@ def patterns_block(text: str) -> tuple[int, int]:
 
 
 def get(path: str) -> dict | list:
-    headers = {"Accept": "application/vnd.github+json", "User-Agent": "sigmahuman"}
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "sigmawrite"}
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -129,7 +129,7 @@ def cmd_sync(ref: str | None) -> int:
         (new_skill[:new_skill.find("## A. ")] + new_skill[new_skill.find("\n## When not to act"):]).splitlines(),
         lineterm="", n=0) if l[:1] in "+-" and not l.startswith(("+++", "---"))]
     if outside:
-        print(f"{len(outside)} changed lines upstream outside A-F (method, voice, when not to act): fold them into SKILL.md by hand:")
+        print(f"{len(outside)} changed lines upstream outside A-F (method, voice, when not to act): fold them into references/human.md by hand:")
         print("\n".join(outside[:80]))
     return 0
 

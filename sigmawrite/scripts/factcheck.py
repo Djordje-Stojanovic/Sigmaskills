@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SigmaHuman fact check: compare a text before and after a rewrite.
+"""SigmaWrite humanize fact check: compare a text before and after a rewrite.
 
   python factcheck.py BEFORE AFTER [--json]
 

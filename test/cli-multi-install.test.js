@@ -73,12 +73,12 @@ test('cli: install a b c installs every skill and writes the lock once', async (
   const projectRoot = tempProject(t);
   const lockWrites = countLockWrites(t);
   const io = createMockIo();
-  const code = await runCli(['install', 'sigmawrite', 'sigmareview', 'sigmabrief', '--project', projectRoot], io);
+  const code = await runCli(['install', 'sigmawrite', 'sigmareview', 'sigmataste', '--project', projectRoot], io);
 
   assert.equal(code, 0, io.getStderr());
   assert.equal(lockWrites(), 1);
-  assert.deepEqual(Object.keys(readLock(projectRoot).skills), ['sigmabrief', 'sigmareview', 'sigmawrite']);
-  for (const id of ['sigmawrite', 'sigmareview', 'sigmabrief']) {
+  assert.deepEqual(Object.keys(readLock(projectRoot).skills), ['sigmataste', 'sigmareview', 'sigmawrite']);
+  for (const id of ['sigmawrite', 'sigmareview', 'sigmataste']) {
     assert.ok(fs.existsSync(path.join(projectRoot, '.agents', 'skills', id, 'SKILL.md')), id);
     assert.match(io.getStdout(), new RegExp(`Installed .* \\(${id}\\)`));
   }
@@ -111,28 +111,28 @@ test('cli: install --all cannot be combined with skill ids', async (t) => {
 test('cli: multi-skill dry run is read-only; JSON lists one plan per skill', async (t) => {
   const projectRoot = tempProject(t);
   const io = createMockIo();
-  const code = await runCli(['install', 'sigmawrite', 'sigmabrief', '--dry-run', '--project', projectRoot], io);
+  const code = await runCli(['install', 'sigmawrite', 'sigmataste', '--dry-run', '--project', projectRoot], io);
   assert.equal(code, 0, io.getStderr());
   assert.match(io.getStdout(), /Plan: SigmaWrite/);
-  assert.match(io.getStdout(), /Plan: SigmaBrief/);
+  assert.match(io.getStdout(), /Plan: SigmaTaste/);
 
   const jsonIo = createMockIo();
-  assert.equal(await runCli(['install', 'sigmawrite', 'sigmabrief', '--dry-run', '--json', '--project', projectRoot], jsonIo), 0);
+  assert.equal(await runCli(['install', 'sigmawrite', 'sigmataste', '--dry-run', '--json', '--project', projectRoot], jsonIo), 0);
   const parsed = JSON.parse(jsonIo.getStdout());
   assert.equal(parsed.schemaVersion, 1);
-  assert.deepEqual(parsed.plans.map((plan) => plan.skill), ['sigmawrite', 'sigmabrief']);
+  assert.deepEqual(parsed.plans.map((plan) => plan.skill), ['sigmawrite', 'sigmataste']);
   assert.ok(parsed.plans.every((plan) => plan.dryRun === true));
   assert.deepEqual(fs.readdirSync(projectRoot), []);
 });
 
 test('cli: a blocked skill stops a multi-skill install before any write', async (t) => {
   const projectRoot = tempProject(t);
-  const stranger = path.join(projectRoot, '.agents', 'skills', 'sigmabrief');
+  const stranger = path.join(projectRoot, '.agents', 'skills', 'sigmataste');
   fs.mkdirSync(stranger, { recursive: true });
   fs.writeFileSync(path.join(stranger, 'notes.txt'), 'not sigma', 'utf8');
 
   const io = createMockIo();
-  const code = await runCli(['install', 'sigmawrite', 'sigmabrief', '--project', projectRoot], io);
+  const code = await runCli(['install', 'sigmawrite', 'sigmataste', '--project', projectRoot], io);
 
   assert.equal(code, 1);
   assert.ok(!fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmawrite')));
@@ -155,7 +155,7 @@ function snapshotTree(root) {
 
 test('transaction: a failure in a later skill rolls back every skill in the batch', async (t) => {
   const projectRoot = tempProject(t);
-  assert.equal(await runCli(['install', 'sigmabrief', '--project', projectRoot], createMockIo()), 0);
+  assert.equal(await runCli(['install', 'sigmataste', '--project', projectRoot], createMockIo()), 0);
   const before = snapshotTree(projectRoot);
   const packageRoot = findPackageRoot();
 
@@ -180,10 +180,10 @@ test('cli: install a b --global --yes installs both skills and writes no project
   const homeDir = tempProject(t);
   const projectRoot = tempProject(t);
   const io = { ...createMockIo(), env: { ...process.env, HOME: homeDir, USERPROFILE: homeDir } };
-  const code = await runCli(['install', 'sigmawrite', 'sigmabrief', '--global', '--yes', '--project', projectRoot], io);
+  const code = await runCli(['install', 'sigmawrite', 'sigmataste', '--global', '--yes', '--project', projectRoot], io);
 
   assert.equal(code, 0, io.getStderr());
-  for (const id of ['sigmawrite', 'sigmabrief']) {
+  for (const id of ['sigmawrite', 'sigmataste']) {
     assert.ok(fs.existsSync(path.join(homeDir, '.agents', 'skills', id, 'SKILL.md')), id);
   }
   assert.deepEqual(fs.readdirSync(projectRoot), []);
@@ -191,7 +191,7 @@ test('cli: install a b --global --yes installs both skills and writes no project
 
 test('cli: install a b migrates an old-layout project once, then installs both', async (t) => {
   const projectRoot = tempProject(t);
-  assert.equal(await runCli(['install', 'sigmabrief', '--project', projectRoot], createMockIo()), 0);
+  assert.equal(await runCli(['install', 'sigmataste', '--project', projectRoot], createMockIo()), 0);
   const agents = path.join(projectRoot, '.agents');
   const stateDir = path.join(agents, '.sigmaskills');
   for (const name of fs.readdirSync(stateDir)) {
@@ -205,6 +205,6 @@ test('cli: install a b migrates an old-layout project once, then installs both',
   assert.equal(code, 0, io.getStderr());
   assert.ok(!fs.existsSync(path.join(agents, 'state.json')));
   const state = JSON.parse(fs.readFileSync(path.join(stateDir, 'state.json'), 'utf8'));
-  assert.deepEqual(Object.keys(state.skills).sort(), ['sigmabrief', 'sigmareview', 'sigmawrite']);
-  assert.deepEqual(Object.keys(readLock(projectRoot).skills), ['sigmabrief', 'sigmareview', 'sigmawrite']);
+  assert.deepEqual(Object.keys(state.skills).sort(), ['sigmataste', 'sigmareview', 'sigmawrite']);
+  assert.deepEqual(Object.keys(readLock(projectRoot).skills), ['sigmataste', 'sigmareview', 'sigmawrite']);
 });
