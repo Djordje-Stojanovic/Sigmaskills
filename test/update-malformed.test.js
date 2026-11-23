@@ -146,9 +146,9 @@ test('update: skip leaves malformed skill unchanged while another skill updates'
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-malformed-skip-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     breakMarkers(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'duplicate');
-    ageOfficial(projectRoot, 'sigmabrief');
+    ageOfficial(projectRoot, 'sigmataste');
     const writeBefore = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8');
     const writeStateBefore = JSON.stringify(readState(projectRoot).skills.sigmawrite);
 
@@ -162,7 +162,7 @@ test('update: skip leaves malformed skill unchanged while another skill updates'
     assert.equal(fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md'), 'utf8'), writeBefore);
     assert.equal(JSON.stringify(readState(projectRoot).skills.sigmawrite), writeStateBefore);
     assert.equal(
-      fs.readFileSync(path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md'), 'utf8').includes('<!-- sigma-older -->'),
+      fs.readFileSync(path.join(skillDir(projectRoot, 'sigmataste'), 'SKILL.md'), 'utf8').includes('<!-- sigma-older -->'),
       false,
     );
   } finally {
@@ -308,24 +308,24 @@ test('packed CLI skips a malformed skill and updates a sibling Project Installat
       cwd: appDir,
       encoding: 'utf8',
     });
-    execFileSync('node', [installedBin, 'install', 'sigmabrief', '--project', project], {
+    execFileSync('node', [installedBin, 'install', 'sigmataste', '--project', project], {
       cwd: appDir,
       encoding: 'utf8',
     });
     const writeMd = path.join(skillDir(project, 'sigmawrite'), 'SKILL.md');
     breakMarkers(writeMd, 'missing');
     const broken = fs.readFileSync(writeMd, 'utf8');
-    const briefMd = path.join(skillDir(project, 'sigmabrief'), 'SKILL.md');
+    const briefMd = path.join(skillDir(project, 'sigmataste'), 'SKILL.md');
     fs.writeFileSync(
       briefMd,
       fs.readFileSync(briefMd, 'utf8').replace('## Personal instructions', '<!-- sigma-older -->\n\n## Personal instructions'),
       'utf8',
     );
-    const briefLive = computeSkillRevisionAndHashes(skillDir(project, 'sigmabrief'));
+    const briefLive = computeSkillRevisionAndHashes(skillDir(project, 'sigmataste'));
     const statePath = path.join(project, '.agents', '.sigmaskills', 'state.json');
     const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
-    state.skills.sigmabrief.baseHashes = briefLive.files;
-    state.skills.sigmabrief.revision = briefLive.revision;
+    state.skills.sigmataste.baseHashes = briefLive.files;
+    state.skills.sigmataste.revision = briefLive.revision;
     fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
 
     execFileSync(

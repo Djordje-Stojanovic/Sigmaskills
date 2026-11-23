@@ -452,7 +452,7 @@ function sigmadebug({ result }) {
 }
 
 
-export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, sigmahuman, sigmatour, sigmaclimb, sigmamusk, sigmaboat, sigmadebug, sigmareview, sigmaimprove, sigmabrief, sigmaship, sigmawrite, sigmaresearch, sigmadeeplook, sigmafreedom };
+export const CONTRACTS = { 'sigmacreatearena': sigmacreatearena, sigmaloop, sigmataste, 'sigmawrite:human': sigmahuman, sigmatour, sigmaclimb, sigmamusk, 'sigmacollab:boat': sigmaboat, sigmadebug, sigmareview, sigmaimprove, 'sigmaloop:briefs': sigmabrief, sigmaship, sigmawrite, sigmaresearch, sigmadeeplook, sigmafreedom };
 
 export function checkContract(skill, output) {
   const check = CONTRACTS[skill];

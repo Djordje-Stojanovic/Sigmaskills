@@ -59,7 +59,7 @@ seed: docs/templates/CLAUDE-template.md -> CLAUDE.md
 ## Check, apply, undo
 
 - `node <sigmasetup>/scripts/house.mjs check .`: a table with House file, Kind, State (`current`, `drift`, `missing`, `no master`) and Note. Exit 0 when all are current, 1 on drift.
-- `node <sigmasetup>/scripts/house.mjs apply .`: saves the old copy of every file it will change, writes all rows, and prints the undo command. Line endings alone are not drift; a copy and a merged section keep the repo file's line endings.
+- `node <sigmasetup>/scripts/house.mjs apply .`: saves the old copy of every file it will change, writes every `drift` row, and prints the undo command. A `missing` row is written only when `--add <file>[,<file>]` names it, after the owner said yes; the rest are listed as not written. Line endings alone are not drift; a copy and a merged section keep the repo file's line endings.
 - `node <sigmasetup>/scripts/house.mjs undo .`: puts back what the last apply changed and deletes the files it created. The saved copies live in the repo's git folder (`.git/sigmasetup-undo/`), outside the working tree; in a folder without git, in `.sigmasetup-undo/`.
 
 ## DESIGN.md without a house source

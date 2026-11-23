@@ -54,7 +54,7 @@ test('A1: generic skills-lock.json stays byte-identical through install, restore
   assert.match(r.stdout, /skills-lock\.json left alone because another tool owns it/);
   assert.equal(fs.readFileSync(lockPath, 'utf8'), GENERIC_LOCK);
 
-  r = await run(dirs, ['install', 'sigmabrief', 'sigmareview']);
+  r = await run(dirs, ['install', 'sigmataste', 'sigmareview']);
   assert.equal(r.code, 0, r.stderr);
   assert.equal(fs.readFileSync(lockPath, 'utf8'), GENERIC_LOCK);
 

@@ -17,17 +17,17 @@ Each example shows the reasoning, so read for the method more than the answer.
 ## The two loops
 
 **Fix loop: what is wrong.**
-`SigmaReview → SigmaBrief → fix PRs → merge`
+`SigmaReview → SigmaLoop briefs → fix PRs → merge`
 
 - SigmaReview proves defects (bugs, security, slow paths) and publishes one PR that adds `SIGMAREVIEW-YYYY-MM-DD.md`. Each finding is a self-contained fix brief, grouped into waves that can run in parallel.
-- SigmaBrief turns a report, a wave or a list of issues into paste-ready briefs for other agents, in safe parallel waves. It writes briefs and does no fixing.
+- SigmaLoop turns a report, a wave or a list of issues into paste-ready briefs for other agents, in safe parallel waves. It writes briefs and does no fixing.
 - A finding filed as an issue with a Done-when goes to SigmaShip instead.
 
 **Grow loop: what would make it better.**
 `SigmaImprove → category issues → SigmaShip`
 
 - SigmaImprove compares the product with the world's top 1-3 and keeps one living issue per category. Each entry has a `Done when:` line, so SigmaShip can ship it.
-- Several entries at once go through SigmaBrief, or through SigmaLoop for an unattended run.
+- Several entries at once go through SigmaLoop: briefs, or a run file for an unattended run.
 
 **SigmaShip** is the end of both loops. It ships one issue with acceptance criteria: a test-first PR, a self-review (a second-agent review only on request), then the merge. `sigmaship stop` ends at a ready PR. Without criteria, its own table sends you to `to-spec`/`to-tickets`, to `grilling`, or to SigmaReview/SigmaImprove.
 
@@ -40,21 +40,21 @@ Each example shows the reasoning, so read for the method more than the answer.
 | One bug | `diagnosing-bugs` → regression test → SigmaShip | SigmaDebug says "not for one bug". |
 | Many open topics or doubts | SigmaDebug | Settles one topic at a time. Each fix ships in a background agent through SigmaShip. |
 | The same correction a second time | SigmaCorrect → SigmaShip | It turns the correction into a check or a test. A one-time bug is not a repeat. |
-| Work to run unattended | SigmaLoop → paste the prompt into the host | SigmaLoop writes the prompt and a loop file. It never starts the run. |
-| Cloud machines for that work | SigmaBoat | CPU boxes on boat.dev. A GPU or TPU job goes to SigmaCollab. |
+| Work to run unattended | SigmaLoop → paste the prompt into the host | SigmaLoop writes the prompt and a run file. It never starts the run. |
+| Cloud machines for that work | SigmaCollab | boat.dev boxes for repo work; Colab or Vast for a GPU or TPU job. |
 | A bloated repo, machine or setup | `/sigmamusk cut <repo>` or `/sigmamusk reset` | It measures the waste first. The owner decides what stays. |
 
 ## What comes after each skill
 
 | After | Next |
 |---|---|
-| SigmaReview | SigmaBrief on the report, or fix the first wave |
-| SigmaImprove | SigmaShip on one entry; SigmaBrief or SigmaLoop for many |
+| SigmaReview | SigmaLoop briefs on the report, or fix the first wave |
+| SigmaImprove | SigmaShip on one entry; SigmaLoop for many |
 | SigmaMusk | SigmaShip on the issue it filed |
 | SigmaTaste | `/sigmaloop` to run the plan, `/sigmaship` for one ticket, or `implement-spec` |
 | SigmaCorrect | SigmaShip for the check |
 | SigmaResearch | `grill-with-docs` or `to-spec` with the findings; SigmaImprove when it is about a product |
-| SigmaLoop | paste the prompt; SigmaBoat for workers |
+| SigmaLoop | paste the prompt or the briefs; SigmaCollab for cloud workers |
 | SigmaShip | done. When the same review comment comes back twice: SigmaCorrect |
 
 ## Standalone Sigma skills
@@ -63,8 +63,7 @@ Each example shows the reasoning, so read for the method more than the answer.
 |---|---|---|
 | Read public sources (Reddit, X, HN, GitHub, YouTube, arXiv, SEC) | SigmaResearch | posting or replying |
 | Look inside video, audio, scans, odd Excel, sqlite, binaries | SigmaDeepLook | plain text, CSV, JSON, code |
-| Plain English, status boards, less jargon | SigmaWrite | rewriting code or APIs |
-| Make a draft read human, or write a script | SigmaHuman | cutting jargon (SigmaWrite) |
+| Plain English, a draft that must read human, a script, status boards | SigmaWrite | rewriting code or APIs |
 | A ranked plan of visible changes to a page, app, deck or film | SigmaTaste | building the changes |
 | A visual tour of a codebase | SigmaTour | reviewing it |
 | Make a score better, one kept-or-reverted change at a time | SigmaClimb | a goal nobody can score |
@@ -72,7 +71,7 @@ Each example shows the reasoning, so read for the method more than the answer.
 | Make or install a new skill | SigmaCreate | a correction given twice |
 | A course, tutorial or guide | SigmaCourse | live tutoring |
 | Any money question: a stock, a deal, a purchase, a loan | SigmaFinanceMan | questions with no money in them |
-| Rent a GPU, TPU or big CPU for one job | SigmaCollab | CPU dev boxes |
+| Rent a cloud box, a GPU, TPU or big CPU for one job | SigmaCollab | local machines |
 | Set up a repo after install, sync house files | SigmaSetup | installing skills |
 | Remove model-written refusals from a repo | SigmaFreedom | adding restrictions |
 

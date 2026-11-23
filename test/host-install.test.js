@@ -96,12 +96,12 @@ test('install: unselected Pi and Claude Code directories stay untouched on defau
     const catalog = getCatalog(ROOT);
     executeProjectInstall({
       catalog,
-      skillId: 'sigmabrief',
+      skillId: 'sigmataste',
       projectRoot,
       packageRoot: ROOT,
     });
 
-    assert.ok(fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmabrief', 'SKILL.md')));
+    assert.ok(fs.existsSync(path.join(projectRoot, '.agents', 'skills', 'sigmataste', 'SKILL.md')));
     assert.ok(!fs.existsSync(path.join(projectRoot, '.claude')));
     assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));
   } finally {

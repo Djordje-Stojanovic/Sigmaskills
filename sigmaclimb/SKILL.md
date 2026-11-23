@@ -1,6 +1,6 @@
 ---
 name: sigmaclimb
-description: Use when asked for sigmaclimb (earlier names sigmaspeedloop, speed loop, hill climb) or to make anything measurable or judgeable better one kept-or-reverted change at a time (a speed, a size, a render, a look, a text). Owner interview, profile, locked scorer, quality check. Do not use for code review, bug hunts or a goal nobody can score or judge.
+description: Use when asked for sigmaclimb, a speed loop or a hill climb, or to make anything measurable or judgeable better one kept-or-reverted change at a time (a speed, a size, a render, a look, a text). Owner interview, profile, locked scorer, quality check. Do not use for code review, bug hunts or a goal nobody can score or judge.
 ---
 
 # SigmaClimb

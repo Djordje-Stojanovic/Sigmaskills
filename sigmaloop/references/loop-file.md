@@ -33,12 +33,13 @@ Shape: <solo | crew of N slots | N lanes: read lanes.md>. Solo: this session pla
 | Planner (orchestrator) | top | <ids> |
 | Builder | <cheap or mid> | <ids> |
 | Reviewer (another family than the builder) | <mid or top> | <ids> |
-| Clerk (ticks, handoff, status) | cheap | <ids> |
+| Clerk (handoff, status) | cheap | <ids> |
 1. The planner plans, starts jobs and merges. It does no builder's tool calls.
 2. One whole unit per builder: build, prove with the unit's acceptance tests, commit. The brief is a spec path and a done line.
-3. One review per pull request. The builder first re-reads its own diff in a fresh context. Then one gate before the merge, by another model family when one is free; the reviewer runs the change, not only reads it, and ends with MERGE or a finding list. The builder fixes each finding or dismisses it in writing; style nits are dropped. At most 3 rounds, 5 for security, data loss or publishing; a round with nothing new ends it. No human review.
+3. The reviewer is a role with no count and no queue: each finished pull request gets a fresh reviewer at once, from another model family when one is free. The builder first re-reads its own diff in a fresh context. The reviewer runs the change, not only reads it, and ends with MERGE or a finding list; its diff leaves out the paths the repo names as the owner's content, so no model passes or fails his words. The builder fixes each finding; one it holds to be wrong is answered with the command that shows it, never waved off in prose. Style nits are dropped. Round limit: <3, 5 for security, data loss or publishing>; a round with nothing new ends it. No human review.
 4. When a job ends, its slot takes the most valuable eligible unit in the same turn. Slots: <N>, capped by CPU (below), not by habit.
 5. Lanes only: workers end after one ticket, lane managers go on ticket after ticket, the top never ends before the stop line. Priority is one ranked list for all lanes, never one list per lane.
+6. Each ticket is Ready, Working (a builder has it), Reviewing, or Landed; findings send it back to Working. The builder that finished a part ticks it off itself, where the to-do is: the spec, the PR's checklist or the issue. Nobody ticks for it.
 Guides (workers are briefed by the guide of their model): <links>
 
 ## Failure rules
@@ -67,6 +68,8 @@ Guides (workers are briefed by the guide of their model): <links>
 <The ranked list, or the tracker section that holds it. Items that need the user live: write their facts, never decide them.>
 
 ## Landing
+- Shape: <one feature branch and one PR for all tickets (default): builders branch from it, the planner merges each passed ticket branch into it, the PR merges after the full gate at Finish | a PR per ticket, each with `Closes #N`>.
+- One branch: each ticket is its own issue, a sub-issue of the spec issue (`gh issue create --parent <spec>`, gh 2.94 or later) listed there as `- [ ] #N`. Its builder closes it after its branch is merged into the feature branch, not when its local tests pass, so a ticket that waits for it does not start early. Two builders ticking boxes in one issue text lose a tick: GitHub keeps the last save.
 - Code first, with the unit's tests. <Changed-unit check command.>
 - Also lands in: <docs, changelog, tracker>.
 - Merge: <worktree off origin/base; PR; squash merge; delete branch and worktree>. Never skip hooks.

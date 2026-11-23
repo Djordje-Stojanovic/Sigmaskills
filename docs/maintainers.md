@@ -20,11 +20,9 @@ Sigmaskills/
 ├── skills-lock.json          Pins those dev skills; see below
 ├── sigmareview/              SKILL.md · agents/ · references/
 ├── sigmaimprove/             SKILL.md · agents/ · references/
-├── sigmabrief/               SKILL.md · agents/ · references/
 ├── sigmaship/                SKILL.md · agents/ · references/
 ├── sigmaloop/                SKILL.md · agents/ · references/
 ├── sigmataste/               SKILL.md · agents/ · references/ (lenses/)
-├── sigmahuman/               SKILL.md · agents/ · references/ (patterns, lanes, upstream MIT notice) · scripts/ (factcheck.py)
 ├── sigmatour/                SKILL.md · agents/ · references/ · assets/ (tour template) · scripts/ (sigmatour.py)
 ├── sigmawrite/               SKILL.md · agents/ · references/ · template.html
 ├── sigmaresearch/             SKILL.md · agents/ · references/ · scripts/ (readers, source-log counter)

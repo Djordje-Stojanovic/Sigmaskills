@@ -205,5 +205,78 @@ class Climb(unittest.TestCase):
         self.assertIn("NOT LOCKED", r.stderr)
 
 
+class BoxModel(unittest.TestCase):
+    """The box scripts read the served model from box/model.env; with the values they held before, they run the same."""
+    VALUES = {  # the worked example's run, as the scripts held it before model.env
+        "MODEL_ID": "nvidia/Qwen3.8-Flash-Next-FP4-Local", "MODEL_REVISION": "b9ce18a6887e18c089fdea8509a33e63429a3300",
+        "SERVED_NAME": "qwen", "REASONING_PARSER": "qwen3", "TOOL_PARSER": "qwen3_xml",
+        "OVERLAY_ID": "Loke-60000/Qwen3.8-Flash-Next-FP4-Local-abliterated",
+    }
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.box = os.path.join(self.tmp, "box")
+        shutil.copytree(os.path.join(TEMPLATE, "box"), self.box)
+        self.model_dir = os.path.join(self.tmp, "weights").replace("\\", "/")
+        self.log = os.path.join(self.tmp, "calls.log").replace("\\", "/")
+        self.bin = os.path.join(self.tmp, "bin")
+        for tool in ("hf", "vllm"):  # stand-ins that record their arguments
+            put(os.path.join(self.bin, tool), f'#!/usr/bin/env bash\necho "{tool} $*" >> "{self.log}"\n')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def set_values(self):
+        lines = [f'{k}="{v}"' for k, v in {**self.VALUES, "MODEL_DIR": self.model_dir}.items()]
+        put(os.path.join(self.box, "model.env"), "\n".join(lines) + "\n")
+
+    def bash(self, script):
+        env = {**os.environ, "HF_TOKEN": "x", "PATH": self.bin + os.pathsep + os.environ["PATH"]}
+        return subprocess.run([BASH, os.path.join(self.box, script).replace("\\", "/")], env=env, capture_output=True, text=True)
+
+    @unittest.skipUnless(BASH, "needs bash")
+    def test_download_and_serve_use_the_model_values(self):
+        self.set_values()
+        self.assertEqual(self.bash("download.sh").returncode, 0)
+        self.assertEqual(self.bash("serve_base.sh").returncode, 0)
+        calls = open(self.log, encoding="utf-8").read()
+        v = self.VALUES
+        self.assertIn(f"hf download {v['MODEL_ID']} --revision {v['MODEL_REVISION']} --local-dir {self.model_dir}", calls)
+        self.assertIn(f"hf download {v['OVERLAY_ID']} --local-dir {self.model_dir}", calls)
+        self.assertIn(f"vllm serve {self.model_dir} --served-model-name qwen", calls)
+        self.assertIn("--reasoning-parser qwen3 --tool-call-parser qwen3_xml", calls)
+
+    @unittest.skipUnless(BASH, "needs bash")
+    def test_placeholders_stop_the_scripts(self):
+        r = self.bash("download.sh")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("set MODEL_ID in box/model.env", r.stderr)
+
+    def test_the_bench_reads_the_served_name_from_model_env(self):
+        proj = os.path.join(self.tmp, "proj")
+        shutil.copytree(TEMPLATE, proj)
+        self.box = os.path.join(proj, "box")
+        self.set_values()
+        bench = os.path.join(proj, "scripts", "bench")
+        code = ("import sys, types; sys.modules['requests'] = types.SimpleNamespace(Session=lambda: None); "
+                "sys.path.insert(0, '.'); import common; print(common.MODEL)")
+        env = {k: v for k, v in os.environ.items() if k != "BENCH_MODEL"}
+        r = subprocess.run([sys.executable, "-c", code], cwd=bench, capture_output=True, text=True, env=env)
+        self.assertEqual(r.stdout.strip(), "qwen", r.stderr)
+        if BASH:
+            line = [l for l in open(os.path.join(bench, "target.sh"), encoding="utf-8") if l.startswith("BENCH_MODEL=")][0]
+            sh = f'BENCH="{bench.replace(chr(92), "/")}"; {line.strip()}; echo "$BENCH_MODEL"'
+            self.assertEqual(subprocess.run([BASH, "-c", sh], capture_output=True, text=True, env=env).stdout.strip(), "qwen")
+
+    def test_python_box_scripts_read_the_model_values(self):
+        # verify_weights.py and cfgcheck.py take MODEL_DIR and SERVED_NAME from this helper (they need the box to run whole).
+        self.set_values()
+        code = "from model_env import model_env; m = model_env(); print(m['MODEL_DIR'], m['SERVED_NAME'])"
+        r = subprocess.run([sys.executable, "-c", code], cwd=self.box, capture_output=True, text=True)
+        self.assertEqual(r.stdout.split(), [self.model_dir, "qwen"], r.stderr)
+        for script in ("verify_weights.py", "cfgcheck.py"):
+            self.assertIn("model_env()", open(os.path.join(self.box, script), encoding="utf-8").read())
+
+
 if __name__ == "__main__":
     unittest.main(warnings="ignore")  # the scripts open files the short way; not a defect here

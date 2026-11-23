@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "sigmaskills",
-  "version": "0.29.2",
+  "version": "0.29.3",
   "description": "Portable Agent Skills monorepo and first-party Sigma Installer",
   "skills": [
     {
@@ -12,11 +12,6 @@
     {
       "id": "sigmaimprove",
       "title": "SigmaImprove",
-      "needsReferences": true
-    },
-    {
-      "id": "sigmabrief",
-      "title": "SigmaBrief",
       "needsReferences": true
     },
     {
@@ -70,11 +65,6 @@
       "needsReferences": true
     },
     {
-      "id": "sigmahuman",
-      "title": "SigmaHuman",
-      "needsReferences": true
-    },
-    {
       "id": "sigmatour",
       "title": "SigmaTour",
       "needsReferences": true
@@ -88,11 +78,6 @@
       "id": "sigmamusk",
       "title": "SigmaMusk",
       "needsReferences": true
-    },
-    {
-      "id": "sigmaboat",
-      "title": "SigmaBoat",
-      "needsReferences": false
     },
     {
       "id": "sigmavast",
@@ -137,7 +122,10 @@
     "sigmarefactor",
     "sigmareset",
     "sigmadesign",
-    "sigmaspeedloop"
+    "sigmaspeedloop",
+    "sigmabrief",
+    "sigmahuman",
+    "sigmaboat"
   ],
   "replacedBy": {
     "sigmaperformance": "sigmareview",
@@ -146,6 +134,9 @@
     "sigmarefactor": "sigmamusk",
     "sigmareset": "sigmamusk",
     "sigmadesign": "frontend-design and the design-md pack, with sigmataste",
-    "sigmaspeedloop": "sigmaclimb"
+    "sigmaspeedloop": "sigmaclimb",
+    "sigmabrief": "sigmaloop",
+    "sigmahuman": "sigmawrite",
+    "sigmaboat": "sigmacollab"
   }
 }

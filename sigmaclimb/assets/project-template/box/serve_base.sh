@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# la125 recipe (qwen3.8-flash-next-fp4-abliterated.yaml, home Spark 2026-10-22) translated to a plain launch.
-# Identical flags and env to home. io_uring is blocked on Vast: a patched loader in box/ (when the engine needs one)
+# The owner's serving recipe translated to a plain launch; the model comes from box/model.env.
+# Identical flags and env to the owner's machine. io_uring is blocked on Vast: a patched loader in box/ (when the engine needs one)
 # falls back to pread for the weight loader and the PLE disk table.
 export VLLM_PLE_TABLE_MEMORY=disk
 export B12X_DISK_BACKEND=io_uring
@@ -19,8 +19,12 @@ export B12X_W4A16_A4_PREFILL=1
 export VLLM_ENGINE_READY_TIMEOUT_S=3600
 export TZ=Europe/Vienna
 export HF_HUB_OFFLINE=1
-exec vllm serve /root/.cache/huggingface/local/Qwen3.8-Flash-Next-FP4-Local-abliterated \
-  --served-model-name qwen \
+. "$(dirname "$0")/model.env"
+for v in MODEL_DIR SERVED_NAME REASONING_PARSER TOOL_PARSER; do
+  case "${!v:-<}" in *"<"*) echo "set $v in box/model.env" >&2; exit 2;; esac
+done
+exec vllm serve "$MODEL_DIR" \
+  --served-model-name "$SERVED_NAME" \
   --host 0.0.0.0 \
   --port 8000 \
   --tensor-parallel-size 1 \
@@ -42,8 +46,8 @@ exec vllm serve /root/.cache/huggingface/local/Qwen3.8-Flash-Next-FP4-Local-abli
   --moe-backend b12x \
   --no-enable-flashinfer-autotune \
   --mm-encoder-tp-mode data \
-  --reasoning-parser qwen3 \
-  --tool-call-parser qwen3_xml \
+  --reasoning-parser "$REASONING_PARSER" \
+  --tool-call-parser "$TOOL_PARSER" \
   --enable-auto-tool-choice \
   --compilation-config '{"pass_config":{"fuse_act_quant":true}}' \
   --override-generation-config '{"temperature":1.0,"top_p":0.95,"top_k":20,"min_p":0.0,"presence_penalty":0.0,"repetition_penalty":1.0}' \

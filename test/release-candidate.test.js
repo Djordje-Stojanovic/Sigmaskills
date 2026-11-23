@@ -199,13 +199,13 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
     assert.deepEqual(fs.readFileSync(path.join(adoptDest, 'SKILL.md')), adoptBefore);
 
     const linkOut = runCli(bin, [
-      'install', 'sigmabrief',
+      'install', 'sigmataste',
       '--project', project,
       '--destination', '.claude/skills',
     ], { cwd: appDir, env: offline });
     assert.match(linkOut, new RegExp(LINK_METHOD));
-    const hostLink = path.join(project, '.claude', 'skills', 'sigmabrief');
-    const linkInfo = inspectManagedPath(hostLink, path.join(project, '.agents', 'skills', 'sigmabrief'));
+    const hostLink = path.join(project, '.claude', 'skills', 'sigmataste');
+    const linkInfo = inspectManagedPath(hostLink, path.join(project, '.agents', 'skills', 'sigmataste'));
     assert.equal(linkInfo.method, LINK_METHOD);
     assert.equal(linkInfo.broken, false);
     assert.equal(linkInfo.wrongTarget, false);
@@ -221,7 +221,7 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
     assert.equal(fs.lstatSync(copyHost).isSymbolicLink(), false);
 
     const dry = JSON.parse(runCli(bin, [
-      'install', 'sigmabrief', '--dry-run', '--json', '--project', path.join(tmpDir, 'dry-proj'),
+      'install', 'sigmataste', '--dry-run', '--json', '--project', path.join(tmpDir, 'dry-proj'),
     ], { cwd: appDir, env: offline }));
     assert.equal(dry.dryRun, true);
     assert.ok(!fs.existsSync(path.join(tmpDir, 'dry-proj', '.agents')));
@@ -248,10 +248,10 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
     runCli(bin, ['restore', '--skill', 'sigmawrite', '--yes', '--project', project], { cwd: appDir, env: offline });
     assert.ok(fs.existsSync(path.join(adoptDest, 'outside-edit.md')));
 
-    runCli(bin, ['uninstall', '--skill', 'sigmabrief', '--yes', '--project', project], { cwd: appDir, env: offline });
-    assert.ok(!fs.existsSync(path.join(project, '.agents', 'skills', 'sigmabrief')));
+    runCli(bin, ['uninstall', '--skill', 'sigmataste', '--yes', '--project', project], { cwd: appDir, env: offline });
+    assert.ok(!fs.existsSync(path.join(project, '.agents', 'skills', 'sigmataste')));
 
-    runCli(bin, ['install', 'sigmabrief', '--project', project], { cwd: appDir, env: offline });
+    runCli(bin, ['install', 'sigmataste', '--project', project], { cwd: appDir, env: offline });
     runCli(bin, ['uninstall', '--all', '--yes', '--project', project], { cwd: appDir, env: offline });
     const afterAll = JSON.parse(fs.readFileSync(path.join(project, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
     assert.deepEqual(afterAll.skills, {});
@@ -269,7 +269,7 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
     schemaState.schemaVersion = 99;
     fs.writeFileSync(schemaPath, `${JSON.stringify(schemaState, null, 2)}\n`);
     const schemaBefore = snapshot(schemaProject);
-    const schemaFail = runCliFail(bin, ['install', 'sigmabrief', '--project', schemaProject], { cwd: appDir, env: offline });
+    const schemaFail = runCliFail(bin, ['install', 'sigmataste', '--project', schemaProject], { cwd: appDir, env: offline });
     assert.match(schemaFail, /schemaVersion 99|unsupported/i);
     assert.deepEqual(snapshot(schemaProject), schemaBefore);
     const statusFail = runCliFail(bin, ['status', '--project', schemaProject], { cwd: appDir, env: offline });
@@ -299,12 +299,12 @@ test('packed Release candidate covers lifecycle, platforms, terminals, schemas, 
     fs.writeFileSync(globalStatePath, `${JSON.stringify(migrated, null, 2)}\n`);
     const globalStatus = JSON.parse(runCli(bin, ['status', '--json', '--global'], { cwd: appDir, env: globalEnv }));
     assert.equal(globalStatus.scope, 'global');
-    runCli(bin, ['install', 'sigmabrief', '--global', '--yes'], { cwd: appDir, env: globalEnv });
+    runCli(bin, ['install', 'sigmataste', '--global', '--yes'], { cwd: appDir, env: globalEnv });
     const afterMigrate = JSON.parse(fs.readFileSync(globalStatePath, 'utf8'));
     assert.equal(afterMigrate.schemaVersion, 1);
     assert.equal(afterMigrate.skills.sigmawrite.lastBackup, 'backups/sigmawrite/kept-ref');
     assert.deepEqual(afterMigrate.skills.sigmawrite.ownedPaths, globalState.skills.sigmawrite.ownedPaths);
-    assert.ok(afterMigrate.skills.sigmabrief);
+    assert.ok(afterMigrate.skills.sigmataste);
 
     const interactiveProject = path.join(tmpDir, 'interactive');
     fs.mkdirSync(interactiveProject, { recursive: true });

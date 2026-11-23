@@ -8,7 +8,7 @@ A job is a batch of units: lessons, guide sections or scenes. Size it so one rev
 
 1. **Draw the mix** from `variety.md`, seeded by the lesson id.
 2. **Read before writing.** The notes the lesson cites, the doctrine, the glossary. Cite every note used.
-3. **Draft** by SKILL.md step 4. Lead with the point. One term for one thing, defined at its first use; a field with many terms gets one glossary. Facts from the sources only. SigmaWrite for technical passages, SigmaHuman for course prose (with the user's writing sample when given). Every number from a calc script; every goal beside its base rate.
+3. **Draft** by SKILL.md step 4. Lead with the point. One term for one thing, defined at its first use; a field with many terms gets one glossary. Facts from the sources only. SigmaWrite for technical passages, its humanize mode for course prose (with the user's writing sample when given). Every number from a calc script; every goal beside its base rate.
 4. **Visuals and media specs** before the voice pass, because an edit after the voice pass makes it stale.
 5. **Lesson checks.** Fix every finding first.
 6. **Teacher voice pass** (when the lesson has a teacher persona). The persona reads the lesson and answers in its own words. Its voice frames the hook and the "in their words" parts; plain prose carries numbers and steps. Run a batch's persona calls in parallel, stop when a round changes nothing, and log its last notes for the reviewer.
@@ -45,7 +45,7 @@ Kill rule: content the learner cannot apply to real material in the same part is
 
 ## Briefs
 
-Every brief names the task, the files, the done line, a scratch folder and the skills to read by path (SigmaBrief writes them). Data files go by path. Every agent ends with one report: files changed, checks run with results, what was not done. Every writing agent gets its own worktree.
+Every brief names the task, the files, the done line, a scratch folder and the skills to read by path (SigmaLoop writes them). Data files go by path. Every agent ends with one report: files changed, checks run with results, what was not done. Every writing agent gets its own worktree.
 
 ## Retro
 

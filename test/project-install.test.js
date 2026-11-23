@@ -38,7 +38,7 @@ test('project-lock: load, update, save, and validate timestamp-free sorted lock'
 
     // 2. Update skills in reverse alphabetical order
     let lock = updateProjectLockSkill(initial, 'sigmawrite', 'hash_w', '0.1.0');
-    lock = updateProjectLockSkill(lock, 'sigmabrief', 'hash_b', '0.1.0');
+    lock = updateProjectLockSkill(lock, 'sigmataste', 'hash_b', '0.1.0');
     lock = updateProjectLockSkill(lock, 'sigmareview', 'hash_r', '0.1.0');
 
     // 3. Save lock
@@ -58,9 +58,9 @@ test('project-lock: load, update, save, and validate timestamp-free sorted lock'
 
     const parsed = JSON.parse(raw);
     const keys = Object.keys(parsed.skills);
-    assert.deepEqual(keys, ['sigmabrief', 'sigmareview', 'sigmawrite']);
+    assert.deepEqual(keys, ['sigmareview', 'sigmataste', 'sigmawrite']);
     assert.equal(parsed.release, '0.1.0');
-    assert.equal(parsed.skills.sigmabrief.revision, 'hash_b');
+    assert.equal(parsed.skills.sigmataste.revision, 'hash_b');
 
     // 5. Validation rejects lock with machine paths or timestamps
     assert.throws(
@@ -69,7 +69,7 @@ test('project-lock: load, update, save, and validate timestamp-free sorted lock'
           schemaVersion: 1,
           release: '0.1.0',
           skills: {
-            sigmabrief: {
+            sigmataste: {
               revision: 'hash_b',
               installedAt: '2026-08-16T00:00:00Z',
             },
@@ -92,13 +92,13 @@ test('state: record, save, load, and check destination ownership', () => {
     assert.deepEqual(initial.skills, {});
 
     const updated = recordSkillInState(initial, {
-      skillId: 'sigmabrief',
+      skillId: 'sigmataste',
       release: '0.1.0',
       revision: 'revision123',
       method: 'copy',
-      destination: '.agents/skills/sigmabrief',
+      destination: '.agents/skills/sigmataste',
       projectRoot: tmpDir,
-      ownedPaths: ['.agents/skills/sigmabrief/SKILL.md', '.agents/skills/sigmabrief/agents/openai.yaml'],
+      ownedPaths: ['.agents/skills/sigmataste/SKILL.md', '.agents/skills/sigmataste/agents/openai.yaml'],
       baseHashes: {
         'SKILL.md': 'hash1',
         'agents/openai.yaml': 'hash2',
@@ -111,15 +111,15 @@ test('state: record, save, load, and check destination ownership', () => {
     assert.ok(fs.existsSync(statePath));
 
     const loaded = loadProjectState(tmpDir);
-    assert.equal(loaded.skills.sigmabrief.revision, 'revision123');
-    assert.equal(loaded.skills.sigmabrief.method, 'copy');
-    assert.equal(loaded.skills.sigmabrief.ownedPaths.length, 2);
-    assert.ok(loaded.skills.sigmabrief.installedAt);
-    assert.ok(loaded.skills.sigmabrief.updatedAt);
+    assert.equal(loaded.skills.sigmataste.revision, 'revision123');
+    assert.equal(loaded.skills.sigmataste.method, 'copy');
+    assert.equal(loaded.skills.sigmataste.ownedPaths.length, 2);
+    assert.ok(loaded.skills.sigmataste.installedAt);
+    assert.ok(loaded.skills.sigmataste.updatedAt);
 
     // Ownership check
-    const destPath = path.join(tmpDir, '.agents', 'skills', 'sigmabrief');
-    assert.ok(isDestinationOwned(tmpDir, 'sigmabrief', destPath));
+    const destPath = path.join(tmpDir, '.agents', 'skills', 'sigmataste');
+    assert.ok(isDestinationOwned(tmpDir, 'sigmataste', destPath));
     assert.ok(!isDestinationOwned(tmpDir, 'sigmawrite', path.join(tmpDir, '.agents', 'skills', 'sigmawrite')));
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -140,7 +140,7 @@ test('plan: dry run produces accurate preview without mutating files', () => {
     assert.equal(plan.scope, 'project');
     assert.equal(plan.method, 'copy');
     assert.equal(plan.unownedConflict, false);
-    assert.equal(plan.writes.length, 6); // SKILL.md, agents/openai.yaml, template.html, references/gui.md, references/picktree.md, scripts/picktree.py
+    assert.equal(plan.writes.length, fs.readdirSync(path.join(ROOT, 'sigmawrite'), { recursive: true }).filter((rel) => fs.statSync(path.join(ROOT, 'sigmawrite', rel)).isFile()).length);
     assert.equal(plan.replacements.length, 0);
     assert.equal(plan.lockChanges.action, 'add');
 
@@ -166,7 +166,7 @@ test('install: installs skill transactionally into universal destination', () =>
     const catalog = getCatalog(ROOT);
     const result = executeProjectInstall({
       catalog,
-      skillId: 'sigmabrief',
+      skillId: 'sigmataste',
       projectRoot: tmpDir,
       packageRoot: ROOT,
     });
@@ -175,24 +175,24 @@ test('install: installs skill transactionally into universal destination', () =>
     assert.equal(result.dryRun, false);
 
     // Verify installed files at universal project destination
-    const destDir = path.join(tmpDir, '.agents', 'skills', 'sigmabrief');
+    const destDir = path.join(tmpDir, '.agents', 'skills', 'sigmataste');
     assert.ok(fs.existsSync(destDir));
     assert.ok(fs.existsSync(path.join(destDir, 'SKILL.md')));
     assert.ok(fs.existsSync(path.join(destDir, 'agents', 'openai.yaml')));
-    assert.ok(fs.existsSync(path.join(destDir, 'references', 'brief-method.md')));
+    assert.ok(fs.existsSync(path.join(destDir, 'references', 'plan.md')));
 
     // Verify project lockfile
     const lock = loadProjectLock(tmpDir);
     assert.equal(lock.release, catalog.manifest.version);
-    assert.equal(lock.skills.sigmabrief.revision, result.plan.sourceRevision);
+    assert.equal(lock.skills.sigmataste.revision, result.plan.sourceRevision);
 
     // Verify private state
     const state = loadProjectState(tmpDir);
-    assert.equal(state.skills.sigmabrief.revision, result.plan.sourceRevision);
-    assert.equal(state.skills.sigmabrief.method, 'copy');
-    assert.equal(state.skills.sigmabrief.destination, '.agents/skills/sigmabrief');
-    assert.ok(state.skills.sigmabrief.ownedPaths.length > 0);
-    assert.ok(state.skills.sigmabrief.baseHashes['SKILL.md']);
+    assert.equal(state.skills.sigmataste.revision, result.plan.sourceRevision);
+    assert.equal(state.skills.sigmataste.method, 'copy');
+    assert.equal(state.skills.sigmataste.destination, '.agents/skills/sigmataste');
+    assert.ok(state.skills.sigmataste.ownedPaths.length > 0);
+    assert.ok(state.skills.sigmataste.baseHashes['SKILL.md']);
 
     // Staging directory must be cleaned up
     const stagingDir = path.join(tmpDir, '.agents', '.sigmaskills', '.sigma-staging');

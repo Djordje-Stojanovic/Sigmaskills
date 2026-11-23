@@ -1,6 +1,6 @@
 # Video
 
-Claude and Codex take pictures, not video. Only Gemini accepts a video file. So `look.py` turns the video into machine facts, a timed transcript and a few pictures, all kept on disk. You read them in small steps.
+Most agents take pictures, not video, and few models accept a video file. So `look.py` turns the video into machine facts, a timed transcript and a few pictures, all kept on disk. You read them in small steps.
 
 ## When look.py is not enough
 

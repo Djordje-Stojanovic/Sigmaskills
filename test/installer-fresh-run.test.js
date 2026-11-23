@@ -25,7 +25,7 @@ async function run(box, args) {
 /** A folder of the owner's own skills that also holds copies of two Sigma skills. */
 function ownerFolder(box) {
   const folder = path.join(box.root, 'owner-skills');
-  writeSkills(folder, { sigmahuman: 'Local copy.', sigmawrite: 'Local copy.', 'studio-film': 'Make films.' }, '.');
+  writeSkills(folder, { sigmataste: 'Local copy.', sigmawrite: 'Local copy.', 'studio-film': 'Make films.' }, '.');
   box.env.SIGMA_LOCAL_SKILLS_DIR = folder;
   return folder;
 }
@@ -65,7 +65,7 @@ test('packs: one owner per skill name; a later pack does not list a name an earl
     const packs = loadPackCatalog({ catalog, packageRoot, homeDir: box.home, env: box.env });
     assert.deepEqual(findPack(packs, 'local').skills.map((skill) => skill.id), ['studio-film']);
     assert.deepEqual(findPack(packs, 'other').skills.map((skill) => skill.id), []);
-    assert.equal(packs.skills.get('sigmahuman').kind, 'bundled', 'the Sigma set wins');
+    assert.equal(packs.skills.get('sigmataste').kind, 'bundled', 'the Sigma set wins');
     assert.equal(findPack(packs, 'sigma').skills.length, catalog.skills.length);
     const listed = packs.packs.flatMap((pack) => pack.skills.map((skill) => skill.id));
     assert.equal(new Set(listed).size, listed.length, 'no name twice across packs');
@@ -85,7 +85,7 @@ test('install: Sigma plus Local in a fresh folder keeps nothing and counts every
     assert.match(out, new RegExp(`Sigma[ ]+${total} of ${total}`));
     assert.match(out, /Local[ ]+1 of 1/);
     assert.ok(!/kept|failed|folder in the way/.test(out), out);
-    const copy = fs.readFileSync(path.join(box.project, '.agents', 'skills', 'sigmahuman', 'SKILL.md'), 'utf8');
+    const copy = fs.readFileSync(path.join(box.project, '.agents', 'skills', 'sigmataste', 'SKILL.md'), 'utf8');
     assert.ok(!copy.includes('Local copy.'), 'the Sigma copy is the one written');
   } finally {
     box.cleanup();
@@ -108,9 +108,9 @@ test('wizard: Sigma plus Local in a fresh folder installs each name once', async
     let out = '';
     stdout.setEncoding('utf8');
     stdout.on('data', (chunk) => { out += chunk; });
-    // Sigma is key 1. Local is the last of the twenty packs (one-skill sources come after it): move down nineteen rows, then Space picks it.
+    // Sigma is key 1. Local is the last of the twenty-two packs (one-skill sources come after it): move down twenty-one rows, then Space picks it.
     // Keys arrive one at a time.
-    const keys = ['1', ...Array(19).fill(DOWN), ' ', ENTER, ENTER, ENTER];
+    const keys = ['1', ...Array(21).fill(DOWN), ' ', ENTER, ENTER, ENTER];
     keys.forEach((chunk, index) => {
       setTimeout(() => (index === keys.length - 1 ? stdin.end(chunk) : stdin.write(chunk)), 200 * (index + 1));
     });

@@ -6,6 +6,8 @@ set -u
 CMD=$1; shift
 BENCH=$(cd "$(dirname "$0")" && pwd); REF=${REF:-$CLIMB_ROOT/ref}
 cd "$BENCH"
+# The served name: BENCH_MODEL, else SERVED_NAME in box/model.env (the one place).
+BENCH_MODEL=${BENCH_MODEL:-$(sed -n 's/^SERVED_NAME="*\([^"]*\)"*$/\1/p' "$BENCH/../../box/model.env")}
 stop_server() { pkill -f "[v]llm serve" >/dev/null 2>&1; for i in $(seq 1 90); do pgrep -f "[v]llm serve" >/dev/null || break; sleep 2; done; pkill -9 -f "[v]llm serve" >/dev/null 2>&1; sleep 5; }
 
 case "$CMD" in
@@ -39,7 +41,7 @@ score)
   OUT=$1
   python3 speed.py --out "$OUT/speed.json" || exit 1  # also writes OUT/score.json
   if [ "${BENCHY:-0}" = 1 ]; then  # forum-comparable numbers, for the baseline and the final champion
-    llama-benchy --base-url http://localhost:8000/v1 --model "${BENCH_MODEL:-qwen}" --tokenizer "${BENCH_TOKENIZER:?set BENCH_TOKENIZER}" \
+    llama-benchy --base-url http://localhost:8000/v1 --model "$BENCH_MODEL" --tokenizer "${BENCH_TOKENIZER:?set BENCH_TOKENIZER}" \
       --pp 2048 --tg 128 --depth 0 8192 32768 --concurrency 1 --runs 3 --no-cache --latency-mode generation \
       --save-result "$OUT/benchy.json" --format json > "$OUT/benchy.log" 2>&1 || echo "benchy exited nonzero"
   fi
@@ -49,7 +51,7 @@ quality)
   if [ "${RECORD:-0}" = 1 ]; then python3 gate.py --record "$REF" || exit 1; fi
   python3 gate.py --ref "$REF" --out "$OUT/gate.json" || exit 1
   # ToolEvalBench: full suite, real sampling, effort low, 8 parallel, no context fill
-  tool-eval-bench run --base-url http://localhost:8000/v1 --model "${BENCH_MODEL:-qwen}" --hardmode \
+  tool-eval-bench run --base-url http://localhost:8000/v1 --model "$BENCH_MODEL" --hardmode \
     --temperature 1.0 --top-p 0.95 --top-k 20 --seed 42 --parallel 8 --no-live \
     --backend-kwargs '{"chat_template_kwargs": {"reasoning_effort": "low"}, "max_tokens": 65536}' \
     --json-file "$OUT/tooleval.json" > "$OUT/tooleval.log" 2>&1 || echo "tooleval exited nonzero"

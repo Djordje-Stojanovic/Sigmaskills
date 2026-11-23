@@ -2,7 +2,7 @@
 
 The 26 numbered patterns are [blader/humanizer](https://github.com/blader/humanizer) v4.0.0 (commit b48c832), copied unchanged under its MIT licence (copyright (c) 2025 Siqi Chen, full text in [LICENSE-humanizer.txt](LICENSE-humanizer.txt)). Their source is Wikipedia's ["Signs of AI writing"](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing), maintained by WikiProject AI Cleanup. Section G holds five extra tells merged from the older humanizer v2.5.1 copy; they keep the letter G so the upstream numbers stay the same.
 
-One owner rule beats two upstream lines. Facts come from the source or the brief only (SKILL.md rule 1). Where §14 or §17 says "if you know", read "if the source gives it". The two §17 "After" examples add a fact the "Before" text lacks (the river's width, the 2024 interview): do not copy that move.
+One owner rule beats two upstream lines. Facts come from the source or the brief only (human.md rule 1). Where §14 or §17 says "if you know", read "if the source gives it". The two §17 "After" examples add a fact the "Before" text lacks (the river's width, the 2024 interview): do not copy that move.
 
 Patterns are numbered strongest first. §1 to §5 justify an edit on one sighting; a pattern marked *weak alone* needs other tells in the same passage before you act. The patterns apply in every language: treat the equivalent construction the same way.
 

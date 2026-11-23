@@ -212,13 +212,13 @@ test('install: failed state creation leaves the original exact copy and prior st
     const catalog = getCatalog(ROOT);
 
     const originalState = recordSkillInState(loadProjectState(projectRoot), {
-      skillId: 'sigmabrief',
+      skillId: 'sigmataste',
       release: '0.1.0',
       revision: 'prior-brief',
       method: 'copy',
-      destination: '.agents/skills/sigmabrief',
+      destination: '.agents/skills/sigmataste',
       projectRoot,
-      ownedPaths: ['.agents/skills/sigmabrief/SKILL.md'],
+      ownedPaths: ['.agents/skills/sigmataste/SKILL.md'],
       baseHashes: { 'SKILL.md': 'abc' },
     });
     saveProjectState(projectRoot, originalState);

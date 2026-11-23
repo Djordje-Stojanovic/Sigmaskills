@@ -35,7 +35,7 @@ Risky files (read every line): <list, see "Risky files" below>
 All other files: <the rest of the stat>
 
 Setup:
-1. Check out the branch in a new worktree, or use the existing one at <path>. Install the dependencies. Do not read the whole diff first.
+1. Check out the branch in a new worktree, or use the existing one at <path>. Install the dependencies. Do not read the whole diff first. Leave out of the diff the paths the repo names as the owner's content: no model passes or fails his words.
 
 Review, in this order:
 2. Did the ticket ask for this? Go through the stat file by file. A change that no criterion needs is a finding: revert it, do not defend it.
@@ -75,4 +75,4 @@ Prose in `.md` files and test files do not count by themselves. When in doubt, l
 
 ## Reaching a named reviewer
 
-When the harness cannot run the model the user named, any route that reaches it works; log which one did. One that worked: T3 Code runs Claude, Codex, Cursor, Gemini, pi and other providers from one place: `t3 thread start . - --provider <instance id> --model <model slug> --worktree <branch> --wait`, with the handoff on stdin. The instance ids are the keys under `providerInstances` in `~/.t3/userdata/settings.json`; the slugs are the names in its model picker. Other routes: the model's own CLI run headless in the branch worktree (`codex exec`, `claude -p`, `gemini -p`), or its API with the handoff as the prompt. When none reaches it, say so in one line and use a fresh sub-agent of your harness.
+When the harness cannot run the model the user named, any route that reaches it works; log which one did. Routes that work: a harness that runs several providers from one place (T3 Code does; read its own docs for the command), the model's own CLI run headless in the branch worktree with closed input, or its API with the handoff as the prompt. When none reaches it, say so in one line and use a fresh sub-agent of your harness.

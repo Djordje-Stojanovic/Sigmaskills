@@ -1,10 +1,14 @@
-"""cfgcheck.py SPEC_JSON - build the la125 VllmConfig without loading weights, print the failing assertion line."""
+"""cfgcheck.py SPEC_JSON - build the served model's VllmConfig without loading weights, print the failing assertion line."""
 import json, sys, traceback
 
 from vllm.engine.arg_utils import EngineArgs
 
+from model_env import model_env
+
+MODEL = model_env()
+
 args = EngineArgs(
-    model="/root/.cache/huggingface/local/Qwen3.8-Flash-Next-FP4-Local-abliterated", served_model_name=["qwen"],
+    model=MODEL["MODEL_DIR"], served_model_name=[MODEL["SERVED_NAME"]],
     max_model_len=262144, max_num_seqs=8, max_num_batched_tokens=4096, kv_cache_dtype="fp8",
     quantization="modelopt_mixed", dtype="bfloat16", block_size=16, load_format="b12x",
     enable_prefix_caching=True, enable_chunked_prefill=True, mamba_cache_mode="align",

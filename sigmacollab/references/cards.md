@@ -1,4 +1,4 @@
-# Colab cards: rates and the one-minute test
+# Cards and prices: Colab rates, the one-minute test, Vast
 
 What one Google AI Ultra account saw. A dated record, not a promise: Colab changes cards, rates and capacity without notice, so read `colab --auth adc usage` live and add what you measure here.
 
@@ -19,3 +19,7 @@ Units per hour: the change in `usage`'s rate when the runtime started. Start: fr
 | TPU v6e-1 | 5.09 | no: the CLI's request timed out (120 s, then 600 s) | | | |
 
 Rates of cards that did not start today (L4, both A100s, T4 High-RAM, v6e-1) are from 20 Nov 2026 runs on the same account. The four cards that started cost about 0.34 units together.
+
+## vast.ai
+
+Seen in October 2026, a speed loop on one GB10 (`cpu_arch=arm64`): $0.28-0.42 per hour; a 40-minute experiment cost about $0.20. Read live prices with `vastai search offers ... -o dph_total`.

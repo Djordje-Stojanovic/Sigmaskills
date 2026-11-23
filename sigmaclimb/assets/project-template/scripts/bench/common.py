@@ -4,8 +4,20 @@ import json, os, time, uuid
 import requests
 
 BASE = os.environ.get("BENCH_BASE", "http://localhost:8000")
-MODEL = os.environ.get("BENCH_MODEL", "qwen")  # the --served-model-name of your server; set BENCH_MODEL in run_experiment.sh
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def served_name():
+    """The --served-model-name of your server: BENCH_MODEL, else SERVED_NAME in box/model.env (the one place)."""
+    if os.environ.get("BENCH_MODEL"):
+        return os.environ["BENCH_MODEL"]
+    for line in open(os.path.join(HERE, "..", "..", "box", "model.env"), encoding="utf-8"):
+        if line.startswith("SERVED_NAME="):
+            return line.split("=", 1)[1].strip().strip('"')
+    raise SystemExit("set SERVED_NAME in box/model.env")
+
+
+MODEL = served_name()
 SESSION = requests.Session()
 
 

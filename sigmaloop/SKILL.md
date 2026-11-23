@@ -1,11 +1,13 @@
 ---
 name: sigmaloop
-description: Use when asked for sigmaloop or a paste-ready unattended-run prompt (Claude Code /loop, Codex /goal, Antigravity, pi, T3) and loop file from open work. One question round. Do not use to start the run.
+description: Use when asked for sigmaloop, sigmabrief, briefs, handoffs, spawn prompts or a paste-ready unattended-run prompt (Claude Code /loop, Codex /goal, Antigravity, pi, T3) and loop file from open work. Do not use to do the work or start the run.
 ---
 
 # SigmaLoop
 
 Turn a repo's open work into one loop prompt for the user's harness, plus a loop file the prompt tells the agent to re-read. SigmaLoop is a prompt factory: read, ask once, write two things, stop. It never starts the loop and never works the items.
+
+Asked for briefs, handoffs or spawn prompts (sigmabrief), write those instead: [Briefs](#briefs-was-sigmabrief).
 
 ## Operating contract
 
@@ -50,6 +52,19 @@ The prompt is short: the done command, the loop file path to re-read every turn,
 1. The loop file path.
 2. The prompt in one fenced `text` block, ready to paste.
 3. Notes (at most five lines): rulings, what the harness will not do and where that fact came from, owner steps before starting.
+
+## Briefs (was SigmaBrief)
+
+Turn actionable work into short, paste-ready briefs for other agents: research lightly, emit dispatch lines and fenced briefs, stop. The executing agent implements, validates once at the end, and opens a PR for review. Read [brief-method.md](references/brief-method.md) before researching and [prompt-contract.md](references/prompt-contract.md) before writing briefs.
+
+- **Brief factory only.** Briefs go to chat. The target repo stays as it was: no code, branch, commit, push, PR or file (no `SIGMABRIEF-*.md`).
+- **One shot.** Work items present: research, write, return. No target at all: ask one question (which issues, which work, which repo for `all open`). Grill only when the user asks for it.
+- **Anything actionable is input:** issue URLs, `#N`, `all open` (filtered or not), a SigmaReview report or wave, chosen SigmaImprove entries, plain-English work, or `this session`, with constraints already given (`do not merge`, skip N, max agents, `approval: auto|plan`) applied without asking again.
+- **Waves before parallelism.** Items that touch the same files, schema or shared state run one after another in one lane; only independent items run in parallel. Honor `Depends on` lines. Rank the dispatch list by value: the next free agent takes the most valuable ready brief. An in-flight PR becomes a finish brief, never a second greenfield one.
+- **Write for the worker's harness.** It is the one the user named, else the one you run in. Use its own tools where they help (a native worktree tool, sub-agents); when you do not know them, read its docs (context7, a web search) or write plain git and shell steps that work anywhere.
+- **Every brief carries the invariants** in [prompt-contract.md](references/prompt-contract.md#2-invariants-every-brief-must-carry): approval mode, do not merge, keep the worktree while the PR is open, the native shell, no secrets, the three questions and the honesty rule. If the repo has `ENGINEERING.md` or `DESIGN.md`, each brief tells its worker to read and follow them.
+
+Final response for briefs, in chat only: a short dispatch list (one line per brief), the paste-ready fenced `text` briefs, and notes when needed (collisions, upstream waits, already fixed, human-only tests). No research dumps.
 
 ## Personal instructions
 

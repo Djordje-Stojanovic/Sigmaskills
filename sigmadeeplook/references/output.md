@@ -78,7 +78,7 @@ A content block that holds only a part of a file says so in its heading (`PARTIA
 
 ## Measured (ticket 83 P0.14b, 17-10)
 
-- Media: 5 files, 38 keyed questions, 2 headless Haiku 5.5 runs, n = 1 each. Plain agent 38/38, 28 turns, $0.061. Plain agent with deeplook 38/38, 20 turns, $0.035: -43 % cost, -29 % turns, +45 % time.
+- Media: 5 files, 38 keyed questions, 2 headless runs of a small model, n = 1 each. Plain agent 38/38, 28 turns, $0.061. Plain agent with deeplook 38/38, 20 turns, $0.035: -43 % cost, -29 % turns, +45 % time.
 - Documents and tables: 30 files, 240 questions (held-out set 3, one blind run). Wrong answers: step 1 alone 66.7 %; all three steps 37.1 %; with `--ask` added 32.5 %; a plain agent with tools 0 % at about the same tokens. This is why plain text and data go to the agent.
 
 ## Bare machine (Python 3.10+, standard library only, no tools)

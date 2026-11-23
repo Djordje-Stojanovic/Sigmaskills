@@ -127,22 +127,22 @@ test('update: prompts distinguish local-only, upstream-only, and concurrent chan
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-outside-kinds-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     installWrite(projectRoot, 'sigmareview');
 
     applyOutsideEdits(skillDir(projectRoot, 'sigmawrite'));
 
-    const briefMd = path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md');
+    const briefMd = path.join(skillDir(projectRoot, 'sigmataste'), 'SKILL.md');
     fs.writeFileSync(
       briefMd,
       fs.readFileSync(briefMd, 'utf8').replace('## Personal instructions', '<!-- sigma-older -->\n\n## Personal instructions'),
       'utf8',
     );
     const hashes = JSON.parse(fs.readFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), 'utf8'));
-    const briefLive = computeSkillRevisionAndHashes(skillDir(projectRoot, 'sigmabrief'));
-    hashes.skills.sigmabrief.baseHashes = briefLive.files;
-    hashes.skills.sigmabrief.revision = briefLive.revision;
-    hashes.skills.sigmabrief.release = '0.0.9';
+    const briefLive = computeSkillRevisionAndHashes(skillDir(projectRoot, 'sigmataste'));
+    hashes.skills.sigmataste.baseHashes = briefLive.files;
+    hashes.skills.sigmataste.revision = briefLive.revision;
+    hashes.skills.sigmataste.release = '0.0.9';
 
     const reviewMd = path.join(skillDir(projectRoot, 'sigmareview'), 'SKILL.md');
     fs.writeFileSync(
@@ -214,19 +214,19 @@ test('update: skip leaves that skill unchanged while another skill still updates
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-outside-skip-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     applyOutsideEdits(skillDir(projectRoot, 'sigmawrite'));
-    const briefMd = path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md');
+    const briefMd = path.join(skillDir(projectRoot, 'sigmataste'), 'SKILL.md');
     const originalBrief = fs.readFileSync(briefMd, 'utf8');
     fs.writeFileSync(
       briefMd,
       originalBrief.replace('## Personal instructions', '<!-- sigma-older -->\n\n## Personal instructions'),
       'utf8',
     );
-    const briefLive = computeSkillRevisionAndHashes(skillDir(projectRoot, 'sigmabrief'));
+    const briefLive = computeSkillRevisionAndHashes(skillDir(projectRoot, 'sigmataste'));
     const state = readState(projectRoot);
-    state.skills.sigmabrief.baseHashes = briefLive.files;
-    state.skills.sigmabrief.revision = briefLive.revision;
+    state.skills.sigmataste.baseHashes = briefLive.files;
+    state.skills.sigmataste.revision = briefLive.revision;
     fs.writeFileSync(path.join(projectRoot, '.agents', '.sigmaskills', 'state.json'), `${JSON.stringify(state, null, 2)}\n`);
     const writeNotes = fs.readFileSync(path.join(skillDir(projectRoot, 'sigmawrite'), 'notes.txt'), 'utf8');
     const writeStateBefore = JSON.stringify(readState(projectRoot).skills.sigmawrite);

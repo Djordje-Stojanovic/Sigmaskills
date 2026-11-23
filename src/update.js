@@ -16,8 +16,9 @@ import {
   loadHostRegistry,
   resolveHomeDir,
 } from './destinations.js';
-import { pathExists } from './links.js';
-import { inspectProjectLock } from './project-lock.js';
+import { gitTracked, pathExists } from './links.js';
+import { inspectProjectLock, isForeignProjectLock, loadProjectLock, removeProjectLockSkill, saveProjectLock } from './project-lock.js';
+import { createUninstallPlan, executeUninstall } from './uninstall.js';
 import {
   STATE_SCHEMA_VERSION,
   getGlobalStateDir,
@@ -389,6 +390,7 @@ export function createUpdatePlan(options = {}) {
   const packageRoot = options.packageRoot || findPackageRoot();
   const state = loadScopeState(options, root, scope);
   const lockInspect = scope === 'project' ? inspectProjectLock(root) : { lock: { skills: {}, release: null } };
+  const registry = options.registry || loadHostRegistry(findPackageRoot());
   const status = collectStatus({
     catalog,
     projectRoot,
@@ -397,7 +399,7 @@ export function createUpdatePlan(options = {}) {
     customStateDir: options.customStateDir,
     packageRoot,
     env,
-    registry: options.registry || loadHostRegistry(findPackageRoot()),
+    registry,
   });
 
   const retiredIds = new Set(catalog.manifest.retired || []);
@@ -405,7 +407,17 @@ export function createUpdatePlan(options = {}) {
     ...Object.keys(state.skills || {}),
     ...Object.keys(lockInspect.lock.skills || {}),
   ])].sort();
-  const retired = recordedIds.filter((skillId) => retiredIds.has(skillId));
+  // A retired folder with no record (a repo that tracks skill folders but no lock) is named too, in the
+  // universal folder and in every host's skills folder; only owned ones are removed.
+  // shortcut: the global scope looks in the hosts' project folders under the home folder (the common layout); read each host's global formula if one differs.
+  const skillDirs = [...new Set(['.agents/skills', ...registry.hosts.map((host) => host.destinations?.project?.path).filter(Boolean)])];
+  const retiredFolders = {};
+  for (const skillId of retiredIds) {
+    if (recordedIds.includes(skillId)) continue;
+    const found = skillDirs.map((dir) => path.join(root, ...dir.split('/'), skillId)).filter((dir) => pathExists(path.join(dir, 'SKILL.md')));
+    if (found.length) retiredFolders[skillId] = found;
+  }
+  const retired = [...recordedIds.filter((skillId) => retiredIds.has(skillId)), ...Object.keys(retiredFolders)].sort();
   const skillIds = recordedIds.filter((skillId) => !retiredIds.has(skillId));
 
   const missing = skillIds.filter((skillId) => !catalog.skills.some((skill) => skill.id === skillId));
@@ -473,6 +485,7 @@ export function createUpdatePlan(options = {}) {
     needsResolution,
     needsMarkerResolution,
     retired,
+    retiredFolders,
     skills,
   };
 }
@@ -778,14 +791,39 @@ function runUpdate(options, updated) {
     .map((skill) => skill.id)
     .filter((skillId) => requested.length === 0 || requested.includes(skillId)));
 
+  if (requested.length === 0 && plan.retired.length > 0) result.retiredResults = retireSkills(options, plan.retired, plan.retiredFolders);
   return result;
+}
+
+// A full update removes the retired skills it owns (an edited copy is backed up first) and drops the
+// lock entry of one whose folder is gone. A copy it has no record of, or a git-tracked one, stays and is named.
+function retireSkills(options, ids, folders = {}) {
+  const base = { ...options, scope: options.scope === 'global' ? 'global' : 'project', clean: 'remove', changed: 'backup' };
+  return createUninstallPlan({ ...base, skillIds: ids }).skills.flatMap((skill) => {
+    if (!skill.blocked) {
+      executeUninstall({ ...base, skillIds: [skill.id] });
+      return { id: skill.id, action: 'removed' };
+    }
+    const root = options.projectRoot || process.cwd();
+    if (!folders[skill.id] && base.scope === 'project' && !pathExists(skill.canonicalAbs) && !isForeignProjectLock(root)) {
+      saveProjectLock(root, removeProjectLockSkill(loadProjectLock(root), skill.id));
+      return { id: skill.id, action: 'lock entry dropped' };
+    }
+    // A copy with no record has no destinations for the uninstall plan to check, so look at each folder itself.
+    return (folders[skill.id] || [skill.canonicalAbs]).map((where) => ({
+      id: skill.id,
+      action: 'kept',
+      reasons: !skill.blockedReasons.includes('git-tracked') && gitTracked(where) ? [...skill.blockedReasons, 'git-tracked'] : skill.blockedReasons,
+      path: where,
+    }));
+  });
 }
 
 /**
  * @param {object} plan
  * @returns {string}
  */
-export function formatUpdateJson(plan) {
+export function formatUpdateJson({ retiredFolders, ...plan }) { // retiredFolders is internal: the JSON schema stays as it was
   const payload = JSON.parse(JSON.stringify({
     ...plan,
     skills: (plan.skills || []).map(({ rawCustom, copies, ...skill }) => skill),
@@ -855,12 +893,18 @@ export function formatUpdateHuman(plan) {
   renderGroup('Unchanged skills', plan.unchanged || []);
   renderGroup('Blocked skills', plan.blocked || []);
   renderGroup('Malformed markers', plan.needsMarkerResolution || []);
-  if (plan.retired?.length) {
+  if (plan.retiredResults?.length) {
     lines.push('');
-    lines.push('Retired skills (no longer in the Skill Pack; left unchanged):');
-    for (const skillId of plan.retired) {
-      lines.push(`  ${skillId} — remove with: sigmaskills uninstall --skill ${skillId}`);
+    lines.push('Retired skills (no longer in the Skill Pack):');
+    for (const { id, action, reasons, path: where } of plan.retiredResults) {
+      lines.push(action === 'kept'
+        ? `  ${id} — kept (${reasons.join(', ')}); remove it by hand: ${reasons.includes('git-tracked') ? `git rm -r "${where}"` : reasons.includes('unowned') ? `delete the folder "${where}"` : `sigmaskills uninstall --skill ${id}`}`
+        : `  ${id} — ${action}`);
     }
+  } else if (plan.retired?.length) {
+    lines.push('');
+    lines.push('Retired skills (no longer in the Skill Pack; a full update removes them):');
+    for (const skillId of plan.retired) lines.push(`  ${skillId}`);
   }
   if (plan.prompt) {
     lines.push('');

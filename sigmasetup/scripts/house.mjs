@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // House files: keep a repo's copies of the owner's master rule files current.
 //   check <repo>   one row per house file: current, drift or missing. Exit 1 on drift.
-//   apply <repo>   bring every row up to date; saves the old copies first and prints the undo command.
+//   apply <repo>   bring every drifted row up to date; a missing file or section is written only when --add names it
+//                  (the owner's yes to the one question). Saves the old copies first and prints the undo command.
 //   undo <repo>    put back what the last apply changed, and delete what it created.
 // --exact: a section becomes the master's word for word; without it, lines only the repo has stay at its end.
 // Where the masters live: --source <dir|git url|owner/repo>, else SIGMASETUP_HOUSE, else a "house:" line
@@ -126,8 +127,9 @@ function undoRoot(repo) {
   return r.status === 0 ? path.join(r.stdout.trim(), 'sigmasetup-undo') : path.join(repo, '.sigmasetup-undo');
 }
 
-export function apply(repo, rows) {
-  const todo = rows.filter((r) => r.next != null);
+export function apply(repo, rows, add = []) {
+  // A file the repo lacks is the owner's call, asked once: a new repo never gets another project's DESIGN.md unasked.
+  const todo = rows.filter((r) => r.next != null && (r.state !== 'missing' || add.includes(r.file)));
   if (!todo.length) return null;
   const dir = path.join(undoRoot(repo), new Date().toISOString().replace(/[:.]/g, '-'));
   const record = { changed: [], created: [] };
@@ -171,7 +173,7 @@ function table(rows) {
 function main(argv) {
   const [cmd, repoArg = '.', ...rest] = argv;
   if (!['check', 'apply', 'undo'].includes(cmd)) {
-    console.error('usage: node house.mjs check|apply|undo <repo> [--source <dir|git url|owner/repo>] [--exact]');
+    console.error('usage: node house.mjs check|apply|undo <repo> [--source <dir|git url|owner/repo>] [--exact] [--add <file>[,<file>]]');
     return 2;
   }
   const repo = path.resolve(repoArg);
@@ -186,24 +188,28 @@ function main(argv) {
   const source = at >= 0 ? rest[at + 1] : process.env.SIGMASETUP_HOUSE || config.source;
   const masters = resolveSource(source);
   try {
-    return run(cmd, repo, masters, source, config.map, rest.includes('--exact'));
+    const added = rest.indexOf('--add');
+    return run(cmd, repo, masters, source, config.map, rest.includes('--exact'), added >= 0 ? rest[added + 1].split(',') : []);
   } finally {
     if (masters !== source) fs.rmSync(masters, { recursive: true, force: true });
   }
 }
 
-function run(cmd, repo, masters, source, map, exact) {
+function run(cmd, repo, masters, source, map, exact, add) {
   const rows = plan(repo, masters, map, exact);
   console.log(`House source: ${source}\n\n${table(rows)}`);
   for (const r of rows) if (r.kept?.length) console.log(`\n${r.file} keeps these repo-only lines in its section:\n${r.kept.map((l) => `  ${l}`).join('\n')}`);
   if (cmd === 'check') return rows.some((r) => r.next != null || (r.kind === 'seed' && r.state === 'missing')) ? 1 : 0;
-  const dir = apply(repo, rows);
-  console.log(dir ? `\nWrote ${rows.filter((r) => r.next != null).length} file(s). Undo: node "${fileURLToPath(import.meta.url)}" undo "${repo}"` : '\nEverything is current; nothing written.');
+  const dir = apply(repo, rows, add);
+  const asked = rows.filter((r) => r.next != null && r.state === 'missing' && !add.includes(r.file));
+  if (asked.length) console.log(`\nNot written, the repo lacks them: ${asked.map((r) => r.file).join(', ')}. Ask the owner; a yes goes in --add.`);
+  console.log(dir ? `\nWrote ${rows.filter((r) => r.next != null && (r.state !== 'missing' || add.includes(r.file))).length} file(s). Undo: node "${fileURLToPath(import.meta.url)}" undo "${repo}"` : '\nEverything is current; nothing written.');
   const seeds = rows.filter((r) => r.kind === 'seed' && r.state === 'missing');
   if (seeds.length) console.log(`Still to write by hand: ${seeds.map((r) => r.file).join(', ')}.`);
   return 0;
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// Node runs a script reached through a symlink or junction from its real path, so compare real paths.
+if (process.argv[1] && fs.realpathSync(path.resolve(process.argv[1])) === fs.realpathSync(fileURLToPath(import.meta.url))) {
   try { process.exitCode = main(process.argv.slice(2)); } catch (e) { console.error(e.message); process.exitCode = 2; }
 }

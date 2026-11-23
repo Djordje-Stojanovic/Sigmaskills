@@ -142,7 +142,7 @@ def raises(fn):
 
 
 def asset_review_cases():
-    """The counterexamples from the release reviews (Astra, Fable) for the non-company models: each failed before its fix."""
+    """The counterexamples from the release reviews for the non-company models: each failed before its fix."""
     import fin_assets as A
     ok = True
     near = lambda a, b, tol=1e-6: a is not None and abs(a - b) <= tol
@@ -162,7 +162,7 @@ def asset_review_cases():
     ok &= check("SAFE terms with no solution stop the run ($1.2m capped at $1m)", raises(lambda: A.venture(
         {"founders": [{"name": "F", "shares": 1e6}], "safes": [{"name": "S", "amount": 1.2e6, "cap": 1e6, "type": "post"}],
          "rounds": [{"name": "A", "pre_money": 5e6, "amount": 1e6}]})))
-    # the startup proof: no grants, so the free pool takes nothing; founders get 132.676m at 250m (Astra)
+    # the startup proof: no grants, so the free pool takes nothing; founders get 132.676m at 250m
     deal = {"founders": [{"name": "Founder A", "shares": 4.5e6}, {"name": "Founder B", "shares": 4.5e6}], "pool": 1e6,
             "safes": [{"name": "Angel SAFE", "amount": 750000, "cap": 8e6, "discount": 0.2, "type": "post"}],
             "rounds": [{"name": "Seed", "pre_money": 14e6, "amount": 3.5e6, "pool_target": 0.10},
@@ -292,7 +292,7 @@ def facts_fixture():
 
 
 def company_fixes(out, lo):
-    """The company-side review findings (Astra 6.2, Fable 5.2), each with the reviewer's own numbers."""
+    """The company-side review findings, each with the reviewer's own numbers."""
     import finman
     import fin_data as D
     import fin_xlsx as X

@@ -13,7 +13,7 @@ One message, numbered, at most 10. Each line: the question, then `Recommended: <
 7. **What may be deleted.** Records, checks, gates and scaffolding the run may cut. Recommended: records no machine reads, checks that never caught anything, a gate that never passed; nothing in user content.
 8. **Off-limits.** Files, items, systems, actions. Quote his sentence for each. Recommended: user-live items, other agents' work, production data, irreversible deletes of data.
 9. **Pre-authorised actions and budgets.** Commit, push, PR, merge, deploy, delete merged branches and worktrees, close tickets; and each spend limit (what, amount, period, the command that prints used). Recommended: no meter, no budget; all but deploy; deploy only when the repo names a deploy step.
-10. **Landing and failure limits.** What done means for one unit, and the stuck time. Recommended: unit tests pass, the loop file's review rule, PR merged, tracker ticked with evidence; stuck after 30 minutes with no commit or output.
+10. **Landing and failure limits.** What done means for one unit, and the stuck time. Recommended: one feature branch with one PR for all tickets (a PR per ticket when asked), unit tests pass, the loop file's review rule, PR merged, the builder ticks its own box with evidence; stuck after 30 minutes with no commit or output.
 
 ## After the reply
 

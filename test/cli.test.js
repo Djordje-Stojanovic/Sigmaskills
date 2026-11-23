@@ -41,7 +41,7 @@ test('cli: --help prints usage and dynamically lists skills', async () => {
   assert.match(out, /Available Skills:/i);
   assert.match(out, /sigmareview/);
   assert.match(out, /sigmaimprove/);
-  assert.match(out, /sigmabrief/);
+  assert.match(out, /sigmataste/);
   assert.match(out, /sigmawrite/);
 });
 

@@ -127,7 +127,7 @@ test('house files: check finds drift, apply syncs copies and sections in one go,
   assert.deepEqual(rows.map((r) => r.state), ['drift', 'missing', 'drift', 'no master']);
   assert.deepEqual(rows[2].kept, ['- Repo rule.'], 'a repo-only line in the section is kept and reported');
 
-  apply(repo, rows);
+  apply(repo, rows, ['docs/HOW_WE_WORK.md']);
   assert.equal(fs.readFileSync(join(repo, 'ENGINEERING.md'), 'utf8'), fs.readFileSync(join(masters, 'ENGINEERING.md'), 'utf8'));
   assert.equal(fs.readFileSync(join(repo, 'docs', 'HOW_WE_WORK.md'), 'utf8'), 'how\n');
   const merged = fs.readFileSync(join(repo, 'AGENTS.md'), 'utf8');
@@ -150,4 +150,42 @@ test('house files: check finds drift, apply syncs copies and sections in one go,
   assert.equal(row.file, 'CLAUDE.md');
   assert.equal(row.state, 'missing');
   fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('house files: a repo with no map gets no missing house file unasked, DESIGN.md least of all', async () => {
+  const { readConfig, plan, apply } = await import('../sigmasetup/scripts/house.mjs');
+  const tmp = fs.mkdtempSync(join(os.tmpdir(), 'sigmasetup-empty-'));
+  const masters = join(tmp, 'masters');
+  const repo = join(tmp, 'repo');
+  fs.mkdirSync(masters);
+  fs.mkdirSync(repo);
+  fs.writeFileSync(join(masters, 'DESIGN.md'), '# Another project\n');
+  fs.writeFileSync(join(masters, 'ENGINEERING.md'), '# Engineering\n');
+  fs.writeFileSync(join(masters, 'AGENTS.md'), '# M\n\n## How we work\n\n- Rule.\n');
+  const rows = plan(repo, masters, readConfig([]).map);
+  assert.deepEqual(rows.map((r) => r.state), ['missing', 'missing', 'missing']);
+  assert.equal(apply(repo, rows), null, 'nothing written without a yes');
+  assert.deepEqual(fs.readdirSync(repo), []);
+  apply(repo, rows, ['ENGINEERING.md']);
+  assert.deepEqual(fs.readdirSync(repo).filter((f) => !f.startsWith('.')), ['ENGINEERING.md'], 'only the file he said yes to');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('house.mjs runs when its folder is reached through a symlink or junction', (t) => {
+  const tmp = fs.mkdtempSync(join(os.tmpdir(), 'sigmasetup-link-'));
+  const link = join(tmp, 'scripts');
+  try {
+    fs.symlinkSync(join(root, 'sigmasetup', 'scripts'), link, process.platform === 'win32' ? 'junction' : 'dir');
+  } catch (err) {
+    fs.rmSync(tmp, { recursive: true, force: true });
+    t.skip(`skipped: no symlink right (${err.code})`);
+    return;
+  }
+  const masters = join(tmp, 'masters');
+  fs.mkdirSync(masters);
+  fs.writeFileSync(join(masters, 'ENGINEERING.md'), '# E\n');
+  const run = spawnSync(process.execPath, [join(link, 'house.mjs'), 'check', tmp, '--source', masters], { encoding: 'utf8' });
+  fs.unlinkSync(link); // the link only, never what it points at
+  fs.rmSync(tmp, { recursive: true, force: true });
+  assert.match(run.stdout, /House source:/, `ran silently: ${run.stderr}`);
 });

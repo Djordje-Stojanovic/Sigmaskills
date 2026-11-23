@@ -279,10 +279,10 @@ test('restore: missing, truncated, tampered, schema-incompatible, insufficient-s
     );
 
     const staleMeta = JSON.parse(originalMeta);
-    staleMeta.ownedPaths = ['.agents/skills/sigmabrief'];
-    staleMeta.copies = [{ kind: 'canonical', destination: '.agents/skills/sigmabrief', hostIds: [], ownedPaths: ['.agents/skills/sigmabrief'] }];
+    staleMeta.ownedPaths = ['.agents/skills/sigmataste'];
+    staleMeta.copies = [{ kind: 'canonical', destination: '.agents/skills/sigmataste', hostIds: [], ownedPaths: ['.agents/skills/sigmataste'] }];
     fs.writeFileSync(metaPath, `${JSON.stringify(staleMeta, null, 2)}\n`);
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     assert.throws(
       () => executeRestore({
         catalog: getCatalog(ROOT),
@@ -389,7 +389,7 @@ test('restore: a removed skill returns from portable ownership metadata without 
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-restore-removed-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     const dest = skillDir(projectRoot, 'sigmawrite');
     fs.writeFileSync(path.join(dest, 'local-keep.txt'), 'removed-skill', 'utf8');
     executeUpdate({
@@ -418,7 +418,7 @@ test('restore: a removed skill returns from portable ownership metadata without 
     });
     assert.equal(fs.readFileSync(path.join(dest, 'local-keep.txt'), 'utf8'), 'removed-skill');
     assert.equal(fs.readFileSync(path.join(stranger, 'leave-me.txt'), 'utf8'), 'unrelated');
-    assert.equal(readState(projectRoot).skills.sigmabrief.destination, '.agents/skills/sigmabrief');
+    assert.equal(readState(projectRoot).skills.sigmataste.destination, '.agents/skills/sigmataste');
     assert.equal(pathExists(backup), true);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });

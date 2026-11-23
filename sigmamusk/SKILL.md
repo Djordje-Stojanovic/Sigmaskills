@@ -1,6 +1,6 @@
 ---
 name: sigmamusk
-description: 'Use when asked for sigmamusk, Elon, Musk, the Algorithm or an idiot index, to shrink the largest files of a repo, or when a repo, machine or setup is bloated (was sigmarefactor and sigmareset). Measures the waste, deletes first, the owner decides what stays. Do not use for bugs (SigmaReview).'
+description: 'Use when asked for sigmamusk, Elon, Musk, the Algorithm or an idiot index, to shrink the largest files of a repo, or when a repo, machine or setup is bloated. Measures the waste, deletes first, the owner decides what stays. Do not use for bugs (SigmaReview).'
 ---
 
 # SigmaMusk

@@ -244,11 +244,11 @@ test('update: customization-only is unchanged; selected skip leaves the other sk
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-skip-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     const writeMd = path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md');
     const raw = '\r\nKeep CRLF  \n# heading\n<note>xml</note>\nno-final-newline';
     fs.writeFileSync(writeMd, injectRawCustomContent(fs.readFileSync(writeMd, 'utf8'), raw, 'sigmawrite'), 'utf8');
-    ageOfficial(projectRoot, 'sigmabrief');
+    ageOfficial(projectRoot, 'sigmataste');
 
     const plan = createUpdatePlan({
       catalog: getCatalog(ROOT),
@@ -256,14 +256,14 @@ test('update: customization-only is unchanged; selected skip leaves the other sk
       packageRoot: ROOT,
     });
     assert.equal(plan.unchanged.find((s) => s.id === 'sigmawrite').comparison, 'customization-only');
-    assert.equal(plan.changed.find((s) => s.id === 'sigmabrief').comparison, 'upstream-only');
+    assert.equal(plan.changed.find((s) => s.id === 'sigmataste').comparison, 'upstream-only');
 
     const io = createMockIo();
     const code = await runCli(['update', '--skill', 'sigmawrite', '--project', projectRoot], io);
     assert.equal(code, 0);
     assert.equal(extractRawCustomContent(fs.readFileSync(writeMd, 'utf8'), 'sigmawrite'), raw);
     assert.equal(
-      fs.readFileSync(path.join(skillDir(projectRoot, 'sigmabrief'), 'SKILL.md'), 'utf8').includes('<!-- sigma-older -->'),
+      fs.readFileSync(path.join(skillDir(projectRoot, 'sigmataste'), 'SKILL.md'), 'utf8').includes('<!-- sigma-older -->'),
       true,
     );
   } finally {
@@ -584,9 +584,9 @@ test('update: independent managed copies receive the canonical customization tog
 test('update: a failure on a later skill still reports the skills already updated (#67)', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-partial-'));
   try {
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     installWrite(projectRoot, 'sigmawrite');
-    ageOfficial(projectRoot, 'sigmabrief');
+    ageOfficial(projectRoot, 'sigmataste');
     const writeMd = path.join(skillDir(projectRoot, 'sigmawrite'), 'SKILL.md');
     fs.writeFileSync(writeMd, fs.readFileSync(writeMd, 'utf8').replace('<sigmaskills-custom>', '<sigmaskills-custom>\n<sigmaskills-custom>'), 'utf8');
 
@@ -596,20 +596,20 @@ test('update: a failure on a later skill still reports the skills already update
         projectRoot,
         packageRoot: ROOT,
         malformedMarkers: 'repair',
-        skillIds: ['sigmabrief', 'sigmawrite'],
+        skillIds: ['sigmataste', 'sigmawrite'],
       }),
       (err) => /invalid repair/.test(err.message)
         && err.updatedSkills.length === 1
-        && err.updatedSkills[0].id === 'sigmabrief'
+        && err.updatedSkills[0].id === 'sigmataste'
         && err.updatedSkills[0].success === true,
     );
 
-    ageOfficial(projectRoot, 'sigmabrief');
+    ageOfficial(projectRoot, 'sigmataste');
     const io = createMockIo();
     const code = await runCli(['update', '--yes', '--malformed-markers', 'repair', '--project', projectRoot], io);
     assert.equal(code, 1);
     assert.match(io.getStderr(), /invalid repair/);
-    assert.match(io.getStderr(), /Updated before the failure: sigmabrief/);
+    assert.match(io.getStderr(), /Updated before the failure: sigmataste/);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -806,14 +806,14 @@ test('packed CLI updates Project and Global Installation while preserving custom
     fs.mkdirSync(homeDir, { recursive: true });
     execFileSync(
       'node',
-      [installedBin, 'install', 'sigmabrief', '--global', '--yes'],
+      [installedBin, 'install', 'sigmataste', '--global', '--yes'],
       {
         cwd: appDir,
         encoding: 'utf8',
         env: { ...process.env, HOME: homeDir, USERPROFILE: homeDir },
       },
     );
-    const globalDest = path.join(homeDir, '.agents', 'skills', 'sigmabrief');
+    const globalDest = path.join(homeDir, '.agents', 'skills', 'sigmataste');
     const globalMd = path.join(globalDest, 'SKILL.md');
     fs.writeFileSync(
       globalMd,
@@ -826,8 +826,8 @@ test('packed CLI updates Project and Global Installation while preserving custom
     const globalHashes = computeSkillRevisionAndHashes(globalDest);
     const globalStatePath = path.join(homeDir, '.agents', '.sigmaskills', 'state.json');
     const globalState = JSON.parse(fs.readFileSync(globalStatePath, 'utf8'));
-    globalState.skills.sigmabrief.baseHashes = globalHashes.files;
-    globalState.skills.sigmabrief.revision = globalHashes.revision;
+    globalState.skills.sigmataste.baseHashes = globalHashes.files;
+    globalState.skills.sigmataste.revision = globalHashes.revision;
     fs.writeFileSync(globalStatePath, `${JSON.stringify(globalState, null, 2)}\n`);
     execFileSync(
       'node',
@@ -847,7 +847,7 @@ test('packed CLI updates Project and Global Installation while preserving custom
   }
 });
 
-test('update: a retired skill is reported and left untouched instead of blocking the update', async () => {
+test('update: a full update removes a retired skill it owns and drops the lock entry of one already gone', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-retired-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
@@ -855,20 +855,64 @@ test('update: a retired skill is reported and left untouched instead of blocking
     const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
     const retiredDir = path.join(projectRoot, '.agents', 'skills', 'sigmaperformance');
     fs.cpSync(path.join(projectRoot, '.agents', 'skills', 'sigmawrite'), retiredDir, { recursive: true });
-    state.skills.sigmaperformance = { ...state.skills.sigmawrite, destination: '.agents/skills/sigmaperformance' };
-    fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
-    const before = snapshotTree(retiredDir);
+    state.skills.sigmaperformance = { ...state.skills.sigmawrite, destination: '.agents/skills/sigmaperformance', copies: undefined };
+    fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}
+`);
+    const lockPath = path.join(projectRoot, 'skills-lock.json');
+    const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+    lock.skills.sigmafork = { ...lock.skills.sigmawrite }; // retired, folder already deleted by hand
+    fs.writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}
+`);
+
+    const jsonIo = createMockIo();
+    assert.equal(await runCli(['update', '--dry-run', '--json', '--project', projectRoot], jsonIo), 0);
+    assert.deepEqual(JSON.parse(jsonIo.getStdout()).retired, ['sigmafork', 'sigmaperformance']);
 
     const io = createMockIo();
     const code = await runCli(['update', '--yes', '--project', projectRoot], io);
     assert.equal(code, 0, io.getStderr());
-    assert.match(io.getStdout(), /Retired skills[\s\S]*sigmaperformance/);
-    assert.match(io.getStdout(), /uninstall --skill sigmaperformance/);
-    assert.deepEqual(snapshotTree(retiredDir), before);
+    assert.match(io.getStdout(), /sigmaperformance — removed/);
+    assert.match(io.getStdout(), /sigmafork — lock entry dropped/);
+    assert.equal(pathExists(retiredDir), false);
+    assert.ok(pathExists(path.join(projectRoot, '.agents', 'skills', 'sigmawrite')));
+    const after = JSON.parse(fs.readFileSync(lockPath, 'utf8')).skills;
+    assert.deepEqual(Object.keys(after).filter((id) => ['sigmafork', 'sigmaperformance'].includes(id)), []);
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
 
-    const jsonIo = createMockIo();
-    assert.equal(await runCli(['update', '--dry-run', '--json', '--project', projectRoot], jsonIo), 0);
-    assert.deepEqual(JSON.parse(jsonIo.getStdout()).retired, ['sigmaperformance']);
+test('update: a git-tracked retired folder with no state and no lock is named with its removal line and kept', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-tracked-'));
+  try {
+    const dir = path.join(projectRoot, '.agents', 'skills', 'sigmahuman');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: sigmahuman\ndescription: Old copy.\n---\n');
+    execFileSync('git', ['init', '-q'], { cwd: projectRoot });
+    execFileSync('git', ['add', '.'], { cwd: projectRoot });
+
+    const io = createMockIo();
+    assert.equal(await runCli(['update', '--yes', '--project', projectRoot], io), 0, io.getStderr());
+    assert.match(io.getStdout(), /sigmahuman — kept \(.*git-tracked.*\); remove it by hand: git rm -r ".*sigmahuman"/);
+    assert.ok(pathExists(path.join(dir, 'SKILL.md')), 'a copy update does not own is never deleted');
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
+test('update: a git-tracked retired folder only under a host skills folder is named with its removal line and kept', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-host-'));
+  try {
+    const dir = path.join(projectRoot, '.claude', 'skills', 'sigmahuman');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: sigmahuman\ndescription: Old copy.\n---\n');
+    execFileSync('git', ['init', '-q'], { cwd: projectRoot });
+    execFileSync('git', ['add', '.'], { cwd: projectRoot });
+
+    const io = createMockIo();
+    assert.equal(await runCli(['update', '--yes', '--project', projectRoot], io), 0, io.getStderr());
+    assert.match(io.getStdout(), /sigmahuman — kept \(.*git-tracked.*\); remove it by hand: git rm -r ".*\.claude[\\/]skills[\\/]sigmahuman"/);
+    assert.ok(pathExists(path.join(dir, 'SKILL.md')), 'a copy update does not own is never deleted');
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }

@@ -44,12 +44,12 @@ test('cli: install --dry-run --json prints versioned JSON plan', async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-cli-dry-json-'));
   try {
     const io = createMockIo();
-    const code = await runCli(['install', 'sigmabrief', '--dry-run', '--json', '--project', tmpDir], io);
+    const code = await runCli(['install', 'sigmataste', '--dry-run', '--json', '--project', tmpDir], io);
 
     assert.equal(code, 0);
     const parsed = JSON.parse(io.getStdout());
     assert.equal(parsed.schemaVersion, 1);
-    assert.equal(parsed.skill, 'sigmabrief');
+    assert.equal(parsed.skill, 'sigmataste');
     assert.equal(parsed.scope, 'project');
     assert.equal(parsed.dryRun, true);
   } finally {
@@ -77,11 +77,11 @@ test('cli: add <skill> is alias for install', async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-cli-add-'));
   try {
     const io = createMockIo();
-    const code = await runCli(['add', 'sigmabrief', '--project', tmpDir], io);
+    const code = await runCli(['add', 'sigmataste', '--project', tmpDir], io);
 
     assert.equal(code, 0);
-    assert.match(io.getStdout(), /Installed SigmaBrief \(sigmabrief\)/);
-    assert.ok(fs.existsSync(path.join(tmpDir, '.agents', 'skills', 'sigmabrief', 'SKILL.md')));
+    assert.match(io.getStdout(), /Installed SigmaTaste \(sigmataste\)/);
+    assert.ok(fs.existsSync(path.join(tmpDir, '.agents', 'skills', 'sigmataste', 'SKILL.md')));
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }

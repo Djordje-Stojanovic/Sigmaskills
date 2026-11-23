@@ -7,7 +7,7 @@ These rules close the known shortcuts. They become §INVARIANTS and §ANTI-GAMIN
 
 1. Model weights, revision, shard set, tokenizer, chat template.
 2. Quantization (`modelopt_mixed`, FP4 weights), KV cache dtype (fp8), LM head precision.
-3. `max_model_len` 262,144 and the served name `qwen`.
+3. `max_model_len` 262,144 and the served name from `box/model.env`.
 4. Sampling defaults the users get (T 1.0, top_p 0.95, top_k 20) and thinking on.
 5. The memory budget: GPU memory share 0.75, or whatever you sign (see questions). A KV pool gain bought by more memory is not a gain.
 6. The benchmark scripts, prompt sets, reference outputs and thresholds. They are hashed in `evaluator.lock`. A hash mismatch voids the experiment.

@@ -1,4 +1,4 @@
-# SigmaBrief prompt contract
+# SigmaLoop Briefs prompt contract
 
 ## Contents
 

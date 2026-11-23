@@ -2,7 +2,9 @@
 LFS files are hashed (low priority, the server keeps running); small files are size-checked."""
 import hashlib, os, sys
 
-DIR = "/root/.cache/huggingface/local/Qwen3.8-Flash-Next-FP4-Local-abliterated"
+from model_env import model_env
+
+DIR = model_env()["MODEL_DIR"]
 os.nice(19)
 bad = 0
 for line in open(sys.argv[1], encoding="utf-8"):

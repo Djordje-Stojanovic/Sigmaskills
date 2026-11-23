@@ -79,6 +79,37 @@ export function hashDirectory(dir) {
   return hash.digest('hex');
 }
 
+/**
+ * Copy each skill folder of `from` into `outDir`. `licenses` (files at the repo root, such as
+ * LICENSE and NOTICE) go into every skill folder, as the design-md transform does. `rename`
+ * ({ upstream id: new id }) gives a skill a pack-unique name when another pack owns the upstream
+ * one, and rewrites the old name in the Markdown of every skill of the source, so a router still finds it.
+ */
+export function stageSkills(source, from, repoRoot, outDir) {
+  const rename = source.rename || {};
+  const olds = Object.keys(rename).map((id) => [new RegExp(`(?<![\\w-])${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`, 'g'), rename[id]]);
+  const rewrite = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) rewrite(full);
+      else if (entry.isFile() && entry.name.endsWith('.md')) {
+        const text = fs.readFileSync(full, 'utf8');
+        const next = olds.reduce((acc, [pattern, id]) => acc.replace(pattern, id), text);
+        if (next !== text) fs.writeFileSync(full, next);
+      }
+    }
+  };
+  for (const [id, dir] of findSkillDirs(from)) {
+    const dest = path.join(outDir, rename[id] || id);
+    fs.cpSync(dir, dest, { recursive: true, filter: (item) => item === dir || !path.basename(item).startsWith('.') });
+    for (const name of source.licenses || []) {
+      const file = path.join(repoRoot, name);
+      if (fs.existsSync(file)) fs.copyFileSync(file, path.join(dest, name));
+    }
+    if (olds.length) rewrite(dest);
+  }
+}
+
 function gitUrl(source, env) {
   if (source.url) return source.url;
   const base = env.SIGMA_GIT_BASE || 'https://github.com/';
@@ -106,7 +137,8 @@ function planFetch(url, dest, source) {
     args: ['-C', dest, 'fetch', '-q', '--depth', '1', '--filter=blob:none', 'origin', ref],
     fallback: ['-C', dest, 'fetch', '-q', '--depth', '1', 'origin', ref],
   });
-  steps.push({ args: ['-c', 'advice.detachedHead=false', '-C', dest, 'checkout', '-q', '--detach', 'FETCH_HEAD'] });
+  // The pinned bytes, never line endings converted by a machine's git (Git for Windows sets core.autocrlf=true).
+  steps.push({ args: ['-c', 'core.autocrlf=false', '-c', 'advice.detachedHead=false', '-C', dest, 'checkout', '-q', '--detach', 'FETCH_HEAD'] });
   steps.push({ args: ['-C', dest, 'rev-parse', 'HEAD'], capture: true });
   return steps;
 }
@@ -173,7 +205,8 @@ function cacheRoot(env) {
 function cacheKey(source) {
   const name = String(source.repo || source.url).replace(/[^A-Za-z0-9._-]+/g, '_');
   const part = String(source.path || '').replace(/[^A-Za-z0-9._-]+/g, '_');
-  return `${name}@${source.ref}${part ? `#${part}` : ''}`;
+  // `~raw`: checkouts made before autocrlf was turned off may hold converted line endings, so they are not reused.
+  return `${name}@${source.ref}${part ? `#${part}` : ''}~raw`;
 }
 
 function headOf(dir) {
@@ -237,6 +270,12 @@ export function createSourceFetcher({ env = process.env } = {}) {
       temps.push(outDir);
       const from = result.root;
       fs.cpSync(from, path.join(outDir, source.rootSkill), { recursive: true, filter: (item) => item === from || !path.basename(item).startsWith('.') });
+      result = { ...result, root: outDir };
+    }
+    if (source.licenses || source.rename) {
+      const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigmaskills-lic-'));
+      temps.push(outDir);
+      stageSkills(source, result.root, checkout, outDir);
       result = { ...result, root: outDir };
     }
     return result;

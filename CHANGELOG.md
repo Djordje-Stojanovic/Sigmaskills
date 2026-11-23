@@ -32,6 +32,29 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.29.3] — 2026-11-23
+
+### Changed
+
+- Three skills joined others, no feature lost: `sigmabrief` is now the Briefs part of `sigmaloop` (its method and prompt contract moved whole into `sigmaloop/references/`), `sigmahuman` is the humanize mode of `sigmawrite` (`references/human.md`, with its patterns, lanes, fact check and upstream sync), and `sigmaboat` is the boat.dev part of `sigmacollab` (`references/boat.md`). Each old name is on the retired list and its words still start the new skill. The Sigma pack has 22 skills (#398).
+- `sigmaloop`'s loop file names the four states of a ticket (ready, working, reviewing, landed), the builder ticks its own box where the to-do is, and the landing shape: one feature branch and one PR for all tickets by default, a PR per ticket when asked (#398).
+- A full `update` removes the retired skills it owns (an edited copy is backed up first) and drops the lock entry of one already deleted. A retired folder it has no record of, or a git-tracked one, stays and the output names the line that removes it, also when the project has no lock. Before, update left retired skills in place, so old names stayed installed (#398).
+- Old names left the skill texts: `sigmatour`, `sigmamusk` and `sigmaclimb` no longer answer to `sigmafork`, `sigmarefactor`, `sigmareset` or `sigmaspeedloop`. `sigmamusk cut` names duplicate pruning and the count without Git or `laloc`, the two steps only `sigmarefactor` spelled out (#398).
+- No skill text names a model: the last few (an eval note, a proxy example, arena anchors) name a role or a kind. `sigmaship` and the tstack setup guide no longer carry one harness's CLI flags and settings path (#398).
+- Every pack moved to its source's newest version: 12 commit pins by `npm run packs:update`, hyperframes `v0.9.86` and last30days `v4.6.0` by hand (#398).
+- `sigmaask`'s catalog is written one line per skill with descriptions cut to 100 characters: 91 KB for 658 skills, was 110 KB for 578 (#398).
+- New packs `gamedev` (gamedev-skills/awesome-gamedev-agent-skills: 79 game skills for 12 engines and a router, Apache-2.0) and `monorepo-doctor` (santoshyadavdev/monorepo-doctor: a read-only JS/TS monorepo audit and its cleanup flow, MIT, Node 22.5+). A pack source may name `licenses` (root files copied into each skill folder, as the design-md transform already did) and `rename` (a pack-unique name for a skill another pack owns; every Markdown mention in the source follows): gamedev's `performance-optimization` installs as `game-performance-optimization`, so its router's routes resolve. `packs:update` fails a router that names a skill its pack does not install (#398).
+- `sigmacollab` takes Google Colab first, for a GPU and for a CPU job, then vast.ai for a card Colab refuses or times out on, then a boat.dev box for what Colab cannot hold (#398).
+- `sigmaloop`'s review rule names the reviewer as a role with no count and no queue; the builder fixes each finding and answers one it holds wrong with the command that shows it; the round limit is a variable of the loop file. In the one-branch mode each ticket is its own sub-issue of the spec issue, closed by its builder after its branch is merged. A reviewer's diff, in `sigmaloop` and `sigmaship`, leaves out the paths the repo names as the owner's content (#398).
+- `sigmaclimb`'s box scripts read the served model (checkpoint, revision, folder, served name, parsers) from `box/model.env`, the one place; a placeholder stops them with the name to set (#398).
+
+### Fixed
+
+- Pack sources are checked out with `core.autocrlf` off, so installed files are the pinned bytes on Windows too; the cache key changed once so older converted checkouts are not reused (#398).
+- `update` also finds a retired skill folder under a host's skills folder (such as `.claude/skills`), tracked or not, and prints its removal line (#398).
+- `sigmasetup`'s `house.mjs` did nothing and said nothing when its folder was reached through a symlink or junction (an installed skills folder can be one): its start check compared the link path with the real one. It compares real paths now (#398).
+- `sigmasetup` no longer writes a house file the repo lacks without a yes: `apply` writes the drifted rows, and a missing one (such as another project's `DESIGN.md` in a new repo) only when `--add` names it. The skill asks once per missing file, default no (#398).
+
 ## [0.29.2] — 2026-11-23
 
 ### Changed
@@ -930,7 +953,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.2...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.3...HEAD
+[0.29.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.2...v0.29.3
 [0.29.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.1...v0.29.2
 [0.29.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.28.0...v0.29.0

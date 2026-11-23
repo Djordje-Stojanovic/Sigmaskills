@@ -1,4 +1,4 @@
-# SigmaBrief method
+# SigmaLoop Briefs method
 
 ## Contents
 
@@ -12,10 +12,10 @@
 
 | Actor | May ask |
 |-------|---------|
-| **SigmaBrief** | At most one question if the work target is missing (`Which issue URL(s), work statement, or repo for all open?`). Full `/grilling` only if the user explicitly asks SigmaBrief to grill them. |
+| **SigmaLoop Briefs** | At most one question if the work target is missing (`Which issue URL(s), work statement, or repo for all open?`). Full `/grilling` only if the user explicitly asks SigmaLoop Briefs to grill them. |
 | **Executing agent** (in the brief) | Nothing under `approval: auto` (default): it decides and logs rulings. Under `approval: plan`, its plan and focused questions. |
 
-SigmaBrief itself stays thin: research enough to write good simple briefs, then emit.
+SigmaLoop Briefs itself stays thin: research enough to write good simple briefs, then emit.
 
 ## 2. Resolve repository and work items
 
@@ -51,7 +51,7 @@ Also:
 - note upstream blockers (linked upstream issues);
 - redact secrets from any quoted issue context.
 
-Skip deep code archaeology. SigmaBrief is not SigmaReview.
+Skip deep code archaeology. SigmaLoop Briefs is not SigmaReview.
 
 ## 4. Classify each item
 

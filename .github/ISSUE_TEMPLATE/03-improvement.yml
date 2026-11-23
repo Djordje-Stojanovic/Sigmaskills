@@ -51,7 +51,7 @@ body:
       options:
         - sigmareview
         - sigmaimprove
-        - sigmabrief
+        - sigmaloop
         - sigmaship
         - sigmawrite
         - Shared (README / install / repo-wide)

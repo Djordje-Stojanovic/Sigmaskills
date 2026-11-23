@@ -21,6 +21,8 @@ Queue: ideas.tsv (sorted by share x p=NN%). Results: results.tsv. Dead ends: rul
 `scripts/bench/target.sh`, `speed.py`, `common.py`, `gate.py`, `quality.py`, `invariants.py`, `bw.py`,
 `build_replay.py`, `scripts/box.ps1`, `launch.ps1`, `wait.ps1`, `box/*`, `docs/03_ANTI_GAMING.md`.
 
+A served model: set its checkpoint, revision, folder, served name and parsers in `box/model.env`, the one place every box script reads.
+
 For another target, replace these:
 1. `scripts/bench/target.sh`: the five steps of your target (start, warmup, score, quality, stop).
 2. Its score step writes `raw/score.json`: `{"probes": {"name": value}}`, or `{"pairs": {"champion": {"won", "lost",

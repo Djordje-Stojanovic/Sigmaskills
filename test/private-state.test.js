@@ -67,21 +67,21 @@ test('private state: git add -A after install and backup stages only skills and 
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-private-git-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     forceBackup(projectRoot, 'sigmawrite', 'first-edit');
-    fs.writeFileSync(path.join(skillDir(projectRoot, 'sigmabrief'), 'mine.txt'), 'edit', 'utf8');
+    fs.writeFileSync(path.join(skillDir(projectRoot, 'sigmataste'), 'mine.txt'), 'edit', 'utf8');
     executeUninstall({
       catalog: getCatalog(ROOT),
       projectRoot,
       packageRoot: ROOT,
-      skillIds: ['sigmabrief'],
+      skillIds: ['sigmataste'],
       changed: 'backup',
     });
 
     const stateDir = getProjectStateDir(projectRoot);
     assert.equal(stateDir, path.join(projectRoot, '.agents', PRIVATE_STATE_DIRNAME));
     assert.ok(pathExists(path.join(stateDir, 'state.json')));
-    assert.ok(fs.readdirSync(path.join(stateDir, 'backups')).includes('sigmabrief'));
+    assert.ok(fs.readdirSync(path.join(stateDir, 'backups')).includes('sigmataste'));
 
     const staged = stagedPaths(projectRoot);
     assert.ok(staged.length > 0);
@@ -124,7 +124,7 @@ test('private state: purge removes the private folder; uninstall-all leaves only
   const allRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-private-all-'));
   try {
     installWrite(allRoot, 'sigmawrite');
-    installWrite(allRoot, 'sigmabrief');
+    installWrite(allRoot, 'sigmataste');
     fs.writeFileSync(path.join(skillDir(allRoot, 'sigmawrite'), 'mine.txt'), 'keep', 'utf8');
     executeUninstall({
       catalog: getCatalog(ROOT),
@@ -147,7 +147,7 @@ test('private state: uninstall-all with no kept backups removes the private fold
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-private-all-clean-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
-    installWrite(projectRoot, 'sigmabrief');
+    installWrite(projectRoot, 'sigmataste');
     executeUninstall({
       catalog: getCatalog(ROOT),
       projectRoot,

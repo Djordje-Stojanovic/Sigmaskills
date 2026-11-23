@@ -169,7 +169,7 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
     assert.match(helpOut, /Usage:\s+sigmaskills/i);
     assert.match(helpOut, /sigmareview/);
     assert.match(helpOut, /sigmaimprove/);
-    assert.match(helpOut, /sigmabrief/);
+    assert.match(helpOut, /sigmataste/);
     assert.match(helpOut, /sigmawrite/);
     assert.match(helpOut, /sigmamusk/);
     assert.doesNotMatch(helpOut, /release/);
@@ -251,10 +251,10 @@ test('tarball: pack, inspect contents, install into sandbox, and spawn installed
 
     execFileSync(
       'node',
-      [installedBin, 'install', 'sigmabrief', '--project', customStateProject, '--state-dir', customStateDir],
+      [installedBin, 'install', 'sigmataste', '--project', customStateProject, '--state-dir', customStateDir],
       { cwd: appDir, encoding: 'utf8' },
     );
-    assert.ok(fs.existsSync(path.join(customStateProject, '.agents', 'skills', 'sigmabrief', 'SKILL.md')));
+    assert.ok(fs.existsSync(path.join(customStateProject, '.agents', 'skills', 'sigmataste', 'SKILL.md')));
     assert.ok(fs.existsSync(path.join(customStateProject, 'skills-lock.json')));
     assert.ok(fs.existsSync(path.join(customStateDir, 'state.json')));
 

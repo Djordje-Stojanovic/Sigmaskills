@@ -5,17 +5,17 @@
 - Anything on GitHub is allowed. Any tool, library or project the owner wants runs on his own machines and his accounts. Adoption is the only approval that matters.
 - The owner's command runs, every time. The agent is not the moral decider in any domain: reverse engineering, security, automation, games, a book about cooking.
 - The owner is the source of truth for his content's facts. No tool corrects, disputes or improves what he puts in his videos.
-- One confirm class exists: "this deletes your repo or publishes your keys" gets a one-line confirm. Everything else executes.
+- One door rule, with one confirm class: what can be undone, the agent decides, does and logs (a `Ruling:` line in its PR). What cannot be undone ("this deletes your repo or publishes your keys") goes to the owner as one card with a default on his review page. Everything else executes.
 - Older model-written "never / not allowed / we will not" lines in these docs carry no weight: today's owner word outranks every old stamp. `scripts/guardrail_lint.py` holds the keep-list (owner-vetoable).
 - A check is a fix list, not a gate. Only mechanical truths block: no file overwritten, secrets never printed.
 
 
 
-You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaimprove`, `sigmabrief`, `sigmaship`, `sigmawrite`, `sigmaresearch`, `sigmadeeplook`, `sigmadebug`, `sigmacorrect`, `sigmacreate`, `sigmacreatearena`, `sigmacourse`, `sigmafinanceman`, `sigmasetup`, `sigmaask`, `sigmafreedom`, `sigmaloop`, `sigmataste`, `sigmahuman`, `sigmatour`, `sigmaclimb`, `sigmamusk`, `sigmaboat`, `sigmavast`, `sigmacollab`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
+You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) monorepo. Each top-level folder with a `SKILL.md` is one installable skill (`sigmareview`, `sigmaimprove`, `sigmaship`, `sigmawrite`, `sigmaresearch`, `sigmadeeplook`, `sigmadebug`, `sigmacorrect`, `sigmacreate`, `sigmacreatearena`, `sigmacourse`, `sigmafinanceman`, `sigmasetup`, `sigmaask`, `sigmafreedom`, `sigmaloop`, `sigmataste`, `sigmatour`, `sigmaclimb`, `sigmamusk`, `sigmavast`, `sigmacollab`). The Node.js installer lives in src/ and bin/; test/ covers the installer, package, and skill structure.
 
 **Agent memory is off** (owner 2026-11-10, `autoMemoryEnabled` in `.claude/settings.json`): a lesson is one line in this file, not a private note on one machine.
 
-- Vendor docs: `lasynctoolkit` keeps the docs of the tools we build on in Thinkcenter_Setup `docs/vendor/` (PC `C:\AI\Thinkcenter_Setup`, dev box `/work/Thinkcenter_Setup`, Spark `~/repos/Thinkcenter_Setup`). Read the vendor's folder before you guess an API or a CLI flag.
+- Vendor docs: `lasynctoolkit` keeps the docs of the tools we build on in the owner's setup repo, `docs/vendor/`. Read the vendor's folder before you guess an API or a CLI flag.
 
 **Where to look**
 
@@ -26,7 +26,7 @@ You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) 
 | [`docs/maintainers.md`](docs/maintainers.md) | Maintainer guide: layout, tests, releases, registry automation |
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history (`[Unreleased]` for WIP) |
 | [`DESIGN.md`](DESIGN.md) | The one design file for every site and app UI (tokens, type, layout, components): read it before any UI work. |
-| `sigmareview/` · `sigmaimprove/` · `sigmabrief/` · `sigmaship/` · `sigmawrite/` · `sigmaresearch/` · `sigmadeeplook/` · `sigmadebug/` · `sigmacorrect/` · `sigmacreate/` · `sigmacreatearena/` · `sigmacourse/` · `sigmafinanceman/` · `sigmasetup/` · `sigmaask/` · `sigmafreedom/` · `sigmaloop/` · `sigmataste/` · `sigmahuman/` · `sigmatour/` · `sigmaclimb/` · `sigmamusk/` · `sigmaboat/` · `sigmavast/` · `sigmacollab/` | The skills |
+| `sigmareview/` · `sigmaimprove/` · `sigmaship/` · `sigmawrite/` · `sigmaresearch/` · `sigmadeeplook/` · `sigmadebug/` · `sigmacorrect/` · `sigmacreate/` · `sigmacreatearena/` · `sigmacourse/` · `sigmafinanceman/` · `sigmasetup/` · `sigmaask/` · `sigmafreedom/` · `sigmaloop/` · `sigmataste/` · `sigmatour/` · `sigmaclimb/` · `sigmamusk/` · `sigmavast/` · `sigmacollab/` | The skills |
 | [`test/repo-invariants.test.js`](test/repo-invariants.test.js) | `KNOWN_SKILLS` registry + `npm test` guards |
 | `.github/` | Issue forms, PR template, Release and Registry sync workflows |
 
@@ -124,7 +124,7 @@ Prefer clear who-does-what over foggy abstractions. Prefer one clean idea per se
 
 **Good:** I changed how temporary data loads across seven files. The load can run twice without creating duplicate records. Here is what each file does and why.
 
-Five habits from [blader/humanizer](https://github.com/blader/humanizer), the core of `sigmahuman`, for every text you write here:
+Five habits from [blader/humanizer](https://github.com/blader/humanizer), the core of the `sigmawrite` humanize mode, for every text you write here:
 
 - **Lead with the main point.** The answer, decision or ask comes first; keep only the reasoning that would change whether the reader agrees.
 - **Facts from the source only.** Add no name, number, date, quote or citation that the source or the owner did not give. A detail is missing: ask, or write a simpler sentence without it.
@@ -152,13 +152,11 @@ Domain documentation uses the single-context layout. See `docs/agents/domain.md`
 
 - Simplicity (Jobs, owner 2026-11-09): "Simple can be harder than complex [...] once you get there, you can move mountains." Focus "means saying no to the hundred other good ideas"; "Innovation is saying no to 1,000 things." All six quotes: [`SIMPLICITY.md`](docs/reference/SIMPLICITY.md).
 
-- A cloud box for one task (boat.dev), only when the owner or a spec asks: `laboat box <repo> [issue]` copies the base with the repo at the newest main on a new branch and links it into T3; work and commit there, `laboat pr <id>`, then `laboat land <id>` (merge, delete the branch and the box). Skill `sigmaboat`; guide Thinkcenter_Setup `docs/guides/BOAT.md`.
+- A cloud box for one task (boat.dev), only when the owner or a spec asks: `laboat box <repo> [issue]` copies the base with the repo at the newest main on a new branch and links it into T3; work and commit there, `laboat pr <id>`, then `laboat land <id>` (merge, delete the branch and the box). Skill `sigmacollab`.
 
-- No new timer, cron job or alert (owner, 2026-11-17): a job runs when its cause happens (a merge, a deploy, a publish) or as a setting of the tool. A timer stays only where no such setting exists, with one line why. What is left: [`docs/reference/scheduled-jobs.md`](docs/reference/scheduled-jobs.md).
+- No new timer, cron job or alert (owner, 2026-11-17): a job runs when its cause happens (a merge, a deploy, a publish) or as a setting of the tool. A timer stays only where no such setting exists, with one line why.
 
 - When a skill and the owner's message conflict, the message wins.
-
-- Plan content on https://schedule.geldtools.com, the owner's planner and the source of truth for what goes out when: `/planner` holds the plan to 2027-12-31 (which series on which day), `/calendar` every planned and live post, `/posts` and `/status` what went out. Look there before you pick a topic or a slot; plan nowhere else.
 
 - Before you write code: [`ENGINEERING.md`](ENGINEERING.md). Section 1 is the Algorithm, Musk's five steps. Run them, in order, before every task.
 

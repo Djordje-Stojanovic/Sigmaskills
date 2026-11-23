@@ -12,11 +12,9 @@ const KNOWN_SKILLS = [
   { id: 'sigmafreedom', title: 'SigmaFreedom', needsReferences: true },
   { id: 'sigmaloop', title: 'SigmaLoop', needsReferences: true },
   { id: 'sigmataste', title: 'SigmaTaste', needsReferences: true },
-  { id: 'sigmahuman', title: 'SigmaHuman', needsReferences: true },
   { id: 'sigmatour', title: 'SigmaTour', needsReferences: true },
   { id: 'sigmaclimb', title: 'SigmaClimb', needsReferences: true },
   { id: 'sigmamusk', title: 'SigmaMusk', needsReferences: true },
-  { id: 'sigmaboat', title: 'SigmaBoat', needsReferences: false },
   { id: 'sigmavast', title: 'SigmaVast', needsReferences: false },
   { id: 'sigmacollab', title: 'SigmaCollab', needsReferences: true },
   { id: 'sigmadebug', title: 'SigmaDebug', needsReferences: false },
@@ -35,11 +33,6 @@ const KNOWN_SKILLS = [
   {
     id: 'sigmaimprove',
     title: 'SigmaImprove',
-    needsReferences: true,
-  },
-  {
-    id: 'sigmabrief',
-    title: 'SigmaBrief',
     needsReferences: true,
   },
   {
