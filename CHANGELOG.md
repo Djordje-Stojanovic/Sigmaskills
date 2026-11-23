@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.29.2] — 2026-11-23
+
 ### Changed
 
 - `sigmacollab` runs one job on rented compute and proves it gone. Google Colab comes first (CPU, High-RAM, GPU, TPU, paid in plan units): it shows the price before the start, carries Colab's rules, and ends on `colab sessions` without the job's runtimes. vast.ai is the second provider, for a card Colab refuses. Both run through their own CLIs (`colab`, `vastai`), so the skill needs no lab wrapper; `sigmaboat` now names the `boat` CLI first too. `sigmavast` is now a pointer to it; its card notes hold a one-minute test of every accelerator (#390).
@@ -928,7 +930,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.1...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.2...HEAD
+[0.29.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.1...v0.29.2
 [0.29.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.27.3...v0.28.0
