@@ -4,7 +4,7 @@ An agent cannot hear. `look.py` turns audio into numbers, text and two pictures.
 
 ## When look.py is not enough
 
-- Taste, voice identity, mix balance, emotion: a human listens, or a model that takes audio (Gemini) does, with the human's yes because the file leaves the machine.
+- Taste, voice identity, mix balance, emotion: a human listens, or a model that takes audio does, with the human's yes because the file leaves the machine.
 - Speakers (who said what), overlapping speech and a language other than the first guess: ask the human for the language and a glossary of names; diarization needs a gated model and a token, which this skill never downloads.
 - Music beyond tempo (key, chords, stems, notes): not in v1. Say so under Limits.
 - Sound effects: no label model is bundled. Describe the waveform and spectrogram, and ask.
