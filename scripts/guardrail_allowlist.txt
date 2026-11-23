@@ -50,8 +50,7 @@ description: 'Fork or copy any repository, from GitHub or a local folder, end to
 description: 'Make a design system end to end from one accent colour
 # keep (ticket 83 M18, 2026-10-23): the 'Do not use' line of each skill description (200-character rule); skill scope routing
 Do not use for 2-3 options or measured checks.
-Do not use to cut jargon.
-Do not use to start the run.
+Do not use to do the work or start the run.
 Do not use for an unattended rewrite or a performance audit.
 Do not use to build them or hunt bugs.
 Do not use to fork, review or improve it.
@@ -69,12 +68,11 @@ forbidden changes (more quantization, precision cuts, other weights, lossy
 running anything heavy there was forbidden.
 description: 'Use when asked for sigmamusk, Elon, Musk, the Algorithm or an idiot index. Measures waste, files one issue with a delete list and a report page, offers SigmaShip. Do not use for bugs (SigmaReview).'
 Do not use for bugs (SigmaReview).
-description: 'Use when asked for sigmaboat or to run authorized work (loop file, ship issue, spec) on boat.dev sandboxes: base once, fork per worker, delete. Do not use to plan work (SigmaLoop) or by default.'
+Do not use for local machines or local GPUs.
 description: 'Use when asked for sigmadebug, or to list and settle every open question, one topic at a time. Grills each, plans each fix, ships each in a background agent. Do not use for one bug (SigmaReview).'
 Do not use for one bug (SigmaReview).
 description: Use when asked for sigmawrite, easy talk, a SigmaWriteGUI board, an EASYTALK REPLY, less jargon, gibberish or outsider-clear text. Plain English and status boards. Do not use to rewrite code or APIs.
-description: 'Use when asked for sigmavast or to rent a GPU (vast.ai and other clouds) for one job through lacompute: pick the card, keep the spend cap, prove the teardown. Do not use for CPU sandboxes (SigmaBoat) or local GPUs.'
-Do not use to plan work (SigmaLoop) or for GPU jobs (SigmaVast).
+Do not use for anything else: load sigmacollab.
 Do not use for live tutoring.
 Do not use for a correction given twice (SigmaCorrect).
 Do not use to install skills.
