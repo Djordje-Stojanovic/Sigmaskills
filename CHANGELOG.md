@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.29.3] — 2026-11-23
+
 ### Changed
 
 - Three skills joined others, no feature lost: `sigmabrief` is now the briefs output of `sigmaloop` (`references/brief.md`), `sigmahuman` is the humanize mode of `sigmawrite` (`references/human.md`, with its patterns, lanes, fact check and upstream sync), and `sigmaboat` is the boat.dev part of `sigmacollab` (`references/boat.md`). Each old name is on the retired list and its words still start the new skill. The Sigma pack has 22 skills (#398).
@@ -41,11 +43,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - Old names left the skill texts: `sigmatour`, `sigmamusk` and `sigmaclimb` no longer answer to `sigmafork`, `sigmarefactor`, `sigmareset` or `sigmaspeedloop`. `sigmamusk cut` names duplicate pruning, the one step only `sigmarefactor` spelled out (#398).
 - Every pack moved to its source's newest version: 11 commit pins by `npm run packs:update`, hyperframes `v0.9.86` and last30days `v4.6.0` by hand (#398).
 - `sigmaask`'s catalog is written one line per skill with descriptions cut to 100 characters: 92 KB for 665 skills, was 110 KB for 578 (#398).
-
-### Added
-
-- Packs `gamedev` (gamedev-skills/awesome-gamedev-agent-skills: 79 game skills for 12 engines and a router, Apache-2.0) and `monorepo-doctor` (santoshyadavdev/monorepo-doctor: a read-only JS/TS monorepo audit and its cleanup flow, MIT, Node 22.5+) (#398).
-- A test holds the call rule: a skill the user types may call helper skills, never another typed skill (#398).
+- New packs `gamedev` (gamedev-skills/awesome-gamedev-agent-skills: 79 game skills for 12 engines and a router, Apache-2.0) and `monorepo-doctor` (santoshyadavdev/monorepo-doctor: a read-only JS/TS monorepo audit and its cleanup flow, MIT, Node 22.5+) (#398).
+- A new test holds the call rule: a skill the user types may call helper skills, never another typed skill (#398).
 
 ## [0.29.2] — 2026-11-23
 
@@ -945,7 +944,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.2...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.3...HEAD
+[0.29.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.2...v0.29.3
 [0.29.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.1...v0.29.2
 [0.29.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.28.0...v0.29.0
