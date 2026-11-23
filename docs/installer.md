@@ -188,7 +188,7 @@ How pack skills install:
 
 ## Agent Hosts
 
-`--agent <host>` (`-a`) adds the host's folder to the install. It takes a host id, a display name, a registry alias, or one of these short names: `claude`, `gemini`, `agy`, `copilot`, `kimi`. Repeat the flag, or join names with commas. `--agent '*'` selects every host in the registry. An unknown name stops with the closest ids.
+`--agent <host>` (`-a`) adds the host's folder to the install. It takes a host id, a display name, a registry alias, or one of these short names: `claude`, `gemini`, `agy`, `copilot`, `kimi`. Repeat the flag, or join names with commas. `--agent '*'` selects every host in the registry, `--agent detected` each host whose folder is in your home (`.gemini/antigravity` for Antigravity). An unknown name stops with the closest ids.
 
 Most hosts (Codex, Cursor, Gemini CLI, Antigravity CLI, Pi, OpenCode, GitHub Copilot, Kimi Code CLI and others) read `.agents/skills`, which every install writes, so `--agent codex` adds no folder. Claude Code, Windsurf, Reasonix and a few others read their own folder, and `--agent claude` adds `.claude/skills`. `--destination <dir>` still adds a raw folder.
 

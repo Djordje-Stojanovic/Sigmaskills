@@ -25,14 +25,14 @@ export const COPY_ONLY_ROOTS = Object.freeze(new Set(['.gemini/config/skills']))
  * Turn friendly Agent Host names into destination roots.
  *
  * A name matches a host id, its display name, a registry alias, or a short alias such as
- * `claude` or `agy`. Hosts that read `.agents/skills` need no folder of their own: the
+ * `claude` or `agy`; `detected` names every host whose folder is in the home. Hosts that read `.agents/skills` need no folder of their own: the
  * universal root is always part of the result.
  *
  * @param {string[]} names
  * @param {object[]} groups destination groups for the scope (project or global)
  * @returns {{ roots: string[], hosts: object[], unknown: string[] }}
  */
-export function resolveAgentRoots(names, groups) {
+export function resolveAgentRoots(names, groups, detected = new Set()) {
   const roots = new Set([UNIVERSAL_PROJECT_DESTINATION]);
   const hosts = [];
   const unknown = [];
@@ -41,8 +41,8 @@ export function resolveAgentRoots(names, groups) {
     for (const part of String(raw).split(',')) {
       const name = part.trim().toLowerCase();
       if (!name) continue;
-      if (name === '*' || name === 'all') {
-        all.forEach((host) => {
+      if (name === '*' || name === 'all' || name === 'detected') {
+        all.filter((host) => name !== 'detected' || detected.has(host.id)).forEach((host) => {
           if (host.relativeRoot) roots.add(host.relativeRoot);
           hosts.push(host);
         });
