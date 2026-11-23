@@ -19,7 +19,7 @@ target is a served model: the GPU host, the engine, the probes and the serving f
 | Video | ComfyUI, diffusers | latency per frame or clip, VRAM | per-frame and temporal metric |
 | Audio, music, speech | diffusers, custom servers | real-time factor, time to first chunk | mel or CLAP distance, word error rate |
 
-The GPU host is usually Vast.ai ([setup-vast.md](setup-vast.md)); for new rentals use the skill `sigmavast`. Another
+The GPU host is usually Vast.ai ([setup-vast.md](setup-vast.md)); for new rentals use the skill `sigmacollab`. Another
 rental works the same way: keep its key in the project's `secrets/`, and give `scripts/box.ps1` its SSH host and port.
 
 ## Phase 1: what the interview pins for a served model

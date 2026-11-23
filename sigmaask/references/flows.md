@@ -41,7 +41,7 @@ Each example shows the reasoning, so read for the method more than the answer.
 | Many open topics or doubts | SigmaDebug | Settles one topic at a time. Each fix ships in a background agent through SigmaShip. |
 | The same correction a second time | SigmaCorrect → SigmaShip | It turns the correction into a check or a test. A one-time bug is not a repeat. |
 | Work to run unattended | SigmaLoop → paste the prompt into the host | SigmaLoop writes the prompt and a loop file. It never starts the run. |
-| Cloud machines for that work | SigmaBoat | CPU boxes on boat.dev. A GPU job goes to SigmaVast. |
+| Cloud machines for that work | SigmaBoat | CPU boxes on boat.dev. A GPU or TPU job goes to SigmaCollab. |
 | A bloated repo, machine or setup | `/sigmamusk cut <repo>` or `/sigmamusk reset` | It measures the waste first. The owner decides what stays. |
 
 ## What comes after each skill
@@ -72,7 +72,7 @@ Each example shows the reasoning, so read for the method more than the answer.
 | Make or install a new skill | SigmaCreate | a correction given twice |
 | A course, tutorial or guide | SigmaCourse | live tutoring |
 | Any money question: a stock, a deal, a purchase, a loan | SigmaFinanceMan | questions with no money in them |
-| Rent a GPU for one job | SigmaVast | CPU sandboxes |
+| Rent a GPU, TPU or big CPU for one job | SigmaCollab | CPU dev boxes |
 | Set up a repo after install, sync house files | SigmaSetup | installing skills |
 | Remove model-written refusals from a repo | SigmaFreedom | adding restrictions |
 

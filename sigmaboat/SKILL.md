@@ -1,6 +1,6 @@
 ---
 name: sigmaboat
-description: 'Use when asked for sigmaboat or a cloud box: work a task of any repo on a boat.dev box, watch, delete or update boxes and the base, preview a dev server from a box, or run authorized work (loop file, ship issue, spec) on boat workers. Do not use to plan work (SigmaLoop) or for GPU jobs (SigmaVast).'
+description: 'Use when asked for sigmaboat or a cloud box: work a task of any repo on a boat.dev box, watch, delete or update boxes and the base, preview a dev server from a box, or run authorized work (loop file, ship issue, spec) on boat workers. Do not use to plan work (SigmaLoop) or for GPU jobs (SigmaCollab).'
 ---
 
 # SigmaBoat

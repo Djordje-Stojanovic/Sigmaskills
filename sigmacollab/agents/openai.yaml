@@ -1,0 +1,11 @@
+interface:
+  display_name: SigmaCollab
+  short_description: Run one job on a Colab runtime or a Vast GPU, then prove it is gone
+  default_prompt: Use $sigmacollab to run this job on a Colab runtime (or Vast when Colab
+    refuses), show the price first, and prove the teardown.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - atlas
+  allow_implicit_invocation: false

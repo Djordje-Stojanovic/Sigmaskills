@@ -307,12 +307,12 @@
  },
  {
   "prompt": "Rent a 48 GB GPU on vast.ai for this voice model test, then tear it down",
-  "skill": "sigmavast",
+  "skill": "sigmacollab",
   "near": "sigmaclimb"
  },
  {
   "prompt": "Use lacompute to run this job on a rented GPU inside the spend cap",
-  "skill": "sigmavast",
+  "skill": "sigmacollab",
   "near": "sigmaboat"
  },
  {
