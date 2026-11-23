@@ -222,6 +222,7 @@ class BoxModel(unittest.TestCase):
         self.bin = os.path.join(self.tmp, "bin")
         for tool in ("hf", "vllm"):  # stand-ins that record their arguments
             put(os.path.join(self.bin, tool), f'#!/usr/bin/env bash\necho "{tool} $*" >> "{self.log}"\n')
+            os.chmod(os.path.join(self.bin, tool), 0o755)  # Linux runs a tool on PATH only with its execute bit
 
     def tearDown(self):
         shutil.rmtree(self.tmp)
