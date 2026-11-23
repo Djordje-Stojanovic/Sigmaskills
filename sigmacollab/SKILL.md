@@ -55,7 +55,7 @@ colab --auth adc stop -s JOB-NAME
 
 ## 6. Run on Vast
 
-- Find the offer with the cap and the place in the query: `vastai search offers 'num_gpus=1 gpu_ram>=24 dph_total<=CAP geolocation notin [CN] reliability>0.98 rentable=true' -o dph_total --raw`. The owner's own filter wins where he keeps one.
+- Find the offer with the cap and the place in the query: `vastai search offers 'num_gpus=1 gpu_ram>=24 dph_total<=CAP geolocation notin [CN] reliability>0.98 rentable=true' -o dph_total --raw`. The owner's own filter adds to it; `geolocation notin [CN]` stays in every query.
 - Rent it with a label and an end on the machine itself: an `--onstart-cmd` that sleeps to the deadline, then runs `vastai destroy instance $CONTAINER_ID --api-key $CONTAINER_API_KEY`. That key is the instance's own and can only touch that instance (`guides/instances/docker-environment.md` in the docs).
 - The job fetches its own code; settings go in, keys never do. `vastai copy` brings results back.
 - Docs: https://docs.vast.ai (`/llms.txt`; add `.md` to a page). A lab wrapper the agent instructions name may add a price cap or a ledger: use it there.
