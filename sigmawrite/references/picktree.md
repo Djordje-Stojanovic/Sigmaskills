@@ -33,9 +33,9 @@ His picks stay in that browser until he changes them. Copy my picks does not cle
 
 ## Show it on his review page
 
-On the dev box, read the board location from Thinkcenter_Setup and add a tree entry:
+Read the board folder (it holds `cards/` and `media/`) from the lab's decideship skill, then add a tree entry:
 
-    board=$(python3 /work/Thinkcenter_Setup/.claude/skills/thinkcenterskill-decideship/loop.py root) || exit 1
+    board=$(python3 <decideship>/loop.py root) || exit 1
     python3 <skill>/scripts/picktree.py tree.json --review "$board" --id DISK-MODELS --title "Models on the Spark" --body "<p>Measured today.</p>" --project Homelab
 
 - `--id` names the entry. Use letters, digits, dot, dash or underscore, up to 80 characters. It is also a file name.

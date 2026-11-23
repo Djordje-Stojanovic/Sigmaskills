@@ -93,12 +93,12 @@
      "Work tasks on boat.dev boxes copied from one base; watch and delete them"
     ],
     [
-     "sigmacollab",
-     "Run one job on a Colab runtime or a Vast GPU, then prove it is gone"
+     "sigmavast",
+     "Rent a GPU for one job through lacompute, then prove it is gone"
     ],
     [
-     "sigmavast",
-     "Points to sigmacollab"
+     "sigmacollab",
+     "Run one job on a Colab runtime or a Vast GPU, then prove it is gone"
     ],
     [
      "sigmadebug",
