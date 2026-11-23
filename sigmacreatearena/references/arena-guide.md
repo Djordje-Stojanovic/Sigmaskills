@@ -46,7 +46,7 @@ Refs: click a reference thumbnail = full size, `←`/`→` = next reference, `R`
 ## Refs and anchors (config)
 
 - **Refs:** a group can have `"refs": ["refs/a.jpg", {"src": "refs/b.wav", "label": "voice"}]`. The page shows them as thumbnails in the prompt bar. Their size follows the window height. Refs are per group, the same for both sides, so they do not break blindness. An arena without refs works as before.
-- **Anchors:** `"anchors": ["gpt", "old-default"]` lists reference players (a cloud model, today's default). They get a rating on the board, but they never take a top-K place: the top-K boost and the "out" cut count non-anchors only. When an anchor has `settings.anchor_games` games (default 8), its pairs get ×0.1 weight, so the picks go to the real candidates.
+- **Anchors:** `"anchors": ["cloud", "old-default"]` lists reference players (a cloud model, today's default). They get a rating on the board, but they never take a top-K place: the top-K boost and the "out" cut count non-anchors only. When an anchor has `settings.anchor_games` games (default 8), its pairs get ×0.1 weight, so the picks go to the real candidates.
 - **Metric weight:** `{"id": "likeness", "weight": 2}` makes a metric count ×2 in Overall.
 
 ## How the ranking works (and why)
@@ -66,14 +66,14 @@ Refs: click a reference thumbnail = full size, `←`/`→` = next reference, `R`
 | Out: 0 wins after 3 losses, or the best case under the K-th's worst case after 6 games | Stop spending picks on clear losers (both arenas); a grey row means "out" and nothing else |
 | Every ~14 picks a judged pair comes back with sides swapped | Consistency: the user's normal is ~65–70 %; below ~55 % the metric or the options are unclear |
 | Retire a group (`"retired": true`), never overwrite it | Old picks stay valid when a prompt is swapped (image arena) |
-| `skip` per group: `{"P5": ["gpt"]}` | A cloud model that refuses a prompt sits it out without a loss (image arena) |
+| `skip` per group: `{"P5": ["cloud"]}` | A cloud model that refuses a prompt sits it out without a loss (image arena) |
 | Anchors: rated, never a top-K place, ×0.1 picks after `anchor_games` | A strong reference in the top K took the top-K boost and soaked up picks; a real candidate was cut as "out" (image arena, round 3) |
 
 ## Lessons for great arenas
 
 1. **Hard groups decide, easy ones don't.** Pick prompts or briefs where the options can fail: many named people, lettering, uncensored content, a specific date or opponent the user can check. Easy prompts left the image board flat (image arena).
 2. **Test on the user's own prompts, not only ours.** The video leader on our prompts lost on their 3 ideas (video arena).
-3. **Keep today's default in as a baseline,** and a strong outside reference (GPT Image, a pro thumbnail) when one exists: the gap tells whether local is good enough. **Make every reference player an anchor** (`"anchors"`). If not, the top-K boost feeds it picks, and it pushes real candidates out (image arena, round 3).
+3. **Keep today's default in as a baseline,** and a strong outside reference (a cloud image model, a pro thumbnail) when one exists: the gap tells whether local is good enough. **Make every reference player an anchor** (`"anchors"`). If not, the top-K boost feeds it picks, and it pushes real candidates out (image arena, round 3).
 4. **Write down where each option came from** (Reddit, the official README, the agent's own idea). The only certain loser in the image arena was the agent's untested LoRA stack; say so plainly.
 5. **Measure the cost of every option** (seconds, GiB, money) in a sidecar: the board shows it next to the rating, and ties go to the cheaper one. Speed breaks ties unless the user says speed matters more.
 6. **Change one thing per option** when you test settings (quant, steps, size), or the board can't tell what helped.
