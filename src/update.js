@@ -823,7 +823,7 @@ function retireSkills(options, ids, folders = {}) {
  * @param {object} plan
  * @returns {string}
  */
-export function formatUpdateJson(plan) {
+export function formatUpdateJson({ retiredFolders, ...plan }) { // retiredFolders is internal: the JSON schema stays as it was
   const payload = JSON.parse(JSON.stringify({
     ...plan,
     skills: (plan.skills || []).map(({ rawCustom, copies, ...skill }) => skill),
