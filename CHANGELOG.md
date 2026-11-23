@@ -35,6 +35,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Fixed
 
 - `--agent detected` installs for every host found in your home. Thinkcenter_Setup's `project_skills.py --global` passes it, so a host added after the first install, such as Antigravity (`~/.gemini/config/skills`), now gets the skills.
+- A copy-only folder (`~/.gemini/config/skills`, Antigravity) in an install no longer turns every other host folder into a copy. The others stay links, and the update after it no longer stops on "wrong-target".
 
 ## [0.29.3] — 2026-11-23
 

@@ -47,6 +47,23 @@ test('pack install: a preset copies each skill once and links the host folder to
   }
 });
 
+test('global install for agy and claude: only ~/.gemini/config/skills is a copy, the rest stay links, and update passes', async () => {
+  const { box, run } = setup();
+  try {
+    for (const marker of ['.claude', '.gemini/antigravity']) fs.mkdirSync(path.join(box.home, marker), { recursive: true });
+    const { code, err } = await run(['install', 'sigmawrite', '--preset', 'acme', '--global', '--yes', '--classic', '--agent', 'detected']);
+    assert.equal(code, 0, err);
+    for (const id of ['sigmawrite', 'alpha']) {
+      assert.ok(fs.lstatSync(path.join(box.home, '.claude', 'skills', id)).isSymbolicLink(), `${id}: Claude Code keeps a link`);
+      assert.ok(!fs.lstatSync(path.join(box.home, '.gemini', 'config', 'skills', id)).isSymbolicLink(), `${id}: agy gets a real copy`);
+    }
+    const update = await run(['update', '--global', '--yes']);
+    assert.equal(update.code, 0, update.err);
+  } finally {
+    box.cleanup();
+  }
+});
+
 test('pack install: running it again changes nothing', async () => {
   const { box, run } = setup();
   try {
