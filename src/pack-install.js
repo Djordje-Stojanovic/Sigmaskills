@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { acquireConcurrencyLock } from './transaction.js';
+import { COPY_ONLY_ROOTS } from './agents.js';
 import { createSkillLink, gitTracked, pathExists, removeManagedPath } from './links.js';
 import { UNIVERSAL_PROJECT_DESTINATION, resolveGlobalSkillPath, resolveSkillPath } from './destinations.js';
 import { findSkillDirs, hashDirectory } from './pack-source.js';
@@ -161,9 +162,9 @@ function applySkill({ ctx, state, skill, sourceDir, index, result, hostRoots, me
     return;
   }
 
-  const wantRoots = hostRoots.map((root) => ({ root, ...ctx.resolve(root, skill.id) }));
+  const wantRoots = hostRoots.map((root) => ({ root, ...ctx.resolve(root, skill.id), method: COPY_ONLY_ROOTS.has(root) ? 'copy' : method }));
   for (const host of wantRoots) {
-    result.destinations.push({ root: host.root, relativeDestination: host.relativeDestination, destination: host.destination, method });
+    result.destinations.push({ root: host.root, relativeDestination: host.relativeDestination, destination: host.destination, method: host.method });
   }
 
   const recordedRoots = new Set((record?.roots || []));
@@ -174,7 +175,7 @@ function applySkill({ ctx, state, skill, sourceDir, index, result, hostRoots, me
     return;
   }
 
-  const hostsOk = wantRoots.every((host) => hostInPlace(host.destination, canonical.destination, method));
+  const hostsOk = wantRoots.every((host) => hostInPlace(host.destination, canonical.destination, host.method));
   if (kind === 'current' && hostsOk && sameRoots(record, wantRoots)) {
     result.status = 'current';
     return;
@@ -210,7 +211,7 @@ function applySkill({ ctx, state, skill, sourceDir, index, result, hostRoots, me
         removeManagedPath(host.destination);
       }
     }
-    if (method === 'link') {
+    if (host.method === 'link') {
       try {
         createSkillLink(host.destination, canonical.destination, ctx.base);
       } catch (err) {

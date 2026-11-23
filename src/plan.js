@@ -17,6 +17,7 @@ import {
 import { plannedExportDir } from './backup.js';
 import { findPackageRoot } from './catalog.js';
 import { pathExists, recommendedLinkMethod } from './links.js';
+import { COPY_ONLY_ROOTS } from './agents.js';
 
 export const PLAN_SCHEMA_VERSION = 1;
 
@@ -98,7 +99,7 @@ function destinationMethod(kind, skillId, requestedMethod, copyRoots, relativeRo
   if (kind === 'canonical') {
     return { method: 'copy', dependsOn: null };
   }
-  if (requestedMethod === 'copy' || (Array.isArray(copyRoots) && copyRoots.includes(relativeRoot))) {
+  if (requestedMethod === 'copy' || COPY_ONLY_ROOTS.has(relativeRoot) || (Array.isArray(copyRoots) && copyRoots.includes(relativeRoot))) {
     return { method: 'copy', dependsOn: null };
   }
   return {

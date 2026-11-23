@@ -721,7 +721,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
         }
         return 1;
       }
-      const method = opts.method || ([...hostRoots].some((root) => COPY_ONLY_ROOTS.has(root)) ? 'copy' : 'link');
+      const method = opts.method || 'link';
       const fetcher = createSourceFetcher({ env });
       const started = Date.now();
       let run;
@@ -770,7 +770,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
           base: scopeName === 'global' ? homeDir : path.resolve(projectBase),
           entries: run.entries,
           hostNames: describeRoots(groups),
-          roots: [{ root: '.agents/skills', method: 'copy' }, ...[...hostRoots].map((root) => ({ root, method }))],
+          roots: [{ root: '.agents/skills', method: 'copy' }, ...[...hostRoots].map((root) => ({ root, method: COPY_ONLY_ROOTS.has(root) ? 'copy' : method }))],
           version: catalog.manifest.version,
           seconds: (Date.now() - started) / 1000,
         }).join('\n'));
