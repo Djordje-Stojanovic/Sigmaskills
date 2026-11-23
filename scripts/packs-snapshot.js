@@ -217,7 +217,7 @@ const PACKS = [
     blurb: "Corey Haines's marketing skills: copy, SEO, CRO, ads, email, pricing, launches, analytics and more.",
     category: 'Marketing',
     aliases: ['corey', 'coreyhaines'],
-    sources: [{ repo: 'coreyhaines31/marketingskills', clone: 'marketingskills', path: 'skills', ref: '8a0c22d677e6031e8a5dd4b554b6ce059b753ffe' }],
+    sources: [{ repo: 'coreyhaines31/marketingskills', clone: 'marketingskills', path: 'skills', ref: '8fd2fcade2fd6629026e9dfe6d133b55b36968b9' }],
   },
   {
     id: 'linkedin',

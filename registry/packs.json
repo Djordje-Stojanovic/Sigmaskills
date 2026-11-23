@@ -2538,7 +2538,7 @@
           "type": "git",
           "repo": "coreyhaines31/marketingskills",
           "path": "skills",
-          "ref": "8a0c22d677e6031e8a5dd4b554b6ce059b753ffe",
+          "ref": "8fd2fcade2fd6629026e9dfe6d133b55b36968b9",
           "skills": [
             {
               "id": "ab-testing",
@@ -3028,6 +3028,10 @@
             {
               "id": "game-jam",
               "description": "Plans and ships a game jam entry against a fixed deadline: reads the jam rules, scopes to the clock, keeps a cut list and checks the build before s..."
+            },
+            {
+              "id": "game-performance-optimization",
+              "description": "Finds and fixes game frame-rate problems by measurement in Godot, Unity, Unreal or Roblox: CPU- vs GPU-bound, then the biggest fix (draw calls, pooling, GC spikes)."
             },
             {
               "id": "game-ui-ux",

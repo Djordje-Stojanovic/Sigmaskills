@@ -10,7 +10,7 @@
    ["sigmacreate","Make a public or a local skill, installed and picked up"],
    ["sigmacreatearena","Blind-pairs arena that ranks any options by Elo per metric"],
    ["sigmafreedom","De-safeguards and decensors a repository"],
-   ["sigmaloop","Agent briefs in safe waves, or a run file and prompt for an unattended run"],
+   ["sigmaloop","Agent briefs, or one loop prompt and loop file for an unattended run"],
    ["sigmataste","A ranked taste plan of big visible changes for one target"],
    ["sigmatour","A visual tour of any repository in one HTML page, with an isolated copy first on request"],
    ["sigmaclimb","Make anything measurable or judgeable better, one judged change at a time"],
@@ -536,7 +536,7 @@
    ["review-animations","Reviews animation and motion code against a high craft bar derived from Emil Kowalski's design"],
    ["write-swift","How to write modern Swift well — modeling with value types, Swift 6 data-race safety and"]
   ]},
-  {"id":"marketingskills","title":"Marketing Skills","blurb":"Corey Haines's marketing skills: copy, SEO, CRO, ads, email, pricing, launches, analytics and more.","refs":{"coreyhaines31/marketingskills":"8a0c22d677e6031e8a5dd4b554b6ce059b753ffe"},"sources":["coreyhaines31/marketingskills@8a0c22d677e6031e8a5dd4b554b6ce059b753ffe/skills"],"skills":[
+  {"id":"marketingskills","title":"Marketing Skills","blurb":"Corey Haines's marketing skills: copy, SEO, CRO, ads, email, pricing, launches, analytics and more.","refs":{"coreyhaines31/marketingskills":"8fd2fcade2fd6629026e9dfe6d133b55b36968b9"},"sources":["coreyhaines31/marketingskills@8fd2fcade2fd6629026e9dfe6d133b55b36968b9/skills"],"skills":[
    ["ab-testing","When the user wants to plan, run, or read A/B tests, or asks a judgement call on one: is the result"],
    ["ad-creative","When the user wants to write or judge ad creative, or asks which ad, hook, or angle to run or kill:"],
    ["ads","When the user wants to plan, run, or fix paid ads on Google, Meta, and LinkedIn, or asks a"],
@@ -646,6 +646,7 @@
    ["game-docs","Writes and maintains a game's design docs: a one-page GDD with a feature index and short feature"],
    ["game-feel","Adds engine-neutral juice to a working mechanic: trauma-based screen shake, hit-stop, eased tweens,"],
    ["game-jam","Plans and ships a game jam entry against a fixed deadline: reads the jam rules, scopes to the"],
+   ["game-performance-optimization","Finds and fixes game frame-rate problems by measurement in Godot, Unity, Unreal or Roblox: CPU- vs"],
    ["game-ui-ux","Engine-neutral design rules for game HUDs and menus: anchors and containers, scaling, safe areas,"],
    ["godot-2d-movement","Godot 4.7 CharacterBody2D movement in GDScript: platformer run and jump, top-down 8-direction"],
    ["godot-3d-essentials","Godot 4.7 3D scene setup: Camera3D, lights, WorldEnvironment (sky, ambient, tonemap, fog),"],
