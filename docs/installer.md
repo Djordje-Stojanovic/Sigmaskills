@@ -445,6 +445,7 @@ npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaclimb -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmamusk -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmaboat -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmavast -g
+npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmacollab -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmawrite -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmadebug -g
 npx skills add Djordje-Stojanovic/Sigmaskills --skill sigmacorrect -g
@@ -483,6 +484,7 @@ $skill-installer install sigmaclimb from https://github.com/Djordje-Stojanovic/S
 $skill-installer install sigmamusk from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmaboat from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmavast from https://github.com/Djordje-Stojanovic/Sigmaskills
+$skill-installer install sigmacollab from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmawrite from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmadebug from https://github.com/Djordje-Stojanovic/Sigmaskills
 $skill-installer install sigmacorrect from https://github.com/Djordje-Stojanovic/Sigmaskills
@@ -518,6 +520,7 @@ cp -R Sigmaskills/sigmaclimb ~/.agents/skills/sigmaclimb
 cp -R Sigmaskills/sigmamusk ~/.agents/skills/sigmamusk
 cp -R Sigmaskills/sigmaboat ~/.agents/skills/sigmaboat
 cp -R Sigmaskills/sigmavast ~/.agents/skills/sigmavast
+cp -R Sigmaskills/sigmacollab ~/.agents/skills/sigmacollab
 cp -R Sigmaskills/sigmawrite ~/.agents/skills/sigmawrite
 cp -R Sigmaskills/sigmadebug ~/.agents/skills/sigmadebug
 cp -R Sigmaskills/sigmacorrect ~/.agents/skills/sigmacorrect
@@ -549,6 +552,7 @@ Copy-Item -Recurse Sigmaskills\sigmaclimb "$HOME\.agents\skills\sigmaclimb"
 Copy-Item -Recurse Sigmaskills\sigmamusk "$HOME\.agents\skills\sigmamusk"
 Copy-Item -Recurse Sigmaskills\sigmaboat "$HOME\.agents\skills\sigmaboat"
 Copy-Item -Recurse Sigmaskills\sigmavast "$HOME\.agents\skills\sigmavast"
+Copy-Item -Recurse Sigmaskills\sigmacollab "$HOME\.agents\skills\sigmacollab"
 Copy-Item -Recurse Sigmaskills\sigmawrite    "$HOME\.agents\skills\sigmawrite"
 Copy-Item -Recurse Sigmaskills\sigmadebug      "$HOME\.agents\skills\sigmadebug"
 Copy-Item -Recurse Sigmaskills\sigmacorrect "$HOME\.agents\skills\sigmacorrect"

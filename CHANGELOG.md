@@ -34,6 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
+- `sigmacollab` runs one job on rented compute and proves it gone. Google Colab comes first (CPU, High-RAM, GPU, TPU, paid in plan units): it shows the price before the start, carries Colab's rules, and ends on `colab sessions` without the job's runtimes. vast.ai is the second provider, for a card Colab refuses. Both run through their own CLIs (`colab`, `vastai`), so the skill needs no lab wrapper; `sigmaboat` now names the `boat` CLI first too. `sigmavast` is now a pointer to it; its card notes hold a one-minute test of every accelerator (#390).
 - The HyperFrames pack moves to the newest release, `v0.9.70` (was `v0.9.65`); the Three.js pack is already at its newest commit, `0e18186`. Both stay optional: `install --pack hyperframes --project .` and `install --pack threejs --project .` put them into one repo, and neither is in the global set (N521).
 - `sigmaresearch` reads a user's newest X posts through the X API with the user's own key (app-only bearer, paged by `next_token`). A logged-out profile page shows no posts, also in a stealth browser, so the old routes could not list a timeline.
 

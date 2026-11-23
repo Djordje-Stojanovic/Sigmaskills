@@ -96,9 +96,13 @@ Needs: git; `gh` for a public skill shipped by PR. Setup: none; it installs the 
 
 Needs: Python 3 and a target it can measure or the owner can judge. Uses `/grilling` when installed. Setup: none; it writes its own project folder.
 
+### sigmacollab
+
+Needs: the `colab` CLI (`uv tool install google-colab-cli`), the Google Cloud CLI for the sign-in, and a Google AI or Colab plan with units. For Vast: the `vastai` CLI with credit. Setup: `gcloud auth application-default login` once per machine (the skill names the scopes), then `colab --auth adc usage`; `vastai set api-key` once for Vast.
+
 ### sigmavast
 
-Needs: the `vastai` CLI with a vast.ai account and credit, and a rental wrapper when the machine has one. Keys stay in the environment or `secrets/`. Setup: `vastai set api-key` once per machine.
+Needs: `sigmacollab`, which it points to. Setup: none.
 
 ### sigmaask
 
