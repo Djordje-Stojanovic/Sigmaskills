@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { stageSkills } from '../src/pack-source.js';
 import { commitAll, createRemote, createSandbox, headSha, writeSkills } from './pack-fixtures.js';
 
@@ -106,6 +106,46 @@ test('packs-update: a router that names a skill its pack does not install fails;
     const renamed = setup(box, packs({ licenses: ['LICENSE'], rename: { shared: 'game-shared' } }));
     assert.match(runScript(box, renamed).find((line) => line.startsWith('later')), /PASS/);
     assert.deepEqual(read(renamed).find((entry) => entry.id === 'later').sources[0].skills.map((skill) => skill.id), ['game-shared', 'own', 'router']);
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('packs-update: a router that still names a skill upstream deleted fails', () => {
+  const box = createSandbox();
+  try {
+    const repo = createRemote(box.remotes, 'acme/gone', { router: 'Routes. For speed load `some-skill`.', 'some-skill': 'Some.' });
+    const old = headSha(repo);
+    fs.rmSync(path.join(repo, 'skills', 'some-skill'), { recursive: true, force: true });
+    commitAll(repo, 'delete some-skill');
+    const file = setup(box, [pack('gone', 'acme/gone', old, ['router', 'some-skill'])]);
+    const lines = runScript(box, file);
+    assert.match(lines.find((line) => line.startsWith('gone')), /FAIL: .*router routes to some-skill, which this pack does not install/);
+    assert.equal(lines.status, 1);
+    assert.equal(read(file)[0].sources[0].ref, old, 'the pack keeps its old pin');
+  } finally {
+    box.cleanup();
+  }
+});
+
+test('a fetched pack source holds the pinned bytes even when the machine sets core.autocrlf=true', () => {
+  const box = createSandbox();
+  try {
+    const repo = createRemote(box.remotes, 'acme/eol', { alpha: 'Alpha.' });
+    fs.writeFileSync(path.join(repo, 'LICENSE'), 'line one\nline two\n');
+    commitAll(repo, 'licence');
+    const system = path.join(box.root, 'system.gitconfig');
+    fs.writeFileSync(system, '[core]\n\tautocrlf = true\n'); // what Git for Windows ships
+    const source = { type: 'git', repo: 'acme/eol', path: 'skills', ref: headSha(repo) };
+    const code = `import { createSourceFetcher } from ${JSON.stringify(pathToFileURL(path.join(path.dirname(script), '..', 'src', 'pack-source.js')).href)};
+      import fs from 'node:fs'; import path from 'node:path';
+      const f = createSourceFetcher(); const r = f.fetch(${JSON.stringify(source)});
+      process.stdout.write(JSON.stringify([fs.readFileSync(path.join(r.repoRoot, 'LICENSE'), 'utf8'), fs.readFileSync(path.join(r.root, 'alpha', 'SKILL.md'), 'utf8')]));`;
+    const run = spawnSync(process.execPath, ['--input-type=module', '-e', code], { env: { ...box.env, GIT_CONFIG_SYSTEM: system }, encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr);
+    const [licence, skill] = JSON.parse(run.stdout);
+    assert.equal(licence, 'line one\nline two\n');
+    assert.ok(!skill.includes('\r'), 'no CRLF in a fetched skill file');
   } finally {
     box.cleanup();
   }

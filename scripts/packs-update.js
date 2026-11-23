@@ -67,7 +67,8 @@ function checkSource(source, root) {
   for (const [id, dir] of found) {
     if (!listed.has(id) || !/(^|-)router$/.test(id)) continue;
     const text = markdownOf(dir);
-    for (const other of found.keys()) {
+    // Upstream skills and the ones the registry listed before, so a target deleted upstream is caught too.
+    for (const other of new Set([...found.keys(), ...old.keys()])) {
       if (!listed.has(other) && new RegExp(`(?<![\\w-])${other}(?![\\w-])`).test(text)) problems.push(`${id} routes to ${other}, which this pack does not install`);
     }
   }

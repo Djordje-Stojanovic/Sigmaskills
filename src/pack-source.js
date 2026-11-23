@@ -137,7 +137,8 @@ function planFetch(url, dest, source) {
     args: ['-C', dest, 'fetch', '-q', '--depth', '1', '--filter=blob:none', 'origin', ref],
     fallback: ['-C', dest, 'fetch', '-q', '--depth', '1', 'origin', ref],
   });
-  steps.push({ args: ['-c', 'advice.detachedHead=false', '-C', dest, 'checkout', '-q', '--detach', 'FETCH_HEAD'] });
+  // The pinned bytes, never line endings converted by a machine's git (Git for Windows sets core.autocrlf=true).
+  steps.push({ args: ['-c', 'core.autocrlf=false', '-c', 'advice.detachedHead=false', '-C', dest, 'checkout', '-q', '--detach', 'FETCH_HEAD'] });
   steps.push({ args: ['-C', dest, 'rev-parse', 'HEAD'], capture: true });
   return steps;
 }
@@ -204,7 +205,8 @@ function cacheRoot(env) {
 function cacheKey(source) {
   const name = String(source.repo || source.url).replace(/[^A-Za-z0-9._-]+/g, '_');
   const part = String(source.path || '').replace(/[^A-Za-z0-9._-]+/g, '_');
-  return `${name}@${source.ref}${part ? `#${part}` : ''}`;
+  // `~raw`: checkouts made before autocrlf was turned off may hold converted line endings, so they are not reused.
+  return `${name}@${source.ref}${part ? `#${part}` : ''}~raw`;
 }
 
 function headOf(dir) {
