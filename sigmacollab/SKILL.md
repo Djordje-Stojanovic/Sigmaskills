@@ -57,7 +57,7 @@ colab --auth adc stop -s JOB-NAME
 ```
 
 - Name every runtime of the job; touch only those names. Other workers' runtimes are not yours: never `stop --all`.
-- A refusal ("Service Unavailable", "Allocation refused") or a start that times out: record the exact text and take the next card, then Vast.
+- A refusal ("Service Unavailable", "Allocation refused", "Bad Gateway") or a start that times out: record the exact text and take the next card, then Vast. The CLI can hang for minutes on a card that does not come: give the request a long timeout (`colab --help` names it) and pick the second card before you start.
 
 ## 6. Run on Vast
 

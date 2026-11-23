@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmacollab`'s card record holds the 24 Nov 2026 test: T4 High-RAM, L4 and G4 (RTX PRO 6000) start in 6 s, the A100s and the H100 answer "Service Unavailable", TPU v6e-1 gives no answer or "Bad Gateway". The skill tells a job to give the CLI a long request timeout and to pick a second card before it starts (#398).
+
 ### Fixed
 
 - `--agent detected` installs for every host found in your home. Thinkcenter_Setup's `project_skills.py --global` passes it, so a host added after the first install, such as Antigravity (`~/.gemini/config/skills`), now gets the skills.
