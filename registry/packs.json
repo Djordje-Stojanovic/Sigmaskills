@@ -2965,6 +2965,13 @@
           "repo": "gamedev-skills/awesome-gamedev-agent-skills",
           "path": "",
           "ref": "c6ca6c41c839b68319ffc08430b99ab768debc32",
+          "licenses": [
+            "LICENSE",
+            "NOTICE"
+          ],
+          "rename": {
+            "performance-optimization": "game-performance-optimization"
+          },
           "skills": [
             {
               "id": "ai-behavior-trees-utility-ai",
@@ -3300,6 +3307,9 @@
           "repo": "santoshyadavdev/monorepo-doctor",
           "path": "skills",
           "ref": "3cb32ea3f16cb7eabf9687d5aab76e358352b7ed",
+          "licenses": [
+            "LICENSE"
+          ],
           "skills": [
             {
               "id": "monorepo-boundaries-cleanup",

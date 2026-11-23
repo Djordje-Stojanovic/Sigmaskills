@@ -35,6 +35,14 @@ function describe(dir) {
   return first.length > 150 ? `${first.slice(0, 147).trimEnd()}...` : first;
 }
 
+function markdownOf(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).map((entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return markdownOf(full);
+    return entry.name.endsWith('.md') ? fs.readFileSync(full, 'utf8') : '';
+  }).join('\n');
+}
+
 /** Check one fetched source. Returns the new skill list, or the reasons it fails. */
 function checkSource(source, root) {
   const found = findSkillDirs(root);
@@ -54,6 +62,16 @@ function checkSource(source, root) {
     .filter(([id]) => (!only || only.includes(id)) && !ownedElsewhere(source, id))
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([id, dir]) => old.get(id) || { id, description: describe(dir) });
+  // A router sends work to other skills of its pack by name: each one it names must be one the pack installs.
+  const listed = new Set(skills.map((skill) => skill.id));
+  for (const [id, dir] of found) {
+    if (!listed.has(id) || !/(^|-)router$/.test(id)) continue;
+    const text = markdownOf(dir);
+    for (const other of found.keys()) {
+      if (!listed.has(other) && new RegExp(`(?<![\\w-])${other}(?![\\w-])`).test(text)) problems.push(`${id} routes to ${other}, which this pack does not install`);
+    }
+  }
+  if (problems.length > 0) return { problems };
   return { skills, added: skills.filter((skill) => !old.has(skill.id)).length, removed: [...old.keys()].filter((id) => !found.has(id)).length };
 }
 

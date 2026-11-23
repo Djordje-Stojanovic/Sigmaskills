@@ -79,6 +79,37 @@ export function hashDirectory(dir) {
   return hash.digest('hex');
 }
 
+/**
+ * Copy each skill folder of `from` into `outDir`. `licenses` (files at the repo root, such as
+ * LICENSE and NOTICE) go into every skill folder, as the design-md transform does. `rename`
+ * ({ upstream id: new id }) gives a skill a pack-unique name when another pack owns the upstream
+ * one, and rewrites the old name in the Markdown of every skill of the source, so a router still finds it.
+ */
+export function stageSkills(source, from, repoRoot, outDir) {
+  const rename = source.rename || {};
+  const olds = Object.keys(rename).map((id) => [new RegExp(`(?<![\\w-])${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`, 'g'), rename[id]]);
+  const rewrite = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) rewrite(full);
+      else if (entry.isFile() && entry.name.endsWith('.md')) {
+        const text = fs.readFileSync(full, 'utf8');
+        const next = olds.reduce((acc, [pattern, id]) => acc.replace(pattern, id), text);
+        if (next !== text) fs.writeFileSync(full, next);
+      }
+    }
+  };
+  for (const [id, dir] of findSkillDirs(from)) {
+    const dest = path.join(outDir, rename[id] || id);
+    fs.cpSync(dir, dest, { recursive: true, filter: (item) => item === dir || !path.basename(item).startsWith('.') });
+    for (const name of source.licenses || []) {
+      const file = path.join(repoRoot, name);
+      if (fs.existsSync(file)) fs.copyFileSync(file, path.join(dest, name));
+    }
+    if (olds.length) rewrite(dest);
+  }
+}
+
 function gitUrl(source, env) {
   if (source.url) return source.url;
   const base = env.SIGMA_GIT_BASE || 'https://github.com/';
@@ -237,6 +268,12 @@ export function createSourceFetcher({ env = process.env } = {}) {
       temps.push(outDir);
       const from = result.root;
       fs.cpSync(from, path.join(outDir, source.rootSkill), { recursive: true, filter: (item) => item === from || !path.basename(item).startsWith('.') });
+      result = { ...result, root: outDir };
+    }
+    if (source.licenses || source.rename) {
+      const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigmaskills-lic-'));
+      temps.push(outDir);
+      stageSkills(source, result.root, checkout, outDir);
       result = { ...result, root: outDir };
     }
     return result;
