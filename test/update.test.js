@@ -882,6 +882,24 @@ test('update: a full update removes a retired skill it owns and drops the lock e
   }
 });
 
+test('update: a git-tracked retired folder with no state and no lock is named with its removal line and kept', async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-tracked-'));
+  try {
+    const dir = path.join(projectRoot, '.agents', 'skills', 'sigmahuman');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: sigmahuman\ndescription: Old copy.\n---\n');
+    execFileSync('git', ['init', '-q'], { cwd: projectRoot });
+    execFileSync('git', ['add', '.'], { cwd: projectRoot });
+
+    const io = createMockIo();
+    assert.equal(await runCli(['update', '--yes', '--project', projectRoot], io), 0, io.getStderr());
+    assert.match(io.getStdout(), /sigmahuman — kept \(.*git-tracked.*\); remove it by hand: git rm -r ".*sigmahuman"/);
+    assert.ok(pathExists(path.join(dir, 'SKILL.md')), 'a copy update does not own is never deleted');
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
 test('update preview: release relation is shown from the running version perspective', () => {
   for (const [relation, label] of [['older', 'newer'], ['same', 'same'], ['newer', 'older']]) {
     const plan = { release: { installed: '1.0.0', running: '2.0.0', relation }, skills: [] };

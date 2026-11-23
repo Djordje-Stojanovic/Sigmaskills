@@ -16,7 +16,7 @@ import {
   loadHostRegistry,
   resolveHomeDir,
 } from './destinations.js';
-import { pathExists } from './links.js';
+import { gitTracked, pathExists } from './links.js';
 import { inspectProjectLock, isForeignProjectLock, loadProjectLock, removeProjectLockSkill, saveProjectLock } from './project-lock.js';
 import { createUninstallPlan, executeUninstall } from './uninstall.js';
 import {
@@ -406,7 +406,9 @@ export function createUpdatePlan(options = {}) {
     ...Object.keys(state.skills || {}),
     ...Object.keys(lockInspect.lock.skills || {}),
   ])].sort();
-  const retired = recordedIds.filter((skillId) => retiredIds.has(skillId));
+  // A retired folder with no record (a repo that tracks skill folders but no lock) is named too; only owned ones are removed.
+  const unrecorded = [...retiredIds].filter((skillId) => !recordedIds.includes(skillId) && pathExists(path.join(root, '.agents', 'skills', skillId, 'SKILL.md')));
+  const retired = [...recordedIds.filter((skillId) => retiredIds.has(skillId)), ...unrecorded].sort();
   const skillIds = recordedIds.filter((skillId) => !retiredIds.has(skillId));
 
   const missing = skillIds.filter((skillId) => !catalog.skills.some((skill) => skill.id === skillId));
@@ -797,7 +799,9 @@ function retireSkills(options, ids) {
       saveProjectLock(root, removeProjectLockSkill(loadProjectLock(root), skill.id));
       return { id: skill.id, action: 'lock entry dropped' };
     }
-    return { id: skill.id, action: 'kept', reasons: skill.blockedReasons, path: skill.canonicalAbs };
+    // A copy with no record has no destinations for the uninstall plan to check, so look at the folder itself.
+    const reasons = !skill.blockedReasons.includes('git-tracked') && gitTracked(skill.canonicalAbs) ? [...skill.blockedReasons, 'git-tracked'] : skill.blockedReasons;
+    return { id: skill.id, action: 'kept', reasons, path: skill.canonicalAbs };
   });
 }
 
@@ -880,7 +884,7 @@ export function formatUpdateHuman(plan) {
     lines.push('Retired skills (no longer in the Skill Pack):');
     for (const { id, action, reasons, path: where } of plan.retiredResults) {
       lines.push(action === 'kept'
-        ? `  ${id} — kept (${reasons.join(', ')}); remove it by hand: ${reasons.includes('git-tracked') ? `git rm -r "${where}"` : `sigmaskills uninstall --skill ${id}`}`
+        ? `  ${id} — kept (${reasons.join(', ')}); remove it by hand: ${reasons.includes('git-tracked') ? `git rm -r "${where}"` : reasons.includes('unowned') ? `delete the folder "${where}"` : `sigmaskills uninstall --skill ${id}`}`
         : `  ${id} — ${action}`);
     }
   } else if (plan.retired?.length) {
