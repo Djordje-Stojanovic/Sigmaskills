@@ -107,15 +107,17 @@ test('install: --preset sigma needs no network and --agent adds the host folder'
   }
 });
 
-test('install: --global --agent agy writes a real copy in ~/.gemini/config/skills, a junction is invisible to agy', async () => {
+test('install: --global --agent detected finds agy and writes a real copy in ~/.gemini/config/skills, a junction is invisible to agy', async () => {
   const box = createSandbox();
   try {
-    const { code, out, err } = await run(box, ['install', 'sigmawrite', '--global', '--yes', '--agent', 'agy']);
+    fs.mkdirSync(path.join(box.home, '.gemini', 'antigravity'), { recursive: true });
+    const { code, out, err } = await run(box, ['install', 'sigmawrite', '--global', '--yes', '--agent', 'detected']);
     assert.equal(code, 0, err);
     assert.match(out, /\.gemini\/config\/skills\s+copied\s+Antigravity CLI/);
     const folder = path.join(box.home, '.gemini', 'config', 'skills', 'sigmawrite');
     assert.ok(fs.existsSync(path.join(folder, 'SKILL.md')));
     assert.ok(!fs.lstatSync(folder).isSymbolicLink(), 'a real folder, not a link');
+    assert.ok(!fs.existsSync(path.join(box.home, '.cursor', 'skills')), 'a host not found gets no folder');
   } finally {
     box.cleanup();
   }

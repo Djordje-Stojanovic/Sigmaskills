@@ -18,7 +18,7 @@ import { listGlobalDestinationGroups, listProjectDestinationGroups, loadHostRegi
 import { BUNDLES, CORE_PACKS, checkLimits, loadPackCatalog, resolveSelection } from './packs.js';
 import { createSourceFetcher } from './pack-source.js';
 import { packStatus, uninstallPackSkills, updatePackSkills } from './pack-install.js';
-import { COPY_ONLY_ROOTS, resolveAgentRoots, suggestAgents } from './agents.js';
+import { COPY_ONLY_ROOTS, detectPopularAgents, resolveAgentRoots, suggestAgents } from './agents.js';
 import { runInstall } from './install-run.js';
 import { describeRoots } from './agents.js';
 import { formatPackList, formatSummary, packSourceLabels } from './report.js';
@@ -67,7 +67,7 @@ Options:
                     (design-md is picked by skill: 3 at a time; repeatable, or comma-separated; 'packs' shows each pack)
   --drop <skill>    With install: remove an installed skill of a limited pack (design-md) to make room
   -a, --agent <host> Agent Host to install for, such as claude, codex, gemini, agy, pi, cursor
-                    (repeatable, or comma-separated; '*' for every host; .agents/skills is always included)
+                    (repeatable, or comma-separated; '*' for every host; 'detected' for each host found in your home; .agents/skills always)
   --force           Replace pack skills that have local edits or a folder in the way, after a private backup
   --packs           With 'list': show every pack and its skills
   --classic         Use the line-by-line installer instead of the full-screen wizard
@@ -694,7 +694,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       const hostRoots = new Set(opts.destinations);
       const groups = hostGroups();
       if (opts.agents.length > 0) {
-        const agentRoots = resolveAgentRoots(opts.agents, groups);
+        const agentRoots = resolveAgentRoots(opts.agents, groups, detectPopularAgents(homeDir));
         if (agentRoots.unknown.length > 0) {
           const near = suggestAgents(agentRoots.unknown[0], groups);
           writeErr(`sigmaskills error: unknown agent '${agentRoots.unknown[0]}'${near.length ? `. Did you mean: ${near.join(', ')}?` : ''}`);
