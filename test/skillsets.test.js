@@ -245,7 +245,7 @@ test('registry: the four new sets are pinned and listed, before Local', () => {
   assert.equal(pack('anthropic').sources[0].skills.length, 19);
   assert.equal(pack('anthropic').sources[0].ref, 'e4bb5d960d87126ff3b3a8af1a104b7db67560ba');
   assert.deepEqual(pack('last30days').sources[0].skills.map((skill) => skill.id), ['last30days']);
-  assert.equal(pack('last30days').sources[0].ref, 'v4.3.2');
+  assert.equal(pack('last30days').sources[0].ref, 'v4.6.0');
   const design = pack('design-md');
   assert.equal(design.sources[0].skills.length, 84);
   assert.equal(design.limit.max, 3);

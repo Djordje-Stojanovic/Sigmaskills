@@ -847,7 +847,7 @@ test('packed CLI updates Project and Global Installation while preserving custom
   }
 });
 
-test('update: a retired skill is reported and left untouched instead of blocking the update', async () => {
+test('update: a full update removes a retired skill it owns and drops the lock entry of one already gone', async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-update-retired-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
@@ -855,20 +855,28 @@ test('update: a retired skill is reported and left untouched instead of blocking
     const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
     const retiredDir = path.join(projectRoot, '.agents', 'skills', 'sigmaperformance');
     fs.cpSync(path.join(projectRoot, '.agents', 'skills', 'sigmawrite'), retiredDir, { recursive: true });
-    state.skills.sigmaperformance = { ...state.skills.sigmawrite, destination: '.agents/skills/sigmaperformance' };
-    fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
-    const before = snapshotTree(retiredDir);
+    state.skills.sigmaperformance = { ...state.skills.sigmawrite, destination: '.agents/skills/sigmaperformance', copies: undefined };
+    fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}
+`);
+    const lockPath = path.join(projectRoot, 'skills-lock.json');
+    const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+    lock.skills.sigmafork = { ...lock.skills.sigmawrite }; // retired, folder already deleted by hand
+    fs.writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}
+`);
+
+    const jsonIo = createMockIo();
+    assert.equal(await runCli(['update', '--dry-run', '--json', '--project', projectRoot], jsonIo), 0);
+    assert.deepEqual(JSON.parse(jsonIo.getStdout()).retired, ['sigmafork', 'sigmaperformance']);
 
     const io = createMockIo();
     const code = await runCli(['update', '--yes', '--project', projectRoot], io);
     assert.equal(code, 0, io.getStderr());
-    assert.match(io.getStdout(), /Retired skills[\s\S]*sigmaperformance/);
-    assert.match(io.getStdout(), /uninstall --skill sigmaperformance/);
-    assert.deepEqual(snapshotTree(retiredDir), before);
-
-    const jsonIo = createMockIo();
-    assert.equal(await runCli(['update', '--dry-run', '--json', '--project', projectRoot], jsonIo), 0);
-    assert.deepEqual(JSON.parse(jsonIo.getStdout()).retired, ['sigmaperformance']);
+    assert.match(io.getStdout(), /sigmaperformance — removed/);
+    assert.match(io.getStdout(), /sigmafork — lock entry dropped/);
+    assert.equal(pathExists(retiredDir), false);
+    assert.ok(pathExists(path.join(projectRoot, '.agents', 'skills', 'sigmawrite')));
+    const after = JSON.parse(fs.readFileSync(lockPath, 'utf8')).skills;
+    assert.deepEqual(Object.keys(after).filter((id) => ['sigmafork', 'sigmaperformance'].includes(id)), []);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }

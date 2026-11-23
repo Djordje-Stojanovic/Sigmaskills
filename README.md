@@ -107,11 +107,11 @@ A pack is a group of skills from one source, downloaded at its pinned version wh
 | Sigma | `sigma` | Engineering | 23 | The skills above | this package |
 | Matt Pocock | `mattpocock` | Engineering | 39 | Grill, spec, TDD, triage, deep modules | [mattpocock/skills](https://github.com/mattpocock/skills) @ `5863806` |
 | Three.js | `threejs` | Media | 13 | Geometry, materials, lighting, shaders, R3F | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) @ `0e18186` |
-| HyperFrames | `hyperframes` | Media | 20 | HTML to video, plus the student kit | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) @ `v0.9.70`, [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit) @ `10511e5` |
+| HyperFrames | `hyperframes` | Media | 20 | HTML to video, plus the student kit | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) @ `v0.9.86`, [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit) @ `10511e5` |
 | MiniMax H3 | `minimax-h3` | Media | 9 | Prompt writing and video recipes for MiniMax H3 | [MiniMax-AI/MiniMax-H3](https://github.com/MiniMax-AI/MiniMax-H3) @ newest commit |
 | Anthropic | `anthropic` | Productivity | 19 | docx, pdf, pptx, xlsx, Claude API, MCP builder, skill creator | [anthropics/skills](https://github.com/anthropics/skills) @ `e4bb5d9` |
 | Design.md | `design-md` | Design | 84 | One brand `DESIGN.md` per skill, at most 3 installed | [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) @ `fcc7028` |
-| Last 30 Days | `last30days` | Research | 1 | What people said about a topic in the last 30 days | [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill) @ `v4.3.2` |
+| Last 30 Days | `last30days` | Research | 1 | What people said about a topic in the last 30 days | [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill) @ `v4.6.0` |
 | Financial Services | `financial-services` | Finance | 99 | Anthropic's finance plugins: DCF, LBO, comps, decks, KYC | [anthropics/financial-services](https://github.com/anthropics/financial-services) @ `3e32c22` |
 | tstack | `tstack` | Engineering | 9 | Theo Browne's PR skills: full-send, council, babysit-pr | [t3dotgg/tstack](https://github.com/t3dotgg/tstack) @ `11e37a7` |
 | Superpowers | `superpowers` | Engineering | 15 | Brainstorm, plan, execute, TDD, debug, review | [obra/superpowers](https://github.com/obra/superpowers) @ `22f0b46` |

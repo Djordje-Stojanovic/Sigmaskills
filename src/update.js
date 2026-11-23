@@ -17,7 +17,8 @@ import {
   resolveHomeDir,
 } from './destinations.js';
 import { pathExists } from './links.js';
-import { inspectProjectLock } from './project-lock.js';
+import { inspectProjectLock, isForeignProjectLock, loadProjectLock, removeProjectLockSkill, saveProjectLock } from './project-lock.js';
+import { createUninstallPlan, executeUninstall } from './uninstall.js';
 import {
   STATE_SCHEMA_VERSION,
   getGlobalStateDir,
@@ -778,7 +779,26 @@ function runUpdate(options, updated) {
     .map((skill) => skill.id)
     .filter((skillId) => requested.length === 0 || requested.includes(skillId)));
 
+  if (requested.length === 0 && plan.retired.length > 0) result.retiredResults = retireSkills(options, plan.retired);
   return result;
+}
+
+// A full update removes the retired skills it owns (an edited copy is backed up first) and drops the
+// lock entry of one whose folder is gone. A copy it has no record of, or a git-tracked one, stays and is named.
+function retireSkills(options, ids) {
+  const base = { ...options, scope: options.scope === 'global' ? 'global' : 'project', clean: 'remove', changed: 'backup' };
+  return createUninstallPlan({ ...base, skillIds: ids }).skills.map((skill) => {
+    if (!skill.blocked) {
+      executeUninstall({ ...base, skillIds: [skill.id] });
+      return { id: skill.id, action: 'removed' };
+    }
+    const root = options.projectRoot || process.cwd();
+    if (base.scope === 'project' && !pathExists(skill.canonicalAbs) && !isForeignProjectLock(root)) {
+      saveProjectLock(root, removeProjectLockSkill(loadProjectLock(root), skill.id));
+      return { id: skill.id, action: 'lock entry dropped' };
+    }
+    return { id: skill.id, action: 'kept', reasons: skill.blockedReasons, path: skill.canonicalAbs };
+  });
 }
 
 /**
@@ -855,12 +875,18 @@ export function formatUpdateHuman(plan) {
   renderGroup('Unchanged skills', plan.unchanged || []);
   renderGroup('Blocked skills', plan.blocked || []);
   renderGroup('Malformed markers', plan.needsMarkerResolution || []);
-  if (plan.retired?.length) {
+  if (plan.retiredResults?.length) {
     lines.push('');
-    lines.push('Retired skills (no longer in the Skill Pack; left unchanged):');
-    for (const skillId of plan.retired) {
-      lines.push(`  ${skillId} — remove with: sigmaskills uninstall --skill ${skillId}`);
+    lines.push('Retired skills (no longer in the Skill Pack):');
+    for (const { id, action, reasons, path: where } of plan.retiredResults) {
+      lines.push(action === 'kept'
+        ? `  ${id} — kept (${reasons.join(', ')}); remove it by hand: ${reasons.includes('git-tracked') ? `git rm -r "${where}"` : `sigmaskills uninstall --skill ${id}`}`
+        : `  ${id} — ${action}`);
     }
+  } else if (plan.retired?.length) {
+    lines.push('');
+    lines.push('Retired skills (no longer in the Skill Pack; a full update removes them):');
+    for (const skillId of plan.retired) lines.push(`  ${skillId}`);
   }
   if (plan.prompt) {
     lines.push('');
