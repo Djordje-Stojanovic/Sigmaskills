@@ -44,9 +44,14 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - Every pack moved to its source's newest version: 12 commit pins by `npm run packs:update`, hyperframes `v0.9.86` and last30days `v4.6.0` by hand (#398).
 - `sigmaask`'s catalog is written one line per skill with descriptions cut to 100 characters: 91 KB for 658 skills, was 110 KB for 578 (#398).
 - New packs `gamedev` (gamedev-skills/awesome-gamedev-agent-skills: 79 game skills for 12 engines and a router, Apache-2.0) and `monorepo-doctor` (santoshyadavdev/monorepo-doctor: a read-only JS/TS monorepo audit and its cleanup flow, MIT, Node 22.5+). A pack source may name `licenses` (root files copied into each skill folder, as the design-md transform already did) and `rename` (a pack-unique name for a skill another pack owns; every Markdown mention in the source follows): gamedev's `performance-optimization` installs as `game-performance-optimization`, so its router's routes resolve. `packs:update` fails a router that names a skill its pack does not install (#398).
+- `sigmacollab` takes Google Colab first, for a GPU and for a CPU job, then vast.ai for a card Colab refuses or times out on, then a boat.dev box for what Colab cannot hold (#398).
+- `sigmaloop`'s review rule names the reviewer as a role with no count and no queue; the builder fixes each finding and answers one it holds wrong with the command that shows it; the round limit is a variable of the loop file. In the one-branch mode each ticket is its own sub-issue of the spec issue, closed by its builder after its branch is merged. A reviewer's diff, in `sigmaloop` and `sigmaship`, leaves out the paths the repo names as the owner's content (#398).
+- `sigmaclimb`'s box scripts read the served model (checkpoint, revision, folder, served name, parsers) from `box/model.env`, the one place; a placeholder stops them with the name to set (#398).
 
 ### Fixed
 
+- Pack sources are checked out with `core.autocrlf` off, so installed files are the pinned bytes on Windows too; the cache key changed once so older converted checkouts are not reused (#398).
+- `update` also finds a retired skill folder under a host's skills folder (such as `.claude/skills`), tracked or not, and prints its removal line (#398).
 - `sigmasetup`'s `house.mjs` did nothing and said nothing when its folder was reached through a symlink or junction (an installed skills folder can be one): its start check compared the link path with the real one. It compares real paths now (#398).
 - `sigmasetup` no longer writes a house file the repo lacks without a yes: `apply` writes the drifted rows, and a missing one (such as another project's `DESIGN.md` in a new repo) only when `--add` names it. The skill asks once per missing file, default no (#398).
 
