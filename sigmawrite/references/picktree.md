@@ -33,9 +33,10 @@ His picks stay in that browser until he changes them. Copy my picks does not cle
 
 ## Show it on his review page
 
-Where his review page runs (a run folder with `cards/` and `media/`; on the dev box, `/work/temp/ultraplan2`), one command adds a tree entry:
+On the dev box, read the board location from Thinkcenter_Setup and add a tree entry:
 
-    python3 <skill>/scripts/picktree.py tree.json --review /work/temp/ultraplan2 --id DISK-MODELS --title "Models on the Spark" --body "<p>Measured today.</p>" --project Homelab
+    board=$(python3 /work/Thinkcenter_Setup/.claude/skills/thinkcenterskill-decideship/loop.py root) || exit 1
+    python3 <skill>/scripts/picktree.py tree.json --review "$board" --id DISK-MODELS --title "Models on the Spark" --body "<p>Measured today.</p>" --project Homelab
 
 - `--id` names the entry. Use letters, digits, dot, dash or underscore, up to 80 characters. It is also a file name.
 - `--body` is HTML. It shows above the tree.
@@ -43,7 +44,7 @@ Where his review page runs (a run folder with `cards/` and `media/`; on the dev 
 
 The review page rebuilds when its cards change. Give him the page link with `#DISK-MODELS` at the end.
 
-His picks go to `/work/temp/ultraplan2/answers/DISK-MODELS.json`. The `pick` field holds the same lines as the copied text below, without the header. A comment on the whole tree goes to `comment`. A rerun with the same `--id` shows his old picks on rows that still exist.
+His picks go to `$board/answers/DISK-MODELS.json`. The `pick` field holds the same lines as the copied text below, without the header. A comment on the whole tree goes to `comment`. A rerun with the same `--id` shows his old picks on rows that still exist.
 
 ## Anywhere else
 
