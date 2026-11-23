@@ -69,7 +69,7 @@ Each skill has one job. Say its name to start it.
 | `sigmaloop` | Writes copy-pastable agent briefs in safe parallel waves, or a loop file and prompt for an unattended run (Claude Code, Codex, Antigravity, pi, T3 Code). Never starts the run. | |
 | `sigmasetup` | Sets up a repo for the packs you installed and syncs your house files (`ENGINEERING.md`, `DESIGN.md`, `AGENTS.md` sections) from your masters. | Node.js |
 | `sigmafreedom` | Deletes model-written refusals and moral limits from a repo's agent docs; a lint keeps them out. | Python 3 |
-| `sigmacollab` | Runs one job on rented compute: a boat.dev cloud box for repo work, a Google Colab runtime (CPU, GPU, TPU) or a vast.ai GPU. Shows the price first and proves the teardown. | The `boat`, `colab` or `vastai` CLI and its account |
+| `sigmacollab` | Runs one job on rented compute: a Google Colab runtime first (CPU, GPU, TPU), a vast.ai GPU when Colab refuses, or a boat.dev box for what Colab cannot hold. Shows the price first and proves the teardown. | The `boat`, `colab` or `vastai` CLI and its account |
 | `sigmavast` | Points to `sigmacollab`. | - |
 
 Every skill needs an agent that loads `SKILL.md`. Skills use the machine's own shell (PowerShell on Windows) and do not assume WSL.

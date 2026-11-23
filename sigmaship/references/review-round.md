@@ -35,7 +35,7 @@ Risky files (read every line): <list, see "Risky files" below>
 All other files: <the rest of the stat>
 
 Setup:
-1. Check out the branch in a new worktree, or use the existing one at <path>. Install the dependencies. Do not read the whole diff first.
+1. Check out the branch in a new worktree, or use the existing one at <path>. Install the dependencies. Do not read the whole diff first. Leave out of the diff the paths the repo names as the owner's content: no model passes or fails his words.
 
 Review, in this order:
 2. Did the ticket ask for this? Go through the stat file by file. A change that no criterion needs is a finding: revert it, do not defend it.

@@ -1,16 +1,17 @@
 ---
 name: sigmacollab
-description: 'Use when asked for sigmacollab, sigmaboat, sigmavast, Colab, a cloud box or to rent compute for one job: a boat.dev Linux box for a task of any repo (boxes, workers, the base, a preview), a Google Colab runtime (CPU, High-RAM, GPU, TPU) paid in plan units, or a vast.ai GPU when Colab refuses. Shows the price, proves the teardown. Do not use for local machines or local GPUs.'
+description: 'Use when asked for sigmacollab, sigmaboat, sigmavast, Colab, a cloud box or to rent compute for one job: a Google Colab runtime first (CPU, High-RAM, GPU, TPU, any card the plan allows) paid in plan units, a vast.ai GPU when Colab refuses, or a boat.dev Linux box for what Colab cannot hold (boxes, workers, the base, a preview). Shows the price, proves the teardown. Do not use for local machines or local GPUs.'
 ---
 
 # SigmaCollab
 
-Run one job on rented compute, then prove the machine is gone. Pick the provider from the job:
+Run one job on rented compute, then prove the machine is gone. Take the providers in this order:
 
-- **boat.dev:** a Linux box with no GPU, for work on a repo (a task's box, workers for authorized work, a dev server preview). Read [references/boat.md](references/boat.md) and follow it; the sections below are for Colab and Vast.
-- **Colab, then Vast:** anything that needs a GPU, a TPU or High-RAM, or a CPU job that is not repo work.
+1. **Google Colab first,** for a GPU, a TPU, High-RAM or a CPU job, repo work included: a Google AI or Colab plan pays for its compute units, so it costs no extra money, and its CPU costs less than a boat box. Any card the plan lists, any model the job runs.
+2. **vast.ai second:** a card Colab refuses or times out on (record the exact text, try the next card first), or a job Colab's rules forbid.
+3. **boat.dev last:** what Colab cannot hold, such as a box that must outlive Colab's runtime limit, a dev server preview, or a box per worker. Read [references/boat.md](references/boat.md) and follow it; the sections below are for Colab and Vast.
 
-Google Colab comes first: a Google AI or Colab plan pays for its compute units, and its CPU costs less than a boat box. vast.ai is the second provider: for a card Colab refuses, or a job Colab's rules forbid. Both are driven by their own CLIs, `colab` and `vastai`; read `--help` and the docs before you guess a flag.
+Colab and vast.ai are driven by their own CLIs, `colab` and `vastai`; read `--help` and the docs before you guess a flag.
 
 No card, price or plan size is a rule here. Read them from the CLI and from [references/cards.md](references/cards.md).
 
@@ -56,7 +57,7 @@ colab --auth adc stop -s JOB-NAME
 ```
 
 - Name every runtime of the job; touch only those names. Other workers' runtimes are not yours: never `stop --all`.
-- A refusal ("Service Unavailable", "Allocation refused"): record the exact text and take the next card, or Vast.
+- A refusal ("Service Unavailable", "Allocation refused") or a start that times out: record the exact text and take the next card, then Vast.
 
 ## 6. Run on Vast
 
