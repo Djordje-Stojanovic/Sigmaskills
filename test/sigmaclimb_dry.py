@@ -252,6 +252,22 @@ class BoxModel(unittest.TestCase):
         self.assertEqual(r.returncode, 2)
         self.assertIn("set MODEL_ID in box/model.env", r.stderr)
 
+    def test_the_bench_reads_the_served_name_from_model_env(self):
+        proj = os.path.join(self.tmp, "proj")
+        shutil.copytree(TEMPLATE, proj)
+        self.box = os.path.join(proj, "box")
+        self.set_values()
+        bench = os.path.join(proj, "scripts", "bench")
+        code = ("import sys, types; sys.modules['requests'] = types.SimpleNamespace(Session=lambda: None); "
+                "sys.path.insert(0, '.'); import common; print(common.MODEL)")
+        env = {k: v for k, v in os.environ.items() if k != "BENCH_MODEL"}
+        r = subprocess.run([sys.executable, "-c", code], cwd=bench, capture_output=True, text=True, env=env)
+        self.assertEqual(r.stdout.strip(), "qwen", r.stderr)
+        if BASH:
+            line = [l for l in open(os.path.join(bench, "target.sh"), encoding="utf-8") if l.startswith("BENCH_MODEL=")][0]
+            sh = f'BENCH="{bench.replace(chr(92), "/")}"; {line.strip()}; echo "$BENCH_MODEL"'
+            self.assertEqual(subprocess.run([BASH, "-c", sh], capture_output=True, text=True, env=env).stdout.strip(), "qwen")
+
     def test_python_box_scripts_read_the_model_values(self):
         # verify_weights.py and cfgcheck.py take MODEL_DIR and SERVED_NAME from this helper (they need the box to run whole).
         self.set_values()
