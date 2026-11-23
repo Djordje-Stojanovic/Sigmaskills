@@ -1840,10 +1840,6 @@
               "description": "Create or evaluate an architecture decision record (ADR)."
             },
             {
-              "id": "code-review",
-              "description": "Review code changes for security, performance, and correctness."
-            },
-            {
               "id": "debug",
               "description": "Structured debugging session \u2014 reproduce, isolate, diagnose, and fix."
             },
@@ -1992,10 +1988,6 @@
               "description": "Creates specs before coding."
             },
             {
-              "id": "test-driven-development",
-              "description": "Drives development with tests using the red-green-refactor loop."
-            },
-            {
               "id": "using-agent-skills",
               "description": "Discovers and invokes agent skills."
             }
@@ -2019,10 +2011,6 @@
           "ref": "b89752f6bca5a26bfde8b019813554241800ca99",
           "skills": [
             {
-              "id": "cavecrew",
-              "description": "When to delegate to `cavecrew-investigator` (locate code), `cavecrew-builder` (1-2 file edit) or `cavecrew-reviewer` (diff review) instead of worki..."
-            },
-            {
               "id": "caveman",
               "description": "Terse caveman voice: answer first, fluff gone, every technical fact kept."
             },
@@ -2035,14 +2023,6 @@
               "description": "Compress a memory file such as CLAUDE.md or a todo list into caveman format to save input tokens, keeping a readable backup."
             },
             {
-              "id": "caveman-discover",
-              "description": "Find and label every LLM workflow in the repository so Caveman Cloud groups spend by workflow instead of one bucket."
-            },
-            {
-              "id": "caveman-evidence-review",
-              "description": "Read-only review of Caveman Cloud evidence: cost, Cave Score, workflows, traces, latency, errors, routing, savings."
-            },
-            {
               "id": "caveman-explore",
               "description": "Read-only repository explorer for cold-start orientation, broad cross-file localization, or when a direct search failed."
             },
@@ -2051,28 +2031,8 @@
               "description": "Quick-reference card for the three caveman skills and their commands."
             },
             {
-              "id": "caveman-learn",
-              "description": "Act on a Caveman learn report - review the ranked token sinks, apply cost-lowering fixes with per-edit consent, and report what those fixes returned."
-            },
-            {
-              "id": "caveman-manage",
-              "description": "Inspect Caveman Cloud's experiment lifecycle and block unsafe execution."
-            },
-            {
-              "id": "caveman-optimize",
-              "description": "Turn a Caveman optimization observation into an operator-chosen candidate with a paired baseline evaluation."
-            },
-            {
               "id": "caveman-review",
               "description": "Compressed code review - one line per finding with location, problem and fix."
-            },
-            {
-              "id": "caveman-setup",
-              "description": "Wire a repository through the Caveman Cloud gateway so every LLM request is measured, with no behavior change."
-            },
-            {
-              "id": "caveman-stats",
-              "description": "Show recorded output and cache-read token usage and mode attribution for the current Claude Code session, or locate the host's native usage report."
             },
             {
               "id": "investigate-first",
@@ -3145,10 +3105,6 @@
             {
               "id": "love2d-core",
               "description": "Builds and debugs L\u00d6VE (Love2D) 11.x games in Lua: main.lua callbacks, conf.lua, fixed steps, crisp pixel-art scaling, love.filesystem saves and a..."
-            },
-            {
-              "id": "performance-optimization",
-              "description": "Finds and fixes game frame-rate problems by measurement in Godot, Unity, Unreal or Roblox: CPU- vs GPU-bound, then the biggest fix (draw calls, poo..."
             },
             {
               "id": "phaser-arcade-physics",

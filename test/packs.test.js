@@ -20,7 +20,7 @@ function load(box, extra) {
   return loadPackCatalog({ catalog, packageRoot, homeDir: box.home, env: box.env });
 }
 
-test('packs: the registry lists the bundled Sigma pack and the twenty-nine outside packs', () => {
+test('packs: the registry lists the bundled Sigma pack and the thirty-one outside packs', () => {
   const box = createSandbox();
   try {
     const packs = load(box);

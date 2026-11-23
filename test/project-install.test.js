@@ -58,7 +58,7 @@ test('project-lock: load, update, save, and validate timestamp-free sorted lock'
 
     const parsed = JSON.parse(raw);
     const keys = Object.keys(parsed.skills);
-    assert.deepEqual(keys, ['sigmataste', 'sigmareview', 'sigmawrite']);
+    assert.deepEqual(keys, ['sigmareview', 'sigmataste', 'sigmawrite']);
     assert.equal(parsed.release, '0.1.0');
     assert.equal(parsed.skills.sigmataste.revision, 'hash_b');
 
@@ -140,7 +140,7 @@ test('plan: dry run produces accurate preview without mutating files', () => {
     assert.equal(plan.scope, 'project');
     assert.equal(plan.method, 'copy');
     assert.equal(plan.unownedConflict, false);
-    assert.equal(plan.writes.length, 6); // SKILL.md, agents/openai.yaml, template.html, references/gui.md, references/picktree.md, scripts/picktree.py
+    assert.equal(plan.writes.length, fs.readdirSync(path.join(ROOT, 'sigmawrite'), { recursive: true }).filter((rel) => fs.statSync(path.join(ROOT, 'sigmawrite', rel)).isFile()).length);
     assert.equal(plan.replacements.length, 0);
     assert.equal(plan.lockChanges.action, 'add');
 

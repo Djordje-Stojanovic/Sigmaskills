@@ -49,13 +49,33 @@ function checkSource(source, root) {
   }
   if (problems.length > 0) return { problems };
   const old = new Map((source.skills || []).map((skill) => [skill.id, skill]));
+  const only = onlyOf(source.repo);
   const skills = [...found.entries()]
+    .filter(([id]) => (!only || only.includes(id)) && !ownedElsewhere(source, id))
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([id, dir]) => old.get(id) || { id, description: describe(dir) });
   return { skills, added: skills.filter((skill) => !old.has(skill.id)).length, removed: [...old.keys()].filter((id) => !found.has(id)).length };
 }
 
 const registry = JSON.parse(fs.readFileSync(file, 'utf8'));
+// A source curated by an `only` list in packs-snapshot.js (caveman leaves out skills that need its plugin) keeps it.
+const snapshotSource = fs.readFileSync(path.join(ROOT, 'scripts', 'packs-snapshot.js'), 'utf8');
+function onlyOf(repo) {
+  const list = snapshotSource.match(new RegExp(`repo: '${repo}'[^}]*?only: \\[([^\\]]*)\\]`));
+  return list ? [...list[1].matchAll(/'([^']+)'/g)].map((m) => m[1]) : null;
+}
+// One owner per skill name, as src/packs.js installs them: the Sigma skills, then the first pack that lists a name.
+const sigmaIds = new Set(JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8')).skills.map((skill) => skill.id));
+function ownedElsewhere(source, id) {
+  if (sigmaIds.has(id)) return true;
+  for (const pack of registry.packs) {
+    for (const other of pack.sources || []) {
+      if (other === source) return false;
+      if ((other.skills || []).some((skill) => skill.id === id)) return true;
+    }
+  }
+  return false;
+}
 const fetcher = createSourceFetcher();
 const moves = [];
 let failed = false;

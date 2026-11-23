@@ -121,7 +121,7 @@ A pack is a group of skills from one source, downloaded at its pinned version wh
 | Ponytail | `ponytail` | Engineering | 6 | The smallest change that fully works, plus audits | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) @ `v5.3.3` |
 | Anthropic Engineering | `anthropic-engineering` | Engineering | 9 | Architecture, debugging, incidents, system design | [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) @ `2baf6d1` |
 | Agent Skills | `agent-skills` | Engineering | 25 | Addy Osmani's spec-to-ship workflow | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) @ `8c99fa3` |
-| Caveman | `caveman` | Engineering | 22 | Terse answers, lean build and verify skills | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) @ `b89752f` |
+| Caveman | `caveman` | Engineering | 14 | Terse answers, lean build and verify skills | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) @ `b89752f` |
 | Claude Red | `claude-red` | Engineering | 79 | Offensive security for authorized tests | [SnailSploit/Claude-Red](https://github.com/SnailSploit/Claude-Red) @ `6196ba7` |
 | Dev Browser | `dev-browser` | Engineering | 1 | The agent drives a real Chrome | [SawyerHood/dev-browser](https://github.com/SawyerHood/dev-browser) @ `520ba5c` |
 | Emil Kowalski | `emil-kowalski` | Design | 19 | Animation, gestures and UI reviews | [emilkowalski/skills](https://github.com/emilkowalski/skills) @ `64eb3de` |

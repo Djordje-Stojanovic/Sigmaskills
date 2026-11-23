@@ -77,7 +77,7 @@ test('cli: install a b c installs every skill and writes the lock once', async (
 
   assert.equal(code, 0, io.getStderr());
   assert.equal(lockWrites(), 1);
-  assert.deepEqual(Object.keys(readLock(projectRoot).skills), ['sigmataste', 'sigmareview', 'sigmawrite']);
+  assert.deepEqual(Object.keys(readLock(projectRoot).skills), ['sigmareview', 'sigmataste', 'sigmawrite']);
   for (const id of ['sigmawrite', 'sigmareview', 'sigmataste']) {
     assert.ok(fs.existsSync(path.join(projectRoot, '.agents', 'skills', id, 'SKILL.md')), id);
     assert.match(io.getStdout(), new RegExp(`Installed .* \\(${id}\\)`));
@@ -205,6 +205,6 @@ test('cli: install a b migrates an old-layout project once, then installs both',
   assert.equal(code, 0, io.getStderr());
   assert.ok(!fs.existsSync(path.join(agents, 'state.json')));
   const state = JSON.parse(fs.readFileSync(path.join(stateDir, 'state.json'), 'utf8'));
-  assert.deepEqual(Object.keys(state.skills).sort(), ['sigmataste', 'sigmareview', 'sigmawrite']);
-  assert.deepEqual(Object.keys(readLock(projectRoot).skills), ['sigmataste', 'sigmareview', 'sigmawrite']);
+  assert.deepEqual(Object.keys(state.skills).sort(), ['sigmareview', 'sigmataste', 'sigmawrite']);
+  assert.deepEqual(Object.keys(readLock(projectRoot).skills), ['sigmareview', 'sigmataste', 'sigmawrite']);
 });

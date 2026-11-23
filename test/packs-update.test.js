@@ -69,6 +69,23 @@ test('packs-update: a passing pack moves its pin and skill list; a failing pack 
   }
 });
 
+test('packs-update: a new upstream skill whose name an earlier pack or a Sigma skill owns is not listed', () => {
+  const box = createSandbox();
+  try {
+    createRemote(box.remotes, 'acme/first', { shared: 'Shared.' });
+    const later = createRemote(box.remotes, 'acme/later', { own: 'Own.' });
+    const old = headSha(later);
+    writeSkills(later, { shared: 'Shared again.', sigmaship: 'A copy.', fresh: 'Fresh.' });
+    commitAll(later, 'add three');
+    const file = setup(box, [pack('first', 'acme/first', null, ['shared']), pack('later', 'acme/later', old, ['own'])]);
+
+    runScript(box, file);
+    assert.deepEqual(read(file).find((entry) => entry.id === 'later').sources[0].skills.map((skill) => skill.id), ['fresh', 'own']);
+  } finally {
+    box.cleanup();
+  }
+});
+
 test('packs-update: --dry-run reports the move and writes nothing; an unchanged pack says so', () => {
   const box = createSandbox();
   try {

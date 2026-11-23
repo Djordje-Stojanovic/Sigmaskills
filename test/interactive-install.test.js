@@ -69,7 +69,7 @@ test('interactive Project Installation reads the skill picker from the manifest 
     assert.match(io.getStdout(), /Project Installation \(default\)/);
     assert.match(io.getStdout(), /sigmareview/);
     assert.match(io.getStdout(), /sigmaimprove/);
-    assert.match(io.getStdout(), /sigmataste/);
+    assert.match(io.getStdout(), /sigmaship/);
     assert.match(io.getStdout(), /sigmawrite/);
     assert.match(io.getStdout(), /Installation cancelled\. No files were written\./);
     assert.ok(!fs.existsSync(path.join(projectRoot, '.agents')));
@@ -90,7 +90,7 @@ test('interactive Project Installation confirms exact destinations and installs 
     assert.equal(io.getStderr(), '');
 
     const reviewDestination = path.join(projectRoot, '.agents', 'skills', 'sigmareview');
-    const briefDestination = path.join(projectRoot, '.agents', 'skills', 'sigmataste');
+    const briefDestination = path.join(projectRoot, '.agents', 'skills', 'sigmaship');
     const output = io.getStdout();
     assert.match(output, /Resolved destinations:/);
     assert.match(output, /Only \.agents\/skills is selected by default/);
@@ -99,7 +99,7 @@ test('interactive Project Installation confirms exact destinations and installs 
     assert.match(output, /\[ \] \.claude\/skills/);
     assert.match(output, /Showing 1–8 of/);
     assert.ok(output.indexOf(reviewDestination) < output.indexOf('Installed SigmaReview'));
-    assert.ok(output.indexOf(briefDestination) < output.indexOf('Installed SigmaTaste'));
+    assert.ok(output.indexOf(briefDestination) < output.indexOf('Installed SigmaShip'));
 
     assert.ok(fs.existsSync(path.join(reviewDestination, 'SKILL.md')));
     assert.ok(fs.existsSync(path.join(briefDestination, 'SKILL.md')));
@@ -109,7 +109,7 @@ test('interactive Project Installation confirms exact destinations and installs 
     assert.ok(!fs.existsSync(path.join(projectRoot, '.pi')));
 
     const lock = JSON.parse(fs.readFileSync(path.join(projectRoot, 'skills-lock.json'), 'utf8'));
-    assert.deepEqual(Object.keys(lock.skills), ['sigmataste', 'sigmareview']);
+    assert.deepEqual(Object.keys(lock.skills), ['sigmareview', 'sigmaship']);
   } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   }
@@ -119,7 +119,7 @@ test('interactive Project Installation preflights every selected destination bef
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-interactive-conflict-'));
   const stateDir = path.join(projectRoot, 'private-state');
   const reviewDestination = path.join(projectRoot, '.agents', 'skills', 'sigmareview');
-  const briefDestination = path.join(projectRoot, '.agents', 'skills', 'sigmataste');
+  const briefDestination = path.join(projectRoot, '.agents', 'skills', 'sigmaship');
   try {
     fs.mkdirSync(briefDestination, { recursive: true });
     fs.writeFileSync(path.join(briefDestination, 'unowned.txt'), 'keep me', 'utf8');
