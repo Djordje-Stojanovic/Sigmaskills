@@ -18,9 +18,8 @@ SigmaBoat makes them, watches them, keeps the base current, and leaves nothing r
 ## Operating contract
 
 - **Explicit only.** Start a box or a worker only when the user's message or the spec asks for a cloud machine or names boat.
-- **Find the route.** First the lab's own wrapper, if this machine has one: search the agent instructions (`AGENTS.md`,
-  `CLAUDE.md`) for "boat" and run the wrapper they name with `-h`; it and its guide win over this skill. Else the boat CLI as in
-  [references/boat.md](references/boat.md). When a command fails or a flag is unclear, find 2-3 other ways to the same answer:
+- **Find the route.** The boat CLI, as in [references/boat.md](references/boat.md). A lab wrapper that the agent instructions
+  name (`AGENTS.md`, `CLAUDE.md`) may add accounts or agent-UI links: use it there. When a command fails or a flag is unclear, find 2-3 other ways to the same answer:
   `boat <command> --help`, the docs (https://docs.boat.dev, page list `/llms.txt`, add `.md` to a page for plain text), the
   boat API. Read before you guess a flag, a price or a limit, and say which route worked.
 - **No key on the base.** The base runs with nothing of the owner's injected (`--no-env`), so its disk and snapshot hold no

@@ -94,7 +94,7 @@
     ],
     [
      "sigmavast",
-     "Rent a GPU for one job through lacompute, then prove it is gone"
+     "Points to SigmaCollab, which now rents Colab and vast.ai compute"
     ],
     [
      "sigmacollab",

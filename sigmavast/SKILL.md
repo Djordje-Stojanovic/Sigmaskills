@@ -5,7 +5,7 @@ description: 'Use when asked for sigmavast by name. It points to SigmaCollab, wh
 
 # SigmaVast
 
-SigmaCollab does this job now, Vast through `lacompute` included: load the `sigmacollab` skill and follow it.
+SigmaCollab does this job now, vast.ai included: load the `sigmacollab` skill and follow it.
 
 ## Personal instructions
 

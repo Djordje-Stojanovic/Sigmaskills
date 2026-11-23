@@ -1,8 +1,7 @@
 interface:
   display_name: SigmaVast
-  short_description: Rent a GPU for one job through lacompute, then prove it is gone
-  default_prompt: Use $sigmavast to rent a GPU for this job through lacompute, inside the
-    spend cap, and prove the teardown.
+  short_description: Points to SigmaCollab, which now rents Colab and vast.ai compute
+  default_prompt: Use $sigmavast only by name; load $sigmacollab for the rental.
 policy:
   products:
   - chatgpt

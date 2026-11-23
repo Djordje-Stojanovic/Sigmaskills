@@ -98,7 +98,7 @@ Needs: Python 3 and a target it can measure or the owner can judge. Uses `/grill
 
 ### sigmacollab
 
-Needs: the `colab` CLI (`uv tool install google-colab-cli`), the Google Cloud CLI for the sign-in, and a Google AI or Colab plan with units. For Vast: the `vastai` CLI with credit and `lacompute`. Setup: `gcloud auth application-default login` once per machine (the skill names the scopes), then `colab --auth adc usage`; `vastai set api-key` once for Vast.
+Needs: the `colab` CLI (`uv tool install google-colab-cli`), the Google Cloud CLI for the sign-in, and a Google AI or Colab plan with units. For Vast: the `vastai` CLI with credit. Setup: `gcloud auth application-default login` once per machine (the skill names the scopes), then `colab --auth adc usage`; `vastai set api-key` once for Vast.
 
 ### sigmavast
 
