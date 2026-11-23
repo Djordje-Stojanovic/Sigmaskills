@@ -270,7 +270,7 @@ function sigmafreedom({ result }) {
 
 // sigmaloop writes one loop file and one prompt; it starts nothing and leaves the target repository as it found it.
 const LOOP_FILE = '.scratch/loops/overnight.md';
-const LOOP_SECTIONS = ['Stop line', 'Crew', 'Order', 'Off-limits'];
+const LOOP_SECTIONS = ['Stance', 'Goal', 'Crew', 'Each turn', 'Priority', 'Landing', 'Finish'];
 
 function sigmaloop({ files, result }) {
   const problems = [];
@@ -284,7 +284,7 @@ function sigmaloop({ files, result }) {
   for (const name of LOOP_SECTIONS) {
     if (!new RegExp(`^## ${name}\\b`, 'm').test(loop)) problems.push(`${LOOP_FILE}: missing section "## ${name}"`);
   }
-  if (!/^## Stop line\s*\n[^\n]*\d{1,2}:\d{2}/m.test(loop)) problems.push(`${LOOP_FILE}: the stop line needs a clock time`);
+  if (!/Stop line:[^\n]*\d{1,2}:\d{2}/.test(loop)) problems.push(`${LOOP_FILE}: the stop line needs a clock time`);
   const prompt = [...result.matchAll(/^```text\r?\n([\s\S]*?)^```/gm)].map((m) => m[1]).find((b) => /^\/(?:goal|loop)\b/m.test(b));
   if (!prompt) return [...problems, 'reply has no fenced ```text prompt that starts with /goal or /loop'];
   problems.push(...requireText(prompt, [/overnight\.md/, /\d{1,2}:\d{2}/, /re-?read|read .*first/i], 'prompt'));

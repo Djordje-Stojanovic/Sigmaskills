@@ -15,7 +15,7 @@ You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) 
 
 **Agent memory is off** (owner 2026-11-10, `autoMemoryEnabled` in `.claude/settings.json`): a lesson is one line in this file, not a private note on one machine.
 
-- Vendor docs: `lasynctoolkit` keeps the docs of the tools we build on in Thinkcenter_Setup `docs/vendor/` (PC `C:\AI\Thinkcenter_Setup`, dev box `/work/Thinkcenter_Setup`, Spark `~/repos/Thinkcenter_Setup`). Read the vendor's folder before you guess an API or a CLI flag.
+- Vendor docs: `lasynctoolkit` keeps the docs of the tools we build on in the owner's setup repo, `docs/vendor/`. Read the vendor's folder before you guess an API or a CLI flag.
 
 **Where to look**
 
@@ -34,7 +34,7 @@ When you add a skill (or rename/remove one): update `KNOWN_SKILLS` in [`test/rep
 
 **Merging (like T3 Code):** squash only, the PR title becomes the commit title (`title (#N)`). After the merge, close the linked issue, delete the remote and local branch and remove the worktree; `sigmaship/references/land.md` has the commands. The repo deletes the remote branch on merge by itself. The land step also runs `git -C /work/Thinkcenter_Setup pull -q --ff-only && python3 /work/Thinkcenter_Setup/scripts/project_skills.py --global` once (dev box; the pull makes sure the script is current): it installs `main`'s global set (`CORE_PACKS` in `src/packs.js`; [`docs/installer.md`](docs/installer.md) "The global set") on the PC, the dev box and the Spark and prints one line each. If a machine is off, its line says FAIL and the other machines still update. This line is the only install of a merge: no hook or timer installs skills. A machine that was off, or a PC whose owner was logged off, catches up at the next land step, or when you run the command again.
 
-Long runs: Claude Code (`/goal`, `/loop`) follows the run mode in [`sigmaloop/references/hosts.md`](sigmaloop/references/hosts.md), which holds every harness's loop facts.
+Long runs: Claude Code (`/goal`, `/loop`) follows the run mode in [`sigmaloop/references/host-claude-code.md`](sigmaloop/references/host-claude-code.md). Codex, Antigravity, pi and T3 Code keep their own loop rules (the sigmaloop host files).
 
 Follow every rule below. They are mandatory for this repo.
 
@@ -152,7 +152,7 @@ Domain documentation uses the single-context layout. See `docs/agents/domain.md`
 
 - Simplicity (Jobs, owner 2026-11-09): "Simple can be harder than complex [...] once you get there, you can move mountains." Focus "means saying no to the hundred other good ideas"; "Innovation is saying no to 1,000 things." All six quotes: [`SIMPLICITY.md`](docs/reference/SIMPLICITY.md).
 
-- A cloud box for one task (boat.dev), only when the owner or a spec asks: `laboat box <repo> [issue]` copies the base with the repo at the newest main on a new branch and links it into T3; work and commit there, `laboat pr <id>`, then `laboat land <id>` (merge, delete the branch and the box). Skill `sigmacollab`; guide Thinkcenter_Setup `docs/guides/BOAT.md`.
+- A cloud box for one task (boat.dev), only when the owner or a spec asks: `laboat box <repo> [issue]` copies the base with the repo at the newest main on a new branch and links it into T3; work and commit there, `laboat pr <id>`, then `laboat land <id>` (merge, delete the branch and the box). Skill `sigmacollab`.
 
 - No new timer, cron job or alert (owner, 2026-11-17): a job runs when its cause happens (a merge, a deploy, a publish) or as a setting of the tool. A timer stays only where no such setting exists, with one line why.
 

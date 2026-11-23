@@ -52,7 +52,7 @@ Read the README against the repo. The scan finds the mechanical part: README com
 
 `python scripts/sigmatour.py build <repo> --out <page> --minutes <N>` makes the page from [the template](assets/tour-template.html) and writes the scan into its data block. The page draws the numbers band, the folder explorer, the history band, the README check and the entry points from it. Fill every `FILL` by [tour.md](references/tour.md): the transit map, how it works, the trace of one request, the examples with their real output, the hidden and missing list, the deep dives (their count sets the length), where things are, and three hands-on tasks. In copy mode, [tour.md](references/tour.md) also says where the copy facts go: why the copy exists, the keys by name, the bundle, the `verify` result.
 
-Write in the `/sigmawrite` voice: clear technical English a sharp outsider follows on the first read (the ASD-STE100 spirit). One lead line per stop, three sentences a paragraph at most, a tap-to-explain meaning for every term a newcomer would stop at. When `/sigmahuman` is installed, give the text one pass with it.
+Write in the `/sigmawrite` voice: clear technical English a sharp outsider follows on the first read (the ASD-STE100 spirit). One lead line per stop, three sentences a paragraph at most, a tap-to-explain meaning for every term a newcomer would stop at. When `/sigmawrite` is installed, give the text one pass with its humanize mode.
 
 ## 5. Check
 

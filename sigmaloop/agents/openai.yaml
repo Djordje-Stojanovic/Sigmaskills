@@ -1,6 +1,6 @@
 interface:
   display_name: SigmaLoop
-  short_description: Agent briefs in safe waves, or a run file and prompt for an unattended run
+  short_description: Agent briefs, or one loop prompt and loop file for an unattended run
   default_prompt: Use $sigmaloop to read this repo's open work, ask one round of
     questions, and write a loop prompt for my host. Do not start the loop.
 policy:

@@ -66,7 +66,7 @@ Each skill has one job. Say its name to start it.
 | `sigmacourse` | Plans and builds a tutorial, guide or course of any size. It starts from what the learner can do at the end and derives the parts and the process from that. | |
 | `sigmacreate` | Makes a new skill, public (proven free of personal data) or local to one repo or machine, and ends with it installed and picked up. | |
 | `sigmacreatearena` | Ranks many options by your taste: blind pairs, Elo per metric. | Python 3, a browser |
-| `sigmaloop` | Writes copy-pastable agent briefs in safe parallel waves, or a run file and prompt for an unattended run (Claude Code, Codex, Antigravity, pi, T3 Code). Never starts the run. | |
+| `sigmaloop` | Writes copy-pastable agent briefs in safe parallel waves, or a loop file and prompt for an unattended run (Claude Code, Codex, Antigravity, pi, T3 Code). Never starts the run. | |
 | `sigmasetup` | Sets up a repo for the packs you installed and syncs your house files (`ENGINEERING.md`, `DESIGN.md`, `AGENTS.md` sections) from your masters. | Node.js |
 | `sigmafreedom` | Deletes model-written refusals and moral limits from a repo's agent docs; a lint keeps them out. | Python 3 |
 | `sigmacollab` | Runs one job on rented compute: a boat.dev cloud box for repo work, a Google Colab runtime (CPU, GPU, TPU) or a vast.ai GPU. Shows the price first and proves the teardown. | The `boat`, `colab` or `vastai` CLI and its account |
@@ -125,11 +125,11 @@ A pack is a group of skills from one source, downloaded at its pinned version wh
 | Claude Red | `claude-red` | Engineering | 79 | Offensive security for authorized tests | [SnailSploit/Claude-Red](https://github.com/SnailSploit/Claude-Red) @ `6196ba7` |
 | Dev Browser | `dev-browser` | Engineering | 1 | The agent drives a real Chrome | [SawyerHood/dev-browser](https://github.com/SawyerHood/dev-browser) @ `520ba5c` |
 | Emil Kowalski | `emil-kowalski` | Design | 19 | Animation, gestures and UI reviews | [emilkowalski/skills](https://github.com/emilkowalski/skills) @ `64eb3de` |
-| Marketing Skills | `marketingskills` | Marketing | 53 | Copy, SEO, CRO, ads, email, launches | [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) @ `8a0c22d` |
+| Marketing Skills | `marketingskills` | Marketing | 53 | Copy, SEO, CRO, ads, email, launches | [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) @ `8fd2fca` |
 | LinkedIn | `linkedin` | Marketing | 12 | Posts, comments and analytics, drafted for approval | [sergebulaev/linkedin-skills](https://github.com/sergebulaev/linkedin-skills) @ `32083c0` |
 | I Have ADHD | `i-have-adhd` | Productivity | 1 | Answers shaped for a reader with ADHD | [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) @ `1ecea19` |
 | Baoyu | `baoyu` | Media | 21 | Covers, infographics, comics, slides, posting to X | [Djordje-Stojanovic/baoyu-skills](https://github.com/Djordje-Stojanovic/baoyu-skills) @ `5847f0a` (English fork of [JimLiu/baoyu-skills](https://github.com/JimLiu/baoyu-skills)) |
-| Game Dev | `gamedev` | Engineering | 79 | Games in 12 engines, with a router | [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) @ `c6ca6c4` |
+| Game Dev | `gamedev` | Engineering | 80 | Games in 12 engines, with a router | [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) @ `c6ca6c4` |
 | Monorepo Doctor | `monorepo-doctor` | Engineering | 2 | Read-only JS/TS monorepo audit and cleanup | [santoshyadavdev/monorepo-doctor](https://github.com/santoshyadavdev/monorepo-doctor) @ `3cb32ea` |
 
 `local` is a folder of your own skills (`SIGMA_LOCAL_SKILLS_DIR` or `~/.sigmaskills/packs.json`). When two packs ship the same skill name, the earlier pack in this table keeps it. `npx @djordje-stojanovic/sigmaskills packs` prints every pack with its skills.

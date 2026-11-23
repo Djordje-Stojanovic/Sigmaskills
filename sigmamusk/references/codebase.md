@@ -5,7 +5,7 @@ Reduce code with the user. Behavior, tests, public interfaces and user data stay
 ## 1. Scan
 
 - Read the repo's `AGENTS.md`, `CLAUDE.md`, `README` and, where it exists, `ENGINEERING.md` before you touch code. Record the working-tree status: the user's uncommitted changes are not targets.
-- Count the physical lines of every maintained source file: `git ls-files --cached --others --exclude-standard`, without docs (`*.md`, `*.mdx`, `*.rst`), lock files and generated or vendored folders. Say what you left out. `laloc -p <root> -m 0` does the count when the command exists; check its list against git's, because it skips folders such as `bin` and `packages`.
+- Count the physical lines of every maintained source file: `git ls-files --cached --others --exclude-standard`, without docs (`*.md`, `*.mdx`, `*.rst`), lock files and generated or vendored folders. Say what you left out. `laloc -p <root> -m 0` does the count when the command exists; check its list against git's, because it skips folders such as `bin` and `packages`. Without Git, list the files natively under the repo's ignore rules. When `laloc` is missing or fails, say so and count natively: decode each file with its real encoding, an empty file has zero lines, each physical line counts once (a last line with no newline too), and CRLF is one separator.
 - Rank by lines, then by path. Take the first five. A file you could not read makes the ranking incomplete: say so.
 
 **Done when:** the report names the five files, their counts, the counting command and every exclusion.

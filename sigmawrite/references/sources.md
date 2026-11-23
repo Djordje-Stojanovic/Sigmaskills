@@ -19,7 +19,7 @@ The humanize mode of SigmaWrite (once the skill SigmaHuman) is made from every h
 
 ## Not taken
 
-- Getting past AI detectors. The upstream README says detectors still flag most of its output, and the 2026-10-19 test found the detectors failed their own control texts. SigmaHuman writes for human readers.
+- Getting past AI detectors. The upstream README says detectors still flag most of its output, and the 2026-10-19 test found the detectors failed their own control texts. The humanize mode writes for human readers.
 - From v4.0.0: the step "where the text is generic, add a specific detail you know to be true". Facts come from the source or the brief only.
 - The upstream plugin manifests (`.claude-plugin/`, `.cursor-plugin/`): the Sigmaskills installer and `npx skills` install this skill on every agent host.
 
