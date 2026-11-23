@@ -80,11 +80,12 @@ Guides (workers are briefed by the guide of their model): <links>
 - Keep a gate that never passes: fix it or cut it in the first hour.
 - Write briefs, old reports or logs no machine reads.
 - Schedule wake tasks that make empty turns.
+- Restart a machine the run uses outside the window the answers name: a restart ends every background job.
 - Count drafted lines as progress: watch accepted output per hour, and when it falls while drafting rises, stop drafting and land.
 <Off-limits from the answers, one line each, with the owner's sentence and its date in quotes. A limit with no quote starts with `model:` and may be dropped if it blocks the run.>
 
 ## Finish (at the stop line)
-Start nothing new. Let running jobs finish and write their state. Run the full gate once and print it. Prove sync: no open PR of this run, one worktree, no stray process. Write the final handoff: accepted (with evidence), open (reason, next step), owner steps.
+Start nothing new. Let running jobs finish and write their state. Run the full gate once and print it. Prove sync: no open PR of this run, one worktree, no stray process. Write the final handoff: accepted (with evidence), open (reason, next step), owner steps. Check an owner step before you list it: look up the machine, account or file it names, run its command once yourself, and label an undo block "only to take it back later".
 
 ## On stop (only when the owner asks)
 Run sigmamusk, then `sigmamusk cut`, then sigmareview on the loop's own scaffolding. Target: half the scaffolding bytes and checks about 10x faster. Measure both before and after, and print the numbers.
