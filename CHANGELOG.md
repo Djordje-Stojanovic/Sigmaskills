@@ -45,6 +45,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 - `sigmaask`'s catalog is written one line per skill with descriptions cut to 100 characters: 91 KB for 658 skills, was 110 KB for 578 (#398).
 - New packs `gamedev` (gamedev-skills/awesome-gamedev-agent-skills: 79 game skills for 12 engines and a router, Apache-2.0) and `monorepo-doctor` (santoshyadavdev/monorepo-doctor: a read-only JS/TS monorepo audit and its cleanup flow, MIT, Node 22.5+). A pack source may name `licenses` (root files copied into each skill folder, as the design-md transform already did) and `rename` (a pack-unique name for a skill another pack owns; every Markdown mention in the source follows): gamedev's `performance-optimization` installs as `game-performance-optimization`, so its router's routes resolve. `packs:update` fails a router that names a skill its pack does not install (#398).
 
+### Fixed
+
+- `sigmasetup`'s `house.mjs` did nothing and said nothing when its folder was reached through a symlink or junction (an installed skills folder can be one): its start check compared the link path with the real one. It compares real paths now (#398).
+- `sigmasetup` no longer writes a house file the repo lacks without a yes: `apply` writes the drifted rows, and a missing one (such as another project's `DESIGN.md` in a new repo) only when `--add` names it. The skill asks once per missing file, default no (#398).
+
 ## [0.29.2] — 2026-11-23
 
 ### Changed
