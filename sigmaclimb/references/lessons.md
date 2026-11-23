@@ -341,7 +341,7 @@ inputs. A later project then made a sealed held-out check required: it answered 
 KEEP, also for a change that could not alter any output, and nothing could be promoted. Rule now: off by default,
 the answer names its stage, a self-test on the champion first, the owner's word promotes (`held-out.md`).
 
-**12.2 What `TrainRTX5070` (3 rounds, one RTX 5070) did better; `SKILL.md` carries the habits:**
+**12.2 What the small-model training runs (3 rounds, one RTX 5070) did better; `SKILL.md` carries the habits:**
 - The training data never touches the validation shards (the last 2 shards are never read for training). The scorer's
   inputs are split from the agent's by construction. Its weakness: the same split picks every KEEP, and the metric
   function is locked by a written rule, not a hash.
