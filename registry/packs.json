@@ -3328,6 +3328,81 @@
       ]
     },
     {
+      "id": "design-kit",
+      "title": "Design Kit",
+      "blurb": "Logos from brief to production files, and editorial charts, decks and reports from your data.",
+      "category": "Design",
+      "aliases": [
+        "logo",
+        "charts"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "kaankiziltug/logo-design-skill",
+          "path": "skills",
+          "ref": "e9eaddc07895575253d6663320354a708f53e955",
+          "skills": [
+            {
+              "id": "logo-design",
+              "description": "Professional logo and brand-mark design, from brief to production files."
+            }
+          ]
+        },
+        {
+          "type": "git",
+          "repo": "larashero3-dotcom/lieflat-charts",
+          "path": "",
+          "rootSkill": "lieflat-charts",
+          "ref": "4b4e75bde11cbef44263de769f3705db54bbb277",
+          "skills": [
+            {
+              "id": "lieflat-charts",
+              "description": "\u4e00\u5957\u6a21\u677f\u9a71\u52a8\u7684\u6570\u636e\u53ef\u89c6\u5316\u3001PPT \u6f14\u793a\u4e0e\u6574\u9875\u62a5\u544a\u751f\u6210 skill\uff0c\u65e2\u80fd\u4e25\u683c\u4ece Lupi\u3001Basics\u3001Glance\u3001Maps \u4e0e Interactive gallery \u7684\u771f\u5b9e\u5b9e\u73b0\u751f\u6210 HTML \u56fe\u8868\uff0c\u4e5f\u80fd\u4ece Presentation Mode \u751f\u6210 HTML/PDF \u6f14\u793a\uff0c\u6216\u4ece\u62a5\u544a\u6a21\u677f\u751f\u6210\u6574..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "motion-kit",
+      "title": "Motion Kit",
+      "blurb": "A raster logo turned into a clean SVG and a logo animation; animated line-art scenes in SVG, exported to video.",
+      "category": "Media",
+      "aliases": [
+        "animation",
+        "motion"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "nolangz/pixel2motion",
+          "path": "",
+          "rootSkill": "pixel2motion",
+          "ref": "e9faedb28930df0da2acf17da00c80730a78cfe8",
+          "skills": [
+            {
+              "id": "pixel2motion",
+              "description": "Turn a raster logo (PNG/JPG/WebP/screenshot) into a clean minimal SVG with edge smoothness as the primary hard gate and IoU optimized as high as re..."
+            }
+          ]
+        },
+        {
+          "type": "git",
+          "repo": "JDhruv14/line-art-animation",
+          "path": "",
+          "rootSkill": "line-art-animation",
+          "ref": "c43d698913cf0ad44f984c7ae14c5348010594d3",
+          "skills": [
+            {
+              "id": "line-art-animation",
+              "description": "Build animated line-art components in SVG and TypeScript \u2014 thin ink lines on paper, people and animals that walk, run, cycle and react, scenes with..."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "local",
       "title": "Local",
       "blurb": "A folder of your own skills on this machine.",

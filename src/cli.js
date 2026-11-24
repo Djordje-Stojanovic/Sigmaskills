@@ -104,7 +104,7 @@ Options:
   --narrow          Use the narrow-terminal layout
   -y, --yes         Skip interactive confirmations
   --remove          With 'ponytail': turn it off in this project
-  --non-core        With 'uninstall': remove every installed pack skill outside the core (keeps Sigma, Matt Pocock, tstack)
+  --non-core        With 'uninstall': remove every installed pack skill outside the core (keeps the packs of the core preset)
   --check           With 'ponytail': report on or off per agent; exit 1 when any is off
                     With 'update': list each out-of-date skill, write nothing; exit 1 when any is out of date
 
