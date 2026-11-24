@@ -19,7 +19,7 @@ Owner page: <path or url>. A card is only for that, or for what he must do himse
 
 ## Budgets
 No meter, no budget. One block each; the quote is the owner's sentence and its date.
-- <name>: <what>, limit <n> per <period>, split <family share, ...>. Meter: `<command>` prints used against the limit (and `next=<family>`). At the limit: <action>. "<his sentence>" (<date>)
+- <name>: <what>, limit <n> per <period> for each account, split <family share, ...>. Meter: `<command>` prints used against the limit per account (and `next=<family>`). At the limit: <action>. "<his sentence>" (<date>)
 - Spend with no usage store (rentals, games, books): the meter is a ledger file, one line per spend, written before the spend.
 A share is a rule of thumb: job difficulty picks the model, the share breaks ties. Never stop a running job for it.
 
@@ -35,17 +35,17 @@ Shape: <solo | crew of N slots | N lanes: read lanes.md>. Solo: this session pla
 | Reviewer (another provider than the builder) | <mid or top> | <ids> |
 | Clerk (handoff, status) | cheap | <ids> |
 1. The planner plans, starts jobs and merges. It does no builder's tool calls.
-2. One whole unit per builder: build, prove with the unit's acceptance tests, commit. The brief is a spec path and a done line.
+2. One whole unit per builder: build, prove with the unit's acceptance tests, commit. The brief is a spec path and a done line. An item too big for one builder is cut first, by the planner before the loop or by its lane manager in it: `to-spec` writes the spec, `to-tickets` cuts it into tracker tickets (they enter Priority), `implement` builds each in the loop; without those skills the planner does the same by hand.
 3. Each finished ticket gets one fresh reviewer at once, from another provider than its builder when one is free; reviewers at once: <no cap>. The builder first re-reads its own diff in a fresh context. The reviewer runs the change, not only reads it, and ends with MERGE or a finding list; its diff leaves out the paths the repo names as the owner's content, so no model passes or fails his words. The builder fixes each finding; one it holds to be wrong is answered with the command that shows it, never waved off in prose. Style nits are dropped. Review passes per ticket: <3, 5 for security, data loss or publishing>; a pass with nothing new ends it. After the last pass the builder fixes, proves and lands each open finding. A ticket is parked only after <3> failed fix tries. No human review.
-4. When a job ends, its slot takes the most valuable eligible unit in the same turn. Slots: <N>, capped by CPU (below), not by habit.
-5. Lanes only: workers end after one ticket, lane managers go on ticket after ticket, the top never ends before the stop line. Priority is one ranked list for all lanes, never one list per lane.
+4. When a job ends, its slot takes the most valuable eligible unit in the same turn. Slots: <N>, capped by CPU (below), not by habit. Workers run on <machines>: the orchestrator's own only while it has CPU and memory to spare, else another.
+5. Lanes only: workers end after one ticket, lane managers pull their own next ticket from Priority and go on ticket after ticket, the top never ends before the stop line. Priority is one ranked list for all lanes, never one list per lane.
 6. Each ticket is Ready, Working (a builder has it), Reviewing, or Landed; findings send it back to Working. The builder that finished a part ticks it off itself, where the to-do is: the spec, the PR's checklist or the issue. Nobody ticks for it.
 Guides (workers are briefed by the guide of their model): <links>
 
 ## Failure rules
 - **Stuck:** a job with no new commit and no new output for <30> minutes is stuck. Read the time from its last commit or log line, never by polling: check it when any notice wakes you.
 - **Restart:** a stuck job gets a WIP commit, is stopped, and restarts from that WIP commit with the same brief. A job stuck <3> times is parked: write why in the handoff, take the next unit, never restart it again.
-- **Provider:** a provider that fails twice (429, rate limit, or a cut-off run) drops to last place in every fallback list.
+- **Provider:** a provider that fails twice (429, rate limit, or a cut-off run) drops to last place in every fallback list; an account at its limit drops out until its period resets.
 - **Tier:** a job that fails twice moves one tier up.
 - **Cleanup:** remove a finished job's worktree; stop a stray process only by a process id this run wrote into the handoff, never by name and never an id it did not start.
 - **No polling.** No sleep loops, no "still waiting" turns. Wait for completion notices.

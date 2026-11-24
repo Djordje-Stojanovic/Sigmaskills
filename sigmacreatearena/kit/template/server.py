@@ -65,14 +65,14 @@ def public_item(it, code):
 
 
 def grid(c):
-    """Grid mode: every option of each group at once, in a fixed shuffle per group (blind: codes only), with its saved 1-5 rating and comment."""
+    """Grid mode: every option of each group at once, in a fixed shuffle per group (named, with its sidecar data; only the pairs of Arena are blind), with its saved 1-5 rating and comment."""
     k, _ = codes(c)
     rt = arena.load("ratings.json", {}) or {}
     out = []
     for g, gv in c["groups"].items():
         its = sorted((it for it in c["items"] if it.get("group") == g), key=lambda it: it["id"])
         random.Random(g).shuffle(its)
-        opts = [dict(public_item(it, k[it["id"]]), n=i + 1, rating=(rt.get(it["id"]) or {}).get("r", 0), comment=(rt.get(it["id"]) or {}).get("c", ""))
+        opts = [dict(public_item(it, k[it["id"]]), n=i + 1, player=(c.get("players") or {}).get(it["player"], it["player"]), meta=it.get("meta") or {}, rating=(rt.get(it["id"]) or {}).get("r", 0), comment=(rt.get(it["id"]) or {}).get("c", ""))
                 for i, it in enumerate(its)]
         out.append({"id": g, "label": gv.get("label", g), "prompt": gv.get("prompt", ""), "refs": public_refs(g, gv), "options": opts})
     return out

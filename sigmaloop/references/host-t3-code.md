@@ -29,7 +29,7 @@ T3 Code starts other agents (Codex, Claude Code, Cursor, OpenCode, Antigravity, 
 | Queue and questions | `t3_queue` (`list`, `cancel`, `reorder`, `edit`, `promote_to_steer`), `t3_pending_request` |
 | Thread housekeeping | `t3_thread_list`, `t3_thread_search`, `t3_thread_update`, `t3_thread_organize` (settle, archive, pin, snooze) |
 | Pull requests | `link_pull_request`, `watch_pull_request`, `unwatch_pull_request`, `list_thread_pull_requests` |
-| Other machines | `t3_environment_links`, `t3_environment_link`; `delegate_task` takes `target.environmentId` |
+| Other machines | `t3_environment_links`, `t3_environment_link`; `delegate_task` takes `target.environmentId`: set it to run a worker on another machine |
 | Projects | `t3_project_list`, `t3_project_create`, `t3_project_clone` |
 
 **Antigravity threads** (seen in one run, 24 Nov 2026, ran):

@@ -7,7 +7,7 @@ Read this only when the run has two or more lanes. One agent alone does not need
 | Level | Who | Ends? |
 |---|---|---|
 | Top | Orchestrator: one thread, owns the backlog, the owner page and the stop line | Never, until the stop line |
-| Lane | One manager per lane: thinks, checks, cuts big tickets into worker jobs | No: ticket after ticket |
+| Lane | One manager per lane: pulls its own tickets, thinks, checks, cuts big tickets into worker jobs | No: ticket after ticket |
 | Worker | Up to three per lane, one whole ticket each | Yes: it ends when the ticket is done |
 
 Two levels under the top, never three. Why: a worker that never ends fills its context; a manager that ends drops its queue. A job with no end state (a speed hunt) is a lane: a failed try is logged and the next one starts.
@@ -27,10 +27,10 @@ One file, one ticket per line. The mark says who holds it:
 ```
 
 - The loop file's Priority is this one backlog, ranked; never a list per lane. A free lane takes the first open ticket it may take, of any kind. It prefers a repo it knows and never idles for that.
-- Claim rule: the top is the only writer. It marks `[~LANE n]` before it hands the ticket out, and only if no branch `<run>/<ID>` and no live thread with `<ID>` in its title exists. A worker's title starts with the ticket id and its branch carries it, so the guard can see double work. Why: without it, two lanes once did the same ticket.
-- The top hands each lane a queue of several tickets. A lane with one ticket left says so in its status block.
+- Claim rule: a manager pulls its own next ticket. It re-reads the file, then in one write marks `[~LANE n]` on the first open ticket it may take, and only if no branch `<run>/<ID>` and no live thread with `<ID>` in its title exists; a mark already there means it takes the next one. A worker's title starts with the ticket id and its branch carries it, so the guard can see double work. Why: without it, two lanes once did the same ticket.
+- The top hands out no tickets: it keeps the backlog ranked and reads the status files. A lane with no ticket it may take says so in its status block.
 - A ticket that needs the owner is marked `[y]`, gets one card, and the lane takes the next ticket in the same turn.
-- Small tickets go to one worker as a batch. A big ticket is cut by its manager.
+- Small tickets go to one worker as a batch. A big ticket is cut by its manager (`to-spec`, `to-tickets`), and `implement` builds each part.
 - Done means the proof on the ticket line was printed in that turn.
 
 ## Models
@@ -39,7 +39,7 @@ Difficulty picks the model first. The meter's `next=<family>` picks between equa
 
 ## The lane brief
 
-One shared file, read by every manager first and after every compaction. A launch message holds only the lane's own queue. The file ends with dated facts the top has proved, newest first. A lane reads them before it raises an alarm. Why: a false alarm cost four minutes of every lane once.
+One shared file, read by every manager first and after every compaction. A launch message holds only the lane's number and the brief's path. The file ends with dated facts the top has proved, newest first. A lane reads them before it raises an alarm. Why: a false alarm cost four minutes of every lane once.
 
 Each lane overwrites its status file at the end of every turn (12 lines at most) and ends its turn with the same block:
 
@@ -79,4 +79,4 @@ The owner reads on a phone. One page, not folders or logs. Open cards first; ans
 
 ## The meter
 
-Three lines it must do. It reads the provider's own usage store, read-only. It prints each family's share of spend for the period against its target and `next=<family>`. It never blocks a job. Use the repo's own script when one exists. With no usage store there is no budget: ask for a ledger.
+Three lines it must do. It reads the provider's own usage store, read-only. It prints each account's use against its limit, each family's share of spend against its target, and `next=<family>`. It never blocks a job. Use the repo's own script when one exists. With no usage store there is no budget: ask for a ledger.

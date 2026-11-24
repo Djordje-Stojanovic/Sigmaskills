@@ -26,7 +26,7 @@ Use the arena for / keep elsewhere:
   refs/                          ← optional reference media per group (the photos or voice every option must match)
   media/<player>__<group>[__<take>].<ext>  (+ same-name .json sidecar: seconds, GiB, cost ...)
   picks.jsonl                    ← append-only, one line per pick (undo = a line that cancels one)
-  codes.json                     ← the blind codes (the page never sees a name or file name)
+  codes.json                     ← the blind codes (Arena never shows a name or file name; Grid shows names)
   results.md / results.json      ← the board, rewritten whenever the Board tab or /api/state is read
 ```
 
