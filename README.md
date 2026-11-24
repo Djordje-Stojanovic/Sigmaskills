@@ -133,6 +133,7 @@ A pack is a group of skills from one or more sources, downloaded at its pinned v
 | Monorepo Doctor | `monorepo-doctor` | Engineering | 2 | Read-only JS/TS monorepo audit and cleanup | [santoshyadavdev/monorepo-doctor](https://github.com/santoshyadavdev/monorepo-doctor) @ `3cb32ea` |
 | Design Kit | `design-kit` | Design | 2 | Logos from brief to files; editorial charts, decks and reports | [kaankiziltug/logo-design-skill](https://github.com/kaankiziltug/logo-design-skill) @ `e9eaddc`, [larashero3-dotcom/lieflat-charts](https://github.com/larashero3-dotcom/lieflat-charts) @ `4b4e75b` |
 | Motion Kit | `motion-kit` | Media | 2 | Logo animation from a raster logo; animated line-art scenes | [nolangz/pixel2motion](https://github.com/nolangz/pixel2motion) @ `e9faedb`, [JDhruv14/line-art-animation](https://github.com/JDhruv14/line-art-animation) @ `c43d698` |
+| Engineering Kit | `engineering-kit` | Engineering | 1 | Local LLM inference hill-climbing under a memory cap | [sybil-solutions/inference-optimisation-skill](https://github.com/sybil-solutions/inference-optimisation-skill) @ `fda968e` |
 
 `local` is a folder of your own skills (`SIGMA_LOCAL_SKILLS_DIR` or `~/.sigmaskills/packs.json`). When two packs ship the same skill name, the earlier pack in this table keeps it. `npx @djordje-stojanovic/sigmaskills packs` prints every pack with its skills.
 

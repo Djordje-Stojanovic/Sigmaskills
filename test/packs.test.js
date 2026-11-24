@@ -20,11 +20,11 @@ function load(box, extra) {
   return loadPackCatalog({ catalog, packageRoot, homeDir: box.home, env: box.env });
 }
 
-test('packs: the registry lists the bundled Sigma pack and the thirty-three outside packs', () => {
+test('packs: the registry lists the bundled Sigma pack and the thirty-four outside packs', () => {
   const box = createSandbox();
   try {
     const packs = load(box);
-    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'anthropic-engineering', 'agent-skills', 'caveman', 'claude-red', 'dev-browser', 'emil-kowalski', 'marketingskills', 'linkedin', 'i-have-adhd', 'baoyu', 'gamedev', 'monorepo-doctor', 'design-kit', 'motion-kit', 'local']);
+    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'anthropic-engineering', 'agent-skills', 'caveman', 'claude-red', 'dev-browser', 'emil-kowalski', 'marketingskills', 'linkedin', 'i-have-adhd', 'baoyu', 'gamedev', 'monorepo-doctor', 'design-kit', 'motion-kit', 'engineering-kit', 'local']);
     const sigma = findPack(packs, 'sigma');
     assert.equal(sigma.skills.length, catalog.skills.length);
     assert.ok(sigma.skills.every((skill) => skill.kind === 'bundled'));
@@ -43,8 +43,10 @@ test('packs: the registry lists the bundled Sigma pack and the thirty-three outs
     // #408: one pack per category holds several one-skill repos; three of the four skills are their repo root
     assert.deepEqual(findPack(packs, 'design-kit').skills.map((skill) => skill.id), ['logo-design', 'lieflat-charts']);
     assert.deepEqual(findPack(packs, 'motion-kit').skills.map((skill) => skill.id), ['pixel2motion', 'line-art-animation']);
+    assert.deepEqual(findPack(packs, 'engineering-kit').skills.map((skill) => skill.id), ['inference-optimisation']);
     assert.equal(findPack(packs, 'logo').id, 'design-kit');
     assert.equal(findPack(packs, 'animation').id, 'motion-kit');
+    assert.equal(findPack(packs, 'inference').id, 'engineering-kit');
     assert.equal(findPack(packs, 'nope'), null);
   } finally {
     box.cleanup();
@@ -150,8 +152,8 @@ test('packs: resolveSelection joins presets and skill ids and reports what it ca
     const sigma = packs.packs.find((pack) => pack.id === 'sigma').skills.map((skill) => skill.id);
     const matt = packs.packs.find((pack) => pack.id === 'mattpocock').skills.map((skill) => skill.id);
     const pack = (id) => packs.packs.find((p) => p.id === id).skills.map((skill) => skill.id);
-    assert.deepEqual(core.skills.map((skill) => skill.id), [...sigma, ...matt, ...['tstack', 'anatomy', 'hallmark', 'design-kit', 'motion-kit'].flatMap(pack)],
-      'core is every Sigma skill plus the Matt Pocock, tstack, Anatomy, Hallmark, Design Kit and Motion Kit packs (#408)');
+    assert.deepEqual(core.skills.map((skill) => skill.id), [...sigma, ...matt, ...['tstack', 'anatomy', 'hallmark', 'design-kit', 'motion-kit', 'engineering-kit'].flatMap(pack)],
+      'core is every Sigma skill plus the Matt Pocock, tstack, Anatomy, Hallmark, Design Kit, Motion Kit and Engineering Kit packs (#411)');
   } finally {
     box.cleanup();
   }
