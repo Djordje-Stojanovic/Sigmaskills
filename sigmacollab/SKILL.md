@@ -61,7 +61,7 @@ colab --auth adc stop -s JOB-NAME
 - A refusal: record the exact text and read it ([the CLI's own skill](https://github.com/googlecolab/google-colab-cli/blob/main/skills/colab-operator/SKILL.md), its `commands/session.py`, [#73](https://github.com/googlecolab/google-colab-cli/issues/73)):
   - `400`: this account may not use the card. Take one `usage` lists as eligible.
   - `412` "Allocation refused": too many active runtimes, or a temporary usage or capacity limit for that card; the answer does not say which. Stop your own idle runtimes, ask once more, then the next card.
-  - `503` "Service Unavailable": the CLI has already retried it; the cause (no free card or an outage) is not in the answer. The next card.
+  - `503` "Service Unavailable": on the first request or after the CLI's own retries; the answer says neither which nor why. Ask once more at most, then the next card.
   - "Bad Gateway", or a start that times out: the next card. The CLI can hang for minutes: give the request a long timeout (`colab --help` names it) and pick the second card before you start.
 - Ask for a refused card once more at most, never in a loop. One user reported an account blocked for "suspected abusive activity" after an agent retried a refused G4 all night ([colabtools#6288](https://github.com/googlecolab/colabtools/issues/6288), 22 Nov 2026, no answer from Google). When the cards run out: Vast, or stop and report.
 
