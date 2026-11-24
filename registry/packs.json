@@ -3403,6 +3403,29 @@
       ]
     },
     {
+      "id": "engineering-kit",
+      "title": "Engineering Kit",
+      "blurb": "Single-skill engineering tools: local LLM inference hill-climbing under a memory cap.",
+      "category": "Engineering",
+      "aliases": [
+        "inference"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "repo": "sybil-solutions/inference-optimisation-skill",
+          "path": "skills",
+          "ref": "fda968e7fc1996aa23c67139c755fe541c9d4be0",
+          "skills": [
+            {
+              "id": "inference-optimisation",
+              "description": "Hill-climb the serving speed of a local LLM on any hardware (NVIDIA, AMD, Intel, Apple, unified-memory laptops, multi-GPU) and any quantization (GG..."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "local",
       "title": "Local",
       "blurb": "A folder of your own skills on this machine.",

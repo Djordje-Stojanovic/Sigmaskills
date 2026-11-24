@@ -7,7 +7,7 @@ const USER_CONFIG_DIR = '.sigmaskills';
 const USER_CONFIG_FILE = 'packs.json';
 
 /** The packs a Global Installation holds; every other pack is per project. The one place: edit this line, then run the land step. */
-export const CORE_PACKS = ['sigma', 'mattpocock', 'tstack', 'anatomy', 'hallmark', 'design-kit', 'motion-kit'];
+export const CORE_PACKS = ['sigma', 'mattpocock', 'tstack', 'anatomy', 'hallmark', 'design-kit', 'motion-kit', 'engineering-kit'];
 
 /** The fixed category list. Every pack has one; the wizard groups one-skill sources by it and `/` matches it. */
 export const CATEGORIES = ['Engineering', 'Design', 'Media', 'Research', 'Marketing', 'Finance', 'Productivity'];

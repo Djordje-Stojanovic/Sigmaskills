@@ -32,12 +32,18 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
-Lessons of a long unattended run on 23 to 24 Nov 2026.
+### Added
 
-- sigmaloop: the loop file has no "Do not" list. Limits are three lists: the owner's orders (quoted, dated), mechanical guards (each with the fault it prevents) and scope notes, which ban nothing. When no rule decides, the run takes the option that keeps work moving and can be undone, not the safer one. A technical obstacle is never a card and never a park. The owner's newest message rewrites the file's sections it changes. The stop line counts open, closed, parked and needs-owner apart. After the last review pass the builder fixes and lands; a ticket parks only after failed fix tries. One shared checkout commits by path. The question round asks which machine runs the work, how many reviewers run at once, the review passes and the fix tries. SigmaLoop runs SigmaFreedom's lint on the file it writes.
-- sigmaloop host notes: T3 Code threads on Antigravity reach the T3 tools only through the ACP bridge; a finished child wakes the parent; `steer` reaches a running turn (seen in one run).
-- sigmacollab: `references/long-jobs.md`, big uploads, streamed output, a Windows program under Wine, a Windows test suite on Linux (seen in one run).
-- sigmasetup: a section sync removes a line the master once held and later dropped; before, the line stayed in every copy as "repo-only". The master is cloned with its history.
+- **Engineering Kit** (`engineering-kit`, Engineering), a single-skill collection pack starting with `inference-optimisation` from `sybil-solutions/inference-optimisation-skill`, pinned to commit `fda968e` (#411).
+- `sigmaclimb` adopts the core practices of `inference-optimisation-skill` in a few lines: physical/practical ceilings before optimizing, machine/power-state locking and bracketed control-candidate-control runs for restarts in `SKILL.md`; serving ceilings, a 7-step lever order, unified-memory accounting, real-usage token counting, concurrent full-length KV soak, drain-before-stop and clean-build qualification in `references/example-model-serving.md` (#411).
+
+### Changed
+
+- The global set (`CORE_PACKS`, the `core` preset) adds Engineering Kit so the land-step sync puts `inference-optimisation` on every machine (#411).
+- sigmaloop: the loop file has no "Do not" list. Limits are three lists: the owner's orders (quoted, dated), mechanical guards (each with the fault it prevents) and scope notes, which ban nothing. When no rule decides, the run takes the option that keeps work moving and can be undone, not the safer one. A technical obstacle is never a card and never a park. The owner's newest message rewrites the file's sections it changes. The stop line counts open, closed, parked and needs-owner apart. After the last review pass the builder fixes and lands; a ticket parks only after failed fix tries. One shared checkout commits by path. The question round asks which machine runs the work, how many reviewers run at once, the review passes and the fix tries. SigmaLoop runs SigmaFreedom's lint on the file it writes (#412).
+- sigmaloop host notes: T3 Code threads on Antigravity reach the T3 tools only through the ACP bridge; a finished child wakes the parent; `steer` reaches a running turn (seen in one run) (#412).
+- sigmacollab: `references/long-jobs.md`, big uploads, streamed output, a Windows program under Wine, a Windows test suite on Linux (seen in one run) (#412).
+- sigmasetup: a section sync removes a line the master once held and later dropped; before, the line stayed in every copy as "repo-only". The master is cloned with its history (#412).
 
 ## [0.30.0] — 2026-11-24
 

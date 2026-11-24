@@ -724,6 +724,9 @@
   {"id":"motion-kit","title":"Motion Kit","blurb":"A raster logo turned into a clean SVG and a logo animation; animated line-art scenes in SVG, exported to video.","refs":{"nolangz/pixel2motion":"e9faedb28930df0da2acf17da00c80730a78cfe8","JDhruv14/line-art-animation":"c43d698913cf0ad44f984c7ae14c5348010594d3"},"sources":["nolangz/pixel2motion@e9faedb28930df0da2acf17da00c80730a78cfe8/","JDhruv14/line-art-animation@c43d698913cf0ad44f984c7ae14c5348010594d3/"],"skills":[
    ["pixel2motion","Turn a raster logo (PNG/JPG/WebP/screenshot) into a clean minimal SVG with edge smoothness as the"],
    ["line-art-animation","Build animated line-art components in SVG and TypeScript — thin ink lines on paper, people and",1]
+  ]},
+  {"id":"engineering-kit","title":"Engineering Kit","blurb":"Single-skill engineering tools: local LLM inference hill-climbing under a memory cap.","refs":{"sybil-solutions/inference-optimisation-skill":"fda968e7fc1996aa23c67139c755fe541c9d4be0"},"sources":["sybil-solutions/inference-optimisation-skill@fda968e7fc1996aa23c67139c755fe541c9d4be0/skills"],"skills":[
+   ["inference-optimisation","Hill-climb the serving speed of a local LLM on any hardware (NVIDIA, AMD, Intel, Apple,"]
   ]}
  ],"hosts":[
   {"id":"adal","name":"AdaL","global":["home",".adal/skills"],"project":".adal/skills"},

@@ -67,9 +67,19 @@ to the box, and starts `run_experiment.sh`, which calls `target.sh`:
 1. `invariants.py`: a broken invariant makes the run VOID before launch.
 2. Stage 1, `speed.py`: probes at the owner's real settings, written to `raw/score.json`. **Every replay or
    throughput turn writes a fixed number of tokens** (`max_tokens = min_tokens`), or wall time measures the sampled
-   answer length instead of speed. The box runs `verdict.py` on the score; anything but a stage-1 win ends the pass.
-3. Stage 2, `gate.py`, ToolEvalBench and `quality.py`: the quality check, on the same running server.
+   answer length instead of speed. Count completion tokens from server usage stats or the real tokenizer (never
+   streamed SSE chunks, which bundle tokens under speculative decoding), size prompts with the real tokenizer, and use
+   a fixed prompt panel with medians so text type does not skew acceptance. The box runs `verdict.py` on the score;
+   anything but a stage-1 win ends the pass.
+3. Stage 2, `gate.py`, ToolEvalBench and `quality.py`: the quality check, on the same running server. When the KV pool
+   is sized for N users, prove it with a concurrent full-length soak and exact-match needles at ~50 % and ~100 %
+   context. On a greedy equivalence divergence (speculation on vs off), inspect logits at the split: a near-tie from
+   different batch-size kernels is not a bug.
 4. `verdict.py` at home: the final verdict from the pulled raw files.
+
+Enforce the memory cap with a watchdog. On unified memory (integrated GPUs and shared-memory systems), GPU allocations
+bypass cgroups and `MemAvailable`: sum driver residency (e.g. Linux DRM `drm-resident-*` deduplicated by client id)
+plus process anonymous memory, and leave headroom.
 
 The baseline runs with `-Record`, the A/A runs with `-Full`. Then `quality.py bands` and `aa.py` on those runs.
 
@@ -77,14 +87,39 @@ The owner's home machine is the held-out check for serving: he runs the champion
 (`held-out.md`).
 
 After the lock, any edit to `scripts/bench/` is an evaluator migration: log it in `evaluator.lock`, push the files to
-the box (it keeps its own copy) and measure the champion again. Measure the real memory-bandwidth ceiling with a
-read-only probe; a spec-sheet number is not a ceiling.
+the box (it keeps its own copy) and measure the champion again.
 
-## Phase 4: the serving profile
+## Phase 4: ceilings and serving profile
 
-Time each part of one real request and of one agent turn: prompt reading, first token, decode, the scheduler's gaps,
-the cache's hit rate, start time. The server's metrics and a profiler trace of one request give the shares. The
-biggest share gets the next ideas.
+Measure the hardware first (device-copy bandwidth and large square GEMMs; a spec-sheet number is not a ceiling) and
+compute practical ceilings from the checkpoint's actual tensor sizes:
+
+- **Decode** (memory-bandwidth bound): bytes read per emitted token (dense + active routed experts + LM head + KV at
+  context + recurrent state) ÷ measured bandwidth. With speculative decoding, divide target verify bytes by accepted
+  length and add draft layer + draft LM head bytes.
+- **Prefill** (compute bound): FLOPs per token (`2 × active linear params` plus causal attention) ÷ ~50 % of measured
+  peak. **TTFT:** one forward pass + schedule. **Startup:** weight bytes ÷ disk/page-cache speed (with caches
+  persisted). **KV:** bytes/token × layers that actually hold KV.
+
+Report progress as a share of the practical ceiling, then time each part of one real request and agent turn (prompt
+reading, first token, decode, scheduler gaps, cache hit rate, start time). Attack the biggest ceiling gap first.
+
+## Lever order (cheapest first)
+
+1. **Startup:** persist JIT, compile, autotune and graph caches across restarts; load weights eagerly where mmap is
+   slow; cap compile workers on memory-tight machines.
+2. **Decode graphs** (CUDA/XPU/HIP capture) first. Once graphs are on, stop fusing small kernels when time sits in the
+   main GEMMs/GEMVs.
+3. **Speculative decoding:** judge `accepted_length / step_time`, not acceptance alone. Prune the draft LM head's
+   vocabulary, sweep draft length per concurrency and context, keep sampling on the GPU, and keep verify on
+   decode-style attention.
+4. **Concurrency and KV:** size the KV pool to N × context; on hybrid SSM/recurrent models, size state slots too (they
+   often cap concurrency before KV); enable prefix caching explicitly and confirm cached tokens > 0.
+5. **Prefill:** tune chunk size against decode stalls; swap in a faster attention library before writing one; treat
+   int8/fp8 prefill GEMMs as a labelled quality trade; avoid grouped-MoE padding cliffs.
+6. **Kernel thread and tile sizes:** defaults copied from larger GPUs often miss smaller cards.
+7. **Kernel and ISA work** only after config levers plateau, gated by bit-exact or tight-tolerance checks across all
+   served row counts.
 
 ## Phase 5: serving-only steps of a pass
 
@@ -93,8 +128,16 @@ biggest share gets the next ideas.
 - `candidate/serve.sh` = the champion plus ONE change. `scripts/bench/verdict.py runs/<n>` decides.
 - A flag that the engine reads at run time gets an ABAB test on one live server first: minutes, not a pass.
 - Noise is large: a champion can swing 10 % between identical runs. Same warm-up both sides; never "fresh and empty".
+- Never force-kill a server mid-batch or mid-prefill: abort requests, wait for drain, then stop with a timeout.
 - A trade (one probe up, one down) is an ARCHIVE; the owner rules on it, from a table.
 
 ## Finish
 
-When the owner has destroyed the box, write `REPORT.md` (see `SKILL.md`).
+When the owner has destroyed the box, write `REPORT.md` (see `SKILL.md`). Before publishing a tuned recipe, pin the base
+image digest, engine/kernel commits and weights revision, build cleanly from those pins, prove the clean build matches
+the champion within noise, and label which harness produced each number.
+
+## Sources
+
+Serving ceilings, lever order, unified-memory accounting, drain-before-stop, speculative-decoding per-step rules and
+clean-build qualification draw on [sybil-solutions/inference-optimisation-skill](https://github.com/sybil-solutions/inference-optimisation-skill) (MIT).

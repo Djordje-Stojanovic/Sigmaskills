@@ -7,7 +7,7 @@
  * <clones-dir> holds one shallow clone per repo, named by the repo name
  * (skills, threejs-skills, hyperframes, hyperframes-student-kit, MiniMax-H3, tstack, superpowers, impeccable,
  * security-audit-skill, anatomy, diagram-design, taste-skill, hallmark, ponytail, logo-design-skill, lieflat-charts,
- * pixel2motion, line-art-animation). The hyperframes
+ * pixel2motion, line-art-animation, inference-optimisation-skill). The hyperframes
  * clone must be at the tag named in HYPERFRAMES_RELEASE: `git clone --branch <tag> --depth 1`. A pack with
  * a `ref` must be cloned at that commit or tag.
  * The snapshot lets the installer show every group at once, without cloning.
@@ -267,6 +267,17 @@ const PACKS = [
     sources: [
       { repo: 'nolangz/pixel2motion', clone: 'pixel2motion', path: '', rootSkill: 'pixel2motion', ref: 'e9faedb28930df0da2acf17da00c80730a78cfe8' },
       { repo: 'JDhruv14/line-art-animation', clone: 'line-art-animation', path: '', rootSkill: 'line-art-animation', ref: 'c43d698913cf0ad44f984c7ae14c5348010594d3' },
+    ],
+  },
+  // Engineering single-skill collection (#411): one-skill engineering repos, each pinned to one commit.
+  {
+    id: 'engineering-kit',
+    title: 'Engineering Kit',
+    blurb: 'Single-skill engineering tools: local LLM inference hill-climbing under a memory cap.',
+    category: 'Engineering',
+    aliases: ['inference'],
+    sources: [
+      { repo: 'sybil-solutions/inference-optimisation-skill', clone: 'inference-optimisation-skill', path: 'skills', ref: 'fda968e7fc1996aa23c67139c755fe541c9d4be0' },
     ],
   },
   {
