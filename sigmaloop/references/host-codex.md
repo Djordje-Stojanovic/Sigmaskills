@@ -19,7 +19,7 @@ Prompt skeleton (under 4,000 characters):
 Order: <loop file> "Priority", top down. First: <items 1-3>.
 Crew: <solo, or roles and tiers from the loop file>. Each builder gets one whole unit; the loop file's review rule gates it; only the orchestrator starts agents. A free slot is refilled at once; a large finding goes to the same agent by send_input.
 Landing per item: <code + tests, docs, tracker tick with evidence, PR merged, branch + worktree gone, deploy proof>.
-Authorised: <list>. Take the safer option when no rule decides; log it.
+Authorised: <list>. When no rule decides, take the option that keeps work moving and can be undone; log it.
 Each turn: read the clock; do the next item; update the handoff; print the check that proves it. Never end a turn idle while an item is workable. At <time, zone> do the Finish block in the loop file, then mark the goal complete.
 ```
 

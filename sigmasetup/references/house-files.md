@@ -10,7 +10,7 @@ The script takes the first of these that is set:
 2. The environment variable `SIGMASETUP_HOUSE`.
 3. A `house:` line in the personal-instructions block of this skill's `SKILL.md`, between `<sigmaskills-custom>` and `</sigmaskills-custom>`. The installer keeps that block on every update.
 
-A folder is read as it is. A git URL or `owner/repo` is cloned shallow into a temp folder; a private repo needs git signed in (`gh auth setup-git`).
+A folder is read as it is. A git URL or `owner/repo` is cloned with its history into a temp folder; a private repo needs git signed in (`gh auth setup-git`).
 
 When none is set, ask the owner once: "Where do your master rule files live? A folder or a repo." Then show both ways to save the answer and let the owner pick:
 
@@ -40,7 +40,7 @@ Map lines go in the same personal-instructions block, one rule per line. Paths a
 | `section: <master>#<heading> [-> <repo file>]` | Replaces the repo's `## <heading>` section with the master's and leaves the rest of the file alone. For `AGENTS.md` and `CLAUDE.md`, where the repo has its own content around the shared part. |
 | `seed: <template> -> <repo path>` | Only reports a missing file. The agent writes it from the template with this repo's facts, because a template has placeholders. |
 
-A section goes into every one of `AGENTS.md` and `CLAUDE.md` that already has it. When neither has it, it goes into the named file; when only `CLAUDE.md` exists, into `CLAUDE.md`. A repo-only line inside the section stays at the section's end, and `check` lists it. When the owner wants the section to be the master's word for word, run with `--exact`.
+A section goes into every one of `AGENTS.md` and `CLAUDE.md` that already has it. When neither has it, it goes into the named file; when only `CLAUDE.md` exists, into `CLAUDE.md`. A repo-only line inside the section stays at the section's end, and `check` lists it. A line the master once held and later dropped is not repo-only: the sync reads the master's git history and removes it from the copies too. When the owner wants the section to be the master's word for word, run with `--exact`.
 
 Example with every kind:
 
