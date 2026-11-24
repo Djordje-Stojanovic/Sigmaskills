@@ -7,7 +7,7 @@ const USER_CONFIG_DIR = '.sigmaskills';
 const USER_CONFIG_FILE = 'packs.json';
 
 /** The packs a Global Installation holds; every other pack is per project. The one place: edit this line, then run the land step. */
-export const CORE_PACKS = ['sigma', 'mattpocock', 'tstack'];
+export const CORE_PACKS = ['sigma', 'mattpocock', 'tstack', 'anatomy', 'hallmark', 'design-kit', 'motion-kit'];
 
 /** The fixed category list. Every pack has one; the wizard groups one-skill sources by it and `/` matches it. */
 export const CATEGORIES = ['Engineering', 'Design', 'Media', 'Research', 'Marketing', 'Finance', 'Productivity'];
@@ -146,7 +146,7 @@ export function findPack(packCatalog, name) {
 /**
  * Turn `--preset` names and skill ids into one install list.
  *
- * `all` means every available pack; `core` means the Sigma, Matt Pocock and tstack packs; `design-pack` means impeccable and taste-skill. A preset that names no pack, or a pack with nothing
+ * `all` means every available pack; `core` means the packs in CORE_PACKS; `design-pack` means impeccable and taste-skill. A preset that names no pack, or a pack with nothing
  * available on this machine, is reported instead of skipped silently.
  *
  * @param {{ packs: object[], skills: Map<string, object> }} packCatalog

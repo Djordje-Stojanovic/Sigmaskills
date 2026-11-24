@@ -151,8 +151,10 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `baoyu` | `baoyu-skills`, `jimliu` |
 | `gamedev` | `games`, `game` |
 | `monorepo-doctor` | `monorepo` |
+| `design-kit` | `logo`, `charts` |
+| `motion-kit` | `animation`, `motion` |
 | `local` | `own` |
-| `core` | the global default: every Sigma skill, the whole Matt Pocock pack and the whole tstack pack. `install --global --yes` with no pack, skill or `--all` installs it |
+| `core` | the global default: every Sigma skill and the whole Matt Pocock, tstack, Anatomy, Hallmark, Design Kit and Motion Kit packs. `install --global --yes` with no pack, skill or `--all` installs it |
 | `design-pack` | the design pair for one repo with a page: `impeccable` and `taste-skill`, at their pinned commits. `sigmataste` is a Sigma skill, so `core` has it already. `frontend-design` is in the `anthropic` pack (19 skills): add it alone with `install frontend-design`. Research: [`docs/research/design-pack.md`](research/design-pack.md) |
 | `all` | every pack that is available on this machine |
 
@@ -182,7 +184,7 @@ How pack skills install:
 - `update` also refreshes pack skills: it downloads each source again and replaces only the copies that are unchanged since the install. `update --skill <id>` limits it. `uninstall --skill <id>` and `uninstall --all` remove pack skills and every link the installer made for them. `status` lists them under *Pack skills*.
 - `uninstall --non-core` removes every installed skill outside the core. Run `uninstall --global --non-core --yes` to keep only the core global.
 
-**The global set.** One line lists the packs that install globally: `CORE_PACKS` in `src/packs.js`, today `['sigma', 'mattpocock', 'tstack']`. Every other pack installs per repo (`install --pack <id> --project .`). To make another pack global, add its id to that line and merge. To stop one being global, take it out of the line, merge, and run `uninstall --global --non-core --yes` on each machine; with `sigma` out, that also removes the Sigma skills. The owner's three machines take the change at the land step of the merge (`project_skills.py --global`, see `AGENTS.md`), which also brings them level. No timer runs it.
+**The global set.** One line lists the packs that install globally: `CORE_PACKS` in `src/packs.js`, today `['sigma', 'mattpocock', 'tstack', 'anatomy', 'hallmark', 'design-kit', 'motion-kit']`. Every other pack installs per repo (`install --pack <id> --project .`). To make another pack global, add its id to that line and merge. To stop one being global, take it out of the line, merge, and run `uninstall --global --non-core --yes` on each machine; with `sigma` out, that also removes the Sigma skills. The owner's three machines take the change at the land step of the merge (`project_skills.py --global`, see `AGENTS.md`), which also brings them level. No timer runs it.
 - `purge` removes bundled Sigma content only. Use `uninstall --all` for pack skills.
 - Global scope works the same way, under your home folder, and needs `--global --yes`.
 

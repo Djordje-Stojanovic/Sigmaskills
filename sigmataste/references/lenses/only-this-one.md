@@ -13,6 +13,7 @@ After the first screen or minute: does the idea carry on, or turn into stock blo
 - A tagline or headline a competitor could sign ("The platform for modern teams").
 - The idea shows on the first screen and then disappears into a generic template.
 - A deck theme picked from a preset list, unrelated to the talk.
+- Invented proof: a logo wall, a metric or a testimonial nobody supplied.
 
 ## Fix moves
 
@@ -20,12 +21,14 @@ After the first screen or minute: does the idea carry on, or turn into stock blo
 - Replace one generic visual with the real thing: a screenshot, the actual data, the product, the place, the people.
 - Borrow vocabulary from the subject: materials, instruments, signage, documents of that world.
 - Carry the idea through: one recurring device that returns in every section, slide or act.
+- Build the page from the sections its category really uses (a restaurant's menu, a festival's lineup, a magazine's issues), not a default run of features, steps and an email sign-up.
 
 ## Verify
 
 - The swap test on the after version: swap the name for a rival's and the design should feel wrong.
 - Ask a stranger what kind of thing it is from the visuals alone, with the name covered.
+- A logo or app icon: look at it at 16 px, in one colour, reversed, and on one sheet beside the rivals' marks. It still reads and still differs.
 
 ## Source and what changed
 
-From Anthropic `frontend-design` ("ground your designs in the subject matter"; Apache-2.0), Anthropic `canvas-design` (name a visual movement, then express it; Apache-2.0), coreyhaines31 `copywriting` (the swap test; MIT) and petergyang `no-ai-slop` (the portability test; MIT). Improved: one test that covers visuals and words together, and the named point of view becomes the plan's Direction instead of a separate manifesto file.
+From Anthropic `frontend-design` ("ground your designs in the subject matter"; Apache-2.0), Anthropic `canvas-design` (name a visual movement, then express it; Apache-2.0), coreyhaines31 `copywriting` (the swap test; MIT), petergyang `no-ai-slop` (the portability test; MIT), Nutlope `hallmark` (the category's own page anatomy, no invented proof; MIT) and kaankiziltug `logo-design-skill` (the 16 px, one-colour, reversed and shelf tests; MIT). Improved: one test that covers visuals and words together, and the named point of view becomes the plan's Direction instead of a separate manifesto file.

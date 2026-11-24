@@ -13,6 +13,8 @@ Whether each chart, metric tile and table answers one question at a glance. Star
 - Gridlines, borders and legends louder than the data.
 - A chart where a sentence or a small table would answer faster.
 - Numbers without units or dates; no source.
+- A bar chart with a cut axis: the bars no longer measure the values.
+- An explainer drawn as labelled boxes and arrows, where a real object whose working is the idea would explain it (a lock for a cache key, a chest of drawers for memory sizes).
 
 ## Fix moves
 
@@ -22,6 +24,8 @@ Whether each chart, metric tile and table answers one question at a glance. Star
 - Sequential data on an even-lightness ramp (OKLCH); categorical colours with a second cue (labels, borders, patterns) since only about three colours can hold contrast with each other.
 - Give the most important metric more size than the rest.
 - Add the exact values in a table or on hover, and the source.
+- An extreme value runs off the top, gets a zoomed inset, or its bar is visibly torn; the axis stays whole.
+- For an explainer, draw one recognisable machine whose motion is the concept, and drive every number it shows from the same model that moves it.
 
 ## Verify
 
@@ -30,4 +34,4 @@ Whether each chart, metric tile and table answers one question at a glance. Star
 
 ## Source and what changed
 
-From meodai `skill.color-expert` (flat-derivative ramps, the border trick for chart colours; CC-BY-4.0), mgifford `accessibility-skills` charts guide (start from the user's question, layered information; AGPL-3.0, ideas only), and chrisvoncsefalvay `claude-d3js-skill` (when a custom chart earns its cost). Improved: one question-first test for dashboards, decks and reports.
+From meodai `skill.color-expert` (flat-derivative ramps, the border trick for chart colours; CC-BY-4.0), mgifford `accessibility-skills` charts guide (start from the user's question, layered information; AGPL-3.0, ideas only), chrisvoncsefalvay `claude-d3js-skill` (when a custom chart earns its cost), larashero3-dotcom `lieflat-charts` (bars never cut the axis, and the three honest ways out) and wheresryan22 `anatomy` ("the object is the explanation", numbers from the model that moves the parts; MIT). Improved: one question-first test for dashboards, decks and reports.

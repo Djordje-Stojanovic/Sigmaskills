@@ -6,7 +6,8 @@
  *
  * <clones-dir> holds one shallow clone per repo, named by the repo name
  * (skills, threejs-skills, hyperframes, hyperframes-student-kit, MiniMax-H3, tstack, superpowers, impeccable,
- * security-audit-skill, anatomy, diagram-design, taste-skill, hallmark, ponytail). The hyperframes
+ * security-audit-skill, anatomy, diagram-design, taste-skill, hallmark, ponytail, logo-design-skill, lieflat-charts,
+ * pixel2motion, line-art-animation). The hyperframes
  * clone must be at the tag named in HYPERFRAMES_RELEASE: `git clone --branch <tag> --depth 1`. A pack with
  * a `ref` must be cloned at that commit or tag.
  * The snapshot lets the installer show every group at once, without cloning.
@@ -243,6 +244,30 @@ const PACKS = [
     category: 'Productivity',
     aliases: ['adhd'],
     sources: [{ repo: 'ayghri/i-have-adhd', clone: 'i-have-adhd', path: 'skills', ref: '1ecea1993b7fce257ffbd686c070948b5e07eda6' }],
+  },
+  // The owner's 24 Nov list (#408): one pack per category, several one-skill repos in it, each pinned to one commit.
+  {
+    id: 'design-kit',
+    title: 'Design Kit',
+    blurb: 'Logos from brief to production files, and editorial charts, decks and reports from your data.',
+    category: 'Design',
+    aliases: ['logo', 'charts'],
+    sources: [
+      { repo: 'kaankiziltug/logo-design-skill', clone: 'logo-design-skill', path: 'skills', ref: 'e9eaddc07895575253d6663320354a708f53e955' },
+      // The skill is the repo root itself, as in anatomy.
+      { repo: 'larashero3-dotcom/lieflat-charts', clone: 'lieflat-charts', path: '', rootSkill: 'lieflat-charts', ref: '4b4e75bde11cbef44263de769f3705db54bbb277' },
+    ],
+  },
+  {
+    id: 'motion-kit',
+    title: 'Motion Kit',
+    blurb: 'A raster logo turned into a clean SVG and a logo animation; animated line-art scenes in SVG, exported to video.',
+    category: 'Media',
+    aliases: ['animation', 'motion'],
+    sources: [
+      { repo: 'nolangz/pixel2motion', clone: 'pixel2motion', path: '', rootSkill: 'pixel2motion', ref: 'e9faedb28930df0da2acf17da00c80730a78cfe8' },
+      { repo: 'JDhruv14/line-art-animation', clone: 'line-art-animation', path: '', rootSkill: 'line-art-animation', ref: 'c43d698913cf0ad44f984c7ae14c5348010594d3' },
+    ],
   },
   {
     id: 'local',

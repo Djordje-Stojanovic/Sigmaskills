@@ -716,6 +716,14 @@
   {"id":"monorepo-doctor","title":"Monorepo Doctor","blurb":"Read-only audit of a JS/TS monorepo (Nx, Turborepo, pnpm, yarn, npm, bun) and a cleanup flow for what it finds.","refs":{"santoshyadavdev/monorepo-doctor":"3cb32ea3f16cb7eabf9687d5aab76e358352b7ed"},"sources":["santoshyadavdev/monorepo-doctor@3cb32ea3f16cb7eabf9687d5aab76e358352b7ed/skills"],"skills":[
    ["monorepo-boundaries-cleanup","Use when a monorepo boundary linter (turbo boundaries, Nx enforce-module-boundaries,"],
    ["monorepo-doctor","Use when a user asks for a JS/TS monorepo audit, or Bazel target visibility or testonly issues in a"]
+  ]},
+  {"id":"design-kit","title":"Design Kit","blurb":"Logos from brief to production files, and editorial charts, decks and reports from your data.","refs":{"kaankiziltug/logo-design-skill":"e9eaddc07895575253d6663320354a708f53e955","larashero3-dotcom/lieflat-charts":"4b4e75bde11cbef44263de769f3705db54bbb277"},"sources":["kaankiziltug/logo-design-skill@e9eaddc07895575253d6663320354a708f53e955/skills","larashero3-dotcom/lieflat-charts@4b4e75bde11cbef44263de769f3705db54bbb277/"],"skills":[
+   ["logo-design","Professional logo and brand-mark design, from brief to production files."],
+   ["lieflat-charts","一套模板驱动的数据可视化、PPT 演示与整页报告生成 skill，既能严格从 Lupi、Basics、Glance、Maps 与 Interactive gallery 的真实实现生成 HTML",1]
+  ]},
+  {"id":"motion-kit","title":"Motion Kit","blurb":"A raster logo turned into a clean SVG and a logo animation; animated line-art scenes in SVG, exported to video.","refs":{"nolangz/pixel2motion":"e9faedb28930df0da2acf17da00c80730a78cfe8","JDhruv14/line-art-animation":"c43d698913cf0ad44f984c7ae14c5348010594d3"},"sources":["nolangz/pixel2motion@e9faedb28930df0da2acf17da00c80730a78cfe8/","JDhruv14/line-art-animation@c43d698913cf0ad44f984c7ae14c5348010594d3/"],"skills":[
+   ["pixel2motion","Turn a raster logo (PNG/JPG/WebP/screenshot) into a clean minimal SVG with edge smoothness as the"],
+   ["line-art-animation","Build animated line-art components in SVG and TypeScript — thin ink lines on paper, people and",1]
   ]}
  ],"hosts":[
   {"id":"adal","name":"AdaL","global":["home",".adal/skills"],"project":".adal/skills"},
