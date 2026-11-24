@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.30.0] — 2026-11-24
+
 ### Added
 
 - `sigmacollab` reads a refused runtime: what `400`, `412` and `503` say and the next step for each. It stops a job's own idle runtimes before a big card and asks for a refused card once more at most, never in a loop. It names the plan manager's account as the one with the units, and Colab Enterprise as paid compute (#405).
@@ -44,6 +46,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 - `--agent detected` installs for every host found in your home, so a host added after the first install, such as Antigravity (`~/.gemini/config/skills`), now gets the skills.
 - A copy-only folder (`~/.gemini/config/skills`, Antigravity) in an install no longer turns every other host folder into a copy. The others stay links, and the update after it no longer stops on "wrong-target".
+
+### Known issues
+
+- A host folder that holds a copy of a skill (Antigravity, `~/.gemini/config/skills`) still gets an empty personal-instructions block; a linked folder shows yours. The fix is #407, not in this Release.
 
 ## [0.29.3] — 2026-11-23
 
@@ -966,7 +972,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.3...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.30.0...HEAD
+[0.30.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.3...v0.30.0
 [0.29.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.2...v0.29.3
 [0.29.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.1...v0.29.2
 [0.29.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.0...v0.29.1
