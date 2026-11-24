@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { walkLiveFiles } from './backup.js';
@@ -58,11 +59,14 @@ function hostIdsFor(groups, relativeRoot) {
   return group ? group.hosts.map((host) => host.id) : [];
 }
 
+// The official part of a SKILL.md: the personal block emptied and line endings as LF (#407).
 function officialMarkdownShell(markdown) {
   const start = markdown.indexOf(CUSTOM_BLOCK_START);
   const end = markdown.indexOf(CUSTOM_BLOCK_END);
-  if (start === -1 || end === -1 || end < start) return markdown;
-  return `${markdown.slice(0, start + CUSTOM_BLOCK_START.length)}${markdown.slice(end)}`;
+  const shell = start === -1 || end === -1 || end < start
+    ? markdown
+    : `${markdown.slice(0, start + CUSTOM_BLOCK_START.length)}${markdown.slice(end)}`;
+  return shell.replace(/\r\n/g, '\n');
 }
 
 function inspectSkillMarkdown(liveMarkdown, skillId, liveHash, bundledMarkdown, bundledHash, installedHash) {
@@ -72,24 +76,16 @@ function inspectSkillMarkdown(liveMarkdown, skillId, liveHash, bundledMarkdown, 
   const live = inspection.status === 'malformed' || !localEdit
     ? liveMarkdown
     : withOfficialDescription(liveMarkdown, bundledMarkdown);
-  if (inspection.status !== 'valid' && live === liveMarkdown) {
-    return {
-      status: inspection.status,
-      officialHash: liveHash,
-      hasCustomContent: false,
-    };
+  if (inspection.status === 'malformed') {
+    return { status: inspection.status, officialHash: liveHash, hasCustomContent: false };
   }
-  if (typeof bundledMarkdown === 'string' && officialMarkdownShell(live) === officialMarkdownShell(bundledMarkdown)) {
-    return {
-      status: 'valid',
-      officialHash: bundledHash || liveHash,
-      hasCustomContent: true,
-    };
-  }
+  const custom = inspection.status === 'valid' || live !== liveMarkdown;
+  // Same official text as the bundled skill, whatever the block holds and whatever the line endings: no outside change.
+  const official = typeof bundledMarkdown === 'string' && officialMarkdownShell(live) === officialMarkdownShell(bundledMarkdown);
   return {
-    status: 'valid',
-    officialHash: liveHash,
-    hasCustomContent: true,
+    status: custom ? 'valid' : inspection.status,
+    officialHash: official ? bundledHash || liveHash : liveHash,
+    hasCustomContent: custom,
   };
 }
 
@@ -134,11 +130,16 @@ function classifyLiveTree({ liveFiles, bundledFiles, skillId, skillMarkdown, bun
 
   const unique = [...new Set(classifications)];
   if (unique.length === 0) unique.push('clean');
+  // Copies are compared without their personal blocks and line endings: those may differ (#407).
+  const compared = { ...officialFiles };
+  if (typeof skillMarkdown === 'string' && compared['SKILL.md']) {
+    compared['SKILL.md'] = `shell:${crypto.createHash('sha256').update(officialMarkdownShell(skillMarkdown)).digest('hex')}`;
+  }
   return {
     classifications: unique,
     files: { added, replaced, deleted },
     fingerprint: JSON.stringify(
-      Object.keys(officialFiles).sort().map((file) => [file, officialFiles[file]]),
+      Object.keys(compared).sort().map((file) => [file, compared[file]]),
     ),
   };
 }
@@ -374,7 +375,8 @@ export function collectStatus(options = {}) {
     };
   });
 
-  const drift = skills.some((skill) => skill.destinations.some((dest) => dest.classifications.some((kind) => kind !== 'clean')));
+  // A personal block or a local description is the user's own text, kept on purpose: not drift (#407).
+  const drift = skills.some((skill) => skill.destinations.some((dest) => dest.classifications.some((kind) => kind !== 'clean' && kind !== 'valid-customization')));
 
   return {
     schemaVersion: STATUS_SCHEMA_VERSION,

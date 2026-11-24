@@ -21,6 +21,7 @@ import {
   migrateStateForCommand,
 } from './state.js';
 import { createSkillLink, pathExists, removeManagedPath } from './links.js';
+import { restorePersonalWrites, syncPersonalBlocks } from './personal.js';
 
 /**
  * Acquire process concurrency lock for project.
@@ -113,6 +114,7 @@ function snapshotInstallState(tx) {
 
   tx.committed = [];
   tx.privateBackups = [];
+  tx.personalWrites = [];
 
   tx.lockLeftAlone = scope !== 'global' && isForeignProjectLock(root);
   tx.useProjectLock = scope !== 'global' && !tx.lockLeftAlone;
@@ -150,6 +152,7 @@ function cleanupStaging(tx) {
 /** Undo every commit, private backup, and state or lock write. Always releases the lock at the end. */
 function rollbackInstall(tx) {
   try {
+    restorePersonalWrites((tx.personalWrites || []).splice(0));
     for (const entry of tx.committed.splice(0).reverse()) {
       if (entry.adopted) continue;
       try {
@@ -220,6 +223,38 @@ function canonicalSkippedWithNothingNew(tx) {
   return plan.destinations.every((dest) => dest.kind === 'canonical' || recorded.has(dest.relativeDestination));
 }
 
+/** True when the state recorded this destination before the run. */
+function recordedBefore(tx, dest) {
+  const copies = tx.originalState.skills?.[tx.skillId]?.copies || [];
+  return copies.some((copy) => String(copy.destination || '').replace(/\\/g, '/') === dest.relativeDestination);
+}
+
+function isRealFolder(dir) {
+  try {
+    const stat = fs.lstatSync(dir);
+    return stat.isDirectory() && !stat.isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Personal instructions (#407): before the run, take block edits into the personal file; after it, write the
+ * file's lines into every copy this run wrote and every recorded copy it adopted. A link shows the canonical copy.
+ * A folder with no record that the run only adopts or skips is never written.
+ */
+function syncPersonal(tx, phase) {
+  const copies = tx.plan.destinations
+    .filter((dest) => dest.method === 'copy' && isRealFolder(dest.destination))
+    .sort((a, b) => (a.kind === 'canonical' ? -1 : 0) - (b.kind === 'canonical' ? -1 : 0));
+  const writes = (dest) => !dest.adoption && dest.resolution !== 'skip' && dest.resolution !== 'export';
+  const params = { stateDir: tx.stateDirForBackups, skillId: tx.skillId, writes: tx.personalWrites };
+  const result = phase === 'absorb'
+    ? syncPersonalBlocks({ ...params, read: copies.filter((dest) => recordedBefore(tx, dest) || writes(dest)).map((dest) => dest.destination) })
+    : syncPersonalBlocks({ ...params, absorb: false, write: copies.filter((dest) => writes(dest) || (dest.adoption && recordedBefore(tx, dest))).map((dest) => dest.destination) });
+  tx.personal = { saved: [...(tx.personal?.saved || []), ...result.saved], refused: result.refused || tx.personal?.refused || null };
+}
+
 /** Result for an install that changed nothing. */
 function unchangedResult(tx) {
   return {
@@ -228,6 +263,7 @@ function unchangedResult(tx) {
     plan: tx.plan,
     lock: tx.originalLock,
     state: tx.originalState,
+    personal: tx.personal,
   };
 }
 
@@ -523,23 +559,26 @@ function finalizeInstall(tx, updatedState, record) {
       entry.backupDir = null;
     }
   }
-  for (const backupPath of tx.privateBackups) {
+  // One prune per run: pruning once per backup made each call delete the other backups of the same run,
+  // which left the backup folder empty when a run replaced two folders of one skill (#407).
+  if (tx.privateBackups.length > 0) {
+    const kept = [...tx.privateBackups];
     let debt = [];
     try {
       const pruneFn = params.pruneBackups || pruneOlderBackups;
       const result = pruneFn({
         stateDir: stateDirForBackups,
         skillId,
-        keepPath: backupPath,
+        keepPath: kept.length === 1 ? kept[0] : kept,
       });
       if (result && Array.isArray(result.debt)) debt = result.debt;
     } catch {
       const dir = path.join(getBackupRoot(stateDirForBackups), skillId);
       if (pathExists(dir)) {
-        const keep = path.resolve(backupPath);
+        const keep = new Set(kept.map((item) => path.resolve(item)));
         for (const name of fs.readdirSync(dir)) {
           const full = path.resolve(dir, name);
-          if (full !== keep) {
+          if (!keep.has(full)) {
             debt.push(path.relative(stateDirForBackups, full).replace(/\\/g, '/'));
           }
         }
@@ -565,13 +604,22 @@ function runInstallTransaction(tx) {
   const { plan, batch } = tx;
 
   if (canonicalSkippedWithNothingNew(tx) || isAlreadyInstalled(tx)) {
+    try {
+      syncPersonal(tx, 'absorb');
+      syncPersonal(tx, 'render');
+    } catch (err) {
+      restorePersonalWrites(tx.personalWrites.splice(0));
+      throw err;
+    }
     cleanupStaging(tx);
     tx.releaseLock();
     return unchangedResult(tx);
   }
 
+  syncPersonal(tx, 'absorb');
   const fileHashes = stageSkill(tx);
   commitDestinations(tx);
+  syncPersonal(tx, 'render');
 
   const copies = buildCopies(tx, fileHashes);
   if (copies.length === 0) {
@@ -605,6 +653,7 @@ function runInstallTransaction(tx) {
     lock: updatedLock,
     lockLeftAlone: tx.lockLeftAlone,
     state: updatedState,
+    personal: tx.personal,
   };
 }
 
