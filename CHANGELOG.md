@@ -32,13 +32,17 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- `sigmacollab` reads a refused runtime: what `400`, `412` and `503` say and the next step for each. It stops a job's own idle runtimes before a big card and asks for a refused card once more at most, never in a loop. It names the plan manager's account as the one with the units, and Colab Enterprise as paid compute (#405).
+
 ### Changed
 
 - `sigmacollab`'s card record holds the 24 Nov 2026 test: T4 High-RAM, L4 and G4 (RTX PRO 6000) start in 6 s, the A100s and the H100 answer "Service Unavailable", TPU v6e-1 gives no answer or "Bad Gateway". The skill tells a job to give the CLI a long request timeout and to pick a second card before it starts (#398).
 
 ### Fixed
 
-- `--agent detected` installs for every host found in your home. Thinkcenter_Setup's `project_skills.py --global` passes it, so a host added after the first install, such as Antigravity (`~/.gemini/config/skills`), now gets the skills.
+- `--agent detected` installs for every host found in your home, so a host added after the first install, such as Antigravity (`~/.gemini/config/skills`), now gets the skills.
 - A copy-only folder (`~/.gemini/config/skills`, Antigravity) in an install no longer turns every other host folder into a copy. The others stay links, and the update after it no longer stops on "wrong-target".
 
 ## [0.29.3] — 2026-11-23
