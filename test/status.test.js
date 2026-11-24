@@ -119,7 +119,7 @@ test('status: clean Project Installation reports scope, releases, revision, host
   }
 });
 
-test('status: valid Skill Customization is drift without corruption', () => {
+test('status: valid Skill Customization is neither drift nor corruption (#407)', () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sigma-status-custom-'));
   try {
     installWrite(projectRoot, 'sigmawrite');
@@ -134,7 +134,7 @@ test('status: valid Skill Customization is drift without corruption', () => {
       scope: 'project',
     });
     const dest = destOf(report, '.agents/skills/sigmawrite');
-    assert.equal(report.drift, true);
+    assert.equal(report.drift, false);
     assert.equal(report.skills[0].corruption, false);
     assert.ok(dest.classifications.includes('valid-customization'));
     assert.ok(!dest.classifications.includes('outside-change'));
@@ -160,7 +160,7 @@ test('status: a local front-matter description is a Skill Customization, not cor
       scope: 'project',
     });
     const dest = destOf(report, '.agents/skills/sigmawrite');
-    assert.equal(report.drift, true);
+    assert.equal(report.drift, false);
     assert.equal(report.skills[0].corruption, false);
     assert.deepEqual(dest.classifications, ['valid-customization']);
   } finally {

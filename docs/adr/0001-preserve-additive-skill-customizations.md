@@ -1,5 +1,7 @@
 # Preserve additive customizations in a reserved skill block
 
+Superseded in part by [ADR 0008](0008-personal-instructions-live-outside-skill-folders.md): the block is now the rendered view of one file per skill.
+
 SigmaSkills will ship a `## Personal instructions` section containing one `<sigmaskills-custom>...</sigmaskills-custom>` block at the end of every `SKILL.md` and preserve the block contents byte-for-byte during updates. This keeps personal instructions visible and editable in the installed skill while preventing users from replacing or deleting official instructions; we rejected unrestricted three-way editing and a separate sidecar as less predictable or less discoverable for this product.
 
 ## Consequences

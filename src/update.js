@@ -814,7 +814,8 @@ function syncRecordedPersonal(options, plan, results) {
   try {
     for (const skill of plan.skills) {
       if (skill.blocked || left.has(skill.id) || (skill.needsMarkerResolution && !results.some((item) => item.id === skill.id))) continue;
-      const folders = (skill.copies || [])
+      const recorded = skill.copies?.length ? skill.copies : [{ destination: skill.ownerDestination, kind: 'canonical' }];
+      const folders = recorded
         .filter((copy) => (copy.method || 'copy') === 'copy')
         .sort((a, b) => (a.kind === 'canonical' ? -1 : 0) - (b.kind === 'canonical' ? -1 : 0))
         .map((copy) => path.resolve(root, ...String(copy.destination).split(/[\\/]/)));
