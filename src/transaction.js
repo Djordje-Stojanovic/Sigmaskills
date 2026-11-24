@@ -402,31 +402,31 @@ function backupBeforeReplace(tx, dest) {
   }
 }
 
-/** Put the user's customization back into a replaced SKILL.md, or give a written copy the canonical one. */
-function reapplyCustomization(tx, dest, canonicalDest) {
-  if (tx.params.preservedCustomRaw !== undefined) return;
+/** Put the user's customization back into a replaced SKILL.md. */
+function reapplyCustomization(tx, dest) {
   const customStatus = dest.customization?.status;
-  const own = dest.resolution === 'replace' && (customStatus === 'valid' || customStatus === 'empty');
-  // A link shows the canonical block; a copy without a block of its own must carry it, or it drops it.
-  const fromCanonical = !own && customStatus !== 'valid' && dest.method === 'copy' && dest !== canonicalDest
-    && canonicalDest?.customization?.status === 'valid';
-  if (!own && !fromCanonical) return;
-  const skillMd = path.join(dest.destination, 'SKILL.md');
-  if (pathExists(skillMd)) {
-    const current = fs.readFileSync(skillMd, 'utf8');
-    const raw = (own ? dest.customization : canonicalDest.customization).rawCustomContent;
-    fs.writeFileSync(skillMd, injectRawCustomContent(current, raw ?? '\n', tx.skillId), 'utf8');
+  if (
+    tx.params.preservedCustomRaw === undefined
+    && dest.resolution === 'replace'
+    && (customStatus === 'valid' || customStatus === 'empty')
+  ) {
+    const skillMd = path.join(dest.destination, 'SKILL.md');
+    if (pathExists(skillMd)) {
+      const current = fs.readFileSync(skillMd, 'utf8');
+      fs.writeFileSync(
+        skillMd,
+        injectRawCustomContent(current, dest.customization.rawCustomContent ?? '\n', tx.skillId),
+        'utf8',
+      );
+    }
   }
-}
-
-function canonicalOf(plan) {
-  return plan.destinations.find((dest) => dest.kind === 'canonical') || plan.destinations[0];
 }
 
 /** Write, link, adopt, skip, or export each destination. The canonical destination goes first. */
 function commitDestinations(tx) {
   const { plan } = tx;
-  const canonicalDest = canonicalOf(plan);
+  const canonicalDest = plan.destinations.find((dest) => dest.kind === 'canonical')
+    || plan.destinations[0];
 
   const ordered = [...plan.destinations].sort((a, b) => {
     if (a.kind === 'canonical' && b.kind !== 'canonical') return -1;
@@ -437,7 +437,6 @@ function commitDestinations(tx) {
   for (const dest of ordered) {
     if (dest.adoption) {
       tx.committed.push({ destDir: dest.destination, backupDir: null, adopted: true });
-      reapplyCustomization(tx, dest, canonicalDest);
       continue;
     }
     if (dest.resolution === 'skip') {
@@ -453,7 +452,7 @@ function commitDestinations(tx) {
     }
     if (dest.method === 'copy') commitCopy(tx, dest.destination);
     else commitLink(tx, dest, canonicalDest);
-    reapplyCustomization(tx, dest, canonicalDest);
+    reapplyCustomization(tx, dest);
   }
 }
 
@@ -566,7 +565,6 @@ function runInstallTransaction(tx) {
   const { plan, batch } = tx;
 
   if (canonicalSkippedWithNothingNew(tx) || isAlreadyInstalled(tx)) {
-    for (const dest of plan.destinations) if (dest.adoption) reapplyCustomization(tx, dest, canonicalOf(plan));
     cleanupStaging(tx);
     tx.releaseLock();
     return unchangedResult(tx);

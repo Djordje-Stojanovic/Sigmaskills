@@ -76,33 +76,6 @@ test('A10: replacing a changed skill keeps a CRLF customization block byte for b
   assert.equal(after[1], raw);
 }));
 
-test('a copied host folder, new or already there, gets the personal instructions of the canonical copy', withDirs(async (dirs) => {
-  const both = ['--destination', '.agents/skills', '--destination', '.gemini/config/skills', '--adopt-changed', 'skip', '--adopt-unverified', 'skip', '--yes'];
-  const block = /<sigmaskills-custom>([\s\S]*)<\/sigmaskills-custom>/;
-  const setBlock = (md, raw) => fs.writeFileSync(md, fs.readFileSync(md, 'utf8').replace(block, () => `<sigmaskills-custom>${raw}</sigmaskills-custom>`));
-  const blockOf = (md) => block.exec(fs.readFileSync(md, 'utf8'))[1];
-  const canonicalMd = path.join(dirs.project, '.agents', 'skills', 'sigmawrite', 'SKILL.md');
-  const copyDir = path.join(dirs.project, '.gemini', 'config', 'skills', 'sigmawrite');
-  const copyMd = path.join(copyDir, 'SKILL.md');
-
-  assert.equal((await run(dirs, ['install', 'sigmawrite'])).code, 0);
-  setBlock(canonicalMd, '\nmy rule\n');
-  const added = await run(dirs, ['install', 'sigmawrite', ...both]);
-  assert.equal(added.code, 0, added.stderr);
-  assert.equal(fs.lstatSync(copyDir).isSymbolicLink(), false);
-  assert.equal(blockOf(copyMd), '\nmy rule\n');
-
-  setBlock(copyMd, '\n');
-  setBlock(canonicalMd, '\nnewer rule\n');
-  { const r = await run(dirs, ['install', 'sigmawrite', ...both]); assert.equal(r.code, 0, r.stderr); }
-  assert.equal(blockOf(copyMd), '\nnewer rule\n', 'an existing empty copy takes the block');
-
-  setBlock(copyMd, '\nown rule\n');
-  { const r = await run(dirs, ['install', 'sigmawrite', ...both]); assert.equal(r.code, 0, r.stderr); }
-  assert.equal(blockOf(copyMd), '\nown rule\n', 'a copy with its own block keeps it');
-  assert.equal(blockOf(canonicalMd), '\nnewer rule\n');
-}));
-
 test('A12: CI counts only when set and not empty, 0, or false in any case', () => {
   for (const value of ['1', 'true', 'TRUE', 'yes', 'github']) assert.equal(isCiEnv({ CI: value }), true, value);
   for (const value of [undefined, '', '0', 'false', 'False', 'FALSE']) assert.equal(isCiEnv({ CI: value }), false, String(value));

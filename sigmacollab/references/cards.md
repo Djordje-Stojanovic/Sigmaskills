@@ -19,7 +19,7 @@ Units per hour: the change in `usage`'s rate when the runtime started. Start: fr
 | TPU v5e-1 | 3.09 | yes | 277 s | 15.7 GiB HBM, 47 GiB host | 177.5 TFLOP/s bf16 |
 | TPU v6e-1 | 5.09 | no (24 Nov): no answer in 330 s; with a 300 s request timeout, "Bad Gateway" after 493 s | | | |
 
-The A100s and the H100 were capacity, not the plan: a 503, where a card the plan lacks gets a 400. A standard-RAM A100 is not known to come more easily than High-RAM: no source says so, and on 24 Nov both refused. The CLI can hang for minutes on a card that does not come: give the request a long timeout, and pick a second card before you start. Rates of A100 40 GB, A100 High-RAM and v6e-1 are from 20 Nov 2026 runs on the same account. The four cards that started on 23 Nov cost about 0.34 units together.
+The A100s and the H100 answered "Service Unavailable" and the CLI gave up after 196 s; the cause is not established. `usage` listed them as eligible, and a card the plan lacks gets a 400 instead. The CLI can hang for minutes on a card that does not come: give the request a long timeout, and pick a second card before you start. Rates of A100 40 GB, A100 High-RAM and v6e-1 are from 20 Nov 2026 runs on the same account. The four cards that started on 23 Nov cost about 0.34 units together.
 
 ## vast.ai
 
