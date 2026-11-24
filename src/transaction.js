@@ -510,7 +510,12 @@ function buildCopies(tx, fileHashes) {
           : [dest.relativeDestination],
         ...(independent ? { baseHashes: dest.baseHashes && dest.resolution !== 'replace' ? dest.baseHashes : fileHashes } : {}),
       };
-    });
+    })
+    // A recorded folder this run skipped or exported keeps its old record (#407): dropping it hid the copy from update for good.
+    .concat(plan.destinations
+      .filter((dest) => (dest.resolution === 'skip' || dest.resolution === 'export') && recordedBefore(tx, dest))
+      .map((dest) => (tx.originalState.skills?.[tx.skillId]?.copies || [])
+        .find((copy) => String(copy.destination || '').replace(/\\/g, '/') === dest.relativeDestination)));
 }
 
 /** Add this skill to a state object. `record` holds copies, primary, fileHashes, and lastBackup. */

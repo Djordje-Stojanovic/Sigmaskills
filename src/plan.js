@@ -164,6 +164,18 @@ export function createInstallPlan(catalog, options) {
   const requestedRoots = selectedRootsFor(options, groups);
   const requestedMethod = requestedMethodFor(options, requestedRoots);
   const selectedRoots = rootsForRequestedMethod(requestedRoots, requestedMethod);
+  // Every folder already recorded for this skill stays in each install of it (#407). A reinstall for one host
+  // would otherwise drop the other hosts from the record and leave their copies stale for good.
+  const recordedCopyRoots = [];
+  const recordedState = scope === 'global' ? loadGlobalState(root, customStateDir) : loadProjectState(root, customStateDir);
+  for (const copy of recordedState.skills?.[skillId]?.copies || []) {
+    const destination = String(copy?.destination || '').replace(/\\/g, '/');
+    if (!destination.endsWith(`/${skillId}`)) continue;
+    const recordedRoot = destination.slice(0, -(skillId.length + 1));
+    if (selectedRoots.includes(recordedRoot) || !pathExists(path.join(root, ...destination.split('/')))) continue;
+    selectedRoots.push(recordedRoot);
+    if (copy.method === 'copy') recordedCopyRoots.push(recordedRoot);
+  }
   const classify = createProjectSkillClassifier({
     catalog,
     projectRoot: root,
@@ -188,7 +200,7 @@ export function createInstallPlan(catalog, options) {
   const currentLock = scope === 'global' ? { skills: {} } : loadProjectLock(projectRoot);
   const skillFiles = Object.keys(skill.files).sort();
   const groupByRoot = new Map(groups.filter((group) => group.selectable).map((group) => [group.relativeRoot, group]));
-  const copyRoots = (options.copyRoots || []).map((copyRoot) => normalizeRelativeRoot(copyRoot));
+  const copyRoots = [...(options.copyRoots || []), ...recordedCopyRoots].map((copyRoot) => normalizeRelativeRoot(copyRoot));
 
   const destinations = selectedRoots.map((relativeRoot) => {
     const resolved = resolvePath(root, relativeRoot, skillId);
@@ -429,6 +441,11 @@ export function formatPlanHuman(plan) {
  * @param {object} plan
  * @returns {string}
  */
+/** JSON replacer: the user's personal lines stay out of a printed plan (#407); their status is enough. */
+export function withoutPersonalLines(key, value) {
+  return key === 'customContent' || key === 'rawCustomContent' ? undefined : value;
+}
+
 export function formatPlanJson(plan) {
-  return JSON.stringify(plan, null, 2);
+  return JSON.stringify(plan, withoutPersonalLines, 2);
 }

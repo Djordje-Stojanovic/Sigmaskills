@@ -32,7 +32,7 @@ import {
 import { collectStatus } from './status.js';
 import { executeProjectInstall } from './transaction.js';
 import { commitSkillBackup, exportSkillTree, walkLiveFiles } from './backup.js';
-import { restorePersonalWrites, syncPersonalBlocks } from './personal.js';
+import { recordedCopyFolders, restorePersonalWrites, syncPersonalBlocks } from './personal.js';
 
 export const UPDATE_SCHEMA_VERSION = 1;
 export const CANONICAL_CUSTOMIZATION_OWNER = 'canonical';
@@ -786,7 +786,7 @@ function runUpdate(options, updated) {
     });
   }
 
-  result.personal = syncRecordedPersonal(options, plan, result.results);
+  syncRecordedPersonal(options, plan, result.results);
 
   // A skill at the running Release still carries the older label until a later install rewrites it.
   // A full update relabels every such skill; --skill relabels only the requested ones.
@@ -808,26 +808,20 @@ function syncRecordedPersonal(options, plan, results) {
   const stateDir = scope === 'global'
     ? getGlobalStateDir(root, options.customStateDir)
     : getProjectStateDir(root, options.customStateDir);
+  // The state after this run's installs: an install may have added copies to the record.
+  const state = loadScopeState(options, root, scope);
   const left = new Set(results.filter((item) => item.action === 'skip' || item.action === 'export').map((item) => item.id));
   const writes = [];
-  const notes = [];
   try {
     for (const skill of plan.skills) {
       if (skill.blocked || left.has(skill.id) || (skill.needsMarkerResolution && !results.some((item) => item.id === skill.id))) continue;
-      const recorded = skill.copies?.length ? skill.copies : [{ destination: skill.ownerDestination, kind: 'canonical' }];
-      const folders = recorded
-        .filter((copy) => (copy.method || 'copy') === 'copy')
-        .sort((a, b) => (a.kind === 'canonical' ? -1 : 0) - (b.kind === 'canonical' ? -1 : 0))
-        .map((copy) => path.resolve(root, ...String(copy.destination).split(/[\\/]/)));
-      const synced = syncPersonalBlocks({ stateDir, skillId: skill.id, read: folders, write: folders, writes });
-      notes.push(...synced.saved.map((file) => `${skill.id}: other personal lines kept in ${file}`));
-      if (synced.refused) notes.push(synced.refused);
+      const folders = recordedCopyFolders(root, state.skills?.[skill.id]);
+      syncPersonalBlocks({ stateDir, skillId: skill.id, read: folders, write: folders, writes });
     }
   } catch (err) {
     restorePersonalWrites(writes);
     throw err;
   }
-  return { notes };
 }
 
 // A full update removes the retired skills it owns (an edited copy is backed up first) and drops the
@@ -944,11 +938,6 @@ export function formatUpdateHuman(plan) {
   if (plan.prompt) {
     lines.push('');
     lines.push(`Prompt: ${plan.prompt}`);
-  }
-  if (plan.personal?.notes?.length) {
-    lines.push('');
-    lines.push('Personal instructions:');
-    for (const note of plan.personal.notes) lines.push(`  ${note}`);
   }
   const localOnly = (plan.skills || []).filter((skill) => skill.changeKind === 'local-only');
   const upstreamOnly = (plan.skills || []).filter((skill) => skill.changeKind === 'upstream-only');

@@ -27,7 +27,7 @@ npx @djordje-stojanovic/sigmaskills install sigmawrite --project .      # one sk
 npx @djordje-stojanovic/sigmaskills@latest update --global --yes        # move to the newest release
 ```
 
-`update` never replaces a skill you edited without asking, and `update --check` lists what is out of date. A merge to `main` never publishes; updates come from npm releases. Every command and flag: the [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/installer.md).
+`update` never replaces a skill you edited without asking, and `update --check` lists what is out of date. Your own instructions for a skill go in `~/.agents/.sigmaskills/custom/<skill>.md`; edit them there, and every install and update writes them into each copy of that skill. A merge to `main` never publishes; updates come from npm releases. Every command and flag: the [installer guide](https://github.com/Djordje-Stojanovic/Sigmaskills/blob/main/docs/installer.md).
 
 **No Node?** These lines copy every Sigma skill into `~/.claude/skills` for Claude Code. Run them again to update.
 

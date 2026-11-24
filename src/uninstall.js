@@ -1,3 +1,4 @@
+import { importPersonal } from './personal.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { commitSkillBackup, copySkillTree, exportSkillTree, getBackupRoot, pruneOlderBackups } from './backup.js';
@@ -519,6 +520,10 @@ export function executeUninstall(options = {}) {
   };
 
   try {
+    // Personal lines move to their file before any folder goes (#407); the file outlives the uninstall.
+    for (const skill of plan.skills) {
+      if (skill.choice !== 'keep') importPersonal({ stateDir, root, skillId: skill.id, entry: state.skills?.[skill.id] });
+    }
     if (plan.all) writeAllJournal('in-progress');
 
     for (let index = 0; index < plan.skills.length; index += 1) {
