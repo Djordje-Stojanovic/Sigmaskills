@@ -14,6 +14,7 @@ Whether each movement has a reason, and whether it should move at all. Valid rea
 - Slow UI motion (well over a third of a second for menus and toggles); enter and exit at the same speed.
 - In video: a slow push on every still whether or not it shows something new; nothing new on screen for a long stretch.
 - No reduced-motion version.
+- Figures that bob on a sine wave; feet or wheels that slide instead of planting; a cast of characters that all move alike.
 
 ## Fix moves
 
@@ -22,6 +23,7 @@ Whether each movement has a reason, and whether it should move at all. Valid rea
 - Defaults for UI where the brand has none: ease-out for enter, exit faster than enter, small scale (0.95 and up) with opacity, origin at the trigger, transform and opacity only, a press state that scales slightly.
 - Gate hover effects behind `(hover: hover) and (pointer: fine)`; give a reduced-motion variant that keeps fades and drops movement.
 - In video, move the camera only when the move shows something new.
+- Where the brand gives no motion, take it from its energy and tone: calm and serious moves longer and evenly, without overshoot; lively and playful anticipates, overshoots and follows through.
 
 ## Verify
 
@@ -31,4 +33,4 @@ Whether each movement has a reason, and whether it should move at all. Valid rea
 
 ## Source and what changed
 
-From emilkowalski `emil-design-eng` (should it animate at all, purpose, easing, origin, speed; MIT), Anthropic `frontend-design` (one orchestrated moment; Apache-2.0) and Vercel `web-design-guidelines` (animation rules; MIT). Improved: the numbers are defaults the brand overrides, the lens covers video camera moves, and each animation needs a one-line reason.
+From emilkowalski `emil-design-eng` (should it animate at all, purpose, easing, origin, speed; MIT), Anthropic `frontend-design` (one orchestrated moment; Apache-2.0) Vercel `web-design-guidelines` (animation rules; MIT), nolangz `pixel2motion` (motion derived from brand energy and tone, after Disney's twelve principles; MIT) and JDhruv14 `line-art-animation` (the sine bob and the sliding foot; MIT). Improved: the numbers are defaults the brand overrides, the lens covers video camera moves, and each animation needs a one-line reason.

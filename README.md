@@ -97,7 +97,7 @@ $sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 
 ## Packs
 
-A pack is a group of skills from one source, downloaded at its pinned version when you install it. `--pack <id>` installs a pack, a skill id installs one skill, and `--pack all` installs every pack. In the wizard, `p` shows a skill's full `SKILL.md` and `/design` (or any category) filters by category. What each pack needs on your machine, and how to set it up in a repo: its guide in [`sigmasetup/references/packs/`](https://github.com/Djordje-Stojanovic/Sigmaskills/tree/main/sigmasetup/references/packs).
+A pack is a group of skills from one or more sources, downloaded at its pinned version when you install it. `--pack <id>` installs a pack, a skill id installs one skill, and `--pack all` installs every pack. In the wizard, `p` shows a skill's full `SKILL.md` and `/design` (or any category) filters by category. What each pack needs on your machine, and how to set it up in a repo: its guide in [`sigmasetup/references/packs/`](https://github.com/Djordje-Stojanovic/Sigmaskills/tree/main/sigmasetup/references/packs).
 
 | Pack | Id | Category | Skills | What it is | Source @ pin |
 |------|----|----------|-------:|------------|--------------|
@@ -131,6 +131,8 @@ A pack is a group of skills from one source, downloaded at its pinned version wh
 | Baoyu | `baoyu` | Media | 21 | Covers, infographics, comics, slides, posting to X | [Djordje-Stojanovic/baoyu-skills](https://github.com/Djordje-Stojanovic/baoyu-skills) @ `5847f0a` (English fork of [JimLiu/baoyu-skills](https://github.com/JimLiu/baoyu-skills)) |
 | Game Dev | `gamedev` | Engineering | 80 | Games in 12 engines, with a router | [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) @ `c6ca6c4` |
 | Monorepo Doctor | `monorepo-doctor` | Engineering | 2 | Read-only JS/TS monorepo audit and cleanup | [santoshyadavdev/monorepo-doctor](https://github.com/santoshyadavdev/monorepo-doctor) @ `3cb32ea` |
+| Design Kit | `design-kit` | Design | 2 | Logos from brief to files; editorial charts, decks and reports | [kaankiziltug/logo-design-skill](https://github.com/kaankiziltug/logo-design-skill) @ `e9eaddc`, [larashero3-dotcom/lieflat-charts](https://github.com/larashero3-dotcom/lieflat-charts) @ `4b4e75b` |
+| Motion Kit | `motion-kit` | Media | 2 | Logo animation from a raster logo; animated line-art scenes | [nolangz/pixel2motion](https://github.com/nolangz/pixel2motion) @ `e9faedb`, [JDhruv14/line-art-animation](https://github.com/JDhruv14/line-art-animation) @ `c43d698` |
 
 `local` is a folder of your own skills (`SIGMA_LOCAL_SKILLS_DIR` or `~/.sigmaskills/packs.json`). When two packs ship the same skill name, the earlier pack in this table keeps it. `npx @djordje-stojanovic/sigmaskills packs` prints every pack with its skills.
 

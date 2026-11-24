@@ -35,9 +35,12 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 ### Added
 
 - `sigmacollab` reads a refused runtime: what `400`, `412` and `503` say and the next step for each. It stops a job's own idle runtimes before a big card and asks for a refused card once more at most, never in a loop. It names the plan manager's account as the one with the units, and Colab Enterprise as paid compute (#405).
+- Two packs that each hold several one-skill repos: **Design Kit** (`design-kit`, Design: `logo-design`, `lieflat-charts`) and **Motion Kit** (`motion-kit`, Media: `pixel2motion`, `line-art-animation`), each source pinned to one commit (#408).
+- `sigmataste` lenses learn from six design skills: charts catch a cut bar axis and a boxes-and-arrows explainer that a real machine would explain better; motion catches the sine bob and the sliding foot and takes timing from the brand's energy and tone; only-this-one catches invented proof, builds a page from its category's own sections and tests a logo at 16 px, one colour, reversed and beside its rivals; spent defaults adds a card in a card, emoji icons and drawn browser windows. Credited in `sources.md` (#408).
 
 ### Changed
 
+- The global set (`CORE_PACKS`, the `core` preset) adds Anatomy, Hallmark, Design Kit and Motion Kit, so the land-step sync puts them on every machine. The Anatomy and Hallmark setup guides name what reaches the network: the gallery pull request and the optional `TOGETHER_API_KEY` (#408).
 - `sigmacollab`'s card record holds the 24 Nov 2026 test: T4 High-RAM, L4 and G4 (RTX PRO 6000) start in 6 s, the A100s and the H100 answer "Service Unavailable", TPU v6e-1 gives no answer or "Bad Gateway". The skill tells a job to give the CLI a long request timeout and to pick a second card before it starts (#398).
 
 ### Fixed

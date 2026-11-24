@@ -22,6 +22,17 @@ Baseline: [abubakarsiddik31/claude-skills-collection](https://github.com/abubaka
 | accessibility-skills | [mgifford/accessibility-skills](https://github.com/mgifford/accessibility-skills) | 55 | AGPL-3.0 (ideas only) | everyone, charts |
 | claude-a11y-skill | [airowe/claude-a11y-skill](https://github.com/airowe/claude-a11y-skill) | 17 | none stated | everyone |
 
+Added 2026-11-24 from the owner's list (#408); stars are the count on that day.
+
+| Skill | Repository | Stars | Licence | Feeds |
+|---|---|---|---|---|
+| hallmark | [Nutlope/hallmark](https://github.com/Nutlope/hallmark) | 60,094 | MIT | spent defaults, only this one |
+| anatomy | [wheresryan22/anatomy](https://github.com/wheresryan22/anatomy) | 28,910 | MIT | charts |
+| logo-design | [kaankiziltug/logo-design-skill](https://github.com/kaankiziltug/logo-design-skill) | 7,584 | MIT | only this one |
+| lieflat-charts | [larashero3-dotcom/lieflat-charts](https://github.com/larashero3-dotcom/lieflat-charts) | 6,976 | PolyForm Noncommercial 1.0.0 | charts |
+| pixel2motion | [nolangz/pixel2motion](https://github.com/nolangz/pixel2motion) | 2,707 | MIT | motion |
+| line-art-animation | [JDhruv14/line-art-animation](https://github.com/JDhruv14/line-art-animation) | 1,207 | MIT | motion |
+
 Outside the collection, kept from an earlier taste review: Leonxlnx `taste-skill` (the one-second and squint passes, first glance).
 
 Adoption is uneven on purpose: low-star sources feed only lenses where a high-star source agrees (Vercel for access, Anthropic for colour roles), or where no larger source covers the topic (colour science).

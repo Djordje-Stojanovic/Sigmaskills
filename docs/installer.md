@@ -151,8 +151,10 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `baoyu` | `baoyu-skills`, `jimliu` |
 | `gamedev` | `games`, `game` |
 | `monorepo-doctor` | `monorepo` |
+| `design-kit` | `logo`, `charts` |
+| `motion-kit` | `animation`, `motion` |
 | `local` | `own` |
-| `core` | the global default: every Sigma skill, the whole Matt Pocock pack and the whole tstack pack. `install --global --yes` with no pack, skill or `--all` installs it |
+| `core` | the global default: every Sigma skill and the whole Matt Pocock, tstack, Anatomy, Hallmark, Design Kit and Motion Kit packs. `install --global --yes` with no pack, skill or `--all` installs it |
 | `design-pack` | the design pair for one repo with a page: `impeccable` and `taste-skill`, at their pinned commits. `sigmataste` is a Sigma skill, so `core` has it already. `frontend-design` is in the `anthropic` pack (19 skills): add it alone with `install frontend-design`. Research: [`docs/research/design-pack.md`](research/design-pack.md) |
 | `all` | every pack that is available on this machine |
 
