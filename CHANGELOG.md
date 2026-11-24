@@ -32,6 +32,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+Lessons of a long unattended run on 23 to 24 Nov 2026.
+
+- sigmaloop: the loop file has no "Do not" list. Limits are three lists: the owner's orders (quoted, dated), mechanical guards (each with the fault it prevents) and scope notes, which ban nothing. When no rule decides, the run takes the option that keeps work moving and can be undone, not the safer one. A technical obstacle is never a card and never a park. The owner's newest message rewrites the file's sections it changes. The stop line counts open, closed, parked and needs-owner apart. After the last review pass the builder fixes and lands; a ticket parks only after failed fix tries. One shared checkout commits by path. The question round asks which machine runs the work, how many reviewers run at once, the review passes and the fix tries. SigmaLoop runs SigmaFreedom's lint on the file it writes.
+- sigmaloop host notes: T3 Code threads on Antigravity reach the T3 tools only through the ACP bridge; a finished child wakes the parent; `steer` reaches a running turn (seen in one run).
+- sigmacollab: `references/long-jobs.md`, big uploads, streamed output, a Windows program under Wine, a Windows test suite on Linux (seen in one run).
+- sigmasetup: a section sync removes a line the master once held and later dropped; before, the line stayed in every copy as "repo-only". The master is cloned with its history.
+
 ## [0.30.0] — 2026-11-24
 
 ### Added
