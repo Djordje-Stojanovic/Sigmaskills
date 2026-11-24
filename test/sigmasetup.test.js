@@ -152,6 +152,27 @@ test('house files: check finds drift, apply syncs copies and sections in one go,
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
+test('house files: a line the master dropped leaves the copy; a repo-only line stays', async () => {
+  const { plan } = await import('../sigmasetup/scripts/house.mjs');
+  const tmp = fs.mkdtempSync(join(os.tmpdir(), 'sigmasetup-dropped-'));
+  const masters = join(tmp, 'masters');
+  const repo = join(tmp, 'repo');
+  fs.mkdirSync(masters);
+  fs.mkdirSync(repo);
+  const git = (...args) => assert.equal(spawnSync('git', ['-C', masters, '-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { encoding: 'utf8' }).status, 0, args.join(' '));
+  git('init', '-q');
+  fs.writeFileSync(join(masters, 'AGENTS.md'), '## How we work\n\n- Rule one.\n- Plan content on the planner.\n');
+  git('add', 'AGENTS.md');
+  git('commit', '-q', '-m', 'one');
+  fs.writeFileSync(join(masters, 'AGENTS.md'), '## How we work\n\n- Rule one.\n');
+  git('commit', '-q', '-am', 'two');
+  fs.writeFileSync(join(repo, 'AGENTS.md'), '## How we work\n\n- Rule one.\n- Plan content on the planner.\n- Repo rule.\n');
+  const [row] = plan(repo, masters, [{ kind: 'section', from: 'AGENTS.md', heading: 'How we work', to: 'AGENTS.md' }]);
+  assert.deepEqual(row.kept, ['- Repo rule.'], 'the dropped master line is not repo-only');
+  assert.equal(row.next, '## How we work\n\n- Rule one.\n\n- Repo rule.\n');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
 test('house files: a repo with no map gets no missing house file unasked, DESIGN.md least of all', async () => {
   const { readConfig, plan, apply } = await import('../sigmasetup/scripts/house.mjs');
   const tmp = fs.mkdtempSync(join(os.tmpdir(), 'sigmasetup-empty-'));

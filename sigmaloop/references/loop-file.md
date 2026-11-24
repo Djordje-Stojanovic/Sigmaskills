@@ -9,13 +9,13 @@ Save to the place the user chose (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md
 ```markdown
 # Loop: <title>
 
-Host: <host>. Stop line: <done command and its text, and/or date, time, zone>. Re-read this file at the start of every turn.
+Host: <host>. Stop line: <done command and its text, and/or date, time, zone>. Its output counts open, closed, parked and needs-owner apart, so no label hides a ticket. Re-read this file at the start of every turn.
 
 ## Stance
-The user pre-authorises for this whole run: <list>. Do not stop to ask; when no rule decides, take the safer option and log `Ruling: <what> - <why> - <cost if wrong>`.
-Speed metric: <accepted output per hour and per token, in the user's unit>. Drafted output that is not accepted counts as zero.
-Owner's words: <path>. First turn: copy his messages from this chat into it verbatim, one per numbered line. Every turn, copy each new one before anything else. Cite a line as `W<n>`.
-Owner page: <path or url>. Questions first: one card each, with A, B, C, your pick first and what happens with no answer; he answers in one reply block. A ticket that needs him is skipped, never waited on.
+What can be undone runs and is logged; what cannot (deleting a repo, publishing a key) waits for his card. Pre-authorised for this whole run: <list>. When no rule decides, take the option that keeps tickets moving and can be undone, and log `Ruling: <what> - <why> - <cost if wrong>`.
+Speed metric: <accepted output per hour and per token, in the user's unit>. Drafted output that is not accepted counts as zero; when accepted output falls while drafting rises, stop drafting and land.
+Owner's words: <path>. First turn: copy his messages from this chat into it verbatim, one per numbered line. Every turn, copy each new one before anything else. Then rewrite the sections of this file it changes: his message wins. Cite a line as `W<n>`.
+Owner page: <path or url>. A card is only for that, or for what he must do himself (play, pay, sign in): one card each, with A, B, C, your pick first and what happens with no answer. A ticket that needs him is skipped, never waited on. A technical obstacle is work: never a card, never a park.
 
 ## Budgets
 No meter, no budget. One block each; the quote is the owner's sentence and its date.
@@ -32,11 +32,11 @@ Shape: <solo | crew of N slots | N lanes: read lanes.md>. Solo: this session pla
 |---|---|---|
 | Planner (orchestrator) | top | <ids> |
 | Builder | <cheap or mid> | <ids> |
-| Reviewer (another family than the builder) | <mid or top> | <ids> |
+| Reviewer (another provider than the builder) | <mid or top> | <ids> |
 | Clerk (handoff, status) | cheap | <ids> |
 1. The planner plans, starts jobs and merges. It does no builder's tool calls.
 2. One whole unit per builder: build, prove with the unit's acceptance tests, commit. The brief is a spec path and a done line.
-3. The reviewer is a role with no count and no queue: each finished pull request gets a fresh reviewer at once, from another model family when one is free. The builder first re-reads its own diff in a fresh context. The reviewer runs the change, not only reads it, and ends with MERGE or a finding list; its diff leaves out the paths the repo names as the owner's content, so no model passes or fails his words. The builder fixes each finding; one it holds to be wrong is answered with the command that shows it, never waved off in prose. Style nits are dropped. Round limit: <3, 5 for security, data loss or publishing>; a round with nothing new ends it. No human review.
+3. Each finished ticket gets one fresh reviewer at once, from another provider than its builder when one is free; reviewers at once: <no cap>. The builder first re-reads its own diff in a fresh context. The reviewer runs the change, not only reads it, and ends with MERGE or a finding list; its diff leaves out the paths the repo names as the owner's content, so no model passes or fails his words. The builder fixes each finding; one it holds to be wrong is answered with the command that shows it, never waved off in prose. Style nits are dropped. Review passes per ticket: <3, 5 for security, data loss or publishing>; a pass with nothing new ends it. After the last pass the builder fixes, proves and lands each open finding. A ticket is parked only after <3> failed fix tries. No human review.
 4. When a job ends, its slot takes the most valuable eligible unit in the same turn. Slots: <N>, capped by CPU (below), not by habit.
 5. Lanes only: workers end after one ticket, lane managers go on ticket after ticket, the top never ends before the stop line. Priority is one ranked list for all lanes, never one list per lane.
 6. Each ticket is Ready, Working (a builder has it), Reviewing, or Landed; findings send it back to Working. The builder that finished a part ticks it off itself, where the to-do is: the spec, the PR's checklist or the issue. Nobody ticks for it.
@@ -54,6 +54,7 @@ Guides (workers are briefed by the guide of their model): <links>
 - **Accepted is final.** Never re-check a unit already accepted. Check only what changed since the last acceptance.
 - **One full gate, at the end.** During the run, checks cover changed units only. The full gate runs once, at Finish.
 - **Bulk compute.** Many small computations of the same kind run as one bulk job, not one run per unit.
+- **A gate that never passes** is fixed or cut in the first hour.
 - **CPU safety by parallel cap.** At most <N> heavy processes at once. Do not cap a single process at a few seconds; give it the time the work needs.
 - **Records a machine reads.** Write a record only when a script or the next turn reads it: the handoff, acceptance records, the tracker. No briefs or reports kept for their own sake.
 
@@ -70,22 +71,17 @@ Guides (workers are briefed by the guide of their model): <links>
 ## Landing
 - Shape: <one feature branch and one PR for all tickets (default): builders branch from it, the planner merges each passed ticket branch into it, the PR merges after the full gate at Finish | a PR per ticket, each with `Closes #N`>.
 - One branch: each ticket is its own issue, a sub-issue of the spec issue (`gh issue create --parent <spec>`, gh 2.94 or later) listed there as `- [ ] #N`. Its builder closes it after its branch is merged into the feature branch, not when its local tests pass, so a ticket that waits for it does not start early. Two builders ticking boxes in one issue text lose a tick: GitHub keeps the last save.
+- One shared checkout (only when asked): commit by path, `git add <paths>` then `git commit -m <msg> -- <paths>`; `git add -A`, `commit -a`, `stash`, `reset`, `checkout <file>` and `clean` take another builder's open work.
 - Code first, with the unit's tests. <Changed-unit check command.>
 - Also lands in: <docs, changelog, tracker>.
 - Merge: <worktree off origin/base; PR; squash merge; delete branch and worktree>. Never skip hooks.
 - Commits end with <trailer>. PR bodies end with <line>.
 
-## Do not
-- Run another review round when the last one found nothing new.
-- Re-check the whole tree when one unit changed.
-- Put a short time cap on a check that acceptance depends on.
-- Cap the crew below what CPU and the queue allow.
-- Keep a gate that never passes: fix it or cut it in the first hour.
-- Write briefs, old reports or logs no machine reads.
-- Schedule wake tasks that make empty turns.
-- Restart a machine the run uses outside the window the answers name: a restart ends every background job.
-- Count drafted lines as progress: watch accepted output per hour, and when it falls while drafting rises, stop drafting and land.
-<Off-limits from the answers, one line each, with the owner's sentence and its date in quotes. A limit with no quote starts with `model:` and may be dropped if it blocks the run.>
+## Limits
+Nothing outside these three lists limits the run.
+- Owner's orders: <one line each: the order, then `(owner, <date>): "<his sentence>"`>.
+- Mechanical guards, each with the fault it prevents: <from the answers>. A machine the run uses restarts only in the window the answers name: a restart ends every background job.
+- Scope notes: <what no ticket covers>. A scope note marks where the work ends; it bans nothing.
 
 ## Finish (at the stop line)
 Start nothing new. Let running jobs finish and write their state. Run the full gate once and print it. Prove sync: no open PR of this run, one worktree, no stray process. Write the final handoff: accepted (with evidence), open (reason, next step), owner steps. Check an owner step before you list it: look up the machine, account or file it names, run its command once yourself, and label an undo block "only to take it back later".
@@ -97,7 +93,7 @@ Run sigmamusk, then `sigmamusk cut`, then sigmareview on the loop's own scaffold
 ## Rules for the file
 
 - Every number comes from an answer or the repo; a `<30>` style default is a recommendation the question round confirms.
-- Failure rules, Speed rules, Do not and Finish are defaults: copy each whole. Drop a line only when an answer contradicts it.
+- Failure rules, Speed rules and Finish are defaults: copy each whole. Drop a line only when an answer contradicts it.
 - Write rules as checks the agent can run, not as wishes.
 - Fill the Guides line with the maker's guide for each model in the table (Anthropic first, OpenAI second, the rest third; links, never copies; checked 2026-11-12): Claude [best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices), the model page `.../prompt-engineering/prompting-claude-<model>`, [skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), [subagents](https://code.claude.com/docs/en/sub-agents); OpenAI [latest model](https://developers.openai.com/api/docs/guides/latest-model), [AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md); Google [prompt design](https://aistudio.google.com/docs/prompting-strategies); DeepSeek [thinking mode](https://api-docs.deepseek.com/guides/thinking_mode); Kimi [prompt practice](https://platform.kimi.com/docs/guide/prompt-best-practice); Meta [reasoning](https://dev.meta.ai/docs/reasoning). A model with no guide: say so in the file, do not guess.
 - Model ids appear only in the Crew table. Everywhere else, name the role or tier.

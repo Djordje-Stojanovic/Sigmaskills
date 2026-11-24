@@ -32,6 +32,11 @@ T3 Code starts other agents (Codex, Claude Code, Cursor, OpenCode, Antigravity, 
 | Other machines | `t3_environment_links`, `t3_environment_link`; `delegate_task` takes `target.environmentId` |
 | Projects | `t3_project_list`, `t3_project_create`, `t3_project_clone` |
 
+**Antigravity threads** (seen in one run, 24 Nov 2026, ran):
+- The T3 tools were not in the agent's tool list. The route that worked, with `ELECTRON_RUN_AS_NODE=1`: `$env:T3_ACP_MCP_NODE "$env:T3_ACP_MCP_ENTRYPOINT" acp-mcp-call delegate_task <json>`, schema in the provider's `antigravity-acp/mcp/t3-code/delegate_task.json`. Start it through `ProcessStartInfo` with an `ArgumentList`, and never read stdout and stderr both synchronously: that hangs. The loop file names this route so the run does not search for it.
+- A thread started by a plain instruction ran 58 minutes in its first turn, and a finished async child started its next turn 11 s after the first ended. A turn that ends with no child running stays stopped: nothing wakes it.
+- `t3_thread_send` with `mode: steer` reached the running turn; the agent acted on it within a minute.
+
 A child may not run at wider permission modes than its parent (source). Start the orchestrator thread at Full access and the crew inherits it.
 
 **Native `/goal`.** With Codex and Claude, a message that starts with `/goal <condition>` sets a goal, and the agent keeps working across turns until it judges it met (doc: `composer.md`, Goals). T3 reads the command in the message path, so the first message, a queued message and a `t3_thread_send` all work (source: `parseGoalCommand`, `Orchestrator.ts`). `/goal` alone shows it, `/goal clear` removes it. Codex also takes `/goal pause` and `/goal resume`; Claude does not (T3 rejects them for Claude). Stop on a Claude thread ends the turn and keeps the goal; Claude checks it again at the end of the next message. Stop on a Codex thread pauses it (doc). A goal command never joins a running turn: it stops the run or waits in the queue (source). Whether the provider's own `/loop` works in a T3 thread is **not documented**, and T3's Claude adapter has no handling for `ScheduleWakeup` or `CronCreate` (source: no match). Do not assume it. The schedule is the wake.
@@ -76,7 +81,7 @@ FIRST TURN: call schedule_task {schedule:{type:'interval', everyMs:<900000>}, bi
 ORDER: <loop file> "Priority", top down. First: <items 1-3>.
 CREW: <shape from the loop file>. One whole unit per builder (build, prove, review, PR, CI, merge); delegate_task with isolation 'worktree' and the spec path; completion wakes you. Re-read the loop file at every wake. Never start an item the handoff marks running.
 LANDING: <one line>.
-AUTHORISED: <list>. Do not stop to ask; take the safer option and log it.
+AUTHORISED: <list>. Do not stop to ask; when no rule decides, take the option that keeps work moving and can be undone; log it.
 ```
 
 ## Prompt skeleton: run to done (thread is not Claude or Codex)

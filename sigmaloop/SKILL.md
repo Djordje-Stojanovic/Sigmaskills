@@ -19,7 +19,7 @@ Asked for briefs, handoffs or spawn prompts (sigmabrief), write those instead: [
 
 ## 1. Read the open work
 
-No questions yet. Find, and stop when you have a ranked picture: a ticket or plan file the user named; the repo's tracker (`docs/agents/issue-tracker.md`, `TODO*`, `.scratch/**`, `gh issue list`, `gh pr list`); the steering files (`AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`, and `ENGINEERING.md` and `DESIGN.md` when present: tell the run to follow both); live state (`git status`, `git worktree list`, open PRs, other agents); speed facts a past run left (gate time, review passes per landing, accepted output per hour). They feed the "Do not" list.
+No questions yet. Find, and stop when you have a ranked picture: a ticket or plan file the user named; the repo's tracker (`docs/agents/issue-tracker.md`, `TODO*`, `.scratch/**`, `gh issue list`, `gh pr list`); the steering files (`AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`, and `ENGINEERING.md` and `DESIGN.md` when present: tell the run to follow both); live state (`git status`, `git worktree list`, open PRs, other agents); speed facts a past run left (gate time, review passes per landing, accepted output per hour). They feed the Limits.
 
 Note for each open item: id, one line, size, what blocks it, owner, files it touches.
 
@@ -39,7 +39,7 @@ One numbered list, at most 10 questions, each with its recommended answer first,
 
 ## 4. Write the loop file
 
-Fill the template in [loop-file.md](references/loop-file.md). Save it where the user said (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). It names the budgets, the owner's words file and the owner page; the run's first turn creates them. Copy its defaults whole (the review rule, changed-units-only checks, one final gate, failure rules, the "Do not" list) unless an answer overrides one. Read [lanes.md](references/lanes.md) only when the run has more than one lane.
+Fill the template in [loop-file.md](references/loop-file.md). Save it where the user said (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). It names the budgets, the owner's words file and the owner page; the run's first turn creates them. Copy its defaults whole (the review rule, changed-units-only checks, one final gate, failure rules) unless an answer overrides one. Then run SigmaFreedom's lint on the file, `python <sigmafreedom folder>/scripts/guardrail_lint.py <loop file>`, and rewrite each line it flags; an owner's order keeps its `(owner, <date>)` mark, which the lint accepts. Read [lanes.md](references/lanes.md) only when the run has more than one lane.
 
 ## 5. Write the host prompt
 

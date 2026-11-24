@@ -43,7 +43,8 @@ function resolveSource(source) {
   if (fs.existsSync(source) && fs.statSync(source).isDirectory()) return source;
   const url = /^[\w.-]+\/[\w.-]+$/.test(source) ? `https://github.com/${source}.git` : source;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigmasetup-house-'));
-  const r = spawnSync('git', ['clone', '--depth', '1', '-q', url, dir], { encoding: 'utf8' });
+  // Full history, not --depth 1: a line the master dropped is found in it (droppedLines).
+  const r = spawnSync('git', ['clone', '--single-branch', '-q', url, dir], { encoding: 'utf8' });
   if (r.status !== 0) throw new Error(`git clone ${url} failed: ${(r.stderr || '').trim()}`);
   return dir;
 }
@@ -63,8 +64,16 @@ function sectionRange(lines, heading) {
   return [start, end];
 }
 
-/** The repo text with its section replaced by the master's; repo-only lines stay at the section's end. */
-export function mergeSection(repoText, masterText, heading, exact = false) {
+/** Every line the master's git history removed from <file>; empty when the master folder has no git. */
+function droppedLines(masters, file) {
+  const r = spawnSync('git', ['-C', masters, 'log', '--format=', '-p', '--', file], { encoding: 'utf8', maxBuffer: 1 << 28 });
+  if (r.status !== 0) return new Set();
+  return new Set(lf(r.stdout).split('\n').filter((l) => l.startsWith('-') && !l.startsWith('---')).map((l) => l.slice(1).trim()).filter(Boolean));
+}
+
+/** The repo text with its section replaced by the master's; repo-only lines stay at the section's end.
+ *  A line the master once held and later dropped is not repo-only: it leaves the copy too. */
+export function mergeSection(repoText, masterText, heading, exact = false, dropped = new Set()) {
   const master = lf(masterText).split('\n');
   const mr = sectionRange(master, heading);
   if (!mr) return null;
@@ -77,7 +86,7 @@ export function mergeSection(repoText, masterText, heading, exact = false) {
     return { text: (body ? `${body}\n\n` : '') + section.join('\n').concat('\n').replace(/\n/g, eol), kept: [] };
   }
   const known = new Set(section.map((l) => l.trim()));
-  const kept = exact ? [] : lines.slice(rr[0] + 1, rr[1]).filter((l) => l.trim() && !known.has(l.trim()));
+  const kept = exact ? [] : lines.slice(rr[0] + 1, rr[1]).filter((l) => l.trim() && !known.has(l.trim()) && !dropped.has(l.trim()));
   const merged = [...section, ...(kept.length ? ['', ...kept] : [])];
   const out = [...lines.slice(0, rr[0]), ...merged, ...lines.slice(rr[1])].join('\n');
   return { text: out.replace(/\n/g, eol), kept };
@@ -103,8 +112,9 @@ export function plan(repo, masters, map, exact = false) {
       const texts = Object.fromEntries(files.map((f) => [f, read(path.join(repo, f))]));
       let targets = files.filter((f) => texts[f] && sectionRange(lf(texts[f]).split('\n'), rule.heading));
       if (!targets.length) targets = [texts[rule.to] === null && texts[files[1]] ? files[1] : rule.to];
+      const dropped = droppedLines(masters, rule.from);
       for (const f of targets) {
-        const merged = mergeSection(texts[f], masterText, rule.heading, exact);
+        const merged = mergeSection(texts[f], masterText, rule.heading, exact, dropped);
         if (!merged) { rows.push({ file: f, kind: 'section', state: 'no master', note: `"## ${rule.heading}" is not in ${rule.from}` }); continue; }
         const has = texts[f] && sectionRange(lf(texts[f]).split('\n'), rule.heading);
         const state = texts[f] !== null && lf(texts[f]) === lf(merged.text) ? 'current' : has ? 'drift' : 'missing';

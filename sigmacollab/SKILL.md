@@ -50,12 +50,13 @@ From [Colab's FAQ](https://research.google.com/colaboratory/faq.html#disallowed-
 ```sh
 colab --auth adc run -s JOB-NAME --gpu L4 --timeout 0 job.py ARGS   # --tpu V6E1, --high-mem, nothing for CPU
 colab --auth adc new -s JOB-NAME --gpu L4
-colab --auth adc upload -s JOB-NAME inputs.zip content/inputs.zip
+colab --auth adc upload -s JOB-NAME inputs.zip content/inputs.zip   # the target starts with content/
 colab --auth adc exec -s JOB-NAME --timeout 0 -f job.py   # can exit 0 when the code raised: print a marker last, check it
 colab --auth adc download -s JOB-NAME content/out.mp4 out.mp4
 colab --auth adc stop -s JOB-NAME
 ```
 
+- Big uploads, a long process's output, a Windows program under Wine: [references/long-jobs.md](references/long-jobs.md).
 - Name every runtime of the job; touch only those names. Other workers' runtimes are not yours: never `stop --all`.
 - Before a big card, stop your own idle runtimes: they burn units, and it may clear a 412.
 - A refusal: record the exact text and read it ([the CLI's own skill](https://github.com/googlecolab/google-colab-cli/blob/main/skills/colab-operator/SKILL.md), its `commands/session.py`, [#73](https://github.com/googlecolab/google-colab-cli/issues/73)):
