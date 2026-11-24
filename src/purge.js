@@ -11,7 +11,10 @@ import {
   getProjectStateDir,
   removeEmptyStateDir,
   migrateStateForCommand,
+  loadGlobalState,
+  loadProjectState,
 } from './state.js';
+import { importPersonal } from './personal.js';
 import { acquireConcurrencyLock } from './transaction.js';
 import { createUninstallPlan, UNINSTALL_JOURNAL_FILENAME } from './uninstall.js';
 
@@ -406,6 +409,9 @@ export function executePurge(options = {}) {
     }
 
     revalidateDestinations(plan);
+    // Personal lines move to their file before the skill folders go (#407); purge leaves custom/ alone.
+    const state = scope === 'global' ? loadGlobalState(root, customStateDir) : loadProjectState(root, customStateDir);
+    for (const [skillId, entry] of Object.entries(state.skills || {})) importPersonal({ stateDir, root, skillId, entry });
     fs.mkdirSync(quarantineDir, { recursive: true });
     writeJournal('in-progress');
     let phase = 'quarantine';

@@ -302,7 +302,10 @@ export function commitSkillBackup(params) {
   if (!pathExists(sourceDir)) {
     throw new Error(`cannot backup missing skill tree at ${sourceDir}`);
   }
-  const dest = path.join(getBackupRoot(stateDir), skillId, filesystemSafeStamp(now));
+  const stamped = path.join(getBackupRoot(stateDir), skillId, filesystemSafeStamp(now));
+  // Two folders of one skill backed up in the same millisecond get two folders, never one mixed one.
+  let dest = stamped;
+  for (let n = 2; pathExists(dest); n += 1) dest = `${stamped}-${n}`;
   assertPathInside(getBackupRoot(stateDir), dest, 'backup folder');
   fs.mkdirSync(dest, { recursive: true });
   try {
@@ -348,10 +351,11 @@ export function pruneOlderBackups(params) {
   assertPathInside(getBackupRoot(stateDir), dir, 'backup folder');
   const debt = [];
   if (!pathExists(dir)) return { debt };
-  const keep = path.resolve(keepPath);
+  // A run that replaced several folders of one skill keeps every backup it made (#407).
+  const keep = new Set([].concat(keepPath).map((item) => path.resolve(item)));
   for (const name of fs.readdirSync(dir)) {
     const full = path.resolve(dir, name);
-    if (full === keep) continue;
+    if (keep.has(full)) continue;
     try {
       fs.rmSync(full, { recursive: true, force: true });
     } catch {

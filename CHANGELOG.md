@@ -32,6 +32,17 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- Your personal instructions for a skill now live in one file outside every skill folder: `~/.agents/.sigmaskills/custom/<id>.md` (a project: `<project>/.agents/.sigmaskills/custom/`). Every install, update and replace writes them into the block of every copy, Antigravity's copied folder included; a linked folder shows the canonical copy. An edit typed into a block is taken into the file on the next run. The first run moves your existing blocks into the files; a second, different block is saved beside the file under a dated name. Nothing is deleted. See ADR 0008 (#407).
+- `status` no longer counts a personal block or a local description as drift (#407).
+
+### Fixed
+
+- A run that replaced two folders of one skill (the canonical copy and Antigravity's copy) kept no backup: each backup's prune deleted the other. One prune per run now keeps every backup the run made, and two backups in the same millisecond get two folders (#407).
+- `update` no longer stops on `copy-disagreement` when copies differ only in their personal blocks or line endings, and a copy with CRLF line endings is no `outside-change` (#407).
+- A recorded copy with an empty block gets your lines on `update`, also when the skill itself did not change (#407).
+
 ## [0.31.0] — 2026-11-24
 
 ### Added

@@ -282,7 +282,7 @@ npx @djordje-stojanovic/sigmaskills status --global --json
 - each Skill Revision;
 - Agent Hosts, methods, exact paths, and ownership.
 
-It checks live per-file hashes and links. A valid Skill Customization is drift, not damage. Drift still exits `0`; a command failure exits `1`.
+It checks live per-file hashes and links. A valid Skill Customization (your personal block or a local description) is neither drift nor damage. Drift still exits `0`; a command failure exits `1`.
 
 `status` never migrates, repairs, or writes anything. It does not rewrite `skills-lock.json`, and it does not use the network.
 
@@ -310,9 +310,20 @@ A skill that left the Skill Pack stays untouched. `update` lists it under *Retir
 
 ### Your customizations
 
-Each `SKILL.md` has a Skill Customization block between markers. `update` copies the bytes in that block onto the new official `SKILL.md` exactly. The canonical `.agents/skills/<id>` copy owns the customization. Links and matching managed copies follow it.
+Your personal instructions for a skill live in one file outside every skill folder: `~/.agents/.sigmaskills/custom/<id>.md` for a Global Installation, `<project>/.agents/.sigmaskills/custom/<id>.md` for a project. Every install, update and replace writes that file's lines into the block between the markers in each copy's `SKILL.md`, Antigravity's copied folder included. A linked host folder shows the canonical copy. No rewrite of a skill folder can lose them, because they are not kept there ([ADR 0008](adr/0008-personal-instructions-live-outside-skill-folders.md)).
 
-The front-matter `description` is part of the customization too. If you change it, for example to fit a host's skill-list limit, `status` reports drift, not damage, and `update` keeps your text on the new `SKILL.md`. Two limits apply. If the new Release changes the official description, `update` cannot tell your edit from the old official text, so it asks for `--outside-edit` first. To get the official description back, run `install <id> --adopt-changed replace`.
+- Edit your lines in that file: `~/.agents/.sigmaskills/custom/<id>.md`. The block in each `SKILL.md` is rewritten from it on every run. A line typed into a block is not lost: the next run takes it into the file.
+- The file keeps your lines without the blank lines around them and without trailing spaces, so a change that is only such whitespace is not taken in.
+- Delete the file, and the next run rebuilds it from the blocks. Leave it empty, and the copies' blocks go empty.
+- When the file and a block both changed since the last run, the file wins. The block's lines are saved beside it, byte for byte and once, as `<id>.saved-<date>-<n>.md`, and the run prints that path.
+- The first run after an upgrade moves each non-empty block into its file. A second, different block is saved the same way. Nothing is deleted.
+- A file that holds a marker (`<sigmaskills-custom>` or `</sigmaskills-custom>`) is not written into any skill. The run prints the file's path.
+- `uninstall` and `purge` move the blocks into the files first, and leave the `custom/` folder alone.
+- The `custom/` folder is readable by you only (0700, its files 0600, where the file system has such modes); every run sets these again. The skill copies keep the modes of skill files, because the host tools read them.
+- Leave the file empty and every block goes empty; each emptied block's lines are first saved beside the file, once, and the run prints that path.
+- In a project, every copy's `SKILL.md` carries your lines. If they are private, keep the skill folders out of git.
+
+The front-matter `description` is part of the customization too. If you change it, for example to fit a host's skill-list limit, `status` lists it as a customization, not damage, and `update` keeps your text on the new `SKILL.md`. Two limits apply. If the new Release changes the official description, `update` cannot tell your edit from the old official text, so it asks for `--outside-edit` first. To get the official description back, run `install <id> --adopt-changed replace`.
 
 ### Edits outside the customization block
 

@@ -1,6 +1,7 @@
+import { personalNotes } from './personal.js';
 import path from 'node:path';
 import { getCatalog, findPackageRoot } from './catalog.js';
-import { formatPlanHuman, formatPlanJson } from './plan.js';
+import { formatPlanHuman, formatPlanJson, withoutPersonalLines } from './plan.js';
 import { isCiEnv, runProjectInstaller } from './interactive.js';
 import { collectStatus, formatStatusHuman, formatStatusJson } from './status.js';
 import { executeUpdate, formatUpdateHuman, formatUpdateJson } from './update.js';
@@ -273,6 +274,16 @@ function readStdinLine(stdin) {
  * @returns {Promise<number>} Exit code (0 for success, 1 for failure)
  */
 export async function runCli(args = process.argv.slice(2), io = { stdout: process.stdout, stderr: process.stderr }) {
+  personalNotes.length = 0;
+  try {
+    return await runCliCommand(args, io);
+  } finally {
+    // Every move, save or refusal of personal instructions is named, with its path, after any command (#407).
+    for (const note of personalNotes.splice(0)) io.stderr.write(`sigmaskills: ${note}\n`);
+  }
+}
+
+async function runCliCommand(args, io) {
   const writeOut = (str) => io.stdout.write(str.endsWith('\n') ? str : `${str}\n`);
   const writeErr = (str) => io.stderr.write(str.endsWith('\n') ? str : `${str}\n`);
 
@@ -819,7 +830,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
       if (opts.json) {
         writeOut(results.length === 1
           ? formatPlanJson(results[0].plan)
-          : JSON.stringify({ schemaVersion: 1, plans: results.map((result) => result.plan) }, null, 2));
+          : JSON.stringify({ schemaVersion: 1, plans: results.map((result) => result.plan) }, withoutPersonalLines, 2));
       } else {
         for (const result of results) writeOut(formatPlanHuman(result.plan));
         if (!opts.dryRun) {

@@ -24,6 +24,7 @@ const USER_SRC_FILES = [
   'key-input.js',
   'links.js',
   'paths.js',
+  'personal.js',
   'plan.js',
   'ponytail.js',
   'prepack.js',

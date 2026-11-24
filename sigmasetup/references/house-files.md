@@ -8,7 +8,7 @@ The script takes the first of these that is set:
 
 1. `--source <folder | git URL | owner/repo>` on the command line.
 2. The environment variable `SIGMASETUP_HOUSE`.
-3. A `house:` line in the personal-instructions block of this skill's `SKILL.md`, between `<sigmaskills-custom>` and `</sigmaskills-custom>`. The installer keeps that block on every update.
+3. A `house:` line in the personal-instructions block of this skill's `SKILL.md`, between `<sigmaskills-custom>` and `</sigmaskills-custom>`. Edit that line in `~/.agents/.sigmaskills/custom/sigmasetup.md`: the installer writes that file into the block on every install and update.
 
 A folder is read as it is. A git URL or `owner/repo` is cloned with its history into a temp folder; a private repo needs git signed in (`gh auth setup-git`).
 
