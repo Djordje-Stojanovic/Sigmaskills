@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.31.0] — 2026-11-24
+
 ### Added
 
 - **Engineering Kit** (`engineering-kit`, Engineering), a single-skill collection pack starting with `inference-optimisation` from `sybil-solutions/inference-optimisation-skill`, pinned to commit `fda968e` (#411).
@@ -988,7 +990,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.30.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.0...HEAD
+[0.31.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.3...v0.30.0
 [0.29.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.2...v0.29.3
 [0.29.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.1...v0.29.2
