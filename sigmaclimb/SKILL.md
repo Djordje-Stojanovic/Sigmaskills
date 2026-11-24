@@ -47,10 +47,12 @@ pass; after 3 passes without a win in one idea category, the loop changes catego
   same running target. A change that cannot alter the output (order of work, caching, scheduling) still gets it once.
 - **Size the quality check to the target.** A frame comparison takes seconds; a full model eval takes minutes. If
   it takes more than a quarter of a pass, make it cheaper or ask the owner.
-- **Same state for both sides.** A fixed warm-up before the measured part, the same for champion and candidate. Never
-  "fresh and empty" by default: a cold start adds noise. If cold and warm both matter, measure both, as two probes.
-- **A/B on one live target** when the change can be switched at run time: ABAB, interleaved. It costs minutes and
-  cancels drift. A 10-minute kill test like this comes before a scored pass whenever the idea allows it.
+- **Same state for both sides.** Lock the machine to one job at a time on fixed power, performance profile and idle
+  load; record that state at run end, void if it drifted, and restore what you changed. Use one fixed warm-up for both
+  sides — never "fresh and empty" by default, and measure cold and warm as two probes when both matter.
+- **A/B interleaved.** Live switches get an ABAB test on one running target first (minutes, cancels drift). When a
+  change needs a restart and drift can rival the gain, bracket it with controls (control, candidate, control) and
+  require it to beat both neighbours.
 - **One probe uses new input every run**: new text, a new scene, a new instance, with the same amount of work. A probe
   that repeats its input measures the cached path only.
 - **Side effects count.** An idea that only one probe can show still runs the whole score. A probe with weight 0 is a
@@ -89,9 +91,10 @@ held-out check: say that first. Modes, self-test and the check script: [held-out
 3. **Bring up and lock.** Start the target once, record the quality references, run the unchanged target `repeats`
    times (the noise runs), then `aa.py` writes `evaluator.lock`. After the lock, an edit to the scorer is a
    migration: log it and measure the champion again.
-4. **Profile.** Find where the score goes before any idea runs. Output: a table of the target's parts with their
-   measured share of the score (time per stage, bytes per stream, flaws per chapter), in `PROGRESS.md`. Every idea
-   names the part it attacks. Refresh the profile after each KEEP and at every plateau.
+4. **Profile and ceilings.** Measure where the score goes before any idea runs, and compute the physical or practical
+   ceiling from measured hardware when one exists. Output: a parts-share table and each metric's share of its ceiling
+   in `PROGRESS.md`; say early if a target sits above the ceiling. Every idea names the part it attacks. Refresh after
+   each KEEP and at every plateau.
 5. **Loop** until the stop rule holds, then write `REPORT.md`.
 
 Never skip the interview or the lock. A scorer rebuilt after pass 1 throws away every result measured before it.

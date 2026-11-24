@@ -32,6 +32,15 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Added
+
+- **Engineering Kit** (`engineering-kit`, Engineering), a single-skill collection pack starting with `inference-optimisation` from `sybil-solutions/inference-optimisation-skill`, pinned to commit `fda968e` (#411).
+- `sigmaclimb` adopts the core practices of `inference-optimisation-skill` in a few lines: physical/practical ceilings before optimizing, machine/power-state locking and bracketed control-candidate-control runs for restarts in `SKILL.md`; serving ceilings, a 7-step lever order, unified-memory accounting, real-usage token counting, concurrent full-length KV soak, drain-before-stop and clean-build qualification in `references/example-model-serving.md` (#411).
+
+### Changed
+
+- The global set (`CORE_PACKS`, the `core` preset) adds Engineering Kit so the land-step sync puts `inference-optimisation` on every machine (#411).
+
 ## [0.30.0] — 2026-11-24
 
 ### Added
