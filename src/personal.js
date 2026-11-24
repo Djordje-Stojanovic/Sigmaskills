@@ -47,8 +47,14 @@ function writeTracked(writes, file, text, personal = false) {
   if (personal) fs.chmodSync(file, 0o600);
 }
 
-/** Put back every file a run wrote, newest first. */
+/** Put back every file a run wrote, newest first, and withdraw the notes that named those files. */
 export function restorePersonalWrites(writes = []) {
+  if (writes.length === 0) return;
+  const restored = writes.map((write) => write.file);
+  for (let index = personalNotes.length - 1; index >= 0; index -= 1) {
+    if (restored.some((file) => personalNotes[index].includes(file))) personalNotes.splice(index, 1);
+  }
+  personalNotes.push('the run failed and was rolled back: the personal files and blocks it wrote are as they were before');
   for (const { file, before } of [...writes].reverse()) {
     try {
       if (before === null) fs.rmSync(file, { force: true });
@@ -73,6 +79,21 @@ function blockIn(dir, skillId) {
   if (inspection.status !== 'valid' && inspection.status !== 'empty') return null;
   const raw = inspection.rawCustomContent ?? '';
   return { file, markdown, raw, lines: linesOf(raw) };
+}
+
+/** The personal lines in a skill folder's block, or null when it has no readable block. */
+export function blockLinesIn(dir, skillId) {
+  return blockIn(dir, skillId)?.lines ?? null;
+}
+
+/** Private modes on the personal folder and every file in it, also when they existed with wider ones. */
+function tightenModes(dir) {
+  if (!fs.existsSync(dir)) return;
+  fs.chmodSync(dir, 0o700);
+  for (const name of fs.readdirSync(dir)) {
+    const file = path.join(dir, name);
+    if (fs.lstatSync(file).isFile()) fs.chmodSync(file, 0o600);
+  }
 }
 
 /** The recorded copy folders of a skill's state entry, canonical first. Links show the canonical copy. */
@@ -128,14 +149,23 @@ export function syncPersonalBlocks({ stateDir, skillId, read = [], write = [], w
   const blocks = [...new Set([...read, ...write])].map((folder) => blockIn(folder, skillId)).filter(Boolean);
   const firstBlock = new Map();
   for (const block of blocks) if (!firstBlock.has(block.lines)) firstBlock.set(block.lines, block);
-  const savedBefore = fs.existsSync(dir)
-    ? fs.readdirSync(dir).filter((name) => name.startsWith(`${skillId}.saved-`)).map((name) => readText(path.join(dir, name)))
+  tightenModes(dir);
+  const savedFiles = fs.existsSync(dir)
+    ? fs.readdirSync(dir).filter((name) => name.startsWith(`${skillId}.saved-`)).map((name) => path.join(dir, name))
     : [];
-  // Lines already saved as a conflict never win later: a retry after an interrupted run must not flip the file.
-  const savedLines = new Set(savedBefore.map((text) => linesOf(text)));
+  const savedBefore = savedFiles.map((saved) => readText(saved));
+  // Lines already saved as a conflict do not win over an existing file: a retry after an interrupted run must
+  // not flip it. A missing file is always rebuilt from the blocks. A skipped edit is named with its saved file.
+  const savedPath = (lines) => savedFiles[savedBefore.findIndex((text) => linesOf(text) === lines)];
   const edits = absorb
-    ? [...firstBlock.keys()].filter((lines) => lines && lines !== source && !savedLines.has(lines)
-      && (source === null || hashOf(lines) !== last))
+    ? [...firstBlock.keys()].filter((lines) => {
+      if (!lines || lines === source || (source !== null && hashOf(lines) === last)) return false;
+      if (source !== null && savedPath(lines)) {
+        personalNotes.push(`${skillId}: the lines in ${firstBlock.get(lines).file} equal ones saved earlier in ${savedPath(lines)}; ${file} stays as it is`);
+        return false;
+      }
+      return true;
+    })
     : [];
   let next = source;
   if (edits.length > 0 && (source === null || hashOf(source) === last)) next = edits[0];
@@ -162,8 +192,17 @@ export function syncPersonalBlocks({ stateDir, skillId, read = [], write = [], w
   }
 
   const targets = new Set(write.map((folder) => path.resolve(folder)));
+  let cleared = 0;
   for (const block of blocks) {
     if (!targets.has(path.resolve(path.dirname(block.file))) || block.lines === next) continue;
+    // An empty file empties the blocks; the lines they held are saved first, once, so none is lost.
+    if (!next && block.lines && !savedBefore.includes(block.raw)) {
+      const keep = path.join(dir, `${skillId}.saved-${stamp}-cleared-${cleared += 1}.md`);
+      writeTracked(writes, keep, block.raw, true);
+      savedBefore.push(block.raw);
+      saved.push(keep);
+      personalNotes.push(`${skillId}: ${file} is empty, so the block in ${block.file} was emptied; its lines are saved byte for byte to ${keep}`);
+    }
     const eol = block.markdown.includes('\r\n') ? '\r\n' : '\n';
     const raw = next ? `${eol}${next.split('\n').join(eol)}${eol}` : eol;
     writeTracked(writes, block.file, injectRawCustomContent(block.markdown, raw, skillId));

@@ -563,8 +563,8 @@ function recordRunningRelease(options, plan, skillIds) {
   }
   if (!changed) return;
   const next = { ...state, skills };
-  if (scope === 'global') saveGlobalState(root, next, options.customStateDir);
-  else saveProjectState(root, next, options.customStateDir);
+  const save = options.saveState || (scope === 'global' ? saveGlobalState : saveProjectState);
+  save(root, next, options.customStateDir);
 }
 
 function ownerAbsPath(skill, options) {
@@ -786,13 +786,19 @@ function runUpdate(options, updated) {
     });
   }
 
-  syncRecordedPersonal(options, plan, result.results);
+  const personalWrites = syncRecordedPersonal(options, plan, result.results);
 
   // A skill at the running Release still carries the older label until a later install rewrites it.
   // A full update relabels every such skill; --skill relabels only the requested ones.
-  recordRunningRelease(options, plan, plan.unchanged
-    .map((skill) => skill.id)
-    .filter((skillId) => requested.length === 0 || requested.includes(skillId)));
+  try {
+    recordRunningRelease(options, plan, plan.unchanged
+      .map((skill) => skill.id)
+      .filter((skillId) => requested.length === 0 || requested.includes(skillId)));
+  } catch (err) {
+    // The state did not move, so the personal files and blocks go back too, as in a failed install (#407).
+    restorePersonalWrites(personalWrites);
+    throw err;
+  }
 
   if (requested.length === 0 && plan.retired.length > 0) result.retiredResults = retireSkills(options, plan.retired, plan.retiredFolders);
   return result;
@@ -822,6 +828,7 @@ function syncRecordedPersonal(options, plan, results) {
     restorePersonalWrites(writes);
     throw err;
   }
+  return writes;
 }
 
 // A full update removes the retired skills it owns (an edited copy is backed up first) and drops the

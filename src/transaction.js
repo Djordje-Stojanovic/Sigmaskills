@@ -21,7 +21,7 @@ import {
   migrateStateForCommand,
 } from './state.js';
 import { createSkillLink, pathExists, removeManagedPath } from './links.js';
-import { restorePersonalWrites, syncPersonalBlocks } from './personal.js';
+import { blockLinesIn, personalFile, personalNotes, restorePersonalWrites, syncPersonalBlocks } from './personal.js';
 
 /**
  * Acquire process concurrency lock for project.
@@ -253,6 +253,15 @@ function syncPersonal(tx, phase) {
     ? syncPersonalBlocks({ ...params, read: copies.filter((dest) => recordedBefore(tx, dest) || writes(dest)).map((dest) => dest.destination) })
     : syncPersonalBlocks({ ...params, absorb: false, write: copies.filter((dest) => writes(dest) || (dest.adoption && recordedBefore(tx, dest))).map((dest) => dest.destination) });
   tx.personal = { saved: [...(tx.personal?.saved || []), ...result.saved], refused: result.refused || tx.personal?.refused || null };
+  // Skip keeps a folder's bytes; say which recorded copies still show older lines than the personal file.
+  if (phase === 'render' && result.lines !== null && !result.refused) {
+    const stale = copies
+      .filter((dest) => (dest.resolution === 'skip' || dest.resolution === 'export') && recordedBefore(tx, dest))
+      .filter((dest) => { const lines = blockLinesIn(dest.destination, tx.skillId); return lines !== null && lines !== result.lines; });
+    if (stale.length > 0) {
+      personalNotes.push(`${tx.skillId}: ${personalFile(tx.stateDirForBackups, tx.skillId)} was not applied to ${stale.length} skipped ${stale.length === 1 ? 'copy' : 'copies'} (${stale.map((dest) => dest.destination).join(', ')}); run update to apply it`);
+    }
+  }
 }
 
 /** Result for an install that changed nothing. */

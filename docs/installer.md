@@ -319,7 +319,8 @@ Your personal instructions for a skill live in one file outside every skill fold
 - The first run after an upgrade moves each non-empty block into its file. A second, different block is saved the same way. Nothing is deleted.
 - A file that holds a marker (`<sigmaskills-custom>` or `</sigmaskills-custom>`) is not written into any skill. The run prints the file's path.
 - `uninstall` and `purge` move the blocks into the files first, and leave the `custom/` folder alone.
-- The folder is readable by you only (0700, its files 0600, where the file system has such modes).
+- The `custom/` folder is readable by you only (0700, its files 0600, where the file system has such modes); every run sets these again. The skill copies keep the modes of skill files, because the host tools read them.
+- Leave the file empty and every block goes empty; each emptied block's lines are first saved beside the file, once, and the run prints that path.
 - In a project, every copy's `SKILL.md` carries your lines. If they are private, keep the skill folders out of git.
 
 The front-matter `description` is part of the customization too. If you change it, for example to fit a host's skill-list limit, `status` lists it as a customization, not damage, and `update` keeps your text on the new `SKILL.md`. Two limits apply. If the new Release changes the official description, `update` cannot tell your edit from the old official text, so it asks for `--outside-edit` first. To get the official description back, run `install <id> --adopt-changed replace`.

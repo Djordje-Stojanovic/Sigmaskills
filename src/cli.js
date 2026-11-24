@@ -279,8 +279,7 @@ export async function runCli(args = process.argv.slice(2), io = { stdout: proces
     return await runCliCommand(args, io);
   } finally {
     // Every move, save or refusal of personal instructions is named, with its path, after any command (#407).
-    for (const note of personalNotes.splice(0)) io.stderr.write(`sigmaskills: ${note}
-`);
+    for (const note of personalNotes.splice(0)) io.stderr.write(`sigmaskills: ${note}\n`);
   }
 }
 

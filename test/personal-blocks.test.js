@@ -355,3 +355,109 @@ test('#407 r1-10 install --json leaves the personal lines out', withProject(asyn
   assert.equal(r.code, 0, r.out);
   assert.equal(r.out.includes('secret-ish line'), false);
 }));
+
+// Review round 2 of PR #416.
+const customDir = (t) => path.dirname(personalFile(t));
+const savedNames = (t) => fs.readdirSync(customDir(t)).filter((name) => name.startsWith(`${SKILL}.saved-`));
+
+test('#407 r2-1 an empty personal file saves each emptied block once and prints the path', withProject(async (t) => {
+  await installBoth(t);
+  setBlock(canonical(t), '\nkeep me\n');
+  assert.equal((await cli(t, ['update', '--yes'])).code, 0);
+  fs.writeFileSync(personalFile(t), '');
+  const r = await cli(t, ['update', '--yes']);
+  assert.equal(r.code, 0, r.out);
+  for (const file of [canonical(t), copy(t)]) assert.equal(blockOf(file), '\n', file);
+  const saved = savedNames(t);
+  assert.equal(saved.length, 1, saved.join());
+  assert.equal(fs.readFileSync(path.join(customDir(t), saved[0]), 'utf8'), '\nkeep me\n');
+  assert.ok(r.out.includes(path.join(customDir(t), saved[0])), r.out);
+  assert.equal((await cli(t, ['update', '--yes'])).code, 0);
+  assert.equal(savedNames(t).length, 1, 'the same bytes are never saved twice');
+}));
+
+test('#407 r2-2 every run sets 0700 and 0600 again on an existing personal folder', { skip: process.platform === 'win32' }, withProject(async (t) => {
+  await installBoth(t);
+  setBlock(canonical(t), '\nmine\n');
+  assert.equal((await cli(t, ['update', '--yes'])).code, 0);
+  fs.chmodSync(customDir(t), 0o755);
+  for (const name of fs.readdirSync(customDir(t))) fs.chmodSync(path.join(customDir(t), name), 0o644);
+  assert.equal((await cli(t, ['update', '--yes'])).code, 0);
+  assert.equal(fs.statSync(customDir(t)).mode & 0o777, 0o700);
+  for (const name of fs.readdirSync(customDir(t))) assert.equal(fs.statSync(path.join(customDir(t), name)).mode & 0o777, 0o600, name);
+}));
+
+// Leaves the personal file holding "mine" and one saved file holding "\nother\n".
+async function mineAndSavedOther(t) {
+  await installBoth(t);
+  setBlock(canonical(t), '\nmine\n');
+  setBlock(copy(t), '\nother\n');
+  assert.equal((await cli(t, ['update', '--yes'])).code, 0);
+  assert.equal(fs.readFileSync(personalFile(t), 'utf8'), 'mine\n');
+  return path.join(customDir(t), savedNames(t)[0]);
+}
+
+test('#407 r2-4 a missing personal file is rebuilt even from lines saved earlier', withProject(async (t) => {
+  await mineAndSavedOther(t);
+  fs.rmSync(personalFile(t));
+  setBlock(canonical(t), '\n');
+  setBlock(copy(t), '\nother\n');
+  const r = await cli(t, ['update', '--yes']);
+  assert.equal(r.code, 0, r.out);
+  assert.equal(fs.readFileSync(personalFile(t), 'utf8'), 'other\n');
+  assert.ok(r.out.includes(personalFile(t)), r.out);
+  for (const file of [canonical(t), copy(t)]) assert.equal(blockOf(file), '\nother\n', file);
+}));
+
+test('#407 r2-4 a block edit equal to a saved file is skipped with a note naming that saved file', withProject(async (t) => {
+  const saved = await mineAndSavedOther(t);
+  setBlock(copy(t), '\nother\n');
+  const r = await cli(t, ['update', '--yes']);
+  assert.equal(r.code, 0, r.out);
+  assert.equal(fs.readFileSync(personalFile(t), 'utf8'), 'mine\n');
+  assert.ok(r.out.includes(saved), r.out);
+  assert.match(r.out, /stays as it is/);
+}));
+
+test('#407 r2-5 an install that skips copies says the personal file was not applied to them', withProject(async (t) => {
+  await installBoth(t);
+  setBlock(canonical(t), '\nfirst\n');
+  assert.equal((await cli(t, ['update', '--yes'])).code, 0);
+  fs.writeFileSync(personalFile(t), 'second\n');
+  fs.writeFileSync(copy(t), fs.readFileSync(copy(t), 'utf8').replace('## Personal instructions', 'outside edit\n\n## Personal instructions'));
+  const r = await cli(t, ['install', SKILL, ...BOTH, '--adopt-changed', 'skip', '--outside-edit', 'skip', '--yes']);
+  assert.equal(r.code, 0, r.out);
+  assert.equal(blockOf(copy(t)), '\nfirst\n');
+  assert.match(r.out, /was not applied to 2 skipped copies \(.*\.claude.skills.sigmawrite\); run update to apply it/);
+}));
+
+test('#407 r2-6 a relabel-only update whose state save fails puts the blocks and the personal file back', withProject(async (t) => {
+  await installBoth(t);
+  const statePath = path.join(t.project, '.agents', '.sigmaskills', 'state.json');
+  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+  state.skills[SKILL].release = '0.0.9';
+  fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
+  setBlock(canonical(t), '\nmy rule\n');
+  const before = { canonical: sha(canonical(t)), copy: sha(copy(t)) };
+  assert.throws(() => executeUpdate({
+    catalog: getCatalog(ROOT), projectRoot: t.project, homeDir: t.home, packageRoot: ROOT,
+    saveState: () => { throw new Error('injected saveState failure'); },
+  }), /injected saveState failure/);
+  assert.deepEqual({ canonical: sha(canonical(t)), copy: sha(copy(t)) }, before);
+  assert.equal(fs.existsSync(personalFile(t)), false);
+}));
+
+test('#407 r2-7 a failed install withdraws its notes and says it was rolled back', withProject(async (t) => {
+  const { personalNotes } = await import('../src/personal.js');
+  await installBoth(t);
+  setBlock(canonical(t), '\nmy rule\n');
+  personalNotes.length = 0;
+  assert.throws(() => executeProjectInstall({
+    catalog: getCatalog(ROOT), skillId: SKILL, projectRoot: t.project, homeDir: t.home, packageRoot: ROOT,
+    selectedRoots: ['.agents/skills', '.claude/skills', '.cursor/skills'], method: 'copy', adoptChanged: 'skip',
+    saveState: () => { throw new Error('injected saveState failure'); },
+  }), /injected saveState failure/);
+  const notes = personalNotes.splice(0);
+  assert.equal(notes.some((note) => note.includes(personalFile(t))), false, notes.join('\n'));
+  assert.ok(notes.some((note) => /rolled back/.test(note)), notes.join('\n'));
+}));
