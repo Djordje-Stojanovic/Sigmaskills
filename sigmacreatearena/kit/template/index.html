@@ -137,7 +137,7 @@ tr:nth-child(4) .medal{background:linear-gradient(135deg,#fdba74,#b45309);color:
 
 <main>
   <section class="grid on" id="grid">
-    <div class="gtop"><span>Every option at once, names hidden. Click a picture for full size (<kbd>←</kbd> <kbd>→</kbd> step, <kbd>Esc</kbd> closes). Rate 1 to 5, comment if you like: it saves at once.</span><button class="btn" id="gcopy">Copy my ratings</button></div>
+    <div class="gtop"><span>Every option at once, with its name and data. Click a picture for full size (<kbd>←</kbd> <kbd>→</kbd> step, <kbd>Esc</kbd> closes). Rate 1 to 5, comment if you like: it saves at once.</span><button class="btn" id="gcopy">Copy my ratings</button></div>
     <textarea id="gout" readonly></textarea>
     <div id="gbody"></div>
   </section>
@@ -273,7 +273,7 @@ function gzoom(i){const a=gimgs();if(!a.length)return;gzi=(i+a.length)%a.length;
   $("zl").textContent=el.closest(".gcell").dataset.name+"  (← → step, Esc closes)";$("zoom").classList.add("on")}
 async function drawGrid(){GD=await j("/api/grid");
   $("gbody").innerHTML=GD.map((g,gi)=>`<section class="gg"><h2>${esc(g.label)}<small>${g.options.length} options</small></h2>${g.prompt?`<p class="gp">${esc(g.prompt)}</p>`:""}
-    <div class="gcells">${g.options.map((o,oi)=>`<div class="gcell" data-g="${gi}" data-o="${oi}" data-name="${esc(g.label)}, option ${o.n}"><div class="lab2">Option ${o.n}</div><div class="stage"></div>
+    <div class="gcells">${g.options.map((o,oi)=>`<div class="gcell" data-g="${gi}" data-o="${oi}" data-name="${esc(g.label)}, option ${o.n}"><div class="lab2">Option ${o.n}: ${esc(o.player)}<small>${Object.entries(o.meta||{}).map(([k,v])=>" "+esc(k+" "+(typeof v==="object"?JSON.stringify(v):v))).join(" ·")}</small></div><div class="stage"></div>
     <div class="stars" role="group" aria-label="Rating of option ${o.n}, 1 to 5">${[1,2,3,4,5].map(v=>`<button data-r="${v}" class="${o.rating===v?"on":""}">${v}</button>`).join("")}</div>
     <textarea placeholder="Your comment" aria-label="Comment on option ${o.n}">${esc(o.comment)}</textarea></div>`).join("")}</div></section>`).join("");
   document.querySelectorAll("#gbody .gcell").forEach(cell=>{const o=GD[cell.dataset.g].options[cell.dataset.o],st=cell.querySelector(".stage");
@@ -283,7 +283,7 @@ async function drawGrid(){GD=await j("/api/grid");
     const put=()=>j("/api/rate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:o.code,rating:o.rating,comment:o.comment})}).then(()=>toast("Saved"));
     cell.querySelectorAll(".stars button").forEach(b=>b.onclick=()=>{o.rating=o.rating===+b.dataset.r?0:+b.dataset.r;cell.querySelectorAll(".stars button").forEach(x=>x.classList.toggle("on",+x.dataset.r===o.rating));put()});
     const ta=cell.querySelector("textarea");ta.onchange=()=>{o.comment=ta.value;put()}})}
-function gridText(){return [C.title+": my grid ratings"].concat(GD.flatMap(g=>g.options.filter(o=>o.rating||o.comment.trim()).map(o=>`Grid ${g.label}, option ${o.n} (${o.code}): ${o.rating?o.rating+" of 5":"no rating"}${o.comment.trim()?" | “"+o.comment.trim()+"”":""}`))).join("\n")}
+function gridText(){return [C.title+": my grid ratings"].concat(GD.flatMap(g=>g.options.filter(o=>o.rating||o.comment.trim()).map(o=>`Grid ${g.label}, option ${o.n} (${o.code}, ${o.player}): ${o.rating?o.rating+" of 5":"no rating"}${o.comment.trim()?" | “"+o.comment.trim()+"”":""}`))).join("\n")}
 $("gcopy").onclick=()=>{if(document.activeElement)document.activeElement.blur();const t=gridText(),o=$("gout");o.style.display="block";o.value=t;o.select();
   (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied"),()=>toast("Select the text and copy it"))};
 document.addEventListener("keydown",e=>{

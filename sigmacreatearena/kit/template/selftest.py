@@ -82,14 +82,14 @@ ok_refs = (rs == [{"url": "/g/g%201/0", "label": "", "kind": "image"}, {"url": "
            and server.public_refs("g0", {}) == [])
 print("refs:", "PASS" if ok_refs else "FAIL", rs)
 
-# 4. grid mode: every option of each group at once, numbered in a fixed order, blind; a rating and comment persist
+# 4. grid mode: every option of each group at once, numbered in a fixed order, named with their data; a rating and comment persist
 c = arena.cfg()
 g1, g2 = server.grid(c), server.grid(c)
 code = g1[0]["options"][0]["code"]
 saved = server.rate(c, code, 4, "clean") and not server.rate(c, "???", 3, "")
 opt = next(o for o in server.grid(c)[0]["options"] if o["code"] == code)
 ok_grid = (len(g1) == 3 and all(len(g["options"]) == 18 for g in g1) and g1 == g2 and saved and (opt["rating"], opt["comment"]) == (4, "clean")
-           and all("player" not in o and "src" not in o for g in g1 for o in g["options"]))
+           and all(o["player"] and "meta" in o and "src" not in o for g in g1 for o in g["options"]))
 print("grid:", "PASS" if ok_grid else "FAIL")
 
 ok = ok_rank and ok_anchor and ok_refs and ok_grid

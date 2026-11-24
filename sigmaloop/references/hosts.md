@@ -30,7 +30,7 @@ For a harness whose docs show no loop command, one long instruction. The agent i
 ```text
 Work unattended until <time, zone>. You are the orchestrator. Rules and order live in <loop file path>: read it now and re-read it at the start of every item; edits apply on the next re-read.
 ORDER: <loop file> "Priority", top down. First: <items 1-3>.
-CREW: <mix, or solo>. One large spec per worker (to-spec, then implement-spec in one long run, one report, a review by a different model); no helper agents.
+CREW: <mix, or solo>. One whole ticket per worker (an item too big goes through to-spec and to-tickets first), one report, a review by a different model; no helper agents.
 LANDING: <one line>.
 AUTHORISED: <list>. Do not stop to ask; when no rule decides, take the option that keeps work moving and can be undone; log it.
 Never end your turn while an item is workable and the clock is before the stop line. At <time, zone> do the Finish block in the loop file and send the final report as your last message.

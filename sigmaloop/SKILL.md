@@ -21,7 +21,7 @@ Asked for briefs, handoffs or spawn prompts (sigmabrief), write those instead: [
 
 No questions yet. Find, and stop when you have a ranked picture: a ticket or plan file the user named; the repo's tracker (`docs/agents/issue-tracker.md`, `TODO*`, `.scratch/**`, `gh issue list`, `gh pr list`); the steering files (`AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`, and `ENGINEERING.md` and `DESIGN.md` when present: tell the run to follow both); live state (`git status`, `git worktree list`, open PRs, other agents); speed facts a past run left (gate time, review passes per landing, accepted output per hour). They feed the Limits.
 
-Note for each open item: id, one line, size, what blocks it, owner, files it touches.
+Note for each open item: id, one line, size, what blocks it, owner, files it touches. An item too big for one worker is cut first (loop-file.md, Crew).
 
 ## 2. Find the harness
 

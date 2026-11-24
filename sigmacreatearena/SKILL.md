@@ -5,7 +5,7 @@ description: Use when asked for sigmacreatearena or to rank, compare or pick the
 
 # SigmaCreateArena
 
-The arena page has two modes. **Grid** shows every option of each group at once, names hidden; the user rates each 1 to 5, comments, and decides. **Arena** shows two options side by side, names hidden, sides random; they pick per metric, and a Bradley-Terry fit turns the picks into an Elo board per metric. This skill grills the user, builds the arena from a bundled kit, hands over the link, and reads the board back.
+The arena page has two modes. **Grid** shows every option of each group at once with its name and all its sidecar data (setting, seconds, cost, source); the user rates each 1 to 5, comments, and decides. **Arena** shows two options side by side, names hidden, sides random; they pick per metric, and a Bradley-Terry fit turns the picks into an Elo board per metric. This skill grills the user, builds the arena from a bundled kit, hands over the link, and reads the board back.
 
 Read [`references/arena-guide.md`](references/arena-guide.md) before step 1: every ranking rule, why it exists, and 16 lessons. The code is the kit in [`kit/`](kit/README.md). Copy it; never rewrite it. Screenshots of the finished look are in `kit/screenshots/`.
 
@@ -15,7 +15,7 @@ Needs Python 3 (standard library only) and a browser. The server listens on 127.
 
 Run a grilling round: numbered questions, your recommended answer under each. Look up every fact yourself; only decisions go to the user. Cover, in order:
 
-0. **Which mode?** Grid is the default: the user looks at everything and decides (see all, rate 1-5, comment, copy the ratings back). Use Arena only when the user asks for a ranking (blind pairs, Elo per metric). Both run from the same kit; Grid opens first. With Grid only, skip questions 3 (anchors), 6 (metrics) and 8 (cost columns).
+0. **Which mode?** Grid is the default: the user looks at everything and decides (see all, rate 1-5, comment, copy the ratings back). Use Arena only when the user asks for a ranking (blind pairs, Elo per metric). Both run from the same kit; Grid opens first and names every option, so a run that needs blind pairs tells the user to skip the Grid tab. With Grid only, skip questions 3 (anchors), 6 (metrics) and 8 (cost columns).
 1. **What is ranked, and what happens to the winner?** (a new default, a caption, a model kept, files deleted.) One sentence each.
 2. **The players:** which options, and where each comes from (the user, research with links, your own idea: say which). Recommend 6-12, at most 20. Keep today's default as a baseline, plus a strong outside reference if one exists.
 3. **Which players are anchors (reference players)?** Recommend: the baseline and the outside reference. Anchors keep a rating but never take a top place or soak up picks (`"anchors"` in `arena.json`).
@@ -40,7 +40,7 @@ A metric counts ×2 in Overall with `"weight": 2`. Stop when no open question is
 
 1. Make a folder inside the project (for example `arena/`). Copy `kit/template/` there. Delete `picks.jsonl`, `codes.json`, `ratings.json` and `results.*` if present.
 2. Make the options (render, write, generate, collect). Name each file `<player>__<group>[__<take>].<ext>` in `media/`, with a same-name `.json` sidecar holding the cost numbers. Text options go in `options.tsv` (`player<TAB>group<TAB>text`). Group long renders by model file.
-3. Run `python make_items.py media/` (or `options.tsv`). Edit `arena.json`: `title`, `question`, `metrics` (`id`, `label`, `hint`, `weight`), `groups` (`label`, `prompt`: the exact text the options answer), `groups.<id>.refs` (optional reference media, e.g. `["refs/face.jpg"]`), `players` (plain labels, shown only on the board), `anchors` (reference player ids), `skip`, `settings.top_k` (how many places the user cares about), `settings.anchor_games` (default 8).
+3. Run `python make_items.py media/` (or `options.tsv`). Edit `arena.json`: `title`, `question`, `metrics` (`id`, `label`, `hint`, `weight`), `groups` (`label`, `prompt`: the exact text the options answer), `groups.<id>.refs` (optional reference media, e.g. `["refs/face.jpg"]`), `players` (plain labels, shown on the board and in Grid), `anchors` (reference player ids), `skip`, `settings.top_k` (how many places the user cares about), `settings.anchor_games` (default 8).
 4. Run `python selftest.py` (must print PASS), then `python server.py --open` (first free port 3410-3499; `--port N` fixes one). Open the page yourself: every item loads, the sides look equal, the keys work.
 
 ## 3. Hand over and watch
