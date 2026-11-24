@@ -28,12 +28,12 @@ Rent only when the owner or the spec asked for the run and no local machine can 
 
 ## 2. Colab's rules
 
-From [Colab's FAQ](https://research.google.com/colaboratory/faq.html#disallowed-activities). A job that needs one of these goes to Vast or stays local: file hosting, media serving or other web services, torrents and peer-to-peer sharing, remote proxies, crypto mining, denial-of-service attacks, password cracking, several accounts to get around limits, creating deepfakes, containers to get around its checks. SSH and other remote control are allowed only while the unit balance is positive. Units arrive each month. Colab ends an idle runtime, and any runtime after 12 hours (24 hours of running code with background execution).
+From [Colab's FAQ](https://research.google.com/colaboratory/faq.html#disallowed-activities). A job that needs one of these goes to Vast or stays local: file hosting, media serving or other web services, torrents and peer-to-peer sharing, remote proxies, crypto mining, denial-of-service attacks, password cracking, several accounts to get around limits, creating deepfakes, containers to get around its checks. SSH and other remote control are allowed only while the unit balance is positive. Units arrive each month. Colab ends an idle runtime, and any runtime after 12 hours (24 hours of running code with background execution). Colab Enterprise is a Google Cloud product priced in money per machine hour ([pricing](https://cloud.google.com/colab/pricing)); no page says plan units pay for it, so it is paid compute: only on the owner's word.
 
 ## 3. Sign in, once per machine
 
 - Install the [Colab CLI](https://github.com/googlecolab/google-colab-cli) (`uv tool install google-colab-cli`) and the Google Cloud CLI.
-- `gcloud auth application-default login --no-launch-browser --disable-quota-project --scopes=openid,https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/colaboratory`. The owner opens the link and picks the account that holds the plan; ask for the code with a secret card, never in chat.
+- `gcloud auth application-default login --no-launch-browser --disable-quota-project --scopes=openid,https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/colaboratory`. The owner opens the link and picks the account that holds the plan (on a Google One family plan, only the plan manager's account gets the units: [help](https://support.google.com/googleone/answer/16286513)); ask for the code with a secret card, never in chat.
 - His other machines: copy the sign-in file (`~/.config/gcloud/application_default_credentials.json`; Windows `%APPDATA%\gcloud\`) over SSH, piped, never printed: `ssh -n A 'cat FILE' | ssh B 'umask 077; mkdir -p DIR; set -o noclobber; cat > FILE'`. Never to a rented machine, a repo or a log.
 - Check: `colab --auth adc usage` prints the balance, the rate per hour and the active runtimes. Vast: `vastai set api-key` once; account calls may need the emailed login code (`vastai tfa`), which only the owner can read.
 
@@ -57,7 +57,13 @@ colab --auth adc stop -s JOB-NAME
 ```
 
 - Name every runtime of the job; touch only those names. Other workers' runtimes are not yours: never `stop --all`.
-- A refusal ("Service Unavailable", "Allocation refused", "Bad Gateway") or a start that times out: record the exact text and take the next card, then Vast. The CLI can hang for minutes on a card that does not come: give the request a long timeout (`colab --help` names it) and pick the second card before you start.
+- Before a big card, stop your own idle runtimes: they burn units, and a 412 can be a runtime limit.
+- A refusal: record the exact text and read it ([the CLI's own skill](https://github.com/googlecolab/google-colab-cli/blob/main/skills/colab-operator/SKILL.md), [#73](https://github.com/googlecolab/google-colab-cli/issues/73), [#236](https://github.com/googlecolab/google-colab-cli/issues/236)):
+  - `400`: this account may not use the card. Take one `usage` lists as eligible.
+  - `412` "Allocation refused": a limit on the account right now (the CLI names it too many runtimes; a free account gets it for a T4 too). Stop your own idle runtimes, ask once more, then the next card.
+  - `503` "Service Unavailable": no free card; the CLI has already asked 4 times (about 3 minutes). The next card.
+  - "Bad Gateway", or a start that times out: the next card. The CLI can hang for minutes: give the request a long timeout (`colab --help` names it) and pick the second card before you start.
+- Ask for a refused card once more at most, never in a loop. One user reported an account blocked for "suspected abusive activity" after an agent retried a refused G4 all night ([colabtools#6288](https://github.com/googlecolab/colabtools/issues/6288), 22 Nov 2026, no answer from Google). When the cards run out: Vast, or stop and report.
 
 ## 6. Run on Vast
 
