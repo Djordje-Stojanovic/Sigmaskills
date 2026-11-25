@@ -16,7 +16,7 @@
    ["sigmaclimb","Make anything measurable or judgeable better, one judged change at a time"],
    ["sigmamusk","Musk's Algorithm on one thing, one codebase or a whole setup"],
    ["sigmavast","Points to SigmaCollab, which now rents Colab and vast.ai compute"],
-   ["sigmacollab","Run one job on a Colab runtime or a Vast GPU, then prove it is gone"],
+   ["sigmacollab","Run one job on a Colab runtime, a boat.dev box or a Vast GPU, then prove it is gone"],
    ["sigmadebug","Settle open topics one by one, ship each fix in the background"],
    ["sigmacourse","Plan and build teaching of any size; the course sets its process"],
    ["sigmafinanceman","Values any investment from free data, with the method on one page"],

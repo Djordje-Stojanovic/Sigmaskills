@@ -86,7 +86,7 @@ Needs: Python 3 and a target it can measure or the owner can judge. Uses `/grill
 
 ### sigmacollab
 
-Needs: the `colab` CLI (`uv tool install google-colab-cli`), the Google Cloud CLI for the sign-in, and a Google AI or Colab plan with units. For Vast: the `vastai` CLI with credit. Setup: `gcloud auth application-default login` once per machine (the skill names the scopes), then `colab --auth adc usage`; `vastai set api-key` once for Vast. For boat.dev boxes: the `boat` CLI (static download from boat.dev for Linux, macOS and Windows) and `BOAT_API_KEY` in the environment or a secrets file; `boat login --key-stdin` once per machine; a repo installs on a box from `.boat/setup.sh`, else its lockfiles.
+Needs: the `colab` CLI (`uv tool install google-colab-cli`), the Google Cloud CLI for the sign-in, and a Google AI or Colab plan with units. For boat.dev boxes: the `boat` CLI (static download from boat.dev for Linux, macOS and Windows) and `BOAT_API_KEY` in the environment or a secrets file; `boat login --key-stdin` once per machine; a repo installs on a box from `.boat/setup.sh`, else its lockfiles. For Vast: the `vastai` CLI with credit. Setup: `gcloud auth application-default login` once per machine (the skill names the scopes), then `colab --auth adc usage`; `vastai set api-key` once for Vast.
 
 ### sigmavast
 

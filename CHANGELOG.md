@@ -34,6 +34,7 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ### Changed
 
+- `sigmacollab` now takes Google Colab first, then boat.dev (what Colab cannot hold), then vast.ai (a GPU Colab refuses, or a job its rules forbid). The order was Colab, vast.ai, boat.dev. With a plan that pays Colab units, Colab's CPU also costs less than a paid box. The text moved; no line was added to the skill.
 - Your personal instructions for a skill now live in one file outside every skill folder: `~/.agents/.sigmaskills/custom/<id>.md` (a project: `<project>/.agents/.sigmaskills/custom/`). Every install, update and replace writes them into the block of every copy, Antigravity's copied folder included; a linked folder shows the canonical copy. An edit typed into a block is taken into the file on the next run. The first run moves your existing blocks into the files; a second, different block is saved beside the file under a dated name. Nothing is deleted. See ADR 0008 (#407).
 - `status` no longer counts a personal block or a local description as drift (#407).
 - `sigmaloop` for a run with lanes: a lane manager pulls its own next ticket, spend is counted per account, workers can run on another machine, and an item too big for one worker goes through `to-spec` and `to-tickets` first. Its lines were swapped, not added.

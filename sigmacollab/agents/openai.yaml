@@ -1,8 +1,8 @@
 interface:
   display_name: SigmaCollab
-  short_description: Run one job on a Colab runtime or a Vast GPU, then prove it is gone
-  default_prompt: Use $sigmacollab to run this job on a Colab runtime (or Vast when Colab
-    refuses), show the price first, and prove the teardown.
+  short_description: Run one job on a Colab runtime, a boat.dev box or a Vast GPU, then prove it is gone
+  default_prompt: Use $sigmacollab to run this job on a Colab runtime (boat.dev or Vast
+    when Colab cannot), show the price first, and prove the teardown.
 policy:
   products:
   - chatgpt

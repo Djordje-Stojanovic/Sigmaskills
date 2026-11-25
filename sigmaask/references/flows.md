@@ -41,7 +41,7 @@ Each example shows the reasoning, so read for the method more than the answer.
 | Many open topics or doubts | SigmaDebug | Settles one topic at a time. Each fix ships in a background agent through SigmaShip. |
 | The same correction a second time | SigmaCorrect → SigmaShip | It turns the correction into a check or a test. A one-time bug is not a repeat. |
 | Work to run unattended | SigmaLoop → paste the prompt into the host | SigmaLoop writes the prompt and a run file. It never starts the run. |
-| Cloud machines for that work | SigmaCollab | boat.dev boxes for repo work; Colab or Vast for a GPU or TPU job. |
+| Cloud machines for that work | SigmaCollab | Colab first (CPU, GPU, TPU); boat.dev for what Colab cannot hold; Vast for a GPU Colab refuses. |
 | A bloated repo, machine or setup | `/sigmamusk cut <repo>` or `/sigmamusk reset` | It measures the waste first. The owner decides what stays. |
 
 ## What comes after each skill
