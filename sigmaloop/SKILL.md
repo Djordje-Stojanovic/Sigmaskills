@@ -1,6 +1,6 @@
 ---
 name: sigmaloop
-description: Use when asked for sigmaloop, sigmabrief, briefs, handoffs, spawn prompts or a paste-ready unattended-run prompt (Claude Code /loop, Codex /goal, Antigravity, pi, T3) and loop file from open work. Do not use to do the work or start the run.
+description: Use when asked for sigmaloop, sigmabrief, briefs, handoffs, spawn prompts or a paste-ready unattended-run prompt (Claude Code, Codex, Antigravity, pi, T3) and loop file from open work. Do not use to do the work or start the run.
 ---
 
 # SigmaLoop

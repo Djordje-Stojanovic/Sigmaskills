@@ -2,14 +2,14 @@
 
 Marks: **ran** (run by the author), **doc** (T3 user docs), **source** (T3 source). See `hosts.md` for the table and the plain instruction. A step not run says "live run pending".
 
-Checked 2026-10-31 against T3 `0.1.6-nightly.20261030.3904`, source commit `36dac688a1` of [pingdotgg/t3code](https://github.com/pingdotgg/t3code) (`apps/server/src/mcp/toolkits/`, `apps/server/src/scheduledTasks/`, `packages/contracts/src/scheduledTask.ts`, `orchestratorMcp.ts`), and `docs/user/`. `main` is 315 commits later; in those files it changed the scheduler only by refactors and webhook logging, and no tool name or description (source: diff). Run on 2026-11-12 (ran): native `/goal` on a Claude thread, `delegate_task` async for lane managers and workers (a finished child woke its parent), one status file per lane. The clock and run-to-done skeletons: live run pending.
+Checked 2026-11-25 against T3 Code 0.1.12 (`docs/user/` + live runs). Verified live (ran): native `/goal` on Claude and Antigravity threads, async `delegate_task` for lane managers and workers (a finished child wakes its parent), `t3_thread_send` with `mode:'steer'`, one status file per lane. The clock and run-to-done scheduler skeletons: live run pending.
 
-T3 Code starts other agents (Codex, Claude Code, Cursor, OpenCode, Antigravity, Pi) and has no loop of its own. It gives the agent three things to build one: a native `/goal`, a scheduler, and tools that start more threads. **Default: native `/goal` with one printed done command, and no repeat timer.** A completion notice wakes the orchestrator, so a timer only piles up wake messages. Use the scheduler only when the stop line is a clock time or the orchestrator is not Claude or Codex.
+T3 Code starts other agents (Codex, Claude Code, Antigravity, OpenCode, Cursor, Pi, Muse) and has no loop of its own. It gives the agent three things to build one: native `/goal`, a scheduler, and tools that start more threads. **Default: native `/goal` with one printed done command, and no repeat timer.** A completion notice wakes the orchestrator, so a timer only piles up wake messages. Use the scheduler only when the stop line is a clock time or the provider has no native `/goal`.
 
 | Mode | Use it when | Wake |
 |---|---|---|
-| **Native `/goal`** (default) | The thread runs Claude or Codex and one printed command proves the end | The provider keeps going turn after turn; no timer |
-| **Run to done** | Same, but the thread is neither Claude nor Codex | Scheduled task re-wakes the thread until the command prints the done text, then disables itself |
+| **Native `/goal`** (default) | The thread runs Claude, Codex, Antigravity (CLI 1.5+), or OpenCode (2.2.5+) and one printed command proves the end | The provider keeps going turn after turn; no timer |
+| **Run to done** | Same, on a provider without native `/goal` (e.g. Pi, Muse, Cursor, local ACP) | Scheduled task re-wakes the thread until the command prints the done text, then disables itself |
 | **Clock** | The stop line is a time | Scheduled task, then delete it at the stop line |
 
 ## What T3 gives the agent
@@ -32,14 +32,18 @@ T3 Code starts other agents (Codex, Claude Code, Cursor, OpenCode, Antigravity, 
 | Other machines | `t3_environment_links`, `t3_environment_link`; `delegate_task` takes `target.environmentId`: set it to run a worker on another machine |
 | Projects | `t3_project_list`, `t3_project_create`, `t3_project_clone` |
 
-**Antigravity threads** (seen in one run, 24 Nov 2026, ran):
-- The T3 tools were not in the agent's tool list. The route that worked, with `ELECTRON_RUN_AS_NODE=1`: `$env:T3_ACP_MCP_NODE "$env:T3_ACP_MCP_ENTRYPOINT" acp-mcp-call delegate_task <json>`, schema in the provider's `antigravity-acp/mcp/t3-code/delegate_task.json`. Start it through `ProcessStartInfo` with an `ArgumentList`, and never read stdout and stderr both synchronously: that hangs. The loop file names this route so the run does not search for it.
-- A thread started by a plain instruction ran 58 minutes in its first turn, and a finished async child started its next turn 11 s after the first ended. A turn that ends with no child running stays stopped: nothing wakes it.
-- `t3_thread_send` with `mode: steer` reached the running turn; the agent acted on it within a minute.
+**Antigravity threads** (T3 Code 0.1.12 + managed Antigravity CLI 1.5.14+, doc + ran):
+- Native `/goal`, `invoke_subagent`, `schedule` (including `TimerCondition` watchdogs), and T3 MCP tools (`mcp_t3-code_*`) work directly in Antigravity threads; T3 tools can load lazily, so try the tool name once before treating it as absent.
+- **ACP fallback** (only if a T3 tool is absent from the tool list): on Windows PowerShell pipe JSON to stdin via `$env:T3_ACP_MCP_CALL` (`'{}' | & $env:T3_ACP_MCP_CALL orchestrator_capabilities -`, non-ASCII as `\uXXXX`); on POSIX follow the `acp-mcp-call` line injected in the thread's T3 instructions.
+- Async `delegate_task` completion wakes the Antigravity parent, and `t3_thread_send` (`mode:'steer'`) reaches a running turn (ran). In `agy acp` 1.5.15+, `session/prompt` stays open across non-daemon background subagents/tasks (doc). In **Full access**, Antigravity can still send fixed-choice questions (`ask_question`) or occasional native approval requests (doc).
 
 A child may not run at wider permission modes than its parent (source). Start the orchestrator thread at Full access and the crew inherits it.
 
-**Native `/goal`.** With Codex and Claude, a message that starts with `/goal <condition>` sets a goal, and the agent keeps working across turns until it judges it met (doc: `composer.md`, Goals). T3 reads the command in the message path, so the first message, a queued message and a `t3_thread_send` all work (source: `parseGoalCommand`, `Orchestrator.ts`). `/goal` alone shows it, `/goal clear` removes it. Codex also takes `/goal pause` and `/goal resume`; Claude does not (T3 rejects them for Claude). Stop on a Claude thread ends the turn and keeps the goal; Claude checks it again at the end of the next message. Stop on a Codex thread pauses it (doc). A goal command never joins a running turn: it stops the run or waits in the queue (source). Whether the provider's own `/loop` works in a T3 thread is **not documented**, and T3's Claude adapter has no handling for `ScheduleWakeup` or `CronCreate` (source: no match). Do not assume it. The schedule is the wake.
+**Native `/goal`.** On Claude, Codex, Antigravity (CLI 1.5+), and OpenCode (2.2.5+), a message starting with `/goal <condition>` sets a goal and keeps working across turns until met (doc: `composer.md`, `providers-antigravity.md`). T3 parses the command on the message path, so the first message, a queued message, and `t3_thread_send` all work (source).
+- Claude: `/goal` shows it, `/goal clear` removes it; Stop ends the turn and keeps the goal for the next message.
+- Codex and OpenCode: `/goal`, `/goal clear`, `/goal pause`, `/goal resume`; Stop pauses the goal.
+- Antigravity: Stop interrupts a running goal, then tell Antigravity to stop pursuing it before starting new work; T3 offers no `/goal` status, pause, resume, or clear commands for Antigravity (doc).
+- Claude's `/loop` (`ScheduleWakeup`, `CronCreate`) has no T3 adapter handling (source); for clock wakes in T3 use `schedule_task` (or Antigravity's native `schedule` tool for within-session watchdogs).
 
 For clock or scheduled run-to-done mode, read `host-t3-scheduler.md` before filling the scheduler skeleton: it covers schedule fields, overlap, permissions, restart and cleanup.
 
@@ -60,18 +64,18 @@ The orchestrator thread runs the loop. Workers do the items.
 1. First turn: `orchestrator_capabilities` once. Write the provider, model and options you will use per role into the loop file's Crew section.
 2. Ticket the worker builds, parent only needs the result: `delegate_task` with `isolation:'worktree'`, `mode:'async'`, a `target` model for the role, and a task that is the path of its full spec plus the done line (the child sees no parent history). End the turn; completion wakes the orchestrator (source). A delegate review or re-check is a fresh `delegate_task` carrying the findings and objections; apply small fixes on the PR branch.
 3. Only when the owner asks for a new top-level thread: `t3_thread_launch` with its own worktree and `modelSelection`, then `t3_thread_wait` or the next wake. Mention it by its `link`.
-5. At most as many live workers as the Crew section allows. Write each worker's id and item into the handoff file before the turn ends.
-6. Landing: the worker opens the pull request; only the thread that owns a PR watches it (`watch_pull_request`), children never; call `unwatch_pull_request` before stopping. Write the merge permission in the loop file, since some models will not merge without it. A question to the owner goes through the harness's question tool, or the thread looks finished. The sidebar is the inbox: settle a thread when its item is done.
+4. At most as many live workers as the Crew section allows. Write each worker's id and item into the handoff file before the turn ends.
+5. Landing: the worker opens the pull request; only the thread that owns a PR watches it (`watch_pull_request`), children never; call `unwatch_pull_request` before stopping. Write the merge permission in the loop file, since some models will not merge without it. A question to the owner goes through the harness's question tool, or the thread looks finished. The sidebar is the inbox: settle a thread when its item is done.
 
-## Prompt skeleton: native `/goal` (default; Claude or Codex thread)
+## Prompt skeleton: native `/goal` (default)
 
-Send it as the first message of the thread. No `schedule_task`.
+Send it as the first message of the thread (Claude, Codex, Antigravity, or OpenCode 2.2.5+). No `schedule_task`.
 
 ```text
 /goal <Title> is done: `<one command>` prints <exact text>. Follow the selected solo or crew roles in the loop file. Every turn: read <loop file path> first and follow it exactly; print the command's output at the end of each turn. Limits: <the 2-3 rules that must hold>.
 ```
 
-Put the selected roles, tstack flow and landing in the loop file. In crew mode, each worker is `delegate_task` (`isolation:'worktree'`, `mode:'async'`) on one whole ticket, and its completion wakes the orchestrator. Keep the goal under 4,000 characters (the Claude Code limit; T3 sets none). Stop on a Claude goal is checked again at the next message; a Codex goal needs `/goal resume`. No schedule runs, so a closed server ends the run: add the clock skeleton only if the run must survive a restart.
+Put the selected roles, tstack flow and landing in the loop file. In crew mode, each worker is `delegate_task` (`isolation:'worktree'`, `mode:'async'`) on one whole ticket, and its completion wakes the orchestrator (same-provider Antigravity workers can also use native `invoke_subagent`). Keep the goal under 4,000 characters (the Claude/Codex limit; T3 sets none). Stop behavior: Claude re-checks at the next message; Codex/OpenCode need `/goal resume`; Antigravity stops the turn and needs a follow-up asking it to cancel the goal. No schedule runs, so a closed server ends the run: add the clock skeleton only if the run must survive a restart.
 
 ## Prompt skeleton: clock (stop line is a time)
 
@@ -84,7 +88,7 @@ LANDING: <one line>.
 AUTHORISED: <list>. Do not stop to ask; when no rule decides, take the option that keeps work moving and can be undone; log it.
 ```
 
-## Prompt skeleton: run to done (thread is not Claude or Codex)
+## Prompt skeleton: run to done (providers without `/goal`)
 
 The check command is the stop line. The wake task re-wakes the thread until it prints the done text.
 

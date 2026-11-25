@@ -8,7 +8,7 @@ Facts ([/goal](https://code.claude.com/docs/en/goal), [scheduled tasks](https://
 - Agents still running at turn end skip the check, and at most 3 idle check-ins follow (doc). The first comes after 30 minutes; `CLAUDE_CODE_GOAL_CHECKIN_MINUTES` changes that, and `0` turns check-ins and retries off (doc). Several turns in a row with no tool use stop the loop with the goal still set (doc), so every turn does real work. So a turn that waits on jobs ends with the jobs running; their completion notices start the next turn. A usage limit pauses the goal; an auth failure or a context overflow clears it (doc).
 - `--resume` brings back the goal. Background shells never come back (doc): restart each job from its own last commit, pushed or WIP (the loop file's Restart rule).
 - Permissions are inherited. Set auto mode or an allowlist first, or the run stalls on a prompt (doc).
-- `/loop <prompt>` is the option for work that waits on a clock. The next wake is `ScheduleWakeup`; `stop: true` ends it; a turn with neither gets one fallback wake about 20 minutes later, then the loop ends (doc). `/loop` needs a live session: `claude -p "/loop …"` ran once and exited (ran). A recurring task expires after 7 days (doc).
+- `/loop <prompt>` is the option for work that waits on a clock. The next wake is `ScheduleWakeup`; `stop: true` ends it; a turn with neither gets one fallback wake about 20 minutes later, then the loop ends (doc). `/loop` needs a live session: `claude -p "/loop …"` ran once and exited (ran). A recurring task expires after 30 days (doc).
 
 ## Default: one `/goal` run, no wake task, no cron
 
