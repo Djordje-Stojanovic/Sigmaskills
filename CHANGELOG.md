@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.31.1] — 2026-11-25
+
 ### Changed
 
 - `sigmaloop` upgrades Antigravity (`agy` 1.5.14–1.5.16 and T3 Code 0.1.12) to a first-party harness with its own `/goal` skeleton, `schedule` watchdog (`TimerCondition`), `invoke_subagent`/`/swarm`/`/run-workflow`, `--mode auto` default, `-r`/`--resume`, `~/.agents/skills`, native T3 `/goal`, and `$env:T3_ACP_MCP_CALL` PowerShell fallback; removes outdated `agy` 1.4.2, manual `ProcessStartInfo` ACP bridge, and "Claude or Codex only" workarounds.
@@ -1005,7 +1007,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.0...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.1...HEAD
+[0.31.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.0...v0.31.1
 [0.31.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.3...v0.30.0
 [0.29.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.2...v0.29.3
