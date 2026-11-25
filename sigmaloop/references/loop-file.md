@@ -2,7 +2,7 @@
 
 One Markdown file the loop agent re-reads at the start of every turn. Edits apply on the next turn. The host prompt stays short; everything long lives here.
 
-Save to the place the user chose (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). Keep its rules under about 1,200 words and the whole run file under <60> KB: rewrite the state section, never append to it; old notes go to <log file>. Replace each `<...>`; delete a section only when the answers made it empty.
+Save to the place the user chose (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). Keep its rules under about 1,200 words and the handoff at <= 100 lines: rewrite live state in place, never append old turns; old notes go to <log file>. Replace each `<...>`; delete a section only when the answers made it empty.
 
 ## Template
 
@@ -35,9 +35,9 @@ Shape: <solo | crew of N slots | N lanes: read lanes.md>. Solo: this session pla
 | Reviewer (another provider than the builder) | <mid or top> | <ids> |
 | Clerk (handoff, status) | cheap | <ids> |
 1. The planner plans, starts jobs and merges. It does no builder's tool calls.
-2. One whole unit per builder: build, prove with the unit's acceptance tests, commit. The brief is a spec path and a done line. An item too big for one builder is cut first, by the planner before the loop or by its lane manager in it: `to-spec` writes the spec, `to-tickets` cuts it into tracker tickets (they enter Priority), `implement` builds each in the loop; without those skills the planner does the same by hand.
-3. Each finished ticket gets one fresh reviewer at once, from another provider than its builder when one is free; reviewers at once: <no cap>. The builder first re-reads its own diff in a fresh context. The reviewer runs the change, not only reads it, and ends with MERGE or a finding list; its diff leaves out the paths the repo names as the owner's content, so no model passes or fails his words. The builder fixes each finding; one it holds to be wrong is answered with the command that shows it, never waved off in prose. Style nits are dropped. Review passes per ticket: <3, 5 for security, data loss or publishing>; a pass with nothing new ends it. After the last pass the builder fixes, proves and lands each open finding. A ticket is parked only after <3> failed fix tries. No human review.
-4. When a job ends, its slot takes the most valuable eligible unit in the same turn. Slots: <N>, capped by CPU (below), not by habit. Workers run on <machines>: the orchestrator's own only while it has CPU and memory to spare, else another.
+2. One cohesive vertical work package per builder (skip tiny micro-file churn): build, prove with fast unit tests (< 2s target, `new test LOC <= src LOC`), commit. The brief is a spec path and a done line. An item too big for one builder is cut first, by the planner before the loop or by its lane manager in it: `to-spec` writes the spec, `to-tickets` cuts it into tracker tickets (they enter Priority), `implement` builds each in the loop; without those skills the planner does the same by hand.
+3. Each finished work package gets one fresh reviewer at once, from another provider than its builder when one is free; reviewers at once: <no cap>. The builder first re-reads its own diff in a fresh context. The reviewer runs the change, not only reads it, and ends with MERGE or a finding list; its diff leaves out the paths the repo names as the owner's content, so no model passes or fails his words. The builder fixes P0-P2 findings and drops style nits; a finding it holds wrong is answered with the command that shows it, never waved off in prose. Review rounds per work package: max <2>; a clean round ends it. After the last round the builder fixes, proves and lands each open P0-P2 finding. A ticket is parked only after <3> failed fix tries. No human review.
+4. When a job ends, its slot takes the most valuable eligible unit in the same turn. Slots: <N>, capped by CPU (below), not by habit. Workers run on <machines> (e.g. `<N>` Google Colab standard low-RAM or High-RAM VMs via `sigmacollab` so heavy builds stay off the owner's PC; orchestrator's machine only while it has CPU and memory to spare).
 5. Lanes only: workers end after one ticket, lane managers pull their own next ticket from Priority and go on ticket after ticket, the top never ends before the stop line. Priority is one ranked list for all lanes, never one list per lane.
 6. Each ticket is Ready, Working (a builder has it), Reviewing, or Landed; findings send it back to Working. The builder that finished a part ticks it off itself, where the to-do is: the spec, the PR's checklist or the issue. Nobody ticks for it.
 Guides (workers are briefed by the guide of their model): <links>
@@ -45,14 +45,14 @@ Guides (workers are briefed by the guide of their model): <links>
 ## Failure rules
 - **Stuck:** a job with no new commit and no new output for <30> minutes is stuck. Read the time from its last commit or log line, never by polling: check it when any notice wakes you.
 - **Restart:** a stuck job gets a WIP commit, is stopped, and restarts from that WIP commit with the same brief. A job stuck <3> times is parked: write why in the handoff, take the next unit, never restart it again.
-- **Provider:** a provider that fails twice (429, rate limit, or a cut-off run) drops to last place in every fallback list; an account at its limit drops out until its period resets.
+- **Provider:** start with all configured providers in the Crew table. A provider that fails twice on transient errors (429, rate limit, cut-off run) drops to last place in every fallback list; an account at its limit drops out until its period resets. If a model or provider refuses the task domain once (policy or recreation refusal), drop that provider family from the Crew table for the rest of the run immediately instead of retrying it.
 - **Tier:** a job that fails twice moves one tier up.
 - **Cleanup:** remove a finished job's worktree; stop a stray process only by a process id this run wrote into the handoff, never by name and never an id it did not start.
 - **No polling.** No sleep loops, no "still waiting" turns. Wait for completion notices.
 
 ## Speed rules
 - **Accepted is final.** Never re-check a unit already accepted. Check only what changed since the last acceptance.
-- **One full gate, at the end.** During the run, checks cover changed units only. The full gate runs once, at Finish.
+- **Fast unit tests, dedicated gates.** Per-package checks stay under 2s (`new test LOC <= src LOC`) and cover changed units only. Heavy full-corpus or slow checks run in dedicated gate runs and once at Finish.
 - **Bulk compute.** Many small computations of the same kind run as one bulk job, not one run per unit.
 - **A gate that never passes** is fixed or cut in the first hour.
 - **CPU safety by parallel cap.** At most <N> heavy processes at once. Do not cap a single process at a few seconds; give it the time the work needs.
@@ -63,7 +63,7 @@ Guides (workers are briefed by the guide of their model): <links>
 2. Read the handoff and any new owner message (copy it to the words file first). Run <status command>.
 3. For each finished job: send it to review, or accept it; refill its slot at once.
 4. Fill every free slot from Priority. Skip units that share files with a running job.
-5. Rewrite the handoff (<path>), never append; the run file stays under <60> KB and old notes go to <log file>: running jobs with process ids and worktrees, accepted since last turn, queue.
+5. Rewrite the handoff (<path>) in place at <= 100 lines (never append old turns; move history to <log file>): active jobs (PIDs, worktrees), accepted summary, blockers, owner steps.
 
 ## Priority
 <The ranked list, or the tracker section that holds it. Items that need the user live: write their facts, never decide them.>

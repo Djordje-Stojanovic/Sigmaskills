@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaloop`: tighten defaults — max 2 review rounds per cohesive vertical work package (clean round ends it; fix P0–P2, drop style nits), fast unit tests (< 2s target, `new test LOC <= src LOC`, heavy full-corpus checks in dedicated gate runs only), immediate provider-family drop from the Crew table on a single domain/policy refusal instead of retrying, configurable Google Colab compute (standard low-RAM or High-RAM VMs, recommended default 2) in the question round, and a crisp <= 100-line live-state handoff rewrite replacing the 60 KB cap.
+
 ## [0.31.1] — 2026-11-25
 
 ### Changed
