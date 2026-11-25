@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.31.2] — 2026-11-25
+
 ### Changed
 
 - `sigmaloop`: tighten defaults — max 2 review rounds per cohesive vertical work package (clean round ends it; fix P0–P2, drop style nits), fast unit tests (< 2s target, `new test LOC <= src LOC`, heavy full-corpus checks in dedicated gate runs only), immediate provider-family drop from the Crew table on a single domain/policy refusal instead of retrying, configurable Google Colab compute (standard low-RAM or High-RAM VMs, recommended default 2) in the question round, and a crisp <= 100-line live-state handoff rewrite replacing the 60 KB cap.
@@ -1011,7 +1013,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.1...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.2...HEAD
+[0.31.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.1...v0.31.2
 [0.31.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.0...v0.31.1
 [0.31.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.29.3...v0.30.0
