@@ -2,7 +2,7 @@
 
 One Markdown file the loop agent re-reads at the start of every turn. Edits apply on the next turn. The host prompt stays short; everything long lives here.
 
-Save to the place the user chose (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). Keep its rules under about 1,200 words and the handoff at <= 100 lines: rewrite live state in place, never append old turns; old notes go to <log file>. Replace each `<...>`; delete a section only when the answers made it empty.
+Save to the place the user chose (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). Keep its rules under about 1,200 words and the handoff at <= 300 lines (<= 30 KB) in two parts: **Live State** (overwritten in place each turn) and **Shipped Ledger** (1 line per accepted commit; compress old verbose turn logs into the ledger instead of dropping shipped commit SHAs or active blockers; full history goes to <log file>). Replace each `<...>`; delete a section only when the answers made it empty.
 
 ## Template
 
@@ -63,7 +63,7 @@ Guides (workers are briefed by the guide of their model): <links>
 2. Read the handoff and any new owner message (copy it to the words file first). Run <status command>.
 3. For each finished job: send it to review, or accept it; refill its slot at once.
 4. Fill every free slot from Priority. Skip units that share files with a running job.
-5. Rewrite the handoff (<path>) in place at <= 100 lines (never append old turns; move history to <log file>): active jobs (PIDs, worktrees), accepted summary, blockers, owner steps.
+5. Update the handoff (<path>) at <= 300 lines (<= 30 KB) in two parts: (1) **Live State**, overwritten in place each turn (active jobs with VM/PID/worktree, open blockers, owner steps, exact resume command); (2) **Shipped Ledger**, compact 1-line-per-commit summary of accepted milestones and gate status (never drop shipped commit SHAs or active blockers — only compress old verbose turn logs into the 1-line ledger, moving full history to <log file>).
 
 ## Priority
 <The ranked list, or the tracker section that holds it. Items that need the user live: write their facts, never decide them.>

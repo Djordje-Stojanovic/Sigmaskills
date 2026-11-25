@@ -32,6 +32,10 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaloop`: raise the `handoff.md` cap from `<= 100` lines to `<= 300 lines` (`<= 30 KB`) with a two-part structure: **Live State** (overwritten in place each turn: active jobs with VM/PID/worktree, open blockers, owner steps, exact resume command) and **Shipped Ledger** (compact 1-line-per-commit summary of accepted milestones and gate status, compressing old verbose turn logs instead of dropping shipped commit SHAs or active blockers).
+
 ## [0.31.2] — 2026-11-25
 
 ### Changed
