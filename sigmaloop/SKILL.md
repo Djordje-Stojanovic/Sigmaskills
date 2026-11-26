@@ -5,7 +5,7 @@ description: Use when asked for sigmaloop, sigmabrief, briefs, handoffs, spawn p
 
 # SigmaLoop
 
-Turn a repo's open work into one loop prompt for the user's harness, plus a loop file the prompt tells the agent to re-read. SigmaLoop is a prompt factory: read, ask once, write two things, stop. It never starts the loop and never works the items.
+Turn a repo's open work into one loop prompt for the user's harness, plus a loop file the prompt tells the agent to re-read. SigmaLoop is a prompt factory: read, ask once, write two things, stop.
 
 Asked for briefs, handoffs or spawn prompts (sigmabrief), write those instead: [Briefs](#briefs-was-sigmabrief).
 
@@ -75,7 +75,7 @@ Fill the template in [loop-file.md](references/loop-file.md). Save it where the 
 
 ## 5. Write the host prompt
 
-**Default: the harness's own run-to-done mechanism (a `/goal` where it exists), driven by completion notices.** A slot is refilled in the same turn its job ends. A `/goal` run sets no timer but the watchdog, and that one only when the answers turned it on. Use a clock wake when the stop line is a clock event the work waits on, or the harness has no run-to-done. A harness with neither gets the plain instruction in [hosts.md](references/hosts.md#other-hosts-plain-instruction).
+**Default: the harness's own run-to-done mechanism (a `/goal` where it exists), driven by completion notices.** A `/goal` run sets no timer but the watchdog, and that one only when the answers turned it on. Use a clock wake when the stop line is a clock event the work waits on, or the harness has no run-to-done. A harness with neither gets the plain instruction in [hosts.md](references/hosts.md#other-hosts-plain-instruction).
 
 The prompt is short: the done command, the loop file path to re-read every turn, and the 2-3 limits that must hold. Over about 1,000 characters, move text into the loop file: the prompt is read once, the loop file every turn. Then stop: start no loop and schedule nothing.
 

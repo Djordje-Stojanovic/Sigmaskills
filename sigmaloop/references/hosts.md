@@ -16,7 +16,7 @@ Pick the row for the host and for how the run starts (a live session, or headles
 | T3 Code | `/goal` in a Claude, Codex, Antigravity (CLI 1.5+) or OpenCode (2.2.5+) thread (doc + source); `schedule_task` on other providers | `schedule_task` | Start in a T3 thread (Full access). Outside agents cannot bind `schedule_task` (ran) | the provider's own folder |
 | Gemini CLI | None: plain instruction, `AfterAgent` hook | None | `gemini -p` | `.agents/skills`, `~/.gemini/skills` |
 
-Invoke SigmaLoop the host's way (`/sigmaloop` in Claude Code and Antigravity, `$sigmaloop` in Codex, `/skill:sigmaloop` in pi). On Windows, Antigravity's global skill folder must be a real copy, not a junction (ran), and Git Bash rewrites a leading `/word` argument to a path (ran, Claude Code and `agy`); use PowerShell or `MSYS_NO_PATHCONV=1` (ran).
+Invoke SigmaLoop the host's way (`/sigmaloop` in Claude Code and Antigravity, `$sigmaloop` in Codex, `/skill:sigmaloop` in pi). On Windows, Git Bash rewrites a leading `/word` argument to a path (ran, Claude Code and `agy`); use PowerShell or `MSYS_NO_PATHCONV=1` (ran).
 
 ## The `/goal` prompt
 
@@ -76,7 +76,7 @@ Checked against CLI 1.5.14-1.5.16 and App 2.35.1 ([`/goal`](https://antigravity.
 - **`schedule`**: a one-shot timer (`DurationSeconds`, `Prompt`, `TimerCondition`: `never`, `any`, or a sub-agent or task id) or a five-field `CronExpression` (`MaxIterations`, `IsDaemon`). Timers belong to the conversation; `manage_task` or `/tasks` lists and kills them (doc). `-p` waits for timers up to `--print-timeout` (ran).
 - **Sub-agents**: `invoke_subagent` with `TypeName` `self`, `research`, `browser` or a custom agent (`.agents/agents/<name>.md`), `Workspace` `inherit`, `branch` (its own worktree) or `share`, and `Model` `inherit`, `flash_lite`, `flash` or `pro`. A sub-agent starts with no parent history; `manage_subagents` kills one and cleans its worktree; nesting stops at depth 10 (doc). A custom agent's `commandExecutionPolicy` defaults to `sandbox` (doc). `/swarm`, `/run-workflow`, `/teamwork` and `/boost` are the built-in crews; use one only when the user names it.
 - **Permissions and resume**: `--mode auto` is the default since 1.5.7 where an OS sandbox exists. Headless `-p` soft-denies unapproved calls unless `--dangerously-skip-permissions` or `permissions.allow` in `~/.gemini/antigravity-cli/settings.json` covers them (doc). Resume with `agy -c`, or `agy -r <id>` (1.5.16+).
-- **Skills**: Windows needs a real copy in the global folder (ran); `sigmaskills install sigmaloop --global --agent agy --yes` writes it.
+- **Skills**: Windows needs a real copy in the global folder, not a junction (ran); `sigmaskills install sigmaloop --global --agent agy --yes` writes it.
 
 Gemini CLI (legacy, not run): the plain instruction, or an `AfterAgent` hook returning `decision: "deny"`.
 
@@ -108,7 +108,7 @@ Checked against T3 Code 0.1.12 (`docs/user/` and live runs). T3 Code starts othe
 The crew:
 
 1. First turn: `orchestrator_capabilities` once. Write the provider, model and options into the loop file's Models line; never guess a model id.
-2. **Every worker that runs commands is a `delegate_task` child**, on every provider: `isolation:'worktree'`, `mode:'async'`, a `target` (`providerInstanceId`, `model`, `options`; `environmentId` for another machine), and a `task` that is the spec path plus the done line, since the child sees no parent history. End the turn; completion wakes the orchestrator (ran). A child cannot run wider than its parent (source): start the orchestrator at **Full access** and leave `runtimeMode` out.
+2. **Every worker that runs commands is a `delegate_task` child**, on every provider: `isolation:'worktree'`, `mode:'async'`, a `target` (`providerInstanceId`, `model`, `options`; `environmentId` for another machine), and a `task` that is the spec path, the done line and the loop file's worker rule (Crew, Bootstrap), since the child sees no parent history. End the turn; completion wakes the orchestrator (ran). A child cannot run wider than its parent (source): start the orchestrator at **Full access** and leave `runtimeMode` out.
 3. In one Antigravity run (ran, 2026-11-26, 5 workers) native `invoke_subagent` workers stalled 60 s on shell commands and failed reads outside the worktree; the same work as `delegate_task` children ran clean. `agy` has stalled 60 s on sub-agent approvals under `agy acp` before (doc: changelog), and the T3 user can read a native sub-agent's work but cannot message or stop it (doc). Keep `invoke_subagent` for short read-only lookups.
 4. A fix goes to the warm child with `t3_thread_send`: a send to a finished child starts a new task on its thread and returns the task id (ran: live tool list). A review is a fresh `delegate_task`. `task_status` and `task_cancel` take the task id. A child that ends on a usage or rate-limit error is the Provider rule's signal.
 5. Wait on a child's result or status file, not its thread: `t3_thread_read` starts at the first message and costs a lot (ran).

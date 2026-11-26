@@ -1,13 +1,11 @@
 # SigmaLoop Briefs
 
-Research enough to write good simple briefs, emit them in chat, stop.
-
 ## Inputs
 
 Prefer the repository implied by issue URLs or the current workspace. Accept:
 
 - issue URLs, issue numbers when the repo is clear (`#12`, `12`), `all open` with simple label filters;
-- a SigmaReview report (`SIGMAREVIEW-*.md`): one brief per finding or per tight group, reusing each finding's fix, proof test and `Done when` verbatim;
+- a SigmaReview report (`SIGMAREVIEW-*.md`) or one wave of it: one brief per finding or per tight group, reusing each finding's fix, proof test and `Done when` verbatim;
 - SigmaImprove category issues: only entries marked `chosen`, with the chosen option and its sketch;
 - features, upgrades, bugs and plain-English tasks outside GitHub;
 - `this session`: a session brief so a fresh agent can continue this conversation. For a run under a loop harness it names the loop file, the handoff file, any scheduled wakes the harness holds and the goal line (one printed command);
@@ -57,7 +55,7 @@ wave N | #N or title | isolation: on|off|ask | type: greenfield|finish-PR|skip|b
 ## Invariants every brief carries
 
 1. Exact work target (issue URL and/or plain task).
-2. With `approval: auto` (default), decide, record each decision as `Ruling: <what> — <why> — <cost if wrong>` in the PR body, and stop only for irreversible, security-sensitive, or outside-the-branch actions. With `approval: plan` (only when the user asked), post a plan and wait for approval.
+2. With `approval: auto` (default), decide, record each decision as `Ruling: <what> — <why> — <cost if wrong>` in the PR body, and stop only for irreversible, security-sensitive, or outside-the-branch actions. With `approval: plan` (only when the user asked), post a plan and focused questions, then wait for approval.
 3. Branch from latest `<base>` (default `main`) **or** continue the existing PR branch (never duplicate in-flight work).
 4. One-sentence definition of done.
 5. Required reads when discoverable (concrete paths, not "read the docs").
@@ -84,8 +82,6 @@ git worktree add -b <branch> <sibling-path> origin/<base>    # e.g. ../repo-issu
 ```
 
 One branch, one worktree, on a sibling path next to the main repo (not under `.git`).
-
-**Finish-PR:** continue the existing PR branch. Merge the latest `origin/<base>` into it (never rebase a pushed branch), resolve conflicts carefully (keep both additive doc entries when both are valid), re-validate, push, confirm mergeable.
 
 **Cleanup.** Every worktree brief ends with this block. The executing agent runs it after human merge or abandon, never after `gh pr create`. A brief with no worktree says `Cleanup: N/A — no worktree`.
 
@@ -133,7 +129,7 @@ REPORT BACK: Status: DONE | DONE_WITH_CONCERNS | BLOCKED · PR URL · checks run
 Existing PR: <pr-url> (branch <name>)
 
 Read the issue and the existing PR. Do not start a second implementation.
-Continue the existing PR branch. Merge the latest origin/<base> into the branch (never rebase a pushed branch), resolve conflicts carefully, re-validate, push, confirm mergeable.
+Continue the existing PR branch. Merge the latest origin/<base> into the branch (never rebase a pushed branch), resolve conflicts carefully (keep both additive doc entries when both are valid), re-validate, push, confirm mergeable.
 Isolation: <on|off>. If on, create a worktree for this PR branch (same create/cleanup rules as greenfield). Otherwise stay on a normal checkout of the PR branch.
 Do not merge. Open/update the PR for review only after self-review for quality, docs, validation, and low bug risk.
 Out of scope: unrelated issues.
