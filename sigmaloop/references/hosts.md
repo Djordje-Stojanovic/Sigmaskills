@@ -87,11 +87,12 @@ Gemini CLI (legacy, not run): the plain instruction, or an `AfterAgent` hook ret
 Facts for lapi, a pi setup with Plan and Code modes (source: its Plan and Code prompts; [pi docs](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/docs)). `pi -p "/skill:sigmaloop …"` loads the skill (ran, Windows and Linux). The plan loop needs the interactive session: `pi -p "/code"` only switches the mode and exits (ran). Live run of the TUI loop pending.
 
 - Stock pi has no loop and no scheduler (doc). In lapi's Code mode, while the dated plan file under `.pi/plans/` has open `- [ ]` boxes inside `<!-- lapi-workflow -->` … `<!-- /lapi-workflow -->`, lapi starts the next turn each time the agent goes idle. Boxes outside the fence are not a loop (source).
+- The loop starts from Plan mode, which is read-only except `.pi/plans/`. In chat the plan is one `[LAPI_PLAN]` … `[/LAPI_PLAN]` block with nothing after it; the dated file holds the same block, then the fence. `/code`, or `/code-fresh` for a new session, starts Code mode (source).
 - It stops when every box is ticked or the agent writes `[LAPI_PLAN_DONE]`. A turn with no write, edit or bash waits for the owner. `Esc` pauses; `/plan pause`, `/plan resume`, `/plan clear` (source).
 - No clock: for a clock stop line, end with a box that reads the clock and, before the stop line, adds new boxes above itself.
 
 ```text
-Plan mode. Use the answers in <loop file path>; ask nothing new. Write the plan: Mission (outcome, stop line <time, zone>), Boundaries, Invariants, Order (<loop file> "Priority"), Landing (<one line>), Authorised (<list>). Put the loop in the dated file under .pi/plans/:
+Plan mode. Use the answers in <loop file path>; ask nothing new. Write the plan: Mission (outcome, stop line <time, zone>), Boundaries, Invariants, Order (<loop file> "Priority"), Landing (<one line>), Authorised (<list>). Give it in chat as one [LAPI_PLAN] … [/LAPI_PLAN] block. Write the same block to the dated file under .pi/plans/, then the loop below it:
 <!-- lapi-workflow -->
 - [ ] Read <loop file path>. Do item <1> to its Landing as one full spec; tick it in the tracker with evidence.
 - [ ] (one box per ranked item, the first <N>)

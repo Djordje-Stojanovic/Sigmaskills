@@ -33,7 +33,7 @@ Each number is a default the user's words override.
 |---|---|---|
 | **S** | A few items, or work that must go in order | One agent, no sub-agents, one branch, one PR. One warm session works the plan top down. |
 | **M** | A spec whose parts touch different files, on a machine with CPU to spare | An orchestrator and 3-4 workers, each in its own git worktree, on one shared feature PR the orchestrator merges into. |
-| **L** | Many subsystems, heavy builds, GPU or browser suites | An orchestrator that only writes specs, steers and keeps the run's files, and 5 workers, each on its own rented machine (sigmacollab). A 15-minute watchdog is on. |
+| **L** | Many subsystems, heavy builds, GPU or browser suites | An orchestrator that only writes specs, steers and keeps the run's files, and 5 workers, each on its own rented machine (sigmacollab). A 15-minute watchdog is on where the host has a timer. |
 
 In M and L every worker is the same kind of slot: it builds, reviews another worker's track or fixes, whatever the orchestrator needs next. From 3 workers up the run keeps two crew files: traps and shared contracts from the orchestrator, questions from the workers.
 
@@ -63,7 +63,7 @@ One numbered message. Each question gives `Recommended: <best default>` and `Alt
 4. **Models.** `Recommended:` one strong, fast model from the host's live list for every slot, reviews in a fresh session. `Alternative:` a second model from another provider for reviews.
 5. **Machines and slots.** Where workers run and how many. `Recommended:` the shape's default, capped by CPU cores and by independent tracks; a repo rule wins. `Alternative:` fewer slots, or local worktrees in place of rented machines.
 6. **Checks.** `Recommended:` a fast check of the changed units while building (`< 2s`, new test lines at most the source lines), one full gate per finished track and one at Finish, at most 2 review rounds; when the work is seen or heard (UI, rendering, animation, video, audio), one gate that looks at the real output. `Alternative:` 1 review round, or the repo's existing gate per track.
-7. **Watchdog** (M and L). A timer that wakes the orchestrator when no worker reported for 15 minutes: when every worker hangs at once, no completion notice comes. `Recommended:` on for L, off for M. `Alternative:` the other one.
+7. **Watchdog** (M and L). A timer that wakes the orchestrator when no worker reported for 15 minutes: when every worker hangs at once, no completion notice comes. `Recommended:` on for L, off for M. `Alternative:` the other one. A host with no timer (hosts.md) has none: say so in the notes.
 8. **Pre-authorised actions and budgets.** Commit, push, PR, merge, deploy, delete merged branches and worktrees, close tickets; and each spend limit (what, amount, period, meter command). `Recommended:` all except deploy (deploy only when the repo names a deploy step); no meter, no budget. `Alternative:` stop at ready PRs (`sigmaship stop`), or a spend cap with its meter.
 9. **Limits and what may be deleted.** The owner's orders (his sentence and its date for each), mechanical guards (the fault each prevents), and what the run may cut. `Recommended:` protect user-live items, other agents' work, production data and data that cannot be restored; cut records no machine reads and checks that never caught anything; nothing in user content. `Alternative:` also freeze the files the owner names, and cut only this run's own scratch.
 
@@ -75,7 +75,7 @@ Fill the template in [loop-file.md](references/loop-file.md). Save it where the 
 
 ## 5. Write the host prompt
 
-**Default: the harness's own run-to-done mechanism (a `/goal` where it exists), driven by completion notices.** A slot is refilled in the same turn its job ends. The only timer is the watchdog, and only when the answers turned it on. Use a clock wake when the stop line is a clock event the work waits on, or the harness has no run-to-done. A harness with neither gets the plain instruction in [hosts.md](references/hosts.md#other-hosts-plain-instruction).
+**Default: the harness's own run-to-done mechanism (a `/goal` where it exists), driven by completion notices.** A slot is refilled in the same turn its job ends. A `/goal` run sets no timer but the watchdog, and that one only when the answers turned it on. Use a clock wake when the stop line is a clock event the work waits on, or the harness has no run-to-done. A harness with neither gets the plain instruction in [hosts.md](references/hosts.md#other-hosts-plain-instruction).
 
 The prompt is short: the done command, the loop file path to re-read every turn, and the 2-3 limits that must hold. Over about 1,000 characters, move text into the loop file: the prompt is read once, the loop file every turn. Then stop: start no loop and schedule nothing.
 

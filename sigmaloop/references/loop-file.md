@@ -40,12 +40,12 @@ Slots: <N> workers, each on <its own git worktree | its own rented machine (sigm
 Crew files <3 or more workers; else delete>, in this file's folder:
 - `crew.md`, written only by the orchestrator, read by every worker at start and when steered. It holds each trap (a command or flag that hung or wasted <15> minutes: two lines, written the moment it is seen) and each contract tracks must agree on (a shared type, an interface, a landed commit).
 - `qna.md`: a worker appends `[OPEN] <slot>: <question> - default: <what it does meanwhile>` and keeps working on that default. The orchestrator answers in place on its next turn and copies a shared answer to `crew.md`.
-Watchdog: <off | <15> minutes>. On: one timer (hosts.md names it for this host) wakes the orchestrator when no worker reported for that long. It then runs the Stuck rule on every worker and sets the timer again. Why a timer: when every worker hangs at once, no completion notice comes.
+Watchdog: <off | <15> minutes | none: this host has no timer>. On: one timer (hosts.md names it for this host) wakes the orchestrator when no worker reported for that long. It then runs the Stuck rule on every worker and sets the timer again. Why a timer: when every worker hangs at once, no completion notice comes.
 
 ## Failure rules
 - **Stuck:** a job with no new commit and no new output for <15> minutes is stuck. Read the time from its last commit or log line when a notice or the watchdog wakes you, never by polling.
 - **Restart:** a stuck job is steered once. Still stuck: it gets a WIP commit, is stopped, and restarts from that commit with the same spec; its cause goes to `crew.md` as a trap. A job stuck <3> times is parked: write why in the handoff and take the next unit.
-- **Provider:** a provider that fails twice on transient errors (429, rate limit, cut-off run) drops to last place; an account at its limit drops out until its period resets. A model or provider that refuses the task's domain once drops out for the rest of the run, with no second try.
+- **Provider:** a provider that fails twice on transient errors (429, rate limit, cut-off run) drops to last place; an account at its limit drops out until its period resets. A model that refuses the task's domain once takes its whole provider family out for the rest of the run, with no second try.
 - **Stronger model:** a job that fails twice moves to the stronger model or the higher effort, when the Models line names one.
 - **Cleanup:** remove a finished job's worktree or rented machine; stop a stray process only by a process id this run wrote into the handoff, never by name and never an id it did not start.
 - **No polling.** No sleep loops, no "still waiting" turns. Wait for completion notices.
@@ -62,7 +62,7 @@ Watchdog: <off | <15> minutes>. On: one timer (hosts.md names it for this host) 
 
 ## Each turn
 1. Read the clock (<zone>). At or after the stop line: Finish.
-2. Read the handoff, `qna.md` and any new owner message (copy it to the words file first). Run <status command>.
+2. Read the handoff, `qna.md` when the run keeps crew files, and any new owner message (copy it to the words file first). Run <status command>.
 3. For each finished job: send it to review, or accept it; refill its slot at once.
 4. Fill every free slot from Priority. Skip units that share files with a running job.
 5. Update the handoff (<path>) at <= <300> lines (<= <30 KB>) in two parts. **Live State**, overwritten in place each turn: active jobs with machine, process id and worktree, open blockers, owner steps, the exact resume command. **Shipped Ledger**: one line per accepted commit and gate status; old turn logs are compressed into it, shipped commit SHAs and open blockers stay, full history goes to <log file>. A fresh thread resumes from the handoff, never from chat history.
