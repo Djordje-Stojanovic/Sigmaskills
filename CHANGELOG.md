@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.31.7] — 2026-11-26
+
 ### Changed
 
 - `sigmaloop`: three shapes and half the text. `sigmaloop S`, `M` or `L` with a few sentences writes the loop file and the prompt at once: S is one agent with no sub-agents, M an orchestrator and 3-4 workers on a git worktree each, L an orchestrator that only writes specs and steers, with 5 workers on a rented machine each (`sigmacollab`). Plain `sigmaloop` still asks one round, now 9 questions in `SKILL.md`, and the loop file keeps the reply verbatim under `## Answers`.
@@ -1052,7 +1054,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.6...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.7...HEAD
+[0.31.7]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.6...v0.31.7
 [0.31.6]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.5...v0.31.6
 [0.31.5]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.4...v0.31.5
 [0.31.4]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.3...v0.31.4
