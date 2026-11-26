@@ -32,9 +32,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.31.8] — 2026-11-26
+
 ### Changed
 
-- `sigmaloop`: five rules from a long multi-worker run whose integration phase took three quarters of the time. (1) Integration and final gates are sharded across the fastest free slots, and a slot with no job left is stopped, its rented machine deleted, in the same turn. (2) One review round per track, then the track merges at once; a cheap smoke on real inputs fails fast on a runtime error, a missing file or a fallback taken before any slow gate, and the second review round goes to the integrated build. (3) Every gate and its harness passes on the base branch before the first track merges, and a gate's cache key covers only its own component's inputs. (4) Shared fixtures are put in place once before the first worker starts, and every worker's start message carries one rule: end your turn only after every build or check you started has exited. (5) The orchestrator reads `crew.md` and `qna.md` only when a worker reported or the watchdog fired, and the handoff's Live State is about 15 lines.
+- `sigmaloop`: five rules from a long multi-worker run whose integration phase took three quarters of the time. (1) Integration and final gates are sharded across the fastest free slots, and a slot whose work is fetched and that no fix or shard waits on is stopped, its rented machine deleted, in the same turn. (2) One review round per track, then the track merges at once; a cheap smoke on real inputs fails fast on a runtime error, a missing file or a fallback taken before any slow gate, and the second review round goes to the integrated build. (3) Every gate and its harness passes on the base branch before the first track merges, and a gate's cache key covers the inputs that gate reads, not the whole repo. (4) Shared fixtures are put in place once before the first worker starts, and every worker's start message carries one rule: end your turn only after every build or check you started has exited. (5) The orchestrator reads `crew.md` and `qna.md` only when a worker reported or the watchdog fired, and the handoff's Live State is about 15 lines.
 - `sigmaloop`: the text shrank while the rules went in (533 to 523 lines, 9,002 to 8,995 words, still 5 files): `SKILL.md`, `briefs.md`, `hosts.md` and `loop-file.md` no longer say the same thing twice.
 
 ## [0.31.7] — 2026-11-26
@@ -1059,7 +1061,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.7...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.8...HEAD
+[0.31.8]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.7...v0.31.8
 [0.31.7]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.6...v0.31.7
 [0.31.6]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.5...v0.31.6
 [0.31.5]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.4...v0.31.5
