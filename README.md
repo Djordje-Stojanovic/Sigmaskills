@@ -66,7 +66,7 @@ Each skill has one job. Say its name to start it.
 | `sigmacourse` | Plans and builds a tutorial, guide or course of any size. It starts from what the learner can do at the end and derives the parts and the process from that. | |
 | `sigmacreate` | Makes a new skill, public (proven free of personal data) or local to one repo or machine, and ends with it installed and picked up. | |
 | `sigmacreatearena` | Ranks many options by your taste: blind pairs, Elo per metric. | Python 3, a browser |
-| `sigmaloop` | Writes copy-pastable agent briefs in safe parallel waves, or a loop file and prompt for an unattended run (Claude Code, Codex, Antigravity, pi, T3 Code). Never starts the run. | |
+| `sigmaloop` | Writes copy-pastable agent briefs in safe parallel waves, or a loop file and prompt for an unattended run (Claude Code, Codex, Antigravity, pi, T3 Code) in three sizes: S one agent, M a crew on worktrees, L a crew on rented machines. Never starts the run. | |
 | `sigmasetup` | Sets up a repo for the packs you installed and syncs your house files (`ENGINEERING.md`, `DESIGN.md`, `AGENTS.md` sections) from your masters. | Node.js |
 | `sigmafreedom` | Deletes model-written refusals and moral limits from a repo's agent docs; a lint keeps them out. | Python 3 |
 | `sigmacollab` | Runs one job on rented compute: a Google Colab runtime first (CPU, GPU, TPU), a boat.dev box for what Colab cannot hold, or a vast.ai GPU when Colab refuses. Shows the price first and proves the teardown. | The `boat`, `colab` or `vastai` CLI and its account |
@@ -93,6 +93,7 @@ $sigmatour Give me a 30 minute tour of this repo
 $sigmaclimb Make my vLLM model serve faster on a rented H100
 $sigmawrite Humanize this announcement so it sounds like me
 $sigmaloop Write an overnight loop prompt for Claude Code until 07:00
+$sigmaloop M Finish the open spec; done when the test suite is green
 ```
 
 ## Packs
