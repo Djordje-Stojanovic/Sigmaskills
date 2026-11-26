@@ -1,12 +1,10 @@
 # Host facts and prompt skeletons
 
-Checked 2026-11-26. Hosts change fast: when a fact matters, check the linked source. Each fact is marked **ran** (run by the author on Windows 11), **doc** (host documentation or its bundled guide), or **source** (host source code); a step not run says "live run pending". These are the harnesses met so far. For any other, read its docs (SKILL.md step 2) and write the prompt from what it can do.
-
-Read the next three sections, then only the section of the user's harness.
+Checked 2026-11-26. Hosts change fast: when a fact matters, check the linked source. Each fact is marked **ran** (run by the author on Windows 11), **doc** (host documentation or its bundled guide), or **source** (host source code); a step not run says "live run pending".
 
 ## Pick the mechanism
 
-A prompt that needs a tool the host lacks stalls the run. Pick the row for the host and for how the run starts (a live session, or headless).
+Pick the row for the host and for how the run starts (a live session, or headless).
 
 | Host | Loop that fits | Clock wake | Headless run | Skill folder |
 |---|---|---|---|---|

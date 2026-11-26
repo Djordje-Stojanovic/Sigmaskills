@@ -1,11 +1,6 @@
 # SigmaLoop Briefs
 
-Research enough to write good simple briefs, emit them in chat, stop. Implement nothing, open no PR and write no file in the target repository.
-
-## Who asks what
-
-- **SigmaLoop Briefs** asks at most one question, when the work target is missing (`Which issue URL(s), work statement, or repo for all open?`). A full `/grilling` only when the user asks for it.
-- **The executing agent** asks nothing under `approval: auto` (default): it decides and logs rulings. Under `approval: plan`, it posts its plan and focused questions.
+Research enough to write good simple briefs, emit them in chat, stop.
 
 ## Inputs
 
@@ -66,7 +61,7 @@ wave N | #N or title | isolation: on|off|ask | type: greenfield|finish-PR|skip|b
 3. Branch from latest `<base>` (default `main`) **or** continue the existing PR branch (never duplicate in-flight work).
 4. One-sentence definition of done.
 5. Required reads when discoverable (concrete paths, not "read the docs").
-6. Big steps: the whole job in 10-20 tool calls; read each input whole; write each file in one Write. Validate once, at the end (tests or checkpoints if known; else smoke the failure mode). A red that is also red on `origin/<base>` is named, not fixed. For a SigmaReview finding, its proof test must fail before the fix and pass after. Long commands run in the background; no sleep or poll loops.
+6. Big steps: the whole job in 10-20 tool calls; read each input whole; write each file in one Write. Validate once, at the end (tests or checkpoints if known; else smoke the failure mode). A red that is also red on `origin/<base>` is named, not fixed. For a SigmaReview finding, its proof test must fail before the fix and pass after. Long commands run in the background and exit before your turn ends; no sleep or poll loops.
 7. Commit each finished part as you go, push, open a PR for review (`Closes #N` when applicable).
 8. **Do not merge.**
 9. Self-review: high quality, docs, validation, low regression risk before opening the PR.

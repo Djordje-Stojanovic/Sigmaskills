@@ -32,6 +32,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaloop`: five rules from a long multi-worker run whose integration phase took three quarters of the time. (1) Integration and final gates are sharded across the fastest free slots, and a slot with no job left is stopped, its rented machine deleted, in the same turn. (2) One review round per track, then the track merges at once; a cheap smoke on real inputs fails fast on a runtime error, a missing file or a fallback taken before any slow gate, and the second review round goes to the integrated build. (3) Every gate and its harness passes on the base branch before the first track merges, and a gate's cache key covers only its own component's inputs. (4) Shared fixtures are put in place once before the first worker starts, and every worker's start message carries one rule: end your turn only after every build or check you started has exited. (5) The orchestrator reads `crew.md` and `qna.md` only when a worker reported or the watchdog fired, and the handoff's Live State is about 15 lines.
+- `sigmaloop`: the text shrank while the rules went in (533 to 527 lines, 9,002 to 8,985 words, still 5 files): `SKILL.md`, `briefs.md`, `hosts.md` and `loop-file.md` no longer say the same thing twice.
+
 ## [0.31.7] — 2026-11-26
 
 ### Changed

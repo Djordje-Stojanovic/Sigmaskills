@@ -1,8 +1,8 @@
 # The loop file
 
-One Markdown file the loop agent re-reads at the start of every turn. Edits apply on the next turn. The host prompt stays short; everything long lives here.
+One Markdown file the loop agent re-reads at the start of every turn. Edits apply on the next turn.
 
-Save to the place the user chose (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). Keep its rules under about 1,200 words. Replace each `<...>`; a `<a | b>` is a choice by shape or answer: keep one side. Delete a section only when the answers made it empty.
+Keep its rules under about 1,200 words. Replace each `<...>`; a `<a | b>` is a choice by shape or answer: keep one side. Delete a section only when the answers made it empty.
 
 ## Template
 
@@ -32,40 +32,42 @@ At the stop line every item in <tracker> is accepted with dated evidence, or car
 <S: this session plans, builds, re-reads its own diff in a fresh read and lands each item, top down, with no sub-agents. Delete the rest of this section.>
 Slots: <N> workers, each on <its own git worktree | its own rented machine (sigmacollab)>, capped by CPU and by independent tracks. Models: <one or two ids with effort, from the user or the host's live list>.
 1. **Tracks, not tickets.** The open items are packed into <N> tracks, one per slot. A track is a spec path and a done line; its files are disjoint from every other track's, and at most one track waits on another. A track with no spec gets one first (`to-spec`, or by hand).
-2. **Any slot, any job.** A free slot takes what unblocks the most, in the same turn the last job ended: a build, a review of another track, a fix or the integration. The orchestrator picks each time.
-3. **Warm sessions.** A track keeps its session: review fixes and follow-ups reach it as a message (hosts.md names the tool), so its context is paid for once. Only a review starts a fresh session.
-4. **Orchestrator.** <M: plans, starts and steers workers, and merges each passed track into the feature branch. | L: writes specs, starts, steers and stops workers, answers their questions and keeps this run's files. Workers do every build, review, commit, merge and deploy, so its turns stay short.>
-5. **Review.** The builder first re-reads its own diff. Then one reviewer in a fresh session (<another slot | a model of another provider>) runs the change, not only reads it, and ends with MERGE or a finding list. Its diff leaves out the paths the repo names as the owner's content, so no model passes or fails his words. The builder fixes P0-P2 findings and drops style nits; a finding it holds wrong is answered with the command that shows it. Rounds per track: max <2>; a clean round ends it. A track is parked only after <3> failed fix tries. No human review.
-6. **State.** Each track is Ready, Working, Reviewing or Landed; findings send it back to Working. The worker that finished a part ticks it off itself, where the to-do is: the spec, the PR's checklist or the issue.
+2. **Bootstrap once.** Before the first worker starts, the orchestrator puts every shared fixture (test data, assets, tools) where all workers read it; nothing is fetched mid-run. A worker's start message is its spec path, its done line and one rule: end your turn only after every build or check you started, in the background or on another machine, has exited.
+3. **Any slot, any job.** A free slot takes what unblocks the most, in the same turn the last job ended: a build, a review of another track, a fix, or a shard of the integration and its gates. The orchestrator picks each time, and stops a slot with no job left (and deletes its rented machine) in that same turn: idle compute is spend with no output.
+4. **Warm sessions.** A track keeps its session: review fixes and follow-ups reach it as a message (hosts.md names the tool), so its context is paid for once. Only a review starts a fresh session.
+5. **Orchestrator.** <M: plans, starts and steers workers, and merges each passed track into the feature branch. | L: writes specs, starts, steers and stops workers, answers their questions and keeps this run's files. Workers do every build, review, commit, merge and deploy, so its turns stay short.>
+6. **Review.** The builder first re-reads its own diff. Then one reviewer in a fresh session (<another slot | a model of another provider>) runs the change, not only reads it, and ends with MERGE or a finding list. Its diff leaves out the paths the repo names as the owner's content, so no model passes or fails his words. The builder fixes P0-P2 findings and drops style nits; a finding it holds wrong is answered with the command that shows it. Rounds: <1> per track, then it merges; the next round, and any look at the real output, reviews the integrated build on real inputs, which show what a track on stand-in data hides. A track is parked only after <3> failed fix tries. No human review.
+7. **State.** Each track is Ready, Working, Reviewing or Landed; findings send it back to Working. The worker that finished a part ticks it off itself, where the to-do is: the spec, the PR's checklist or the issue.
 Crew files <3 or more workers; else delete>, in this file's folder:
 - `crew.md`, written only by the orchestrator, read by every worker at start and when steered. It holds each trap (a command or flag that hung or wasted <15> minutes: two lines, written the moment it is seen) and each contract tracks must agree on (a shared type, an interface, a landed commit).
-- `qna.md`: a worker appends `[OPEN] <slot>: <question> - default: <what it does meanwhile>` and keeps working on that default. The orchestrator answers in place on its next turn and copies a shared answer to `crew.md`.
-Watchdog: <off | <15> minutes | none: this host has no timer>. On: one timer (hosts.md names it for this host) wakes the orchestrator when no worker reported for that long. It then runs the Stuck rule on every worker and sets the timer again. Why a timer: when every worker hangs at once, no completion notice comes.
+- `qna.md`: a worker appends `[OPEN] <slot>: <question> - default: <what it does meanwhile>` and keeps working on that default. The orchestrator answers in place the next time a worker reports and copies a shared answer to `crew.md`.
+Watchdog: <off | <15> minutes | none: this host has no timer>. On: one timer (hosts.md names it for this host) wakes the orchestrator when no worker reported for that long. It then runs the Stuck rule on every worker and sets the timer again.
 
 ## Failure rules
 - **Stuck:** a job with no new commit and no new output for <15> minutes is stuck. Read the time from its last commit or log line when a notice or the watchdog wakes you, never by polling.
 - **Restart:** a stuck job is steered once. Still stuck: it gets a WIP commit, is stopped, and restarts from that commit with the same spec; its cause goes to `crew.md` as a trap. A job stuck <3> times is parked: write why in the handoff and take the next unit.
 - **Provider:** a provider that fails twice on transient errors (429, rate limit, cut-off run) drops to last place; an account at its limit drops out until its period resets. A model that refuses the task's domain once takes its whole provider family out for the rest of the run, with no second try.
 - **Stronger model:** a job that fails twice moves to the stronger model or the higher effort, when the Models line names one.
-- **Cleanup:** remove a finished job's worktree or rented machine; stop a stray process only by a process id this run wrote into the handoff, never by name and never an id it did not start.
+- **Cleanup:** remove a finished track's worktree; stop a stray process only by a process id this run wrote into the handoff, never by name and never an id it did not start.
 - **No polling.** No sleep loops, no "still waiting" turns. Wait for completion notices.
 
 ## Speed rules
 - **Accepted is final.** Check only what changed since the last acceptance.
-- **Fast checks while building, full gates once.** A builder's checks cover the changed units only (<< 2s> target, `<new test LOC <= src LOC>`). The full or slow suite runs once per finished track and once at Finish.
+- **Cheapest check first.** A builder's checks cover the changed units only (<< 2s> target, `<new test LOC <= src LOC>`). A track that passed its review merges into the integrated build at once. There a cheap smoke on real inputs runs first and fails fast on a runtime error, a missing file or asset, or a fallback taken. The full or slow suite runs only on a build that passed the smoke, and once at Finish.
+- **Shard the slow gates.** Integration and final gates split across the fastest free slots and machines, one shard each; no worker runs the whole queue while others idle.
 - **Look at the real output.** <Work that is seen or heard: UI, rendering, animation, video, audio; else delete.> One gate shows the reviewer the result itself: screenshots, or a contact sheet of frames across the motion, beside a reference where one exists (sigmadeeplook reads video and audio). Green tests on a broken screen are not done.
 - **Bulk compute.** Many small computations of the same kind run as one bulk job, not one run per unit.
-- **A gate that never passes** is fixed or cut in the first hour.
+- **Gates prove themselves first.** Each gate and its harness passes on the base branch before the first track merges; one that never passes is fixed or cut in the first hour. A gate's cache key covers only the inputs of its own component, so an edit re-runs the gates it touches, not all of them.
 - **One lock, one worker.** At most <N> heavy processes at once; a worker runs one server and one browser at a time and closes them when its check ends. Slots that queue behind one checkout, one build lock or one machine are one slot: give each its own. Give a process the time the work needs, never a cap of a few seconds.
 - **Commands on another machine** carry a time limit and name exact folders, never a whole disk.
 - **Records a machine reads.** Write a record only when a script or the next turn reads it: the handoff, the crew files, the tracker.
 
 ## Each turn
 1. Read the clock (<zone>). At or after the stop line: Finish.
-2. Read the handoff, `qna.md` when the run keeps crew files, and any new owner message (copy it to the words file first). Run <status command>.
+2. Read the handoff's Live State and any new owner message (copy it to the words file first). Read `qna.md` and `crew.md` only when a worker reported or the watchdog fired, never an unchanged file. Run <status command>.
 3. For each finished job: send it to review, or accept it; refill its slot at once.
 4. Fill every free slot from Priority. Skip units that share files with a running job.
-5. Update the handoff (<path>) at <= <300> lines (<= <30 KB>) in two parts. **Live State**, overwritten in place each turn: active jobs with machine, process id and worktree, open blockers, owner steps, the exact resume command. **Shipped Ledger**: one line per accepted commit and gate status; old turn logs are compressed into it, shipped commit SHAs and open blockers stay, full history goes to <log file>. A fresh thread resumes from the handoff, never from chat history.
+5. Update the handoff (<path>), two parts, <= <300> lines. **Live State**, about <15> lines overwritten in place: active jobs (machine, process id, worktree), open blockers, owner steps, the exact resume command. **Shipped Ledger**: one line per accepted commit and gate status; older turn logs go to <log file>. A fresh thread resumes from the handoff, never from chat history.
 
 ## Priority
 <The ranked list, or the tracker section that holds it. Items that need the user live: write their facts, never decide them.>
@@ -87,14 +89,13 @@ Nothing outside these three lists limits the run.
 - Scope notes: <what no ticket covers>. A scope note marks where the work ends; it bans nothing.
 
 ## Finish (at the stop line)
-Start nothing new. Let running jobs finish and write their state. Run the full gate once and print it. Prove sync: no open PR of this run, one worktree, no stray process, no rented machine (sigmacollab's teardown proof), no timer of this run. Write the final handoff: accepted (with evidence), open (reason, next step), owner steps. Check an owner step before you list it: look up the machine, account or file it names, run its command once yourself, and label an undo block "only to take it back later".
+Start nothing new. Let running jobs finish and write their state. Run the full gate once, sharded, and print it. Prove sync: no open PR of this run, one worktree, no stray process, no rented machine (sigmacollab's teardown proof), no timer of this run. Write the final handoff: accepted (with evidence), open (reason, next step), owner steps. Check an owner step before you list it: look up the machine, account or file it names, run its command once yourself, and label an undo block "only to take it back later".
 ```
 
 ## Rules for the file
 
 - Every number comes from an answer or the repo; a `<15>` style default is a recommendation the question round confirms.
-- Failure rules, Speed rules and Finish are defaults: copy each whole. Drop a line only when an answer contradicts it.
 - Write rules as checks the agent can run, not as wishes.
-- A preference that would put several slots behind one checkout, one build lock or one machine is a serial bottleneck: name the trade-off in the question round before it becomes a Limit.
+- A preference that queues several slots behind one checkout, build lock or machine is a serial bottleneck: name it in the question round.
 - Model ids appear only on the Models line of Crew.
 - Host-only facts (wake tools, cache flags, proxies) belong in hosts.md, not here.
