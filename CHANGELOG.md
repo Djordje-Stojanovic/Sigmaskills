@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.31.6] — 2026-11-26
+
 ### Changed
 
 - `sigmasetup`: the git guard now covers Antigravity too. One `install` writes the Claude Code hook (`.claude/settings.json`) and an Antigravity hook (`.agents/hooks.json`, `run_command`, decision JSON on stdout); `remove` takes both out, `status` names a missing half. Proved live with `agy` 1.5.16: `git reset --hard` denied, `git status` ran.
@@ -1040,7 +1042,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.5...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.6...HEAD
+[0.31.6]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.5...v0.31.6
 [0.31.5]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.4...v0.31.5
 [0.31.4]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.3...v0.31.4
 [0.31.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.2...v0.31.3

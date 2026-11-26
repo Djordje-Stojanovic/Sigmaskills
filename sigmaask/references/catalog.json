@@ -1,4 +1,4 @@
-{"generatedBy":"scripts/sigmaask-catalog.js","release":"0.31.5","retired":{"sigmaperformance":"sigmareview","sigmawritegui":"sigmawrite","sigmafork":"sigmatour","sigmarefactor":"sigmamusk","sigmareset":"sigmamusk","sigmadesign":"frontend-design and the design-md pack, with sigmataste","sigmaspeedloop":"sigmaclimb","sigmabrief":"sigmaloop","sigmahuman":"sigmawrite","sigmaboat":"sigmacollab"},"packs":[
+{"generatedBy":"scripts/sigmaask-catalog.js","release":"0.31.6","retired":{"sigmaperformance":"sigmareview","sigmawritegui":"sigmawrite","sigmafork":"sigmatour","sigmarefactor":"sigmamusk","sigmareset":"sigmamusk","sigmadesign":"frontend-design and the design-md pack, with sigmataste","sigmaspeedloop":"sigmaclimb","sigmabrief":"sigmaloop","sigmahuman":"sigmawrite","sigmaboat":"sigmacollab"},"packs":[
   {"id":"sigma","title":"Sigma","blurb":"Review, improve, ship, research and write. The first-party Sigma skills.","refs":{},"sources":["Djordje-Stojanovic/Sigmaskills@main/"],"skills":[
    ["sigmareview","Find and prove every bug, security hole, and slow path"],
    ["sigmaimprove","Living per-category backlog of ideas versus the world's best"],
