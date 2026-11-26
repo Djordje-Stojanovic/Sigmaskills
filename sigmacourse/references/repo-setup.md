@@ -29,7 +29,7 @@ books/                    git-ignored; the user drops bought books here
 OBJECTIVE (one sentence):
 END STATE: the lines of SKILL.md step 1     MAP: nodes, proofs, minutes, longest chain (script output)
 PROCESS: the step table of SKILL.md step 3  LEARNER:          PLACEMENT:
-GOAL:                        BASE RATE (source or assumption):
+GOAL:                        BASE RATE (source, assumption or "no number found"):
 BAR (named comparison):      OUT OF SCOPE:
 LEARNER TIME: total, per sitting, sittings a week      BUILD FIRST or PILOT:
 VARIETY: shapes, tasks, levels, sameness checks (variety.md, adapted)
@@ -49,7 +49,7 @@ Each line records its source and date ("user <date>" or "default, logged"). When
 - One line per requirement the spec states: `R-<n> <what> [script: <check> | review | user step]`. Script beats review.
 - Group by area: lessons, variety, media, cases, personas, lab tools, delivery, research, books.
 - At the top: open decisions and conflicts, each with its default.
-- The completion ladder at the bottom: done means `checks/check.py` prints `DONE` (every line passes, accepted learner time at target, every area at its count, the final review PASS). Then polish, then maintenance only if the user wants it.
+- The completion ladder at the bottom: done means `checks/check.py` prints `DONE` (every line passes, accepted learner time at target, every area at its count, the final review PASS). Without a script, verify the same conditions by hand.
 
 ## queue.tsv
 
@@ -61,7 +61,7 @@ Columns: `id  status  area  job  blocked_by  paths  done_when  notes`. Status is
 
 ## checks/check.py
 
-One script, no AI. It prints one line per area (`lessons 12/40 accepted, 9.5/30 h`) and a last line: `DONE` or `OPEN <n>`. `--unit <id>` checks one unit: every "Check:" of SKILL.md step 4 a script can test, read from the unit's front matter (`id`, `node`, `minutes`; the `variety.md` fields when that step ran). It reads front matter and the queue; it never trusts a typed number. Grow it with the course; write each new check test-first.
+One script, no AI. It prints one line per area (`lessons 12/40 accepted, 9.5/30 h`) and a last line: `DONE` or `OPEN <n>`. `--unit <id>` checks one unit against the map, by every "Check:" of SKILL.md step 4 a script can test and its front matter (`id`, `node`, `minutes`; the `variety.md` fields when that step ran), and prints `PASS` or the failed checks. It reads front matter and the queue; it never trusts a typed number. Grow it with the course; write each new check test-first.
 
 ## AGENTS.md
 
@@ -69,7 +69,7 @@ Short. It holds: the user's words decide and the newest wins; the only confirm (
 
 ## loop/run.md
 
-Written from `build.md`, adapted to the spec, with a link to `lessons.md`. SigmaLoop's loop file points to it; the two never say the same thing twice. Order for a free slot (default): finish drafted lessons through review; new lesson batches; media, personas and cases in step with the lessons that need them; fixes and checks.
+Written from `build.md`, adapted to the spec, with a link to `lessons.md`. SigmaLoop's loop file points to it. Order for a free slot (default): finish drafted lessons through review; new lesson batches; media, personas and cases in step with the lessons that need them; fixes and checks.
 
 ## loop/STEER.md
 

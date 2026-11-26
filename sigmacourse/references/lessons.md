@@ -10,7 +10,7 @@ What one long course build, run by unattended loops over several weeks, learned.
 6. **Voice frames; plain prose carries.** Whole paragraphs in a persona's chat voice blurred numbers.
 7. **Every target sits beside its base rate.** A lesson turned a goal into a 34% yearly growth rate and gave no odds; review failed it. Applies to every growth or success number, not only the headline goal.
 8. **Write the counting rule once.** When several jobs filled one floor, each counted "met" its own way and four reviews failed on counts.
-9. **Stored sources or it did not happen.** A quote came from an interviewer, not the teacher; a total came from one line of a filing, not the sum. Every quote, date and number matches a stored snapshot, and a schema check fails when it does not.
+9. **Stored sources or it did not happen.** A quote came from an interviewer, not the teacher; a total came from one line of a filing, not the sum. Every quote, date, number and outcome matches a stored snapshot, and a schema check fails when it does not.
 10. **Personas leak.** A persona run inside the repo talked about the tracker and the user's notes, and spoke in the user's plain-English style. The fix is in `hosts.md`; check with one OOC message when a new account wrapper appears.
 11. **Never edit the user's files.** A persona sheet was trimmed and given a header without asking. Use user files byte for byte; propose changes.
 12. **Blind tests leak through surface clues.** Only one side was cut with "...", so the real answer was guessable. Cut both sides the same way and surface-check before the user sees it.

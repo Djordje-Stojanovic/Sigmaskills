@@ -1,6 +1,6 @@
 # Build method (goes into loop/run.md)
 
-The loop follows this every round. Keep only what the spec needs: a course with no teachers has no persona step, a text course no media step.
+Keep only what the spec needs: a course with no teachers has no persona step, a text course no media step.
 
 ## The lesson pipeline
 
@@ -13,7 +13,7 @@ A job is a batch of units: lessons, guide sections or scenes. Size it so one rev
 5. **Lesson checks.** Fix every finding first.
 6. **Teacher voice pass** (when the lesson has a teacher persona). The persona reads the lesson and answers in its own words. Its voice frames the hook and the "in their words" parts; plain prose carries numbers and steps. Run a batch's persona calls in parallel, stop when a round changes nothing, and log its last notes for the reviewer.
 7. **One fresh review, one model up**, for the whole batch, by an agent that did not write it, with the rendered pages in hand (SKILL.md step 5, `delivery.md`). A failed lesson goes back with the findings; passed ones get their own PASS line.
-8. **Gate.** A unit is accepted when its checks pass and its review row's notes hold `PASS <unit> <reviewer> <date>`, written after the last prose edit; the check script counts only accepted learner time. No second agent: the row stays `held`, the unit ships unaccepted, and the report says so.
+8. **Gate.** A unit is accepted when its checks pass and its review notes (the queue row, else the unit) hold `PASS <unit> <reviewer> <date>`, written after the last prose edit; the check script counts only accepted learner time. No second agent: write `held` there, the unit ships unaccepted, and the report says so.
 
 ## Code, checks and lab tools
 
