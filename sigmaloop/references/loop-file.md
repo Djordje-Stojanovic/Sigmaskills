@@ -2,7 +2,7 @@
 
 One Markdown file the loop agent re-reads at the start of every turn. Edits apply on the next turn. The host prompt stays short; everything long lives here.
 
-Save to the place the user chose (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). Keep its rules under about 1,200 words and the handoff at <= 300 lines (<= 30 KB) in two parts: **Live State** (overwritten in place each turn) and **Shipped Ledger** (1 line per accepted commit; compress old verbose turn logs into the ledger instead of dropping shipped commit SHAs or active blockers; full history goes to <log file>). Replace each `<...>`; delete a section only when the answers made it empty.
+Save to the place the user chose (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). Keep its rules under about 1,200 words and the handoff at <= <300> lines (<= <30 KB>) in two parts: **Live State** (overwritten in place each turn) and **Shipped Ledger** (1 line per accepted commit; compress old verbose turn logs into the ledger instead of dropping shipped commit SHAs or active blockers; full history goes to <log file>). Replace each `<...>`; delete a section only when the answers made it empty.
 
 ## Template
 
@@ -35,8 +35,8 @@ Shape: <solo | crew of N slots | N lanes: read lanes.md>. Solo: this session pla
 | Reviewer (another provider than the builder) | <mid or top> | <ids> |
 | Clerk (handoff, status) | cheap | <ids> |
 1. The planner plans, starts jobs and merges. It does no builder's tool calls.
-2. One cohesive vertical work package per builder (skip tiny micro-file churn): build, prove with fast unit tests (< 2s target, `new test LOC <= src LOC`), commit. The brief is a spec path and a done line. An item too big for one builder is cut first, by the planner before the loop or by its lane manager in it: `to-spec` writes the spec, `to-tickets` cuts it into tracker tickets (they enter Priority), `implement` builds each in the loop; without those skills the planner does the same by hand.
-3. Each finished work package gets one fresh reviewer at once, from another provider than its builder when one is free; reviewers at once: <no cap>. The builder first re-reads its own diff in a fresh context. The reviewer runs the change, not only reads it, and ends with MERGE or a finding list; its diff leaves out the paths the repo names as the owner's content, so no model passes or fails his words. The builder fixes P0-P2 findings and drops style nits; a finding it holds wrong is answered with the command that shows it, never waved off in prose. Review rounds per work package: max <2>; a clean round ends it. After the last round the builder fixes, proves and lands each open P0-P2 finding. A ticket is parked only after <3> failed fix tries. No human review.
+2. One cohesive vertical work package per builder (skip tiny micro-file churn): build, prove with fast unit tests (<< 2s> target, `<new test LOC <= src LOC>`), commit. The brief is a spec path and a done line. An item too big for one builder is cut first, by the planner before the loop or by its lane manager in it: `to-spec` writes the spec, `to-tickets` cuts it into tracker tickets (they enter Priority), `implement` builds each in the loop; without those skills the planner does the same by hand.
+3. Each finished work package gets one fresh reviewer at once, from another provider than its builder when one is free; reviewers at once: <no cap>. The builder first re-reads its own diff in a fresh context. The reviewer runs the change, not only reads it, and ends with MERGE or a finding list; its diff leaves out the paths the repo names as the owner's content, so no model passes or fails his words. The builder fixes P0-P2 findings and drops style nits — for small findings, resume or steer the existing warm builder thread (`t3_thread_send` / resume) instead of spawning a cold new agent when the harness supports it; a finding it holds wrong is answered with the command that shows it, never waved off in prose. Review rounds per work package: max <2>; a clean round ends it. After the last round the builder fixes, proves and lands each open P0-P2 finding. A ticket is parked only after <3> failed fix tries. No human review.
 4. When a job ends, its slot takes the most valuable eligible unit in the same turn. Slots: <N>, capped by CPU (below), not by habit. Workers run on <machines> (e.g. `<N>` Google Colab standard low-RAM or High-RAM VMs via `sigmacollab` so heavy builds stay off the owner's PC; orchestrator's machine only while it has CPU and memory to spare).
 5. Lanes only: workers end after one ticket, lane managers pull their own next ticket from Priority and go on ticket after ticket, the top never ends before the stop line. Priority is one ranked list for all lanes, never one list per lane.
 6. Each ticket is Ready, Working (a builder has it), Reviewing, or Landed; findings send it back to Working. The builder that finished a part ticks it off itself, where the to-do is: the spec, the PR's checklist or the issue. Nobody ticks for it.
@@ -52,7 +52,7 @@ Guides (workers are briefed by the guide of their model): <links>
 
 ## Speed rules
 - **Accepted is final.** Never re-check a unit already accepted. Check only what changed since the last acceptance.
-- **Fast unit tests, dedicated gates.** Per-package checks stay under 2s (`new test LOC <= src LOC`) and cover changed units only. Heavy full-corpus or slow checks run in dedicated gate runs and once at Finish.
+- **Fast unit tests, dedicated gates.** Per-package checks stay << 2s> target (`<new test LOC <= src LOC>`) and cover changed units only. Heavy full-corpus or slow checks run in dedicated gate runs and once at Finish.
 - **Bulk compute.** Many small computations of the same kind run as one bulk job, not one run per unit.
 - **A gate that never passes** is fixed or cut in the first hour.
 - **CPU safety by parallel cap.** At most <N> heavy processes at once. Do not cap a single process at a few seconds; give it the time the work needs.
@@ -63,7 +63,7 @@ Guides (workers are briefed by the guide of their model): <links>
 2. Read the handoff and any new owner message (copy it to the words file first). Run <status command>.
 3. For each finished job: send it to review, or accept it; refill its slot at once.
 4. Fill every free slot from Priority. Skip units that share files with a running job.
-5. Update the handoff (<path>) at <= 300 lines (<= 30 KB) in two parts: (1) **Live State**, overwritten in place each turn (active jobs with VM/PID/worktree, open blockers, owner steps, exact resume command); (2) **Shipped Ledger**, compact 1-line-per-commit summary of accepted milestones and gate status (never drop shipped commit SHAs or active blockers — only compress old verbose turn logs into the 1-line ledger, moving full history to <log file>).
+5. Update the handoff (<path>) at <= <300> lines (<= <30 KB>) in two parts: (1) **Live State**, overwritten in place each turn (active jobs with VM/PID/worktree, open blockers, owner steps, exact resume command); (2) **Shipped Ledger**, compact 1-line-per-commit summary of accepted milestones and gate status (never drop shipped commit SHAs or active blockers — only compress old verbose turn logs into the 1-line ledger, moving full history to <log file>).
 
 ## Priority
 <The ranked list, or the tracker section that holds it. Items that need the user live: write their facts, never decide them.>
@@ -78,7 +78,7 @@ Guides (workers are briefed by the guide of their model): <links>
 - Commits end with <trailer>. PR bodies end with <line>.
 
 ## Limits
-Nothing outside these three lists limits the run.
+Nothing outside these three lists limits the run. Before freezing any preference into Limits, check whether it creates a serial bottleneck (e.g. multiple parallel slots behind 1 shared checkout or 1 single-lock VM) and surface the trade-off in the question round.
 - Owner's orders: <one line each: the order, then `(owner, <date>): "<his sentence>"`>.
 - Mechanical guards, each with the fault it prevents: <from the answers>. A machine the run uses restarts only in the window the answers name: a restart ends every background job.
 - Scope notes: <what no ticket covers>. A scope note marks where the work ends; it bans nothing.

@@ -32,6 +32,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaloop`: warm-steer the existing builder thread (`t3_thread_send` / resume) on small P0–P2 review findings instead of spawning a cold new agent when supported, wrap recommended numeric defaults in `<...>` placeholders in `references/loop-file.md`, add a serial-bottleneck guard to `## Limits`, and tell workers to read only the relevant section of a large `DESIGN.md` (> ~1,000 words).
+- `sigmaship`: read only the relevant section of a large `DESIGN.md` (> ~1,000 words), keep new unit tests lean and fast at the public seam (`new test LOC <= src LOC` when practical; skip redundant micro-tests), and run only changed-since-step-4 checks during self-review instead of re-running an unchanged green full suite.
+
 ## [0.31.4] — 2026-11-26
 
 ### Changed
