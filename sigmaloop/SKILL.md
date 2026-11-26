@@ -5,7 +5,7 @@ description: Use when asked for sigmaloop, sigmabrief, briefs, handoffs, spawn p
 
 # SigmaLoop
 
-Turn a repo's open work into one loop prompt for the user's harness, plus a loop file the prompt tells the agent to re-read. SigmaLoop is a prompt factory: read, ask once, write two things, stop. It never starts the loop and never works the items.
+Turn a repo's open work into one loop prompt for the user's harness, plus a loop file the prompt tells the agent to re-read. SigmaLoop is a prompt factory: read, ask once, write two things, stop.
 
 Asked for briefs, handoffs or spawn prompts (sigmabrief), write those instead: [Briefs](#briefs-was-sigmabrief).
 
@@ -35,7 +35,7 @@ Each number is a default the user's words override.
 | **M** | A spec whose parts touch different files, on a machine with CPU to spare | An orchestrator and 3-4 workers, each in its own git worktree, on one shared feature PR the orchestrator merges into. |
 | **L** | Many subsystems, heavy builds, GPU or browser suites | An orchestrator that only writes specs, steers and keeps the run's files, and 5 workers, each on its own rented machine (sigmacollab). A 15-minute watchdog is on where the host has a timer. |
 
-In M and L every worker is the same kind of slot: it builds, reviews another worker's track or fixes, whatever the orchestrator needs next. From 3 workers up the run keeps two crew files: traps and shared contracts from the orchestrator, questions from the workers.
+In M and L every worker is the same kind of slot: it builds, reviews another worker's track, fixes or runs a shard of the final gates, whatever the orchestrator needs next, and is stopped when nothing is left for it. From 3 workers up the run keeps two crew files: traps and shared contracts from the orchestrator, questions from the workers.
 
 ## 1. Read the open work
 
@@ -62,7 +62,7 @@ One numbered message. Each question gives `Recommended: <best default>` and `Alt
 3. **Scope and order.** The ranked list (id, line, size; show the first 10 and a count). `Recommended:` value first, then unblocking power; blocked and user-live items last. `Alternative:` smallest unblocker first.
 4. **Models.** `Recommended:` one strong, fast model from the host's live list for every slot, reviews in a fresh session. `Alternative:` a second model from another provider for reviews.
 5. **Machines and slots.** Where workers run and how many. `Recommended:` the shape's default, capped by CPU cores and by independent tracks; a repo rule wins. `Alternative:` fewer slots, or local worktrees in place of rented machines.
-6. **Checks.** `Recommended:` a fast check of the changed units while building (`< 2s`, new test lines at most the source lines), one full gate per finished track and one at Finish, at most 2 review rounds; when the work is seen or heard (UI, rendering, animation, video, audio), one gate that looks at the real output. `Alternative:` 1 review round, or the repo's existing gate per track.
+6. **Checks.** `Recommended:` a fast check of the changed units while building (`< 2s`, new test lines at most the source lines), every gate proved on the base branch before the first merge, one review round per track, then integrate, a cheap smoke on real inputs, a second round on the integrated build, and slow full gates last, sharded across free slots; when the work is seen or heard (UI, rendering, animation, video, audio), one gate that looks at the real output. `Alternative:` 2 review rounds per track, or the repo's existing gate per track.
 7. **Watchdog** (M and L). A timer that wakes the orchestrator when no worker reported for 15 minutes: when every worker hangs at once, no completion notice comes. `Recommended:` on for L, off for M. `Alternative:` the other one. A host with no timer (hosts.md) has none: say so in the notes.
 8. **Pre-authorised actions and budgets.** Commit, push, PR, merge, deploy, delete merged branches and worktrees, close tickets; and each spend limit (what, amount, period, meter command). `Recommended:` all except deploy (deploy only when the repo names a deploy step); no meter, no budget. `Alternative:` stop at ready PRs (`sigmaship stop`), or a spend cap with its meter.
 9. **Limits and what may be deleted.** The owner's orders (his sentence and its date for each), mechanical guards (the fault each prevents), and what the run may cut. `Recommended:` protect user-live items, other agents' work, production data and data that cannot be restored; cut records no machine reads and checks that never caught anything; nothing in user content. `Alternative:` also freeze the files the owner names, and cut only this run's own scratch.
@@ -71,11 +71,11 @@ After the reply: a blank takes the recommended answer, logged as `Ruling: <what>
 
 ## 4. Write the loop file
 
-Fill the template in [loop-file.md](references/loop-file.md). Save it where the user said (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). Copy its defaults whole (the review rule, changed-units-only checks, one final gate, failure rules) unless an answer overrides one. Then run SigmaFreedom's lint on the file, `python <sigmafreedom folder>/scripts/guardrail_lint.py <loop file>`, and rewrite each line it flags; an owner's order keeps its `(owner, <date>)` mark, which the lint accepts.
+Fill the template in [loop-file.md](references/loop-file.md). Save it where the user said (default `.scratch/loops/<yyyy-mm-dd>-<slug>.md`). Copy its Review line, Failure rules, Speed rules and Finish whole unless an answer overrides one. Then run SigmaFreedom's lint on the file, `python <sigmafreedom folder>/scripts/guardrail_lint.py <loop file>`, and rewrite each line it flags; an owner's order keeps its `(owner, <date>)` mark, which the lint accepts.
 
 ## 5. Write the host prompt
 
-**Default: the harness's own run-to-done mechanism (a `/goal` where it exists), driven by completion notices.** A slot is refilled in the same turn its job ends. A `/goal` run sets no timer but the watchdog, and that one only when the answers turned it on. Use a clock wake when the stop line is a clock event the work waits on, or the harness has no run-to-done. A harness with neither gets the plain instruction in [hosts.md](references/hosts.md#other-hosts-plain-instruction).
+**Default: the harness's own run-to-done mechanism (a `/goal` where it exists), driven by completion notices.** A `/goal` run sets no timer but the watchdog, and that one only when the answers turned it on. Use a clock wake when the stop line is a clock event the work waits on, or the harness has no run-to-done. A harness with neither gets the plain instruction in [hosts.md](references/hosts.md#other-hosts-plain-instruction).
 
 The prompt is short: the done command, the loop file path to re-read every turn, and the 2-3 limits that must hold. Over about 1,000 characters, move text into the loop file: the prompt is read once, the loop file every turn. Then stop: start no loop and schedule nothing.
 
@@ -91,12 +91,12 @@ Turn actionable work into short, paste-ready briefs for other agents: research l
 
 - **Brief factory only.** Briefs go to chat. The target repo stays as it was: no code, branch, commit, push, PR or file (no `SIGMABRIEF-*.md`).
 - **One shot.** Work items present: research, write, return. No target at all: ask one question (which issues, which work, which repo for `all open`). Grill only when the user asks for it.
-- **Anything actionable is input:** issue URLs, `#N`, `all open` (filtered or not), a SigmaReview report or wave, chosen SigmaImprove entries, plain-English work, or `this session`, with constraints already given (`do not merge`, skip N, max agents, `approval: auto|plan`) applied without asking again.
-- **Waves before parallelism.** Items that touch the same files, schema or shared state run one after another in one lane; only independent items run in parallel. Honor `Depends on` lines. Rank the dispatch list by value: the next free agent takes the most valuable ready brief. An in-flight PR becomes a finish brief, never a second greenfield one.
+- **Anything actionable is input** ([briefs.md](references/briefs.md#inputs)). Constraints already given (`do not merge`, skip N, max agents, `approval: auto|plan`) apply without asking again.
+- **Waves before parallelism.** Only independent items run in parallel ([briefs.md](references/briefs.md#classify-each-item)). Honor `Depends on` lines. Rank the dispatch list by value: the next free agent takes the most valuable ready brief.
 - **Write for the worker's harness.** It is the one the user named, else the one you run in. Use its own tools where they help (a native worktree tool, sub-agents); when you do not know them, read its docs (context7, a web search) or write plain git and shell steps that work anywhere.
-- **Every brief carries the invariants** in [briefs.md](references/briefs.md#invariants-every-brief-carries): approval mode, do not merge, keep the worktree while the PR is open, the native shell, no secrets, the three questions and the honesty rule. If the repo has `ENGINEERING.md` or `DESIGN.md`, each brief tells its worker to read and follow them (a `DESIGN.md` over about 1,000 words: only the section the ticket needs).
+- **Every brief carries the invariants** in [briefs.md](references/briefs.md#invariants-every-brief-carries). If the repo has `ENGINEERING.md` or `DESIGN.md`, each brief tells its worker to read and follow them (a `DESIGN.md` over about 1,000 words: only the section the ticket needs).
 
-Final response for briefs, in chat only: a short dispatch list (one line per brief), the paste-ready fenced `text` briefs, and notes when needed (collisions, upstream waits, already fixed, human-only tests). No research dumps.
+Final response for briefs, in chat only: the three parts of [Chat output](references/briefs.md#chat-output). No research dumps.
 
 ## Personal instructions
 
