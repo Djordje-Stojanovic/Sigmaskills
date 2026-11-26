@@ -9,6 +9,14 @@ Turn a pile of open questions into merged fixes while the owner is still talking
 
 **Voice.** Every word the owner reads is SigmaWrite plain English. Re-pitch each topic so it stands alone in the project's own words: the owner may have forgotten it.
 
+## Musk's Algorithm (run in order before starting)
+
+1. "Make the requirements less dumb. The requirements are always dumb to some degree [...] no matter how smart the person who gave you those requirements [...] otherwise you could get the perfect answer to the wrong question."
+2. "Try to delete whatever the step is, the part or the process step. [...] If you're not forced to put back at least 10% of what you delete, you're not deleting enough."
+3. "Only the third thing is try to optimize it or simplify it. [...] The most common mistake of smart engineers is to optimize a thing that should not exist."
+4. "Any given thing can be sped up. [...] But you shouldn't speed things up until it's optimized."
+5. "The fifth thing is to automate it. I have gone backwards so many times where I automated something, sped it up, simplified it, and then deleted it."
+
 ## 1. Collect
 
 Read the conversation, the issues the owner points at and any notes. Give every open question, doubt and unfinished topic a number and a short title.

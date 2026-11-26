@@ -32,6 +32,11 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaloop`, `sigmaclimb`, `sigmaship`, `sigmadebug`, `sigmareview`: add Musk's literal 5-step Algorithm at the top of each `SKILL.md` (before step 1).
+- `sigmaloop`: upgrade `references/questions.md` so every one of the 10 grill questions offers `Recommended:` and `Alternative:` options (with option 3 always custom), explicitly covering slots/parallel workers, checkout & PR strategy, models per role (including taste), Colab VM count, and decoupled architecture (flat dependency graph max depth 2) with fast `< 2s` unit tests and max 2 review rounds.
+
 ## [0.31.3] — 2026-11-26
 
 ### Changed
