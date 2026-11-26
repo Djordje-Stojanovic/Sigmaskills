@@ -1,6 +1,6 @@
 # Git guard
 
-A Claude Code hook for one repo. It stops the agent from running git commands that destroy work nobody can get back, and it is gone again with one command.
+A hook for one repo, for Claude Code and Antigravity. It stops the agent from running git commands that destroy work nobody can get back, and it is gone again with one command.
 
 | Blocked | Why |
 |---|---|
@@ -16,11 +16,11 @@ Allowed on purpose: a normal push, `git push origin --delete <branch>`, `git bra
 
 Run from the repo root. `<sigmasetup>` is the folder this skill is installed in.
 
-- On: `node <sigmasetup>/scripts/git-guard.mjs install .` copies the hook to `.claude/hooks/sigma-git-guard.mjs` and adds one `PreToolUse` entry (Bash and PowerShell) to `.claude/settings.json`. Other settings stay as they are; running it twice adds nothing.
-- Off: `node .claude/hooks/sigma-git-guard.mjs remove .` takes the entry and the file out again. When `.claude/settings.json` held only the guard, the file goes too.
-- Check: `node .claude/hooks/sigma-git-guard.mjs status .`
+- On: `node <sigmasetup>/scripts/git-guard.mjs install .` does both agents in one go. Claude Code: it copies the hook to `.claude/hooks/sigma-git-guard.mjs` and adds one `PreToolUse` entry (Bash and PowerShell) to `.claude/settings.json`. Antigravity (app, `agy`, IDE, and T3 Code's Antigravity): it copies the hook to `.agents/hooks/sigma-git-guard.mjs` and adds one `sigma-git-guard` hook on `run_command` to `.agents/hooks.json`. Other settings and hooks stay as they are; running it twice adds nothing.
+- Off: `node .claude/hooks/sigma-git-guard.mjs remove .` takes both entries and both files out again. A settings file that held only the guard goes too.
+- Check: `node .claude/hooks/sigma-git-guard.mjs status .` says on, off, or which half is missing.
 
-Claude Code treats a hook that crashes (no Node, a moved file) as "allow", so check with `status` after moving the repo or changing machines. `install` refuses the home folder, so the guard can never end up in `~/.claude/settings.json`. Commit `.claude/settings.json` and the hook file when the whole team should have the guard; leave them uncommitted for one machine.
+Claude Code treats a hook that crashes (no Node, a moved file) as "allow", so check with `status` after moving the repo or changing machines. Antigravity starts a workspace hook in `.agents/`, so the command there is `node hooks/sigma-git-guard.mjs` (proved with `agy` 1.5.16: `git reset --hard` came back "denied by pre-tool hook", `git status` ran). `install` refuses the home folder, so the guard never ends up in `~/.claude/settings.json` or `~/.gemini/config/hooks.json`. Commit `.claude/` and `.agents/hooks*` when the whole team should have the guard; leave them uncommitted for one machine. Codex: find its pre-command hook in its docs and port `blockReason`.
 
 ## Matt Pocock's version
 

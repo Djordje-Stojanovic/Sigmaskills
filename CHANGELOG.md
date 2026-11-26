@@ -32,6 +32,13 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmasetup`: the git guard now covers Antigravity too. One `install` writes the Claude Code hook (`.claude/settings.json`) and an Antigravity hook (`.agents/hooks.json`, `run_command`, decision JSON on stdout); `remove` takes both out, `status` names a missing half. Proved live with `agy` 1.5.16: `git reset --hard` denied, `git status` ran.
+- `sigmacreate`: a machine skill also goes to `~/.gemini/config/skills/<name>/` as a real copy (Antigravity reads neither `~/.agents/skills` nor a junction), with an `agy -p` proof line.
+- `sigmadeeplook`: flags `.agents/hooks.json` as `HOOK-OR-MCP`, like `.claude/settings.json`.
+- `sigmaask`: names `/name` for Antigravity and `$name` for T3 Code.
+
 ## [0.31.5] — 2026-11-26
 
 ### Changed

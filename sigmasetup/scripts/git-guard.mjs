@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Per-project git guard for Claude Code: blocks commands that destroy work nobody can get back.
-// install <dir>: copy this file to <dir>/.claude/hooks/ and add one PreToolUse entry to <dir>/.claude/settings.json.
-// remove <dir>: take both out again. status <dir>: say whether it is on. No argument: run as the hook (JSON on stdin).
+// Per-project git guard for Claude Code and Antigravity: blocks commands that destroy work nobody can get back.
+// install <dir>: copy this file to <dir>/.claude/hooks/ and <dir>/.agents/hooks/, add one PreToolUse entry to
+// <dir>/.claude/settings.json (Claude Code) and one hook to <dir>/.agents/hooks.json (Antigravity).
+// remove <dir>: take all of it out again. status <dir>: say whether it is on. No argument: run as the hook (JSON on stdin).
 // Branch deletes stay allowed: after a squash merge `git branch -D` is normal cleanup.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -11,6 +12,9 @@ import { fileURLToPath } from 'node:url';
 const HOOK_FILE = 'sigma-git-guard.mjs';
 const COMMAND = `node "$CLAUDE_PROJECT_DIR/.claude/hooks/${HOOK_FILE}"`;
 const MATCHER = 'Bash|PowerShell';
+// Antigravity runs a workspace hook from the folder that holds hooks.json (.agents/, agy 1.5.16) and names its shell tool run_command.
+const AGY_NAME = 'sigma-git-guard';
+const AGY_ENTRY = { PreToolUse: [{ matcher: 'run_command', hooks: [{ type: 'command', command: `node hooks/${HOOK_FILE}` }] }] };
 
 // Git options that come before the subcommand and take a value in the next word.
 const GLOBAL_WITH_VALUE = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path', '--config-env']);
@@ -91,10 +95,16 @@ export function install(arg) {
   if (!settings.hooks.PreToolUse.some(isOurs)) {
     settings.hooks.PreToolUse.push({ matcher: MATCHER, hooks: [{ type: 'command', command: COMMAND }] });
   }
-  fs.mkdirSync(path.join(dir, '.claude', 'hooks'), { recursive: true });
-  fs.copyFileSync(fileURLToPath(import.meta.url), path.join(dir, '.claude', 'hooks', HOOK_FILE));
+  const agyFile = path.join(dir, '.agents', 'hooks.json');
+  const agy = readSettings(agyFile);
+  agy[AGY_NAME] = AGY_ENTRY;
+  for (const host of ['.claude', '.agents']) {
+    fs.mkdirSync(path.join(dir, host, 'hooks'), { recursive: true });
+    fs.copyFileSync(fileURLToPath(import.meta.url), path.join(dir, host, 'hooks', HOOK_FILE));
+  }
   fs.writeFileSync(file, `${JSON.stringify(settings, null, 2)}\n`);
-  return `git guard on: ${path.join(dir, '.claude', 'hooks', HOOK_FILE)}`;
+  fs.writeFileSync(agyFile, `${JSON.stringify(agy, null, 2)}\n`);
+  return `git guard on: ${file} (Claude Code), ${agyFile} (Antigravity)`;
 }
 
 export function remove(arg) {
@@ -111,29 +121,49 @@ export function remove(arg) {
     if (Object.keys(settings).length === 0) fs.rmSync(file);
     else fs.writeFileSync(file, `${JSON.stringify(settings, null, 2)}\n`);
   }
-  fs.rmSync(path.join(dir, '.claude', 'hooks', HOOK_FILE), { force: true });
-  for (const folder of [path.join(dir, '.claude', 'hooks'), path.join(dir, '.claude')]) {
-    if (fs.existsSync(folder) && fs.readdirSync(folder).length === 0) fs.rmdirSync(folder);
+  const agyFile = path.join(dir, '.agents', 'hooks.json');
+  if (fs.existsSync(agyFile)) {
+    const agy = readSettings(agyFile);
+    delete agy[AGY_NAME];
+    if (Object.keys(agy).length === 0) fs.rmSync(agyFile);
+    else fs.writeFileSync(agyFile, `${JSON.stringify(agy, null, 2)}\n`);
+  }
+  for (const host of ['.claude', '.agents']) {
+    fs.rmSync(path.join(dir, host, 'hooks', HOOK_FILE), { force: true });
+    for (const folder of [path.join(dir, host, 'hooks'), path.join(dir, host)]) {
+      if (fs.existsSync(folder) && fs.readdirSync(folder).length === 0) fs.rmdirSync(folder);
+    }
   }
   return 'git guard off';
 }
 
 export function status(arg) {
   const dir = path.resolve(arg || '.');
-  const on = (readSettings(settingsPath(dir)).hooks?.PreToolUse || []).some(isOurs)
+  const claude = (readSettings(settingsPath(dir)).hooks?.PreToolUse || []).some(isOurs)
     && fs.existsSync(path.join(dir, '.claude', 'hooks', HOOK_FILE));
-  return on ? 'git guard on' : 'git guard off';
+  const agy = Boolean(readSettings(path.join(dir, '.agents', 'hooks.json'))[AGY_NAME])
+    && fs.existsSync(path.join(dir, '.agents', 'hooks', HOOK_FILE));
+  if (claude && agy) return 'git guard on';
+  if (!claude && !agy) return 'git guard off';
+  return `git guard half on: Claude Code ${claude ? 'on' : 'off'}, Antigravity ${agy ? 'on' : 'off'}; run install again`;
 }
 
 function runHook() {
   let input = '';
   process.stdin.on('data', (d) => { input += d; });
   process.stdin.on('end', () => {
-    let command = '';
-    try { command = JSON.parse(input).tool_input?.command || ''; } catch { process.exit(0); }
-    const reason = blockReason(command);
+    let call;
+    try { call = JSON.parse(input); } catch { process.exit(0); }
+    // Antigravity sends toolCall.args.CommandLine and reads a decision on stdout; Claude Code sends tool_input.command and reads exit 2.
+    const agy = Boolean(call?.toolCall);
+    const reason = blockReason(agy ? call.toolCall.args?.CommandLine : call?.tool_input?.command);
+    const message = reason && `BLOCKED by the project git guard: ${reason}. Ask the owner to run it, or turn the guard off: node ${agy ? '.agents' : '.claude'}/hooks/${HOOK_FILE} remove .`;
+    if (agy) {
+      process.stdout.write(JSON.stringify(reason ? { decision: 'deny', reason: message } : { decision: 'allow' }));
+      process.exit(0);
+    }
     if (!reason) process.exit(0);
-    process.stderr.write(`BLOCKED by the project git guard: ${reason}. Ask the owner to run it, or turn the guard off: node .claude/hooks/${HOOK_FILE} remove .\n`);
+    process.stderr.write(`${message}\n`);
     process.exit(2);
   });
 }

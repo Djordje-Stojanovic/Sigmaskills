@@ -74,15 +74,16 @@ Run the target repo's own private-name check too, if it has one. Replace each hi
 
 ## 5. Install and prove it
 
-**Public:** list the skill everywhere the repo's `AGENTS.md` says a new skill goes (manifest, tests, README, install docs, changelog), run the repo's test command, and ship it through the repo's own flow. Then install it with the repo's installer, or copy the folder to `~/.agents/skills/<name>/` and `~/.claude/skills/<name>/`.
+**Public:** list the skill everywhere the repo's `AGENTS.md` says a new skill goes (manifest, tests, README, install docs, changelog), run the repo's test command, and ship it through the repo's own flow. Then install it with the repo's installer, or copy the folder to `~/.agents/skills/<name>/`, `~/.claude/skills/<name>/` and `~/.gemini/config/skills/<name>/` (Antigravity).
 
-**Local:** copy the folder where the agents of that place load skills. Find which agents run there (their config folders, the user's words). Claude Code reads `.claude/skills/<name>/` (project) and `~/.claude/skills/<name>/` (machine); Codex, pi and most others read `.agents/skills/` and `~/.agents/skills/`. For any other agent, the Sigma installer's host list (`registry/agent-hosts.json` in the Sigmaskills repo) or the agent's own docs name the folder. A project skill goes into that repo's git with the change it belongs to; a machine skill stays on the machine.
+**Local:** copy the folder where the agents of that place load skills. Find which agents run there (their config folders, the user's words). Claude Code reads `.claude/skills/<name>/` (project) and `~/.claude/skills/<name>/` (machine); Codex, pi and most others read `.agents/skills/` and `~/.agents/skills/`. Antigravity (app, `agy`, T3 Code's Antigravity) reads `.agents/skills/` and `~/.gemini/config/skills/<name>/`, not `~/.agents/skills/`; on Windows that one must be a real copy, since `agy` lists no skill behind a junction. For any other agent, the Sigma installer's host list (`registry/agent-hosts.json` in the Sigmaskills repo) or the agent's own docs name the folder. A project skill goes into that repo's git with the change it belongs to; a machine skill stays on the machine.
 
 Prove that a fresh agent sees it: start it headless in the target folder with closed input and ask for its skills, for example:
 
 ```bash
 claude -p "List the names of the skills you can use, one per line." < /dev/null | grep -x '<name>'
 codex exec "List the names of the skills you can use, one per line." < /dev/null | grep '<name>'
+agy -p "List the names of the skills you can use, one per line." < /dev/null | grep '<name>'
 ```
 
 Another agent's docs name its headless flag.

@@ -44,7 +44,7 @@ Installed: sigmaimprove, sigmaship · missing <skill>: `npx @djordje-stojanovic/
 Source: <URL, only when the answer came from the web>
 ```
 
-Write the command the way the user's host calls a skill: `/name` in Claude Code, `$name` in Codex, the skill name elsewhere. Add a line for a machine fact only when it changes the answer (a retired skill, a stale install, a duplicate), with its fix command. If one question would change the answer, ask it, with your recommended answer.
+Write the command the way the user's host calls a skill: `/name` in Claude Code and Antigravity, `$name` in Codex and T3 Code, the skill name elsewhere. Add a line for a machine fact only when it changes the answer (a retired skill, a stale install, a duplicate), with its fix command. If one question would change the answer, ask it, with your recommended answer.
 
 ## Personal instructions
 

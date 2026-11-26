@@ -330,7 +330,7 @@ def look_repo(look):
         for n in fns:
             p = Path(dp) / n
             core.scan_injection(look, p.read_text(encoding="utf-8", errors="replace")[:200000], p.relative_to(root).as_posix())
-    for rel in (".claude/settings.json", ".claude/settings.local.json", ".mcp.json", ".vscode/tasks.json", ".devcontainer/devcontainer.json"):
+    for rel in (".claude/settings.json", ".claude/settings.local.json", ".agents/hooks.json", ".mcp.json", ".vscode/tasks.json", ".devcontainer/devcontainer.json"):
         p = root / rel
         if p.is_file():
             t = p.read_text(encoding="utf-8", errors="replace")[:200000]
@@ -341,6 +341,9 @@ def look_repo(look):
             if rel.startswith(".claude") and ("hooks" in j or "mcpServers" in j or "env" in j):
                 look.flag("HOOK-OR-MCP", rel, ", ".join(k for k in ("hooks", "mcpServers", "env") if k in j),
                           "this repo configures agent hooks or MCP servers that run commands; do not open an agent with auto-trust inside it")
+            elif rel == ".agents/hooks.json" and isinstance(j, dict) and j:
+                look.flag("HOOK-OR-MCP", rel, "Antigravity hooks: " + ", ".join(j),
+                          "this repo configures Antigravity hooks that run commands; do not open an agent with auto-trust inside it")
             elif rel == ".mcp.json" and j:
                 look.flag("HOOK-OR-MCP", rel, "MCP servers configured", "runs commands when an agent opens the repo")
             elif rel in (".vscode/tasks.json", ".devcontainer/devcontainer.json"):

@@ -9,7 +9,7 @@ The installer puts skills on the machine; a repo still needs its own setup (trac
 
 ## Operating contract
 
-- **Per repo.** Every write lands in the current repo, hooks in the repo's own config folder of each agent (`.claude/` for Claude Code). The user-level config of every agent stays as it is.
+- **Per repo.** Every write lands in the current repo, hooks in the repo's own config folder of each agent (`.claude/` for Claude Code, `.agents/` for Antigravity). The user-level config of every agent (`~/.claude/`, `~/.gemini/config/`) stays as it is.
 - **Ask once, then act.** Write nothing before the owner answers the one list (step 3).
 - **Every change has an undo:** a command or the files to delete, repeated in the final report.
 - **Keys by name only.** Keys go in the environment or an ignored `secrets/` folder. Never print a key.
@@ -29,7 +29,7 @@ Offer it where agents write code: `npx @djordje-stojanovic/sigmaskills ponytail 
 
 ## Git guard
 
-An optional hook for this repo only: it blocks force push, `reset --hard`, `clean -f`, `stash clear` and anything that throws away uncommitted changes (`checkout .`, `checkout -f`, `restore .`), and allows branch deletes. Offer it with the Matt Pocock pack or when the owner asks for git safety. The bundled one is a Claude Code hook ([git-guard.md](references/git-guard.md)); for another agent, find its pre-command hook in its docs and port the block list.
+An optional hook for this repo only: it blocks force push, `reset --hard`, `clean -f`, `stash clear` and anything that throws away uncommitted changes (`checkout .`, `checkout -f`, `restore .`), and allows branch deletes. Offer it with the Matt Pocock pack or when the owner asks for git safety. One install covers Claude Code and Antigravity ([git-guard.md](references/git-guard.md)); for another agent, find its pre-command hook in its docs and port the block list.
 
 ## Personal instructions
 
