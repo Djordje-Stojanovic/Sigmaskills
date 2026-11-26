@@ -15,7 +15,6 @@
 
 ## Source rules
 - Every fetched source is kept as a snapshot with a header: URL, published date, accessed date.
-- Every quote, date and outcome in a lesson or case file matches a stored file; the schema check fails when it does not.
 - When the course has cases, their outcomes are computed by a committed script from a dated data file.
 - Never send the user's email or name in a request header; use a generic user agent.
 - Beliefs from the grill that sound like facts go to a "beliefs to verify" list until a source confirms them.

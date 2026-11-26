@@ -1,6 +1,6 @@
 # Delivery: design, interface, performance, accessibility
 
-For anything a learner opens: a page, an app, a deck, a video, a print file. Items 2 to 4 and 7 apply to screens and media; a print file gets items 1, 5 and 6, checked on a printed or PDF proof. Named tools are examples that worked: use what this machine has, and when one is missing or fails, find another way to the same check and say which you used.
+Plain text read as written (a markdown file, a message) gets item 2 only, as a read-through; write the rest "not needed: plain text". Items 2 to 4 and 7 apply to screens and media; a print file gets items 1, 5 and 6, checked on a printed or PDF proof.
 
 1. **One design file before the first screen.** Colour, type, spacing and components as tokens; light and dark. Use the project's existing design file when it has one, else an installed design skill (for example `impeccable` or `frontend-design`), else write the tokens yourself. Check: every screen uses only the tokens.
 2. **The learner's path.** The first sitting ends with one real task done. Every screen shows where the learner is, how far they are against the end lines, the one next action and where to get help. The learner can reach any finished part, leave, and resume with a recap of what the next part needs. Answers open after the learner commits. Check: walk one learner from the first page to the last proof task with no dead end.

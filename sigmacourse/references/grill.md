@@ -9,7 +9,6 @@ List the open unknowns that would change a node, an order, a proof, a medium or 
 - One question at a time. Your recommended answer first, its reason, one concrete example.
 - Reuse the user's own words. Pin each answer in the plan: field, value, source, date.
 - A vague word ("great", "deep", "properly") gets pinned to a comparison, a number or a named judge.
-- "Just build it": write every answer as a guess, play the plan back once, take corrections.
 
 ## Methods: pick by what is still unknown
 
@@ -34,12 +33,12 @@ Ask an area only when its answer changes the plan; otherwise write "not needed: 
 2. **The goal and its odds.** The result and a date. The bar as a named comparison. How often comparable learners reach it, sourced or an assumption. What the course cannot promise.
 3. **Scope.** The named size against the map's total; when they disagree, offer a bigger size or a smaller end state. Finite or ongoing. A pilot part first, or the whole build. What is out.
 4. **Practice, feedback, help.** Which shapes and task types fit the field ([variety.md](variety.md)). How blunt and how fast feedback is, and who gives it: a key, a rubric, a script, a reviewer, a persona, a person. Where the learner gets help when stuck. What keeps them going and what puts them off: progress shown, a person checking in, points, streaks (rewards can crowd out interest: Deci, Koestner and Ryan, *Psychological Bulletin*, 1999).
-5. **The evaluator.** Scripts for numbers and counts; a fresh reviewer for what no script can judge; how often the user reviews. Learner time counts only accepted pieces, by script.
-6. **Runtime and crew** (only when the build spans sessions). Host, agents, models (reviews one model up), machines, accounts, limits. Default: what the user already uses.
+5. **The evaluator.** Scripts for numbers and counts; a fresh reviewer for what no script can judge; how often the user reviews.
+6. **Runtime and crew** (only when the build spans sessions). Host, agents, models, machines, accounts, limits. Default: what the user already uses.
 7. **Media and delivery.** Which media the proofs need and which of the user's tools make them; generated likenesses and cloned voices are the user's call. Where the learner opens it: device, screen sizes, network, offline, print; this sets the performance budget. An existing design file. Accessibility needs. Where progress and answers live (for a minor, with the guardian's consent). Stack, by default the simplest that carries the media and the learner's path.
-8. **Teachers and cases.** Real or invented teachers, and how deep each goes; the user's persona sheets are used byte for byte. Whether the field has cases.
+8. **Teachers and cases.** Real or invented teachers, and how deep each goes. Whether the field has cases.
 9. **Sources.** Allowed kinds, corpora, a book list, data, the user's own APIs.
-10. **Secrets.** Where keys live. The only confirm: deleting the repo or publishing a secret.
+10. **Secrets.** Where keys live.
 
 ## Alignment
 

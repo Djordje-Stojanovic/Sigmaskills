@@ -5,13 +5,13 @@ description: 'Use when asked for sigmacourse or to plan or build a tutorial, gui
 
 # SigmaCourse
 
-Plan and build teaching of any size, on any subject, for any audience, in any medium. The course decides how much process it gets: a one-pager ends with almost no process and a program of a thousand hours with a lot, because each step below runs only when the course needs it. When a local skill builds courses with your own stack, it builds; it runs steps 1 to 3 here first.
+Plan and build teaching of any size, on any subject, for any audience, in any medium. Each step below runs only when the course needs it, so a one-pager gets almost no process and a thousand-hour program a lot. When a local skill builds courses with your own stack, it builds; it runs steps 1 to 3 here first.
 
 ## Operating contract
 
 - **The user decides.** Subject, size, depth, voice, media, real people as teachers, generated likenesses: all the user's call. The newest word wins over every default here; when it clashes with a rule, say once what it costs, then do it. The only confirm: an action that deletes the repo or publishes a secret. Save the user's words verbatim.
 - **Find the real need, then align.** One question at a time, your pick first, only while a wrong guess costs more than the question ([grill.md](references/grill.md)). Before the build, play the plan back in the user's words and wait for a yes; after the first built part, ask what is off and fix the plan, not only the part. "Just build it": guess every answer and ask for corrections once.
-- **Realism.** Every number has a source or a stated assumption. Every promised result sits next to how often comparable learners reach it. Counts and sums run in a script, never in prose. No secrets in any file, brief or prompt.
+- **Realism.** Every number has a source or a stated assumption. Every promised result sits next to how often comparable learners reach it, or "no number found", never an invented one. Counts and sums run in a script, never in prose. No secrets in any file, brief or prompt.
 
 ## 1. The end state
 
@@ -19,15 +19,15 @@ Write one line per separate ability the learner must have at the end: "At the en
 
 ## 2. The ability map
 
-1. Under each end line, write what the learner must be able to do just before it. Repeat for each new line until you reach what the learner can already do. Ask when you do not know. Merge duplicates: one ability, one node. A wrong belief the learner holds that would block a node becomes a node.
+1. Under each end line, write what the learner must be able to do just before it. Repeat for each new line until you reach what the learner can already do. Ask when you do not know. Merge duplicates: one ability, one node. A wrong belief the learner holds that would block a node becomes a node. An end line is the last node of its chain.
 2. For each node write: the proof task, the practice it needs (how many tries, with feedback, before the proof is likely to pass; an estimate with its reason), and the medium the proof needs (step 4).
-3. Give each node its minutes: teach, practice, proof. Reading and speaking time come from a rate you state for this audience, video from its real runtime. A script sums the minutes and counts the nodes and the longest prerequisite chain (one node needs no script).
+3. Give each node its minutes: teach, practice, proof. Reading and speaking time come from a rate you state for this audience, video from its real runtime, practice from tries times the time of one try (measured, else a stated guess). Keep the map as data, one row per node (`id`, `needs`, the three minute counts, its end line); a script you write reads it, sums the minutes and counts the nodes and the longest prerequisite chain (one node needs no script).
 4. Fit a named size. Over it: cut practice on the easiest nodes first, then the end line that matters least to the user; say which. Under it: finish short and say so, or, if the user wants the full size, add practice on the hardest nodes. Never pad with new topics.
-5. The outline is the map in order: each node after what it needs. One new idea per part. Nothing goes in that no end line needs. **Done when** the node count, the longest chain and the total minutes are printed (by the script, from two nodes up), and every outline item names the end line it serves.
+5. The outline is the map in order: each node after what it needs. One part per node; a wrong-belief node makes a short first part. Nothing goes in that no end line needs. **Done when** the node count, the longest chain and the total minutes are printed (by the script, from two nodes up), and every outline item names the end line it serves.
 
 ## 3. The process the map needs
 
-Read the map, then run each step whose condition is true. Write the result as a short table: step, true or false, the fact from the map that decided it. That table is the proof that the course, not a size, chose the process. A named skill or tool is the known route: read it before its step; when it is missing, do the step another way and say which.
+Read the map, then run each step whose condition is true. Write the result as a short table: step, true or false, the fact from the map that decided it. A named skill or tool is the known route: read it before its step; when it is missing, do the step another way and say which.
 
 | Step | Run it when | Tool |
 |---|---|---|
@@ -38,9 +38,9 @@ Read the map, then run each step whose condition is true. Write the result as a 
 | Placement check | the learner's start is unknown and some nodes may already be known | a short test on those nodes |
 | Spaced review | the learner time spans more than one sitting | step 4 |
 | Research | the course states a fact the user's sources do not hold | [research-and-books.md](references/research-and-books.md) |
-| Fresh review by an agent that did not write it | always; its size follows the map (one read for one node, a batch review per part for many) | SigmaReview lenses |
-| Spec, done list, user sign-off | the build needs more than one agent session, so others must work from a written contract | [repo-setup.md](references/repo-setup.md) |
-| Queue, check script, run file, goal prompt | the build needs more sessions than the user will watch | [repo-setup.md](references/repo-setup.md), [build.md](references/build.md), SigmaLoop for the user's harness ([hosts.md](references/hosts.md)); a decision map (`wayfinder` or `docs/course/map.md`) when open decisions block later parts |
+| Fresh review by an agent that did not write it | always; its size follows the map (one read for one node, a batch review per part for many); with no second agent, hold it open and say so | SigmaReview lenses |
+| Spec, done list, user sign-off | the build needs more than one agent session, so others must work from a written contract, or the user asks for one; leave out each spec line the course has no answer for | [repo-setup.md](references/repo-setup.md) |
+| Queue and check script; run file and goal prompt | the first pair: more than one job to track; the second: more sessions than the user will watch | [repo-setup.md](references/repo-setup.md), [build.md](references/build.md), SigmaLoop for the user's harness ([hosts.md](references/hosts.md)); a decision map (`wayfinder` or `docs/course/map.md`) when open decisions block later parts |
 | Personas | the user names real or invented teachers | [build.md](references/build.md#personas) |
 | Variety draw | more than one lesson per ability, or the same task type would repeat | [variety.md](references/variety.md) |
 | Delivery checks | the course has screens, pages or media a learner opens | step 5 |
@@ -62,7 +62,7 @@ An item that cannot apply (a one-page reference has no spacing) is written "not 
 
 ## 5. Delivery: design, interface, performance, accessibility
 
-For anything a learner opens (a page, an app, a deck, a video, a print file), run the seven checks in [delivery.md](references/delivery.md): one design file first, the learner's path, phone and desktop, a performance budget, WCAG 2.2 AA, taste, and a check of the rendered thing. **Done when** each check that applies has its proof (screenshots, measurements, zero checker errors).
+For anything a learner opens (a page, an app, a deck, a video, a print file; plain text: item 2 only), run the seven checks in [delivery.md](references/delivery.md): one design file first, the learner's path, phone and desktop, a performance budget, WCAG 2.2 AA, taste, and a check of the rendered thing. **Done when** each check that applies has its proof (screenshots, measurements, zero checker errors).
 
 ## Final response
 

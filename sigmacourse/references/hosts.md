@@ -11,7 +11,7 @@ Harnesses met so far, as examples:
 | pi | `/skill:sigmacourse` | the pi prompt SigmaLoop writes |
 | T3 Code | the call of the agent it drives | a scheduled task or `/goal` in a thread |
 
-Parallel agents: use the harness's own way (subagents, spawned agents, child threads); where none exists, run one job at a time. Every writing agent gets its own git worktree.
+Parallel agents: use the harness's own way (subagents, spawned agents, child threads); where none exists, run one job at a time.
 
 ## Personas on any host
 
