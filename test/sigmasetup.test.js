@@ -69,7 +69,19 @@ test('git guard install and remove touch only their own entry and refuse the hom
   const allowed = spawnSync(process.execPath, [hook], { input: JSON.stringify({ tool_input: { command: 'git branch -D x' } }), encoding: 'utf8' });
   assert.equal(allowed.status, 0);
 
+  // Antigravity: .agents/hooks.json gets one named hook; the decision comes back as JSON on stdout.
+  const agyHooks = JSON.parse(fs.readFileSync(join(dir, '.agents', 'hooks.json'), 'utf8'));
+  assert.equal(agyHooks['sigma-git-guard'].PreToolUse[0].matcher, 'run_command');
+  const agyHook = join(dir, '.agents', 'hooks', 'sigma-git-guard.mjs');
+  const agyCall = (CommandLine) => JSON.parse(spawnSync(process.execPath, [agyHook], { input: JSON.stringify({ toolCall: { name: 'run_command', args: { CommandLine } } }), encoding: 'utf8' }).stdout);
+  assert.equal(agyCall('git -C x reset --hard').decision, 'deny');
+  assert.match(agyCall('git -C x reset --hard').reason, /\.agents\/hooks/);
+  assert.equal(agyCall('git status').decision, 'allow');
+  fs.writeFileSync(join(dir, '.agents', 'hooks.json'), JSON.stringify({ lint: { Stop: [] }, ...agyHooks }));
+
   remove(dir);
+  assert.deepEqual(JSON.parse(fs.readFileSync(join(dir, '.agents', 'hooks.json'), 'utf8')), { lint: { Stop: [] } });
+  assert.equal(fs.existsSync(agyHook), false);
   assert.deepEqual(JSON.parse(fs.readFileSync(settings, 'utf8')), before);
   assert.equal(fs.existsSync(hook), false);
   assert.equal(status(dir), 'git guard off');
