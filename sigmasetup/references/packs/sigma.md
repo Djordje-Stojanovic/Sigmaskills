@@ -50,7 +50,7 @@ Needs: Python. Setup: it is the setup. On a yes it copies `guardrail_lint.py` in
 
 ### sigmaloop
 
-Needs: one long-run host (Claude Code, Codex, Antigravity, pi with lapi, or T3 Code). Reads `docs/agents/issue-tracker.md`. Its briefs point to `/grilling` and `/tdd` (Matt Pocock pack). Setup: the tracker file above.
+Needs: one long-run host (Claude Code, Codex, Antigravity, pi with lapi, or T3 Code). Reads `docs/agents/issue-tracker.md`. Its briefs point to `/grilling` and `/tdd`, its loop file to `to-spec` (Matt Pocock pack). Shape L rents machines through `sigmacollab`; the gate that looks at real output uses `sigmadeeplook` when installed. Setup: the tracker file above.
 
 ### sigmataste
 

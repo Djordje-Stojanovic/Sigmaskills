@@ -34,7 +34,7 @@ When you add a skill (or rename/remove one): update `KNOWN_SKILLS` in [`test/rep
 
 **Merging (like T3 Code):** squash only, the PR title becomes the commit title (`title (#N)`). After the merge, close the linked issue, delete the remote and local branch and remove the worktree; `sigmaship/references/land.md` has the commands. The repo deletes the remote branch on merge by itself. The land step also runs `git -C /work/Thinkcenter_Setup pull -q --ff-only && python3 /work/Thinkcenter_Setup/scripts/project_skills.py --global` once (dev box; the pull makes sure the script is current): it installs `main`'s global set (`CORE_PACKS` in `src/packs.js`; [`docs/installer.md`](docs/installer.md) "The global set") on the PC, the dev box and the Spark and prints one line each. If a machine is off, its line says FAIL and the other machines still update. This line is the only install of a merge: no hook or timer installs skills. A machine that was off, or a PC whose owner was logged off, catches up at the next land step, or when you run the command again.
 
-Long runs: Claude Code (`/goal`, `/loop`) follows the run mode in [`sigmaloop/references/host-claude-code.md`](sigmaloop/references/host-claude-code.md). Codex, Antigravity, pi and T3 Code keep their own loop rules (the sigmaloop host files).
+Long runs: Claude Code (`/goal`, `/loop`) follows the run mode in [`sigmaloop/references/hosts.md`](sigmaloop/references/hosts.md#claude-code). Codex, Antigravity, pi and T3 Code keep their own loop rules (their sections of that file).
 
 Follow every rule below. They are mandatory for this repo.
 

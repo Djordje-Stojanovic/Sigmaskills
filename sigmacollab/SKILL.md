@@ -57,6 +57,7 @@ colab --auth adc stop -s JOB-NAME
 ```
 
 - Big uploads, a long process's output, a Windows program under Wine: [references/long-jobs.md](references/long-jobs.md).
+- A crew of parallel workers gets one runtime each (`-s JOB-1`, `-s JOB-2`), so no two wait on one build lock; each sends its work back as a `git bundle`. Drive a runtime with `colab exec`: a runtime takes a limited number of SSH sessions, set by the plan, and answers `429` past it.
 - Name every runtime of the job; touch only those names. Other workers' runtimes are not yours: never `stop --all`.
 - Before a big card, stop your own idle runtimes: they burn units, and it may clear a 412.
 - A refusal: record the exact text and read it ([the CLI's own skill](https://github.com/googlecolab/google-colab-cli/blob/main/skills/colab-operator/SKILL.md), its `commands/session.py`, [#73](https://github.com/googlecolab/google-colab-cli/issues/73)):

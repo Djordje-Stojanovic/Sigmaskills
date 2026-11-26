@@ -32,6 +32,16 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+### Changed
+
+- `sigmaloop`: three shapes and half the text. `sigmaloop S`, `M` or `L` with a few sentences writes the loop file and the prompt at once: S is one agent with no sub-agents, M an orchestrator and 3-4 workers on a git worktree each, L an orchestrator that only writes specs and steers, with 5 workers on a rented machine each (`sigmacollab`). Plain `sigmaloop` still asks one round, now 9 questions in `SKILL.md`, and the loop file keeps the reply verbatim under `## Answers`.
+- `sigmaloop`: the crew is one or two models and every worker slot builds, reviews or fixes as needed; the four-role model table and the clerk are gone. Open items are packed into one track per slot, and a track keeps its session through review fixes, so its context is paid for once.
+- `sigmaloop`: two optional crew files (`crew.md` for traps and shared contracts, written only by the orchestrator; `qna.md` for worker questions with the default they work on), an optional 15-minute watchdog for the case that every worker hangs at once, and one gate that looks at the real output when the work is seen or heard.
+- `sigmaloop`: 14 files became 5. `references/hosts.md` now holds every host (one shared `/goal` skeleton, one table for workers, warm messages and the watchdog), `references/briefs.md` holds the brief method and contract, and `references/lanes.md` (three levels of managers, the owner page cards, the spend meter) is deleted with `questions.md`, the six `host-*.md` files, `brief-method.md` and `prompt-contract.md`.
+- `sigmaloop`, T3 Code: every worker that runs commands is a `delegate_task` child. Native Antigravity `invoke_subagent` workers stalled 60 s on shell commands in one run; the line that allowed them is gone. Also new there: the `once` schedule type, and `runtimeMode` left out so a child inherits Full access.
+- `sigmaloop`, Claude Code: the watchdog is `/goal`'s own check-in (`CLAUDE_CODE_GOAL_CHECKIN_MINUTES`), not a second timer.
+- `sigmacollab`: a crew of parallel workers gets one Colab runtime each and sends work back as a `git bundle`; a runtime's SSH session limit depends on the plan (`429` past it), so drive it with `colab exec`.
+
 ## [0.31.6] — 2026-11-26
 
 ### Changed
