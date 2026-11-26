@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.31.3] — 2026-11-26
+
 ### Changed
 
 - `sigmaloop`: raise the `handoff.md` cap from `<= 100` lines to `<= 300 lines` (`<= 30 KB`) with a two-part structure: **Live State** (overwritten in place each turn: active jobs with VM/PID/worktree, open blockers, owner steps, exact resume command) and **Shipped Ledger** (compact 1-line-per-commit summary of accepted milestones and gate status, compressing old verbose turn logs instead of dropping shipped commit SHAs or active blockers).
@@ -1017,7 +1019,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.2...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.3...HEAD
+[0.31.3]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.2...v0.31.3
 [0.31.2]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.1...v0.31.2
 [0.31.1]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.0...v0.31.1
 [0.31.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.30.0...v0.31.0
