@@ -7,7 +7,7 @@
 - A field skill when the subject needs models from its own data (filings, lab results, match statistics).
 
 ## Order
-1. Pedagogy first, when the plan file step ran: the doctrine evidence and the exemplar courses (`repo-setup.md`, doctrine).
+1. Pedagogy first, when the run file step ran: the doctrine evidence and the exemplar courses (`repo-setup.md`, doctrine).
 2. The base rate for the goal. It goes on page one.
 3. Teachers just ahead of the lesson that needs them. Each teacher file: method, decisions with dates, quotes word for word with sources, mistakes and failures (keep a floor of them, so the course is not a highlight reel).
 4. Corpora the grill named, harvested in full, then sorted.
@@ -15,7 +15,6 @@
 
 ## Source rules
 - Every fetched source is kept as a snapshot with a header: URL, published date, accessed date.
-- Every quote, date and outcome in a lesson or case file matches a stored file; the schema check fails when it does not.
 - When the course has cases, their outcomes are computed by a committed script from a dated data file.
 - Never send the user's email or name in a request header; use a generic user agent.
 - Beliefs from the grill that sound like facts go to a "beliefs to verify" list until a source confirms them.

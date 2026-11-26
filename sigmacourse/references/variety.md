@@ -29,7 +29,7 @@ An ordered ladder in the field's words, its top set by the end lines. One exampl
 2. No fixed opener or closer: flag the same first-sentence pattern, heading sequence or closing line in consecutive lessons.
 3. Outcomes and answers stay hidden until the learner commits, in no fixed order, and some surprise (the obvious answer was wrong).
 4. Old abilities come back in quizzes, tasks and cumulative tests, as the spacing plan in SKILL.md step 4 lists.
-5. A lesson fits the learner's real sitting length (the grill asks); longer work splits into sittings.
+5. A lesson fits the learner's real sitting length; longer work splits into sittings.
 6. The script prints the share of learner time spent doing (tasks, practice, proofs) against taking in (reading, watching, listening); the grill sets the floor.
 7. Repetition by content, not wrapping: one topic in many formats is still one topic. Count repeated titles and repeated figures.
 
