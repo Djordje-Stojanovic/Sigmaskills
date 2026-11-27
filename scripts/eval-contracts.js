@@ -372,7 +372,7 @@ function sigmatour({ files, result }) {
 }
 
 
-// sigmaclimb scaffolds one project under Projects/<name>/ (signed spec, run file, queue, results header, weights),
+// sigmaclimb scaffolds one project under Projects/<name>/ (signed spec, run file, queue, results header, weights and time caps),
 // rents nothing in an offline run, and changes no other file.
 function sigmaclimb({ files, result }) {
   const problems = [];
@@ -381,14 +381,14 @@ function sigmaclimb({ files, result }) {
     const original = path.join(FIXTURE, ...name.split('/'));
     if (!fs.existsSync(original) || fs.readFileSync(original, 'utf8') !== text) problems.push(`changed a file outside Projects/: ${name}`);
   }
-  const goalName = Object.keys(files).find((name) => /^Projects\/[^/]+\/GOAL\.md$/.test(name));
-  if (!goalName) return [...problems, 'missing Projects/<name>/GOAL.md'];
-  const dir = goalName.slice(0, -'GOAL.md'.length);
-  const goal = files[goalName];
-  if (!/Stop line:/.test(goal)) problems.push(`${goalName}: no stop line`);
-  if (!/held-out/i.test(goal)) problems.push(`${goalName}: no held-out check`);
-  const left = goal.match(/<[A-Za-z][^<>:\n]{0,80}>/g); // any template placeholder; links (<https:...>) have a colon
-  if (left) problems.push(`${goalName}: template placeholders left: ${[...new Set(left)].join(', ')}`);
+  const runName = Object.keys(files).find((name) => /^Projects\/[^/]+\/climb\.md$/.test(name));
+  if (!runName) return [...problems, 'missing Projects/<name>/climb.md'];
+  const dir = runName.slice(0, -'climb.md'.length);
+  const runFile = files[runName];
+  if (!/Stop line:/.test(runFile)) problems.push(`${runName}: no stop line`);
+  if (!/held-out/i.test(runFile)) problems.push(`${runName}: no held-out check`);
+  const left = runFile.match(/<[A-Za-z][^<>:\n]{0,80}>/g); // any template placeholder; links (<https:...>) have a colon
+  if (left) problems.push(`${runName}: template placeholders left: ${[...new Set(left)].join(', ')}`);
   const spec = files[`${dir}SPEC_DRAFT.md`];
   if (!spec) problems.push(`missing ${dir}SPEC_DRAFT.md`);
   else problems.push(...requireText(spec, [/faster/i, /quality/i, /Ruling:/], `${dir}SPEC_DRAFT.md`));
@@ -407,9 +407,12 @@ function sigmaclimb({ files, result }) {
   if (!files[projectName]) problems.push(`missing ${projectName}`);
   else {
     try {
-      const weights = JSON.parse(files[projectName]).weights || {};
+      const { weights = {}, budget } = JSON.parse(files[projectName]);
+      for (const key of ['step_seconds', 'pass_seconds']) {
+        if (!Number.isFinite(budget?.[key]) || budget[key] <= 0) problems.push(`${projectName}: budget.${key} must be a positive number`);
+      }
       const sum = Object.values(weights).reduce((a, b) => a + b, 0);
-      if (Math.abs(sum - 1) > 0.011) problems.push(`${projectName}: score weights add up to ${sum}, not 1`);
+      if (!Number.isFinite(sum) || Object.values(weights).some((w) => w < 0) || Math.abs(sum - 1) > 1e-9) problems.push(`${projectName}: score weights add up to ${sum}, not 1`);
     } catch {
       problems.push(`${projectName}: not JSON`);
     }

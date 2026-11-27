@@ -1,9 +1,12 @@
 """Dry self-test of the sigmaclimb template: made-up run folders, the real scripts, no target.
 Run: python3 test/sigmaclimb_dry.py   (test/sigmaclimb.test.js runs it under npm test)"""
-import json, os, shutil, subprocess, sys, tempfile, unittest
+import csv, importlib.util, json, os, shlex, shutil, socket, subprocess, sys, tempfile, time, unittest
+from pathlib import Path
 
 TEMPLATE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sigmaclimb", "assets", "project-template")
-BASH = shutil.which("bash")
+def command(code):
+    args = [sys.executable, "-c", code]
+    return subprocess.list2cmdline(args) if os.name == "nt" else shlex.join(args)
 
 
 def put(path, obj):
@@ -20,7 +23,7 @@ class Climb(unittest.TestCase):
         self.project(weights={"a": 0.5, "b": 0.5}, lower_is_better=["b"])
         for name, a, b in (("0001", 10.0, 5.0), ("0002", 10.1, 5.0), ("0003", 9.9, 5.05)):  # A/A: about 1 % noise
             self.run_dir(name, {"a": a, "b": b}, quality=True)
-        self.py("scripts/bench/aa.py", "runs/0001", "runs/0002", "runs/0003")
+        self.py("climb.py", "lock", "runs/0001", "runs/0002", "runs/0003")
 
     def tearDown(self):
         shutil.rmtree(self.tmp)
@@ -34,7 +37,7 @@ class Climb(unittest.TestCase):
 
     def run_dir(self, name, probes=None, quality=None, change="change A", pairs=None, stages=None):
         raw = os.path.join(self.proj, "runs", name, "raw")
-        shutil.rmtree(raw, ignore_errors=True)  # a new run starts empty, as run_experiment.sh does
+        shutil.rmtree(raw, ignore_errors=True)  # a new run starts empty, as the runner does
         put(os.path.join(raw, "score.json"), {"pairs": pairs} if pairs else {"probes": probes})
         put(os.path.join(raw, "meta.json"), {"status": "OK", "stage_s": stages or {"start": 60, "score": 300, "quality": 60}})
         put(os.path.join(raw, "change"), change)
@@ -48,7 +51,7 @@ class Climb(unittest.TestCase):
         return r.stdout.strip().splitlines()[-1] if r.stdout.strip() else r.stderr
 
     def verdict(self, *args):
-        return self.py("scripts/bench/verdict.py", *args)
+        return self.py("climb.py", *args) if args[0] == "promote" else self.py("climb.py", "verdict", *args)
 
     def champion(self):
         return json.load(open(os.path.join(self.proj, "state", "champion.json"), encoding="utf-8"))
@@ -102,6 +105,7 @@ class Climb(unittest.TestCase):
         self.assertEqual(self.champion()["history"][-1]["owner"], "take it, b does not matter to me")
 
     def test_heldout_required_names_the_stage(self):
+        self.configure_steps()
         d = os.path.join(self.tmp, "heldout")
         self.project(heldout={"mode": "required", "dir": d})
         self.run_dir("0004", {"a": 12.0, "b": 5.0}, quality=True)
@@ -112,41 +116,51 @@ class Climb(unittest.TestCase):
             put(os.path.join(d, "check.py"), f'print("detail 1.23")\nprint(\'{{"quality_ok": {quality_ok}, "gain": {gain}}}\')\n')
 
         owner_check("false", 0.0)
-        self.assertIn("SELFTEST FAIL", self.py("scripts/bench/heldout.py", "selftest", self.proj))
-        self.assertIn("BROKEN", self.py("scripts/bench/heldout.py", "check", self.proj, "runs/0004"))
+        self.assertIn("SELFTEST FAIL", self.py("climb.py", "heldout", "selftest"))
+        self.assertIn("BROKEN", self.py("climb.py", "heldout", "check", "runs/0004"))
         put(os.path.join(d, "check.py"), 'import os, sys\nok = os.path.isfile(os.path.join(sys.argv[1], "project.json")) '
             'and os.path.isfile(os.path.join(sys.argv[2], "raw", "score.json"))\n'
             'print(\'{"quality_ok": %s, "gain": 0.0}\' % ("true" if ok else "false"))\n')
-        self.assertEqual("SELFTEST PASS", self.py("scripts/bench/heldout.py", "selftest", "."))  # "." as the docs say
+        self.assertEqual("SELFTEST PASS", self.py("climb.py", "heldout", "selftest"))
         owner_check("false", 0.09)
-        self.assertEqual("FAIL quality", self.py("scripts/bench/heldout.py", "check", self.proj, "runs/0004"))
+        self.assertEqual("FAIL quality", self.py("climb.py", "heldout", "check", "runs/0004"))
         self.assertIn("REFUSED: held-out check (required): FAIL quality", self.verdict("promote", "runs/0004"))
         owner_check("true", 0.01)  # visible gain +9.5 %: half of it is the bar
-        self.assertEqual("FAIL gain", self.py("scripts/bench/heldout.py", "check", self.proj, "runs/0004"))
+        self.assertEqual("FAIL gain", self.py("climb.py", "heldout", "check", "runs/0004"))
         self.assertIn("FAIL gain", self.verdict("promote", "runs/0004"))
         change = os.path.join(self.proj, "runs", "0004", "raw", "change")
         with open(change, "wb") as f:
             f.write(b"change A\nline 2\n")
         owner_check("true", 0.06)
-        self.assertEqual("PASS", self.py("scripts/bench/heldout.py", "check", self.proj, "runs/0004"))
+        self.assertEqual("PASS", self.py("climb.py", "heldout", "check", "runs/0004"))
         with open(change, "wb") as f:  # the same change with Windows line endings is still the change checked
             f.write(b"change A\r\nline 2\r\n")
         self.assertIn("PROMOTED", self.verdict("promote", "runs/0004"))
         self.assertEqual(self.champion()["history"][-1]["heldout"], "PASS")
 
+    def test_heldout_selftest_has_a_time_cap(self):
+        d = Path(self.tmp, "heldout")
+        self.configure_steps(step_seconds=1)
+        self.project(heldout={"dir": str(d), "mode": "required"})
+        put(d / "check.py", "import time; time.sleep(60)")
+        result = subprocess.run([sys.executable, "climb.py", "heldout", "selftest"], cwd=self.proj,
+                                capture_output=True, text=True, timeout=5)
+        self.assertIn("SELFTEST FAIL", result.stdout)
+        self.assertFalse(json.loads((d / "selftest.json").read_text())["ok"])
+
     def test_heldout_advisory_never_blocks(self):
         self.project(heldout={"mode": "advisory", "dir": os.path.join(self.tmp, "none")})
         self.run_dir("0004", {"a": 12.0, "b": 5.0}, quality=True)
-        out = subprocess.run([sys.executable, "scripts/bench/verdict.py", "promote", "runs/0004"], cwd=self.proj,
+        out = subprocess.run([sys.executable, "climb.py", "promote", "runs/0004"], cwd=self.proj,
                              capture_output=True, text=True).stdout
         self.assertIn("held-out check (advisory, does not block): not run", out)
         self.assertIn("PROMOTED", out)
 
-    def test_a_judge_measurer_scores_the_share_of_pairs_won(self):
+    def test_human_picks_score_the_share_of_pairs_won(self):
         self.project(measurer="pairs")
         for name, won in (("0001", 10), ("0002", 11), ("0003", 9)):  # the unchanged film against itself
             self.run_dir(name, pairs={"champion": {"won": won, "lost": 20 - won, "tied": 0}})
-        self.py("scripts/bench/aa.py", "runs/0001", "runs/0002", "runs/0003")  # spread 0.05: smallest gain 0.10
+        self.py("climb.py", "lock", "runs/0001", "runs/0002", "runs/0003")  # spread 0.05: smallest gain 0.10
         self.run_dir("0004", pairs={"champion": {"won": 15, "lost": 4, "tied": 1}, "start": {"won": 17, "lost": 3, "tied": 0}},
                      quality=True)
         line = self.verdict("runs/0004")
@@ -164,120 +178,125 @@ class Climb(unittest.TestCase):
                 row = dict.fromkeys(hdr, "") | {"pass": p, "verdict": v, "idea_id": idea, "minutes": minutes, "score_share": share}
                 f.write("\t".join(row[h] for h in hdr) + "\n")
         put(os.path.join(self.proj, "state", "champion.json"), {"runs": [], "probes": {}, "start": {}, "history": [{"keep_to_champion_min": 25}]})
-        line = self.py("scripts/status.py")
+        line = self.py("climb.py", "status")
         self.assertIn("45 min per idea", line)  # 90 minutes over 2 ideas; the baseline does not count
         self.assertIn("25 min from a KEEP to its champion", line)
         self.assertIn("40% of a pass measures the score - UNDER 50%", line)
-        self.assertIn("score", subprocess.run([sys.executable, "check_state.py"], cwd=self.proj, capture_output=True, text=True).stdout)
+        self.assertIn("score", subprocess.run([sys.executable, "climb.py", "check"], cwd=self.proj, capture_output=True, text=True).stdout)
 
-    @unittest.skipUnless(BASH, "needs bash")
-    def test_a_slower_run_ends_before_the_quality_check(self):
-        put(os.path.join(self.proj, "fake_target.sh"), "\n".join([
-            'cmd=$1; shift', 'case "$cmd" in',
-            '  score) OUT=$1; echo "{\\"probes\\": {\\"a\\": $FAKE_A, \\"b\\": 5.0}}" > "$OUT/score.json" ;;',
-            '  quality) OUT=$1; touch "$OUT/quality_ran"; echo \'{"ok": true, "fails": []}\' > "$OUT/quality.json" ;;',
-            'esac', ""]))
+    def configure_steps(self, step_seconds=5, pass_seconds=20, **steps):
+        self.project(budget={"step_seconds": step_seconds, "pass_seconds": pass_seconds, "run_hours": None},
+                     steps={key: command(code) for key, code in steps.items()})
         put(os.path.join(self.proj, "change.patch"), "one change")
-        for name in ("0004", "0005"):
-            put(os.path.join(self.proj, "runs", name, "invariants.json"), {"ok": True, "problems": []})
-        env = dict(os.environ, TARGET=os.path.join(self.proj, "fake_target.sh"), PYTHON=sys.executable, CLIMB_ROOT=self.proj)
-        for name, a, quality_runs, verdict in (("0004", "9.0", False, "REJECT"), ("0005", "12.0", True, "KEEP")):
-            subprocess.run([BASH, "scripts/bench/run_experiment.sh", f"runs/{name}", "change.patch"], cwd=self.proj,
-                           env=dict(env, FAKE_A=a), check=True, capture_output=True)
-            raw = os.path.join(self.proj, "runs", name, "raw")
-            self.assertTrue(os.path.exists(os.path.join(raw, "DONE")))
-            self.assertEqual(os.path.exists(os.path.join(raw, "quality_ran")), quality_runs, name)
-            self.assertEqual(set(json.load(open(os.path.join(raw, "meta.json")))["stage_s"]) >= {"start", "score", "stop"}, True)
-            self.assertRegex(self.verdict(f"runs/{name}"), rf"^VERDICT {verdict}")
-        # a box: the run folder lives outside the project (/root/runs/<id>), with the invariants check pushed into it
-        box_run = os.path.join(self.tmp, "box_runs", "0006")
-        put(os.path.join(box_run, "invariants.json"), {"ok": True, "problems": []})
-        subprocess.run([BASH, "scripts/bench/run_experiment.sh", box_run, "change.patch"], cwd=self.proj,  # backslashes on Windows
-                       env=dict(env, FAKE_A="12.0"), check=True, capture_output=True)
-        self.assertTrue(os.path.exists(os.path.join(box_run, "raw", "quality_ran")), "stage 1 on the box must see the invariants")
+
+    def run_pass(self, run, *args):
+        return subprocess.run([sys.executable, "climb.py", "run", run, "change.patch", *args],
+                              cwd=self.proj, capture_output=True, text=True, timeout=10)
+
+    def test_a_slower_run_ends_before_the_quality_check(self):
+        for run, value, quality_runs, verdict in (("runs/0004", 9, False, "REJECT"), ("runs/0005", 12, True, "KEEP"),
+                                                  ("runs/0007", 9, True, "REJECT"),
+                                                  (os.path.join(self.tmp, "external", "0006"), 12, True, "KEEP")):
+            raw = Path(self.proj, run, "raw")
+            put(raw.parent / "invariants.json", {"ok": True})
+            self.configure_steps(
+                score="import os; from pathlib import Path; assert Path(os.environ['CLIMB_CHANGE']).read_text() == 'one change'; "
+                      f"Path(os.environ['CLIMB_OUT'], 'score.json').write_text({json.dumps({'probes': {'a': value, 'b': 5}})!r})",
+                quality="import os; from pathlib import Path; Path(os.environ['CLIMB_OUT'], 'quality.json').write_text('{\"ok\":true}')")
+            r = self.run_pass(run, "--full") if run == "runs/0007" else self.run_pass(run)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertTrue((raw / "DONE").exists())
+            self.assertEqual((raw / "quality.json").exists(), quality_runs, run)
+            self.assertTrue(set(json.loads((raw / "meta.json").read_text())["stage_s"]) >= {"start", "score", "stop"})
+            self.assertRegex(self.verdict(run), rf"^VERDICT {verdict}")
+
+    def test_budget_is_required_before_any_step(self):
+        for step, total in ((None, 3), (3, 0), (-1, 3), (True, 3)):
+            self.configure_steps(step_seconds=step, pass_seconds=total,
+                                 start="from pathlib import Path; Path('started').touch()")
+            result = self.run_pass("runs/0004")
+            self.assertEqual(result.returncode, 2)
+            self.assertEqual(len((result.stdout + result.stderr).splitlines()), 1)
+            self.assertFalse(Path(self.proj, "started").exists())
+
+    def test_timeout_kills_child_and_runs_stop(self):
+        # The grandchild owns a listening socket. Binding the same port proves that it died.
+        child = "import socket,time; from pathlib import Path; s=socket.socket(); s.bind(('127.0.0.1',0)); s.listen(); Path('port').write_text(str(s.getsockname()[1])); time.sleep(60)"
+        put(os.path.join(self.proj, "child.py"), child)
+        spawn = "import subprocess,sys,time; subprocess.Popen([sys.executable,'child.py']); time.sleep(60)"
+        for run, step, total, cap in (("runs/0004", 1, 8, "step_seconds"), ("runs/0005", 8, 1, "pass_seconds")):
+            self.configure_steps(step, total, warmup=spawn, stop="from pathlib import Path; Path('stopped').touch()")
+            start = time.monotonic()
+            result = self.run_pass(run)
+            self.assertLess(time.monotonic() - start, 5)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            raw = Path(self.proj, run, "raw")
+            self.assertEqual(json.loads((raw / "meta.json").read_text())["status"], "TIMEOUT")
+            self.assertRegex(self.verdict(run), rf"^VERDICT CRASH: .*warmup.*{cap}.*1")
+            self.assertTrue(json.loads(Path(self.proj, "state/pass.json").read_text())["finished"])
+            port = Path(self.proj, "port")
+            with socket.socket() as probe:
+                probe.bind(("127.0.0.1", int(port.read_text())))
+            port.unlink()
+            Path(self.proj, "stopped").unlink()
+
+    def test_stalled_and_finished_status(self):
+        self.configure_steps()
+        root = Path(self.proj)
+        put(root / "state/pass.json", {"run": "runs/0004", "started": time.time()-60, "finished": False, "pid": 1})
+        stalled = self.py("climb.py", "status")
+        self.assertRegex(stalled, r"^LOOP STALLED: .*runs/0004.*kill it, record the CRASH, take the next idea")
+        self.py("climb.py", "record", "--run", "runs/0004", "--idea", "hung", "--category", "setup",
+                "--work", "SETTING", "--part", "all", "--desc", "killed", "--verdict", "CRASH")
+        self.assertRegex(self.py("climb.py", "status"), "^LOOP RUNNING:")  # the recorded CRASH clears the stall
+        (root / "STOP").touch()
+        (root / "REPORT.md").touch()
+        self.assertRegex(self.py("climb.py", "status"), "^LOOP FINISHED:")
+        (root / "STOP").unlink()
+        self.project(budget={"step_seconds": 5, "pass_seconds": 20, "run_hours": 1})
+        self.py("climb.py", "record", "--run", "runs/0001", "--idea", "base", "--category", "setup",
+                "--work", "SETTING", "--part", "all", "--desc", "start", "--verdict", "BASELINE")
+        p = root / "results.tsv"
+        rows = p.read_text().splitlines()
+        first = rows[1].split("\t")
+        first[1] = "2000-01-01T00:00Z"
+        p.write_text(rows[0] + "\n" + "\t".join(first) + "\n")
+        self.assertRegex(self.py("climb.py", "status"), "^LOOP FINISHED:")
+
+    def test_locked_scoring_files(self):
+        scorer = Path(self.proj, "score.py")
+        scorer.write_text("print(1)")
+        self.project(locked=["score.py"])
+        self.py("climb.py", "lock", "runs/0001", "runs/0002", "runs/0003")
+        lock = json.loads(Path(self.proj, "evaluator.lock").read_text())
+        self.assertEqual(set(lock["files"]), {"climb.py", "score.py"})
+        scorer.write_text("print(2)")
+        self.assertIn("VERDICT VOID: scorer file changed: score.py", self.verdict("runs/0001"))
+
+    @unittest.skipUnless(importlib.util.find_spec("matplotlib"), "matplotlib is not installed")
+    def test_progress_draws_sample_results(self):
+        root = Path(self.proj)
+        p = root / "results.tsv"
+        fields = p.read_text().strip().split("\t")
+        with p.open("a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fields, delimiter="\t")
+            for i, (v, score) in enumerate((("BASELINE", 1), ("AA", 1.01), ("AA", .99), ("REJECT", .98),
+                                            ("KEEP", 1.1), ("REJECT", 1.07), ("KEEP", 1.2), ("CRASH", "")), 1):
+                writer.writerow({"pass": i, "verdict": v, "vs_start": score})
+        r = subprocess.run([sys.executable, str(root / "progress.py")], cwd=self.tmp, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        png = (root / "progress.png").read_bytes()
+        self.assertTrue(png.startswith(b"\x89PNG\r\n\x1a\n"))
+        self.assertGreater(len(png), 4096)
 
     def test_aa_refuses_a_band_from_nothing(self):
         for name in ("0001", "0002", "0003"):
             self.run_dir(name, {"a": None, "b": None})
-        r = subprocess.run([sys.executable, "scripts/bench/aa.py", "runs/0001", "runs/0002", "runs/0003"], cwd=self.proj,
+        r = subprocess.run([sys.executable, "climb.py", "lock", "runs/0001", "runs/0002", "runs/0003"], cwd=self.proj,
                            capture_output=True, text=True)
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("NOT LOCKED", r.stderr)
 
 
-class BoxModel(unittest.TestCase):
-    """The box scripts read the served model from box/model.env; with the values they held before, they run the same."""
-    VALUES = {  # the worked example's run, as the scripts held it before model.env
-        "MODEL_ID": "nvidia/Qwen3.8-Flash-Next-FP4-Local", "MODEL_REVISION": "b9ce18a6887e18c089fdea8509a33e63429a3300",
-        "SERVED_NAME": "qwen", "REASONING_PARSER": "qwen3", "TOOL_PARSER": "qwen3_xml",
-        "OVERLAY_ID": "Loke-60000/Qwen3.8-Flash-Next-FP4-Local-abliterated",
-    }
-
-    def setUp(self):
-        self.tmp = tempfile.mkdtemp()
-        self.box = os.path.join(self.tmp, "box")
-        shutil.copytree(os.path.join(TEMPLATE, "box"), self.box)
-        self.model_dir = os.path.join(self.tmp, "weights").replace("\\", "/")
-        self.log = os.path.join(self.tmp, "calls.log").replace("\\", "/")
-        self.bin = os.path.join(self.tmp, "bin")
-        for tool in ("hf", "vllm"):  # stand-ins that record their arguments
-            put(os.path.join(self.bin, tool), f'#!/usr/bin/env bash\necho "{tool} $*" >> "{self.log}"\n')
-            os.chmod(os.path.join(self.bin, tool), 0o755)  # Linux runs a tool on PATH only with its execute bit
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp)
-
-    def set_values(self):
-        lines = [f'{k}="{v}"' for k, v in {**self.VALUES, "MODEL_DIR": self.model_dir}.items()]
-        put(os.path.join(self.box, "model.env"), "\n".join(lines) + "\n")
-
-    def bash(self, script):
-        env = {**os.environ, "HF_TOKEN": "x", "PATH": self.bin + os.pathsep + os.environ["PATH"]}
-        return subprocess.run([BASH, os.path.join(self.box, script).replace("\\", "/")], env=env, capture_output=True, text=True)
-
-    @unittest.skipUnless(BASH, "needs bash")
-    def test_download_and_serve_use_the_model_values(self):
-        self.set_values()
-        self.assertEqual(self.bash("download.sh").returncode, 0)
-        self.assertEqual(self.bash("serve_base.sh").returncode, 0)
-        calls = open(self.log, encoding="utf-8").read()
-        v = self.VALUES
-        self.assertIn(f"hf download {v['MODEL_ID']} --revision {v['MODEL_REVISION']} --local-dir {self.model_dir}", calls)
-        self.assertIn(f"hf download {v['OVERLAY_ID']} --local-dir {self.model_dir}", calls)
-        self.assertIn(f"vllm serve {self.model_dir} --served-model-name qwen", calls)
-        self.assertIn("--reasoning-parser qwen3 --tool-call-parser qwen3_xml", calls)
-
-    @unittest.skipUnless(BASH, "needs bash")
-    def test_placeholders_stop_the_scripts(self):
-        r = self.bash("download.sh")
-        self.assertEqual(r.returncode, 2)
-        self.assertIn("set MODEL_ID in box/model.env", r.stderr)
-
-    def test_the_bench_reads_the_served_name_from_model_env(self):
-        proj = os.path.join(self.tmp, "proj")
-        shutil.copytree(TEMPLATE, proj)
-        self.box = os.path.join(proj, "box")
-        self.set_values()
-        bench = os.path.join(proj, "scripts", "bench")
-        code = ("import sys, types; sys.modules['requests'] = types.SimpleNamespace(Session=lambda: None); "
-                "sys.path.insert(0, '.'); import common; print(common.MODEL)")
-        env = {k: v for k, v in os.environ.items() if k != "BENCH_MODEL"}
-        r = subprocess.run([sys.executable, "-c", code], cwd=bench, capture_output=True, text=True, env=env)
-        self.assertEqual(r.stdout.strip(), "qwen", r.stderr)
-        if BASH:
-            line = [l for l in open(os.path.join(bench, "target.sh"), encoding="utf-8") if l.startswith("BENCH_MODEL=")][0]
-            sh = f'BENCH="{bench.replace(chr(92), "/")}"; {line.strip()}; echo "$BENCH_MODEL"'
-            self.assertEqual(subprocess.run([BASH, "-c", sh], capture_output=True, text=True, env=env).stdout.strip(), "qwen")
-
-    def test_python_box_scripts_read_the_model_values(self):
-        # verify_weights.py and cfgcheck.py take MODEL_DIR and SERVED_NAME from this helper (they need the box to run whole).
-        self.set_values()
-        code = "from model_env import model_env; m = model_env(); print(m['MODEL_DIR'], m['SERVED_NAME'])"
-        r = subprocess.run([sys.executable, "-c", code], cwd=self.box, capture_output=True, text=True)
-        self.assertEqual(r.stdout.split(), [self.model_dir, "qwen"], r.stderr)
-        for script in ("verify_weights.py", "cfgcheck.py"):
-            self.assertIn("model_env()", open(os.path.join(self.box, script), encoding="utf-8").read())
-
-
 if __name__ == "__main__":
-    unittest.main(warnings="ignore")  # the scripts open files the short way; not a defect here
+    unittest.main(warnings="ignore")

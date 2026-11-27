@@ -1,8 +1,8 @@
 {
   "name": "<Project>",
   "measurer": "script",
-  "weights": {"short": 0.25, "warm": 0.15, "miss": 0.08, "long": 0.15, "prefill": 0.07, "prefill_new": 0.07, "c2": 0.08, "c3": 0.05, "replay": 0.10, "ttft_128k": 0.0},
-  "lower_is_better": ["warm", "miss", "replay", "ttft_128k"],
+  "weights": {"score": 1},
+  "lower_is_better": [],
   "repeats": 3,
   "min_gain": null,
   "max_drop": null,
@@ -12,25 +12,45 @@
   "category_switch_after": 3,
   "bold_every": 3,
   "invariants": true,
+  "locked": [],
   "heldout": {"mode": "off", "share": 0.5, "dir": ""},
   "cost_per_hour": 0,
-  "machine": "<where the score is measured>",
-  "vast": {"filters": "cpu_arch=arm64 rentable=true reliability>=0.98 disk_space>=350 inet_down>=500", "disk_gb": 350, "image": "<image:tag>"},
-  "paths_on_box": {"project": "/root/work", "ref": "/root/work/ref", "runs": "/root/runs"},
+  "machine": "",
+  "steps": {"start": "", "warmup": "", "score": "", "quality": "", "stop": ""},
+  "budget": {"step_seconds": null, "pass_seconds": null, "run_hours": null},
   "notes": {
-    "measurer": "script: raw/score.json holds {probes: {name: value}}. pairs: raw/score.json holds {pairs: {champion: {won, lost, tied}, start: {...}}}, blind pairs judged by the owner or a judge he accepts; the score is the share of pairs won.",
-    "weights": "Score = weighted geometric mean of the probe ratios against the champion. Weight 0 = a guard: not scored, but it may not drop. A probe the champion has and a run lacks is a CRASH. The example is a served model; rename the probes for your target.",
-    "repeats": "Runs of the unchanged target that set the noise (A/A). 3: fewer cannot show a spread.",
-    "min_gain": "null = twice the measured score spread (evaluator.lock). A number (0.05 = +5 %) overrides. A gain inside the noise is luck.",
-    "max_drop": "null = twice each probe's own spread. A probe that drops further turns a win into a trade (ARCHIVE).",
-    "confirm_below": "A KEEP whose gain is under this many times min_gain needs one confirmation run (also a KEEP) before promote. A big gain does not.",
-    "quality_share_max": "The quality check may take at most this share of a pass. Bigger: make it cheaper, or ask the owner. check_state.py says when.",
-    "score_share_min": "The share of a pass that should measure the score. Under it, status.py and check_state.py say: fix the loop first.",
-    "category_switch_after": "Passes without a KEEP in one idea category before the loop moves to another and profiles again. check_state.py says when.",
-    "bold_every": "At least every Nth pass is a code or design change, not a setting. check_state.py says when.",
-    "invariants": "true: every run needs runs/<n>/invariants.json with ok true (the change touched nothing locked), or it is VOID. false only when nothing is locked.",
-    "heldout": "off (default) | advisory (reports, never blocks) | required (the owner opted in, in his words). share = the part of the visible gain the held-out set must show. dir = the folder heldout.py writes its answers to.",
-    "cost_per_hour": "Rent per hour of the machine, for the cost column. state/instance.json dph wins when it exists.",
-    "vast": "Serving example only: offer filters for the rented box (references/setup-vast.md)."
+    "name": "Use the project name from the signed scope.",
+    "measurer": "script reads {probes: {name: value}}. For pairs, the owner or people they name pick blind pairs. Write {pairs: {champion: {won, lost, tied}, start: {won, lost, tied}}}. Each tie counts as half a win.",
+    "weights": "Set probe weights to sum to 1 for the weighted geometric mean. Weight 0 protects a probe from regressions without scoring it.",
+    "lower_is_better": "List probes such as elapsed time whose ratio improves when the number falls.",
+    "repeats": "Measure the unchanged target this many times to estimate noise, counting the baseline.",
+    "min_gain": "Use twice the measured score spread by default, or enter a fraction such as 0.05 for five percent.",
+    "max_drop": "Use twice each probe's measured spread by default. A larger drop turns a gain into a trade.",
+    "confirm_below": "A KEEP below this multiple of min_gain needs a second KEEP for the same change.",
+    "quality_share_max": "A quality check above this fraction of pass time needs a cheaper equivalent or an owner decision.",
+    "score_share_min": "Below this share of time measuring the score, improve the loop before the next idea.",
+    "category_switch_after": "After this many passes in one category without a KEEP, profile again and change category.",
+    "bold_every": "Include a code or design change within this many passes. TEXT covers a change to the content itself.",
+    "invariants": "When true, write runs/NNNN/invariants.json with ok and problems before measuring. False means the project has no invariant checks.",
+    "locked": "List the scorer files relative to the project. The lock hashes them and climb.py so edits are visible.",
+    "heldout": {
+      "mode": "off skips the check, advisory reports its answer, required asks for a PASS.",
+      "share": "This fraction of the visible gain must repeat on private inputs.",
+      "dir": "Keep check.py, its private inputs and its answers in this folder."
+    },
+    "cost_per_hour": "Measured pass time times this hourly price gives the cost in USD. Zero covers free compute.",
+    "machine": "Use the compute label from the scope so each results row identifies the measurement setup.",
+    "steps": {
+      "start": "Apply CLIMB_CHANGE and start the target. Each command runs in the project folder. An empty command skips its step.",
+      "warmup": "Bring the champion and candidate to the same state before scoring.",
+      "score": "Write score.json in CLIMB_OUT with probes or blind pair counts.",
+      "quality": "Write quality.json in CLIMB_OUT with ok (true or false) and fails (reasons).",
+      "stop": "Clean up the target after every pass, including a failure or timeout."
+    },
+    "budget": {
+      "step_seconds": "A positive cap kills a stalled command and its children. Cleanup and held-out checks each get their own step cap.",
+      "pass_seconds": "A positive cap limits the total time before cleanup, even when each step stays under its own cap.",
+      "run_hours": "Optional time limit from the first recorded pass. With null, the owner stops the loop with STOP."
+    }
   }
 }

@@ -1,0 +1,5 @@
+{
+  "name": "Serving speed",
+  "weights": {"short": 0.5, "long": 0.5},
+  "budget": {"step_seconds": 60, "pass_seconds": 180, "run_hours": 1}
+}

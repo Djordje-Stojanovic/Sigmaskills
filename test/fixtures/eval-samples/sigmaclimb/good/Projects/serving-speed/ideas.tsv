@@ -1,0 +1,4 @@
+id	status	idea	category	work_type	part	share	expected_effect	evidence	notes
+batch	pending	Try smaller batches	scheduler	SETTING	queue	0.5	less waiting	baseline timings	p=40%
+cache	pending	Reuse shared input	cache	CODE	prefill	0.3	less repeated work	request trace	p=50%
+copy	pending	Remove a buffer copy	memory	CODE	transfer	0.2	less transfer time	copy profile	p=25%

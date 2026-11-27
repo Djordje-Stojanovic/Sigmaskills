@@ -56,7 +56,7 @@ Each skill has one job. Say its name to start it.
 | `sigmadebug` | Lists every open question, grills one topic at a time, plans each fix and ships it in a background agent. | |
 | `sigmacorrect` | Turns a correction you gave twice into a type, a check or a test that fails on the real mistake; docs last. | |
 | `sigmamusk` | Runs Musk's five-step Algorithm on a plan, a codebase (`cut`) or a whole setup (`reset`): measure, delete first, you decide what stays. | |
-| `sigmaclimb` | Makes anything you can score or judge better, one kept-or-reverted change at a time, against a locked scorer and a quality check. | Python 3 |
+| `sigmaclimb` | Makes anything you can measure or judge better (a speed, a size, a render, a text), one kept-or-reverted change at a time. A locked script or your own blind picks decide, never a model. Every command has a time cap, so a long run cannot hang. | Python 3 |
 | `sigmataste` | Looks at a page, app, deck, doc, image or film through 14 lenses and writes a ranked plan of visible changes. Plans; never builds. | A browser to see a page |
 | `sigmatour` | A visual tour of any repo in one HTML page. On request it copies the repo first, isolated, and tours the copy. | Python 3, `git`, a browser |
 | `sigmaresearch` | Reads public sources (Reddit, X, Hacker News, GitHub, Stack Overflow, YouTube, arXiv, SEC EDGAR, other languages) and counts only those read in full. | Python 3 |
@@ -90,7 +90,8 @@ $sigmadeeplook What happens at 2:10 in demo.mp4?
 $sigmafinanceman What does the price of KO assume?
 $sigmafinanceman Should I buy or rent an H100 for six months?
 $sigmatour Give me a 30 minute tour of this repo
-$sigmaclimb Make my vLLM model serve faster on a rented H100
+$sigmaclimb Make my model serve faster on this GPU without losing quality
+$sigmaclimb Keep improving my 2-minute stock pitch until I say stop
 $sigmawrite Humanize this announcement so it sounds like me
 $sigmaloop Write an overnight loop prompt for Claude Code until 07:00
 $sigmaloop M Finish the open spec; done when the test suite is green

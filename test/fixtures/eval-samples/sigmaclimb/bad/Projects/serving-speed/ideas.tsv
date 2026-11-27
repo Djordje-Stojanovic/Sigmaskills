@@ -1,0 +1,2 @@
+id	status	idea	category	work_type	part	share	expected_effect	evidence	notes
+batch	pending	Try smaller batches	scheduler	SETTING	queue	0.5	less waiting	trace	unknown

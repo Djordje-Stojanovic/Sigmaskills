@@ -82,7 +82,7 @@ Needs: git; `gh` for a public skill shipped by PR. Setup: none; it installs the 
 
 ### sigmaclimb
 
-Needs: Python 3 and a target it can measure or the owner can judge. Uses `/grilling` when installed. Setup: none; it writes its own project folder.
+Needs: Python 3 and a target a script can measure or the owner can judge in blind pairs. Uses `/grilling` when installed; rents compute through `sigmacollab` when the local machine cannot hold the target. Setup: none; it writes its own project folder.
 
 ### sigmacollab
 
