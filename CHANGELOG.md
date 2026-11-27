@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+## [0.32.0] — 2026-11-27
+
 ### Added
 
 - Four new packs, each pinned to one commit and installed per repo (`install --pack <id> --project .`), none global: **Three.js Graphics** (`threejs-graphics`, Media: 28 skills from `scottstts/Threejs-Awesome-Graphics-Agent-Skills`, with `threejs-skill-router`), **Three.js Games** (`threejs-games`, Media: 9 skills from `majidmanzarpour/threejs-game-skills`, routed by `threejs-game-director`), **pstack** (`pstack`, Engineering: Lauren Tan's 59 skills from `cursor/plugins`, its generated Claude Code tree `harness/pstack/claude-code/skills`) and **Karpathy Guidelines** (`karpathy`, Engineering: `karpathy-guidelines` from `multica-ai/andrej-karpathy-skills`). Matt Pocock's pack owns `tdd` and `teach`, so pstack's install as `pstack-tdd` and `pstack-teach`, and every call to them in pstack follows. A renamed id that is a plain word changes only where it is written as a name (`/teach`, `` `teach` ``, `**teach**`, `name: teach`), never in prose. pstack's subagents (`poteto-agent`, `comment-sicko`) are agent files, not skills: its guide says to get them from the upstream Claude Code plugin.
@@ -1074,7 +1076,8 @@ Ship high-rigor, installable agent skills (not apps): full-repo audits, performa
 | 2026-08-11 | `5dab832` | Add CHANGELOG and mark v0.1.0 as the first Sigmaskills release |
 | 2026-08-11 | `124a666` | Polish v0.1.0 docs for multi-host install and use |
 
-[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.8...HEAD
+[Unreleased]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.32.0...HEAD
+[0.32.0]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.8...v0.32.0
 [0.31.8]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.7...v0.31.8
 [0.31.7]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.6...v0.31.7
 [0.31.6]: https://github.com/Djordje-Stojanovic/Sigmaskills/compare/v0.31.5...v0.31.6
