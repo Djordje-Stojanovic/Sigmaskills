@@ -158,12 +158,14 @@ test('stageSkills: licence files go into every skill folder, and a renamed skill
     fs.mkdirSync(path.join(repo, 'skills', 'perf'), { recursive: true });
     fs.mkdirSync(path.join(repo, 'skills', 'router', 'references'), { recursive: true });
     fs.writeFileSync(path.join(repo, 'LICENSE'), 'L');
-    fs.writeFileSync(path.join(repo, 'NOTICE'), 'N');
+    // A licence below the root (cursor/plugins keeps pstack's at harness/pstack/claude-code/LICENSE) lands by its file name.
+    fs.mkdirSync(path.join(repo, 'legal'));
+    fs.writeFileSync(path.join(repo, 'legal', 'NOTICE'), 'N');
     fs.writeFileSync(path.join(repo, 'skills', 'perf', 'SKILL.md'), '---\nname: perf\ndescription: P.\n---\n');
     fs.writeFileSync(path.join(repo, 'skills', 'router', 'SKILL.md'), '---\nname: router\ndescription: R.\n---\nLoad perf, not perf-tools.\n');
     fs.writeFileSync(path.join(repo, 'skills', 'router', 'references', 'table.md'), '| slow | `perf` |\n');
     const out = path.join(box.root, 'out');
-    stageSkills({ licenses: ['LICENSE', 'NOTICE', 'MISSING'], rename: { perf: 'game-perf' } }, path.join(repo, 'skills'), repo, out);
+    stageSkills({ licenses: ['LICENSE', 'legal/NOTICE', 'MISSING'], rename: { perf: 'game-perf' } }, path.join(repo, 'skills'), repo, out);
     assert.deepEqual(fs.readdirSync(out).sort(), ['game-perf', 'router']);
     assert.deepEqual(fs.readdirSync(path.join(out, 'router')).sort(), ['LICENSE', 'NOTICE', 'SKILL.md', 'references']);
     assert.match(fs.readFileSync(path.join(out, 'game-perf', 'SKILL.md'), 'utf8'), /name: game-perf/);

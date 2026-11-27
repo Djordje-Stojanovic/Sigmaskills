@@ -23,7 +23,7 @@
    ["sigmasetup","Set up a repo for the installed packs and sync your house rule files"],
    ["sigmaask","Which skill, and what next, from what is on this machine"]
   ]},
-  {"id":"mattpocock","title":"Matt Pocock","blurb":"Skills for real engineers: grill, spec, TDD, triage, deep modules.","refs":{"mattpocock/skills":"abeeaf95660ba9e8b7c753eb38f441ca707a8823"},"sources":["mattpocock/skills@abeeaf95660ba9e8b7c753eb38f441ca707a8823/skills"],"skills":[
+  {"id":"mattpocock","title":"Matt Pocock","blurb":"Skills for real engineers: grill, spec, TDD, triage, deep modules.","refs":{"mattpocock/skills":"6f7f7831a625f040a8e06a0e7954826b87ce775a"},"sources":["mattpocock/skills@6f7f7831a625f040a8e06a0e7954826b87ce775a/skills"],"skills":[
    ["ask-matt","Ask which skill or flow fits your situation."],
    ["chief-of-staff","Pursue a long-running goal in a single session by co-ordinating subagents."],
    ["claude-handoff","Hand the current conversation off to a fresh background agent that picks up the work immediately."],
@@ -79,7 +79,7 @@
    ["threejs-shaders","Custom GLSL vertex and fragment shaders: uniforms, varyings, shader chunks, extending built-in"],
    ["threejs-textures","Three.js textures: image loading, color spaces, UV channels and transforms, texture types from"]
   ]},
-  {"id":"hyperframes","title":"HyperFrames","blurb":"HTML to video: the HyperFrames skill, CLI, registry, media and slideshows, plus the student kit.","refs":{"nateherkai/hyperframes-student-kit":"10511e5af86fc47756ea89803b397422e2d89284"},"sources":["heygen-com/hyperframes@v0.9.86/skills","nateherkai/hyperframes-student-kit@10511e5af86fc47756ea89803b397422e2d89284/.agents/skills"],"skills":[
+  {"id":"hyperframes","title":"HyperFrames","blurb":"HTML to video: the HyperFrames skill, CLI, registry, media and slideshows, plus the student kit.","refs":{"nateherkai/hyperframes-student-kit":"10511e5af86fc47756ea89803b397422e2d89284"},"sources":["heygen-com/hyperframes@v0.9.101/skills","nateherkai/hyperframes-student-kit@10511e5af86fc47756ea89803b397422e2d89284/.agents/skills"],"skills":[
    ["figma","Bring Figma into a HyperFrames video - rendered assets, brand tokens, components, storyboard frames"],
    ["hyperframes","Read first to make, edit, animate or render any video with HyperFrames (HTML rendered to video),"],
    ["hyperframes-cli","HyperFrames CLI - scaffold, check frames, edit timelines, preview, render, share and project"],
@@ -219,7 +219,7 @@
    ["design-x-ai","Use when building UI in the xAI look: Elon Musk's AI lab. Stark monochrome, futuristic minimalism."],
    ["design-zapier","Use when building UI in the Zapier look: Automation platform. Warm orange, friendly"]
   ]},
-  {"id":"last30days","title":"Last 30 Days","blurb":"Research what people say about any topic in the last 30 days, across Reddit, X, YouTube, Hacker News and more.","refs":{},"sources":["mvanhorn/last30days-skill@v4.6.0/skills"],"skills":[
+  {"id":"last30days","title":"Last 30 Days","blurb":"Research what people say about any topic in the last 30 days, across Reddit, X, YouTube, Hacker News and more.","refs":{},"sources":["mvanhorn/last30days-skill@v4.7.0/skills"],"skills":[
    ["last30days","Research what people actually say about any topic in the last 30 days."]
   ]},
   {"id":"financial-services","title":"Financial Services","blurb":"Anthropic finance plugins as skills: DCF, LBO, comps, pitch decks, earnings, fund admin, KYC.","refs":{"anthropics/financial-services":"3e32c2287dcb637c184c01cc0ad82d6af7e9bb0f"},"sources":["anthropics/financial-services@3e32c2287dcb637c184c01cc0ad82d6af7e9bb0f/plugins"],"skills":[
@@ -351,7 +351,7 @@
    ["writing-plans","Use when you have a spec or requirements for a multi-step task, before touching code"],
    ["writing-skills","Use when creating new skills, editing existing skills, or verifying skills work before deployment"]
   ]},
-  {"id":"impeccable","title":"Impeccable","blurb":"Paul Bakaus's design vocabulary for agents: one skill with commands to audit, polish, critique and restyle a frontend.","refs":{"pbakaus/impeccable":"b49177d32788f2dc585c42831d845dacf1ebed2c"},"sources":["pbakaus/impeccable@b49177d32788f2dc585c42831d845dacf1ebed2c/plugin/skills"],"skills":[
+  {"id":"impeccable","title":"Impeccable","blurb":"Paul Bakaus's design vocabulary for agents: one skill with commands to audit, polish, critique and restyle a frontend.","refs":{"pbakaus/impeccable":"2fc5e1459efbbf06d92c7306517c286bf12490cf"},"sources":["pbakaus/impeccable@2fc5e1459efbbf06d92c7306517c286bf12490cf/plugin/skills"],"skills":[
    ["impeccable","Use to design, redesign, critique, audit, polish or animate a frontend: websites, landing pages,"]
   ]},
   {"id":"security-audit","title":"Security Audit","blurb":"Cloudflare's security audit skill: find vulnerabilities and verify each finding before it is reported.","refs":{"cloudflare/security-audit-skill":"c1c8a8c1471069fb0e188eeaff69b8e8db6564a8"},"sources":["cloudflare/security-audit-skill@c1c8a8c1471069fb0e188eeaff69b8e8db6564a8/skills"],"skills":[
@@ -360,10 +360,10 @@
   {"id":"anatomy","title":"Anatomy","blurb":"Detailed, interactive isometric illustrations of real machines and how they work.","refs":{"wheresryan22/anatomy":"1482e8469b0a9e0d8cc18ea2740a01423d29ae80"},"sources":["wheresryan22/anatomy@1482e8469b0a9e0d8cc18ea2740a01423d29ae80/"],"skills":[
    ["anatomy","Build crafted, highly detailed, interactive isometric SVG figures that explain a technical idea as"]
   ]},
-  {"id":"diagram-design","title":"Diagram Design","blurb":"Cathryn Lavery's editorial diagrams: architecture, flow, sequence and more as clean HTML and SVG.","refs":{"cathrynlavery/diagram-design":"0eeda75a708f419560d5e032693618bb9954f17b"},"sources":["cathrynlavery/diagram-design@0eeda75a708f419560d5e032693618bb9954f17b/skills"],"skills":[
+  {"id":"diagram-design","title":"Diagram Design","blurb":"Cathryn Lavery's editorial diagrams: architecture, flow, sequence and more as clean HTML and SVG.","refs":{"cathrynlavery/diagram-design":"795eec47fd376e5dda0b9e056a49520060cd2f13"},"sources":["cathrynlavery/diagram-design@795eec47fd376e5dda0b9e056a49520060cd2f13/skills"],"skills":[
    ["diagram-design","Create branded architecture, architecture delta, IT current-state, flowchart, sequence, state"]
   ]},
-  {"id":"taste-skill","title":"Taste","blurb":"Art direction for coding agents: reference images, a visual brief and a browser check, so a page does not look generated.","refs":{"Leonxlnx/taste-skill":"6c0b5c78f5d31776e2210305abaa210cdc0030bf"},"sources":["Leonxlnx/taste-skill@6c0b5c78f5d31776e2210305abaa210cdc0030bf/skills"],"skills":[
+  {"id":"taste-skill","title":"Taste","blurb":"Art direction for coding agents: reference images, a visual brief and a browser check, so a page does not look generated.","refs":{"Leonxlnx/taste-skill":"952435f63acece7d2fcb4b4d3c1786c1c43603e0"},"sources":["Leonxlnx/taste-skill@952435f63acece7d2fcb4b4d3c1786c1c43603e0/skills"],"skills":[
    ["taste-skill","tasteskill 2.5.1, the anti-slop frontend skill."]
   ]},
   {"id":"hallmark","title":"Hallmark","blurb":"A design skill that refuses the AI look: new pages, audits, redesigns and design extraction.","refs":{"Nutlope/hallmark":"04977e15f3dfd6ee4b74c887dac3eb52665d6c92"},"sources":["Nutlope/hallmark@04977e15f3dfd6ee4b74c887dac3eb52665d6c92/skills"],"skills":[
@@ -377,7 +377,7 @@
    ["ponytail-help","Quick reference for ponytail levels, skills and commands."],
    ["ponytail-review","Quality review of a change: is the logic right, is it safe, does it hold under real load, is risky"]
   ]},
-  {"id":"anthropic-engineering","title":"Anthropic Engineering","blurb":"Anthropic's engineering plugin as skills: architecture, code review, debugging, incidents, standups, system design, tech debt, testing.","refs":{"anthropics/knowledge-work-plugins":"2baf6d1eded3cd7aeff0b5c5918601a5799189b4"},"sources":["anthropics/knowledge-work-plugins@2baf6d1eded3cd7aeff0b5c5918601a5799189b4/engineering/skills"],"skills":[
+  {"id":"anthropic-engineering","title":"Anthropic Engineering","blurb":"Anthropic's engineering plugin as skills: architecture, code review, debugging, incidents, standups, system design, tech debt, testing.","refs":{"anthropics/knowledge-work-plugins":"5e504ae11498f2b8daa30d86b7dab97b2ecd8092"},"sources":["anthropics/knowledge-work-plugins@5e504ae11498f2b8daa30d86b7dab97b2ecd8092/engineering/skills"],"skills":[
    ["architecture","Create or evaluate an architecture decision record (ADR)."],
    ["debug","Structured debugging session — reproduce, isolate, diagnose, and fix."],
    ["deploy-checklist","Pre-deployment verification checklist."],
@@ -388,7 +388,7 @@
    ["tech-debt","Identify, categorize, and prioritize technical debt."],
    ["testing-strategy","Design test strategies and test plans."]
   ]},
-  {"id":"agent-skills","title":"Agent Skills","blurb":"Addy Osmani's engineering workflow: spec, plan, build in small steps, test, review, harden and ship.","refs":{"addyosmani/agent-skills":"8c99fa36d90068c82d547f7c12a9d67a3e95f4ee"},"sources":["addyosmani/agent-skills@8c99fa36d90068c82d547f7c12a9d67a3e95f4ee/skills"],"skills":[
+  {"id":"agent-skills","title":"Agent Skills","blurb":"Addy Osmani's engineering workflow: spec, plan, build in small steps, test, review, harden and ship.","refs":{"addyosmani/agent-skills":"e997ac5b9a74eab332d5e9793bb38a38c8cfdd74"},"sources":["addyosmani/agent-skills@e997ac5b9a74eab332d5e9793bb38a38c8cfdd74/skills"],"skills":[
    ["accessibility-engineering","Audits existing interfaces for WCAG 2.2 AA conformance and remediates the violations found."],
    ["api-and-interface-design","Guides stable API and interface design."],
    ["browser-testing-with-devtools","Tests in real browsers via Chrome DevTools MCP."],
@@ -415,7 +415,7 @@
    ["spec-driven-development","Creates specs before coding."],
    ["using-agent-skills","Discovers and invokes agent skills."]
   ]},
-  {"id":"caveman","title":"Caveman","blurb":"Terse answers that keep every fact, plus lean build, patch, refactor and verify skills.","refs":{"JuliusBrussee/caveman":"b89752f6bca5a26bfde8b019813554241800ca99"},"sources":["JuliusBrussee/caveman@b89752f6bca5a26bfde8b019813554241800ca99/skills"],"skills":[
+  {"id":"caveman","title":"Caveman","blurb":"Terse answers that keep every fact, plus lean build, patch, refactor and verify skills.","refs":{"JuliusBrussee/caveman":"e74a11ccdb38b98d15c9f9545787c907dd15f0ab"},"sources":["JuliusBrussee/caveman@e74a11ccdb38b98d15c9f9545787c907dd15f0ab/skills"],"skills":[
    ["caveman","Terse caveman voice: answer first, fluff gone, every technical fact kept."],
    ["caveman-commit","Write a Conventional Commits message compressed to intent only."],
    ["caveman-compress","Compress a memory file such as CLAUDE.md or a todo list into caveman format to save input tokens,"],
@@ -536,7 +536,7 @@
    ["review-animations","Reviews animation and motion code against a high craft bar derived from Emil Kowalski's design"],
    ["write-swift","How to write modern Swift well — modeling with value types, Swift 6 data-race safety and"]
   ]},
-  {"id":"marketingskills","title":"Marketing Skills","blurb":"Corey Haines's marketing skills: copy, SEO, CRO, ads, email, pricing, launches, analytics and more.","refs":{"coreyhaines31/marketingskills":"8fd2fcade2fd6629026e9dfe6d133b55b36968b9"},"sources":["coreyhaines31/marketingskills@8fd2fcade2fd6629026e9dfe6d133b55b36968b9/skills"],"skills":[
+  {"id":"marketingskills","title":"Marketing Skills","blurb":"Corey Haines's marketing skills: copy, SEO, CRO, ads, email, pricing, launches, analytics and more.","refs":{"coreyhaines31/marketingskills":"2bf95edb4ebd37198ab7fd18b99ba95c2145ec64"},"sources":["coreyhaines31/marketingskills@2bf95edb4ebd37198ab7fd18b99ba95c2145ec64/skills"],"skills":[
    ["ab-testing","When the user wants to plan, run, or read A/B tests, or asks a judgement call on one: is the result"],
    ["ad-creative","When the user wants to write or judge ad creative, or asks which ad, hook, or angle to run or kill:"],
    ["ads","When the user wants to plan, run, or fix paid ads on Google, Meta, and LinkedIn, or asks a"],
@@ -605,7 +605,7 @@
    ["linkedin-repurposer","Repurpose existing content into a native LinkedIn post."],
    ["linkedin-thread-monitor","Track which of your LinkedIn comments earned author replies."]
   ]},
-  {"id":"i-have-adhd","title":"I Have ADHD","blurb":"Answers shaped for a reader with ADHD: next action first, numbered steps, no tangents, visible wins.","refs":{"ayghri/i-have-adhd":"1ecea1993b7fce257ffbd686c070948b5e07eda6"},"sources":["ayghri/i-have-adhd@1ecea1993b7fce257ffbd686c070948b5e07eda6/skills"],"skills":[
+  {"id":"i-have-adhd","title":"I Have ADHD","blurb":"Answers shaped for a reader with ADHD: next action first, numbered steps, no tangents, visible wins.","refs":{"ayghri/i-have-adhd":"f3e783bae5f4820416492091b3abeb670616c23a"},"sources":["ayghri/i-have-adhd@f3e783bae5f4820416492091b3abeb670616c23a/skills"],"skills":[
    ["i-have-adhd","Shape output for a reader with ADHD: lead with the next action, number multi-step work, restate"]
   ]},
   {"id":"baoyu","title":"Baoyu","blurb":"Baoyu's content skills: cover images, infographics, comics, slides, diagrams, translation and posting to X, WeChat and Weibo.","refs":{"Djordje-Stojanovic/baoyu-skills":"5847f0ac444300bc9457122301ff6685a9011e09"},"sources":["Djordje-Stojanovic/baoyu-skills@5847f0ac444300bc9457122301ff6685a9011e09/skills"],"skills":[
@@ -713,9 +713,10 @@
    ["unreal-packaging","Packages and ships Unreal Engine 5 (UE 5.8) projects: Shipping builds, cooking, pak/IoStore and"],
    ["visual-novel","Builds visual novels and choice-driven stories in Ren'Py or any engine: routes and endings,"]
   ]},
-  {"id":"monorepo-doctor","title":"Monorepo Doctor","blurb":"Read-only audit of a JS/TS monorepo (Nx, Turborepo, pnpm, yarn, npm, bun) and a cleanup flow for what it finds.","refs":{"santoshyadavdev/monorepo-doctor":"3cb32ea3f16cb7eabf9687d5aab76e358352b7ed"},"sources":["santoshyadavdev/monorepo-doctor@3cb32ea3f16cb7eabf9687d5aab76e358352b7ed/skills"],"skills":[
+  {"id":"monorepo-doctor","title":"Monorepo Doctor","blurb":"Read-only audit of a JS/TS monorepo (Nx, Turborepo, pnpm, yarn, npm, bun) and a cleanup flow for what it finds.","refs":{"santoshyadavdev/monorepo-doctor":"2bf96e4cffa7fd4803cf769a14dc691021178e35"},"sources":["santoshyadavdev/monorepo-doctor@2bf96e4cffa7fd4803cf769a14dc691021178e35/skills"],"skills":[
    ["monorepo-boundaries-cleanup","Use when a monorepo boundary linter (turbo boundaries, Nx enforce-module-boundaries,"],
-   ["monorepo-doctor","Use when a user asks for a JS/TS monorepo audit, or Bazel target visibility or testonly issues in a"]
+   ["monorepo-doctor","Use when a user asks for a JS/TS monorepo audit, or Bazel target visibility or testonly issues in a"],
+   ["polyrepo-tax","Use when a user wants to know what their polyrepo setup costs - bugs from version drift and"]
   ]},
   {"id":"design-kit","title":"Design Kit","blurb":"Logos from brief to production files, and editorial charts, decks and reports from your data.","refs":{"kaankiziltug/logo-design-skill":"e9eaddc07895575253d6663320354a708f53e955","larashero3-dotcom/lieflat-charts":"4b4e75bde11cbef44263de769f3705db54bbb277"},"sources":["kaankiziltug/logo-design-skill@e9eaddc07895575253d6663320354a708f53e955/skills","larashero3-dotcom/lieflat-charts@4b4e75bde11cbef44263de769f3705db54bbb277/"],"skills":[
    ["logo-design","Professional logo and brand-mark design, from brief to production files."],
@@ -727,6 +728,111 @@
   ]},
   {"id":"engineering-kit","title":"Engineering Kit","blurb":"Single-skill engineering tools: local LLM inference hill-climbing under a memory cap.","refs":{"sybil-solutions/inference-optimisation-skill":"fda968e7fc1996aa23c67139c755fe541c9d4be0"},"sources":["sybil-solutions/inference-optimisation-skill@fda968e7fc1996aa23c67139c755fe541c9d4be0/skills"],"skills":[
    ["inference-optimisation","Hill-climb the serving speed of a local LLM on any hardware (NVIDIA, AMD, Intel, Apple,"]
+  ]},
+  {"id":"threejs-graphics","title":"Three.js Graphics","blurb":"Scott Stts's graphics vocabulary for three.js: lighting, shadows, water, clouds, terrain, procedural worlds and post-processing, with a router.","refs":{"scottstts/Threejs-Awesome-Graphics-Agent-Skills":"06f952ea0e4bedbd5bb176d909dcabc8cd152452"},"sources":["scottstts/Threejs-Awesome-Graphics-Agent-Skills@06f952ea0e4bedbd5bb176d909dcabc8cd152452/skills"],"skills":[
+   ["threejs-atmosphere-aerial-perspective","Implement physically motivated sky and aerial-perspective systems in Three.js."],
+   ["threejs-bloom","Implement production bloom in advanced Three.js scenes."],
+   ["threejs-camera-direction","Direct advanced Three.js camera systems and solve reference-matched lenses."],
+   ["threejs-exposure-color-grading","Build a measured exposure, tone-mapping, and color-grading path in Three.js."],
+   ["threejs-image-pipeline","Build a deliberate final-image pipeline for advanced Three.js scenes."],
+   ["threejs-lighting-and-gi","Author physically coherent Three.js lighting, HDRI fill, global illumination, and real-time"],
+   ["threejs-parallax-occlusion-mapping","Build silhouette-aware parallax occlusion mapping in Three.js WebGPU and TSL."],
+   ["threejs-precipitation-surfaces","Build coupled precipitation and affected surfaces in Three.js."],
+   ["threejs-procedural-animation","Build advanced procedural animation in Three.js."],
+   ["threejs-procedural-architecture","Build authored procedural buildings, architectural kits, and composed architectural ornament and"],
+   ["threejs-procedural-fields","Build coherent procedural scalar and vector fields for Three.js materials and geometry."],
+   ["threejs-procedural-geometry","Build well-crafted production procedural meshes in Three.js."],
+   ["threejs-procedural-materials","Author production procedural materials in Three.js."],
+   ["threejs-procedural-planets","Author procedural planetary bodies in Three.js."],
+   ["threejs-procedural-vegetation","Generate authored procedural trees, grass, ivy, flowers, and vegetation in Three.js or raw WebGPU."],
+   ["threejs-procedural-vfx","Author production real-time VFX in Three.js."],
+   ["threejs-raymarched-space-effects","Build raymarched space phenomena in Three.js."],
+   ["threejs-reference-reading","Decode a visual reference into a physically coherent Three.js 3D build plan."],
+   ["threejs-screen-space-ambient-occlusion","Implement a production GTAO path in Three.js."],
+   ["threejs-shadow-systems","Implement stable, scalable directional-shadow systems for Three.js."],
+   ["threejs-skill-router","Route ambitious Three.js graphics work to the smallest expert skill set."],
+   ["threejs-spectral-ocean","Build large procedural oceans and coast transitions in Three.js."],
+   ["threejs-temporal-stability","Keep Three.js scenes crisp and artifact-free in motion, not only in converged stills."],
+   ["threejs-temporal-surfaces","Build view-aligned and screen-space surface effects in Three.js."],
+   ["threejs-terrain-and-landscapes","Build non-orbital Three.js terrain, geological rock and cliffs, dunes, snowfields, built-to-ground"],
+   ["threejs-visual-validation","Validate advanced Three.js graphics as authored systems rather than subjective screenshots."],
+   ["threejs-volumetric-clouds","Implement volumetric cloud systems in Three.js."],
+   ["threejs-water-optics","Build production analytic and bounded water in Three.js."]
+  ]},
+  {"id":"threejs-games","title":"Three.js Games","blurb":"Playable, polished three.js browser games: a director skill routes gameplay, graphics, UI, assets, audio, debugging and release QA.","refs":{"majidmanzarpour/threejs-game-skills":"8286774b22a2566bf894dbc825825c16921866af"},"sources":["majidmanzarpour/threejs-game-skills@8286774b22a2566bf894dbc825825c16921866af/skills"],"skills":[
+   ["threejs-3d-generator","Generate, texture, rig, animate, stylize, convert, and download 3D assets for Three.js games via"],
+   ["threejs-aaa-graphics-builder","Upgrade Three.js games from prototype visuals to premium browser graphics: art-direction critique,"],
+   ["threejs-audio-generator","Generate, convert, clean, and integrate audio for Three.js browser games with ElevenLabs: sound"],
+   ["threejs-debug-profiler","Debug and profile Three.js browser games: blank canvases, render and runtime bugs, asset and audio"],
+   ["threejs-game-director","Entrypoint for building, upgrading, and finishing Three.js browser games."],
+   ["threejs-game-ui-designer","Design premium Three.js game UI: HUDs, menus, overlays, pause/win/lose screens, settings, icon"],
+   ["threejs-gameplay-systems","Build and iterate playable Three.js game systems: starter scaffold, architecture, design briefs,"],
+   ["threejs-image-generator","Generate and edit 2D image assets for Three.js games with Google's Gemini image API: concept"],
+   ["threejs-qa-release","Verify and release Three.js browser games: playtest QA, automated bot playtests, mobile and"]
+  ]},
+  {"id":"pstack","title":"pstack","blurb":"Lauren Tan's rigorous engineering workflows: poteto-mode playbooks, 23 principles, review, verification and investigation skills.","refs":{"cursor/plugins":"b7b93c36be9bcc36a74db438e0fd385d660bc559"},"sources":["cursor/plugins@b7b93c36be9bcc36a74db438e0fd385d660bc559/harness/pstack/claude-code/skills"],"skills":[
+   ["architect","Sketch types, signatures, and module structure before code, then stay in the loop while"],
+   ["arena","Spawn N parallel candidates at the same task, pick a base, graft the strongest parts of the losers"],
+   ["automate-me","Use for \"automate me\", \"create/update/refresh my -mode skill\", \"turn/capture my preferences or"],
+   ["benchmark-checklist","Vet a perf measurement (limiter, tuning, limits, errors, repeatability, relevance, and whether the"],
+   ["blast-radius","Find what a change could break somewhere else before it ships, beyond the diff, and prove the one"],
+   ["bro","Restate the last message in plain human language, with no jargon."],
+   ["correct","Find the mistakes agents keep repeating in this repo and make each one impossible."],
+   ["create-formal-verification-skill","Generate a project-local skill that formally verifies the code where a bug costs the most and tests"],
+   ["create-verification-skill","Generate a project-local verification skill that drives your app the way a user does — any"],
+   ["figure-it-out","Design an auditable playbook when no narrower one fits: a large migration, an ambitious multi-part"],
+   ["how","Use for \"how does X work\", code walkthroughs before changing something, and placement / ownership /"],
+   ["in-your-own-words","Restate in your own words what you think the user's goals are and what problem they're trying to"],
+   ["interrogate","Use for \"interrogate\", \"adversarial review\", \"multi-model review\", \"challenge this\", \"stress test"],
+   ["ketchup","Catch the user up on what changed in this chat since their last message, in plain words and small"],
+   ["ketchup-video","Catch the user up like /ketchup, with a short subtitled video of slides for what happened and the"],
+   ["maintain-formal-verification-skill","Bring a project's formal verification back in line with the code after the code changes: find the"],
+   ["maintain-verification-skill","Periodic pass that keeps a project's verification skill and feature map honest: parallel source"],
+   ["make-bot-ui","Use when building a custom UI (page, dashboard, buttons) that should wake a Grok Bot over a"],
+   ["no-comments","Spawn Comment Sicko, fix accepted findings, and offer encodings for claimed constraints."],
+   ["poteto-help","Guides users through pstack setup, /poteto-mode, and picking the skill, playbook, or principle for"],
+   ["poteto-mode","poteto's agent style for concise, detailed responses, deliberate subagents, unslopped prose, simple"],
+   ["principle-attack-the-premise","Apply when two or more fixes that share one premise have failed the same gate."],
+   ["principle-boundary-discipline","Apply when wiring validation, error handling, or framework adapters."],
+   ["principle-build-the-lever","Apply to any non-trivial work, not just bulk work: edits, migrations, analyses, checks."],
+   ["principle-encode-lessons-in-structure","Apply when you catch yourself writing the same instruction a second time, or notice a recurring"],
+   ["principle-exhaust-the-design-space","Apply when facing a novel UI interaction or architectural decision with no precedent in the"],
+   ["principle-experience-first","Apply when product, UX, or feature-scope tradeoffs come up."],
+   ["principle-explain-the-number","Apply before you measure, and before you trust, report, or act on a number you measured: a speedup,"],
+   ["principle-fix-root-causes","Apply when debugging."],
+   ["principle-foundational-thinking","Apply before writing logic: choosing core types and data structures, sequencing scaffold-vs-feature"],
+   ["principle-guard-the-context-window","Apply when context is filling up: large outputs, long files, repeated reads, fan-out planning."],
+   ["principle-laziness-protocol","Apply when refactoring, evaluating diff size, or tempted to add abstractions, layers, or signal"],
+   ["principle-make-operations-idempotent","Apply when designing commands, lifecycle steps, or processing loops that run amid crashes,"],
+   ["principle-migrate-callers-then-delete-legacy-apis","Apply when introducing a new internal API while old callers still exist."],
+   ["principle-minimize-reader-load","Apply when reviewing or shaping code that's hard to trace."],
+   ["principle-model-the-domain","Apply when writing stateful logic, or when code branches a lot or repeats a shape assumption across"],
+   ["principle-never-block-on-the-human","Apply when tempted to ask 'should I do X?' on reversible work."],
+   ["principle-outcome-oriented-execution","Apply during planned rewrites and migrations with explicit phase boundaries."],
+   ["principle-prove-it-works","Apply after completing a task, before declaring done."],
+   ["principle-redesign-from-first-principles","Apply when integrating a new requirement into an existing design."],
+   ["principle-separate-before-serializing-shared-state","Apply when concurrent actors might write to the same file, branch, key, or state object."],
+   ["principle-sequence-verifiable-units","Apply to multi-step work (sweeps, migrations, runs of similar edits) and to how you stack commits"],
+   ["principle-subtract-before-you-add","Apply when sequencing an addition, refactor, or rewrite."],
+   ["principle-test-behavior-not-implementation","Apply when you write, change, or keep a test."],
+   ["principle-type-system-discipline","Apply when designing types, reviewing a function signature, or writing code in any statically-typed"],
+   ["pstack-tdd","Use only when the user explicitly asks for TDD, a failing test, or a regression test, OR when the"],
+   ["pstack-teach","Explain a body of work plainly so a person actually understands it."],
+   ["recall","Reconstruct your recent working context from your own chat history, live state, and the shared"],
+   ["reflect","Mine the active transcript for durable learnings and route each to a concrete edit on an existing"],
+   ["reframe","Teach the expert words for what the operator is building, borrow words from neighboring fields that"],
+   ["setup-pstack","Configure which models pstack uses per role and at what reasoning budget."],
+   ["sharpen","Make a task deeper, not bigger, then rewrite the prompt."],
+   ["show-me-your-work","Keep a reviewable decision trail for long-running or unattended work: a TSV log with one row per"],
+   ["statechart","Check a TLA+ model of a system that moves between states, such as a product flow, a protocol, or a"],
+   ["swarm","Fan out N parallel workers, drain them, and return one report."],
+   ["technical-writing","Layered technical-writing standard: Diátaxis structure, Google developer style sentences, STE"],
+   ["typescript-best-practices","TypeScript best practices."],
+   ["unslop","Cut AI tells from any writing."],
+   ["why","Use for 'why does X work this way', 'why we picked Y', design rationale, regressions, postmortems,"]
+  ]},
+  {"id":"karpathy","title":"Karpathy Guidelines","blurb":"Coding guidelines drawn from Andrej Karpathy's notes on LLM coding pitfalls: think first, keep it simple, change only what you must.","refs":{"multica-ai/andrej-karpathy-skills":"2c606141936f1eeef17fa3043a72095b4765b9c2"},"sources":["multica-ai/andrej-karpathy-skills@2c606141936f1eeef17fa3043a72095b4765b9c2/skills"],"skills":[
+   ["karpathy-guidelines","Behavioral guidelines to reduce common LLM coding mistakes."]
   ]}
  ],"hosts":[
   {"id":"adal","name":"AdaL","global":["home",".adal/skills"],"project":".adal/skills"},

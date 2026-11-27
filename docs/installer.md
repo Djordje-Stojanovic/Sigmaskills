@@ -154,6 +154,10 @@ A **pack** is a named group of skills. `--preset <pack>` installs all of it, and
 | `design-kit` | `logo`, `charts` |
 | `motion-kit` | `animation`, `motion` |
 | `engineering-kit` | `inference` |
+| `threejs-graphics` | `threejs-awesome`, `scottstts` |
+| `threejs-games` | `threejs-game`, `majid` |
+| `pstack` | `poteto`, `lauren-tan` |
+| `karpathy` | `karpathy-skills`, `andrej-karpathy` |
 | `local` | `own` |
 | `core` | the global default: every Sigma skill and the whole Matt Pocock, tstack, Anatomy, Hallmark, Design Kit, Motion Kit and Engineering Kit packs. `install --global --yes` with no pack, skill or `--all` installs it |
 | `design-pack` | the design pair for one repo with a page: `impeccable` and `taste-skill`, at their pinned commits. `sigmataste` is a Sigma skill, so `core` has it already. `frontend-design` is in the `anthropic` pack (19 skills): add it alone with `install frontend-design`. Research: [`docs/research/design-pack.md`](research/design-pack.md) |

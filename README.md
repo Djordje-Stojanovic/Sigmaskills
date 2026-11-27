@@ -104,38 +104,42 @@ A pack is a group of skills from one or more sources, downloaded at its pinned v
 | Pack | Id | Category | Skills | What it is | Source @ pin |
 |------|----|----------|-------:|------------|--------------|
 | Sigma | `sigma` | Engineering | 22 | The skills above | this package |
-| Matt Pocock | `mattpocock` | Engineering | 39 | Grill, spec, TDD, triage, deep modules | [mattpocock/skills](https://github.com/mattpocock/skills) @ `abeeaf9` |
+| Matt Pocock | `mattpocock` | Engineering | 39 | Grill, spec, TDD, triage, deep modules | [mattpocock/skills](https://github.com/mattpocock/skills) @ `6f7f783` |
 | Three.js | `threejs` | Media | 13 | Geometry, materials, lighting, shaders, R3F | [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills) @ `0e18186` |
-| HyperFrames | `hyperframes` | Media | 20 | HTML to video, plus the student kit | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) @ `v0.9.86`, [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit) @ `10511e5` |
+| HyperFrames | `hyperframes` | Media | 20 | HTML to video, plus the student kit | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) @ `v0.9.101`, [nateherkai/hyperframes-student-kit](https://github.com/nateherkai/hyperframes-student-kit) @ `10511e5` |
 | MiniMax H3 | `minimax-h3` | Media | 9 | Prompt writing and video recipes for MiniMax H3 | [MiniMax-AI/MiniMax-H3](https://github.com/MiniMax-AI/MiniMax-H3) @ newest commit |
 | Anthropic | `anthropic` | Productivity | 19 | docx, pdf, pptx, xlsx, Claude API, MCP builder, skill creator | [anthropics/skills](https://github.com/anthropics/skills) @ `e4bb5d9` |
 | Design.md | `design-md` | Design | 84 | One brand `DESIGN.md` per skill, at most 3 installed | [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) @ `fcc7028` |
-| Last 30 Days | `last30days` | Research | 1 | What people said about a topic in the last 30 days | [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill) @ `v4.6.0` |
+| Last 30 Days | `last30days` | Research | 1 | What people said about a topic in the last 30 days | [mvanhorn/last30days-skill](https://github.com/mvanhorn/last30days-skill) @ `v4.7.0` |
 | Financial Services | `financial-services` | Finance | 99 | Anthropic's finance plugins: DCF, LBO, comps, decks, KYC | [anthropics/financial-services](https://github.com/anthropics/financial-services) @ `3e32c22` |
 | tstack | `tstack` | Engineering | 9 | Theo Browne's PR skills: full-send, council, babysit-pr | [t3dotgg/tstack](https://github.com/t3dotgg/tstack) @ `11e37a7` |
 | Superpowers | `superpowers` | Engineering | 15 | Brainstorm, plan, execute, TDD, debug, review | [obra/superpowers](https://github.com/obra/superpowers) @ `22f0b46` |
-| Impeccable | `impeccable` | Design | 1 | Audit, polish, critique and restyle a frontend | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) @ `b49177d` |
+| Impeccable | `impeccable` | Design | 1 | Audit, polish, critique and restyle a frontend | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) @ `2fc5e14` |
 | Security Audit | `security-audit` | Engineering | 1 | Find vulnerabilities and verify each one | [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill) @ `c1c8a8c` |
 | Anatomy | `anatomy` | Design | 1 | Interactive isometric drawings of real machines | [wheresryan22/anatomy](https://github.com/wheresryan22/anatomy) @ `1482e84` |
-| Diagram Design | `diagram-design` | Design | 1 | Editorial diagrams as HTML and SVG | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) @ `0eeda75` |
-| Taste | `taste-skill` | Design | 1 | Art direction so a page does not look generated | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) @ `6c0b5c7` |
+| Diagram Design | `diagram-design` | Design | 1 | Editorial diagrams as HTML and SVG | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) @ `795eec4` |
+| Taste | `taste-skill` | Design | 1 | Art direction so a page does not look generated | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) @ `952435f` |
 | Hallmark | `hallmark` | Design | 1 | New pages, audits and redesigns without the AI look | [Nutlope/hallmark](https://github.com/Nutlope/hallmark) @ `04977e1` |
 | Ponytail | `ponytail` | Engineering | 6 | The smallest change that fully works, plus audits | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) @ `v5.3.3` |
-| Anthropic Engineering | `anthropic-engineering` | Engineering | 9 | Architecture, debugging, incidents, system design | [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) @ `2baf6d1` |
-| Agent Skills | `agent-skills` | Engineering | 25 | Addy Osmani's spec-to-ship workflow | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) @ `8c99fa3` |
-| Caveman | `caveman` | Engineering | 14 | Terse answers, lean build and verify skills | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) @ `b89752f` |
+| Anthropic Engineering | `anthropic-engineering` | Engineering | 9 | Architecture, debugging, incidents, system design | [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) @ `5e504ae` |
+| Agent Skills | `agent-skills` | Engineering | 25 | Addy Osmani's spec-to-ship workflow | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) @ `e997ac5` |
+| Caveman | `caveman` | Engineering | 14 | Terse answers, lean build and verify skills | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) @ `e74a11c` |
 | Claude Red | `claude-red` | Engineering | 79 | Offensive security for authorized tests | [SnailSploit/Claude-Red](https://github.com/SnailSploit/Claude-Red) @ `6196ba7` |
 | Dev Browser | `dev-browser` | Engineering | 1 | The agent drives a real Chrome | [SawyerHood/dev-browser](https://github.com/SawyerHood/dev-browser) @ `520ba5c` |
 | Emil Kowalski | `emil-kowalski` | Design | 19 | Animation, gestures and UI reviews | [emilkowalski/skills](https://github.com/emilkowalski/skills) @ `64eb3de` |
-| Marketing Skills | `marketingskills` | Marketing | 53 | Copy, SEO, CRO, ads, email, launches | [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) @ `8fd2fca` |
+| Marketing Skills | `marketingskills` | Marketing | 53 | Copy, SEO, CRO, ads, email, launches | [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) @ `2bf95ed` |
 | LinkedIn | `linkedin` | Marketing | 12 | Posts, comments and analytics, drafted for approval | [sergebulaev/linkedin-skills](https://github.com/sergebulaev/linkedin-skills) @ `32083c0` |
-| I Have ADHD | `i-have-adhd` | Productivity | 1 | Answers shaped for a reader with ADHD | [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) @ `1ecea19` |
+| I Have ADHD | `i-have-adhd` | Productivity | 1 | Answers shaped for a reader with ADHD | [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) @ `f3e783b` |
 | Baoyu | `baoyu` | Media | 21 | Covers, infographics, comics, slides, posting to X | [Djordje-Stojanovic/baoyu-skills](https://github.com/Djordje-Stojanovic/baoyu-skills) @ `5847f0a` (English fork of [JimLiu/baoyu-skills](https://github.com/JimLiu/baoyu-skills)) |
 | Game Dev | `gamedev` | Engineering | 80 | Games in 12 engines, with a router | [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) @ `c6ca6c4` |
-| Monorepo Doctor | `monorepo-doctor` | Engineering | 2 | Read-only JS/TS monorepo audit and cleanup | [santoshyadavdev/monorepo-doctor](https://github.com/santoshyadavdev/monorepo-doctor) @ `3cb32ea` |
+| Monorepo Doctor | `monorepo-doctor` | Engineering | 3 | Read-only JS/TS monorepo audit, cleanup and polyrepo cost | [santoshyadavdev/monorepo-doctor](https://github.com/santoshyadavdev/monorepo-doctor) @ `2bf96e4` |
 | Design Kit | `design-kit` | Design | 2 | Logos from brief to files; editorial charts, decks and reports | [kaankiziltug/logo-design-skill](https://github.com/kaankiziltug/logo-design-skill) @ `e9eaddc`, [larashero3-dotcom/lieflat-charts](https://github.com/larashero3-dotcom/lieflat-charts) @ `4b4e75b` |
 | Motion Kit | `motion-kit` | Media | 2 | Logo animation from a raster logo; animated line-art scenes | [nolangz/pixel2motion](https://github.com/nolangz/pixel2motion) @ `e9faedb`, [JDhruv14/line-art-animation](https://github.com/JDhruv14/line-art-animation) @ `c43d698` |
 | Engineering Kit | `engineering-kit` | Engineering | 1 | Local LLM inference hill-climbing under a memory cap | [sybil-solutions/inference-optimisation-skill](https://github.com/sybil-solutions/inference-optimisation-skill) @ `fda968e` |
+| Three.js Graphics | `threejs-graphics` | Media | 28 | Lighting, shadows, water, clouds, procedural worlds, with a router | [scottstts/Threejs-Awesome-Graphics-Agent-Skills](https://github.com/scottstts/Threejs-Awesome-Graphics-Agent-Skills) @ `06f952e` |
+| Three.js Games | `threejs-games` | Media | 9 | Playable browser games, routed by a director skill | [majidmanzarpour/threejs-game-skills](https://github.com/majidmanzarpour/threejs-game-skills) @ `8286774` |
+| pstack | `pstack` | Engineering | 59 | Lauren Tan's poteto-mode playbooks, principles and review skills | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack) @ `b7b93c3` |
+| Karpathy Guidelines | `karpathy` | Engineering | 1 | Think first, keep it simple, change only what you must | [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) @ `2c60614` |
 
 `local` is a folder of your own skills (`SIGMA_LOCAL_SKILLS_DIR` or `~/.sigmaskills/packs.json`). When two packs ship the same skill name, the earlier pack in this table keeps it. `npx @djordje-stojanovic/sigmaskills packs` prints every pack with its skills.
 

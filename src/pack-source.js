@@ -80,8 +80,8 @@ export function hashDirectory(dir) {
 }
 
 /**
- * Copy each skill folder of `from` into `outDir`. `licenses` (files at the repo root, such as
- * LICENSE and NOTICE) go into every skill folder, as the design-md transform does. `rename`
+ * Copy each skill folder of `from` into `outDir`. `licenses` (repo paths, such as LICENSE and
+ * NOTICE) go into every skill folder by file name, as the design-md transform does. `rename`
  * ({ upstream id: new id }) gives a skill a pack-unique name when another pack owns the upstream
  * one, and rewrites the old name in the Markdown of every skill of the source, so a router still finds it.
  */
@@ -104,7 +104,7 @@ export function stageSkills(source, from, repoRoot, outDir) {
     fs.cpSync(dir, dest, { recursive: true, filter: (item) => item === dir || !path.basename(item).startsWith('.') });
     for (const name of source.licenses || []) {
       const file = path.join(repoRoot, name);
-      if (fs.existsSync(file)) fs.copyFileSync(file, path.join(dest, name));
+      if (fs.existsSync(file)) fs.copyFileSync(file, path.join(dest, path.basename(name)));
     }
     if (olds.length) rewrite(dest);
   }

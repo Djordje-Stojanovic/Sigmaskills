@@ -24,7 +24,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // The HyperFrames skills change shape often (14 were folded into `hyperframes` at once). The pack
 // is pinned to one release tag; to move it, clone that tag, change this line, and re-run.
-const HYPERFRAMES_RELEASE = 'v0.9.86';
+const HYPERFRAMES_RELEASE = 'v0.9.101';
 
 // Theo Browne's tstack (MIT) is pinned to one commit. To move it, clone that commit, change this line, and re-run.
 const TSTACK_COMMIT = '11e37a74d0a6868c121cd0910ab2b3bd9873b92a';
@@ -44,7 +44,7 @@ const PACKS = [
     blurb: 'Skills for real engineers: grill, spec, TDD, triage, deep modules.',
     category: 'Engineering',
     aliases: ['matt', 'pocock'],
-    sources: [{ repo: 'mattpocock/skills', clone: 'matt', path: 'skills', ref: 'abeeaf95660ba9e8b7c753eb38f441ca707a8823' }],
+    sources: [{ repo: 'mattpocock/skills', clone: 'matt', path: 'skills', ref: '6f7f7831a625f040a8e06a0e7954826b87ce775a' }],
   },
   {
     id: 'threejs',
@@ -103,7 +103,7 @@ const PACKS = [
     blurb: "Paul Bakaus's design vocabulary for agents: one skill with commands to audit, polish, critique and restyle a frontend.",
     category: 'Design',
     aliases: ['pbakaus'],
-    sources: [{ repo: 'pbakaus/impeccable', clone: 'impeccable', path: 'plugin/skills', ref: 'b49177d32788f2dc585c42831d845dacf1ebed2c' }],
+    sources: [{ repo: 'pbakaus/impeccable', clone: 'impeccable', path: 'plugin/skills', ref: '2fc5e1459efbbf06d92c7306517c286bf12490cf' }],
   },
   {
     id: 'security-audit',
@@ -128,7 +128,7 @@ const PACKS = [
     blurb: "Cathryn Lavery's editorial diagrams: architecture, flow, sequence and more as clean HTML and SVG.",
     category: 'Design',
     aliases: ['diagram', 'diagrams'],
-    sources: [{ repo: 'cathrynlavery/diagram-design', clone: 'diagram-design', path: 'skills', ref: '0eeda75a708f419560d5e032693618bb9954f17b' }],
+    sources: [{ repo: 'cathrynlavery/diagram-design', clone: 'diagram-design', path: 'skills', ref: '795eec47fd376e5dda0b9e056a49520060cd2f13' }],
   },
   {
     id: 'taste-skill',
@@ -136,7 +136,7 @@ const PACKS = [
     blurb: 'Art direction for coding agents: reference images, a visual brief and a browser check, so a page does not look generated.',
     category: 'Design',
     aliases: ['taste', 'leonxlnx'],
-    sources: [{ repo: 'Leonxlnx/taste-skill', clone: 'taste-skill', path: 'skills', ref: '6c0b5c78f5d31776e2210305abaa210cdc0030bf' }],
+    sources: [{ repo: 'Leonxlnx/taste-skill', clone: 'taste-skill', path: 'skills', ref: '952435f63acece7d2fcb4b4d3c1786c1c43603e0' }],
   },
   {
     id: 'hallmark',
@@ -161,7 +161,7 @@ const PACKS = [
     blurb: "Anthropic's engineering plugin as skills: architecture, code review, debugging, incidents, standups, system design, tech debt, testing.",
     category: 'Engineering',
     aliases: ['anthropic-eng'],
-    sources: [{ repo: 'anthropics/knowledge-work-plugins', clone: 'knowledge-work-plugins', path: 'engineering/skills', ref: '2baf6d1eded3cd7aeff0b5c5918601a5799189b4' }],
+    sources: [{ repo: 'anthropics/knowledge-work-plugins', clone: 'knowledge-work-plugins', path: 'engineering/skills', ref: '5e504ae11498f2b8daa30d86b7dab97b2ecd8092' }],
   },
   {
     id: 'agent-skills',
@@ -169,7 +169,7 @@ const PACKS = [
     blurb: "Addy Osmani's engineering workflow: spec, plan, build in small steps, test, review, harden and ship.",
     category: 'Engineering',
     aliases: ['addy', 'addyosmani'],
-    sources: [{ repo: 'addyosmani/agent-skills', clone: 'agent-skills', path: 'skills', ref: '8c99fa36d90068c82d547f7c12a9d67a3e95f4ee' }],
+    sources: [{ repo: 'addyosmani/agent-skills', clone: 'agent-skills', path: 'skills', ref: 'e997ac5b9a74eab332d5e9793bb38a38c8cfdd74' }],
   },
   {
     id: 'caveman',
@@ -183,7 +183,7 @@ const PACKS = [
       repo: 'JuliusBrussee/caveman',
       clone: 'caveman',
       path: 'skills',
-      ref: 'b89752f6bca5a26bfde8b019813554241800ca99',
+      ref: 'e74a11ccdb38b98d15c9f9545787c907dd15f0ab',
       only: ['caveman', 'caveman-commit', 'caveman-compress', 'caveman-explore', 'caveman-help', 'caveman-review', 'investigate-first',
         'lean-build', 'megacave', 'migration', 'safe-refactor', 'surgical-patch', 'ultracave', 'verify-and-stop'],
     }],
@@ -218,7 +218,7 @@ const PACKS = [
     blurb: "Corey Haines's marketing skills: copy, SEO, CRO, ads, email, pricing, launches, analytics and more.",
     category: 'Marketing',
     aliases: ['corey', 'coreyhaines'],
-    sources: [{ repo: 'coreyhaines31/marketingskills', clone: 'marketingskills', path: 'skills', ref: '8fd2fcade2fd6629026e9dfe6d133b55b36968b9' }],
+    sources: [{ repo: 'coreyhaines31/marketingskills', clone: 'marketingskills', path: 'skills', ref: '2bf95edb4ebd37198ab7fd18b99ba95c2145ec64' }],
   },
   {
     id: 'linkedin',
@@ -243,7 +243,7 @@ const PACKS = [
     blurb: 'Answers shaped for a reader with ADHD: next action first, numbered steps, no tangents, visible wins.',
     category: 'Productivity',
     aliases: ['adhd'],
-    sources: [{ repo: 'ayghri/i-have-adhd', clone: 'i-have-adhd', path: 'skills', ref: '1ecea1993b7fce257ffbd686c070948b5e07eda6' }],
+    sources: [{ repo: 'ayghri/i-have-adhd', clone: 'i-have-adhd', path: 'skills', ref: 'f3e783bae5f4820416492091b3abeb670616c23a' }],
   },
   // The owner's 24 Nov list (#408): one pack per category, several one-skill repos in it, each pinned to one commit.
   {

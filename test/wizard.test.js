@@ -98,8 +98,8 @@ test('wizard: a pack from outside installs, and the review names the download', 
   try {
     createRemote(box.remotes, 'acme/skills', { alpha: 'Alpha skill.', beta: 'Beta skill.' });
     writeUserConfig(box.home, { packs: [ACME_PACK] });
-    // Acme is the 24th pack: twenty-three built-in packs come first (Local hides with no folder set), the one-skill sources after it.
-    const { code, io } = await wizard(box, `${DOWN.repeat(23)} ${ENTER}${ENTER}${ENTER}`);
+    // Acme is the 27th pack: twenty-six built-in packs come first (Local hides with no folder set), the one-skill sources after it.
+    const { code, io } = await wizard(box, `${DOWN.repeat(26)} ${ENTER}${ENTER}${ENTER}`);
     assert.equal(code, 0, io.err());
     assert.ok(io.frames().some((frame) => /Downloads\s+acme\/skills/.test(frame)));
     assert.match(io.text(), /2 skills installed/);
