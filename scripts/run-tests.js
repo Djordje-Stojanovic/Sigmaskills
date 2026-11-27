@@ -32,15 +32,18 @@ if (tarball && spawnSync('tar', ['-xzf', tarball], { cwd: packDir }).status === 
 env.SIGMA_TEST_TIMING = join(packDir, 'timing.json');
 // Most tests wait on child processes, so run more files at once than there are cores.
 const concurrency = String(Math.max(8, availableParallelism() * 2));
-const result = spawnSync(process.execPath, ['--test', '--test-concurrency', concurrency,
+const BUDGET = 180; // owner limit for the default run; slow sets go behind SIGMA_SLOW_TESTS=1
+const fast = !process.env.SIGMA_SLOW_TESTS;
+// Hard limits in the default run: one test is failed at 60 s, the whole run killed at the budget.
+// shortcut: on Windows the kill reaches only the runner, not test files it started; add a tree kill if one ever lingers.
+const result = spawnSync(process.execPath, ['--test', '--test-concurrency', concurrency, ...(fast ? ['--test-timeout', '60000'] : []),
   '--test-reporter', 'spec', '--test-reporter-destination', 'stdout',
   '--test-reporter', pathToFileURL(join(root, 'scripts', 'test-timing.js')).href, '--test-reporter-destination', join(packDir, 'timing.log'),
-  ...files], { cwd: root, stdio: 'inherit', env });
+  ...files], { cwd: root, stdio: 'inherit', env, ...(fast ? { timeout: BUDGET * 1000 } : {}) });
 const timing = existsSync(env.SIGMA_TEST_TIMING) ? JSON.parse(readFileSync(env.SIGMA_TEST_TIMING, 'utf8')) : {};
 const seconds = (Date.now() - started) / 1000;
-const BUDGET = 180; // owner limit for the default run; slow sets go behind SIGMA_SLOW_TESTS=1
 console.log(`npm test took ${seconds.toFixed(0)} s (budget ${BUDGET} s)`);
-if (!process.env.SIGMA_SLOW_TESTS && seconds > BUDGET) {
+if (fast && seconds > BUDGET) {
   const slowest = Object.entries(timing).sort((a, b) => b[1] - a[1]).slice(0, 5);
   for (const [file, secs] of slowest) console.error(`  ${secs.toFixed(0).padStart(4)} s  ${file.slice(root.length + 1)}`);
   console.error(`FAIL: npm test took ${seconds.toFixed(0)} s, over the ${BUDGET} s budget; move the slow test behind SIGMA_SLOW_TESTS=1 with a fast fixture test in its place`);
