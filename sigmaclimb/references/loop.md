@@ -1,97 +1,112 @@
-# Project files, the long run, steering, research, hand-off
+# The loop: files, the pass, verdicts, cheats, steering, hand-off
 
-## 1. File map of `assets/project-template/`
+## 1. The project folder
 
-**Generic core** (any target; keep it as it is):
-
-| Path | Role |
-|---|---|
-| `project.json` | every setting of the loop with its default and reason: measurer, weights, noise runs, smallest gain, confirmation rule, quality share, category switch, bold slot, held-out mode |
-| `GOAL.md` | run file, re-read every turn; fill every `<...>` |
-| `scripts/bench/run_experiment.sh` | one pass in two stages: score, stage-1 verdict, quality check only on a win; times every stage |
-| `scripts/bench/verdict.py` | the only judge: VOID, CRASH, REJECT, ARCHIVE, STAGE1-WIN, KEEP; `promote` is the only writer of `state/champion.json` |
-| `scripts/bench/aa.py` | noise bands from the unchanged runs, file hashes -> `evaluator.lock` |
-| `scripts/bench/heldout.py` | the optional held-out check (`held-out.md`) |
-| `scripts/record.py` | one `results.tsv` row from the raw files |
-| `scripts/status.py` | the status line and the loop's own speed |
-| `check_state.py`, `plot_progress.py` | TSV validator; `progress.png` with the champion chain back to the start |
-
-**The serving example** (replace these for another target):
+Copied from `assets/project-template/`. Every command runs from it.
 
 | Path | Role |
 |---|---|
-| `scripts/bench/target.sh` | the target's steps: start, warmup, score, quality, stop |
-| `scripts/bench/speed.py`, `common.py` | score probes; writes `raw/score.json` |
-| `scripts/bench/gate.py`, `quality.py` | quality check; `quality.py` writes `raw/quality.json` from A/A bands |
-| `scripts/bench/invariants.py`, `bw.py`, `build_replay.py` | locked flags, bandwidth probe, agent replay traces |
-| `scripts/box.ps1`, `launch.ps1`, `wait.ps1`, `box/*` | the rented box: run, push, wait, pull; download and smoke test |
-| `docs/03_ANTI_GAMING.md` | the serving shortcuts and their blocks |
+| `climb.md` | the run file, re-read every turn: scope anchor, budgets, the pass, rules, the profile table, every ruling |
+| `project.json` | every setting with its reason; `steps` holds the target's shell commands |
+| `climb.py` | the one tool: `run`, `verdict`, `promote`, `lock`, `record`, `status`, `check`, `heldout` |
+| `results.tsv` | one row per pass; only `climb.py record` writes it |
+| `ideas.tsv` | the queue and the dead ends: `pending`, `trying`, `dead` |
+| `progress.py`, `progress.json` | the chart `progress.png` and its config |
+| `evaluator.lock` | noise bands and scorer hashes, from `climb.py lock` |
+| `state/champion.json` | the champion; only `climb.py promote` writes it |
+| `runs/NNNN/` | `raw/change`, `raw/score.json`, `raw/quality.json` (stage 2 only), `raw/meta.json`; `verdict.json` |
+| `STOP`, `REPORT.md` | the owner's stop; the final report |
 
-A run folder: `runs/<id>/raw/` holds `change`, `score.json`, `quality.json` (stage 2 only), `meta.json` (status and
-seconds per stage) and the target's own files. `runs/<id>/verdict.json` is the verdict.
+## 2. One pass
 
-## 2. TSV headers
+1. **Wake.** Read `climb.md`, then `python climb.py status`. `LOOP STALLED` (a pass ran past `pass_seconds`): kill its process tree, record a CRASH, restore the champion.
+2. **Pick** the `pending` idea with the highest share x odds and mark it `trying`. First search `results.tsv` and the `dead` rows (a repeat costs a whole pass), and check that the setting exists in the installed target and its default today. Every third pass (`bold_every`) is a code or design change: the big gains live there.
+3. **Cheap test first.** A live switch: an ABAB test of minutes on the running target. A bold idea: build its first hour with a dry test that needs no target; its effort estimate is a guess.
+4. **One change.** The change file is the champion plus one change: a patch, a settings file, the new text. With `invariants` on, write `runs/NNNN/invariants.json` (`ok`, `problems`) before measuring; without it the pass is VOID.
+5. **Measure.** `python climb.py run runs/NNNN <change-file>`. Every pass takes a new run id: `run` refuses one that already finished.
+6. **Verdict.** `python climb.py verdict runs/NNNN`. Act on it as printed.
+7. **Record.** `python climb.py record --run runs/NNNN --idea <id> --category <c> --work CODE|SETTING|TEXT --part <p> --desc "..."`. The description is the next session's memory: what changed, why, what happened, what it rules out. A failed idea turns `dead` with what would reopen it.
+8. **Keep or revert.** KEEP: `python climb.py promote runs/NNNN`; when it asks for a confirmation, run the same change once more as `runs/MMMM` and promote with both; commit. ARCHIVE: one table to the owner, the next idea meanwhile; on his yes, run the change once more with `--full` (a trade has no quality check yet) and promote that run with `--owner`. Any other verdict: revert. Two changes that score the same: keep the one that deletes.
+9. **Close.** `python climb.py check` prints `STATE: CLEAN`. At a KEEP: `python progress.py`, and profile again. Keep 3 or more `pending` ideas. End the turn with `python climb.py status`.
 
-`ideas.tsv`: `id	status	idea	category	work_type	part	share	expected_effect	evidence	notes` (`part` = the profile
-row it attacks, `share` = that row's share; `p=NN%` last in notes; sort by share x p)
-`ruled_out.tsv`: `id	direction	why_it_failed	evidence	rules_out	reopen_condition`
-`results.tsv`: `pass	utc	parent	idea_id	category	work_type	part	who	machine	verdict	vs_champion	vs_start	probes	quality	minutes	score_share	cost_usd	description`
+## 3. The verdicts
 
-Verdicts in `results.tsv`: BASELINE, AA, KEEP, ARCHIVE, REJECT, VOID, CRASH, RECON. Tabs only. Run
-`python check_state.py` after every write.
+The right column is what the owner hears.
 
-## 3. The long-run prompt
-
-The stop condition is the one line `scripts/status.py` prints: "LOOP FINISHED: ..." when the stop rule holds (the
-owner destroyed the rented box, or wrote a `STOP` file, and `REPORT.md` exists), "LOOP RUNNING: ..." in every other
-case. Paste the prompt after the setup files exist. Replace the first word with the loop command of the user's
-harness. The table holds the harnesses met so far. For any other, find it (the user's words, your own tools), ask
-once when unclear, and read its docs (context7, a web search, a fast sigmaresearch pass) for a run-to-done mode;
-`sigmaloop` step 2 does the same.
-
-```text
-<host loop command> <Project> climb is done: `python scripts/status.py` prints "LOOP FINISHED". Every turn: read <project>/GOAL.md first and follow it exactly, then print the output of `python scripts/status.py` at the end of the turn. Never end a turn without a live background job that waits on the running pass. Limits: never touch the owner's own machines; never cut what the owner protects (quality, precision, the invariants); ideas.tsv keeps at least 3 pending ideas, sorted by share x odds; one change per pass, and only scripts/bench/verdict.py decides; start no sub-agent; never print a secret.
-```
-
-| Host | Loop command and stop check | Notes |
+| Verdict | When | Say this |
 |---|---|---|
-| Claude Code | `/goal`: a judge reads the transcript for the printed status line | The owner ends it with `/goal clear`. See `sigmaloop/references/hosts.md`, Claude Code. |
-| Codex | `/goal`, with the status line as the done check | `sigmaloop/references/hosts.md`, Codex |
-| pi, T3 Code, Antigravity | their own loop or goal mode | `sigmaloop/references/hosts.md`, the host's section |
-| No loop mode | the owner re-sends "continue" | Every turn still starts by reading `GOAL.md` and ends with the status line. |
+| VOID | a scorer file changed (hash), or an invariant broke | the run does not count |
+| CRASH | a step was killed at its cap or failed; no score | the run failed before it measured anything |
+| REJECT | the quality check failed, or the gain is under the smallest gain | the change is not better; it is undone |
+| STAGE1-WIN | the score wins; the quality check has not run | the change scored better; the quality check runs next |
+| KEEP | the gain reaches the smallest gain, quality held, no probe dropped past its band | the change is better and stays |
+| ARCHIVE | a trade: the score wins but a probe dropped, or one probe is clearly up and the total is short | better in one part, worse in another; you decide |
 
-- **"Every turn read GOAL.md":** an edit to that file steers the next turn. Put rulings there.
-- **The limits in the prompt** are the ones a long session must not forget after its context is compacted.
-- When the owner says stop, stop starting runs, even while the stop check still says RUNNING. Say what keeps billing.
+`promote` asks for a confirmation run when the gain is small (`confirm_below`). `--owner "<his words>"` promotes any scored verdict on his word, an ARCHIVE or a REJECT too; never a VOID, a CRASH, or a run without a passed quality check.
 
-## 4. How the owner steers
+## 4. How a run cheats, and the block
 
-- The agent decides what a rule decides and logs `Ruling: <what> - <why> - <cost if wrong>` in `insights.md`. A
-  real choice comes as **one table**: option, effect on each probe, risk, recommended answer. Keep the target busy
-  with the next idea meanwhile.
-- The owner may say "sort by chance", "run X first", "drop low-value ideas". Log each as `Owner <time>: ...`.
-- **Never idle.** Each turn starts, measures, records, profiles or researches; the background waiter wakes you.
-- A trade (ARCHIVE) comes as a table; the owner's word promotes it (`promote ... --owner "<his words>"`).
-- Status answers, in plain words (`plain-words.md`): time, current pass and stage, last verdicts,
-  the best setup against the start and the owner's setup, money left, the loop's own speed, and the chart.
+| Shortcut | Block |
+|---|---|
+| Edit the scorer, its inputs, its parser or a step command | the hash lock in `evaluator.lock`: any edit makes the pass VOID |
+| Do less work (shorter output, fewer steps, lower precision) | fixed work per probe; the quality check; the invariants |
+| Reuse results left by an earlier run | a fresh seed or salt per request; the new-input probe |
+| Best of N runs, or re-run until it wins | one verdict per pass; at most one confirmation; every run saved |
+| Win by luck on a noisy machine | the noise bands; champion and candidate in the same state |
+| Buy the win with more memory, clock or cores | the invariants; peak use recorded |
+| Claim a result it did not run | the verdict reads `runs/NNNN/raw/` |
+| Tune to the visible inputs | the new-input probe; the held-out check where the owner wants it |
 
-## 5. Research rounds
+## 5. The held-out check
 
-Start one when fewer than 3 ideas are pending, when the profile changed, after `category_switch_after` passes without
-a KEEP, or when asked. The agent that runs the loop does the research itself; it starts no sub-agent.
+The same score and quality check on inputs the loop never tuned to, on the candidates' machine. When the owner runs the target on his own machine, his run there is the held-out check.
 
-- Read `ideas.tsv` and `ruled_out.tsv` first; report only new ideas.
-- Read the target's own source and docs first, then upstream issues and pull requests, then forums with raw data.
-- Each idea: the part it attacks and its share, the exact change, the expected effect, the risk to the guards, and
-  the evidence URL. Keep only ideas with a concrete code path or setting. At least one in three is a code or
-  design change.
-- Write the round to `docs/NN_RESEARCH_<topic>.md` and log the ordering ruling in `insights.md`.
+| `heldout` mode | What `promote` does | When |
+|---|---|---|
+| `off` | nothing | the default |
+| `advisory` | prints the answer, promotes anyway | he wants to see whether a gain transfers |
+| `required` | refuses without a PASS for this exact change | only when he opts in, in his own words |
 
-## 6. Hand-off when usage runs out
+- The check is `check.py` in the folder `heldout.dir` names, written by the owner or with his inputs. It is called as `python check.py <project folder> <run folder>` under `budget.step_seconds`, and its last printed line is JSON: `{"quality_ok": true, "gain": 0.04}`. The gain is in the score's own unit: the ratio minus 1, or the share of pairs won minus 0.5.
+- `python climb.py heldout selftest` runs the check on the unchanged champion before first use. A check that fails the champion is broken, not strict: tell the owner and leave it off until it passes.
+- `python climb.py heldout check runs/NNNN` answers `PASS`, `FAIL quality` or `FAIL gain` (the gain did not transfer), with no numbers.
+- `FAIL quality` on a change that cannot alter the output: repeat the self-test before you believe it. `FAIL gain`: the idea turns `dead`. The loop goes on either way.
+- A held-out input the agent saw (a log, an error message) is spent: make a new set and say so.
 
-Before the limit hits (or when asked), leave the project resumable by a fresh session:
-1. `PROGRESS.md` current: the profile, the champion table against the start, the queue top, what runs now.
-2. `state/pass.json` correct; any waiter job named in `PROGRESS.md` with its run id.
-3. `insights.md` has every ruling and owner decision up to now.
-4. `GOAL.md` still says what to do first on resume: recover the pass, then continue.
-5. One line to the owner: what is running, when it ends, what the next session does first.
+## 6. How the owner steers
+
+- **He steers through `climb.md`**: an edit applies on the next turn. His rulings go there in his words, with the date and the runs they re-judge; old rows keep the rule they were judged by.
+- The agent logs each ruling it takes there: `Ruling: <what> - <why> - <cost if wrong>`. A choice for him is one table (option, effect on each probe, risk, recommended answer); the next idea runs meanwhile.
+- When he says stop, start no new pass, and say what keeps billing.
+
+## 7. Research rounds
+
+Start one when fewer than 3 ideas are `pending`, when the profile changed, after `category_switch_after` passes without a KEEP, or when asked. In a crew a worker can take it; the orchestrator writes the rows.
+
+- Read `ideas.tsv` and `results.tsv` first; add only new ideas.
+- Sources in this order: the target's own source and docs, upstream issues and pull requests, forums that show raw data.
+- Each row: the part it attacks and its share, the exact change, the risk to the guards, the evidence URL, the odds. One in three is a code or design change.
+- A gain someone else measured is worth a test, not an expected gain; such gains do not add up.
+
+## 8. Hand-off
+
+Three checks: `python climb.py check` prints `STATE: CLEAN`; `climb.md` holds the profile, every ruling and what to do first; one line tells the owner what runs, when it ends and what the next session does first.
+
+## 9. Plain words for the owner
+
+A label appears only in a code span, after its phrase.
+
+| Label | Say this |
+|---|---|
+| champion | the best setup so far |
+| start | your setup as it was before the loop |
+| promote | make the change the new best setup |
+| guard | a measurement that may not get worse |
+| smallest gain | the gain needed to be sure it is not luck |
+| lock | the fingerprint that shows nobody edited the measuring scripts |
+| profile | where the time (or size, or flaw) goes, part by part |
+
+A report or status answer starts with what changed for him, then one table (the best setup against the start and against his current setup), then what runs now, what comes next and the money left.
+
+Bad: "P9 KEEP, gate ok, ARCHIVE on c3."
+Good: "Pass 9: the change is better and stays (6 % faster than the best setup before). The quality test passed."

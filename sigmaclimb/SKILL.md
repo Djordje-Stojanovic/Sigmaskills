@@ -5,19 +5,11 @@ description: Use when asked for sigmaclimb, a speed loop or a hill climb, or to 
 
 # SigmaClimb
 
-SigmaClimb turns "make X better" into a loop that a scorer judges. Each pass makes one change. A scorer the agent
-cannot edit says keep or revert. What the owner protects may not get worse. The loop finds where the time (or the
-cost, or the flaw) sits first, and attacks the biggest part.
+SigmaClimb turns "make X better" into a loop that a scorer decides. Each pass makes one change. A scorer the agent cannot edit says keep or revert. What the owner protects may not get worse. The loop first finds where the time (or the cost, or the flaw) sits, then attacks the biggest part, for an hour or with no end date.
 
-It works for any goal in any field: a frame rate, a file size at the same quality, a film's look, a book, a build,
-a served model. The method names the parts of a loop; an interview with the owner fills them in. No field, unit or
-number of one project is built in. [examples.md](references/examples.md) shows six fields side by side. The template's
-worked example is a served model: [example](references/example-model-serving.md), [evaluator](references/evaluator.md), [setup](references/setup-vast.md), [case study](references/case-study-la125.md).
+It fits the speed of a served model (language, image, video, voice), a build, a file size, a render, a text such as a two-minute stock pitch. [examples.md](references/examples.md) holds eight fields, two worked loops and the lessons.
 
-One agent runs the loop from start to end. It starts no sub-agent: not for research, ideas or a second opinion.
-A judge model may still be the measurer (a scored call with a fixed question). Any agent that can run a shell, keep
-files and wait on a background job can drive it. A long unattended run uses the loop mode of the user's own harness:
-find it, and read its docs when you do not know it ([loop.md](references/loop.md#3-the-long-run-prompt)).
+**The measurer is a script or the owner.** A script gives a reproducible number, a diff or a mechanical check. Where no number exists, the owner, or people he names, pick between blind pairs (`measurer: pairs`). A model never scores or passes content.
 
 ## Musk's Algorithm (run in order before starting)
 
@@ -29,114 +21,64 @@ find it, and read its docs when you do not know it ([loop.md](references/loop.md
 
 ## The seven parts of every loop
 
-A part is a slot in the loop, not an agent. The interview fills every slot and writes the answers to `project.json`.
+The grill fills each part and writes it to `project.json`.
 
 | Part | What it holds | Default when the owner says "recommended" |
 |---|---|---|
-| **Target** | the thing that is changed: a program, a file, a recipe, a text | what the owner points at |
-| **Score** | what must get better, and in which direction | the owner's own words, made countable |
-| **Guards** | what may not get worse, each with how much worse still counts as the same | the quality the owner names; side effects on every other probe |
-| **Measurer** | whatever turns two versions into better, same or worse: a script, the owner picking blind pairs, a judge | a script when a number exists; blind pairs when it does not |
+| **Target** | what is changed: a program, a file, a recipe, a text | what the owner points at |
+| **Score** | what must get better, and in which direction | his own words, made countable |
+| **Guards** | what may not get worse, and how much worse still counts as the same | the quality he names; side effects on every other probe |
+| **Measurer** | what turns two versions into better, same or worse | a script when a number exists; blind pairs when not |
 | **Noise** | how much the measurer moves when nothing changed | 3 runs of the unchanged target |
-| **Budget** | the time and money of one pass and of the whole run | measured on the first run, then agreed |
-| **Stop rule** | when the loop ends | the owner says stop, and `REPORT.md` exists |
+| **Budget** | the longest one command and one pass may run; the hours and money of the run | from one timed run, agreed before anything else runs |
+| **Stop rule** | when the loop ends | he writes a `STOP` file, or `run_hours` is used up; then `REPORT.md` |
 
-Numbers come from measurement, not from this file: the smallest gain that counts is twice the measured spread; a
-confirmation run is needed only when the gain is under twice that; the quality check takes at most a quarter of a
-pass; after 3 passes without a win in one idea category, the loop changes category. Each is a setting in
-`project.json` with its reason, and the owner may change any of them.
+Every threshold is a setting in `project.json` with its reason, derived from measurement (the smallest gain is twice the measured spread); the owner may change any.
 
 ## Rules for every target
 
 - **One change per pass**, made by a script or a patch. Bundles of small changes lose.
-- **Fix the work, then time it.** Same output size, same steps, same instances in every run. The scorer measures; the
-  target never reports its own score. Raw outputs are saved per run, and the verdict reads them, never a summary.
-- **Measure first.** Stage 1 runs every score probe. Only a stage-1 win gets stage 2, the quality check, on the
-  same running target. A change that cannot alter the output (order of work, caching, scheduling) still gets it once.
-- **Size the quality check to the target.** A frame comparison takes seconds; a full model eval takes minutes. If
-  it takes more than a quarter of a pass, make it cheaper or ask the owner.
-- **Same state for both sides.** Lock the machine to one job at a time on fixed power, performance profile and idle
-  load; record that state at run end, void if it drifted, and restore what you changed. Use one fixed warm-up for both
-  sides — never "fresh and empty" by default, and measure cold and warm as two probes when both matter.
-- **A/B interleaved.** Live switches get an ABAB test on one running target first (minutes, cancels drift). When a
-  change needs a restart and drift can rival the gain, bracket it with controls (control, candidate, control) and
-  require it to beat both neighbours.
-- **One probe uses new input every run**: new text, a new scene, a new instance, with the same amount of work. A probe
-  that repeats its input measures the cached path only.
-- **Side effects count.** An idea that only one probe can show still runs the whole score. A probe with weight 0 is a
-  guard: it never scores, but it may not drop past its noise band.
-- **Bands come from the noise runs**, never from zero.
+- **Fix the work, then time it.** Same output size, steps and instances in every run. The verdict reads the run's raw files, never the target's own report.
+- **Score first.** Stage 1 runs every score probe. Only a stage-1 win gets stage 2, the quality check, on the same running target. A check over a quarter of a pass: make it cheaper or ask the owner.
+- **Same state for both sides.** One job at a time on the machine and one fixed warm-up; cold and warm are two probes when both matter. A live switch gets an ABAB test of minutes on one running target first. Where a restart lets drift rival the gain, bracket the change (control, candidate, control); it must beat both.
+- **One probe takes new input every run**, with the same amount of work. A probe that repeats its input measures the cached path only.
+- **Side effects count.** Every pass runs the whole score. A probe with weight 0 is a guard: it never scores, and it may not drop past its band. Bands come from the noise runs, never from zero.
 
-## How a run cheats, and the block
+## The loop cannot hang
 
-| Shortcut | Block |
-|---|---|
-| Edit the scorer, its inputs or its parser | Hash lock in `evaluator.lock`; any edit makes the pass VOID |
-| Do less work (shorter output, fewer steps, lower precision) | Fixed work per probe; the quality check; the invariants list |
-| Reuse results left by an earlier run | A fresh seed or salt per request; the new-input probe |
-| Best of N runs, or re-run until it wins | One verdict per pass; at most one confirmation; every run saved |
-| Win by luck on a noisy machine | The noise floor; champion and candidate in the same state |
-| Buy the win with more memory, clock or cores | Invariants; peak use recorded |
-| Claim a result it did not run | Raw files under `runs/<id>/raw/`; the verdict reads them |
-| Tune to the visible inputs | The new-input probe; the held-out check where the owner wants it |
+An unattended run dies from a command that never returns, or a turn that ends with nothing set to wake it. Detail per harness: [run.md](references/run.md).
 
-## The held-out check
+1. **Every command has a cap.** Every test, scorer and eval runs through `climb.py run`, which kills a step at `budget.step_seconds` and a pass at `budget.pass_seconds`. A killed step is a CRASH: revert, one row, next idea. The same idea killed twice is dead.
+2. **A pass is atomic.** Champion plus one change, measured, then KEEP (promote, commit) or revert. It always ends with one new `results.tsv` row and the target equal to the champion.
+3. **State lives in files** (`climb.md`, `results.tsv`, `ideas.tsv`, `state/`), never in the agent's memory.
+4. **Scope anchor.** The first lines of `climb.md` name Target, Score, Guards and Out of scope. A side quest becomes an `ideas.tsv` row.
+5. **End a turn while a command runs only when the harness will wake you.**
+6. **Watchdog:** the harness's own. On a wake run `python climb.py status`; `LOOP STALLED` means kill the pass, record a CRASH, take the next idea.
+7. **Every turn ends with the status line.**
 
-Off by default: the same quality check and score on inputs the loop never tuned to, on the same machine as the
-candidates. Modes: `off`, `advisory` (it reports, never blocks) and `required` (only when the owner opts in, in his
-own words). It self-tests on the unchanged champion before first use: a check that fails the champion is broken, not
-strict. His word promotes in every mode. When he has his own machine, his run there is the
-held-out check: say that first. Modes, self-test and the check script: [held-out.md](references/held-out.md).
+## One agent or a crew
+
+The owner picks, in the first grill question. In a crew, one orchestrator owns `climb.md`, `results.tsv`, `ideas.tsv` and the champion; each worker returns one candidate; two measurements never overlap on one machine; only the orchestrator promotes. Compute is the local machine first, else the skill `sigmacollab`. Crew shapes and the long-run prompt: run.md.
 
 ## The phases
 
-1. **Interview.** One round of questions to the owner, each with a recommended answer and its reason; "all
-   recommended" is an answer. Run the target once or twice first, so the defaults come from measurement.
-   Use `/grilling` when it is installed. The questions: [interview.md](references/interview.md). Output:
-   `SPEC_DRAFT.md`, signed off with a "yes", and `project.json`.
-2. **Scaffold** one project folder from [assets/project-template/](assets/project-template/). Its README says which
-   files are the generic core and which belong to the worked example, and what to replace for another target.
-3. **Bring up and lock.** Start the target once, record the quality references, run the unchanged target `repeats`
-   times (the noise runs), then `aa.py` writes `evaluator.lock`. After the lock, an edit to the scorer is a
-   migration: log it and measure the champion again.
-4. **Profile and ceilings.** Measure where the score goes before any idea runs, and compute the physical or practical
-   ceiling from measured hardware when one exists. Output: a parts-share table and each metric's share of its ceiling
-   in `PROGRESS.md`; say early if a target sits above the ceiling. Every idea names the part it attacks. Refresh after
-   each KEEP and at every plateau.
-5. **Loop** until the stop rule holds, then write `REPORT.md`.
+1. **Grill.** Time the unchanged target once, then one round with the owner: [grill.md](references/grill.md). It asks first for one agent or a crew and for how long, then for the time budget: the longest any test or scorer command may run, and the longest a pass may take. Done when he says "yes" to the written answers.
+2. **Scaffold** one project folder from [assets/project-template/](assets/project-template/). The target's shell commands (start, warmup, score, quality, stop) go into `steps` of `project.json`; rename `_gitignore` to `.gitignore`; fill the scope anchor of `climb.md`.
+3. **Bring up and lock.** Run the unchanged target `repeats` times (`climb.py run ... --full`); `climb.py lock` then writes the noise bands and the hash lock. After the lock, an edit to the scorer is a migration: log it and measure the champion again.
+4. **Profile.** Measure where the score goes, part by part, and the ceiling from measured hardware when one exists. Write the table to `climb.md`; say early if a target sits above the ceiling. Every idea names the part it attacks. Refresh after each KEEP and at every plateau.
+5. **Loop** until the stop rule holds, then write `REPORT.md`. Ideas run in order of share x odds (the part's share of the profile times the odds it wins), and only `climb.py verdict` decides. The pass, the verdicts, how a run cheats and the block, the held-out check (off by default), steering, research and hand-off: [loop.md](references/loop.md).
 
-Never skip the interview or the lock. A scorer rebuilt after pass 1 throws away every result measured before it.
-
-## Phase 5: the loop
-
-The scaffolded `GOAL.md` holds the pass procedure, the rules that decide and the finish; the run re-reads it every
-turn. What it rests on:
-
-- **Rank ideas by share x odds** (the part's share in the profile times `p=NN%`), never by age. Search
-  `results.tsv` and `ruled_out.tsv` first: a repeat costs a whole pass.
-- **Only `verdict.py` decides.** `STAGE1-WIN` is never a KEEP. Every scored verdict prints two numbers: against the
-  champion before, and against the start. One run and at most one confirmation per idea.
-- **Bold ideas are where the big gains live.** At least every third pass (`bold_every`) is a code or design change.
-  An effort estimate is a guess: read the target's source and build the first hour of a "days" idea before you
-  believe it.
-- When two changes score the same, keep the one that deletes code. Keep a background waiter alive; never poll. Write
-  each result so a fresh session learns from it. More: [lessons.md](references/lessons.md).
+The grill and the lock come before pass 1: a scorer rebuilt later throws away every result measured before it.
 
 ## Talking to the owner
 
-- Use plain words, never the skill's own: [plain-words.md](references/plain-words.md) maps each term to a phrase
-  ("KEEP" is "the change is better and stays"). Say what a thing does before you name it.
-- Every report starts with what changed for the owner. Short sentences, tables for numbers, and say what is not
-  done or not verified. Never claim a gain from one noisy run.
-- Decide what a rule decides; do not hand decisions back. A real choice comes as a table with a recommended answer.
-- Every turn ends with the status line of `scripts/status.py`. It also measures the loop: minutes per idea, minutes
-  from a KEEP to its champion, and the share of a pass that measures the score. Under half: fix the loop before the
-  next idea.
+- Say what a thing does before you name it, in plain words, never the skill's own: "KEEP" is "the change is better and stays" (the word list is in loop.md).
+- Start with what changed for him; say what is not done or not verified. One noisy run is not a gain.
+- Decide what a rule decides; a real choice is one table with a recommended answer.
 
 ## Final response
 
-At the end of a phase or a pass: what changed for the owner, the verdict with its two numbers, the next step, and the
-status line.
+What changed for the owner, the verdict with its two numbers (against the champion before, against the start), the next step, the status line.
 
 ## Personal instructions
 
