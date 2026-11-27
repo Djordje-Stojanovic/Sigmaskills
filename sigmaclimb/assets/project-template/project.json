@@ -32,7 +32,7 @@
     "category_switch_after": "After this many passes in one category without a KEEP, profile again and change category.",
     "bold_every": "Include a code or design change within this many passes. TEXT covers a change to the content itself.",
     "invariants": "When true, write runs/NNNN/invariants.json with ok and problems before measuring. False means the project has no invariant checks.",
-    "locked": "List the scorer files relative to the project. The lock hashes them and climb.py so edits are visible.",
+    "locked": "List the scorer files relative to the project. The lock hashes them and climb.py, and keeps the step commands, so edits are visible.",
     "heldout": {
       "mode": "off skips the check, advisory reports its answer, required asks for a PASS.",
       "share": "This fraction of the visible gain must repeat on private inputs.",
@@ -45,11 +45,11 @@
       "warmup": "Bring the champion and candidate to the same state before scoring.",
       "score": "Write score.json in CLIMB_OUT with probes or blind pair counts.",
       "quality": "Write quality.json in CLIMB_OUT with ok (true or false) and fails (reasons).",
-      "stop": "Clean up the target after every pass, including a failure or timeout."
+      "stop": "Clean up the target after every pass, including a failure or timeout. End everything start began: a background process of a finished step runs until stop ends it."
     },
     "budget": {
       "step_seconds": "A positive cap kills a stalled command and its children. Cleanup and held-out checks each get their own step cap.",
-      "pass_seconds": "A positive cap limits the total time before cleanup, even when each step stays under its own cap.",
+      "pass_seconds": "A positive cap limits the total time before cleanup, even when each step stays under its own cap. The stop step then gets one more step cap.",
       "run_hours": "Optional time limit from the first recorded pass. With null, the owner stops the loop with STOP."
     }
   }

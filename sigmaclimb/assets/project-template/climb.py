@@ -55,6 +55,8 @@ def lock_problem(lock):
     for rel, digest in lock["files"].items():
         if sha(ROOT / rel) != digest:
             return f"scorer file changed: {rel}"
+    if lock.get("steps", project()["steps"]) != project()["steps"]:
+        return "the step commands in project.json changed since the lock"
 
 
 def champion(lock):
@@ -82,7 +84,7 @@ def weighted(r, weights):
 
 def missing(cand, champ, p):
     """Scored or guard probes the champion measured and the candidate did not: a gap is never a pass."""
-    return sorted(k for k in p.get("weights", {}) if champ.get(k) and not cand.get(k))
+    return sorted(k for k in p.get("weights", {}) if champ.get(k) and not positive(cand.get(k)))
 
 
 def share(p):
@@ -112,7 +114,10 @@ def decide(run, announce=True):
     p, lock = project(), jload(LOCK)
     pairs = p.get("measurer") == "pairs"
     meta = raw(run, "meta.json") or {}
-    sc, q = (raw(run, "score.json") or {}, raw(run, "quality.json")) if meta.get("status") == "OK" else ({}, None)
+    try:
+        sc, q = (raw(run, "score.json") or {}, raw(run, "quality.json")) if meta.get("status") == "OK" else ({}, None)
+    except ValueError as exc:
+        sc, q, meta = {}, None, {"status": f"unreadable raw file: {exc}"}
     inv = jload(ROOT / run / "invariants.json")
     status = str(meta.get("status", "no meta.json"))
     out = {"run": run, "utc": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")}
@@ -197,7 +202,9 @@ def promote(run, confirm, owner=None):
     for c in confirm:
         if why:
             break
-        if decide(c)["verdict"] != "KEEP":
+        if (ROOT / c).resolve() == (ROOT / run).resolve():
+            why = f"confirmation run {c} is the run itself: measure the change once more"
+        elif decide(c)["verdict"] != "KEEP":
             why = f"confirmation run {c} is not a KEEP"
         elif change_hash(c) != change_hash(run):
             why = f"confirmation run {c} is another change"
@@ -245,15 +252,19 @@ def bands(runs, p):
 
 def lock_runs(runs):
     p = project()
+    if len({(ROOT / run).resolve() for run in runs}) != len(runs):
+        sys.exit("NOT LOCKED: the same run is named twice; a noise band needs separate runs")
     for run in runs:
         if (raw(run, "meta.json") or {}).get("status") != "OK":
             sys.exit(f"NOT LOCKED: {run} did not finish successfully")
+        if (raw(run, "quality.json") or {"ok": True}).get("ok") is not True:
+            sys.exit(f"NOT LOCKED: {run} failed its quality check")
     med, spread, score_spread = bands(runs, p)
     files = {rel: sha(ROOT / rel) for rel in ["climb.py", *p["locked"]]}
     for rel, digest in files.items():
         if digest is None:
             sys.exit(f"NOT LOCKED: missing scorer file: {rel}")
-    lock = {"created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "files": files,
+    lock = {"created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "files": files, "steps": p["steps"],
             "thresholds": {"spread": spread, "score_spread": score_spread, "baseline_runs": runs, "baseline_probes": med}}
     save(LOCK, lock)
     floor = p["min_gain"] if p.get("min_gain") is not None else 2 * score_spread
@@ -269,14 +280,15 @@ def execute(command, cwd, log, deadline, env=None, stderr=subprocess.STDOUT):
     try:
         return proc.wait(timeout=max(0, deadline - time.monotonic()))
     except (subprocess.TimeoutExpired, KeyboardInterrupt):
+        # shortcut: a child that left the tree or the group (a detached process, setsid) survives; the stop step ends it
         if os.name == "nt":
-            subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True)
+            subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True, timeout=30)
         else:
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-        proc.wait()
+        proc.wait(timeout=30)
         raise
 
 
@@ -327,6 +339,9 @@ def run_pass(run, change, full):
         return 2
     change = (ROOT / change).resolve()
     out = ROOT / run / "raw"
+    if (out / "DONE").exists():
+        print(f"{run} already holds a finished run: take a new run id, its files are evidence.")
+        return 2
     change_bytes = change.read_bytes()
     (out.parent / "verdict.json").unlink(missing_ok=True)
     if out.exists():
@@ -383,7 +398,7 @@ def run_pass(run, change, full):
         raise
     finally:
         step("stop")
-        if meta["status"] != "TIMEOUT" and (out / "status").exists():
+        if meta["status"] == "OK" and (out / "status").exists():
             meta["status"] = (out / "status").read_text().strip()
         save(out / "meta.json", meta)
         (out / "DONE").touch()
@@ -425,12 +440,12 @@ def record(a):
         "minutes": fmt(total / 60, 3) if total else "", "score_share": fmt(stages.get("score", 0) / total, 2) if total else "",
         "cost_usd": fmt(total / 3600 * cfg["cost_per_hour"], 3) if total else "", "description": a.desc,
     }
-    with (ROOT / "results.tsv").open("r+", encoding="utf-8") as f:
-        columns = f.readline().rstrip("\n").split("\t")
-        f.seek(0, os.SEEK_END)
-        f.write("\t".join(" ".join(str(row[k]).splitlines()).replace("\t", " ") for k in columns) + "\n")
+    old = (ROOT / "results.tsv").read_text(encoding="utf-8")
+    columns = old.splitlines()[0].split("\t")
+    with (ROOT / "results.tsv").open("a", encoding="utf-8") as f:
+        f.write(("" if old.endswith("\n") else "\n") + "\t".join(" ".join(str(row[k]).splitlines()).replace("\t", " ") for k in columns) + "\n")
     state = jload(PASS)
-    if state and state["run"] == a.run and not state.get("finished"):  # a recorded pass is no longer stalled
+    if state and (ROOT / state["run"]).resolve() == run.resolve() and not state.get("finished"):  # a recorded pass is no longer stalled
         save(PASS, {**state, "finished": True})
     print("recorded", number, a.idea, verdict, row["vs_champion"])
 
@@ -461,9 +476,10 @@ def status():
         first = datetime.datetime.fromisoformat(rows[0]["utc"].replace("Z", "+00:00"))
         stopped |= time.time() >= first.timestamp() + hours * 3600
     state, cap = jload(PASS), cfg["budget"].get("pass_seconds")
+    cleanup = cfg["budget"].get("step_seconds") or 0  # the stop step runs after the pass cap, under its own step cap
     if stopped and (ROOT / "REPORT.md").exists():
         print(f"LOOP FINISHED: stop line met, REPORT.md written, {tail}")
-    elif state and not state.get("finished") and positive(cap) and time.time() - state["started"] > cap:
+    elif state and not state.get("finished") and positive(cap) and time.time() - state["started"] > cap + cleanup:
         print(f"LOOP STALLED: {state['run']} exceeded {cap}s; kill it, record the CRASH, take the next idea | {tail}")
     else:
         print(f"LOOP RUNNING: {tail}")

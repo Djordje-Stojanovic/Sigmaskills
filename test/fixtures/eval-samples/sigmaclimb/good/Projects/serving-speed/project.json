@@ -1,5 +1,6 @@
 {
   "name": "Serving speed",
   "weights": {"short": 0.5, "long": 0.5},
+  "steps": {"start": "bash serve.sh", "warmup": "", "score": "python probes.py", "quality": "python fidelity.py", "stop": "bash stop.sh"},
   "budget": {"step_seconds": 60, "pass_seconds": 180, "run_hours": 1}
 }

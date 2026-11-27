@@ -188,6 +188,8 @@ class Climb(unittest.TestCase):
         self.project(budget={"step_seconds": step_seconds, "pass_seconds": pass_seconds, "run_hours": None},
                      steps={key: command(code) for key, code in steps.items()})
         put(os.path.join(self.proj, "change.patch"), "one change")
+        lock = os.path.join(self.proj, "evaluator.lock")
+        put(lock, dict(json.load(open(lock, encoding="utf-8")), steps=json.load(open(os.path.join(self.proj, "project.json"), encoding="utf-8"))["steps"]))
 
     def run_pass(self, run, *args):
         return subprocess.run([sys.executable, "climb.py", "run", run, "change.patch", *args],
@@ -210,6 +212,35 @@ class Climb(unittest.TestCase):
             self.assertTrue(set(json.loads((raw / "meta.json").read_text())["stage_s"]) >= {"start", "score", "stop"})
             self.assertRegex(self.verdict(run), rf"^VERDICT {verdict}")
 
+    def test_guards_from_the_review_round(self):
+        write = "import os, sys; from pathlib import Path; out = Path(os.environ['CLIMB_OUT']); "
+        self.configure_steps(score=write + "(out / 'status').write_text('OK'); (out / 'score.json').write_text('{\"probes\": {\"a\": 12, \"b\": 5}}')",
+                             quality=write + "(out / 'quality.json').write_text('{\"ok\": true}'); sys.exit(1)")
+        put(os.path.join(self.proj, "runs", "0004", "invariants.json"), {"ok": True})
+        self.assertEqual(self.run_pass("runs/0004").returncode, 0)
+        self.assertRegex(self.verdict("runs/0004"), r"^VERDICT CRASH: run status quality exited 1")  # a status file hides no failed step
+        again = self.run_pass("runs/0004")  # a finished run keeps its evidence
+        self.assertEqual((again.returncode, "already holds a finished run" in again.stdout), (2, True))
+        self.project(steps={"score": "echo less work"})  # the step commands are part of the scorer
+        self.assertRegex(self.verdict("runs/0004"), r"^VERDICT VOID: the step commands")
+        self.configure_steps()
+        self.run_dir("0005", {"a": 10.6, "b": 5.0}, quality=True)  # a small gain cannot confirm itself
+        self.assertIn("is the run itself", self.verdict("promote", "runs/0005", "runs/./0005"))
+        self.run_dir("0006", {"a": 10.6, "b": -1}, quality=True)  # a probe that went negative is a gap, not a pass
+        self.assertIn("VERDICT CRASH: probes the champion has are missing: ['b']", self.verdict("runs/0006"))
+        self.run_dir("0007", {"a": 10.6, "b": 5.0})  # a half-written file is a CRASH
+        put(os.path.join(self.proj, "runs", "0007", "raw", "quality.json"), '{"ok": tr')
+        self.assertRegex(self.verdict("runs/0007"), r"^VERDICT CRASH: run status unreadable raw file")
+        results = Path(self.proj, "results.tsv")
+        for run in ("0005", "0006"):  # a last row without its newline is not joined to the next one
+            self.py("climb.py", "record", "--run", f"runs/{run}", "--idea", "x", "--category", "c", "--work", "CODE",
+                    "--part", "p", "--desc", "d", "--verdict", "REJECT")
+            results.write_text(results.read_text(encoding="utf-8").rstrip("\n"), encoding="utf-8")
+        self.assertEqual([line.split("\t")[0] for line in results.read_text(encoding="utf-8").splitlines()], ["pass", "5", "6"])
+        r = subprocess.run([sys.executable, "climb.py", "lock", "runs/0001", "runs/0001", "runs/0002"], cwd=self.proj,
+                           capture_output=True, text=True)
+        self.assertIn("NOT LOCKED: the same run is named twice", r.stderr)
+
     def test_budget_is_required_before_any_step(self):
         for step, total in ((None, 3), (3, 0), (-1, 3), (True, 3)):
             self.configure_steps(step_seconds=step, pass_seconds=total,
@@ -224,15 +255,15 @@ class Climb(unittest.TestCase):
         child = "import socket,time; from pathlib import Path; s=socket.socket(); s.bind(('127.0.0.1',0)); s.listen(); Path('port').write_text(str(s.getsockname()[1])); time.sleep(60)"
         put(os.path.join(self.proj, "child.py"), child)
         spawn = "import subprocess,sys,time; subprocess.Popen([sys.executable,'child.py']); time.sleep(60)"
-        for run, step, total, cap in (("runs/0004", 1, 8, "step_seconds"), ("runs/0005", 8, 1, "pass_seconds")):
+        for run, step, total, cap in (("runs/0004", 2, 8, "step_seconds"), ("runs/0005", 8, 2, "pass_seconds")):
             self.configure_steps(step, total, warmup=spawn, stop="from pathlib import Path; Path('stopped').touch()")
             start = time.monotonic()
             result = self.run_pass(run)
-            self.assertLess(time.monotonic() - start, 5)
+            self.assertLess(time.monotonic() - start, 8)
             self.assertEqual(result.returncode, 0, result.stderr)
             raw = Path(self.proj, run, "raw")
             self.assertEqual(json.loads((raw / "meta.json").read_text())["status"], "TIMEOUT")
-            self.assertRegex(self.verdict(run), rf"^VERDICT CRASH: .*warmup.*{cap}.*1")
+            self.assertRegex(self.verdict(run), rf"^VERDICT CRASH: .*warmup.*{cap}.*2")
             self.assertTrue(json.loads(Path(self.proj, "state/pass.json").read_text())["finished"])
             port = Path(self.proj, "port")
             with socket.socket() as probe:

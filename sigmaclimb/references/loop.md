@@ -23,10 +23,10 @@ Copied from `assets/project-template/`. Every command runs from it.
 2. **Pick** the `pending` idea with the highest share x odds and mark it `trying`. First search `results.tsv` and the `dead` rows (a repeat costs a whole pass), and check that the setting exists in the installed target and its default today. Every third pass (`bold_every`) is a code or design change: the big gains live there.
 3. **Cheap test first.** A live switch: an ABAB test of minutes on the running target. A bold idea: build its first hour with a dry test that needs no target; its effort estimate is a guess.
 4. **One change.** The change file is the champion plus one change: a patch, a settings file, the new text. With `invariants` on, write `runs/NNNN/invariants.json` (`ok`, `problems`) before measuring; without it the pass is VOID.
-5. **Measure.** `python climb.py run runs/NNNN <change-file>`.
+5. **Measure.** `python climb.py run runs/NNNN <change-file>`. Every pass takes a new run id: `run` refuses one that already finished.
 6. **Verdict.** `python climb.py verdict runs/NNNN`. Act on it as printed.
 7. **Record.** `python climb.py record --run runs/NNNN --idea <id> --category <c> --work CODE|SETTING|TEXT --part <p> --desc "..."`. The description is the next session's memory: what changed, why, what happened, what it rules out. A failed idea turns `dead` with what would reopen it.
-8. **Keep or revert.** KEEP: `python climb.py promote runs/NNNN`; when it asks for a confirmation, run the same change once more as `runs/MMMM` and promote with both; commit. ARCHIVE: one table to the owner, the next idea meanwhile. Any other verdict: revert. Two changes that score the same: keep the one that deletes.
+8. **Keep or revert.** KEEP: `python climb.py promote runs/NNNN`; when it asks for a confirmation, run the same change once more as `runs/MMMM` and promote with both; commit. ARCHIVE: one table to the owner, the next idea meanwhile; on his yes, run the change once more with `--full` (a trade has no quality check yet) and promote that run with `--owner`. Any other verdict: revert. Two changes that score the same: keep the one that deletes.
 9. **Close.** `python climb.py check` prints `STATE: CLEAN`. At a KEEP: `python progress.py`, and profile again. Keep 3 or more `pending` ideas. End the turn with `python climb.py status`.
 
 ## 3. The verdicts
@@ -48,7 +48,7 @@ The right column is what the owner hears.
 
 | Shortcut | Block |
 |---|---|
-| Edit the scorer, its inputs or its parser | the hash lock in `evaluator.lock`: any edit makes the pass VOID |
+| Edit the scorer, its inputs, its parser or a step command | the hash lock in `evaluator.lock`: any edit makes the pass VOID |
 | Do less work (shorter output, fewer steps, lower precision) | fixed work per probe; the quality check; the invariants |
 | Reuse results left by an earlier run | a fresh seed or salt per request; the new-input probe |
 | Best of N runs, or re-run until it wins | one verdict per pass; at most one confirmation; every run saved |
@@ -67,6 +67,7 @@ The same score and quality check on inputs the loop never tuned to, on the candi
 | `advisory` | prints the answer, promotes anyway | he wants to see whether a gain transfers |
 | `required` | refuses without a PASS for this exact change | only when he opts in, in his own words |
 
+- The check is `check.py` in the folder `heldout.dir` names, written by the owner or with his inputs. It is called as `python check.py <project folder> <run folder>` under `budget.step_seconds`, and its last printed line is JSON: `{"quality_ok": true, "gain": 0.04}`. The gain is in the score's own unit: the ratio minus 1, or the share of pairs won minus 0.5.
 - `python climb.py heldout selftest` runs the check on the unchanged champion before first use. A check that fails the champion is broken, not strict: tell the owner and leave it off until it passes.
 - `python climb.py heldout check runs/NNNN` answers `PASS`, `FAIL quality` or `FAIL gain` (the gain did not transfer), with no numbers.
 - `FAIL quality` on a change that cannot alter the output: repeat the self-test before you believe it. `FAIL gain`: the idea turns `dead`. The loop goes on either way.

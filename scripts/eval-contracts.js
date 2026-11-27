@@ -407,7 +407,8 @@ function sigmaclimb({ files, result }) {
   if (!files[projectName]) problems.push(`missing ${projectName}`);
   else {
     try {
-      const { weights = {}, budget } = JSON.parse(files[projectName]);
+      const { weights = {}, budget, steps } = JSON.parse(files[projectName]);
+      if (typeof steps?.score !== 'string' || !steps.score.trim()) problems.push(`${projectName}: steps.score is empty, so no pass can run`);
       for (const key of ['step_seconds', 'pass_seconds']) {
         if (!Number.isFinite(budget?.[key]) || budget[key] <= 0) problems.push(`${projectName}: budget.${key} must be a positive number`);
       }

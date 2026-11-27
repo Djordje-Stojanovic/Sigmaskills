@@ -44,8 +44,11 @@ def draw(proj):
         rows = load(proj, s, offset)
         s = {"color": "#0b5d7a", "label": "Passes", "who": "", **s}
         s.setdefault("base", {"label": "start", "passes": [r["pass"] for r in rows if r["verdict"] in REF]})
-        if "champions" not in s:
-            s["champions"] = [{"label": "#" + r["pass"], "passes": [r["pass"]]} for r in rows if r["verdict"] == "KEEP"]
+        if "champions" not in s:  # the promoted runs when the champion file exists, else every KEEP row
+            champ = proj / "state/champion.json"
+            done = {Path(h["runs"][0]).name.lstrip("0") for h in json.loads(champ.read_text(encoding="utf-8"))["history"]} if champ.is_file() else None
+            s["champions"] = [{"label": "#" + r["pass"], "passes": [r["pass"]]} for r in rows
+                              if (r["verdict"] == "KEEP" if done is None else r["pass"] in done)]
         segs.append({**s, "rows": rows, "by": {r["pass"]: r for r in rows}, "x0": offset, "scale": {}})
         offset = max((r["_x"] for r in rows), default=offset) + 3
 

@@ -30,7 +30,7 @@ Host notes:
 - **Claude Code:** Set permission mode (e.g. auto mode) before `/goal`. In `-p`, `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS` caps idle waits at 10 min (`0` removes it). Background shells vanish on `--resume`; restart from the last commit.
 - **Codex:** CLI lacks timers and scheduled tasks; `/goal` stops on a plan limit. Set `--sandbox workspace-write` or `/permissions` first.
 - **Antigravity `/swarm`:** Preview on all plans. Turns the session into a coordinator with named workers, `@verifier`, and `@monitor` watchdog on one `@mention` board; idle members sleep with zero token spend, and workers can get separate working copies. Fits a climb crew when parallel tracks benefit from sharing dead ends on one board: keep the orchestrator as sole writer of `climb.md`/champion, restrict `@verifier` to mechanical script checks (never content scoring), and note Swarm burns quota faster and pauses on quota without auto-retrying.
-- **T3 Code:** Start at Full access (children inherit at most parent permissions). Keep the server up with `t3 service install` (Linux, macOS, Windows). With `schedule_task` (`{schedule:{type:'interval', everyMs}, bindToCurrentThread:true}`), set `everyMs` >= a normal turn and clear stacked wakes via `t3_queue`.
+- **T3 Code:** Start at Full access (children inherit at most parent permissions). Keep the server up with `t3 service install` (Linux, macOS, Windows; on Windows it runs only while the user is signed in). With `schedule_task` (`{schedule:{type:'interval', everyMs}, bindToCurrentThread:true}`), set `everyMs` >= a normal turn and clear stacked wakes via `t3_queue`.
 - **pi / no loop mode:** Every turn starts by reading `climb.md` and ends with `python climb.py status`.
 
 ## Long-run prompt skeleton
