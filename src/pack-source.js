@@ -87,7 +87,14 @@ export function hashDirectory(dir) {
  */
 export function stageSkills(source, from, repoRoot, outDir) {
   const rename = source.rename || {};
-  const olds = Object.keys(rename).map((id) => [new RegExp(`(?<![\\w-])${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`, 'g'), rename[id]]);
+  const olds = Object.keys(rename).map((id) => {
+    const name = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // A hyphenated id is never prose. A plain word (teach) only where it is written as a name: /x, `x`, **x**, $x, name: x, x/.
+    const pattern = id.includes('-')
+      ? `(?<![\\w-])${name}(?![\\w-])`
+      : `(?:(?<=[/\`*$])|(?<=^name:[ \\t]*))${name}(?![\\w-])|(?<![\\w-])${name}(?=[\`*/])`;
+    return [new RegExp(pattern, 'gm'), rename[id]];
+  });
   const rewrite = (dir) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
