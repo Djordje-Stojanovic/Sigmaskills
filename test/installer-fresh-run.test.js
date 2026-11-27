@@ -108,9 +108,9 @@ test('wizard: Sigma plus Local in a fresh folder installs each name once', async
     let out = '';
     stdout.setEncoding('utf8');
     stdout.on('data', (chunk) => { out += chunk; });
-    // Sigma is key 1. Local is the last of the twenty-four packs (one-skill sources come after it): move down twenty-three rows, then Space picks it.
+    // Sigma is key 1. Local is the last of the twenty-seven packs (one-skill sources come after it): move down twenty-six rows, then Space picks it.
     // Keys arrive one at a time.
-    const keys = ['1', ...Array(23).fill(DOWN), ' ', ENTER, ENTER, ENTER];
+    const keys = ['1', ...Array(26).fill(DOWN), ' ', ENTER, ENTER, ENTER];
     keys.forEach((chunk, index) => {
       setTimeout(() => (index === keys.length - 1 ? stdin.end(chunk) : stdin.write(chunk)), 200 * (index + 1));
     });

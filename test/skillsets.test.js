@@ -238,14 +238,14 @@ const pack = (id) => registry.packs.find((entry) => entry.id === id);
 
 test('registry: the four new sets are pinned and listed, before Local', () => {
   const ids = registry.packs.map((entry) => entry.id);
-  assert.deepEqual(ids, ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'anthropic-engineering', 'agent-skills', 'caveman', 'claude-red', 'dev-browser', 'emil-kowalski', 'marketingskills', 'linkedin', 'i-have-adhd', 'baoyu', 'gamedev', 'monorepo-doctor', 'design-kit', 'motion-kit', 'engineering-kit', 'local']);
-  for (const id of ['anthropic', 'design-md', 'last30days', 'financial-services', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'design-kit', 'motion-kit', 'engineering-kit']) {
+  assert.deepEqual(ids, ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'anthropic-engineering', 'agent-skills', 'caveman', 'claude-red', 'dev-browser', 'emil-kowalski', 'marketingskills', 'linkedin', 'i-have-adhd', 'baoyu', 'gamedev', 'monorepo-doctor', 'design-kit', 'motion-kit', 'engineering-kit', 'threejs-graphics', 'threejs-games', 'pstack', 'karpathy', 'local']);
+  for (const id of ['anthropic', 'design-md', 'last30days', 'financial-services', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'design-kit', 'motion-kit', 'engineering-kit', 'threejs-graphics', 'threejs-games', 'pstack', 'karpathy']) {
     for (const source of pack(id).sources) assert.match(source.ref, /^([0-9a-f]{40}|v\d+\.\d+\.\d+)$/, `${id} is pinned`);
   }
   assert.equal(pack('anthropic').sources[0].skills.length, 19);
   assert.equal(pack('anthropic').sources[0].ref, 'e4bb5d960d87126ff3b3a8af1a104b7db67560ba');
   assert.deepEqual(pack('last30days').sources[0].skills.map((skill) => skill.id), ['last30days']);
-  assert.equal(pack('last30days').sources[0].ref, 'v4.6.0');
+  assert.equal(pack('last30days').sources[0].ref, 'v4.7.0');
   const design = pack('design-md');
   assert.equal(design.sources[0].skills.length, 84);
   assert.equal(design.limit.max, 3);

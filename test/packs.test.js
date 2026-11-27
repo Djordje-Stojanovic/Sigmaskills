@@ -20,11 +20,11 @@ function load(box, extra) {
   return loadPackCatalog({ catalog, packageRoot, homeDir: box.home, env: box.env });
 }
 
-test('packs: the registry lists the bundled Sigma pack and the thirty-four outside packs', () => {
+test('packs: the registry lists the bundled Sigma pack and the thirty-seven outside packs', () => {
   const box = createSandbox();
   try {
     const packs = load(box);
-    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'anthropic-engineering', 'agent-skills', 'caveman', 'claude-red', 'dev-browser', 'emil-kowalski', 'marketingskills', 'linkedin', 'i-have-adhd', 'baoyu', 'gamedev', 'monorepo-doctor', 'design-kit', 'motion-kit', 'engineering-kit', 'local']);
+    assert.deepEqual(packs.packs.map((pack) => pack.id), ['sigma', 'mattpocock', 'threejs', 'hyperframes', 'minimax-h3', 'anthropic', 'design-md', 'last30days', 'financial-services', 'tstack', 'superpowers', 'impeccable', 'security-audit', 'anatomy', 'diagram-design', 'taste-skill', 'hallmark', 'ponytail', 'anthropic-engineering', 'agent-skills', 'caveman', 'claude-red', 'dev-browser', 'emil-kowalski', 'marketingskills', 'linkedin', 'i-have-adhd', 'baoyu', 'gamedev', 'monorepo-doctor', 'design-kit', 'motion-kit', 'engineering-kit', 'threejs-graphics', 'threejs-games', 'pstack', 'karpathy', 'local']);
     const sigma = findPack(packs, 'sigma');
     assert.equal(sigma.skills.length, catalog.skills.length);
     assert.ok(sigma.skills.every((skill) => skill.kind === 'bundled'));
@@ -47,6 +47,12 @@ test('packs: the registry lists the bundled Sigma pack and the thirty-four outsi
     assert.equal(findPack(packs, 'logo').id, 'design-kit');
     assert.equal(findPack(packs, 'animation').id, 'motion-kit');
     assert.equal(findPack(packs, 'inference').id, 'engineering-kit');
+    // N696: two three.js packs with routers, pstack (Matt Pocock owns tdd and teach, so pstack's are renamed), Karpathy
+    assert.ok(findPack(packs, 'threejs-graphics').skills.some((skill) => skill.id === 'threejs-skill-router'));
+    assert.ok(findPack(packs, 'majid').skills.some((skill) => skill.id === 'threejs-game-director'));
+    const pstack = findPack(packs, 'poteto').skills.map((skill) => skill.id);
+    assert.ok(pstack.includes('poteto-mode') && pstack.includes('pstack-tdd') && pstack.includes('pstack-teach') && !pstack.includes('tdd'));
+    assert.deepEqual(findPack(packs, 'karpathy').skills.map((skill) => skill.id), ['karpathy-guidelines']);
     assert.equal(findPack(packs, 'nope'), null);
   } finally {
     box.cleanup();

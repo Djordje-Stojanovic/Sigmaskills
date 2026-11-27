@@ -155,20 +155,29 @@ test('stageSkills: licence files go into every skill folder, and a renamed skill
   const box = createSandbox();
   try {
     const repo = path.join(box.root, 'repo');
-    fs.mkdirSync(path.join(repo, 'skills', 'perf'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'skills', 'perf-check'), { recursive: true });
     fs.mkdirSync(path.join(repo, 'skills', 'router', 'references'), { recursive: true });
     fs.writeFileSync(path.join(repo, 'LICENSE'), 'L');
-    fs.writeFileSync(path.join(repo, 'NOTICE'), 'N');
-    fs.writeFileSync(path.join(repo, 'skills', 'perf', 'SKILL.md'), '---\nname: perf\ndescription: P.\n---\n');
-    fs.writeFileSync(path.join(repo, 'skills', 'router', 'SKILL.md'), '---\nname: router\ndescription: R.\n---\nLoad perf, not perf-tools.\n');
-    fs.writeFileSync(path.join(repo, 'skills', 'router', 'references', 'table.md'), '| slow | `perf` |\n');
+    // A licence below the root (cursor/plugins keeps pstack's at harness/pstack/claude-code/LICENSE) lands by its file name.
+    fs.mkdirSync(path.join(repo, 'legal'));
+    fs.writeFileSync(path.join(repo, 'legal', 'NOTICE'), 'N');
+    fs.writeFileSync(path.join(repo, 'skills', 'perf-check', 'SKILL.md'), '---\nname: perf-check\ndescription: P.\n---\n');
+    fs.writeFileSync(path.join(repo, 'skills', 'router', 'SKILL.md'), '---\nname: router\ndescription: R.\n---\nLoad perf-check, not perf-check-tools.\n');
+    fs.writeFileSync(path.join(repo, 'skills', 'router', 'references', 'table.md'), '| slow | `perf-check` |\n');
     const out = path.join(box.root, 'out');
-    stageSkills({ licenses: ['LICENSE', 'NOTICE', 'MISSING'], rename: { perf: 'game-perf' } }, path.join(repo, 'skills'), repo, out);
-    assert.deepEqual(fs.readdirSync(out).sort(), ['game-perf', 'router']);
+    stageSkills({ licenses: ['LICENSE', 'legal/NOTICE', 'MISSING'], rename: { 'perf-check': 'game-perf-check' } }, path.join(repo, 'skills'), repo, out);
+    assert.deepEqual(fs.readdirSync(out).sort(), ['game-perf-check', 'router']);
     assert.deepEqual(fs.readdirSync(path.join(out, 'router')).sort(), ['LICENSE', 'NOTICE', 'SKILL.md', 'references']);
-    assert.match(fs.readFileSync(path.join(out, 'game-perf', 'SKILL.md'), 'utf8'), /name: game-perf/);
-    assert.match(fs.readFileSync(path.join(out, 'router', 'SKILL.md'), 'utf8'), /Load game-perf, not perf-tools\./);
-    assert.match(fs.readFileSync(path.join(out, 'router', 'references', 'table.md'), 'utf8'), /`game-perf`/);
+    assert.match(fs.readFileSync(path.join(out, 'game-perf-check', 'SKILL.md'), 'utf8'), /name: game-perf-check/);
+    assert.match(fs.readFileSync(path.join(out, 'router', 'SKILL.md'), 'utf8'), /Load game-perf-check, not perf-check-tools\./);
+    assert.match(fs.readFileSync(path.join(out, 'router', 'references', 'table.md'), 'utf8'), /`game-perf-check`/);
+    // A name that is a plain word (pstack's teach) is renamed where it is written as a name, never in prose.
+    fs.mkdirSync(path.join(repo, 'skills', 'teach'));
+    fs.writeFileSync(path.join(repo, 'skills', 'teach', 'SKILL.md'), '---\nname: teach\ndescription: T.\n---\nRun /teach, `teach` or the **teach** skill. Then teach the words.\n');
+    const out2 = path.join(box.root, 'out2');
+    stageSkills({ rename: { teach: 'pstack-teach' } }, path.join(repo, 'skills'), repo, out2);
+    assert.equal(fs.readFileSync(path.join(out2, 'pstack-teach', 'SKILL.md'), 'utf8'),
+      '---\nname: pstack-teach\ndescription: T.\n---\nRun /pstack-teach, `pstack-teach` or the **pstack-teach** skill. Then teach the words.\n');
   } finally {
     box.cleanup();
   }

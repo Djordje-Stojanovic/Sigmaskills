@@ -80,14 +80,21 @@ export function hashDirectory(dir) {
 }
 
 /**
- * Copy each skill folder of `from` into `outDir`. `licenses` (files at the repo root, such as
- * LICENSE and NOTICE) go into every skill folder, as the design-md transform does. `rename`
+ * Copy each skill folder of `from` into `outDir`. `licenses` (repo paths, such as LICENSE and
+ * NOTICE) go into every skill folder by file name, as the design-md transform does. `rename`
  * ({ upstream id: new id }) gives a skill a pack-unique name when another pack owns the upstream
  * one, and rewrites the old name in the Markdown of every skill of the source, so a router still finds it.
  */
 export function stageSkills(source, from, repoRoot, outDir) {
   const rename = source.rename || {};
-  const olds = Object.keys(rename).map((id) => [new RegExp(`(?<![\\w-])${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`, 'g'), rename[id]]);
+  const olds = Object.keys(rename).map((id) => {
+    const name = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // A hyphenated id is never prose. A plain word (teach) only where it is written as a name: /x, `x`, **x**, $x, name: x, x/.
+    const pattern = id.includes('-')
+      ? `(?<![\\w-])${name}(?![\\w-])`
+      : `(?:(?<=[/\`*$])|(?<=^name:[ \\t]*))${name}(?![\\w-])|(?<![\\w-])${name}(?=[\`*/])`;
+    return [new RegExp(pattern, 'gm'), rename[id]];
+  });
   const rewrite = (dir) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
@@ -104,7 +111,7 @@ export function stageSkills(source, from, repoRoot, outDir) {
     fs.cpSync(dir, dest, { recursive: true, filter: (item) => item === dir || !path.basename(item).startsWith('.') });
     for (const name of source.licenses || []) {
       const file = path.join(repoRoot, name);
-      if (fs.existsSync(file)) fs.copyFileSync(file, path.join(dest, name));
+      if (fs.existsSync(file)) fs.copyFileSync(file, path.join(dest, path.basename(name)));
     }
     if (olds.length) rewrite(dest);
   }
