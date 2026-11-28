@@ -443,12 +443,12 @@ function sigmaboat({ result }) {
   return problems;
 }
 
-// sigmadebug: a topic file, 5 headed parts and 3 lettered options (one starred) per topic,
+// sigmadebug: a topic file, a card per topic (Why, Done, Left, Pick) with 3 lettered options (one starred),
 // a plan file, and a /sigmaship hand-off to a background worker that never asks the owner.
 function sigmadebug({ result }) {
   const problems = requireText(result, [/issues-[\w.-]+-\d{2}-\d{2}-\d{4}\.txt/, /fix-issues-plan-temp-\d{2}-\d{2}-\d{4}\.md/, /sigmaship/i, /background/i], 'reply');
-  for (const part of ['What I said', 'What you answered', 'What this is about', 'My answer', 'What you can do']) {
-    if (!new RegExp(part, 'i').test(result)) problems.push(`reply: missing the part "${part}"`);
+  for (const part of ['Why', 'Done', 'Left', 'Pick']) {
+    if (!new RegExp(String.raw`^\W*${part}\W*:`, 'im').test(result)) problems.push(`reply: missing the line "${part}:"`);
   }
   if (!/^\s*(?:[-*]\s*)?\**A[.)]?\**.*★/m.test(result)) problems.push('reply: option A is not the starred recommendation');
   if (!/^\s*(?:[-*]\s*)?\**B[.)]/m.test(result) || !/^\s*(?:[-*]\s*)?\**C[.)]/m.test(result)) problems.push('reply: fewer than 3 lettered options');
