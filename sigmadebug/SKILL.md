@@ -29,14 +29,15 @@ OPEN, ONE AT A TIME
 Why:  the backup disk is 94 % full; the nightly backup fails at 100 %.
 Done: you said keep every photo. I measured three old images: 410 GB.
 Left: pick which images go.
-Pick: A ★ delete all three: frees 410 GB, cannot be undone
-      B keep the newest: frees 290 GB, cannot be undone
-      C move all three to the spare disk: frees 410 GB, can be undone, 2 h copy
+Pick:
+  A. Delete all three: frees 410 GB, cannot be undone. ★
+  B. Keep the newest: frees 290 GB, cannot be undone.
+  C. Move all three to the spare disk: frees 410 GB, can be undone, 2 h copy.
 ```
 
-The .txt is the one record. Every topic stays in it. Add a new topic at the end of the open list and keep the header line current. When a worker starts, the topic moves up as AGENT RUNNING; when its PR merges, it turns DONE with the PR and one line on what changed. Renumber top to bottom after each move.
+The .txt is the one record. Every topic stays in it. Add a new topic at the end of the open list, rewrite a card after each answer, keep the header line current, and move `(NOW)` to the topic in chat. When a worker starts, the topic moves up as AGENT RUNNING; when its PR merges, it turns DONE with the PR and one line on what changed. Renumber top to bottom after each move.
 
-On "sigmadebug gui", use a SigmaWrite GUI board (SigmaWrite's `references/gui.md`) in place of the .txt: one `DO` card per topic with the card below and a status. Replies come back as an `EASYTALK REPLY`.
+On "sigmadebug gui", use a SigmaWrite GUI board (SigmaWrite's `references/gui.md`) in place of the .txt, everywhere below: one `DO` card per topic with the card below and a status. Replies come back as an `EASYTALK REPLY`.
 
 ## 2. Talk: one card per message
 
@@ -60,7 +61,7 @@ Each message carries one topic, as one card. Check its facts again first if an h
 
 At once, append a plan to `fix-issues-plan-temp-<dd-mm-yyyy>.md` beside the .txt: the fastest buildable plan, short. The files to change and the change in each, runnable acceptance checks, and the deploy step with its proof if the project deploys. Small related topics may share one plan and one PR.
 
-**Attack the premise.** When a second fix on the same idea failed, do not plan a third. Write the idea both fixes assumed in one sentence and test that idea itself; the plan changes the idea or asks the next why.
+**Attack the premise.** When a second fix on the same idea failed, do not plan a third. Write the idea both fixes assumed in one sentence and test that idea itself; the plan changes the idea or asks the next why. Put the idea and the test result in the plan.
 
 ## 4. Ship in the background
 

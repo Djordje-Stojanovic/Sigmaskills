@@ -2,7 +2,7 @@ I saved the topic list to C:\Users\me\Downloads\issues-snake-06-11-2026.txt and 
 
 ### T1. Should the snake die when it touches the right or bottom wall?
 Why: the snake can touch the right and bottom walls and live, so a lost game goes on.
-Done: I found the cause. `src/logic.js` uses `head[0] > WIDTH`; it should be `>=`. No test covers it.
+Done: I found the cause. `step` in `src/logic.js` uses `>` for both walls; it should be `>=`. No test covers it.
 Left: pick how far the fix goes.
 Pick:
 A. Fix the check and add one test: 2 lines, can be undone. ★

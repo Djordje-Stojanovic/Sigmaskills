@@ -448,7 +448,7 @@ function sigmaboat({ result }) {
 function sigmadebug({ result }) {
   const problems = requireText(result, [/issues-[\w.-]+-\d{2}-\d{2}-\d{4}\.txt/, /fix-issues-plan-temp-\d{2}-\d{2}-\d{4}\.md/, /sigmaship/i, /background/i], 'reply');
   for (const part of ['Why', 'Done', 'Left', 'Pick']) {
-    if (!new RegExp(String.raw`^\W*${part}\W*:`, 'im').test(result)) problems.push(`reply: missing the line "${part}:"`);
+    if (!new RegExp(String.raw`^[ \t*_-]*${part}[ \t*_]*:`, 'im').test(result)) problems.push(`reply: missing the line "${part}:"`);
   }
   if (!/^\s*(?:[-*]\s*)?\**A[.)]?\**.*★/m.test(result)) problems.push('reply: option A is not the starred recommendation');
   if (!/^\s*(?:[-*]\s*)?\**B[.)]/m.test(result) || !/^\s*(?:[-*]\s*)?\**C[.)]/m.test(result)) problems.push('reply: fewer than 3 lettered options');
