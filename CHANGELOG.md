@@ -32,6 +32,8 @@ All notable changes to [Sigmaskills](https://github.com/Djordje-Stojanovic/Sigma
 
 ## [Unreleased]
 
+- `sigmadebug`: each topic is now one short card: the decision as the title, then Why, Done, Left and Pick. Done holds the state now instead of replaying "what I said / what you answered", and each option says what it costs and whether it can be undone. The voice rules fit in one paragraph, the Algorithm quotes became one line, and the skill is shorter.
+
 ## [0.32.0] — 2026-11-27
 
 ### Added

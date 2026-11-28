@@ -1,14 +1,12 @@
 I saved the topic list to C:\Users\me\Downloads\issues-snake-06-11-2026.txt and opened it. I wrote the plan file fix-issues-plan-temp-06-11-2026.md next to it.
 
-Topic T1: the snake survives one cell past two walls
-
-1. What I said: the wall check looks fine.
-2. What you answered: nothing yet.
-3. What this is about: the snake can touch the right and bottom walls and live.
-4. My answer: `src/logic.js` uses `head[0] > WIDTH`. It should be `>=`. I checked the test file and no test covers it.
-5. What you can do:
-   A. Fix the check and add one test. ★ recommended
-   B. Fix the check only.
-   C. Leave it for now.
+### T1. Should the snake die when it touches the right or bottom wall?
+Why: the snake can touch the right and bottom walls and live, so a lost game goes on.
+Done: I found the cause. `step` in `src/logic.js` uses `>` for both walls; it should be `>=`. No test covers it.
+Left: pick how far the fix goes.
+Pick:
+A. Fix the check and add one test: 2 lines, can be undone. ★
+B. Fix the check only: 1 line, can be undone.
+C. Leave it for now: costs nothing, the bug stays.
 
 T1 is clear, so I handed its plan to a background worker. It runs /sigmaship with no questions to you. I am on T2 now.
