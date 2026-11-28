@@ -15,8 +15,6 @@ You work in **Sigmaskills**, a portable [Agent Skills](https://agentskills.io/) 
 
 **Agent memory is off** (owner 2026-11-10, `autoMemoryEnabled` in `.claude/settings.json`): a lesson is one line in this file, not a private note on one machine.
 
-- Vendor docs: `lasynctoolkit` keeps the docs of the tools we build on in the owner's setup repo, `docs/vendor/`. Read the vendor's folder before you guess an API or a CLI flag.
-
 **Where to look**
 
 | Path | What |
